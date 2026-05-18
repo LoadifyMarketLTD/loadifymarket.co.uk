@@ -12,10 +12,14 @@ import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { openExternalUrl } from "@/lib/capacitorUtils";
 
-/** Total number of onboarding steps for a seller. Used when marking completion. */
+/** Total number of visible onboarding steps shown in the UI progress flow. */
 const ONBOARDING_TOTAL_STEPS = 5;
-/** DB value written to onboardingStep when all steps are complete. */
-const ONBOARDING_COMPLETE_STEP = 8;
+/**
+ * Final persisted onboardingStep value written to users.onboardingStep.
+ * The DB tracks 8 granular sub-steps (profile/Stripe/shipping/listing flags),
+ * while the UI intentionally compresses them into 5 visible steps.
+ */
+const ONBOARDING_COMPLETE_SUBSTEP = 8;
 
 /**
  * /onboarding
@@ -509,10 +513,10 @@ const SellerOnboarding = () => {
     if (!user) return;
     setFinishing(true);
     try {
-      await supabase
-        .from("users")
-        .update({ onboardingCompleted: true, onboardingStep: ONBOARDING_COMPLETE_STEP })
-        .eq("id", user.id);
+        await supabase
+          .from("users")
+          .update({ onboardingCompleted: true, onboardingStep: ONBOARDING_COMPLETE_SUBSTEP })
+          .eq("id", user.id);
       toast({ title: "Setup complete! 🎉", description: "Your seller account is now live." });
       navigate("/seller", { replace: true });
     } catch (err) {

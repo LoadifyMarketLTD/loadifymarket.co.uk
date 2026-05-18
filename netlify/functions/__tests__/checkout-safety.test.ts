@@ -46,6 +46,7 @@ const singleSellerBody = {
   buyerId: 'buyer-1',
   shippingAddress: { line1: '1 High St', city: 'London', postal_code: 'E1 1AA', country: 'GB' },
   billingAddress: { line1: '1 High St', city: 'London', postal_code: 'E1 1AA', country: 'GB' },
+  shippingMethodId: '11111111-1111-1111-1111-111111111111',
 };
 
 // Two products from different sellers
@@ -82,11 +83,14 @@ function makeSupabaseMock(opts: {
     isActive: boolean;
     isApproved: boolean;
     stockQuantity: number;
+    listingContext?: string;
+    listingStatus?: string;
   }>;
   productsError?: Error | null;
   sellerProfile?: MockSellerProfile | null;
   sellerProfileError?: Error | null;
   sessionInsertError?: Error | null;
+  productShippingRows?: unknown[] | null;
   // For webhook tests
   paymentSessionsUpdate?: ReturnType<typeof vi.fn>;
   paymentSessionMaybeSingle?: { data: unknown; error: unknown };
@@ -103,6 +107,15 @@ function makeSupabaseMock(opts: {
     sellerProfile = { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active' },
     sellerProfileError = null,
     sessionInsertError = null,
+    productShippingRows = [{
+      product_id: 'p1',
+      shipping_methods: {
+        id: '11111111-1111-1111-1111-111111111111',
+        active: true,
+        name: 'Tracked 48',
+        shipping_rates: [{ price: 4.99 }],
+      },
+    }],
     paymentSessionsUpdate = vi.fn().mockReturnValue({ error: null }),
     paymentSessionMaybeSingle = { data: { orderId: 'order-1' }, error: null },
     orderSingle = { data: { id: 'order-1', buyerId: 'buyer-1', sellerId: 's1' }, error: null },
@@ -122,7 +135,20 @@ function makeSupabaseMock(opts: {
           case 'products':
             return {
               select: vi.fn().mockReturnThis(),
-              in: vi.fn().mockResolvedValue({ data: products, error: productsError }),
+              in: vi.fn().mockResolvedValue({
+                data: products.map((product) => ({
+                  listingContext: 'product',
+                  listingStatus: 'active',
+                  ...product,
+                })),
+                error: productsError,
+              }),
+            };
+          case 'product_shipping':
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              in: vi.fn().mockResolvedValue({ data: productShippingRows, error: null }),
             };
           case 'seller_profiles':
             return {

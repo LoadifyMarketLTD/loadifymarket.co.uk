@@ -27,6 +27,7 @@ const validBody = {
   buyerId: 'buyer-1',
   shippingAddress: { line1: '1 High St', city: 'London', postal_code: 'E1 1AA', country: 'GB' },
   billingAddress: { line1: '1 High St', city: 'London', postal_code: 'E1 1AA', country: 'GB' },
+  shippingMethodId: '11111111-1111-1111-1111-111111111111',
 };
 
 describe('create-checkout handler – request validation', () => {
@@ -101,5 +102,85 @@ describe('create-checkout handler – request validation', () => {
     const res = await handler(makeEvent(validBody, 'POST', { authorization: 'Bearer valid-token' }), {} as never);
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.body as string).error).toMatch(/no longer available/i);
+  });
+
+  it('returns 400 when a physical cart is missing shippingMethodId', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
+    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+    vi.doMock('stripe', () => ({
+      default: vi.fn().mockImplementation(function () {
+        return {};
+      }),
+    }));
+    vi.doMock('./_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
+    vi.doMock('./_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
+    }));
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'buyer-1', email: 'buyer@test.com' } },
+            error: null,
+          }),
+        },
+        from: vi.fn((table: string) => {
+          if (table === 'products') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              in: vi.fn().mockResolvedValue({
+                data: [{
+                  id: 'p1',
+                  price: 10,
+                  title: 'Widget',
+                  sellerId: 's1',
+                  isActive: true,
+                  isApproved: true,
+                  stockQuantity: 5,
+                  listingContext: 'product',
+                  listingStatus: 'active',
+                }],
+                error: null,
+              }),
+            };
+          }
+          if (table === 'seller_profiles') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active' },
+                error: null,
+              }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }),
+      })),
+    }));
+
+    const { handler } = await import('../create-checkout');
+    const res = await handler(
+      makeEvent(
+        {
+          ...validBody,
+          shippingMethodId: undefined,
+        },
+        'POST',
+        { authorization: 'Bearer valid-token' },
+      ),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body as string).error).toMatch(/shipping method/i);
   });
 });
