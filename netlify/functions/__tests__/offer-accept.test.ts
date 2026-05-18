@@ -285,6 +285,48 @@ describe('offer action handlers', () => {
     });
   });
 
+  it('includes raw RPC diagnostics when OFFER_ACCEPT_DEBUG is enabled', async () => {
+    process.env.OFFER_ACCEPT_DEBUG = 'true';
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: null,
+        rpcError: {
+          code: '23505',
+          message: 'duplicate key value violates unique constraint "one_active_order_per_listing"',
+          details: 'Key ("productId")=(123) already exists.',
+          hint: 'Resolve existing active order first.',
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-accept');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-accept', body: { offerId: 'offer-debug-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(409);
+    const parsed = JSON.parse(response!.body) as {
+      error: string;
+      details: string;
+      debug?: {
+        offerId: string;
+        actorId: string;
+        payload: { offerId: string };
+        rpcErrorCode: string;
+        rpcErrorMessage: string;
+        rpcErrorDetails: string;
+        rpcErrorHint: string;
+        stack: string;
+      };
+    };
+    expect(parsed.error).toBe('Failed to accept offer');
+    expect(parsed.debug?.offerId).toBe('offer-debug-1');
+    expect(parsed.debug?.rpcErrorCode).toBe('23505');
+    expect(parsed.debug?.rpcErrorDetails).toContain('Key ("productId")=(123) already exists.');
+    expect(parsed.debug?.stack).toContain('offer-accept rpc failure');
+  });
+
   it('accepts legacy migration-590 payload shape', async () => {
     createClientMock.mockReturnValue(
       makeSupabaseMock({
