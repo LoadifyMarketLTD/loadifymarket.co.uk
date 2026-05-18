@@ -5,6 +5,12 @@ interface RequestBody {
   offerId?: string;
 }
 
+interface OfferRow {
+  id: string;
+  status: string;
+  recipientId: string;
+}
+
 interface OfferActionRpcResult {
   ok: boolean;
   offerId: string;
@@ -60,6 +66,11 @@ function getServerConfig():
 
 function isOfferAcceptDebugEnabled(): boolean {
   const raw = (process.env.OFFER_ACCEPT_DEBUG ?? '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes';
+}
+
+function isBypassRpcEnabled(): boolean {
+  const raw = (process.env.OFFER_ACCEPT_BYPASS_RPC ?? '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'yes';
 }
 
@@ -164,6 +175,91 @@ export const handler: Handler = async (event) => {
       p_actor_id: user.id,
     };
     const debugEnabled = isOfferAcceptDebugEnabled();
+
+    // ── DIAGNOSTIC BYPASS ──────────────────────────────────────────────────
+    // Set OFFER_ACCEPT_BYPASS_RPC=true in Netlify env vars to skip the RPC
+    // and perform a direct table update instead. If this succeeds where the
+    // RPC fails, the accept_offer() function itself is the broken component.
+    if (isBypassRpcEnabled()) {
+      console.log('offer-accept: BYPASS mode active — skipping accept_offer() RPC');
+
+      const { data: offerRow, error: fetchErr } = await supabase
+        .from('offers')
+        .select('id, status, "recipientId"')
+        .eq('id', offerId)
+        .single<OfferRow>();
+
+      if (fetchErr || !offerRow) {
+        console.error('offer-accept bypass: fetch offer failed', fetchErr);
+        return jsonResponse(404, {
+          error: 'Offer not found',
+          details: fetchErr?.message ?? 'No row returned',
+          _bypass: true,
+        });
+      }
+
+      if (offerRow.recipientId !== user.id) {
+        console.error('offer-accept bypass: actor is not recipient', { actor: user.id, recipient: offerRow.recipientId });
+        return jsonResponse(403, {
+          error: 'Not authorized — actor is not the offer recipient',
+          _bypass: true,
+        });
+      }
+
+      if (offerRow.status === 'accepted') {
+        return jsonResponse(200, {
+          ok: true,
+          offerId,
+          status: 'accepted',
+          orderId: null,
+          alreadyDone: true,
+          _bypass: true,
+        });
+      }
+
+      if (offerRow.status !== 'pending') {
+        return jsonResponse(409, {
+          error: 'Offer is not actionable',
+          details: `current status: ${offerRow.status}`,
+          _bypass: true,
+        });
+      }
+
+      const { error: updateErr } = await supabase
+        .from('offers')
+        .update({ status: 'accepted' })
+        .eq('id', offerId)
+        .eq('status', 'pending');
+
+      if (updateErr) {
+        console.error('offer-accept bypass: direct update failed', {
+          code: updateErr.code,
+          message: updateErr.message,
+          details: updateErr.details,
+          hint: updateErr.hint,
+          offerId,
+          actorId: user.id,
+        });
+        return jsonResponse(500, {
+          error: 'Direct update failed — RPC is not the cause',
+          details: `${updateErr.code ?? 'update_error'}: ${updateErr.message}`,
+          hint: updateErr.hint ?? null,
+          _bypass: true,
+        });
+      }
+
+      console.log('offer-accept bypass: direct update succeeded — RPC is likely the broken component');
+      return jsonResponse(200, {
+        ok: true,
+        offerId,
+        status: 'accepted',
+        orderId: null,
+        alreadyDone: false,
+        _bypass: true,
+      });
+    }
+    // ── END BYPASS ──────────────────────────────────────────────────────────
+
     if (debugEnabled) {
       console.log('offer-accept debug request:', {
         payload: { offerId },

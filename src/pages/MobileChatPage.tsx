@@ -720,13 +720,38 @@ export default function MobileChatPage() {
   }, [conversationId, user?.id, offersFeatureUnavailable, loadOffers]);
 
   // Orders table Realtime — update the Pay Now / payment-confirmed state live
-  // when an order's status changes (e.g. awaiting_payment → paid after webhook).
+  // when an order is created or its status changes.
   // Filter by buyerId so only the buyer receives events for their own orders.
   useEffect(() => {
     if (!user?.id) return;
 
     const ordersChannel = supabase
       .channel(`chat-orders:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event:  "INSERT",
+          schema: "public",
+          table:  "orders",
+          filter: `buyerId=eq.${user.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as {
+            id: string;
+            status: string;
+            offerId: string | null;
+          };
+          if (!updated.offerId) return;
+          setOfferMap((prev) => {
+            const existing = prev.get(updated.offerId!);
+            if (!existing) return prev;
+            if (existing.orderId === updated.id && existing.orderStatus === updated.status) return prev;
+            const next = new Map(prev);
+            next.set(updated.offerId!, { ...existing, orderId: updated.id, orderStatus: updated.status });
+            return next;
+          });
+        },
+      )
       .on(
         "postgres_changes",
         {
@@ -745,9 +770,10 @@ export default function MobileChatPage() {
           // Only update if this order belongs to an offer in the current chat.
           setOfferMap((prev) => {
             const existing = prev.get(updated.offerId!);
-            if (!existing || existing.orderId !== updated.id) return prev;
+            if (!existing) return prev;
+            if (existing.orderId === updated.id && existing.orderStatus === updated.status) return prev;
             const next = new Map(prev);
-            next.set(updated.offerId!, { ...existing, orderStatus: updated.status });
+            next.set(updated.offerId!, { ...existing, orderId: updated.id, orderStatus: updated.status });
             return next;
           });
         },
@@ -900,6 +926,21 @@ export default function MobileChatPage() {
       const json = await res.json() as { orderId?: string; error?: string; details?: string };
       if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
 
+      if (json.orderId) {
+        setOfferMap((prev) => {
+          const existing = prev.get(offerId);
+          if (!existing) return prev;
+          const next = new Map(prev);
+          next.set(offerId, {
+            ...existing,
+            status: "accepted",
+            orderId: json.orderId,
+            orderStatus: existing.orderStatus ?? "awaiting_payment",
+          });
+          return next;
+        });
+      }
+
       toast({ title: "Offer accepted! Buyer has been notified to pay." });
       // Track analytics event
       const acceptedOffer = offerMap.get(offerId);
@@ -934,7 +975,8 @@ export default function MobileChatPage() {
     }
   };
 
-  const handlePayNow = async (orderId: string) => {
+  const handlePayNow = async (offerId: string, orderId: string, status: string) => {
+    console.log("PAY_NOW_CLICK", { offerId, orderId, status });
     try {
       const res = await authorizedFetch("/.netlify/functions/checkout-from-offer", {
         method: "POST",
@@ -1169,11 +1211,23 @@ export default function MobileChatPage() {
                       : undefined}
                     highlightedOfferId={routeOfferId}
                     onPayNow={(() => {
-                      // Source of truth for orderId is the offers table (via
-                      // offerRecord.orderId from the orders FK join), not the
-                      // message JSON which never contains orderId.
-                      const oid = offerRecord?.orderId;
-                      return oid ? () => void handlePayNow(oid) : undefined;
+                      if (!parsed.offerId) return undefined;
+                      return () => {
+                        const rec = offerMap.get(parsed.offerId!);
+                        const oid = rec?.orderId ?? null;
+                        const status = rec?.status ?? "accepted";
+                        if (!oid) {
+                          console.log("PAY_NOW_CLICK", { offerId: parsed.offerId, orderId: oid, status });
+                          toast({
+                            title: "Checkout not ready",
+                            description: "Order is still syncing. Please try again in a moment.",
+                            variant: "destructive",
+                          });
+                          void loadOffers();
+                          return;
+                        }
+                        void handlePayNow(parsed.offerId!, oid, status);
+                      };
                     })()}
                   />
                 ) : (

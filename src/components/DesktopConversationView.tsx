@@ -1025,6 +1025,23 @@ export default function DesktopConversationView() {
       .channel(`desktop-chat-orders:${user.id}`)
       .on(
         "postgres_changes",
+        { event: "INSERT", schema: "public", table: "orders", filter: `buyerId=eq.${user.id}` },
+        (payload) => {
+          const updated = payload.new as { id: string; status: string; offerId: string | null };
+          const offerId = updated.offerId;
+          if (!offerId) return;
+          setOfferMap((prev) => {
+            const existing = prev.get(offerId);
+            if (!existing) return prev;
+            if (existing.orderId === updated.id && existing.orderStatus === updated.status) return prev;
+            const next = new Map(prev);
+            next.set(offerId, { ...existing, orderId: updated.id, orderStatus: updated.status });
+            return next;
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
         { event: "UPDATE", schema: "public", table: "orders", filter: `buyerId=eq.${user.id}` },
         (payload) => {
           const updated = payload.new as { id: string; status: string; offerId: string | null };
@@ -1032,10 +1049,10 @@ export default function DesktopConversationView() {
           if (!offerId) return;
           setOfferMap((prev) => {
             const existing = prev.get(offerId);
-            // Only update when this order event belongs to the offer's linked order
-            if (!existing || existing.orderId !== updated.id) return prev;
+            if (!existing) return prev;
+            if (existing.orderId === updated.id && existing.orderStatus === updated.status) return prev;
             const next = new Map(prev);
-            next.set(offerId, { ...existing, orderStatus: updated.status });
+            next.set(offerId, { ...existing, orderId: updated.id, orderStatus: updated.status });
             return next;
           });
         },
@@ -1108,6 +1125,21 @@ export default function DesktopConversationView() {
       const json = await res.json() as { orderId?: string; error?: string; details?: string };
       if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
 
+      if (json.orderId) {
+        setOfferMap((prev) => {
+          const existing = prev.get(offerId);
+          if (!existing) return prev;
+          const next = new Map(prev);
+          next.set(offerId, {
+            ...existing,
+            status: "accepted",
+            orderId: json.orderId,
+            orderStatus: existing.orderStatus ?? "awaiting_payment",
+          });
+          return next;
+        });
+      }
+
       toast({ title: "Offer accepted! Buyer has been notified to pay." });
       const rec = offerMap.get(offerId);
       if (rec) trackOfferAccepted({ offerId, amountPence: rec.amountPence });
@@ -1138,7 +1170,8 @@ export default function DesktopConversationView() {
     }
   };
 
-  const handlePayNow = async (orderId: string) => {
+  const handlePayNow = async (offerId: string, orderId: string, status: string) => {
+    console.log("PAY_NOW_CLICK", { offerId, orderId, status });
     try {
       const res = await authorizedFetch("/.netlify/functions/checkout-from-offer", {
         method: "POST",
@@ -1448,9 +1481,23 @@ export default function DesktopConversationView() {
                         onCancel={parsed.offerId ? () => void handleCancelOffer(parsed.offerId!) : undefined}
                         highlightedOfferId={routeOfferId}
                         onPayNow={(() => {
-                          const rec = parsed.offerId ? offerMap.get(parsed.offerId) : undefined;
-                          const oid = rec?.orderId;
-                          return oid ? () => void handlePayNow(oid) : undefined;
+                          if (!parsed.offerId) return undefined;
+                          return () => {
+                            const rec = offerMap.get(parsed.offerId!);
+                            const oid = rec?.orderId ?? null;
+                            const status = rec?.status ?? "accepted";
+                            if (!oid) {
+                              console.log("PAY_NOW_CLICK", { offerId: parsed.offerId, orderId: oid, status });
+                              toast({
+                                title: "Checkout not ready",
+                                description: "Order is still syncing. Please try again in a moment.",
+                                variant: "destructive",
+                              });
+                              void loadOffers();
+                              return;
+                            }
+                            void handlePayNow(parsed.offerId!, oid, status);
+                          };
                         })()}
                       />
                     ) : (
