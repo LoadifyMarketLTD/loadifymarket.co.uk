@@ -432,11 +432,38 @@ export default function DesktopConversationView() {
   // Track which route conversation ID has already been auto-selected so that
   // user-initiated conversation clicks are not silently overridden by the effect.
   const lastAutoSelectedRouteRef = useRef<string | null>(null);
+  // Retry counter for deep-link hydration recovery (max 2 auto-retries)
+  const hydrationRetryRef = useRef(0);
+  // Gate for the one-shot post-auth-hydration delayed re-fetch
+  const postHydrationRefetchFired = useRef(false);
+  // Show debug state panel when ?debug=1 is in the URL (or in dev mode)
+  const showDebug = new URLSearchParams(location.search).get("debug") === "1" || import.meta.env.DEV;
   const selectedConv = conversations.find((c) => c.id === selectedId) ?? null;
 
   const loadConversations = useCallback(async () => {
     if (!user?.id) return;
     setLoadingConvs(true);
+    // Force-verify the auth session before making RLS-protected queries.
+    // This prevents silent empty results caused by expired or not-yet-restored tokens.
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.info("[InboxHydration] session check", {
+      userId: user.id,
+      hasSession: !!session,
+      sessionUserId: session?.user?.id,
+      sessionMatchesStore: session?.user?.id === user.id,
+      expiresAt: session?.expires_at ?? null,
+      sessionError: sessionError?.message ?? null,
+      retryAttempt: hydrationRetryRef.current,
+      routeConversationId,
+    });
+    if (!session?.user) {
+      console.warn("[InboxHydration] No valid session — conversations query skipped", {
+        userId: user.id,
+        sessionError: sessionError?.message ?? null,
+      });
+      setLoadingConvs(false);
+      return;
+    }
     console.info("[DesktopConversationView] loadConversations:start", {
       userId: user.id,
       routeConversationId,
@@ -460,6 +487,14 @@ export default function DesktopConversationView() {
         participantMatches,
         ids: rows.map((r) => r.id),
       });
+      if (rows.length === 0) {
+        console.warn("[InboxHydration] RLS returned empty conversations list", {
+          userId: user.id,
+          sessionUserId: session?.user?.id,
+          routeConversationId,
+          supabasePayload: data,
+        });
+      }
 
       // Resolve other participants
       const otherIds = [...new Set(rows.map((r) => r.user1Id === user.id ? r.user2Id : r.user1Id))];
@@ -684,6 +719,69 @@ export default function DesktopConversationView() {
 
     return () => { void supabase.removeChannel(channel); };
   }, [user?.id, loadConversations]);
+
+  // ── Timeout protection — prevent infinite loading spinner ───────────────────
+  useEffect(() => {
+    if (!loadingConvs) return;
+    const timeout = setTimeout(() => {
+      console.warn("[InboxHydration] Loading timeout — forcing off after 10s", {
+        userId: user?.id,
+        routeConversationId,
+      });
+      setLoadingConvs(false);
+    }, 10_000);
+    return () => clearTimeout(timeout);
+  }, [loadingConvs, user?.id, routeConversationId]);
+
+  // ── Post-auth-hydration delayed re-fetch (catches auth race conditions) ──────
+  // Fires once, 2 s after the user first becomes available, to handle the edge
+  // case where the Supabase session token wasn't ready when loadConversations
+  // was first called.
+  useEffect(() => {
+    if (!user?.id || postHydrationRefetchFired.current) return;
+    postHydrationRefetchFired.current = true;
+    const timer = setTimeout(() => {
+      console.info("[InboxHydration] Post-auth-hydration delayed re-fetch", {
+        userId: user.id,
+        routeConversationId,
+        currentCount: conversations.length,
+      });
+      void loadConversations();
+    }, 2000);
+    return () => clearTimeout(timer);
+    // loadConversations intentionally omitted — one-shot guard prevents loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // ── Deep-link recovery retry ─────────────────────────────────────────────────
+  // If the conversation list loads empty while a conversationId deep-link is
+  // active, retry up to twice with increasing backoff.  Stops once the target
+  // conversation appears or max retries are exhausted.
+  useEffect(() => {
+    if (!routeConversationId || !user?.id) return;
+    if (loadingConvs) return;
+    if (conversations.some((c) => c.id === routeConversationId)) return;
+    if (hydrationRetryRef.current >= 2) return;
+
+    hydrationRetryRef.current++;
+    const attempt = hydrationRetryRef.current;
+    const delay = attempt * 1500;
+    console.info("[InboxHydration] Deep-link recovery retry scheduled", {
+      userId: user.id,
+      routeConversationId,
+      attempt,
+      delayMs: delay,
+    });
+    const timer = setTimeout(() => {
+      console.info("[InboxHydration] Deep-link recovery retry firing", {
+        userId: user.id,
+        routeConversationId,
+        attempt,
+      });
+      void loadConversations();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [conversations, loadingConvs, routeConversationId, user?.id, loadConversations]);
 
   // ── Load thread metadata (isSeller, otherId, productTitle) ──────────────────
   useEffect(() => {
@@ -1106,6 +1204,15 @@ export default function DesktopConversationView() {
             )}
           </h1>
         </div>
+
+        {/* ── Debug state panel — activate with ?debug=1 in the URL ── */}
+        {showDebug && (
+          <div className="px-3 py-1.5 bg-yellow-500/10 border-b border-yellow-500/20 text-[10px] font-mono text-yellow-400 space-y-0.5">
+            <div>uid: {user?.id ?? "—"}</div>
+            <div>convs: {conversations.length} | selected: {selectedId ?? "none"}</div>
+            <div>msgs: {messages.length} | retries: {hydrationRetryRef.current}</div>
+          </div>
+        )}
 
         {loadingConvs ? (
           <div className="flex-1 p-3 space-y-2">

@@ -363,6 +363,7 @@ export default function MobileChatPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const routeOfferId = new URLSearchParams(location.search).get("offerId");
+  const showDebug = new URLSearchParams(location.search).get("debug") === "1" || import.meta.env.DEV;
   const { user, isLoading } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
 
@@ -407,6 +408,24 @@ export default function MobileChatPage() {
     let cancelled = false;
 
     const load = async () => {
+      // Force-verify auth session before RLS-protected fetch.
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      console.info("[MobileChat] session check", {
+        conversationId,
+        userId: user?.id,
+        hasSession: !!session,
+        sessionMatchesStore: session?.user?.id === user?.id,
+        authError: authError?.message ?? null,
+      });
+      if (!session?.user) {
+        console.warn("[MobileChat] No valid session during conversation load", {
+          conversationId,
+          userId: user?.id,
+          authError: authError?.message ?? null,
+        });
+        if (!cancelled) navigate("/inbox", { replace: true });
+        return;
+      }
       // Fetch conversation row
       const { data: conv, error } = await supabase
         .from("conversations")
@@ -415,16 +434,33 @@ export default function MobileChatPage() {
         .maybeSingle<ConversationMeta>();
 
       if (error || !conv) {
+        console.warn("[MobileChat] Conversation not found or error", {
+          conversationId,
+          userId: user?.id,
+          error: error?.message ?? null,
+        });
         if (!cancelled) navigate("/inbox", { replace: true });
         return;
       }
       // Verify the current user is actually a participant (belt-and-suspenders
       // on top of Supabase RLS, in case of any stale session edge-case)
       if (conv.user1Id !== user.id && conv.user2Id !== user.id) {
+        console.warn("[MobileChat] User is not a participant in this conversation", {
+          conversationId,
+          userId: user.id,
+          user1Id: conv.user1Id,
+          user2Id: conv.user2Id,
+        });
         if (!cancelled) navigate("/inbox", { replace: true });
         return;
       }
       if (cancelled) return;
+      console.info("[MobileChat] Conversation loaded", {
+        conversationId,
+        userId: user?.id,
+        user1Id: conv.user1Id,
+        user2Id: conv.user2Id,
+      });
       setConvMeta(conv);
 
       // Resolve the other participant's name
@@ -538,6 +574,10 @@ export default function MobileChatPage() {
     const load = async () => {
       setLoadingMsgs(true);
       setMessages([]);
+      console.info("[MobileChat] loadMessages:start", {
+        conversationId,
+        userId: user?.id,
+      });
       try {
         const { data, error } = await supabase
           .from("messages")
@@ -548,7 +588,13 @@ export default function MobileChatPage() {
 
         if (error) throw error;
         if (cancelled) return;
-        setMessages((data as Message[]) ?? []);
+        const msgs = (data as Message[]) ?? [];
+        console.info("[MobileChat] loadMessages:result", {
+          conversationId,
+          userId: user?.id,
+          count: msgs.length,
+        });
+        setMessages(msgs);
 
         // Mark incoming as read
         await supabase
@@ -567,6 +613,19 @@ export default function MobileChatPage() {
     load();
     return () => { cancelled = true; };
   }, [conversationId, user?.id]);
+
+  // Timeout protection for message loading (prevents infinite spinner)
+  useEffect(() => {
+    if (!loadingMsgs) return;
+    const timeout = setTimeout(() => {
+      console.warn("[MobileChat] Message loading timeout — forcing off after 8s", {
+        conversationId,
+        userId: user?.id,
+      });
+      setLoadingMsgs(false);
+    }, 8000);
+    return () => clearTimeout(timeout);
+  }, [loadingMsgs, conversationId, user?.id]);
 
   // Supabase Realtime
   useEffect(() => {
@@ -1153,6 +1212,13 @@ export default function MobileChatPage() {
           <p className="text-[11px] text-white/35 ml-auto">Seen ✓</p>
         )}
       </div>
+
+      {/* Debug state panel — activate with ?debug=1 in the URL */}
+      {showDebug && (
+        <div className="shrink-0 px-3 py-1 bg-yellow-500/10 border-t border-yellow-500/20 text-[10px] font-mono text-yellow-400">
+          uid: {user?.id ?? "—"} | conv: {conversationId ?? "—"} | msgs: {messages.length}
+        </div>
+      )}
 
       {/* Compose bar */}
       <div
