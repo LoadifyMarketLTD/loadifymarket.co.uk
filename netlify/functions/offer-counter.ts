@@ -1,5 +1,7 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { sendPushToUser } from './_shared/pushNotifications';
+import { buildOfferLink, buildOfferPushData } from './_shared/offerLinks';
 
 interface RequestBody {
   offerId?: string;
@@ -87,7 +89,7 @@ function normalizeRpcResult(value: unknown): OfferActionRpcResult | null {
   return null;
 }
 
-function mapRpcErrorStatus(message: string): number {
+function mapRpcErrorStatus(message: string, code?: string | null): number {
   if (message.includes('offer_not_found') || message.includes('listing_not_found') || message.includes('conversation_not_found')) return 404;
   if (message.includes('not_authorized') || message.includes('not_participant')) return 403;
   if (
@@ -97,6 +99,8 @@ function mapRpcErrorStatus(message: string): number {
     || message.includes('offer_expired')
     || message.includes('invalid_amount')
     || message.includes('amount_too_large')
+    // PostgreSQL integrity-constraint violations (23xxx)
+    || (typeof code === 'string' && code.startsWith('23'))
   ) return 409;
   return 500;
 }
@@ -166,7 +170,7 @@ export const handler: Handler = async (event) => {
         actorId: user.id,
         amountPence,
       });
-      return jsonResponse(mapRpcErrorStatus(rpcError.message ?? ''), {
+      return jsonResponse(mapRpcErrorStatus(rpcError.message ?? '', rpcError.code), {
         error: 'Failed to counter offer',
         details: safeDetails,
       });
@@ -179,6 +183,65 @@ export const handler: Handler = async (event) => {
         error: 'Failed to counter offer',
         details: 'RPC returned invalid payload shape',
       });
+    }
+
+    // Notify the recipient of the counter offer (non-fatal: counter is already
+    // committed so a notification failure must not roll back the action).
+    if (!normalized.alreadyDone) {
+      try {
+        interface CounterOfferRow {
+          recipientId: string;
+          proposedById: string;
+          amountPence: number;
+          conversationId: string;
+          listingId: string;
+        }
+        const { data: counterOffer } = await supabase
+          .from('offers')
+          .select('recipientId, proposedById, amountPence, conversationId, listingId')
+          .eq('id', normalized.offerId)
+          .maybeSingle<CounterOfferRow>();
+
+        if (counterOffer) {
+          const pounds = (counterOffer.amountPence / 100).toFixed(2);
+          const offerLink = buildOfferLink({
+            conversationId: counterOffer.conversationId,
+            offerId: normalized.offerId,
+            listingId: counterOffer.listingId,
+            buyerId: counterOffer.recipientId,
+            sellerId: counterOffer.proposedById,
+            amountPence: counterOffer.amountPence,
+            status: 'pending',
+          });
+
+          await supabase.from('notifications').insert({
+            userId: counterOffer.recipientId,
+            type: 'offer_received',
+            title: 'Counter offer received',
+            message: `A counter offer of £${pounds} has been sent to you`,
+            link: offerLink,
+          });
+
+          await sendPushToUser(supabase, counterOffer.recipientId, {
+            title: 'Counter offer received',
+            body: `Counter offer of £${pounds} – tap to respond`,
+            data: {
+              ...buildOfferPushData({
+                conversationId: counterOffer.conversationId,
+                offerId: normalized.offerId,
+                listingId: counterOffer.listingId,
+                buyerId: counterOffer.recipientId,
+                sellerId: counterOffer.proposedById,
+                amountPence: counterOffer.amountPence,
+                status: 'pending',
+              }),
+              type: 'offer_received',
+            },
+          });
+        }
+      } catch (notifyErr) {
+        console.warn('offer-counter: failed to send counter notification (non-fatal):', notifyErr);
+      }
     }
 
     return jsonResponse(200, {

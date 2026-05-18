@@ -85,10 +85,16 @@ function normalizeRpcResult(value: unknown, fallbackOfferId: string): OfferActio
   return null;
 }
 
-function mapRpcErrorStatus(message: string): number {
+function mapRpcErrorStatus(message: string, code?: string | null): number {
   if (message.includes('offer_not_found') || message.includes('conversation_not_found')) return 404;
   if (message.includes('not_authorized') || message.includes('not_participant')) return 403;
-  if (message.includes('offer_not_actionable') || message.includes('offer_not_pending') || message.includes('offer_expired')) return 409;
+  if (
+    message.includes('offer_not_actionable')
+    || message.includes('offer_not_pending')
+    || message.includes('offer_expired')
+    // PostgreSQL integrity-constraint violations (23xxx)
+    || (typeof code === 'string' && code.startsWith('23'))
+  ) return 409;
   return 500;
 }
 
@@ -150,7 +156,7 @@ export const handler: Handler = async (event) => {
         offerId,
         actorId: user.id,
       });
-      return jsonResponse(mapRpcErrorStatus(rpcError.message ?? ''), {
+      return jsonResponse(mapRpcErrorStatus(rpcError.message ?? '', rpcError.code), {
         error: 'Failed to decline offer',
         details: safeDetails,
       });

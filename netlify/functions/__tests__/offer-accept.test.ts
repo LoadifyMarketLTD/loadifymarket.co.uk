@@ -388,4 +388,44 @@ describe('offer action handlers', () => {
       alreadyDone: true,
     });
   });
+
+  it('maps PostgreSQL 23505 unique-constraint violation to 409 (no more 500 on race condition)', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: null,
+        rpcError: {
+          code: '23505',
+          message: 'duplicate key value violates unique constraint "one_active_order_per_listing"',
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-accept');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-accept', body: { offerId: 'offer-race-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(409);
+  });
+
+  it('maps any 23xxx constraint-violation code to 409 in offer-decline', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: null,
+        rpcError: {
+          code: '23514',
+          message: 'new row for relation "orders" violates check constraint',
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-decline');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-decline', body: { offerId: 'offer-check-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(409);
+  });
 });
