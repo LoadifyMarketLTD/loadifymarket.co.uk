@@ -16,7 +16,7 @@
  * conversation's linked product.
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   MessageSquare, Send, User, Tag,
   CheckCircle, XCircle, CreditCard,
@@ -39,7 +39,7 @@ interface ConversationRow {
   id: string;
   subject: string | null;
   lastMessageAt: string;
-  isArchived: boolean;
+  isArchived: boolean | null;
   user1Id: string;
   user2Id: string;
   productId: string | null;
@@ -407,8 +407,10 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
 export default function DesktopConversationView() {
   const { user } = useAuthStore();
   const location = useLocation();
-  const routeConversationId = new URLSearchParams(location.search).get("conversationId");
-  const routeOfferId = new URLSearchParams(location.search).get("offerId");
+  const normalizedSearch = useMemo(() => location.search.replaceAll("&amp;", "&"), [location.search]);
+  const routeParams = useMemo(() => new URLSearchParams(normalizedSearch), [normalizedSearch]);
+  const routeConversationId = routeParams.get("conversationId");
+  const routeOfferId = routeParams.get("offerId");
 
   // ── Conversation list state ──────────────────────────────────────────────────
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -437,17 +439,30 @@ export default function DesktopConversationView() {
   const loadConversations = useCallback(async () => {
     if (!user?.id) return;
     setLoadingConvs(true);
+    console.info("[DesktopConversationView] loadConversations:start", {
+      userId: user.id,
+      routeConversationId,
+      rawSearch: location.search,
+      normalizedSearch,
+    });
     try {
       const { data, error } = await supabase
         .from("conversations")
         .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id, productId")
         .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`)
-        .eq("isArchived", false)
+        .not("isArchived", "is", true)
         .order("lastMessageAt", { ascending: false })
         .limit(100);
 
       if (error) throw error;
       const rows = (data ?? []) as ConversationRow[];
+      const participantMatches = rows.filter((r) => r.user1Id === user.id || r.user2Id === user.id).length;
+      console.info("[DesktopConversationView] loadConversations:result", {
+        userId: user.id,
+        count: rows.length,
+        participantMatches,
+        ids: rows.map((r) => r.id),
+      });
 
       // Resolve other participants
       const otherIds = [...new Set(rows.map((r) => r.user1Id === user.id ? r.user2Id : r.user1Id))];
@@ -504,6 +519,7 @@ export default function DesktopConversationView() {
         const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
         return {
           ...r,
+          isArchived: r.isArchived ?? false,
           other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
           unreadCount: unreadMap.get(r.id) ?? 0,
           lastMessagePreview: previewText(lastMsgMap.get(r.id) ?? null),
@@ -512,12 +528,17 @@ export default function DesktopConversationView() {
       });
 
       setConversations(enriched);
-    } catch {
+    } catch (error) {
+      console.error("[DesktopConversationView] loadConversations:error", {
+        userId: user.id,
+        routeConversationId,
+        error,
+      });
       toast({ title: "Failed to load conversations", variant: "destructive" });
     } finally {
       setLoadingConvs(false);
     }
-  }, [user?.id]);
+  }, [user?.id, routeConversationId, location.search, normalizedSearch]);
 
   // ── Fetch conversation list ──────────────────────────────────────────────────
   useEffect(() => {
@@ -534,13 +555,31 @@ export default function DesktopConversationView() {
 
     const fetchSingle = async () => {
       try {
+        console.info("[DesktopConversationView] fetchSingle:start", {
+          userId: user.id,
+          routeConversationId,
+          listCount: conversations.length,
+        });
         const { data } = await supabase
           .from("conversations")
           .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id, productId")
           .eq("id", routeConversationId)
           .maybeSingle<ConversationRow>();
 
-        if (!data) return;
+        if (!data) {
+          console.warn("[DesktopConversationView] fetchSingle:not_found", {
+            userId: user.id,
+            routeConversationId,
+          });
+          return;
+        }
+        console.info("[DesktopConversationView] fetchSingle:found", {
+          userId: user.id,
+          routeConversationId,
+          conversationId: data.id,
+          user1Id: data.user1Id,
+          user2Id: data.user2Id,
+        });
 
         const otherId = data.user1Id === user.id ? data.user2Id : data.user1Id;
         const { data: users } = await supabase
@@ -562,6 +601,7 @@ export default function DesktopConversationView() {
 
         const conv: Conversation = {
           ...data,
+          isArchived: data.isArchived ?? false,
           other,
           unreadCount: 0,
           lastMessagePreview: null,
@@ -571,7 +611,12 @@ export default function DesktopConversationView() {
           if (prev.some((c) => c.id === conv.id)) return prev;
           return [conv, ...prev];
         });
-      } catch {
+      } catch (error) {
+        console.error("[DesktopConversationView] fetchSingle:error", {
+          userId: user.id,
+          routeConversationId,
+          error,
+        });
         // Non-fatal — the conversation list without this entry is still usable.
       }
     };
@@ -588,6 +633,9 @@ export default function DesktopConversationView() {
       lastAutoSelectedRouteRef.current !== routeConversationId &&
       conversations.some((c) => c.id === routeConversationId)
     ) {
+      console.info("[DesktopConversationView] routeSelect:auto", {
+        routeConversationId,
+      });
       setSelectedId(routeConversationId);
       lastAutoSelectedRouteRef.current = routeConversationId;
       return;
@@ -733,6 +781,10 @@ export default function DesktopConversationView() {
     const load = async () => {
       setLoadingMsgs(true);
       setMessages([]);
+      console.info("[DesktopConversationView] loadMessages:start", {
+        userId: user.id,
+        selectedId,
+      });
       try {
         const { data, error } = await supabase
           .from("messages")
@@ -744,6 +796,11 @@ export default function DesktopConversationView() {
         if (error) throw error;
         if (cancelled) return;
         setMessages((data as Message[]) ?? []);
+        console.info("[DesktopConversationView] loadMessages:result", {
+          userId: user.id,
+          selectedId,
+          count: (data as Message[] | null)?.length ?? 0,
+        });
 
         // Mark incoming as read
         await supabase
@@ -757,7 +814,12 @@ export default function DesktopConversationView() {
         setConversations((prev) =>
           prev.map((c) => (c.id === selectedId ? { ...c, unreadCount: 0 } : c))
         );
-      } catch {
+      } catch (error) {
+        console.error("[DesktopConversationView] loadMessages:error", {
+          userId: user.id,
+          selectedId,
+          error,
+        });
         toast({ title: "Failed to load messages", variant: "destructive" });
       } finally {
         if (!cancelled) setLoadingMsgs(false);
