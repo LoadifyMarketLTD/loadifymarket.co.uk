@@ -432,6 +432,8 @@ export interface AppNotification {
   message: string;
   link: string | null;
   isRead: boolean;
+  isArchived?: boolean;
+  archivedAt?: string | null;
   createdAt: string;
 }
 

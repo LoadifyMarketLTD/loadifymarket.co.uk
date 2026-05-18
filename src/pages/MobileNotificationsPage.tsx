@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Bell } from 'lucide-react';
+import { ChevronLeft, Bell, Archive, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import {
   MOBILE_NOTIFICATION_QUERY_TYPES,
@@ -15,6 +15,7 @@ import {
 } from '@/lib/notificationUtils';
 import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
+import { toast } from '@/hooks/use-toast';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import type { AppNotification } from '@/types';
 
@@ -36,6 +37,8 @@ export default function MobileNotificationsPage() {
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [openingNotificationId, setOpeningNotificationId] = useState<string | null>(null);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -47,8 +50,9 @@ export default function MobileNotificationsPage() {
       setLoading(true);
       const { data } = await supabase
         .from('notifications')
-        .select('id, type, title, message, link, isRead, createdAt')
+        .select('id, type, title, message, link, isRead, isArchived, createdAt')
         .eq('userId', user.id)
+        .not('isArchived', 'is', true)
         .in('type', MOBILE_NOTIFICATION_QUERY_TYPES)
         .order('createdAt', { ascending: false })
         .limit(50);
@@ -74,8 +78,9 @@ export default function MobileNotificationsPage() {
         async () => {
           const { data } = await supabase
             .from('notifications')
-            .select('id, type, title, message, link, isRead, createdAt')
+            .select('id, type, title, message, link, isRead, isArchived, createdAt')
             .eq('userId', user.id)
+            .not('isArchived', 'is', true)
             .in('type', MOBILE_NOTIFICATION_QUERY_TYPES)
             .order('createdAt', { ascending: false })
             .limit(50);
@@ -106,6 +111,42 @@ export default function MobileNotificationsPage() {
       if (item.link) navigate(item.link);
     } finally {
       setOpeningNotificationId((prev) => (prev === item.id ? null : prev));
+    }
+  };
+
+  const archiveNotification = async (id: string) => {
+    if (!user?.id) return;
+    setArchivingId(id);
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ isArchived: true, archivedAt: new Date().toISOString() })
+        .eq('id', id)
+        .eq('userId', user.id);
+      if (error) throw error;
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch {
+      toast({ title: 'Failed to archive notification', variant: 'destructive' });
+    } finally {
+      setArchivingId((prev) => (prev === id ? null : prev));
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    if (!user?.id) return;
+    setDeletingId(id);
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id)
+        .eq('userId', user.id);
+      if (error) throw error;
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch {
+      toast({ title: 'Failed to delete notification', variant: 'destructive' });
+    } finally {
+      setDeletingId((prev) => (prev === id ? null : prev));
     }
   };
 
@@ -203,20 +244,46 @@ export default function MobileNotificationsPage() {
                   className={item.isRead ? '' : 'bg-primary'}
                   style={{ width: 8, height: 8, borderRadius: '50%', background: item.isRead ? 'transparent' : undefined, flexShrink: 0, marginTop: 6 }}
                 />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p className={`text-sm text-foreground/90 m-0 ${item.isRead ? 'font-medium' : 'font-bold'}`} style={{ lineHeight: 1.3 }}>
-                    {item.title}
-                  </p>
+                 <div style={{ flex: 1, minWidth: 0 }}>
+                   <p className={`text-sm text-foreground/90 m-0 ${item.isRead ? 'font-medium' : 'font-bold'}`} style={{ lineHeight: 1.3 }}>
+                     {item.title}
+                   </p>
                   {item.message ? (
                     <p className="text-[13px] text-muted-foreground" style={{ margin: '3px 0 0', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                       {item.message}
                     </p>
                   ) : null}
-                  <p className="text-[11px] text-foreground/25" style={{ margin: '4px 0 0' }}>
-                    {formatDate(item.createdAt)}
-                  </p>
-                </div>
-              </button>
+                   <p className="text-[11px] text-foreground/25" style={{ margin: '4px 0 0' }}>
+                     {formatDate(item.createdAt)}
+                   </p>
+                 </div>
+                 <div className="flex items-center gap-1 shrink-0">
+                   <button
+                     type="button"
+                     aria-label="Archive notification"
+                     disabled={archivingId === item.id}
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       void archiveNotification(item.id);
+                     }}
+                     style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', opacity: archivingId === item.id ? 0.5 : 0.85 }}
+                   >
+                     <Archive style={{ width: 16, height: 16 }} />
+                   </button>
+                   <button
+                     type="button"
+                     aria-label="Delete notification"
+                     disabled={deletingId === item.id}
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       void deleteNotification(item.id);
+                     }}
+                     style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', opacity: deletingId === item.id ? 0.5 : 0.85 }}
+                   >
+                     <Trash2 style={{ width: 16, height: 16 }} />
+                   </button>
+                 </div>
+               </button>
               {i < items.length - 1 && (
                 <div
                   aria-hidden="true"

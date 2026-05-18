@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, CheckCheck, Inbox } from "lucide-react";
+import { Archive, Bell, CheckCheck, Inbox, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
@@ -30,6 +30,8 @@ const BuyerNotifications = () => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchNotifications = async () => {
     if (!user?.id) return;
@@ -37,8 +39,9 @@ const BuyerNotifications = () => {
     try {
       const { data } = await supabase
         .from("notifications")
-        .select("id, type, title, message, link, isRead, createdAt")
+        .select("id, type, title, message, link, isRead, isArchived, createdAt")
         .eq("userId", user.id)
+        .not("isArchived", "is", true)
         .order("createdAt", { ascending: false })
         .limit(50);
       setNotifications((data as AppNotification[]) ?? []);
@@ -84,6 +87,42 @@ const BuyerNotifications = () => {
       toast({ title: "Failed to mark all as read", variant: "destructive" });
     } finally {
       setMarkingAll(false);
+    }
+  };
+
+  const archiveNotification = async (id: string) => {
+    if (!user?.id) return;
+    setArchivingId(id);
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ isArchived: true, archivedAt: new Date().toISOString() })
+        .eq("id", id)
+        .eq("userId", user.id);
+      if (error) throw error;
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      toast({ title: "Failed to archive notification", variant: "destructive" });
+    } finally {
+      setArchivingId((prev) => (prev === id ? null : prev));
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    if (!user?.id) return;
+    setDeletingId(id);
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("id", id)
+        .eq("userId", user.id);
+      if (error) throw error;
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      toast({ title: "Failed to delete notification", variant: "destructive" });
+    } finally {
+      setDeletingId((prev) => (prev === id ? null : prev));
     }
   };
 
@@ -157,16 +196,42 @@ const BuyerNotifications = () => {
                     {formatDate(n.createdAt)}
                   </p>
                 </div>
-                {!n.isRead && (
+                <div className="flex items-center gap-1 shrink-0">
+                  {!n.isRead && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={() => markAsRead(n.id)}
+                    >
+                      Mark read
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="text-xs shrink-0"
-                    onClick={() => markAsRead(n.id)}
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={archivingId === n.id}
+                    onClick={() => {
+                      void archiveNotification(n.id);
+                    }}
+                    aria-label="Archive notification"
                   >
-                    Mark read
+                    <Archive className="h-4 w-4" />
                   </Button>
-                )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    disabled={deletingId === n.id}
+                    onClick={() => {
+                      void deleteNotification(n.id);
+                    }}
+                    aria-label="Delete notification"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
