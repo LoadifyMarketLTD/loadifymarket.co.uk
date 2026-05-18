@@ -13,6 +13,17 @@ interface OfferActionRpcResult {
   alreadyDone: boolean;
 }
 
+interface RpcErrorDebugPayload {
+  offerId: string;
+  actorId: string;
+  payload: RequestBody;
+  rpcErrorCode: string | null;
+  rpcErrorMessage: string | null;
+  rpcErrorDetails: string | null;
+  rpcErrorHint: string | null;
+  stack: string;
+}
+
 function jsonResponse(statusCode: number, payload: Record<string, unknown>) {
   return {
     statusCode,
@@ -45,6 +56,11 @@ function getServerConfig():
   }
 
   return { supabaseUrl, serviceRoleKey };
+}
+
+function isOfferAcceptDebugEnabled(): boolean {
+  const raw = (process.env.OFFER_ACCEPT_DEBUG ?? '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes';
 }
 
 function normalizeRpcResult(value: unknown, fallbackOfferId: string): OfferActionRpcResult | null {
@@ -143,13 +159,45 @@ export const handler: Handler = async (event) => {
       return jsonResponse(400, { error: 'Invalid request body', details: 'offerId is required' });
     }
 
-    const { data: rpcData, error: rpcError } = await supabase.rpc('accept_offer', {
+    const rpcPayload = {
       p_offer_id: offerId,
       p_actor_id: user.id,
-    });
+    };
+    const debugEnabled = isOfferAcceptDebugEnabled();
+    if (debugEnabled) {
+      console.log('offer-accept debug request:', {
+        payload: { offerId },
+        user: { id: user.id },
+        rpcPayload,
+      });
+    }
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc('accept_offer', rpcPayload);
+    if (debugEnabled) {
+      console.log('offer-accept debug rpc result:', {
+        payload: { offerId },
+        user: { id: user.id },
+        rpcData,
+        rpcError,
+        rpcErrorCode: rpcError?.code ?? null,
+        rpcErrorDetails: rpcError?.details ?? null,
+        rpcErrorHint: rpcError?.hint ?? null,
+        stack: new Error('offer-accept rpc trace').stack ?? 'stack_unavailable',
+      });
+    }
 
     if (rpcError) {
       const safeDetails = `${rpcError.code ?? 'rpc_error'}: ${rpcError.message ?? 'Unknown RPC error'}`;
+      const debugPayload: RpcErrorDebugPayload = {
+        offerId,
+        actorId: user.id,
+        payload: { offerId },
+        rpcErrorCode: rpcError.code ?? null,
+        rpcErrorMessage: rpcError.message ?? null,
+        rpcErrorDetails: rpcError.details ?? null,
+        rpcErrorHint: rpcError.hint ?? null,
+        stack: new Error('offer-accept rpc failure').stack ?? 'stack_unavailable',
+      };
       console.error('offer-accept RPC error:', {
         code: rpcError.code,
         message: rpcError.message,
@@ -157,10 +205,13 @@ export const handler: Handler = async (event) => {
         hint: rpcError.hint,
         offerId,
         actorId: user.id,
+        payload: rpcPayload,
+        stack: debugPayload.stack,
       });
       return jsonResponse(mapRpcErrorStatus(rpcError.message ?? '', rpcError.code), {
         error: 'Failed to accept offer',
         details: safeDetails,
+        ...(debugEnabled ? { debug: debugPayload } : {}),
       });
     }
 
@@ -181,10 +232,18 @@ export const handler: Handler = async (event) => {
       alreadyDone: normalized.alreadyDone,
     });
   } catch (error) {
-    console.error('offer-accept unhandled error:', error);
+    const stack = error instanceof Error ? error.stack ?? 'stack_unavailable' : 'stack_unavailable';
+    console.error('offer-accept unhandled error:', error, stack);
     return jsonResponse(500, {
       error: 'Failed to accept offer',
       details: error instanceof Error ? error.message : 'Unhandled server error',
+      ...(isOfferAcceptDebugEnabled()
+        ? {
+            debug: {
+              stack,
+            },
+          }
+        : {}),
     });
   }
 };
