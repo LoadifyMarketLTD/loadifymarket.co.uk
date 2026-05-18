@@ -213,10 +213,48 @@ export const handler: Handler = async (event) => {
   }
 
   if (existingOffer) {
-    return {
-      statusCode: 409,
-      body: JSON.stringify({ error: 'There is already a pending offer in this conversation. Wait for the seller to respond before making another offer.' }),
-    };
+    // Check whether this is an orphan: offer row exists but no display message
+    // was ever written (e.g. the function timed out between the offer insert and
+    // the message insert, or the message rollback itself failed).  If it is an
+    // orphan the buyer cannot make progress, so we auto-recover by removing the
+    // stale record and allowing a fresh attempt.
+    const { data: orphanMessageRows } = await supabase
+      .from('messages')
+      .select('id')
+      .eq('conversationId', conversationId)
+      .like('message', `%${existingOffer.id}%`)
+      .limit(1);
+
+    const isOrphan = !orphanMessageRows || orphanMessageRows.length === 0;
+
+    if (isOrphan) {
+      console.warn(
+        'conversation-offer: orphan pending offer detected (no matching message) – auto-cleaning:',
+        existingOffer.id,
+      );
+      const { error: orphanDeleteError } = await supabase
+        .from('offers')
+        .delete()
+        .eq('id', existingOffer.id);
+      if (orphanDeleteError) {
+        console.error(
+          'conversation-offer: failed to delete orphan offer, blocking retry:',
+          orphanDeleteError.message,
+          '| orphanOfferId:',
+          existingOffer.id,
+        );
+        return {
+          statusCode: 409,
+          body: JSON.stringify({ error: 'There is already a pending offer in this conversation. Wait for the seller to respond before making another offer.' }),
+        };
+      }
+      // Orphan cleaned up – fall through to create the new offer below.
+    } else {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({ error: 'There is already a pending offer in this conversation. Wait for the seller to respond before making another offer.' }),
+      };
+    }
   }
 
   // ── Insert offer record ─────────────────────────────────────────────────────
@@ -275,13 +313,19 @@ export const handler: Handler = async (event) => {
 
   if (displayMessageError || !insertedMessage) {
     console.error('conversation-offer: display message insert failed:', displayMessageError?.message);
-    await supabase
+    const { error: rollbackError } = await supabase
       .from('offers')
       .delete()
-      .eq('id', offer.id)
-      .then(({ error }) => {
-        if (error) console.warn('conversation-offer: rollback offer delete failed (non-fatal):', error.message);
-      });
+      .eq('id', offer.id);
+    if (rollbackError) {
+      console.error(
+        'conversation-offer: CRITICAL – rollback of offer after message failure failed.',
+        'Orphan offer left in DB.',
+        '| offerId:', offer.id,
+        '| conversationId:', conversationId,
+        '| rollbackError:', rollbackError.message,
+      );
+    }
 
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create offer chat message' }) };
   }
@@ -311,7 +355,7 @@ export const handler: Handler = async (event) => {
 
   if (notificationError) {
     console.error('conversation-offer: notifications insert failed:', notificationError.message);
-    await Promise.allSettled([
+    const rollbackResults = await Promise.allSettled([
       supabase
         .from('messages')
         .delete()
@@ -321,6 +365,25 @@ export const handler: Handler = async (event) => {
         .delete()
         .eq('id', offer.id),
     ]);
+    rollbackResults.forEach((result, idx) => {
+      if (result.status === 'rejected') {
+        console.error(
+          `conversation-offer: CRITICAL – rollback step ${idx} failed after notification failure.`,
+          'Orphan record may remain.',
+          '| offerId:', offer.id,
+          '| messageId:', insertedMessage.id,
+          '| conversationId:', conversationId,
+        );
+      } else if (result.value?.error) {
+        console.error(
+          `conversation-offer: CRITICAL – rollback step ${idx} DB error after notification failure.`,
+          'Orphan record may remain.',
+          '| offerId:', offer.id,
+          '| messageId:', insertedMessage.id,
+          '| error:', result.value.error.message,
+        );
+      }
+    });
 
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create seller notification' }) };
   }
