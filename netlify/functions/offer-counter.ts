@@ -34,8 +34,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL ?? '';
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+  const supabaseUrl = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? '').trim();
+  const serviceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
   if (!supabaseUrl || !serviceRoleKey) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfiguration' }) };
   }
@@ -132,6 +132,7 @@ export const handler: Handler = async (event) => {
     .select('id')
     .maybeSingle<{ id: string }>();
   if (updateError) {
+    console.error('offer-counter: update original offer failed:', updateError.code, updateError.message, updateError.details, updateError.hint);
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to update original offer' }) };
   }
   if (!previousPending) {
@@ -154,6 +155,7 @@ export const handler: Handler = async (event) => {
     .select('id')
     .single<{ id: string }>();
   if (counterInsertError || !counterOffer) {
+    console.error('offer-counter: counter insert failed:', counterInsertError?.code, counterInsertError?.message, counterInsertError?.details, counterInsertError?.hint);
     await supabase
       .from('offers')
       .update({ status: 'pending' })
@@ -182,6 +184,7 @@ export const handler: Handler = async (event) => {
       message: displayMessage,
     });
   if (messageError) {
+    console.error('offer-counter: message insert failed:', messageError.code, messageError.message, messageError.details, messageError.hint);
     await Promise.allSettled([
       supabase.from('offers').delete().eq('id', counterOffer.id),
       supabase.from('offers').update({ status: 'pending' }).eq('id', originalOffer.id),

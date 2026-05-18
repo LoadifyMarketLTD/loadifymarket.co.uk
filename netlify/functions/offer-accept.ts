@@ -188,7 +188,7 @@ export const handler: Handler = async (event) => {
       .rpc('accept_offer', { p_offer_id: offerId, p_actor_id: callerId });
 
     if (rpcError) {
-      console.error('offer-accept: accept_offer RPC error:', rpcError.message);
+      console.error('offer-accept: accept_offer RPC error:', rpcError.code, rpcError.message, rpcError.details, rpcError.hint);
 
       const msg = rpcError.message ?? '';
       if (msg.includes('offer_not_found')) return jsonResponse(404, { error: 'Offer not found' });
