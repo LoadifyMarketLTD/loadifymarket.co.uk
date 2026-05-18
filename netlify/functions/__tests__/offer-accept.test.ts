@@ -2,127 +2,60 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HandlerEvent } from '@netlify/functions';
 
 const createClientMock = vi.fn();
-const sendPushToUserMock = vi.fn();
-const checkRateLimitMock = vi.fn();
-const expireStaleOffersMock = vi.fn();
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: createClientMock,
 }));
 
-vi.mock('../_shared/pushNotifications', () => ({
-  sendPushToUser: sendPushToUserMock,
-}));
-
-vi.mock('../_shared/rateLimiter', () => ({
-  checkRateLimit: checkRateLimitMock,
-}));
-
-vi.mock('../_shared/offerLifecycle', () => ({
-  expireStaleOffers: expireStaleOffersMock,
-}));
-
-function makeEvent(
-  body: unknown,
-  method = 'POST',
-  headers: Record<string, string> = { authorization: 'Bearer valid-token' },
-): HandlerEvent {
+function makeEvent(options: {
+  path: '/.netlify/functions/offer-accept' | '/.netlify/functions/offer-decline' | '/.netlify/functions/offer-counter';
+  body: unknown;
+  method?: string;
+  headers?: Record<string, string>;
+}): HandlerEvent {
   return {
-    httpMethod: method,
-    body: JSON.stringify(body),
-    headers,
+    httpMethod: options.method ?? 'POST',
+    body: JSON.stringify(options.body),
+    headers: options.headers ?? { authorization: 'Bearer valid-token' },
     multiValueHeaders: {},
     isBase64Encoded: false,
-    path: '/.netlify/functions/offer-accept',
+    path: options.path,
     queryStringParameters: null,
     multiValueQueryStringParameters: null,
     rawQuery: '',
-    rawUrl: 'http://localhost/.netlify/functions/offer-accept',
-  };
-}
-
-function chainMaybeSingle<T>(result: Promise<{ data: T; error: unknown }> | { data: T; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockResolvedValue(result),
+    rawUrl: `http://localhost${options.path}`,
   };
 }
 
 function makeSupabaseMock(options?: {
-  rpcResult?: unknown;
-  rpcError?: { message?: string; code?: string } | null;
-  productLookupThrows?: boolean;
-  notificationError?: { message: string } | null;
+  userId?: string;
+  authError?: { message: string } | null;
+  rpcData?: unknown;
+  rpcError?: { message?: string; code?: string; details?: string; hint?: string } | null;
 }) {
   const opts = options ?? {};
-  const offer = {
-    id: 'offer-1',
-    conversationId: 'conv-1',
-    listingId: 'listing-1',
-    proposedById: 'buyer-1',
-    recipientId: 'seller-1',
-    amountPence: 2599,
-    status: 'pending',
-    expiresAt: null,
-  };
 
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'seller-1' } },
-        error: null,
+        data: { user: opts.authError ? null : { id: opts.userId ?? 'seller-1' } },
+        error: opts.authError ?? null,
       }),
     },
-    from: vi.fn((table: string) => {
-      if (table === 'offers') {
-        return chainMaybeSingle({ data: offer, error: null });
-      }
-
-      if (table === 'products') {
-        if (opts.productLookupThrows) {
-          return {
-            select: vi.fn().mockReturnThis(),
-            eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockRejectedValue(new Error('product lookup failed')),
-          };
-        }
-
-        return chainMaybeSingle({
-          data: { title: 'Test listing', sellerId: 'seller-1' },
-          error: null,
-        });
-      }
-
-      if (table === 'notifications') {
-        return {
-          insert: vi.fn().mockResolvedValue({ data: null, error: opts.notificationError ?? null }),
-        };
-      }
-
-      return {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-        update: vi.fn().mockReturnThis(),
-      };
-    }),
-    rpc: vi.fn((fn: string) => {
-      if (fn === 'release_stale_unpaid_listing_locks') {
-        return Promise.resolve({ data: null, error: null });
-      }
-
-      if (fn === 'accept_offer') {
-        return Promise.resolve({ data: opts.rpcResult ?? { order_id: 'order-1', already_done: false }, error: opts.rpcError ?? null });
-      }
-
-      return Promise.resolve({ data: null, error: null });
+    rpc: vi.fn().mockResolvedValue({
+      data: opts.rpcData ?? {
+        ok: true,
+        offerId: 'offer-1',
+        status: 'accepted',
+        orderId: 'order-1',
+        alreadyDone: false,
+      },
+      error: opts.rpcError ?? null,
     }),
   };
 }
 
-describe('offer-accept handler', () => {
+describe('offer action handlers', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -132,51 +65,223 @@ describe('offer-accept handler', () => {
     process.env = {
       ...originalEnv,
       VITE_SUPABASE_URL: 'https://test.supabase.co',
-      SUPABASE_SERVICE_ROLE_KEY: 'eyJ-service-role-key',
+      SUPABASE_SERVICE_ROLE_KEY: 'eyJ-service-role-key-with-length',
     };
-
-    checkRateLimitMock.mockResolvedValue({ exceeded: false, attempts: 1 });
-    expireStaleOffersMock.mockResolvedValue([]);
-    sendPushToUserMock.mockResolvedValue(undefined);
   });
 
-  it('returns JSON misconfiguration errors for invalid database env', async () => {
-    process.env.VITE_SUPABASE_URL = 'not-a-url';
+  it('accept success returns stable JSON', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: {
+          ok: true,
+          offerId: 'offer-acc-1',
+          status: 'accepted',
+          orderId: 'order-acc-1',
+          alreadyDone: false,
+        },
+      }),
+    );
 
     const { handler } = await import('../offer-accept');
-    const response = await handler(makeEvent({ offerId: 'offer-1' }), {} as never);
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-accept', body: { offerId: 'offer-acc-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(200);
+    expect(JSON.parse(response!.body)).toEqual({
+      ok: true,
+      offerId: 'offer-acc-1',
+      status: 'accepted',
+      orderId: 'order-acc-1',
+      alreadyDone: false,
+    });
+  });
+
+  it('decline success returns stable JSON', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: {
+          ok: true,
+          offerId: 'offer-dec-1',
+          status: 'declined',
+          orderId: null,
+          alreadyDone: false,
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-decline');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-decline', body: { offerId: 'offer-dec-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(200);
+    expect(JSON.parse(response!.body)).toEqual({
+      ok: true,
+      offerId: 'offer-dec-1',
+      status: 'declined',
+      orderId: null,
+      alreadyDone: false,
+    });
+  });
+
+  it('counter success returns stable JSON', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: {
+          ok: true,
+          offerId: 'offer-counter-1',
+          status: 'pending',
+          orderId: null,
+          alreadyDone: false,
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-counter');
+    const response = await handler(
+      makeEvent({
+        path: '/.netlify/functions/offer-counter',
+        body: { offerId: 'offer-original-1', amountPence: 2599 },
+      }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(200);
+    expect(JSON.parse(response!.body)).toEqual({
+      ok: true,
+      offerId: 'offer-counter-1',
+      status: 'pending',
+      orderId: null,
+      alreadyDone: false,
+    });
+  });
+
+  it('returns 400 for invalid offerId payload', async () => {
+    createClientMock.mockReturnValue(makeSupabaseMock());
+
+    const { handler } = await import('../offer-accept');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-accept', body: {} }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(400);
+    expect(JSON.parse(response!.body)).toEqual({
+      error: 'Invalid request body',
+      details: 'offerId is required',
+    });
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    createClientMock.mockReturnValue(makeSupabaseMock());
+
+    const { handler } = await import('../offer-decline');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-decline', body: { offerId: 'offer-1' }, headers: {} }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(401);
+    expect(JSON.parse(response!.body)).toEqual({
+      error: 'Authentication required',
+      details: 'Missing bearer token',
+    });
+  });
+
+  it('returns 403 for non-participant actor from RPC', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: null,
+        rpcError: {
+          code: 'P0001',
+          message: 'not_participant',
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-counter');
+    const response = await handler(
+      makeEvent({
+        path: '/.netlify/functions/offer-counter',
+        body: { offerId: 'offer-1', amountPence: 3000 },
+      }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(403);
+    expect(JSON.parse(response!.body)).toEqual({
+      error: 'Failed to counter offer',
+      details: 'P0001: not_participant',
+    });
+  });
+
+  it('returns alreadyDone payload for already accepted/declined offers', async () => {
+    createClientMock
+      .mockReturnValueOnce(
+        makeSupabaseMock({
+          rpcData: {
+            ok: true,
+            offerId: 'offer-a',
+            status: 'accepted',
+            orderId: 'order-a',
+            alreadyDone: true,
+          },
+        }),
+      )
+      .mockReturnValueOnce(
+        makeSupabaseMock({
+          rpcData: {
+            ok: true,
+            offerId: 'offer-d',
+            status: 'declined',
+            orderId: null,
+            alreadyDone: true,
+          },
+        }),
+      );
+
+    const { handler: acceptHandler } = await import('../offer-accept');
+    const acceptResponse = await acceptHandler(
+      makeEvent({ path: '/.netlify/functions/offer-accept', body: { offerId: 'offer-a' } }),
+      {} as never,
+    );
+
+    const { handler: declineHandler } = await import('../offer-decline');
+    const declineResponse = await declineHandler(
+      makeEvent({ path: '/.netlify/functions/offer-decline', body: { offerId: 'offer-d' } }),
+      {} as never,
+    );
+
+    expect(acceptResponse?.statusCode).toBe(200);
+    expect(JSON.parse(acceptResponse!.body).alreadyDone).toBe(true);
+    expect(declineResponse?.statusCode).toBe(200);
+    expect(JSON.parse(declineResponse!.body).alreadyDone).toBe(true);
+  });
+
+  it('returns JSON 500 (not 502) for unexpected RPC failures', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: null,
+        rpcError: {
+          code: 'XX000',
+          message: 'unexpected_backend_failure',
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-accept');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-accept', body: { offerId: 'offer-1' } }),
+      {} as never,
+    );
 
     expect(response?.statusCode).toBe(500);
-    expect(JSON.parse(response!.body)).toEqual({ error: 'Database configuration is invalid' });
-    expect(createClientMock).not.toHaveBeenCalled();
-  });
-
-  it('accepts nested RPC payloads and returns success JSON', async () => {
-    createClientMock.mockReturnValue(
-      makeSupabaseMock({
-        rpcResult: { accept_offer: { order_id: 'order-123', already_done: false } },
-      }),
-    );
-
-    const { handler } = await import('../offer-accept');
-    const response = await handler(makeEvent({ offerId: 'offer-1' }), {} as never);
-
-    expect(response?.statusCode).toBe(200);
-    expect(JSON.parse(response!.body)).toEqual({ orderId: 'order-123', alreadyDone: false });
-  });
-
-  it('keeps post-accept notification failures non-fatal', async () => {
-    createClientMock.mockReturnValue(
-      makeSupabaseMock({
-        rpcResult: { order_id: 'order-456', already_done: false },
-        productLookupThrows: true,
-      }),
-    );
-
-    const { handler } = await import('../offer-accept');
-    const response = await handler(makeEvent({ offerId: 'offer-1' }), {} as never);
-
-    expect(response?.statusCode).toBe(200);
-    expect(JSON.parse(response!.body)).toEqual({ orderId: 'order-456', alreadyDone: false });
+    expect(JSON.parse(response!.body)).toEqual({
+      error: 'Failed to accept offer',
+      details: 'XX000: unexpected_backend_failure',
+    });
   });
 });
