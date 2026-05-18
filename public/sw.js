@@ -11,7 +11,7 @@
 //
 // Bump CACHE_NAME when deploying a breaking change to force cache eviction.
 
-const CACHE_NAME = 'loadify-v1';
+const CACHE_NAME = 'loadify-v2';
 
 // ── Install: activate immediately without waiting for existing clients ────────
 self.addEventListener('install', () => {
@@ -56,6 +56,13 @@ function isCacheFirst(url) {
   return false;
 }
 
+function offlineResponse() {
+  return new Response('', {
+    status: 503,
+    statusText: 'Service Unavailable',
+  });
+}
+
 // ── Fetch: route requests through the appropriate strategy ────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -77,17 +84,19 @@ self.addEventListener('fetch', (event) => {
   if (isCacheFirst(url)) {
     // ── Cache-first ───────────────────────────────────────────────────────────
     event.respondWith(
-      caches.open(CACHE_NAME).then((cache) =>
-        cache.match(request).then((cached) => {
-          if (cached) return cached;
-          return fetch(request)
-            .then((response) => {
-              if (response.ok) cache.put(request, response.clone());
-              return response;
-            })
-            .catch(() => new Response('', { status: 504, statusText: 'Gateway Timeout' }));
-        }),
-      ),
+      caches.open(CACHE_NAME)
+        .then((cache) =>
+          cache.match(request).then((cached) => {
+            if (cached) return cached;
+            return fetch(request)
+              .then((response) => {
+                if (response.ok) cache.put(request, response.clone());
+                return response;
+              })
+              .catch(() => new Response('', { status: 504, statusText: 'Gateway Timeout' }));
+          }),
+        )
+        .catch(() => offlineResponse()),
     );
     return;
   }
@@ -102,6 +111,8 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(request)),
+      .catch(() =>
+        caches.match(request).then((cached) => cached ?? offlineResponse()),
+      ),
   );
 });

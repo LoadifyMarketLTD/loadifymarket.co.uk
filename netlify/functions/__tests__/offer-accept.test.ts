@@ -284,4 +284,108 @@ describe('offer action handlers', () => {
       details: 'XX000: unexpected_backend_failure',
     });
   });
+
+  it('accepts legacy migration-590 payload shape', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: {
+          order_id: 'order-legacy-1',
+          already_done: false,
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-accept');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-accept', body: { offerId: 'offer-legacy-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(200);
+    expect(JSON.parse(response!.body)).toEqual({
+      ok: true,
+      offerId: 'offer-legacy-1',
+      status: 'accepted',
+      orderId: 'order-legacy-1',
+      alreadyDone: false,
+    });
+  });
+
+  it('maps offer_not_pending to 409 conflict', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: null,
+        rpcError: {
+          code: 'P0001',
+          message: 'offer_not_pending: countered',
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-accept');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-accept', body: { offerId: 'offer-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(409);
+    expect(JSON.parse(response!.body)).toEqual({
+      error: 'Failed to accept offer',
+      details: 'P0001: offer_not_pending: countered',
+    });
+  });
+
+  it('decline accepts legacy snake_case payload shape', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: {
+          already_done: false,
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-decline');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-decline', body: { offerId: 'offer-decline-legacy-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(200);
+    expect(JSON.parse(response!.body)).toEqual({
+      ok: true,
+      offerId: 'offer-decline-legacy-1',
+      status: 'declined',
+      orderId: null,
+      alreadyDone: false,
+    });
+  });
+
+  it('counter accepts legacy snake_case payload shape', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: {
+          offer_id: 'offer-counter-legacy-1',
+          already_done: true,
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-counter');
+    const response = await handler(
+      makeEvent({
+        path: '/.netlify/functions/offer-counter',
+        body: { offerId: 'offer-original-legacy-1', amountPence: 3250 },
+      }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(200);
+    expect(JSON.parse(response!.body)).toEqual({
+      ok: true,
+      offerId: 'offer-counter-legacy-1',
+      status: 'pending',
+      orderId: null,
+      alreadyDone: true,
+    });
+  });
 });

@@ -54,25 +54,50 @@ function normalizeRpcResult(value: unknown): OfferActionRpcResult | null {
   }
 
   const candidate = value as Record<string, unknown>;
-  if (candidate.ok !== true) return null;
-  if (typeof candidate.offerId !== 'string') return null;
-  if (typeof candidate.status !== 'string') return null;
-  if (candidate.orderId !== null && typeof candidate.orderId !== 'string') return null;
-  if (typeof candidate.alreadyDone !== 'boolean') return null;
+  if (
+    candidate.ok === true
+    && typeof candidate.offerId === 'string'
+    && typeof candidate.status === 'string'
+    && (candidate.orderId === null || typeof candidate.orderId === 'string')
+    && typeof candidate.alreadyDone === 'boolean'
+  ) {
+    return {
+      ok: true,
+      offerId: candidate.offerId,
+      status: candidate.status,
+      orderId: candidate.orderId,
+      alreadyDone: candidate.alreadyDone,
+    };
+  }
 
-  return {
-    ok: true,
-    offerId: candidate.offerId,
-    status: candidate.status,
-    orderId: candidate.orderId,
-    alreadyDone: candidate.alreadyDone,
-  };
+  if (
+    typeof candidate.offer_id === 'string'
+    && typeof candidate.already_done === 'boolean'
+    && (candidate.order_id === null || candidate.order_id === undefined || typeof candidate.order_id === 'string')
+  ) {
+    return {
+      ok: true,
+      offerId: candidate.offer_id,
+      status: typeof candidate.status === 'string' ? candidate.status : 'pending',
+      orderId: candidate.order_id === undefined ? null : candidate.order_id,
+      alreadyDone: candidate.already_done,
+    };
+  }
+
+  return null;
 }
 
 function mapRpcErrorStatus(message: string): number {
   if (message.includes('offer_not_found') || message.includes('listing_not_found') || message.includes('conversation_not_found')) return 404;
   if (message.includes('not_authorized') || message.includes('not_participant')) return 403;
-  if (message.includes('offer_not_actionable') || message.includes('listing_not_available') || message.includes('offer_expired') || message.includes('invalid_amount') || message.includes('amount_too_large')) return 409;
+  if (
+    message.includes('offer_not_actionable')
+    || message.includes('offer_not_pending')
+    || message.includes('listing_not_available')
+    || message.includes('offer_expired')
+    || message.includes('invalid_amount')
+    || message.includes('amount_too_large')
+  ) return 409;
   return 500;
 }
 

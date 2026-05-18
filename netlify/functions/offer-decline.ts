@@ -47,31 +47,48 @@ function getServerConfig():
   return { supabaseUrl, serviceRoleKey };
 }
 
-function normalizeRpcResult(value: unknown): OfferActionRpcResult | null {
+function normalizeRpcResult(value: unknown, fallbackOfferId: string): OfferActionRpcResult | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
   }
 
   const candidate = value as Record<string, unknown>;
-  if (candidate.ok !== true) return null;
-  if (typeof candidate.offerId !== 'string') return null;
-  if (typeof candidate.status !== 'string') return null;
-  if (candidate.orderId !== null && typeof candidate.orderId !== 'string') return null;
-  if (typeof candidate.alreadyDone !== 'boolean') return null;
+  if (
+    candidate.ok === true
+    && typeof candidate.offerId === 'string'
+    && typeof candidate.status === 'string'
+    && (candidate.orderId === null || typeof candidate.orderId === 'string')
+    && typeof candidate.alreadyDone === 'boolean'
+  ) {
+    return {
+      ok: true,
+      offerId: candidate.offerId,
+      status: candidate.status,
+      orderId: candidate.orderId,
+      alreadyDone: candidate.alreadyDone,
+    };
+  }
 
-  return {
-    ok: true,
-    offerId: candidate.offerId,
-    status: candidate.status,
-    orderId: candidate.orderId,
-    alreadyDone: candidate.alreadyDone,
-  };
+  if (
+    typeof candidate.already_done === 'boolean'
+    && (candidate.order_id === null || candidate.order_id === undefined || typeof candidate.order_id === 'string')
+  ) {
+    return {
+      ok: true,
+      offerId: typeof candidate.offer_id === 'string' ? candidate.offer_id : fallbackOfferId,
+      status: typeof candidate.status === 'string' ? candidate.status : 'declined',
+      orderId: candidate.order_id === undefined ? null : candidate.order_id,
+      alreadyDone: candidate.already_done,
+    };
+  }
+
+  return null;
 }
 
 function mapRpcErrorStatus(message: string): number {
   if (message.includes('offer_not_found') || message.includes('conversation_not_found')) return 404;
   if (message.includes('not_authorized') || message.includes('not_participant')) return 403;
-  if (message.includes('offer_not_actionable') || message.includes('offer_expired')) return 409;
+  if (message.includes('offer_not_actionable') || message.includes('offer_not_pending') || message.includes('offer_expired')) return 409;
   return 500;
 }
 
@@ -139,7 +156,7 @@ export const handler: Handler = async (event) => {
       });
     }
 
-    const normalized = normalizeRpcResult(rpcData);
+    const normalized = normalizeRpcResult(rpcData, offerId);
     if (!normalized) {
       console.error('offer-decline invalid RPC payload:', rpcData);
       return jsonResponse(500, {
