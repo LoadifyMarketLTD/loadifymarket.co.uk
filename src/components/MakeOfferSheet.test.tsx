@@ -120,6 +120,38 @@ describe("MakeOfferSheet", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
+  it("shows a conflict-specific toast when the API returns 409", async () => {
+    mockAuthorizedFetch.mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: async () => ({ error: "There is already a pending offer in this conversation." }),
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <MakeOfferSheet
+        open
+        onOpenChange={vi.fn()}
+        conversationId="conversation-1"
+        receiverId="seller-1"
+      />,
+    );
+
+    await user.type(screen.getByPlaceholderText("0.00"), "10");
+    await user.click(screen.getByRole("button", { name: "Send Offer" }));
+
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith({
+        title: "Offer already pending",
+        description: "There is already a pending offer in this conversation.",
+        variant: "destructive",
+      });
+    });
+
+    expect(screen.getByRole("button", { name: "Send Offer" })).toBeEnabled();
+  });
+
   it("blocks repeated clicks while the offer request is in flight", async () => {
     mockAuthorizedFetch.mockImplementation(() => new Promise(() => undefined));
 

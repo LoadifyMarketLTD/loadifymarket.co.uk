@@ -113,7 +113,14 @@ export default function MakeOfferSheet({
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Request failed" })) as { error?: string };
-        throw new Error(err.error ?? `HTTP ${res.status}`);
+        const description = err.error ?? `HTTP ${res.status}`;
+        resetSubmitState();
+        toast({
+          title: res.status === 409 ? "Offer already pending" : "Failed to send offer",
+          description,
+          variant: "destructive",
+        });
+        return;
       }
 
       setSubmitState("success");
