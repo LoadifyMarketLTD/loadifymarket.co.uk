@@ -86,4 +86,212 @@ describe('checkout-from-offer handler', () => {
     expect(res.statusCode).toBe(500);
     expect(JSON.parse(res.body as string).error).toContain('supabase auth outage');
   });
+
+  it('falls back to the request origin when app URL env vars are invalid', async () => {
+    process.env.URL = 'not-a-valid-url';
+    process.env.VITE_APP_URL = 'still-bad';
+
+    const stripeCreate = vi.fn().mockResolvedValue({ id: 'cs_test_123', url: 'https://checkout.stripe.test/session' });
+    vi.doMock('stripe', () => ({
+      default: vi.fn().mockImplementation(function () {
+        return {
+        checkout: {
+          sessions: {
+            create: stripeCreate,
+            expire: vi.fn().mockResolvedValue({}),
+          },
+        },
+      };
+      }),
+    }));
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'buyer-1' } },
+            error: null,
+          }),
+        },
+        rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+        from: vi.fn((table: string) => {
+          if (table === 'platform_settings') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            };
+          }
+          if (table === 'orders') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'order-1',
+                  buyerId: 'buyer-1',
+                  sellerId: 'seller-1',
+                  productId: 'product-1',
+                  total: 12.34,
+                  status: 'awaiting_payment',
+                  offerId: 'offer-1',
+                },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'products') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'product-1',
+                  title: 'Offer listing',
+                  sellerId: 'seller-1',
+                  listingContext: 'goods',
+                },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'seller_profiles') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  stripeAccountId: 'acct_123',
+                  stripeConnectStatus: 'active',
+                  sellerStatus: 'active',
+                },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'payment_sessions') {
+            return {
+              insert: vi.fn().mockResolvedValue({ error: null }),
+            };
+          }
+          throw new Error(`Unexpected table ${table}`);
+        }),
+      })),
+    }));
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false, attempts: 1 }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
+
+    const { handler } = await import('../checkout-from-offer');
+    const res = await handler(
+      makeEvent({ orderId: 'order-1' }, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(stripeCreate).toHaveBeenCalledWith(expect.objectContaining({
+      success_url: 'http://localhost/order-success?orderId=order-1&session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: 'http://localhost/inbox',
+    }));
+  });
+
+  it('returns 409 when the order total cannot produce a valid Stripe amount', async () => {
+    vi.doMock('stripe', () => ({
+      default: vi.fn().mockImplementation(function () {
+        return {
+        checkout: {
+          sessions: {
+            create: vi.fn(),
+            expire: vi.fn().mockResolvedValue({}),
+          },
+        },
+      };
+      }),
+    }));
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'buyer-1' } },
+            error: null,
+          }),
+        },
+        rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+        from: vi.fn((table: string) => {
+          if (table === 'platform_settings') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            };
+          }
+          if (table === 'orders') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'order-1',
+                  buyerId: 'buyer-1',
+                  sellerId: 'seller-1',
+                  productId: 'product-1',
+                  total: Number.NaN,
+                  status: 'awaiting_payment',
+                  offerId: 'offer-1',
+                },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'products') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'product-1',
+                  title: 'Offer listing',
+                  sellerId: 'seller-1',
+                  listingContext: 'goods',
+                },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'seller_profiles') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  stripeAccountId: 'acct_123',
+                  stripeConnectStatus: 'active',
+                  sellerStatus: 'active',
+                },
+                error: null,
+              }),
+            };
+          }
+          throw new Error(`Unexpected table ${table}`);
+        }),
+      })),
+    }));
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false, attempts: 1 }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
+
+    const { handler } = await import('../checkout-from-offer');
+    const res = await handler(
+      makeEvent({ orderId: 'order-1' }, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(409);
+    expect(JSON.parse(res.body as string).error).toMatch(/order total is invalid/i);
+  });
 });
