@@ -12,7 +12,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { MessageSquare, User, Search, SquarePen } from "lucide-react";
+import { Archive, MessageSquare, User, Search, SquarePen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
@@ -92,6 +92,7 @@ export default function MobileInboxPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [archivingConversationId, setArchivingConversationId] = useState<string | null>(null);
   // Retry counter and one-shot post-hydration re-fetch gate
   const hydrationRetryRef = useRef(0);
   const postHydrationRefetchFired = useRef(false);
@@ -316,6 +317,24 @@ export default function MobileInboxPage() {
 
   const inboxUnread = conversations.filter((c) => !c.isArchived && c.unreadCount > 0).length;
 
+  const archiveConversation = async (conversationId: string) => {
+    if (!user?.id) return;
+    setArchivingConversationId(conversationId);
+    try {
+      const { error } = await supabase
+        .from("conversations")
+        .update({ isArchived: true })
+        .eq("id", conversationId)
+        .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`);
+      if (error) throw error;
+      setConversations((prev) => prev.filter((conversation) => conversation.id !== conversationId));
+    } catch {
+      toast({ title: "Failed to archive conversation", variant: "destructive" });
+    } finally {
+      setArchivingConversationId((prev) => (prev === conversationId ? null : prev));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -468,107 +487,120 @@ export default function MobileInboxPage() {
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {filtered.map((conv) => (
               <li key={conv.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                <button
-                  onClick={() => navigate(`/inbox/${conv.id}`)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "14px 16px",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
-                  className="active:bg-white/5 transition-colors"
-                >
-                  {/* Avatar with online indicator */}
-                  <div style={{ position: "relative", flexShrink: 0 }}>
-                    <div
-                      className="bg-white/[0.08] flex items-center justify-center"
-                      style={{
-                        width: "48px",
-                        height: "48px",
-                        borderRadius: "50%",
-                        border: "1px solid rgba(255,255,255,0.10)",
-                      }}
-                    >
-                      <User className="text-foreground/60" style={{ width: "22px", height: "22px" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", paddingRight: "10px" }}>
+                  <button
+                    onClick={() => navigate(`/inbox/${conv.id}`)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "14px 16px",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                    className="active:bg-white/5 transition-colors"
+                  >
+                    {/* Avatar with online indicator */}
+                    <div style={{ position: "relative", flexShrink: 0 }}>
+                      <div
+                        className="bg-white/[0.08] flex items-center justify-center"
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          borderRadius: "50%",
+                          border: "1px solid rgba(255,255,255,0.10)",
+                        }}
+                      >
+                        <User className="text-foreground/60" style={{ width: "22px", height: "22px" }} />
+                      </div>
+                      {conv.unreadCount > 0 && (
+                        <span
+                          aria-hidden="true"
+                          className="bg-success border-background"
+                          style={{
+                            position: "absolute",
+                            bottom: "1px",
+                            right: "1px",
+                            width: "11px",
+                            height: "11px",
+                            borderRadius: "50%",
+                            borderWidth: "2px",
+                            borderStyle: "solid",
+                          }}
+                        />
+                      )}
                     </div>
+
+                    {/* Content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "2px" }}>
+                        <span
+                          className={`text-sm overflow-hidden text-ellipsis whitespace-nowrap ${conv.unreadCount > 0 ? 'font-bold text-foreground' : 'font-semibold text-foreground/80'}`}
+                        >
+                          {participantName(conv.other)}
+                        </span>
+                        <span className="text-[11px] text-foreground/65 shrink-0">
+                          {formatDate(conv.lastMessageAt)}
+                        </span>
+                      </div>
+                      {conv.lastMessagePreview && (
+                        <p
+                          className={`text-xs overflow-hidden text-ellipsis whitespace-nowrap ${conv.unreadCount > 0 ? 'text-foreground/80' : 'text-foreground/60'}`}
+                        >
+                          {previewText(conv.lastMessagePreview)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Unread badge */}
                     {conv.unreadCount > 0 && (
                       <span
-                        aria-hidden="true"
-                        className="bg-success border-background"
+                        className="bg-primary text-surface text-[11px] font-extrabold flex items-center justify-center shrink-0"
                         style={{
-                          position: "absolute",
-                          bottom: "1px",
-                          right: "1px",
-                          width: "11px",
-                          height: "11px",
-                          borderRadius: "50%",
-                          borderWidth: "2px",
-                          borderStyle: "solid",
+                          minWidth: "22px",
+                          height: "22px",
+                          borderRadius: "11px",
+                          padding: "0 5px",
                         }}
-                      />
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "2px" }}>
-                      <span
-                        className={`text-sm overflow-hidden text-ellipsis whitespace-nowrap ${conv.unreadCount > 0 ? 'font-bold text-foreground' : 'font-semibold text-foreground/80'}`}
                       >
-                        {participantName(conv.other)}
+                        {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                       </span>
-                      <span className="text-[11px] text-foreground/65 shrink-0">
-                        {formatDate(conv.lastMessageAt)}
-                      </span>
-                    </div>
-                    {conv.lastMessagePreview && (
-                      <p
-                        className={`text-xs overflow-hidden text-ellipsis whitespace-nowrap ${conv.unreadCount > 0 ? 'text-foreground/80' : 'text-foreground/60'}`}
-                      >
-                        {previewText(conv.lastMessagePreview)}
-                      </p>
                     )}
-                  </div>
 
-                  {/* Unread badge */}
-                  {conv.unreadCount > 0 && (
-                    <span
-                      className="bg-primary text-surface text-[11px] font-extrabold flex items-center justify-center shrink-0"
-                      style={{
-                        minWidth: "22px",
-                        height: "22px",
-                        borderRadius: "11px",
-                        padding: "0 5px",
-                      }}
-                    >
-                      {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
-                    </span>
-                  )}
-
-                  {/* Product thumbnail */}
-                  {conv.productImage && (
-                    <div
-                      className="bg-white/[0.06] shrink-0 overflow-hidden"
-                      style={{
-                        width: "48px",
-                        height: "48px",
-                        borderRadius: "10px",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      <img
-                        src={conv.productImage}
-                        alt={conv.productTitle ?? "Product"}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    </div>
-                  )}
-                </button>
+                    {/* Product thumbnail */}
+                    {conv.productImage && (
+                      <div
+                        className="bg-white/[0.06] shrink-0 overflow-hidden"
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          borderRadius: "10px",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                        }}
+                      >
+                        <img
+                          src={conv.productImage}
+                          alt={conv.productTitle ?? "Product"}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      </div>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Archive conversation"
+                    disabled={archivingConversationId === conv.id}
+                    onClick={() => {
+                      void archiveConversation(conv.id);
+                    }}
+                    className="rounded-md border border-white/10 bg-white/[0.04] text-foreground/75 hover:text-foreground h-8 w-8 inline-flex items-center justify-center shrink-0"
+                  >
+                    <Archive className="h-4 w-4" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

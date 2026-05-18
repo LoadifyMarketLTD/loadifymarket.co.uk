@@ -18,7 +18,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
-  MessageSquare, Send, User, Tag,
+  Archive, MessageSquare, Send, User, Tag,
   CheckCircle, XCircle, CreditCard,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
@@ -414,6 +414,7 @@ export default function DesktopConversationView() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [archivingConversationId, setArchivingConversationId] = useState<string | null>(null);
 
   // ── Thread state ─────────────────────────────────────────────────────────────
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1184,6 +1185,30 @@ export default function DesktopConversationView() {
 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
+  const archiveConversation = async (conversationId: string) => {
+    if (!user?.id) return;
+    setArchivingConversationId(conversationId);
+    try {
+      const { error } = await supabase
+        .from("conversations")
+        .update({ isArchived: true })
+        .eq("id", conversationId)
+        .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`);
+      if (error) throw error;
+      setConversations((prev) => {
+        const remaining = prev.filter((conversation) => conversation.id !== conversationId);
+        if (selectedId === conversationId) {
+          setSelectedId(remaining[0]?.id ?? null);
+        }
+        return remaining;
+      });
+    } catch {
+      toast({ title: "Failed to archive conversation", variant: "destructive" });
+    } finally {
+      setArchivingConversationId((prev) => (prev === conversationId ? null : prev));
+    }
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-full overflow-hidden">
@@ -1232,45 +1257,58 @@ export default function DesktopConversationView() {
           <ul className="flex-1 overflow-y-auto divide-y divide-border">
             {conversations.map((conv) => (
               <li key={conv.id}>
-                <button
-                  onClick={() => setSelectedId(conv.id)}
-                  className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted ${
-                    selectedId === conv.id ? "bg-primary/5" : ""
-                  }`}
-                >
-                  {/* Thumbnail or avatar placeholder */}
-                  <div className="w-9 h-9 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 mt-0.5 overflow-hidden">
-                    {conv.productImage ? (
-                      <img
-                        src={conv.productImage}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-sm font-medium text-foreground truncate">
-                        {participantName(conv.other)}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground shrink-0">
-                        {formatDate(conv.lastMessageAt)}
-                      </span>
+                <div className="w-full flex items-center gap-1 pr-2">
+                  <button
+                    onClick={() => setSelectedId(conv.id)}
+                    className={`flex-1 w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted ${
+                      selectedId === conv.id ? "bg-primary/5" : ""
+                    }`}
+                  >
+                    {/* Thumbnail or avatar placeholder */}
+                    <div className="w-9 h-9 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 mt-0.5 overflow-hidden">
+                      {conv.productImage ? (
+                        <img
+                          src={conv.productImage}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="h-4 w-4 text-muted-foreground" />
+                      )}
                     </div>
-                    {(conv.subject ?? conv.lastMessagePreview) && (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {conv.lastMessagePreview || conv.subject}
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-sm font-medium text-foreground truncate">
+                          {participantName(conv.other)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {formatDate(conv.lastMessageAt)}
+                        </span>
+                      </div>
+                      {(conv.subject ?? conv.lastMessagePreview) && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {conv.lastMessagePreview || conv.subject}
+                        </p>
+                      )}
+                    </div>
+                    {conv.unreadCount > 0 && (
+                      <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-black text-[10px] font-medium flex items-center justify-center">
+                        {conv.unreadCount}
+                      </span>
                     )}
-                  </div>
-                  {conv.unreadCount > 0 && (
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-black text-[10px] font-medium flex items-center justify-center">
-                      {conv.unreadCount}
-                    </span>
-                  )}
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    className="h-8 w-8 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted inline-flex items-center justify-center shrink-0"
+                    aria-label="Archive conversation"
+                    disabled={archivingConversationId === conv.id}
+                    onClick={() => {
+                      void archiveConversation(conv.id);
+                    }}
+                  >
+                    <Archive className="h-4 w-4" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, CheckCheck, Inbox } from "lucide-react";
+import { Archive, Bell, CheckCheck, Inbox, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +73,8 @@ const SellerNotifications = () => {
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
   const [openingGroupKey, setOpeningGroupKey] = useState<string | null>(null);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchNotifications = async () => {
     if (!user?.id) return;
@@ -80,8 +82,9 @@ const SellerNotifications = () => {
     try {
       const { data } = await supabase
         .from("notifications")
-        .select("id, type, title, message, link, isRead, createdAt")
+        .select("id, type, title, message, link, isRead, isArchived, createdAt")
         .eq("userId", user.id)
+        .not("isArchived", "is", true)
         .order("createdAt", { ascending: false })
         .limit(50);
       setNotifications(((data as AppNotification[]) ?? []).map(normalizeNotification));
@@ -203,6 +206,42 @@ const SellerNotifications = () => {
     }
   };
 
+  const archiveNotification = async (id: string) => {
+    if (!user?.id) return;
+    setArchivingId(id);
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ isArchived: true, archivedAt: new Date().toISOString() })
+        .eq("id", id)
+        .eq("userId", user.id);
+      if (error) throw error;
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      toast({ title: "Failed to archive notification", variant: "destructive" });
+    } finally {
+      setArchivingId((prev) => (prev === id ? null : prev));
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    if (!user?.id) return;
+    setDeletingId(id);
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("id", id)
+        .eq("userId", user.id);
+      if (error) throw error;
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch {
+      toast({ title: "Failed to delete notification", variant: "destructive" });
+    } finally {
+      setDeletingId((prev) => (prev === id ? null : prev));
+    }
+  };
+
   return (
     <div className="p-6 max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
@@ -302,19 +341,47 @@ const SellerNotifications = () => {
                     {formatRelativeTime(n.createdAt)}
                   </p>
                 </div>
-                {!isRead && (
+                <div className="flex items-center gap-1 shrink-0">
+                  {!isRead && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void markAsRead(group.items.map((item) => item.id));
+                      }}
+                    >
+                      Mark read
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="text-xs shrink-0"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={archivingId === n.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      void markAsRead(group.items.map((item) => item.id));
+                      void archiveNotification(n.id);
                     }}
+                    aria-label="Archive notification"
                   >
-                    Mark read
+                    <Archive className="h-4 w-4" />
                   </Button>
-                )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    disabled={deletingId === n.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void deleteNotification(n.id);
+                    }}
+                    aria-label="Delete notification"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           );

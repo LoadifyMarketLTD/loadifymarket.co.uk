@@ -14,7 +14,8 @@ export function useUnreadNotificationsCount(userId?: string): number {
         .from('notifications')
         .select('id', { count: 'exact', head: true })
         .eq('userId', userId)
-        .eq('isRead', false);
+        .eq('isRead', false)
+        .not('isArchived', 'is', true);
 
       if (!cancelled) {
         setCount(unreadCount ?? 0);
