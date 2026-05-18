@@ -150,22 +150,28 @@ export const handler: Handler = async (event) => {
     .eq('orderId', orderId);
 
   // ── Fetch buyer name & B2B profile ────────────────────────────────────────
-  const { data: buyerRow } = await supabase
-    .from('users')
-    .select('firstName, lastName, email')
-    .eq('id', order.buyerId ?? '')
-    .single<{ firstName?: string; lastName?: string; email?: string }>();
+  const buyerRow = order.buyerId
+    ? (await supabase
+        .from('users')
+        .select('firstName, lastName, email')
+        .eq('id', order.buyerId)
+        .single<{ firstName?: string; lastName?: string; email?: string }>()
+      ).data
+    : null;
 
-  const { data: buyerProfileRow } = await supabase
-    .from('buyer_profiles')
-    .select('accountType, companyName, vatNumber, isVatVerified')
-    .eq('userId', order.buyerId ?? '')
-    .maybeSingle<{
-      accountType?: string | null;
-      companyName?: string | null;
-      vatNumber?: string | null;
-      isVatVerified?: boolean | null;
-    }>();
+  const buyerProfileRow = order.buyerId
+    ? (await supabase
+        .from('buyer_profiles')
+        .select('accountType, companyName, vatNumber, isVatVerified')
+        .eq('userId', order.buyerId)
+        .maybeSingle<{
+          accountType?: string | null;
+          companyName?: string | null;
+          vatNumber?: string | null;
+          isVatVerified?: boolean | null;
+        }>()
+      ).data
+    : null;
 
   const isB2B =
     Boolean(buyerProfileRow?.accountType) &&
