@@ -73,7 +73,7 @@ function formatTime(iso: string) {
 }
 
 /** Parse a message string that may be JSON-encoded offer / system event */
-function parseMessage(raw: string): {
+function parseMessage(raw: unknown): {
   type: "text" | "offer" | "system";
   text?: string;
   // offer fields
@@ -85,13 +85,17 @@ function parseMessage(raw: string): {
   event?: string;
   orderId?: string;
 } {
-  if (raw.startsWith("{")) {
+  const rawText = typeof raw === "string" ? raw : "";
+  if (rawText.trim().startsWith("{")) {
     try {
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
-      if (parsed._t === "offer" && typeof parsed.amount_pence === "number") {
+      const parsed = JSON.parse(rawText) as Record<string, unknown>;
+      if (
+        parsed._t === "offer" &&
+        (typeof parsed.amount_pence === "number" || typeof parsed.offerId === "string")
+      ) {
         return {
           type:         "offer",
-          amount_pence: parsed.amount_pence as number,
+          amount_pence: typeof parsed.amount_pence === "number" ? parsed.amount_pence : undefined,
           offerId:      typeof parsed.offerId === "string" ? parsed.offerId : undefined,
           productTitle: typeof parsed.productTitle === "string" ? parsed.productTitle : undefined,
           note:         typeof parsed.note === "string" ? parsed.note : undefined,
@@ -109,7 +113,7 @@ function parseMessage(raw: string): {
       // ignore invalid JSON; treat as plain text
     }
   }
-  return { type: "text", text: raw };
+  return { type: "text", text: rawText };
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -1037,6 +1041,30 @@ export default function MobileChatPage() {
           messages.map((msg) => {
             const isMine = msg.senderId === user?.id;
             const parsed = parseMessage(msg.message);
+            const offerRecord = parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null;
+
+            if (import.meta.env.DEV) {
+              console.log("RAW MESSAGE:", msg.message);
+              let parsedDebug: unknown = null;
+              if (typeof msg.message === "string") {
+                try {
+                  parsedDebug = JSON.parse(msg.message);
+                } catch {
+                  parsedDebug = null;
+                }
+              }
+              const parsedRecord =
+                parsedDebug && typeof parsedDebug === "object"
+                  ? (parsedDebug as Record<string, unknown>)
+                  : null;
+              const parsedOfferId =
+                typeof parsedRecord?.offerId === "string" ? parsedRecord.offerId : undefined;
+              console.log("PARSED:", parsedDebug);
+              console.log("TYPE:", parsedRecord?._t);
+              console.log("OFFER ID:", parsedOfferId);
+              console.log("offerMap:", Object.fromEntries(offerMap.entries()));
+              console.log("MATCHED OFFER:", parsedOfferId ? offerMap.get(parsedOfferId) : undefined);
+            }
 
             if (parsed.type === "system") {
               return (
@@ -1052,34 +1080,33 @@ export default function MobileChatPage() {
               <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 {parsed.type === "offer" ? (
                   <OfferBubble
-                    amount_pence={parsed.amount_pence ?? 0}
+                    amount_pence={parsed.amount_pence ?? offerRecord?.amountPence ?? 0}
                     offerId={parsed.offerId}
                     isMine={isMine}
                     isSeller={isSeller}
                     currentUserId={user?.id}
                     productTitle={parsed.productTitle}
-                     note={parsed.note}
-                     offerRecord={parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null}
-                     actingOnOffer={actingOnOffer}
-                     onAccept={parsed.offerId && actingOnOffer !== parsed.offerId
-                       ? () => void handleAcceptOffer(parsed.offerId!)
-                       : undefined}
+                    note={parsed.note}
+                    offerRecord={offerRecord}
+                    actingOnOffer={actingOnOffer}
+                    onAccept={parsed.offerId && actingOnOffer !== parsed.offerId
+                      ? () => void handleAcceptOffer(parsed.offerId!)
+                      : undefined}
                     onDecline={parsed.offerId && actingOnOffer !== parsed.offerId
                       ? () => void handleDeclineOffer(parsed.offerId!)
                       : undefined}
-                     onCounter={parsed.offerId && actingOnOffer !== parsed.offerId
-                       ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message)
-                       : undefined}
-                     onCancel={parsed.offerId && actingOnOffer !== parsed.offerId
-                       ? () => void handleCancelOffer(parsed.offerId!)
-                       : undefined}
-                     highlightedOfferId={routeOfferId}
+                    onCounter={parsed.offerId && actingOnOffer !== parsed.offerId
+                      ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message)
+                      : undefined}
+                    onCancel={parsed.offerId && actingOnOffer !== parsed.offerId
+                      ? () => void handleCancelOffer(parsed.offerId!)
+                      : undefined}
+                    highlightedOfferId={routeOfferId}
                     onPayNow={(() => {
                       // Source of truth for orderId is the offers table (via
                       // offerRecord.orderId from the orders FK join), not the
                       // message JSON which never contains orderId.
-                      const rec = parsed.offerId ? offerMap.get(parsed.offerId) : undefined;
-                      const oid = rec?.orderId;
+                      const oid = offerRecord?.orderId;
                       return oid ? () => void handlePayNow(oid) : undefined;
                     })()}
                   />
