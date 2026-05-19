@@ -74,13 +74,18 @@ export default function ProhibitedItemsPolicyPage() {
               </li>
             </ul>
 
-            <h2 className="text-2xl font-semibold mt-6 mb-3">6. Planned Additional Compliance Pages</h2>
-            <p>
-              To support future international scaling, Loadify Market plans to maintain dedicated pages for:
-            </p>
+            <h2 className="text-2xl font-semibold mt-6 mb-3">6. Related Compliance Pages</h2>
             <ul className="list-disc pl-6 my-4">
-              <li>Seller Verification Policy</li>
-              <li>Intellectual Property / Trademark Complaints</li>
+              <li>
+                <Link to="/seller-verification-policy" className="text-secondary hover:underline">
+                  Seller Verification Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/ip-trademark-complaints" className="text-secondary hover:underline">
+                  Intellectual Property / Trademark Complaints
+                </Link>
+              </li>
             </ul>
 
             <h2 className="text-2xl font-semibold mt-6 mb-3">7. Contact</h2>

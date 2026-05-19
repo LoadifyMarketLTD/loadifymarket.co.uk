@@ -247,6 +247,22 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
         ),
       },
       {
+        question: "Where can I find your Seller Verification Policy?",
+        answer: (
+          <Link to="/seller-verification-policy" className="text-primary underline">
+            Seller Verification Policy
+          </Link>
+        ),
+      },
+      {
+        question: "How do I report trademark or IP infringement?",
+        answer: (
+          <Link to="/ip-trademark-complaints" className="text-primary underline">
+            Intellectual Property / Trademark Complaints
+          </Link>
+        ),
+      },
+      {
         question: "Where can I find your Privacy Policy?",
         answer: (
           <Link to="/privacy" className="text-primary underline">

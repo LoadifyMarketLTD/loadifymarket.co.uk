@@ -87,6 +87,8 @@ const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 // Legal pages without pixel-perfect equivalents
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
 const ProhibitedItemsPolicyPage = lazy(() => import('./pages/legal/ProhibitedItemsPolicyPage'));
+const SellerVerificationPolicyPage = lazy(() => import('./pages/legal/SellerVerificationPolicyPage'));
+const IntellectualPropertyComplaintsPage = lazy(() => import('./pages/legal/IntellectualPropertyComplaintsPage'));
 const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
 // Onboarding pages
 const RoleSelection     = lazy(() => import('./pages/onboarding/RoleSelection'));
@@ -666,6 +668,8 @@ function App() {
         {/* Legal pages without pixel-perfect equivalents */}
         <Route path="acceptable-use-policy" element={<Suspense fallback={<PageLoader />}><AcceptableUsePolicyPage /></Suspense>} />
         <Route path="prohibited-items-policy" element={<Suspense fallback={<PageLoader />}><ProhibitedItemsPolicyPage /></Suspense>} />
+        <Route path="seller-verification-policy" element={<Suspense fallback={<PageLoader />}><SellerVerificationPolicyPage /></Suspense>} />
+        <Route path="ip-trademark-complaints" element={<Suspense fallback={<PageLoader />}><IntellectualPropertyComplaintsPage /></Suspense>} />
         <Route path="seller-guidelines" element={<Suspense fallback={<PageLoader />}><SellerGuidelinesPage /></Suspense>} />
 
         {/* ── Aliases: /pp/* → clean routes (backward compat for bookmarks / old links) */}

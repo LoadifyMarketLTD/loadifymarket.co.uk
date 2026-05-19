@@ -1,6 +1,7 @@
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import { Link } from "react-router-dom";
 
 const SellerTerms = () => {
   return (
@@ -119,12 +120,12 @@ const SellerTerms = () => {
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>
           </ul>
 
-          <h2>12. Planned Compliance Policy Pages</h2>
-          <p>To strengthen marketplace compliance at scale, Loadify Market intends to maintain dedicated legal guidance pages for:</p>
+          <h2>12. Additional Compliance Policy Pages</h2>
+          <p>To strengthen marketplace compliance at scale, Loadify Market maintains dedicated legal guidance pages for:</p>
           <ul>
-            <li>Prohibited Items Policy</li>
-            <li>Seller Verification Policy</li>
-            <li>Intellectual Property / Trademark Complaints</li>
+            <li><Link to="/prohibited-items-policy">Prohibited Items Policy</Link></li>
+            <li><Link to="/seller-verification-policy">Seller Verification Policy</Link></li>
+            <li><Link to="/ip-trademark-complaints">Intellectual Property / Trademark Complaints</Link></li>
           </ul>
         </div>
       </main>
