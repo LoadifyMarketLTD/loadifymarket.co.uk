@@ -52,6 +52,19 @@ interface SellerProfileRow {
   sellerStatus: string | null;
 }
 
+interface DiagnosticErrorShape {
+  step: string;
+  error: string;
+  details: Record<string, unknown>;
+}
+
+interface SupabaseErrorShape {
+  code: string | null;
+  message: string | null;
+  details: string | null;
+  hint: string | null;
+}
+
 function jsonResponse(statusCode: number, payload: Record<string, unknown>) {
   return {
     statusCode,
@@ -63,6 +76,39 @@ function jsonResponse(statusCode: number, payload: Record<string, unknown>) {
 function isCheckoutFromOfferDebugEnabled(): boolean {
   const raw = (process.env.CHECKOUT_FROM_OFFER_DEBUG ?? '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'yes';
+}
+
+function normalizeSupabaseError(error: unknown): SupabaseErrorShape {
+  if (!error || typeof error !== 'object') {
+    return {
+      code: null,
+      message: error instanceof Error ? error.message : null,
+      details: null,
+      hint: null,
+    };
+  }
+
+  const candidate = error as {
+    code?: unknown;
+    message?: unknown;
+    details?: unknown;
+    hint?: unknown;
+  };
+
+  return {
+    code: typeof candidate.code === 'string' ? candidate.code : null,
+    message: typeof candidate.message === 'string' ? candidate.message : error instanceof Error ? error.message : null,
+    details: typeof candidate.details === 'string' ? candidate.details : null,
+    hint: typeof candidate.hint === 'string' ? candidate.hint : null,
+  };
+}
+
+function diagnosticErrorResponse(statusCode: number, payload: DiagnosticErrorShape) {
+  return jsonResponse(statusCode, payload);
+}
+
+function logStep(step: string, details: Record<string, unknown>) {
+  console.info('checkout-from-offer step', { step, ...details });
 }
 
 function tryGetOrigin(value: string | undefined | null): string | null {
@@ -121,6 +167,9 @@ function getServerConfig():
 }
 
 export const handler: Handler = async (event) => {
+  let currentStep = 'request.start';
+  const debugEnabled = isCheckoutFromOfferDebugEnabled();
+
   try {
     if (event.httpMethod !== 'POST') {
       return jsonResponse(405, { error: 'Method not allowed' });
@@ -146,6 +195,7 @@ export const handler: Handler = async (event) => {
       return jsonResponse(401, { error: 'Authentication required' });
     }
 
+    currentStep = 'auth.get_user';
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authUser) {
       return jsonResponse(401, { error: 'Invalid authentication token' });
@@ -178,6 +228,7 @@ export const handler: Handler = async (event) => {
     }
 
     // ── Maintenance mode ──────────────────────────────────────────────────────
+    currentStep = 'maintenance.check';
     const maintenance = await isMaintenanceMode(supabase);
     if (maintenance) {
       const { data: callerRow } = await supabase
@@ -191,17 +242,40 @@ export const handler: Handler = async (event) => {
       }
     }
 
+    currentStep = 'rpc.release_stale_unpaid_listing_locks.before';
+    logStep(currentStep, { orderId, callerId });
+    currentStep = 'rpc.release_stale_unpaid_listing_locks.call';
     const { data, error } = await supabase.rpc('release_stale_unpaid_listing_locks');
     if (error) {
-      console.error('checkout-from-offer RPC error', error);
-      return jsonResponse(500, {
-        error: 'RPC failed',
-        details: `${error.code ?? 'rpc_error'}: ${error.message ?? 'Unknown RPC error'}`,
+      const rpcError = normalizeSupabaseError(error);
+      console.error('checkout-from-offer RPC error', {
+        step: currentStep,
+        orderId,
+        callerId,
+        rpcName: 'release_stale_unpaid_listing_locks',
+        ...rpcError,
+      });
+      return diagnosticErrorResponse(500, {
+        step: currentStep,
+        error: 'Supabase RPC failed',
+        details: {
+          orderId,
+          callerId,
+          rpcName: 'release_stale_unpaid_listing_locks',
+          ...rpcError,
+        },
       });
     }
-    void data;
+    currentStep = 'rpc.release_stale_unpaid_listing_locks.after';
+    logStep(currentStep, {
+      orderId,
+      callerId,
+      rpcName: 'release_stale_unpaid_listing_locks',
+      result: data ?? null,
+    });
 
     // ── Validate order ────────────────────────────────────────────────────────
+    currentStep = 'orders.lookup';
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('id, buyerId, sellerId, productId, total, status, offerId')
@@ -209,11 +283,19 @@ export const handler: Handler = async (event) => {
       .maybeSingle<OrderRow>();
 
     if (orderError) {
+      const normalizedOrderError = normalizeSupabaseError(orderError);
       console.error('checkout-from-offer: order lookup failed:', {
-        code: orderError.code,
-        message: orderError.message,
-        details: orderError.details,
+        step: currentStep,
         orderId,
+        ...normalizedOrderError,
+      });
+      return diagnosticErrorResponse(500, {
+        step: currentStep,
+        error: 'Order lookup failed',
+        details: {
+          orderId,
+          ...normalizedOrderError,
+        },
       });
     }
     if (!order) {
@@ -229,6 +311,7 @@ export const handler: Handler = async (event) => {
     }
 
     // ── Validate listing ──────────────────────────────────────────────────────
+    currentStep = 'products.lookup';
     const { data: listing, error: listingError } = await supabase
       .from('products')
       .select('id, title, sellerId, listingContext')
@@ -236,12 +319,21 @@ export const handler: Handler = async (event) => {
       .maybeSingle<ProductRow>();
 
     if (listingError) {
+      const normalizedListingError = normalizeSupabaseError(listingError);
       console.error('checkout-from-offer: listing lookup failed:', {
-        code: listingError.code,
-        message: listingError.message,
-        details: listingError.details,
+        step: currentStep,
         orderId,
         productId: order.productId,
+        ...normalizedListingError,
+      });
+      return diagnosticErrorResponse(500, {
+        step: currentStep,
+        error: 'Listing lookup failed',
+        details: {
+          orderId,
+          productId: order.productId,
+          ...normalizedListingError,
+        },
       });
     }
     if (!listing) {
@@ -249,6 +341,7 @@ export const handler: Handler = async (event) => {
     }
 
     // ── Seller Stripe-readiness check ─────────────────────────────────────────
+    currentStep = 'seller_profiles.lookup';
     const { data: sellerProfile, error: sellerProfileError } = await supabase
       .from('seller_profiles')
       .select('stripeAccountId, stripeConnectStatus, sellerStatus')
@@ -256,8 +349,22 @@ export const handler: Handler = async (event) => {
       .maybeSingle<SellerProfileRow>();
 
     if (sellerProfileError) {
-      console.error('checkout-from-offer: seller profile query failed:', sellerProfileError.message);
-      return jsonResponse(500, { error: 'Unable to verify seller status. Please try again.' });
+      const normalizedSellerProfileError = normalizeSupabaseError(sellerProfileError);
+      console.error('checkout-from-offer: seller profile query failed:', {
+        step: currentStep,
+        orderId,
+        sellerId: order.sellerId,
+        ...normalizedSellerProfileError,
+      });
+      return diagnosticErrorResponse(500, {
+        step: currentStep,
+        error: 'Seller profile lookup failed',
+        details: {
+          orderId,
+          sellerId: order.sellerId,
+          ...normalizedSellerProfileError,
+        },
+      });
     }
 
     if (sellerProfile?.sellerStatus === 'suspended') {
@@ -282,6 +389,16 @@ export const handler: Handler = async (event) => {
     }
     const stripe = new Stripe(config.stripeKey, { apiVersion: '2025-08-27.basil' });
 
+    currentStep = 'stripe.checkout_session.before';
+    logStep(currentStep, {
+      orderId,
+      callerId,
+      sellerId: order.sellerId,
+      productId: order.productId,
+      amountPence,
+      transferGroup,
+    });
+    currentStep = 'stripe.checkout_session.create';
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -309,18 +426,44 @@ export const handler: Handler = async (event) => {
         transfer_group: transferGroup,
       },
     });
+    currentStep = 'stripe.checkout_session.after';
+    logStep(currentStep, {
+      orderId,
+      callerId,
+      stripeSessionId: session.id,
+      hasCheckoutUrl: Boolean(session.url),
+      transferGroup,
+    });
     if (!session.url) {
       console.error('checkout-from-offer: Stripe Checkout Session missing URL', {
         orderId,
-        sessionId: session.id,
+        callerId,
+        stripeSessionId: session.id,
       });
       await stripe.checkout.sessions.expire(session.id).catch((e: unknown) =>
         console.error('checkout-from-offer: failed to expire url-less session:', e),
       );
-      return jsonResponse(500, { error: 'Checkout initialisation failed. Please try again.' });
+      return diagnosticErrorResponse(500, {
+        step: currentStep,
+        error: 'Stripe Checkout session missing URL',
+        details: {
+          orderId,
+          callerId,
+          stripeSessionId: session.id,
+          transferGroup,
+        },
+      });
     }
 
     // ── Insert payment_sessions row ───────────────────────────────────────────
+    currentStep = 'payment_sessions.insert.before';
+    logStep(currentStep, {
+      orderId,
+      callerId,
+      stripeSessionId: session.id,
+      transferGroup,
+    });
+    currentStep = 'payment_sessions.insert';
     const { error: sessionInsertError } = await supabase
       .from('payment_sessions')
       .insert({
@@ -344,26 +487,52 @@ export const handler: Handler = async (event) => {
       });
 
     if (sessionInsertError) {
-      console.error('checkout-from-offer: payment_sessions insert failed:', sessionInsertError.message);
+      const normalizedSessionInsertError = normalizeSupabaseError(sessionInsertError);
+      console.error('checkout-from-offer: payment_sessions insert failed:', {
+        step: currentStep,
+        orderId,
+        callerId,
+        stripeSessionId: session.id,
+        ...normalizedSessionInsertError,
+      });
       await stripe.checkout.sessions.expire(session.id).catch((e: unknown) =>
         console.error('checkout-from-offer: failed to expire orphaned session:', e),
       );
-      return jsonResponse(500, { error: 'Checkout initialisation failed. Please try again.' });
+      return diagnosticErrorResponse(500, {
+        step: currentStep,
+        error: 'Payment session insert failed',
+        details: {
+          orderId,
+          callerId,
+          stripeSessionId: session.id,
+          ...normalizedSessionInsertError,
+        },
+      });
     }
+    currentStep = 'payment_sessions.insert.after';
+    logStep(currentStep, {
+      orderId,
+      callerId,
+      stripeSessionId: session.id,
+      transferGroup,
+    });
 
     return jsonResponse(200, { checkoutUrl: session.url });
   } catch (error) {
     const stack = error instanceof Error ? error.stack ?? 'stack_unavailable' : 'stack_unavailable';
-    console.error('checkout-from-offer unhandled error:', error, stack);
-    return jsonResponse(500, {
-      error: error instanceof Error ? error.message : 'Checkout session creation failed',
-      ...(isCheckoutFromOfferDebugEnabled()
-        ? {
-            debug: {
-              stack,
-            },
-          }
-        : {}),
+    const normalizedError = normalizeSupabaseError(error);
+    console.error('checkout-from-offer unhandled error:', {
+      step: currentStep,
+      ...normalizedError,
+      stack,
+    });
+    return diagnosticErrorResponse(500, {
+      step: currentStep,
+      error: normalizedError.message ?? 'Checkout session creation failed',
+      details: {
+        ...normalizedError,
+        ...(debugEnabled ? { stack } : {}),
+      },
     });
   }
 };

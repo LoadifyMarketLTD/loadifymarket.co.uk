@@ -65,7 +65,7 @@ const AboutUs = () => {
                 UK-Focused
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Loadify Market is built for UK buyers and sellers. All sellers are UK-based, and we support delivery across the United Kingdom. Our platform is designed for the UK market, supporting both physical goods and service‑based commerce — from everyday items to specialist, niche, and bespoke offerings.
+                Loadify Market is a UK-based marketplace designed for UK market standards. We support UK sellers and approved international sellers who comply with UK laws, Stripe requirements, marketplace rules, and consumer protection obligations. Our platform supports both physical goods and service‑based commerce — from everyday items to specialist, niche, and bespoke offerings.
               </p>
             </section>
           </div>

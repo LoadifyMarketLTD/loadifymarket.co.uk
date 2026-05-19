@@ -61,7 +61,7 @@ const Footer = () => {
             </div>
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Store className="h-5 w-5 text-primary shrink-0" />
-              Independent UK Marketplace
+              UK-Based Marketplace
             </div>
           </div>
 
@@ -85,7 +85,7 @@ const Footer = () => {
             <p className="text-lg font-bold text-foreground mb-3">Loadify Market</p>
             <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">
               Loadify Market is operated by <strong className="text-muted-foreground">XDrive Logistics Ltd</strong>.
-              We are a marketplace that connects buyers with independent sellers across the UK.
+              We are a UK-based marketplace that connects buyers with independent sellers in the UK and approved international sellers that comply with UK and Stripe requirements.
               Loadify Market does not own, stock, sell, or ship any products — all orders are
               fulfilled directly by the independent seller.
             </p>
@@ -163,6 +163,9 @@ const Footer = () => {
               <FooterLink to="/cookies">Cookie Policy</FooterLink>
               <FooterLink to="/disclaimer">Disclaimer</FooterLink>
               <FooterLink to="/acceptable-use-policy">Acceptable Use Policy</FooterLink>
+              <FooterLink to="/prohibited-items-policy">Prohibited Items Policy</FooterLink>
+              <FooterLink to="/seller-verification-policy">Seller Verification Policy</FooterLink>
+              <FooterLink to="/ip-trademark-complaints">IP / Trademark Complaints</FooterLink>
               <FooterLink to="/returns-policy">Returns Policy</FooterLink>
               <FooterLink to="/shipping-policy">Shipping Policy</FooterLink>
               <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>
@@ -198,6 +201,9 @@ const Footer = () => {
               { to: "/cookies", label: "Cookies" },
               { to: "/disclaimer", label: "Disclaimer" },
               { to: "/acceptable-use-policy", label: "Acceptable Use" },
+              { to: "/prohibited-items-policy", label: "Prohibited Items" },
+              { to: "/seller-verification-policy", label: "Seller Verification" },
+              { to: "/ip-trademark-complaints", label: "IP Complaints" },
               { to: "/buyer-terms", label: "Buyer Terms" },
               { to: "/seller-terms", label: "Seller Terms" },
             ].map((l) => (

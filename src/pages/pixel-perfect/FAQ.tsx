@@ -34,7 +34,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "Who can use Loadify Market?",
         answer:
-          "Any UK-based business or individual can register as a buyer. To sell on the platform you must complete your seller profile and connect a Stripe account. Both B2B and B2C transactions are supported.",
+          "Loadify Market is UK-based. Buyers in supported regions can register, and international sellers may apply to sell if they comply with UK laws, Stripe requirements, marketplace rules, intellectual property regulations, shipping obligations, and consumer protection requirements. Both B2B and B2C transactions are supported.",
       },
     ],
   },
@@ -60,15 +60,15 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
           <>
             After registering, choose the <strong>Seller</strong> role during sign-up or from
             your account dashboard. You will need to complete your business profile and connect
-            a Stripe account. Once all setup steps are complete, your seller account is
-            activated automatically — no manual review required.
+            a Stripe account. Seller accounts are subject to compliance checks, and we may
+            manually review suspicious listings or account activity before or after activation.
           </>
         ),
       },
       {
-        question: "How does seller activation work?",
+        question: "How does seller activation and moderation work?",
         answer:
-          "Your seller account is activated automatically once you complete your business profile (name, phone, address) and connect a Stripe account with payments enabled. There is no manual approval step for normal seller accounts.",
+          "Your seller account can be activated once you complete your business profile (name, phone, address) and connect a Stripe account with payments enabled. We reserve the right to manually review suspicious listings, remove prohibited products without notice, and suspend or remove sellers that breach platform or legal requirements.",
       },
       {
         question: "Can I have both a buyer and seller account?",
@@ -211,6 +211,20 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
         answer:
           "Reviews can only be submitted by buyers who have completed a verified order. We reserve the right to remove reviews that violate our community guidelines.",
       },
+      {
+        question: "Are counterfeit, fake branded or replica products allowed?",
+        answer: (
+          <>
+            <strong>Counterfeit, fake branded, replica, trademark-infringing or unauthorised products are strictly prohibited on Loadify Market.</strong>{" "}
+            Listings may be removed immediately and seller accounts may be restricted or suspended.
+            Read our{" "}
+            <Link to="/prohibited-items-policy" className="text-primary underline">
+              Prohibited Items Policy
+            </Link>
+            .
+          </>
+        ),
+      },
     ],
   },
   {
@@ -221,6 +235,30 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
         answer: (
           <Link to="/terms" className="text-primary underline">
             Terms &amp; Conditions
+          </Link>
+        ),
+      },
+      {
+        question: "Where can I find your Prohibited Items Policy?",
+        answer: (
+          <Link to="/prohibited-items-policy" className="text-primary underline">
+            Prohibited Items Policy
+          </Link>
+        ),
+      },
+      {
+        question: "Where can I find your Seller Verification Policy?",
+        answer: (
+          <Link to="/seller-verification-policy" className="text-primary underline">
+            Seller Verification Policy
+          </Link>
+        ),
+      },
+      {
+        question: "How do I report trademark or IP infringement?",
+        answer: (
+          <Link to="/ip-trademark-complaints" className="text-primary underline">
+            Intellectual Property / Trademark Complaints
           </Link>
         ),
       },
