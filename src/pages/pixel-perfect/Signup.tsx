@@ -78,6 +78,7 @@ const Signup = () => {
     password: "", confirmPassword: "", showPassword: false,
     /* Bottom */
     agreeTerms: false,
+    agreeSellerCompliance: false,
   });
 
   const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -125,6 +126,9 @@ const Signup = () => {
     if (!f.agreeTerms) {
       setError("You must agree to the Privacy Policy and Terms of Use."); return;
     }
+    if (isSeller && !f.agreeSellerCompliance) {
+      setError("Seller compliance confirmation is required."); return;
+    }
     if (isSeller && !f.sellerType) {
       setError("Please select your seller type (Individual, Sole Trader, or Company)."); return;
     }
@@ -152,6 +156,7 @@ const Signup = () => {
         ...(Object.keys(businessAddress).length > 0 ? { businessAddress }         : {}),
         // Seller-type captured at registration for compliance routing
         ...(isSeller && f.sellerType ? { sellerType: f.sellerType }               : {}),
+        ...(isSeller && f.agreeSellerCompliance ? { sellerComplianceConfirmed: true } : {}),
       };
 
       // storeName is used for sellers; companyName for buyers
@@ -283,13 +288,13 @@ const Signup = () => {
 
             {/* IMPORTANT notice bar — like reference */}
             <div className="bg-warning/10 border-l-4 border-warning px-5 py-2.5 flex items-start gap-3">
-              <span className="text-warning text-[11px] font-black uppercase tracking-widest shrink-0 mt-0.5">
-                Important:
-              </span>
-              <p className="text-warning text-[11px] leading-snug">
+                <span className="text-warning text-[11px] font-black uppercase tracking-widest shrink-0 mt-0.5">
+                  Important:
+                </span>
+                <p className="text-warning text-[11px] leading-snug">
                 {isPrivate
                   ? <>This registration is for <strong>individual buyers and sellers</strong>. All accounts are subject to review.</>
-                  : <>Create an account to buy or sell on Loadify Market. Available for <strong>individuals and businesses</strong>.</>
+                  : <>Create an account to buy or sell on Loadify Market. Available for <strong>individuals and businesses</strong>. Loadify Market is UK-based and international sellers may apply subject to UK legal and Stripe compliance requirements.</>
 
                 }
                 {" "}Fields marked <span className="text-danger font-bold">*</span> are mandatory. Already have an account?{" "}
@@ -681,6 +686,28 @@ const Signup = () => {
                       </label>
                     </div>
                   </div>
+                  {isSeller && (
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Seller Compliance Confirmation <span className="text-danger">*</span></p>
+                      <div className="flex items-start gap-2 border border-white/10 bg-elevated px-3 py-2.5 max-w-lg">
+                        <input
+                          id="agreeSellerCompliance"
+                          name="agreeSellerCompliance"
+                          type="checkbox"
+                          required={isSeller}
+                          checked={f.agreeSellerCompliance}
+                          onChange={set}
+                          className="mt-0.5 h-4 w-4 border-2 border-white/30 cursor-pointer shrink-0"
+                        />
+                        <label
+                          htmlFor="agreeSellerCompliance"
+                          className="text-xs text-slate-300 leading-relaxed cursor-pointer"
+                        >
+                          <span className="text-danger font-bold">*</span> I confirm that my products comply with UK laws, Stripe policies and intellectual property regulations.
+                        </label>
+                      </div>
+                    </div>
+                  )}
 
                 </div>
 

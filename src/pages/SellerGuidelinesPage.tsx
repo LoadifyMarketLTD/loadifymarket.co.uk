@@ -165,7 +165,7 @@ export default function SellerGuidelinesPage() {
         <div className="container-market text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Ready to start selling?</h2>
           <p className="text-gray-600 text-sm mb-5">
-            Join hundreds of independent UK sellers already using Loadify Market.
+            Join independent UK and approved international sellers already using Loadify Market.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link

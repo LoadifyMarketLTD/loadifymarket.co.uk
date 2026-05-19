@@ -17,6 +17,7 @@ const SellerTerms = () => {
           <p>These Seller Terms apply to all users who list and sell goods through Loadify Market ("Platform"), operated by XDrive Logistics Ltd (Company No: 13171804, VAT: GB375949535). These terms supplement our general <a href="/terms">Terms &amp; Conditions</a>.</p>
 
           <p><strong>As a seller on Loadify Market, you are an independent seller and are solely responsible for your listings, products, and all transactions.</strong> Loadify Market is a marketplace intermediary platform and is not a party to the sales contract between you and the buyer.</p>
+          <p>Loadify Market is a UK-based marketplace platform. International sellers may apply, but all sellers must comply with UK laws, Stripe requirements, marketplace policies, intellectual property regulations, shipping obligations, and consumer protection requirements.</p>
 
           <p>Sellers are responsible for:</p>
           <ul>
@@ -34,9 +35,10 @@ const SellerTerms = () => {
           <p>To sell on Loadify Market, you must:</p>
           <ul>
             <li>Be at least 18 years of age</li>
-            <li>Be a registered business or sole trader operating lawfully in the UK</li>
+            <li>Be a registered business or sole trader operating lawfully in your jurisdiction</li>
             <li>Complete the seller registration process with accurate business information</li>
             <li>Agree to these Seller Terms and our general Terms &amp; Conditions</li>
+            <li>Meet Stripe onboarding and compliance requirements for your seller account</li>
           </ul>
           <p>We reserve the right to verify seller information and may request additional documentation.</p>
 
@@ -58,6 +60,7 @@ const SellerTerms = () => {
             <li>Dangerous or restricted without proper licensing</li>
             <li>In violation of intellectual property rights</li>
           </ul>
+          <p><strong>Counterfeit, fake branded, replica, trademark-infringing or unauthorised products are strictly prohibited on Loadify Market.</strong></p>
           <p>We reserve the right to remove listings and suspend accounts that violate these restrictions.</p>
 
           <h2>4. Fees &amp; Payments</h2>
@@ -101,6 +104,7 @@ const SellerTerms = () => {
             <li>Engage in fraudulent or deceptive practices</li>
             <li>Fail to fulfil orders consistently</li>
           </ul>
+          <p>We may manually review suspicious listings, remove prohibited products without notice, and cooperate with payment providers (including Stripe), regulators, and law-enforcement authorities where legally required.</p>
 
           <h2>9. Limitation of Liability</h2>
           <p>Loadify Market is not liable for any losses arising from your use of the Platform as a seller, including but not limited to lost sales, delivery issues or buyer disputes. You are solely responsible for your products, listings and transactions.</p>
@@ -113,6 +117,14 @@ const SellerTerms = () => {
           <ul>
             <li>Email: contact@loadifymarket.co.uk</li>
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>
+          </ul>
+
+          <h2>12. Planned Compliance Policy Pages</h2>
+          <p>To strengthen marketplace compliance at scale, Loadify Market intends to maintain dedicated legal guidance pages for:</p>
+          <ul>
+            <li>Prohibited Items Policy</li>
+            <li>Seller Verification Policy</li>
+            <li>Intellectual Property / Trademark Complaints</li>
           </ul>
         </div>
       </main>

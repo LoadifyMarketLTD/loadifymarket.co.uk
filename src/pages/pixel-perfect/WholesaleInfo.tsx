@@ -34,10 +34,11 @@ const WholesaleInfo = () => {
             Marketplace Information
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed mb-10">
-            Loadify Market is a multi-category online marketplace connecting UK sellers and
-            buyers. Whether you sell individual items or bulk stock, buy one unit or order
-            in quantity — there are no restrictions on what you can list or purchase. This page
-            explains how the platform works for both buyers and sellers.
+            Loadify Market is a UK-based multi-category online marketplace connecting buyers
+            with UK and approved international sellers. Whether you sell individual items or
+            bulk stock, buy one unit or order in quantity — there are no category restrictions
+            on what you can list or purchase, provided platform and legal rules are followed.
+            This page explains how the platform works for both buyers and sellers.
           </p>
 
           <div className="space-y-10">
@@ -78,8 +79,10 @@ const WholesaleInfo = () => {
                 Selling on Loadify Market
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
-                Any UK-based individual or business can sell on Loadify Market — across any
-                product category and at any quantity. To start selling:
+                Loadify Market is UK-based, and both UK and international sellers may apply to
+                sell across any product category and at any quantity. Sellers must comply with
+                UK laws, Stripe requirements, marketplace rules, and intellectual property and
+                consumer protection requirements. To start selling:
               </p>
               <ol className="text-muted-foreground space-y-2 ml-4 list-decimal list-inside">
                 <li>
@@ -162,7 +165,7 @@ const WholesaleInfo = () => {
                   },
                   {
                     q: "Are all sellers UK-based?",
-                    a: "Yes. Loadify Market operates in the UK. All sellers are UK-based and all deliveries are within the United Kingdom.",
+                    a: "No. Loadify Market is UK-based, but international sellers may apply and sell if they comply with UK laws, Stripe requirements, and marketplace compliance policies.",
                   },
                   {
                     q: "What categories are available?",

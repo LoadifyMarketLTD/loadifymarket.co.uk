@@ -86,6 +86,7 @@ const AdminSellerDetailPage = lazy(() => import('./pages/AdminSellerDetailPage')
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 // Legal pages without pixel-perfect equivalents
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
+const ProhibitedItemsPolicyPage = lazy(() => import('./pages/legal/ProhibitedItemsPolicyPage'));
 const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
 // Onboarding pages
 const RoleSelection     = lazy(() => import('./pages/onboarding/RoleSelection'));
@@ -664,6 +665,7 @@ function App() {
 
         {/* Legal pages without pixel-perfect equivalents */}
         <Route path="acceptable-use-policy" element={<Suspense fallback={<PageLoader />}><AcceptableUsePolicyPage /></Suspense>} />
+        <Route path="prohibited-items-policy" element={<Suspense fallback={<PageLoader />}><ProhibitedItemsPolicyPage /></Suspense>} />
         <Route path="seller-guidelines" element={<Suspense fallback={<PageLoader />}><SellerGuidelinesPage /></Suspense>} />
 
         {/* ── Aliases: /pp/* → clean routes (backward compat for bookmarks / old links) */}

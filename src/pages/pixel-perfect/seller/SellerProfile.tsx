@@ -39,7 +39,7 @@ function getBusinessNameWarning(name: string): string | null {
   }
   // Warn for common non-UK structures
   if (/\b(inc\.?|corp\.?|incorporated|llc|l\.l\.c|s\.a\.?|gmbh|b\.v\.?)\b/.test(n)) {
-    return 'This looks like a non-UK company structure. Only UK-registered businesses may sell on Loadify Market.';
+    return 'This looks like a non-UK company structure. International sellers may apply but must comply with UK laws and Stripe requirements.';
   }
   return null;
 }
@@ -159,7 +159,7 @@ const SellerProfile = () => {
     if (!raw) return;
 
     if (!isValidUKPostcode(raw)) {
-      setPostcodeError("Please enter a valid UK postcode (e.g. SW1A 1AA).");
+      setPostcodeError("UK postcode lookup supports UK postcodes only. International sellers can enter postcode manually.");
       return;
     }
 
@@ -186,7 +186,7 @@ const SellerProfile = () => {
       const isUK = ukTerms.some((term) => countryLower.includes(term));
 
       if (!isUK) {
-        setPostcodeError("Only UK sellers are accepted on Loadify Market.");
+        setPostcodeError("UK postcode lookup is only available for UK postcodes.");
         return;
       }
 
@@ -214,11 +214,6 @@ const SellerProfile = () => {
     }
     if (!form.contactName.trim()) {
       toast({ title: "Contact name required", description: "Please enter your full name.", variant: "destructive" });
-      return;
-    }
-    if (form.postcode.trim() && !isValidUKPostcode(form.postcode)) {
-      setPostcodeError("Please enter a valid UK postcode before saving.");
-      toast({ title: "Invalid postcode", description: "Please enter a valid UK postcode.", variant: "destructive" });
       return;
     }
     if (form.postcode.trim() && isValidUKPostcode(form.postcode) && !postcodeVerified) {
@@ -520,7 +515,7 @@ const SellerProfile = () => {
                 <p className="text-red-500 text-xs mt-1">{postcodeError}</p>
               )}
               <p className="text-[11px] text-muted-foreground mt-1">
-                UK addresses only. Click the search icon to verify.
+                UK postcode lookup is optional and supports UK postcodes only. International sellers can enter postcode manually.
               </p>
             </div>
           </div>
