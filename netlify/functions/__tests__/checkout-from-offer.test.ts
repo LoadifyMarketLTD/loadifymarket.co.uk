@@ -232,6 +232,26 @@ describe('checkout-from-offer handler', () => {
     });
   });
 
+  it('falls back to the request origin when app URL env vars are invalid', async () => {
+    process.env.URL = 'not-a-valid-url';
+    process.env.VITE_APP_URL = 'still-bad';
+    const mocks = mockCheckoutDependencies({
+      stripeCreateResult: { id: 'cs_test_123', url: 'https://checkout.stripe.test/session' },
+    });
+
+    const { handler } = await import('../checkout-from-offer');
+    const res = await handler(
+      makeEvent({ orderId: 'order-1' }, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(mocks.stripeCreate).toHaveBeenCalledWith(expect.objectContaining({
+      success_url: 'http://localhost/order-success?orderId=order-1&session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: 'http://localhost/inbox',
+    }));
+  });
+
   it('logs before and after RPC, Stripe, and DB write steps on success', async () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     mockCheckoutDependencies();
@@ -311,5 +331,32 @@ describe('checkout-from-offer handler', () => {
       },
     });
     expect(mocks.stripeExpire).toHaveBeenCalledWith('cs_test_123');
+  });
+
+  it('returns 409 when the order total cannot produce a valid Stripe amount', async () => {
+    const mocks = mockCheckoutDependencies({
+      orderResult: {
+        data: {
+          id: 'order-1',
+          buyerId: 'buyer-1',
+          sellerId: 'seller-1',
+          productId: 'product-1',
+          total: Number.NaN,
+          status: 'awaiting_payment',
+          offerId: 'offer-1',
+        },
+        error: null,
+      },
+    });
+
+    const { handler } = await import('../checkout-from-offer');
+    const res = await handler(
+      makeEvent({ orderId: 'order-1' }, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(409);
+    expect(JSON.parse(res.body as string).error).toMatch(/order total is invalid/i);
+    expect(mocks.stripeCreate).not.toHaveBeenCalled();
   });
 });
