@@ -670,6 +670,7 @@ function App() {
         <Route path="prohibited-items-policy" element={<Suspense fallback={<PageLoader />}><ProhibitedItemsPolicyPage /></Suspense>} />
         <Route path="seller-verification-policy" element={<Suspense fallback={<PageLoader />}><SellerVerificationPolicyPage /></Suspense>} />
         <Route path="ip-trademark-complaints" element={<Suspense fallback={<PageLoader />}><IntellectualPropertyComplaintsPage /></Suspense>} />
+        <Route path="intellectual-property-complaints" element={<Navigate to="/ip-trademark-complaints" replace />} />
         <Route path="seller-guidelines" element={<Suspense fallback={<PageLoader />}><SellerGuidelinesPage /></Suspense>} />
 
         {/* ── Aliases: /pp/* → clean routes (backward compat for bookmarks / old links) */}
