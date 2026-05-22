@@ -197,6 +197,20 @@ const MainScreen = ({
       {/* Footer links */}
       <nav aria-label="Support links" className="flex flex-col py-2">
         <Link
+          to="/register?type=seller"
+          onClick={onClose}
+          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
+        >
+          Sell Stock
+        </Link>
+        <Link
+          to="/shipping"
+          onClick={onClose}
+          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
+        >
+          Transport
+        </Link>
+        <Link
           to="/wholesale-info"
           onClick={onClose}
           className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"

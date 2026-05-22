@@ -163,6 +163,12 @@ const Header = () => {
 
         {/* Right actions (desktop) */}
         <div className="hidden lg:flex items-center gap-1.5 shrink-0">
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
+            <Link to="/register?type=seller">Sell Stock</Link>
+          </Button>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
+            <Link to="/shipping">Transport</Link>
+          </Button>
           <Link
             to="/cart"
             className="relative p-2.5 text-muted-foreground hover:text-primary hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(212,175,55,0.35)] hover:bg-white/10 rounded-xl transition-all"
