@@ -5,12 +5,6 @@ interface RequestBody {
   offerId?: string;
 }
 
-interface OfferRow {
-  id: string;
-  status: string;
-  recipientId: string;
-}
-
 interface OfferActionRpcResult {
   ok: boolean;
   offerId: string;
@@ -66,11 +60,6 @@ function getServerConfig():
 
 function isOfferAcceptDebugEnabled(): boolean {
   const raw = (process.env.OFFER_ACCEPT_DEBUG ?? '').trim().toLowerCase();
-  return raw === '1' || raw === 'true' || raw === 'yes';
-}
-
-function isBypassRpcEnabled(): boolean {
-  const raw = (process.env.OFFER_ACCEPT_BYPASS_RPC ?? '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'yes';
 }
 
