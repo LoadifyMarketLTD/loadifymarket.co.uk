@@ -33,8 +33,7 @@ interface ProductInfoProps {
   onNativeShare?: () => void;
   supportsNativeShare?: boolean;
   onMessageSeller?: () => void;
-  onMakeOffer?: () => void;
-  contactActionLoading?: "message" | "offer" | null;
+  contactActionLoading?: "message" | null;
 }
 
 const conditionColor: Record<string, string> = {
@@ -64,7 +63,6 @@ const ProductInfo = ({
   onNativeShare,
   supportsNativeShare = false,
   onMessageSeller,
-  onMakeOffer,
   contactActionLoading = null,
 }: ProductInfoProps) => {
   const { addToCart } = useCart();
@@ -321,52 +319,28 @@ const ProductInfo = ({
             </Button>
           </div>
 
-          {(onMessageSeller || onMakeOffer) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {onMessageSeller && (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-base"
-                  onClick={onMessageSeller}
-                  disabled={contactActionLoading !== null}
-                  aria-busy={contactActionLoading === "message"}
-                >
-                  {contactActionLoading === "message" ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Opening…
-                    </>
-                  ) : (
-                    <>
-                      <MessageSquare className="mr-2 h-5 w-5" />
-                      Message
-                    </>
-                  )}
-                </Button>
-              )}
-              {onMakeOffer && (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-base"
-                  onClick={onMakeOffer}
-                  disabled={contactActionLoading !== null}
-                  aria-busy={contactActionLoading === "offer"}
-                >
-                  {contactActionLoading === "offer" ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Preparing…
-                    </>
-                  ) : (
-                    <>
-                      <Tag className="mr-2 h-5 w-5" />
-                      Offer
-                    </>
-                  )}
-                </Button>
-              )}
+          {onMessageSeller && (
+            <div className="grid grid-cols-1 gap-3">
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-base"
+                onClick={onMessageSeller}
+                disabled={contactActionLoading !== null}
+                aria-busy={contactActionLoading === "message"}
+              >
+                {contactActionLoading === "message" ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Opening…
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    Message
+                  </>
+                )}
+              </Button>
             </div>
           )}
         </div>

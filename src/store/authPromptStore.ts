@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type AuthPromptContext = 'sell' | 'message' | 'buy' | 'offer' | 'save' | null;
+export type AuthPromptContext = 'sell' | 'message' | 'buy' | 'save' | null;
 
 interface AuthPromptState {
   isOpen: boolean;

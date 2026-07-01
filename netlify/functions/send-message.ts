@@ -17,8 +17,7 @@
  *   { id, senderId, message, isRead, createdAt }
  *
  * Notes:
- *   - System messages (_t:"system") and offer JSON (_t:"offer") are NOT pushed
- *     here; they have dedicated push paths in offer-accept.ts / conversation-offer.ts.
+ *   - Structured system messages are not pushed from here.
  *   - This function is for plain-text messages sent by humans from the chat UI.
  */
 
@@ -151,8 +150,7 @@ export const handler: Handler = async (event) => {
   }
 
   // Reject messages containing HTML tags to prevent stored XSS.
-  // System/offer messages use a JSON envelope (see isStructuredJson below) and
-  // are handled separately; plain-text human messages must never contain markup.
+  // Structured system messages use a JSON envelope; plain-text human messages must never contain markup.
   if (/<[a-z!/?][^>]{0,2000}>/i.test(message)) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Message must not contain HTML markup' }) };
   }
@@ -194,8 +192,7 @@ export const handler: Handler = async (event) => {
   }
 
   // ── Push notification to receiver ───────────────────────────────────────────
-  // Only for human plain-text messages.  System events (_t:"system") and offer
-  // cards (_t:"offer") have their own dedicated push paths.
+  // Only for human plain-text messages. Structured system events are ignored here.
   const isStructuredJson = message.trim().startsWith('{');
   if (!isStructuredJson) {
     // Fetch sender name for the notification title.

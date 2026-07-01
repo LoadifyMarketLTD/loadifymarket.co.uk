@@ -5,7 +5,7 @@ import { CheckCircle, ShoppingBag, ArrowRight, Package, Shield, Truck, Star, Loa
 import { useCart } from '../contexts/CartContext';
 import { BRAND } from '../constants/brand';
 import { supabase } from '../lib/supabase';
-import { trackOfferPaid } from '../lib/analytics';
+import { trackCompletedPurchase } from '../lib/analytics';
 import SEO from '@/components/SEO';
 
 // Maximum number of 2-second polls before giving up and showing the safe timeout message.
@@ -57,7 +57,7 @@ export default function OrderSuccessPage() {
           if (row.status === 'completed') {
             // Webhook has processed — fire analytics and show the success page.
             if (row.orderId) {
-              trackOfferPaid({ orderId: row.orderId, amountPence: Math.round((row.amount ?? 0) * 100) });
+              trackCompletedPurchase({ orderId: row.orderId, value: row.amount ?? 0 });
             }
             setPhase('confirmed');
             return;

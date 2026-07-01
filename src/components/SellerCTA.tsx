@@ -24,7 +24,7 @@ export default function SellerCTA() {
 
           {/* Subtext */}
           <p style={{ fontSize: '14px', lineHeight: 1.55, marginBottom: '22px' }} className="text-muted-foreground">
-            List products, receive offers, get paid securely.
+            List products, sell at fixed prices, get paid securely.
           </p>
 
           {/* Gold CTA button */}

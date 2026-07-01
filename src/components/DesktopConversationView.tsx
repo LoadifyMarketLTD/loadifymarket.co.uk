@@ -2,36 +2,18 @@
  * DesktopConversationView
  *
  * Shared two-panel desktop messages view used by both BuyerMessages and
- * SellerMessages.  Handles the full message + offer lifecycle:
- *   - Conversation list with unread badges and last-message previews
- *   - Message thread: plain text, offer bubbles, system event cards
- *   - Sending messages via the send-message Netlify function (push notifications)
- *   - Sending offers via the conversation-offer Netlify function (buyer only)
- *   - Accepting/declining offers via offer-accept/offer-decline (seller only)
- *   - Pay Now button for accepted offers (buyer)
- *   - Supabase Realtime subscriptions for messages, offers, and orders
- *
- * The component determines per-conversation whether the current user is the
- * seller by checking listing.sellerId === user.id after loading the selected
- * conversation's linked product.
+ * SellerMessages for conversation lists, threads, and realtime updates.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import {
-  Archive, MessageSquare, Send, User, Tag,
-  CheckCircle, XCircle, CreditCard,
-} from "lucide-react";
+import { Archive, MessageSquare, Send, User } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
-import { openExternalUrl } from "@/lib/capacitorUtils";
-import { getOfferActionAvailability } from "@/lib/offerActions";
 import { parseConversationRouteSearch } from "@/lib/routeSearch";
-import MakeOfferSheet from "@/components/MakeOfferSheet";
-import { trackOfferAccepted } from "@/lib/analytics";
 import type { ConversationParticipant, InboxConversation } from "@/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -56,15 +38,6 @@ interface Message {
   createdAt: string;
 }
 
-interface OfferRecord {
-  id: string;
-  amountPence: number;
-  status: string;
-  proposedById: string;
-  recipientId: string;
-  orderId?: string | null;
-  orderStatus?: string | null;
-}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -87,30 +60,17 @@ function participantName(p: ConversationParticipant) {
   return name || DEFAULT_DISPLAY_NAME;
 }
 
-/** Decode offer/system message JSON to a human-readable inbox preview. */
+/** Decode archived/system message JSON to a human-readable inbox preview. */
 function previewText(raw: string | null): string {
   if (!raw) return "";
   if (raw.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
-      if (parsed._t === "offer" && typeof parsed.amount_pence === "number") {
-        return `💰 Offer: £${(parsed.amount_pence as number / 100).toFixed(2)}`;
+      if (parsed._t === "offer") {
+        return "💬 Offer (archived)";
       }
-      if (parsed._t === "offer" && typeof parsed.offerId === "string") {
-        return "💰 Offer";
-      }
-      if (parsed._t === "system") {
-        const events: Record<string, string> = {
-          offer_accepted: "✓ Offer accepted",
-          offer_declined: "✗ Offer declined",
-          offer_rejected: "✗ Offer rejected",
-          offer_cancelled: "↺ Offer cancelled",
-          offer_expired: "⌛ Offer expired",
-          listing_unavailable: "🔒 Listing unavailable",
-        };
-        if (typeof parsed.event === "string" && events[parsed.event]) {
-          return events[parsed.event];
-        }
+      if (parsed._t === "system" && parsed.event === "listing_unavailable") {
+        return "🔒 Listing unavailable";
       }
     } catch {
       /* ignore */
@@ -119,40 +79,23 @@ function previewText(raw: string | null): string {
   return raw.length > 60 ? raw.slice(0, 60) + "…" : raw;
 }
 
-/** Parse a message string that may be JSON-encoded offer / system event. */
+/** Parse a message string that may be JSON-encoded archived/system event. */
 function parseMessage(raw: unknown): {
-  type: "text" | "offer" | "system";
+  type: "text" | "system";
   text?: string;
-  amount_pence?: number;
-  offerId?: string;
-  productTitle?: string;
-  note?: string;
   event?: string;
-  orderId?: string;
-  amountPence?: number;
 } {
   const rawText = typeof raw === "string" ? raw : "";
   if (rawText.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(rawText) as Record<string, unknown>;
-      if (
-        parsed._t === "offer" &&
-        (typeof parsed.amount_pence === "number" || typeof parsed.offerId === "string")
-      ) {
-        return {
-          type:         "offer",
-          amount_pence: typeof parsed.amount_pence === "number" ? parsed.amount_pence : undefined,
-          offerId:      typeof parsed.offerId === "string" ? parsed.offerId : undefined,
-          productTitle: typeof parsed.productTitle === "string" ? parsed.productTitle : undefined,
-          note:         typeof parsed.note === "string" ? parsed.note : undefined,
-        };
+      if (parsed._t === "offer") {
+        return { type: "text", text: "Offer (archived)" };
       }
       if (parsed._t === "system") {
         return {
-          type:        "system",
-          event:       typeof parsed.event === "string" ? parsed.event : undefined,
-          orderId:     typeof parsed.orderId === "string" ? parsed.orderId : undefined,
-          amountPence: typeof parsed.amountPence === "number" ? parsed.amountPence : undefined,
+          type: "system",
+          event: typeof parsed.event === "string" ? parsed.event : undefined,
         };
       }
     } catch {
@@ -164,240 +107,16 @@ function parseMessage(raw: unknown): {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function OfferBubble({
-  amount_pence,
-  offerId,
-  isMine,
-  isSeller,
-  currentUserId,
-  productTitle,
-  note,
-  offerRecord,
-  actingOnOffer,
-  onAccept,
-  onDecline,
-  onCounter,
-  onCancel,
-  highlightedOfferId,
-  onPayNow,
-}: {
-  amount_pence: number;
-  offerId?: string;
-  isMine: boolean;
-  isSeller: boolean;
-  currentUserId?: string;
-  productTitle?: string;
-  note?: string;
-  offerRecord?: OfferRecord | null;
-  actingOnOffer: string | null;
-  onAccept?: () => void;
-  onDecline?: () => void;
-  onCounter?: (amountPence: number, message?: string) => void;
-  onCancel?: () => void;
-  highlightedOfferId?: string | null;
-  onPayNow?: () => void;
-}) {
-  const pounds = (amount_pence / 100).toFixed(2);
-  const status = offerRecord?.status ?? "pending";
-  const [counterOpen, setCounterOpen] = useState(false);
-  const [customCounter, setCustomCounter] = useState("");
-  const [counterMessage, setCounterMessage] = useState("");
-  const actions = getOfferActionAvailability({
-    status,
-    currentUserId,
-    proposedById: offerRecord?.proposedById,
-    recipientId: offerRecord?.recipientId,
-  });
-
-  const statusLabel: Record<string, string> = {
-    pending:   isMine ? "You offered · Pending" : "Offer received · Pending",
-    countered: "Countered",
-    accepted:  "Accepted ✓",
-    rejected:  "Rejected",
-    declined:  "Declined",
-    expired:   "Expired",
-    cancelled: "Cancelled",
-  };
-
-  const statusColour: Record<string, string> = {
-    pending:   "text-muted-foreground",
-    countered: "text-primary",
-    accepted:  "text-success dark:text-success",
-    rejected:  "text-destructive",
-    declined:  "text-destructive",
-    expired:   "text-muted-foreground",
-    cancelled: "text-muted-foreground",
-  };
-
-  const busy = offerId ? actingOnOffer === offerId : false;
-
-  return (
-    <div
-      data-offer-id={offerId}
-      className={`rounded-2xl px-4 py-3 max-w-[80%] border ${
-        isMine
-          ? "bg-primary/10 border-primary/30 rounded-br-sm ml-auto"
-          : "bg-muted border-border rounded-bl-sm"
-      } ${offerId && highlightedOfferId === offerId ? "ring-2 ring-primary/70" : ""}`}
-    >
-      <div className="flex items-center gap-1.5 mb-1">
-        <Tag className="h-3.5 w-3.5 text-primary" />
-        <span className="text-xs font-semibold text-primary uppercase tracking-wide">Offer</span>
-      </div>
-      {productTitle && (
-        <p className="text-xs text-muted-foreground mb-1 truncate">{productTitle}</p>
-      )}
-      {note && (
-        <p className="text-xs text-muted-foreground mb-1 whitespace-pre-wrap break-words">{note}</p>
-      )}
-      <p className="text-xl font-bold text-foreground">£{pounds}</p>
-      <p className={`text-[11px] mt-1 ${statusColour[status] ?? "text-muted-foreground"}`}>
-        {statusLabel[status] ?? status}
-      </p>
-
-      {actions.canAccept && (
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={onAccept}
-            disabled={busy}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-success/10 border border-success/30 text-green-700 text-xs font-semibold hover:bg-green-100 disabled:opacity-40 transition-colors dark:bg-success/10 dark:border-success/30 dark:text-success dark:hover:bg-success/100/20"
-          >
-            <CheckCircle className="h-3.5 w-3.5" />
-            {busy ? "…" : "Accept"}
-          </button>
-          <button
-            onClick={onDecline}
-            disabled={busy}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-danger/10 border border-danger/30 text-danger text-xs font-semibold hover:bg-red-100 disabled:opacity-40 transition-colors dark:bg-danger/100/10 dark:border-danger/30 dark:text-danger dark:hover:bg-danger/100/20"
-          >
-            <XCircle className="h-3.5 w-3.5" />
-            {busy ? "…" : "Reject"}
-          </button>
-          <button
-            onClick={() => setCounterOpen((v) => !v)}
-            disabled={busy}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/20 disabled:opacity-40 transition-colors"
-          >
-            {busy ? "…" : "Counter"}
-          </button>
-        </div>
-      )}
-      {actions.canCounter && counterOpen && (
-        <div className="mt-2 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            {[1.05, 1.1, 1.15].map((factor) => {
-              const suggested = Math.round(amount_pence * factor);
-              return (
-                <button
-                  key={factor}
-                  onClick={() => onCounter?.(suggested, counterMessage || undefined)}
-                  disabled={busy}
-                  className="rounded-lg border border-border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-40"
-                >
-                  Counter £{(suggested / 100).toFixed(2)}
-                </button>
-              );
-            })}
-            <input
-              value={customCounter}
-              onChange={(e) => setCustomCounter(e.target.value)}
-              placeholder="Custom £"
-              className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
-            />
-            <button
-              onClick={() => {
-                const poundsValue = Number(customCounter);
-                if (!Number.isFinite(poundsValue) || poundsValue <= 0) return;
-                onCounter?.(Math.round(poundsValue * 100), counterMessage || undefined);
-              }}
-              disabled={busy}
-              className="rounded-lg border border-primary/40 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10 disabled:opacity-40"
-            >
-              Send custom
-            </button>
-          </div>
-          <textarea
-            value={counterMessage}
-            onChange={(e) => setCounterMessage(e.target.value)}
-            placeholder="Optional message"
-            maxLength={500}
-            rows={2}
-            className="w-full rounded-lg border border-border bg-background px-2 py-1 text-xs"
-          />
-        </div>
-      )}
-      {actions.canCancel && (
-        <button
-          onClick={onCancel}
-          disabled={busy}
-          className="mt-3 w-full rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted disabled:opacity-40 transition-colors"
-        >
-          {busy ? "…" : "Cancel offer"}
-        </button>
-      )}
-
-      {/* Buyer: Pay Now button for accepted offers awaiting payment */}
-      {!isSeller && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
-        <Button
-          size="sm"
-          className="mt-3 w-full gap-1.5"
-          onClick={onPayNow}
-        >
-          <CreditCard className="h-3.5 w-3.5" />
-          Pay Now
-        </Button>
-      )}
-
-      {/* Buyer: payment confirmed state */}
-      {!isSeller && status === "accepted" && offerRecord?.orderStatus === "paid" && (
-        <p className="mt-3 text-center text-xs font-semibold text-success dark:text-success">
-          ✓ Payment confirmed
-        </p>
-      )}
-    </div>
-  );
-}
-
-function SystemEventCard({ event, amountPence }: { event?: string; amountPence?: number }) {
-  const pounds = amountPence ? `£${(amountPence / 100).toFixed(2)}` : "";
-
-  const content: Record<string, { icon: string; text: string }> = {
-    offer_accepted: {
-      icon: "🎉",
-      text: pounds
-        ? `Offer of ${pounds} accepted! Complete payment to secure the item.`
-        : "Offer accepted!",
-    },
-    offer_declined: {
-      icon: "❌",
-      text: pounds ? `Offer of ${pounds} was declined.` : "Offer declined.",
-    },
-    offer_rejected: {
-      icon: "❌",
-      text: pounds ? `Offer of ${pounds} was rejected.` : "Offer rejected.",
-    },
-    offer_cancelled: {
-      icon: "↺",
-      text: pounds ? `Offer of ${pounds} was cancelled.` : "Offer cancelled.",
-    },
-    offer_expired: {
-      icon: "⌛",
-      text: pounds ? `Offer of ${pounds} expired before anyone responded.` : "Offer expired.",
-    },
-    listing_unavailable: {
-      icon: "🔒",
-      text: "This listing has been purchased. It is no longer available.",
-    },
-  };
-
-  const info = event ? content[event] : null;
-  if (!info) return null;
+function SystemEventCard({ event }: { event?: string }) {
+  if (event !== "listing_unavailable") return null;
 
   return (
     <div className="flex justify-center">
       <div className="max-w-[75%] rounded-2xl px-4 py-2 bg-muted border border-border text-center">
-        <span className="mr-1">{info.icon}</span>
-        <span className="text-xs text-muted-foreground">{info.text}</span>
+        <span className="mr-1">🔒</span>
+        <span className="text-xs text-muted-foreground">
+          This listing has been purchased. It is no longer available.
+        </span>
       </div>
     </div>
   );
@@ -408,7 +127,7 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
 export default function DesktopConversationView() {
   const { user } = useAuthStore();
   const location = useLocation();
-  const { conversationId: routeConversationId, offerId: routeOfferId } = parseConversationRouteSearch(location.search);
+  const { conversationId: routeConversationId } = parseConversationRouteSearch(location.search);
 
   // ── Conversation list state ──────────────────────────────────────────────────
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -421,13 +140,8 @@ export default function DesktopConversationView() {
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [isSeller, setIsSeller] = useState(false);
   const [otherId, setOtherId] = useState<string | null>(null);
   const [productTitle, setProductTitle] = useState<string | null>(null);
-  const [offerMap, setOfferMap] = useState<Map<string, OfferRecord>>(new Map());
-  const [actingOnOffer, setActingOnOffer] = useState<string | null>(null);
-  const [offerOpen, setOfferOpen] = useState(false);
-  const [offersFeatureUnavailable, setOffersFeatureUnavailable] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   // Track which route conversation ID has already been auto-selected so that
@@ -784,10 +498,9 @@ export default function DesktopConversationView() {
     return () => clearTimeout(timer);
   }, [conversations, loadingConvs, routeConversationId, user?.id, loadConversations]);
 
-  // ── Load thread metadata (isSeller, otherId, productTitle) ──────────────────
+  // ── Load thread metadata (otherId, productTitle) ─────────────────────────────
   useEffect(() => {
     if (!selectedId || !user?.id) {
-      setIsSeller(false);
       setOtherId(null);
       setProductTitle(null);
       return;
@@ -804,92 +517,20 @@ export default function DesktopConversationView() {
       if (conv.productId) {
         const { data: listing } = await supabase
           .from("products")
-          .select("sellerId, title")
+          .select("title")
           .eq("id", conv.productId)
-          .maybeSingle<{ sellerId: string; title: string }>();
-        if (!cancelled && listing) {
-          setIsSeller(listing.sellerId === user.id);
-          setProductTitle(listing.title);
-        }
-      } else {
+          .maybeSingle<{ title: string }>();
         if (!cancelled) {
-          setIsSeller(false);
-          setProductTitle(conv.subject ?? null);
+          setProductTitle(listing?.title ?? conv.subject ?? null);
         }
+      } else if (!cancelled) {
+        setProductTitle(conv.subject ?? null);
       }
     };
 
     load();
     return () => { cancelled = true; };
   }, [selectedId, user?.id, conversations]);
-
-  // Load offers for selected conversation and keep offerMap up-to-date.
-  // Orders are fetched in a separate query to avoid PostgREST embedded-resource
-  // relationship resolution (PGRST200) errors when the schema cache is stale.
-  const loadOffers = useCallback(async () => {
-    if (!selectedId || offersFeatureUnavailable || !user?.id) return;
-
-    await authorizedFetch("/.netlify/functions/offer-sync", {
-      method: "POST",
-      body: JSON.stringify({ conversationId: selectedId }),
-    }).catch((error) => {
-      console.warn("desktop chat: offer-sync failed (non-fatal):", error);
-    });
-
-    const { data: offerRows, error } = await supabase
-      .from("offers")
-      .select("id, amountPence, status, proposedById, recipientId")
-      .eq("conversationId", selectedId)
-      .order("createdAt", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      if (error.code === "42P01") {
-        setOffersFeatureUnavailable(true);
-        setOfferMap(new Map());
-        return;
-      }
-      console.warn("desktop chat: failed to load offers:", error.message);
-      return;
-    }
-
-    if (!offerRows?.length) {
-      setOfferMap(new Map());
-      return;
-    }
-
-    // Fetch related orders via explicit FK column query — no PostgREST join needed.
-    const offerIds = offerRows.map((o) => o.id);
-    const { data: orderRows } = await supabase
-      .from("orders")
-      .select("id, status, offerId")
-      .in("offerId", offerIds);
-
-    const orderByOfferId = new Map(
-      (orderRows ?? []).map((o) => [o.offerId as string, { orderId: o.id as string, orderStatus: o.status as string }]),
-    );
-
-    const mapped = (offerRows as Array<{
-      id: string;
-      amountPence: number;
-      status: string;
-      proposedById: string;
-      recipientId: string;
-    }>).map((o) => ({
-      id:           o.id,
-      amountPence:  o.amountPence,
-      status:       o.status,
-      proposedById: o.proposedById,
-      recipientId:  o.recipientId,
-      orderId:      orderByOfferId.get(o.id)?.orderId ?? null,
-      orderStatus:  orderByOfferId.get(o.id)?.orderStatus ?? null,
-    }));
-    setOfferMap(new Map(mapped.map((o) => [o.id, o])));
-  }, [selectedId, offersFeatureUnavailable, user?.id]);
-
-  useEffect(() => {
-    void loadOffers();
-  }, [loadOffers]);
 
   // ── Load messages ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -950,7 +591,7 @@ export default function DesktopConversationView() {
 
   // ── Supabase Realtime: messages ──────────────────────────────────────────────
   useEffect(() => {
-    if (!selectedId || !user?.id || offersFeatureUnavailable) return;
+    if (!selectedId || !user?.id) return;
 
     const channel = supabase
       .channel(`desktop-chat-msgs:${selectedId}`)
@@ -969,98 +610,12 @@ export default function DesktopConversationView() {
               .update({ isRead: true, readAt: new Date().toISOString() })
               .eq("id", msg.id);
           }
-          const parsed = parseMessage(msg.message);
-          if (parsed.type === "offer" || parsed.type === "system") {
-            void loadOffers();
-          }
         },
       )
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [selectedId, user?.id, loadOffers, offersFeatureUnavailable]);
-
-  // ── Supabase Realtime: offers ────────────────────────────────────────────────
-  useEffect(() => {
-    if (!selectedId || !user?.id) return;
-
-    const channel = supabase
-      .channel(`desktop-chat-offers:${selectedId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "offers", filter: `conversationId=eq.${selectedId}` },
-        () => {
-          void loadOffers();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "offers", filter: `conversationId=eq.${selectedId}` },
-        (payload) => {
-          const updated = payload.new as { id: string; status: string };
-          let found = false;
-          setOfferMap((prev) => {
-            const existing = prev.get(updated.id);
-            if (!existing) return prev;
-            found = true;
-            const next = new Map(prev);
-            next.set(updated.id, { ...existing, status: updated.status });
-            return next;
-          });
-          if (!found) {
-            void loadOffers();
-          }
-        },
-      )
-      .subscribe();
-
-    return () => { void supabase.removeChannel(channel); };
-  }, [selectedId, user?.id, offersFeatureUnavailable, loadOffers]);
-
-  // ── Supabase Realtime: orders (Pay Now / payment-confirmed live update) ──────
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const channel = supabase
-      .channel(`desktop-chat-orders:${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "orders", filter: `buyerId=eq.${user.id}` },
-        (payload) => {
-          const updated = payload.new as { id: string; status: string; offerId: string | null };
-          const offerId = updated.offerId;
-          if (!offerId) return;
-          setOfferMap((prev) => {
-            const existing = prev.get(offerId);
-            if (!existing) return prev;
-            if (existing.orderId === updated.id && existing.orderStatus === updated.status) return prev;
-            const next = new Map(prev);
-            next.set(offerId, { ...existing, orderId: updated.id, orderStatus: updated.status });
-            return next;
-          });
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "orders", filter: `buyerId=eq.${user.id}` },
-        (payload) => {
-          const updated = payload.new as { id: string; status: string; offerId: string | null };
-          const offerId = updated.offerId;
-          if (!offerId) return;
-          setOfferMap((prev) => {
-            const existing = prev.get(offerId);
-            if (!existing) return prev;
-            if (existing.orderId === updated.id && existing.orderStatus === updated.status) return prev;
-            const next = new Map(prev);
-            next.set(offerId, { ...existing, orderId: updated.id, orderStatus: updated.status });
-            return next;
-          });
-        },
-      )
-      .subscribe();
-
-    return () => { void supabase.removeChannel(channel); };
-  }, [user?.id]);
+  }, [selectedId, user?.id]);
 
   // ── Scroll to bottom ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1113,123 +668,6 @@ export default function DesktopConversationView() {
       void handleSend();
     }
   };
-
-  // ── Offer action handlers ────────────────────────────────────────────────────
-  const handleAcceptOffer = async (offerId: string) => {
-    setActingOnOffer(offerId);
-    try {
-      const res = await authorizedFetch("/.netlify/functions/offer-accept", {
-        method: "POST",
-        body: JSON.stringify({ offerId }),
-      });
-      const json = await res.json() as { orderId?: string; error?: string; details?: string };
-      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
-
-      if (json.orderId) {
-        setOfferMap((prev) => {
-          const existing = prev.get(offerId);
-          if (!existing) return prev;
-          const next = new Map(prev);
-          next.set(offerId, {
-            ...existing,
-            status: "accepted",
-            orderId: json.orderId,
-            orderStatus: existing.orderStatus ?? "awaiting_payment",
-          });
-          return next;
-        });
-      }
-
-      toast({ title: "Offer accepted! Buyer has been notified to pay." });
-      const rec = offerMap.get(offerId);
-      if (rec) trackOfferAccepted({ offerId, amountPence: rec.amountPence });
-      void loadOffers();
-    } catch (err) {
-      toast({ title: "Failed to accept offer", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setActingOnOffer(null);
-    }
-  };
-
-  const handleDeclineOffer = async (offerId: string) => {
-    setActingOnOffer(offerId);
-    try {
-      const res = await authorizedFetch("/.netlify/functions/offer-decline", {
-        method: "POST",
-        body: JSON.stringify({ offerId }),
-      });
-      const json = await res.json() as { success?: boolean; error?: string; details?: string };
-      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
-
-      toast({ title: "Offer declined." });
-      void loadOffers();
-    } catch (err) {
-      toast({ title: "Failed to decline offer", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setActingOnOffer(null);
-    }
-  };
-
-  const handlePayNow = async (offerId: string, orderId: string, status: string) => {
-    console.log("PAY_NOW_CLICK", { offerId, orderId, status });
-    try {
-      const res = await authorizedFetch("/.netlify/functions/checkout-from-offer", {
-        method: "POST",
-        body: JSON.stringify({ orderId }),
-      });
-      const json = await res.json() as { checkoutUrl?: string; error?: string };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-      if (!json.checkoutUrl) throw new Error("No checkout URL returned");
-
-      await openExternalUrl(json.checkoutUrl);
-    } catch (err) {
-      toast({ title: "Failed to start checkout", description: (err as Error).message, variant: "destructive" });
-    }
-  };
-
-  const handleCounterOffer = async (offerId: string, amountPence: number, message?: string) => {
-    setActingOnOffer(offerId);
-    try {
-      const res = await authorizedFetch("/.netlify/functions/offer-counter", {
-        method: "POST",
-        body: JSON.stringify({ offerId, amountPence, message }),
-      });
-      const json = await res.json() as { offerId?: string; error?: string; details?: string };
-      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
-      toast({ title: "Counter offer sent." });
-      void loadOffers();
-    } catch (err) {
-      toast({ title: "Failed to send counter offer", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setActingOnOffer(null);
-    }
-  };
-
-  const handleCancelOffer = async (offerId: string) => {
-    setActingOnOffer(offerId);
-    try {
-      const res = await authorizedFetch("/.netlify/functions/offer-cancel", {
-        method: "POST",
-        body: JSON.stringify({ offerId }),
-      });
-      const json = await res.json() as { success?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-
-      toast({ title: "Offer cancelled." });
-      void loadOffers();
-    } catch (err) {
-      toast({ title: "Failed to cancel offer", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setActingOnOffer(null);
-    }
-  };
-
-  useEffect(() => {
-    if (!routeOfferId || !selectedId) return;
-    const el = document.querySelector(`[data-offer-id="${routeOfferId}"]`) as HTMLElement | null;
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [routeOfferId, selectedId, messages, offerMap]);
 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
@@ -1392,17 +830,6 @@ export default function DesktopConversationView() {
                 </p>
               )}
             </div>
-            {/* Make Offer — buyers only (not the listing seller) */}
-            {otherId && !isSeller && (
-              <button
-                onClick={() => setOfferOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/40 text-primary text-xs font-semibold hover:bg-primary/10 transition-colors shrink-0"
-                aria-label="Make an offer"
-              >
-                <Tag className="h-3.5 w-3.5" />
-                <span>Offer</span>
-              </button>
-            )}
           </div>
 
           {/* Messages area */}
@@ -1427,97 +854,33 @@ export default function DesktopConversationView() {
               messages.map((msg) => {
                 const isMine = msg.senderId === user?.id;
                 const parsed = parseMessage(msg.message);
-                const offerRecord = parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null;
-
-                if (import.meta.env.DEV) {
-                  console.log("RAW MESSAGE:", msg.message);
-                  let parsedDebug: unknown = null;
-                  if (typeof msg.message === "string") {
-                    try {
-                      parsedDebug = JSON.parse(msg.message);
-                    } catch {
-                      parsedDebug = null;
-                    }
-                  }
-                  const parsedRecord =
-                    parsedDebug && typeof parsedDebug === "object"
-                      ? (parsedDebug as Record<string, unknown>)
-                      : null;
-                  const parsedOfferId =
-                    typeof parsedRecord?.offerId === "string" ? parsedRecord.offerId : undefined;
-                  console.log("PARSED:", parsedDebug);
-                  console.log("TYPE:", parsedRecord?._t);
-                  console.log("OFFER ID:", parsedOfferId);
-                  console.log("offerMap:", Object.fromEntries(offerMap.entries()));
-                  console.log("MATCHED OFFER:", parsedOfferId ? offerMap.get(parsedOfferId) : undefined);
-                }
 
                 if (parsed.type === "system") {
                   return (
                     <SystemEventCard
                       key={msg.id}
                       event={parsed.event}
-                      amountPence={parsed.amountPence}
                     />
                   );
                 }
-
                 return (
                   <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                    {parsed.type === "offer" ? (
-                      <OfferBubble
-                        amount_pence={parsed.amount_pence ?? offerRecord?.amountPence ?? 0}
-                        offerId={parsed.offerId}
-                        isMine={isMine}
-                        isSeller={isSeller}
-                        currentUserId={user?.id}
-                        productTitle={parsed.productTitle}
-                        note={parsed.note}
-                        offerRecord={offerRecord}
-                        actingOnOffer={actingOnOffer}
-                        onAccept={parsed.offerId ? () => void handleAcceptOffer(parsed.offerId!) : undefined}
-                        onDecline={parsed.offerId ? () => void handleDeclineOffer(parsed.offerId!) : undefined}
-                        onCounter={parsed.offerId ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message) : undefined}
-                        onCancel={parsed.offerId ? () => void handleCancelOffer(parsed.offerId!) : undefined}
-                        highlightedOfferId={routeOfferId}
-                        onPayNow={(() => {
-                          if (!parsed.offerId) return undefined;
-                          return () => {
-                            const rec = offerMap.get(parsed.offerId!);
-                            const oid = rec?.orderId ?? null;
-                            const status = rec?.status ?? "accepted";
-                            if (!oid) {
-                              console.log("PAY_NOW_CLICK", { offerId: parsed.offerId, orderId: oid, status });
-                              toast({
-                                title: "Checkout not ready",
-                                description: "Order is still syncing. Please try again in a moment.",
-                                variant: "destructive",
-                              });
-                              void loadOffers();
-                              return;
-                            }
-                            void handlePayNow(parsed.offerId!, oid, status);
-                          };
-                        })()}
-                      />
-                    ) : (
-                      <div
-                        className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                          isMine
-                            ? "bg-primary text-black rounded-br-sm"
-                            : "bg-muted text-foreground rounded-bl-sm"
+                    <div
+                      className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                        isMine
+                          ? "bg-primary text-black rounded-br-sm"
+                          : "bg-muted text-foreground rounded-bl-sm"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap break-words">{parsed.text}</p>
+                      <p
+                        className={`text-[10px] mt-1 ${
+                          isMine ? "text-primary-foreground/70" : "text-muted-foreground"
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words">{parsed.text}</p>
-                        <p
-                          className={`text-[10px] mt-1 ${
-                            isMine ? "text-primary-foreground/70" : "text-muted-foreground"
-                          }`}
-                        >
-                          {formatDate(msg.createdAt)}
-                        </p>
-                      </div>
-                    )}
+                        {formatDate(msg.createdAt)}
+                      </p>
+                    </div>
                   </div>
                 );
               })
@@ -1564,18 +927,6 @@ export default function DesktopConversationView() {
             </p>
           </div>
         </div>
-      )}
-
-      {/* Make Offer Sheet — buyer only */}
-      {otherId && !isSeller && selectedId && (
-        <MakeOfferSheet
-          open={offerOpen}
-          onOpenChange={setOfferOpen}
-          conversationId={selectedId}
-          receiverId={otherId}
-          productTitle={productTitle ?? selectedConv?.subject ?? undefined}
-          onSent={() => void loadOffers()}
-        />
       )}
     </div>
   );

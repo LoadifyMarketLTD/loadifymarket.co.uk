@@ -80,69 +80,19 @@ function renderProductInfo(props: Partial<ComponentProps<typeof ProductInfo>> = 
 }
 
 describe("ProductInfo contact CTAs", () => {
-  it("renders desktop Message and Offer buttons and triggers their handlers", async () => {
+  it("renders a Message button and triggers its handler", async () => {
     const user = userEvent.setup();
     const onMessageSeller = vi.fn();
-    const onMakeOffer = vi.fn();
 
-    renderProductInfo({ onMessageSeller, onMakeOffer });
+    renderProductInfo({ onMessageSeller });
 
     await user.click(screen.getByRole("button", { name: "Message" }));
-    await user.click(screen.getByRole("button", { name: "Offer" }));
 
     expect(onMessageSeller).toHaveBeenCalledTimes(1);
-    expect(onMakeOffer).toHaveBeenCalledTimes(1);
   });
 
-  it("shows loading labels while message or offer actions are pending", () => {
-    const { rerender } = render(
-      <MemoryRouter>
-        <ProductInfo
-          title={product.title}
-          category={product.category}
-          subcategory={product.subcategory}
-          condition={product.condition}
-          location={product.location}
-          unitCount={product.unitCount}
-          views={product.views}
-          listed={product.listed}
-          product={product}
-          sellerId="seller-1"
-          onShareFacebook={vi.fn()}
-          onShareWhatsApp={vi.fn()}
-          onCopyLink={vi.fn()}
-          onMessageSeller={vi.fn()}
-          onMakeOffer={vi.fn()}
-          contactActionLoading="message"
-        />
-      </MemoryRouter>,
-    );
-
+  it("shows a loading label while the message action is pending", () => {
+    renderProductInfo({ onMessageSeller: vi.fn(), contactActionLoading: "message" });
     expect(screen.getByRole("button", { name: /opening/i })).toBeDisabled();
-
-    rerender(
-      <MemoryRouter>
-        <ProductInfo
-          title={product.title}
-          category={product.category}
-          subcategory={product.subcategory}
-          condition={product.condition}
-          location={product.location}
-          unitCount={product.unitCount}
-          views={product.views}
-          listed={product.listed}
-          product={product}
-          sellerId="seller-1"
-          onShareFacebook={vi.fn()}
-          onShareWhatsApp={vi.fn()}
-          onCopyLink={vi.fn()}
-          onMessageSeller={vi.fn()}
-          onMakeOffer={vi.fn()}
-          contactActionLoading="offer"
-        />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByRole("button", { name: /preparing/i })).toBeDisabled();
   });
 });
