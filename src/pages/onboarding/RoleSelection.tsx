@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ShoppingBag, Store, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store";
 import { supabase } from "@/lib/supabase";
@@ -17,22 +17,24 @@ const BUYER_ONBOARDING_STEP = 0;
  * - Buyer  → sets role=buyer, onboardingCompleted=true, redirects /buyer
  * - Seller → sets role=seller, onboardingCompleted=false, redirects /onboarding
  *
- * The userId is passed as ?uid= from the signup flow so that the role can be
- * persisted even before the user has an active session (email confirmation pending).
- * If the user already has a session in the auth store, their id takes precedence.
+ * Role updates are allowed only for the authenticated session user.
  */
 const RoleSelection = () => {
   const [selected, setSelected] = useState<"buyer" | "seller" | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user } = useAuthStore();
 
-  // Resolve user ID — prefer live session, fall back to ?uid= param from signup.
-  const uid = user?.id ?? searchParams.get("uid");
-
   const handleContinue = async () => {
-    if (!selected || !uid) return;
+    if (!selected || !user?.id) {
+      toast({
+        title: "Sign-in required",
+        description: "Please sign in to continue onboarding.",
+        variant: "destructive",
+      });
+      navigate("/auth", { replace: true });
+      return;
+    }
     setLoading(true);
 
     try {
@@ -44,7 +46,7 @@ const RoleSelection = () => {
           onboardingCompleted: selected === "buyer",
           onboardingStep: selected === "seller" ? SELLER_INITIAL_STEP : BUYER_ONBOARDING_STEP,
         })
-        .eq("id", uid);
+        .eq("id", user.id);
 
       if (error) throw error;
 

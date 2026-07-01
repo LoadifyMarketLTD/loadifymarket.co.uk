@@ -31,6 +31,8 @@ export interface RateLimitOptions {
   windowMinutes: number;
   /** Maximum number of attempts allowed within the window. */
   maxAttempts: number;
+  /** Error handling policy when DB-backed rate limiting is unavailable. */
+  policy?: 'fail-open' | 'fail-closed' | 'fail-soft';
 }
 
 export interface RateLimitResult {
@@ -38,6 +40,63 @@ export interface RateLimitResult {
   exceeded: boolean;
   /** Current attempt count (after incrementing). */
   attempts: number;
+}
+
+interface InMemoryRateLimitState {
+  attempts: number;
+  windowEndMs: number;
+}
+
+const inMemoryFallback = new Map<string, InMemoryRateLimitState>();
+
+function fallbackKey(tableName: string, identifier: string, windowEnd: string): string {
+  return `${tableName}::${identifier}::${windowEnd}`;
+}
+
+function runInMemoryFallback(
+  tableName: string,
+  identifier: string,
+  windowEnd: string,
+  maxAttempts: number,
+): RateLimitResult {
+  const key = fallbackKey(tableName, identifier, windowEnd);
+  const windowEndMs = Date.parse(windowEnd);
+  const now = Date.now();
+  const prev = inMemoryFallback.get(key);
+  if (prev && prev.windowEndMs <= now) {
+    inMemoryFallback.delete(key);
+  }
+
+  const current = inMemoryFallback.get(key);
+  const attempts = (current?.attempts ?? 0) + 1;
+  inMemoryFallback.set(key, { attempts, windowEndMs });
+  return { exceeded: attempts > maxAttempts, attempts };
+}
+
+function handlePolicyFailure(
+  policy: 'fail-open' | 'fail-closed' | 'fail-soft',
+  tableName: string,
+  identifier: string,
+  windowEnd: string,
+  maxAttempts: number,
+  stage: 'select' | 'update' | 'insert' | 'exception',
+  error: unknown,
+): RateLimitResult {
+  console.error('rate-limiter-backend-unavailable', {
+    tableName,
+    stage,
+    policy,
+    identifierPrefix: identifier.slice(0, 16),
+    error: error instanceof Error ? error.message : String(error),
+  });
+
+  if (policy === 'fail-closed') {
+    return { exceeded: true, attempts: maxAttempts };
+  }
+  if (policy === 'fail-soft') {
+    return runInMemoryFallback(tableName, identifier, windowEnd, maxAttempts);
+  }
+  return { exceeded: false, attempts: 0 };
 }
 
 /**
@@ -52,14 +111,20 @@ export interface RateLimitResult {
 export async function checkRateLimit(
   opts: RateLimitOptions,
 ): Promise<RateLimitResult> {
-  const { supabase, tableName, identifier, windowMinutes, maxAttempts } = opts;
+  const {
+    supabase,
+    tableName,
+    identifier,
+    windowMinutes,
+    maxAttempts,
+    policy = 'fail-open',
+  } = opts;
+  const windowEnd = new Date(
+    Math.ceil(Date.now() / (windowMinutes * 60 * 1000)) *
+      (windowMinutes * 60 * 1000),
+  ).toISOString();
 
   try {
-    const windowEnd = new Date(
-      Math.ceil(Date.now() / (windowMinutes * 60 * 1000)) *
-        (windowMinutes * 60 * 1000),
-    ).toISOString();
-
     const { data: rl, error: selectError } = await supabase
       .from(tableName)
       .select('id, attempts')
@@ -68,8 +133,15 @@ export async function checkRateLimit(
       .maybeSingle<{ id: string; attempts: number }>();
 
     if (selectError) {
-      // Table may not exist yet — fail open.
-      return { exceeded: false, attempts: 0 };
+      return handlePolicyFailure(
+        policy,
+        tableName,
+        identifier,
+        windowEnd,
+        maxAttempts,
+        'select',
+        selectError,
+      );
     }
 
     if (rl && rl.attempts >= maxAttempts) {
@@ -77,19 +149,48 @@ export async function checkRateLimit(
     }
 
     if (rl) {
-      await supabase
+      const { error: updateError } = await supabase
         .from(tableName)
         .update({ attempts: rl.attempts + 1 })
         .eq('id', rl.id);
+      if (updateError) {
+        return handlePolicyFailure(
+          policy,
+          tableName,
+          identifier,
+          windowEnd,
+          maxAttempts,
+          'update',
+          updateError,
+        );
+      }
       return { exceeded: false, attempts: rl.attempts + 1 };
     }
 
-    await supabase
+    const { error: insertError } = await supabase
       .from(tableName)
       .insert({ identifier, windowEnd, attempts: 1 });
+    if (insertError) {
+      return handlePolicyFailure(
+        policy,
+        tableName,
+        identifier,
+        windowEnd,
+        maxAttempts,
+        'insert',
+        insertError,
+      );
+    }
     return { exceeded: false, attempts: 1 };
-  } catch {
-    // Fail open — a DB outage must not block legitimate traffic.
-    return { exceeded: false, attempts: 0 };
+  } catch (error) {
+    return handlePolicyFailure(
+      policy,
+      tableName,
+      identifier,
+      windowEnd,
+      maxAttempts,
+      'exception',
+      error,
+    );
   }
 }

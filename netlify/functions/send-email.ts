@@ -232,6 +232,7 @@ export const handler: Handler = async (event) => {
         identifier: `${isPublicContact ? 'public' : 'internal'}:ip:${ip}`,
         windowMinutes: 15,
         maxAttempts: isPublicContact ? 5 : 40,
+        policy: 'fail-soft',
       });
       if (rl.exceeded) {
         return {
@@ -250,6 +251,7 @@ export const handler: Handler = async (event) => {
           identifier: `public:email:${contactEmail}`,
           windowMinutes: 15,
           maxAttempts: 3,
+          policy: 'fail-soft',
         });
         if (byEmail.exceeded) {
           return {

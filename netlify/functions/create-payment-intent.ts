@@ -134,6 +134,7 @@ export const handler: Handler = async (event) => {
     identifier: verifiedBuyerId,
     windowMinutes: 60,
     maxAttempts: 10,
+    policy: 'fail-soft',
   });
   if (piRl.exceeded) {
     return {
