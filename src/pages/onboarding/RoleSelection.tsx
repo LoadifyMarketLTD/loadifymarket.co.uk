@@ -2,13 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShoppingBag, Store, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store";
-import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { toast } from "@/hooks/use-toast";
-
-/** First step in the seller onboarding wizard. */
-const SELLER_INITIAL_STEP = 1;
-/** Buyers complete onboarding immediately — no wizard steps. */
-const BUYER_ONBOARDING_STEP = 0;
 
 /**
  * /onboarding/role-selection
@@ -17,7 +12,8 @@ const BUYER_ONBOARDING_STEP = 0;
  * - Buyer  → sets role=buyer, onboardingCompleted=true, redirects /buyer
  * - Seller → sets role=seller, onboardingCompleted=false, redirects /onboarding
  *
- * Role updates are allowed only for the authenticated session user.
+ * Role updates are performed server-side and allowed only for the
+ * authenticated session user.
  */
 const RoleSelection = () => {
   const [selected, setSelected] = useState<"buyer" | "seller" | null>(null);
@@ -38,17 +34,20 @@ const RoleSelection = () => {
     setLoading(true);
 
     try {
-      // Update role and onboarding state in the users table.
-      const { error } = await supabase
-        .from("users")
-        .update({
-          role: selected,
-          onboardingCompleted: selected === "buyer",
-          onboardingStep: selected === "seller" ? SELLER_INITIAL_STEP : BUYER_ONBOARDING_STEP,
-        })
-        .eq("id", user.id);
-
-      if (error) throw error;
+      const response = await authorizedFetch("/.netlify/functions/set-account-role", {
+        method: "POST",
+        body: JSON.stringify({ role: selected }),
+      });
+      if (!response.ok) {
+        let message = "Please try again or contact support.";
+        try {
+          const payload = (await response.json()) as { error?: string };
+          if (payload?.error) message = payload.error;
+        } catch {
+          // ignore malformed response payloads
+        }
+        throw new Error(message);
+      }
 
       toast({
         title: selected === "buyer" ? "Welcome to Loadify Market!" : "Let's set up your seller account",
@@ -65,9 +64,10 @@ const RoleSelection = () => {
       }
     } catch (err) {
       console.error("Role selection error:", err);
+      const message = err instanceof Error ? err.message : "Please try again or contact support.";
       toast({
         title: "Something went wrong",
-        description: "Please try again or contact support.",
+        description: message,
         variant: "destructive",
       });
     } finally {
