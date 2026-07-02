@@ -5,7 +5,7 @@
  *   [Create account]  [Log in]  [Continue browsing]
  *
  * Triggered via useAuthPromptStore().open(context?) from any component.
- * Does NOT force login on browse — only actions (message/buy/sell/save/offer).
+ * Does NOT force login on browse — only actions (message/buy/sell/save).
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -17,7 +17,6 @@ const CONTEXT_MESSAGES: Record<NonNullable<AuthPromptContext>, string> = {
   sell: 'Create an account to start selling.',
   message: 'Create an account to message the seller.',
   buy: 'Create an account to checkout safely.',
-  offer: 'Create an account to make an offer.',
   save: 'Create an account to save items.',
 };
 

@@ -226,36 +226,6 @@ paths:
         '200':
           description: Conversation ready
 
-  /conversation-offer:
-    post:
-      tags: [Offers & Messages]
-      summary: Send offer in conversation
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Offer created
-
-  /offer-accept:
-    post:
-      tags: [Offers & Messages]
-      summary: Accept offer
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Offer accepted
-
-  /offer-decline:
-    post:
-      tags: [Offers & Messages]
-      summary: Decline offer
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Offer declined
-
   /connect-onboard:
     post:
       tags: [Seller Payouts]

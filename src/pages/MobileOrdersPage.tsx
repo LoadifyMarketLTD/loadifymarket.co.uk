@@ -29,7 +29,6 @@ interface OrderRow {
   quantity: number;
   productTitle: string | null;
   productImage: string | null;
-  conversationId: string | null;
 }
 
 type Tab = "all" | "pending" | "shipped" | "delivered" | "cancelled";
@@ -196,7 +195,7 @@ export default function MobileOrdersPage() {
         const { data } = await supabase
           .from("orders")
           .select(
-            `id, orderNumber, total, status, createdAt, offerId, quantity,
+            `id, orderNumber, total, status, createdAt, quantity,
              products:productId(title, images)`
           )
           .eq("buyerId", user.id)
@@ -207,34 +206,6 @@ export default function MobileOrdersPage() {
           return;
         }
 
-        const offerIds = (
-          data as unknown as Array<{
-            id: string;
-            orderNumber: string;
-            total: number;
-            status: string;
-            createdAt: string;
-            quantity: number;
-            offerId: string | null;
-            products: { title: string; images: string[] | null } | null;
-          }>
-        )
-          .map((o) => o.offerId)
-          .filter((x): x is string => x != null);
-
-        const convMap: Record<string, string> = {};
-        if (offerIds.length > 0) {
-          const { data: offerRows } = await supabase
-            .from("offers")
-            .select("id, conversationId")
-            .in("id", offerIds);
-          (offerRows ?? []).forEach(
-            (r: { id: string; conversationId: string }) => {
-              convMap[r.id] = r.conversationId;
-            }
-          );
-        }
-
         const rows: OrderRow[] = (
           data as unknown as Array<{
             id: string;
@@ -243,7 +214,6 @@ export default function MobileOrdersPage() {
             status: string;
             createdAt: string;
             quantity: number;
-            offerId: string | null;
             products: { title: string; images: string[] | null } | null;
           }>
         ).map((o) => ({
@@ -255,7 +225,6 @@ export default function MobileOrdersPage() {
           quantity: o.quantity ?? 1,
           productTitle: o.products?.title ?? null,
           productImage: (o.products?.images ?? [])[0] ?? null,
-          conversationId: o.offerId ? (convMap[o.offerId] ?? null) : null,
         }));
 
         setOrders(rows);
@@ -382,7 +351,7 @@ export default function MobileOrdersPage() {
           <div className="flex items-start gap-2 rounded-xl bg-primary/10 border border-primary/40 p-3 mt-3">
             <AlertCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
             <p className="text-primary text-xs leading-relaxed">
-              You have offers awaiting payment. Tap an order to complete checkout before the reservation expires.
+              You have orders awaiting payment. Tap an order to complete checkout before the reservation expires.
             </p>
           </div>
         )}

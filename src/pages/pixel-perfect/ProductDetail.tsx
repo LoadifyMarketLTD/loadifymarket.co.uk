@@ -22,7 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, ChevronRight, Loader2 } from "lucide-react";
+import { Flag, ShoppingCart, ArrowLeft, Share2, Heart, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import { shareProduct, canShare } from "@/lib/shareProduct";
@@ -30,7 +30,6 @@ import { isCapacitorNative } from "@/lib/capacitorUtils";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
-import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { useCart } from "@/contexts/CartContext";
 import {
   trackProductView,
@@ -128,9 +127,7 @@ const ProductDetail = () => {
   const [reportLoading, setReportLoading] = useState(false);
 
   // Mobile CTA state
-  const [ctaLoadingAction, setCtaLoadingAction] = useState<"message" | "offer" | null>(null);
-  const [offerConvId, setOfferConvId] = useState<string | null>(null);
-  const [offerOpen, setOfferOpen] = useState(false);
+  const [ctaLoadingAction, setCtaLoadingAction] = useState<"message" | null>(null);
   // Listing availability state (active | reserved | sold)
   const [listingStatus, setListingStatus] = useState<string>("active");
   // Mobile wishlist state (mirrored for the mobile overlay header)
@@ -345,7 +342,7 @@ const ProductDetail = () => {
 
   /** Guards against unauthenticated access and resolves/creates the conversation id. */
   const requireConversation = async (
-    action: "message" | "offer",
+    action: "message",
     context: import('@/store/authPromptStore').AuthPromptContext = null,
   ): Promise<string | null> => {
     if (!user) { promptAuth(context); return null; }
@@ -402,13 +399,6 @@ const ProductDetail = () => {
     navigate("/checkout");
   };
 
-  const handleMakeOffer = async () => {
-    const convId = await requireConversation("offer", "offer");
-    if (convId) {
-      setOfferConvId(convId);
-      setOfferOpen(true);
-    }
-  };
 
   const handleMessage = async () => {
     const convId = await requireConversation("message", "message");
@@ -830,7 +820,6 @@ const ProductDetail = () => {
                     onNativeShare={handleNativeShare}
                     supportsNativeShare={supportsNativeShare}
                     onMessageSeller={() => void handleMessage()}
-                    onMakeOffer={() => void handleMakeOffer()}
                     contactActionLoading={ctaLoadingAction}
                   />
                 </div>
@@ -959,17 +948,6 @@ const ProductDetail = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Make Offer sheet */}
-      {offerConvId && productSellerId && (
-        <MakeOfferSheet
-          open={offerOpen}
-          onOpenChange={setOfferOpen}
-          conversationId={offerConvId}
-          receiverId={productSellerId}
-          productTitle={product?.title}
-          onSent={() => navigate(`/inbox/${offerConvId}`)}
-        />
-      )}
 
       {/* ── Mobile sticky bottom CTA — hidden on desktop ─────────────────────── */}
       {isMobileCtaVisible && (
@@ -1051,42 +1029,6 @@ const ProductDetail = () => {
                   <>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                     Message
-                  </>
-                )}
-              </button>
-
-              {/* Make Offer */}
-              <button
-                onClick={() => void handleMakeOffer()}
-                disabled={ctaLoadingAction !== null}
-                aria-busy={ctaLoadingAction === "offer"}
-                style={{
-                  flex: 1,
-                  padding: "14px 8px",
-                  borderRadius: "12px",
-                  background: "rgba(255,255,255,0.07)",
-                  color: "rgba(255,255,255,1)",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "5px",
-                }}
-                className="active:bg-white/10 transition-colors disabled:opacity-50"
-                aria-label="Make an offer"
-              >
-                {ctaLoadingAction === "offer" ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Preparing…
-                  </>
-                ) : (
-                  <>
-                    <Tag style={{ width: "14px", height: "14px" }} />
-                    Offer
                   </>
                 )}
               </button>

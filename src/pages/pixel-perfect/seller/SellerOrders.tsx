@@ -166,7 +166,7 @@ const SellerOrders = () => {
               const awaitingCount = orders.filter((o) => o.status === "awaiting_payment").length;
               return (
                 <p className="text-sm font-semibold text-primary dark:text-primary">
-                  {awaitingCount} accepted offer{awaitingCount > 1 ? "s" : ""} awaiting buyer payment
+                  {awaitingCount} order{awaitingCount > 1 ? "s" : ""} awaiting buyer payment
                 </p>
               );
             })()}

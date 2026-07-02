@@ -1,7 +1,7 @@
 /**
  * MobileNotificationsPage — /profile/notifications
  *
- * Simple mobile notifications list. Shows messages, orders and offers.
+ * Simple mobile notifications list. Shows messages, orders, and account activity.
  * No advanced controls, no daily limits, no email/push split.
  */
 
@@ -206,7 +206,7 @@ export default function MobileNotificationsPage() {
             No notifications yet
           </p>
           <p className="text-[13px] text-foreground/25 m-0" style={{ maxWidth: 240 }}>
-            Messages, orders, and offers will appear here.
+            Messages, orders, and account activity will appear here.
           </p>
         </div>
       ) : (

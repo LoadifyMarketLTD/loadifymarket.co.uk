@@ -15,9 +15,6 @@ const typeColor: Record<string, string> = {
   shipment:         "bg-indigo-500/10 text-indigo-700",
   product_question: "bg-primary/10 text-primary",
   message:          "bg-primary/10 text-primary",
-  offer_received:   "bg-violet-500/10 text-violet-700",
-  offer_accepted:   "bg-success/10 text-success",
-  offer_rejected:   "bg-danger/100/10 text-danger",
   listing_published: "bg-success/10 text-success",
   listing_sold:      "bg-success/10 text-success",
   share_reminder:   "bg-primary/10 text-primary",
@@ -51,10 +48,7 @@ function buildSellerMessageRoute(link?: string | null) {
   if (!link) return null;
   const conversationId = extractConversationId(link);
   if (!conversationId) return link;
-  const url = new URL(link, "https://loadifymarket.co.uk");
-  const offerId = url.searchParams.get("offerId");
   const query = new URLSearchParams({ conversationId });
-  if (offerId) query.set("offerId", offerId);
   return `/seller/messages?${query.toString()}`;
 }
 
@@ -288,11 +282,9 @@ const SellerNotifications = () => {
             const groupedTitle =
               group.count === 1
                 ? n.title
-                : n.type === "offer_received"
-                  ? `${group.count} offers received for this conversation`
-                  : n.type === "message"
-                    ? `${group.count} new messages in this conversation`
-                    : `${group.count} similar notifications`;
+                : n.type === "message"
+                  ? `${group.count} new messages in this conversation`
+                  : `${group.count} similar notifications`;
 
             return (
             <div

@@ -112,11 +112,19 @@ Database migrations are **not** automated via CI/CD — they are applied manuall
 - Files live in `supabase/` and are named `NNN_description.sql` (e.g. `200_services_marketplace.sql`).
 - Apply in ascending numeric order.
 - Never modify a migration after it has been applied to production; add a new migration instead.
+- Corrective/duplicate-number migrations may exist (for example, multiple fixes for the same RLS area); `VERIFY_migration_health.sql` is the canonical source of expected live state.
 
 **Before applying a migration to production:**
 1. Apply and test on the Supabase development project first.
 2. Review for destructive operations (`DROP`, `ALTER … TYPE`, etc.).
 3. Ensure RLS policies are present for every new table.
+4. Run `supabase/VERIFY_migration_health.sql` on the target environment and save the full query output.
+5. Treat a failed verification report as a hard release gate (no production deploy until fixed).
+
+**Production release gate (mandatory):**
+- Execute `/home/runner/work/loadifymarket.co.uk/loadifymarket.co.uk/supabase/VERIFY_migration_health.sql` in the live Supabase SQL editor.
+- Archive the result output in release evidence (ticket/PR/deploy notes) so reviewers can confirm admin account, RLS/triggers, and rate-limit table health.
+- If any check reports drift/failure, apply corrective migration(s) first, then re-run verification before release approval.
 
 ---
 

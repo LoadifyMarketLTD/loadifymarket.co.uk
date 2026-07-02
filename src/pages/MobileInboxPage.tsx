@@ -65,17 +65,20 @@ function participantName(p: ConversationParticipant) {
   return name || DEFAULT_DISPLAY_NAME;
 }
 
-/** Decode offer messages to a human-readable preview */
+/** Decode archived/system messages to a human-readable preview. */
 function previewText(raw: string | null): string {
   if (!raw) return "";
-  if (raw.startsWith('{"_t":"offer"')) {
+  if (raw.trim().startsWith("{")) {
     try {
-      const parsed = JSON.parse(raw) as { amount_pence?: number };
-      if (typeof parsed.amount_pence === "number") {
-        return `💰 Offer: £${(parsed.amount_pence / 100).toFixed(2)}`;
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      if (parsed._t === "offer") {
+        return "💬 Offer (archived)";
+      }
+      if (parsed._t === "system" && parsed.event === "listing_unavailable") {
+        return "🔒 Listing unavailable";
       }
     } catch {
-      // ignore invalid offer JSON; fall back to raw preview
+      // ignore invalid JSON; fall back to raw preview
     }
   }
   return raw.length > 60 ? raw.slice(0, 60) + "…" : raw;

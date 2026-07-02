@@ -1,29 +1,11 @@
-/**
- * MobileChatPage — /inbox/:conversationId
- *
- * Full-screen chat thread for a single conversation.
- * Features:
- *   - Message bubbles (plain text + real offer cards with state)
- *   - Supabase Realtime for live messages
- *   - Send text message
- *   - "Make Offer" FAB → MakeOfferSheet
- *   - Accept / Decline offer buttons for the seller
- *   - "Pay Now" button for accepted offers (buyer)
- *   - Back button → /inbox
- */
-
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Send, Tag, CheckCircle, XCircle, CreditCard } from "lucide-react";
+import { ArrowLeft, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
-import { openExternalUrl } from "@/lib/capacitorUtils";
-import { getOfferActionAvailability } from "@/lib/offerActions";
-import MakeOfferSheet from "@/components/MakeOfferSheet";
-import { trackOfferAccepted } from "@/lib/analytics";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,18 +25,6 @@ interface ConversationMeta {
   productId: string | null;
 }
 
-interface OfferRecord {
-  id: string;
-  amountPence: number;
-  status: string;
-  proposedById: string;
-  recipientId: string;
-  /** orderId from the linked order (present when status = 'accepted') */
-  orderId?: string | null;
-  /** Live order status from the orders table (updated via Realtime) */
-  orderStatus?: string | null;
-}
-
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 /** Fallback name shown when a participant has not set a display name. */
@@ -72,41 +42,20 @@ function formatTime(iso: string) {
     " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
-/** Parse a message string that may be JSON-encoded offer / system event */
-function parseMessage(raw: unknown): {
-  type: "text" | "offer" | "system";
-  text?: string;
-  // offer fields
-  amount_pence?: number;
-  offerId?: string;
-  productTitle?: string;
-  note?: string;
-  // system event fields
-  event?: string;
-  orderId?: string;
-} {
+function parseMessage(raw: unknown):
+  | { type: "text"; text: string }
+  | { type: "system"; event?: string } {
   const rawText = typeof raw === "string" ? raw : "";
   if (rawText.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(rawText) as Record<string, unknown>;
-      if (
-        parsed._t === "offer" &&
-        (typeof parsed.amount_pence === "number" || typeof parsed.offerId === "string")
-      ) {
-        return {
-          type:         "offer",
-          amount_pence: typeof parsed.amount_pence === "number" ? parsed.amount_pence : undefined,
-          offerId:      typeof parsed.offerId === "string" ? parsed.offerId : undefined,
-          productTitle: typeof parsed.productTitle === "string" ? parsed.productTitle : undefined,
-          note:         typeof parsed.note === "string" ? parsed.note : undefined,
-        };
+      if (parsed._t === "offer") {
+        return { type: "text", text: "Offer (archived)" };
       }
       if (parsed._t === "system") {
         return {
-          type:    "system",
-          event:   typeof parsed.event === "string" ? parsed.event : undefined,
-          orderId: typeof parsed.orderId === "string" ? parsed.orderId : undefined,
-          amount_pence: typeof parsed.amountPence === "number" ? parsed.amountPence : undefined,
+          type: "system",
+          event: typeof parsed.event === "string" ? parsed.event : undefined,
         };
       }
     } catch {
@@ -118,238 +67,14 @@ function parseMessage(raw: unknown): {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-/** Offer bubble with live status from the offers table */
-function OfferBubble({
-  amount_pence,
-  offerId,
-  isMine,
-  isSeller,
-  currentUserId,
-  productTitle,
-  note,
-  offerRecord,
-  actingOnOffer,
-  onAccept,
-  onDecline,
-  onCounter,
-  onCancel,
-  highlightedOfferId,
-  onPayNow,
-}: {
-  amount_pence: number;
-  offerId?: string;
-  isMine: boolean;
-  isSeller: boolean;
-  currentUserId?: string;
-  productTitle?: string;
-  note?: string;
-  offerRecord?: OfferRecord | null;
-  actingOnOffer: string | null;
-  onAccept?: () => void;
-  onDecline?: () => void;
-  onCounter?: (amountPence: number, message?: string) => void;
-  onCancel?: () => void;
-  highlightedOfferId?: string | null;
-  onPayNow?: () => void;
-}) {
-  const pounds = (amount_pence / 100).toFixed(2);
-  const status = offerRecord?.status ?? "pending";
-  const [counterOpen, setCounterOpen] = useState(false);
-  const [customCounter, setCustomCounter] = useState("");
-  const [counterMessage, setCounterMessage] = useState("");
-  const actions = getOfferActionAvailability({
-    status,
-    currentUserId,
-    proposedById: offerRecord?.proposedById,
-    recipientId: offerRecord?.recipientId,
-  });
-  const busy = offerId ? actingOnOffer === offerId : false;
-
-  const statusLabel: Record<string, string> = {
-    pending:   isMine ? "You offered · Pending" : "Offer received · Pending",
-    countered: "Countered",
-    accepted:  "Accepted ✓",
-    rejected:  "Rejected",
-    declined:  "Declined",
-    expired:   "Expired",
-    cancelled: "Cancelled",
-  };
-
-  const statusColour: Record<string, string> = {
-    pending:   "text-warning",
-    countered: "text-primary",
-    accepted:  "text-success",
-    rejected:  "text-danger",
-    declined:  "text-danger",
-    expired:   "text-white/30",
-    cancelled: "text-white/30",
-  };
-
-  return (
-    <div
-      data-offer-id={offerId}
-      className={`rounded-2xl px-4 py-3 max-w-[80%] ${
-        isMine
-          ? "bg-primary/15 border border-primary/30 rounded-br-sm"
-          : "bg-primary/10 border border-primary/20 rounded-bl-sm"
-      } ${offerId && highlightedOfferId === offerId ? "ring-2 ring-primary/80" : ""}`}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <Tag className="h-3.5 w-3.5 text-primary" />
-        <span className="text-xs font-semibold text-primary uppercase tracking-wide">Offer</span>
-      </div>
-      {productTitle && (
-        <p className="text-xs text-white/75 mb-1 truncate">{productTitle}</p>
-      )}
-      {note && (
-        <p className="text-xs text-white/70 mb-1 whitespace-pre-wrap break-words">{note}</p>
-      )}
-      <p className="text-xl font-bold text-white">£{pounds}</p>
-      <p className={`text-[11px] mt-1 ${statusColour[status] ?? "text-white/40"}`}>
-        {statusLabel[status] ?? status}
-      </p>
-
-      {actions.canAccept && (
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={onAccept}
-            disabled={busy}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-success/100/20 border border-green-500/40 text-success text-xs font-semibold active:bg-success/100/30 transition-colors"
-          >
-            <CheckCircle className="h-3.5 w-3.5" />
-            {busy ? "…" : "Accept"}
-          </button>
-          <button
-            onClick={onDecline}
-            disabled={busy}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-danger/100/20 border border-red-500/40 text-danger text-xs font-semibold active:bg-danger/100/30 transition-colors"
-          >
-            <XCircle className="h-3.5 w-3.5" />
-            {busy ? "…" : "Reject"}
-          </button>
-          <button
-            onClick={() => setCounterOpen((v) => !v)}
-            disabled={busy}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-primary/20 border border-primary/40 text-primary text-xs font-semibold active:bg-primary/30 transition-colors"
-          >
-            {busy ? "…" : "Counter"}
-          </button>
-        </div>
-      )}
-      {actions.canCounter && counterOpen && (
-        <div className="mt-2 space-y-2">
-          <div className="grid grid-cols-2 gap-2">
-            {[1.05, 1.1, 1.15].map((factor) => {
-              const suggested = Math.round(amount_pence * factor);
-              return (
-                <button
-                  key={factor}
-                  onClick={() => onCounter?.(suggested, counterMessage || undefined)}
-                  disabled={busy}
-                  className="rounded-lg border border-white/20 px-2 py-1 text-xs font-medium text-white/90"
-                >
-                  Counter £{(suggested / 100).toFixed(2)}
-                </button>
-              );
-            })}
-            <input
-              value={customCounter}
-              onChange={(e) => setCustomCounter(e.target.value)}
-              placeholder="Custom £"
-              className="rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white"
-            />
-              <button
-                onClick={() => {
-                  const poundsValue = Number(customCounter);
-                  if (!Number.isFinite(poundsValue) || poundsValue <= 0) return;
-                  onCounter?.(Math.round(poundsValue * 100), counterMessage || undefined);
-                }}
-                disabled={busy}
-                className="rounded-lg border border-primary/40 px-2 py-1 text-xs font-semibold text-primary"
-              >
-                Send custom
-            </button>
-          </div>
-          <textarea
-            value={counterMessage}
-            onChange={(e) => setCounterMessage(e.target.value)}
-            placeholder="Optional message"
-            maxLength={500}
-            rows={2}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white"
-          />
-        </div>
-      )}
-      {actions.canCancel && (
-        <button
-          onClick={onCancel}
-          disabled={busy}
-          className="mt-3 w-full rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 active:bg-white/10 disabled:opacity-40"
-        >
-          {busy ? "…" : "Cancel offer"}
-        </button>
-      )}
-
-      {/* Buyer: Pay Now button for accepted offers awaiting payment */}
-      {!isSeller && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
-        <button
-          onClick={onPayNow}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-black text-sm font-bold transition-colors"
-        >
-          <CreditCard className="h-4 w-4" />
-          Pay Now
-        </button>
-      )}
-
-      {/* Buyer: payment confirmed state */}
-      {!isSeller && status === "accepted" && offerRecord?.orderStatus === "paid" && (
-        <p className="mt-3 text-center text-xs font-semibold text-success">
-          ✓ Payment confirmed
-        </p>
-      )}
-    </div>
-  );
-}
-
-/** System event card (offer accepted / declined / listing unavailable) */
-function SystemEventCard({ event, amountPence }: { event?: string; amountPence?: number }) {
-  const pounds = amountPence ? `£${(amountPence / 100).toFixed(2)}` : "";
-
-  const content: Record<string, { icon: string; text: string }> = {
-    offer_accepted: {
-      icon: "🎉",
-      text: pounds ? `Offer of ${pounds} accepted! Complete payment to secure the item.` : "Offer accepted!",
-    },
-    offer_declined: {
-      icon: "❌",
-      text: pounds ? `Your offer of ${pounds} was declined.` : "Offer declined.",
-    },
-    offer_rejected: {
-      icon: "❌",
-      text: pounds ? `Your offer of ${pounds} was rejected.` : "Offer rejected.",
-    },
-    offer_cancelled: {
-      icon: "↺",
-      text: pounds ? `Offer of ${pounds} was cancelled.` : "Offer cancelled.",
-    },
-    offer_expired: {
-      icon: "⌛",
-      text: pounds ? `Offer of ${pounds} expired before anyone responded.` : "Offer expired.",
-    },
-    listing_unavailable: {
-      icon: "🔒",
-      text: "This listing has been purchased. It is no longer available.",
-    },
-  };
-
-  const info = event ? content[event] : null;
-  if (!info) return null;
+function SystemEventCard({ event }: { event?: string }) {
+  if (event !== "listing_unavailable") return null;
 
   return (
     <div className="flex justify-center">
       <div className="max-w-[80%] rounded-2xl px-4 py-2.5 bg-white/5 border border-white/10 text-center">
-        <span className="mr-1">{info.icon}</span>
-        <span className="text-xs text-white/75">{info.text}</span>
+        <span className="mr-1">🔒</span>
+        <span className="text-xs text-white/75">This listing has been purchased. It is no longer available.</span>
       </div>
     </div>
   );
@@ -362,7 +87,6 @@ export default function MobileChatPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const routeOfferId = new URLSearchParams(location.search).get("offerId");
   const showDebug = new URLSearchParams(location.search).get("debug") === "1" || import.meta.env.DEV;
   const { user, isLoading } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
@@ -374,13 +98,8 @@ export default function MobileChatPage() {
   const [draft, setDraft] = useState("");
   const [loadingMsgs, setLoadingMsgs] = useState(true);
   const [sending, setSending] = useState(false);
-  const [offerOpen, setOfferOpen] = useState(false);
-  const [offersFeatureUnavailable, setOffersFeatureUnavailable] = useState(false);
-  // Map of offerId → OfferRecord for live status display
-  const [offerMap, setOfferMap] = useState<Map<string, OfferRecord>>(new Map());
   // True when the current user is the seller (listing owner) in this conversation
   const [isSeller, setIsSeller] = useState(false);
-  const [actingOnOffer, setActingOnOffer] = useState<string | null>(null);
   // Typing indicator — true when the other participant is typing
   const [otherTyping, setOtherTyping] = useState(false);
   const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -500,79 +219,6 @@ export default function MobileChatPage() {
     return () => { cancelled = true; };
   }, [conversationId, user?.id, navigate]);
 
-  // Load offers for this conversation and keep offerMap up-to-date.
-  // Orders are fetched in a separate query to avoid PostgREST embedded-resource
-  // relationship resolution (PGRST200) errors when the schema cache is stale.
-  const loadOffers = useCallback(async () => {
-    if (!conversationId || offersFeatureUnavailable || !user?.id) return;
-
-    await authorizedFetch("/.netlify/functions/offer-sync", {
-      method: "POST",
-      body: JSON.stringify({ conversationId }),
-    }).catch((error) => {
-      console.warn("mobile chat: offer-sync failed (non-fatal):", error);
-    });
-
-    const { data: offerRows, error } = await supabase
-      .from("offers")
-      .select("id, amountPence, status, proposedById, recipientId")
-      .eq("conversationId", conversationId)
-      .order("createdAt", { ascending: false })
-      .limit(50);
-
-    if (error) {
-      if (error.code === "42P01") {
-        setOffersFeatureUnavailable(true);
-        setOfferMap(new Map());
-        return;
-      }
-      console.warn("mobile chat: failed to load offers:", error.message);
-      return;
-    }
-
-    if (!offerRows?.length) {
-      setOfferMap(new Map());
-      return;
-    }
-
-    // Fetch related orders via explicit FK column query — no PostgREST join needed.
-    const offerIds = offerRows.map((o) => o.id);
-    const { data: orderRows } = await supabase
-      .from("orders")
-      .select("id, status, offerId")
-      .in("offerId", offerIds);
-
-    const orderByOfferId = new Map(
-      (orderRows ?? []).map((o) => [o.offerId as string, { orderId: o.id as string, orderStatus: o.status as string }]),
-    );
-
-    const mapped = (offerRows as Array<{
-      id: string;
-      amountPence: number;
-      status: string;
-      proposedById: string;
-      recipientId: string;
-    }>).map((o) => ({
-      id:           o.id,
-      amountPence:  o.amountPence,
-      status:       o.status,
-      proposedById: o.proposedById,
-      recipientId:  o.recipientId,
-      // Source of truth for orderId is the orders table via explicit query,
-      // not the message JSON which never contains orderId.
-      orderId: orderByOfferId.get(o.id)?.orderId ?? null,
-      orderStatus: orderByOfferId.get(o.id)?.orderStatus ?? null,
-    }));
-    setOfferMap(new Map(mapped.map((o) => [o.id, o])));
-  }, [conversationId, offersFeatureUnavailable, user?.id]);
-
-  useEffect(() => {
-    void loadOffers();
-  }, [loadOffers]);
-
-  // Reload offers when an offer system message arrives (realtime)
-  // handled inside the messages subscription below.
-
   // Load messages
   useEffect(() => {
     if (!conversationId || !user?.id) return;
@@ -636,7 +282,7 @@ export default function MobileChatPage() {
 
   // Supabase Realtime
   useEffect(() => {
-    if (!conversationId || !user?.id || offersFeatureUnavailable) return;
+    if (!conversationId || !user?.id) return;
 
     const channel = supabase
       .channel(`mobile-chat:${conversationId}`)
@@ -660,128 +306,12 @@ export default function MobileChatPage() {
               .update({ isRead: true, readAt: new Date().toISOString() })
               .eq("id", msg.id);
           }
-          const parsed = parseMessage(msg.message);
-          if (parsed.type === "offer" || parsed.type === "system") {
-            void loadOffers();
-          }
         },
       )
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [conversationId, user?.id, loadOffers, offersFeatureUnavailable]);
-
-  // Offers table Realtime — catch direct status changes (accepted / declined /
-  // cancelled) without relying solely on system messages.
-  useEffect(() => {
-    if (!conversationId || !user?.id) return;
-
-    const offersChannel = supabase
-      .channel(`chat-offers:${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event:  "INSERT",
-          schema: "public",
-          table:  "offers",
-          filter: `conversationId=eq.${conversationId}`,
-        },
-        () => {
-          void loadOffers();
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event:  "UPDATE",
-          schema: "public",
-          table:  "offers",
-          filter: `conversationId=eq.${conversationId}`,
-        },
-        (payload) => {
-          const updated = payload.new as { id: string; status: string };
-          let found = false;
-          setOfferMap((prev) => {
-            const existing = prev.get(updated.id);
-            if (!existing) return prev;
-            found = true;
-            const next = new Map(prev);
-            next.set(updated.id, { ...existing, status: updated.status });
-            return next;
-          });
-          if (!found) {
-            void loadOffers();
-          }
-        },
-      )
-      .subscribe();
-
-    return () => { void supabase.removeChannel(offersChannel); };
-  }, [conversationId, user?.id, offersFeatureUnavailable, loadOffers]);
-
-  // Orders table Realtime — update the Pay Now / payment-confirmed state live
-  // when an order is created or its status changes.
-  // Filter by buyerId so only the buyer receives events for their own orders.
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const ordersChannel = supabase
-      .channel(`chat-orders:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event:  "INSERT",
-          schema: "public",
-          table:  "orders",
-          filter: `buyerId=eq.${user.id}`,
-        },
-        (payload) => {
-          const updated = payload.new as {
-            id: string;
-            status: string;
-            offerId: string | null;
-          };
-          if (!updated.offerId) return;
-          setOfferMap((prev) => {
-            const existing = prev.get(updated.offerId!);
-            if (!existing) return prev;
-            if (existing.orderId === updated.id && existing.orderStatus === updated.status) return prev;
-            const next = new Map(prev);
-            next.set(updated.offerId!, { ...existing, orderId: updated.id, orderStatus: updated.status });
-            return next;
-          });
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event:  "UPDATE",
-          schema: "public",
-          table:  "orders",
-          filter: `buyerId=eq.${user.id}`,
-        },
-        (payload) => {
-          const updated = payload.new as {
-            id: string;
-            status: string;
-            offerId: string | null;
-          };
-          if (!updated.offerId) return;
-          // Only update if this order belongs to an offer in the current chat.
-          setOfferMap((prev) => {
-            const existing = prev.get(updated.offerId!);
-            if (!existing) return prev;
-            if (existing.orderId === updated.id && existing.orderStatus === updated.status) return prev;
-            const next = new Map(prev);
-            next.set(updated.offerId!, { ...existing, orderId: updated.id, orderStatus: updated.status });
-            return next;
-          });
-        },
-      )
-      .subscribe();
-
-    return () => { void supabase.removeChannel(ordersChannel); };
-  }, [user?.id]);
+  }, [conversationId, user?.id]);
 
   // Supabase Presence channel — used for typing indicator only.
   // We join the channel for the conversation; each side broadcasts
@@ -913,134 +443,10 @@ export default function MobileChatPage() {
     }, 1500);
   };
 
-  // ── Offer action handlers ──────────────────────────────────────────────────
-
-  const handleAcceptOffer = async (offerId: string) => {
-    setActingOnOffer(offerId);
-    try {
-      const res = await authorizedFetch("/.netlify/functions/offer-accept", {
-        method: "POST",
-        body: JSON.stringify({ offerId }),
-      });
-
-      const json = await res.json() as { orderId?: string; error?: string; details?: string };
-      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
-
-      if (json.orderId) {
-        setOfferMap((prev) => {
-          const existing = prev.get(offerId);
-          if (!existing) return prev;
-          const next = new Map(prev);
-          next.set(offerId, {
-            ...existing,
-            status: "accepted",
-            orderId: json.orderId,
-            orderStatus: existing.orderStatus ?? "awaiting_payment",
-          });
-          return next;
-        });
-      }
-
-      toast({ title: "Offer accepted! Buyer has been notified to pay." });
-      // Track analytics event
-      const acceptedOffer = offerMap.get(offerId);
-      if (acceptedOffer) {
-        trackOfferAccepted({ offerId, amountPence: acceptedOffer.amountPence });
-      }
-      void loadOffers();
-    } catch (err) {
-      toast({ title: "Failed to accept offer", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setActingOnOffer(null);
-    }
-  };
-
-  const handleDeclineOffer = async (offerId: string) => {
-    setActingOnOffer(offerId);
-    try {
-      const res = await authorizedFetch("/.netlify/functions/offer-decline", {
-        method: "POST",
-        body: JSON.stringify({ offerId }),
-      });
-
-      const json = await res.json() as { success?: boolean; error?: string; details?: string };
-      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
-
-      toast({ title: "Offer declined." });
-      void loadOffers();
-    } catch (err) {
-      toast({ title: "Failed to decline offer", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setActingOnOffer(null);
-    }
-  };
-
-  const handlePayNow = async (offerId: string, orderId: string, status: string) => {
-    console.log("PAY_NOW_CLICK", { offerId, orderId, status });
-    try {
-      const res = await authorizedFetch("/.netlify/functions/checkout-from-offer", {
-        method: "POST",
-        body: JSON.stringify({ orderId }),
-      });
-
-      const json = await res.json() as { checkoutUrl?: string; error?: string };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-      if (!json.checkoutUrl) throw new Error("No checkout URL returned");
-
-      await openExternalUrl(json.checkoutUrl);
-    } catch (err) {
-      toast({ title: "Failed to start checkout", description: (err as Error).message, variant: "destructive" });
-    }
-  };
-
-  const handleCounterOffer = async (offerId: string, amountPence: number, message?: string) => {
-    setActingOnOffer(offerId);
-    try {
-      const res = await authorizedFetch("/.netlify/functions/offer-counter", {
-        method: "POST",
-        body: JSON.stringify({ offerId, amountPence, message }),
-      });
-      const json = await res.json() as { offerId?: string; error?: string; details?: string };
-      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
-
-      toast({ title: "Counter offer sent." });
-      void loadOffers();
-    } catch (err) {
-      toast({ title: "Failed to send counter offer", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setActingOnOffer(null);
-    }
-  };
-
-  const handleCancelOffer = async (offerId: string) => {
-    setActingOnOffer(offerId);
-    try {
-      const res = await authorizedFetch("/.netlify/functions/offer-cancel", {
-        method: "POST",
-        body: JSON.stringify({ offerId }),
-      });
-      const json = await res.json() as { success?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-
-      toast({ title: "Offer cancelled." });
-      void loadOffers();
-    } catch (err) {
-      toast({ title: "Failed to cancel offer", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setActingOnOffer(null);
-    }
-  };
-
-  useEffect(() => {
-    if (!routeOfferId || !conversationId) return;
-    const el = document.querySelector(`[data-offer-id="${routeOfferId}"]`) as HTMLElement | null;
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [routeOfferId, conversationId, messages, offerMap]);
-
   return (
     <div
       className="flex flex-col bg-background"
+      data-is-seller={isSeller ? "true" : "false"}
       style={{
         height: "100dvh",
       }}
@@ -1054,7 +460,7 @@ export default function MobileChatPage() {
           paddingBottom: "0",
         }}
       >
-        {/* Row 1: back + name + offer button */}
+        {/* Row 1: back + name */}
         <div className="flex items-center gap-3 px-4 pb-3">
           <button
             onClick={() => navigate("/inbox")}
@@ -1069,17 +475,6 @@ export default function MobileChatPage() {
               <p className="text-xs text-primary/70 truncate">{convMeta.subject}</p>
             )}
           </div>
-          {/* Make Offer button — buyers only (not the listing seller) */}
-          {otherId && !isSeller && (
-            <button
-              onClick={() => setOfferOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/40 text-primary text-xs font-semibold hover:bg-primary/10 transition-colors"
-              aria-label="Make an offer"
-            >
-              <Tag className="h-3.5 w-3.5" />
-              <span className="hidden xs:inline">Offer</span>
-            </button>
-          )}
         </div>
 
         {/* Row 2: product preview strip (when conversation is linked to a listing) */}
@@ -1114,7 +509,9 @@ export default function MobileChatPage() {
                   flexShrink: 0,
                 }}
               >
-                <Tag className="h-4 w-4 text-white/30" />
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30">
+                  Item
+                </span>
               </div>
             )}
             <p
@@ -1149,103 +546,27 @@ export default function MobileChatPage() {
           messages.map((msg) => {
             const isMine = msg.senderId === user?.id;
             const parsed = parseMessage(msg.message);
-            const offerRecord = parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null;
-
-            if (import.meta.env.DEV) {
-              console.log("RAW MESSAGE:", msg.message);
-              let parsedDebug: unknown = null;
-              if (typeof msg.message === "string") {
-                try {
-                  parsedDebug = JSON.parse(msg.message);
-                } catch {
-                  parsedDebug = null;
-                }
-              }
-              const parsedRecord =
-                parsedDebug && typeof parsedDebug === "object"
-                  ? (parsedDebug as Record<string, unknown>)
-                  : null;
-              const parsedOfferId =
-                typeof parsedRecord?.offerId === "string" ? parsedRecord.offerId : undefined;
-              console.log("PARSED:", parsedDebug);
-              console.log("TYPE:", parsedRecord?._t);
-              console.log("OFFER ID:", parsedOfferId);
-              console.log("offerMap:", Object.fromEntries(offerMap.entries()));
-              console.log("MATCHED OFFER:", parsedOfferId ? offerMap.get(parsedOfferId) : undefined);
-            }
 
             if (parsed.type === "system") {
-              return (
-                <SystemEventCard
-                  key={msg.id}
-                  event={parsed.event}
-                  amountPence={parsed.amount_pence}
-                />
-              );
+              return <SystemEventCard key={msg.id} event={parsed.event} />;
             }
 
             return (
               <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                {parsed.type === "offer" ? (
-                  <OfferBubble
-                    amount_pence={parsed.amount_pence ?? offerRecord?.amountPence ?? 0}
-                    offerId={parsed.offerId}
-                    isMine={isMine}
-                    isSeller={isSeller}
-                    currentUserId={user?.id}
-                    productTitle={parsed.productTitle}
-                    note={parsed.note}
-                    offerRecord={offerRecord}
-                    actingOnOffer={actingOnOffer}
-                    onAccept={parsed.offerId && actingOnOffer !== parsed.offerId
-                      ? () => void handleAcceptOffer(parsed.offerId!)
-                      : undefined}
-                    onDecline={parsed.offerId && actingOnOffer !== parsed.offerId
-                      ? () => void handleDeclineOffer(parsed.offerId!)
-                      : undefined}
-                    onCounter={parsed.offerId && actingOnOffer !== parsed.offerId
-                      ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message)
-                      : undefined}
-                    onCancel={parsed.offerId && actingOnOffer !== parsed.offerId
-                      ? () => void handleCancelOffer(parsed.offerId!)
-                      : undefined}
-                    highlightedOfferId={routeOfferId}
-                    onPayNow={(() => {
-                      if (!parsed.offerId) return undefined;
-                      return () => {
-                        const rec = offerMap.get(parsed.offerId!);
-                        const oid = rec?.orderId ?? null;
-                        const status = rec?.status ?? "accepted";
-                        if (!oid) {
-                          console.log("PAY_NOW_CLICK", { offerId: parsed.offerId, orderId: oid, status });
-                          toast({
-                            title: "Checkout not ready",
-                            description: "Order is still syncing. Please try again in a moment.",
-                            variant: "destructive",
-                          });
-                          void loadOffers();
-                          return;
-                        }
-                        void handlePayNow(parsed.offerId!, oid, status);
-                      };
-                    })()}
-                  />
-                ) : (
-                  <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
-                      isMine
-                        ? "bg-primary text-black rounded-br-sm"
-                        : "bg-white/10 text-white rounded-bl-sm"
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                      {parsed.text}
-                    </p>
-                    <p className={`text-[10px] mt-1 ${isMine ? "text-background/60" : "text-white/40"}`}>
-                      {formatTime(msg.createdAt)}
-                    </p>
-                  </div>
-                )}
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                    isMine
+                      ? "bg-primary text-black rounded-br-sm"
+                      : "bg-white/10 text-white rounded-bl-sm"
+                  }`}
+                >
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    {parsed.text}
+                  </p>
+                  <p className={`text-[10px] mt-1 ${isMine ? "text-background/60" : "text-white/40"}`}>
+                    {formatTime(msg.createdAt)}
+                  </p>
+                </div>
               </div>
             );
           })
@@ -1310,17 +631,6 @@ export default function MobileChatPage() {
         </div>
       </div>
 
-      {/* Make Offer Sheet — buyers only */}
-      {otherId && !isSeller && (
-        <MakeOfferSheet
-          open={offerOpen}
-          onOpenChange={setOfferOpen}
-          conversationId={conversationId ?? ""}
-          receiverId={otherId}
-          productTitle={convMeta?.subject ?? undefined}
-          onSent={() => void loadOffers()}
-        />
-      )}
     </div>
   );
 }
