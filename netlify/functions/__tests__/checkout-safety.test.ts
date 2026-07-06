@@ -143,6 +143,10 @@ function makeSupabaseMock(opts: {
                 })),
                 error: productsError,
               }),
+              update: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnThis(),
+                select: vi.fn().mockResolvedValue({ count: 1, error: null }),
+              }),
             };
           case 'product_shipping':
             return {

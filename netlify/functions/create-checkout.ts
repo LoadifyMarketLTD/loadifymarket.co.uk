@@ -98,6 +98,19 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  let reservedProductIds: string[] = [];
+  const releaseReservedProducts = async () => {
+    if (reservedProductIds.length === 0) return;
+    await supabase
+      .from('products')
+      .update({ listingStatus: 'active', reservedUntil: null })
+      .in('id', reservedProductIds)
+      .eq('listingStatus', 'reserved')
+      .catch((err: unknown) => {
+        console.error('create-checkout: failed to release product reservations:', err);
+      });
+    reservedProductIds = [];
+  };
 
   // 5a. If an Authorization header is present, verify the token and ensure
   //     buyerId matches the authenticated user to prevent order spoofing.
@@ -163,6 +176,16 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }),
       };
     }
+  }
+
+  const maybeRpc = (supabase as typeof supabase & { rpc?: (fn: string) => Promise<unknown> }).rpc;
+  if (typeof maybeRpc === 'function') {
+    await maybeRpc.call(supabase, 'release_expired_reservations').catch((err: unknown) => {
+      console.warn('create-checkout: release_expired_reservations RPC failed (non-fatal):', err);
+    });
+    await maybeRpc.call(supabase, 'release_stale_unpaid_listing_locks').catch((err: unknown) => {
+      console.warn('create-checkout: release_stale_unpaid_listing_locks RPC failed (non-fatal):', err);
+    });
   }
 
   // 5. Validate products from DB (price integrity + availability)
@@ -405,6 +428,34 @@ export const handler: Handler = async (event) => {
   const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
   // ─────────────────────────────────────────────────────────────────────────
 
+  const reservableProductIds = [
+    ...new Set(
+      enrichedItems
+        .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
+        .map((item) => item.productId),
+    ),
+  ];
+  const reservedUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  for (const productId of reservableProductIds) {
+    const { count } = await supabase
+      .from('products')
+      .update({ listingStatus: 'reserved', reservedUntil })
+      .eq('id', productId)
+      .eq('listingStatus', 'active')
+      .select('id', { count: 'exact', head: true });
+
+    if (!count || count === 0) {
+      await releaseReservedProducts();
+      const item = enrichedItems.find((i) => i.productId === productId);
+      return {
+        statusCode: 409,
+        body: JSON.stringify({ error: `Item "${item?.title ?? 'selected item'}" is no longer available` }),
+      };
+    }
+
+    reservedProductIds.push(productId);
+  }
+
   // 6. Create Stripe checkout session
   try {
     const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
@@ -497,6 +548,7 @@ export const handler: Handler = async (event) => {
       // work with — abort so the customer is not charged for an unrecoverable
       // order. Stripe will not charge until the browser completes the redirect.
       console.error('Failed to pre-insert payment_sessions record:', sessionInsertError);
+      await releaseReservedProducts();
       return {
         statusCode: 500,
         body: JSON.stringify({ error: 'Order initialisation failed. Please try again.' }),
@@ -508,6 +560,7 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ url: session.url, sessionId: session.id }),
     };
   } catch (err: unknown) {
+    await releaseReservedProducts();
     const message = err instanceof Error ? err.message : 'Checkout session creation failed';
     return { statusCode: 500, body: JSON.stringify({ error: message }) };
   }

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { useAuthStore } from "@/store";
 import { copyToClipboard } from "@/lib/clipboard";
 import { trackShareProduct, trackCopyLink } from "@/lib/analytics";
@@ -229,12 +230,19 @@ const SellerProducts = () => {
     if (!soldTarget || !user) return;
     setSoldLoading(true);
     try {
-      const { error } = await supabase
-        .from("products")
-        .update({ isActive: false, stockQuantity: 0, stockStatus: "out_of_stock" })
-        .eq("id", soldTarget.id)
-        .eq("sellerId", user.id); // RLS: only owner can update
-      if (error) throw error;
+      const res = await authorizedFetch("/.netlify/functions/update-product", {
+        method: "POST",
+        body: JSON.stringify({
+          id: soldTarget.id,
+          isActive: false,
+          stockQuantity: 0,
+          stockStatus: "out_of_stock",
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+      }
       setProducts((prev) =>
         prev.map((p) =>
           p.id === soldTarget.id

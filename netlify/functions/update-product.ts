@@ -34,9 +34,42 @@ import {
 } from '../../src/lib/listingLocks';
 
 const LOCKED_CRITICAL_FIELDS = ['title', 'type', 'condition', 'price', 'listingContext', 'stockQuantity', 'stockStatus'] as const;
+const UPDATE_ALLOWED_FIELDS = [
+  'title',
+  'description',
+  'type',
+  'listingType',
+  'condition',
+  'price',
+  'categoryId',
+  'subcategoryId',
+  'listingContext',
+  'stockQuantity',
+  'stockStatus',
+  'images',
+  'specifications',
+  'weight',
+  'dimensions',
+  'palletInfo',
+  'logisticsInfo',
+  'isHandmade',
+  'isUnique',
+  'artistName',
+  'isActive',
+] as const;
 
 function hasOwn(obj: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function pickAllowedFields(source: Record<string, unknown>): Record<string, unknown> {
+  const picked: Record<string, unknown> = {};
+  for (const field of UPDATE_ALLOWED_FIELDS) {
+    if (hasOwn(source, field)) {
+      picked[field] = source[field];
+    }
+  }
+  return picked;
 }
 
 function parseStockQuantity(raw: unknown): number | null {
@@ -126,6 +159,7 @@ export const handler: Handler = async (event) => {
     identifier:    callerId,
     windowMinutes: 60,
     maxAttempts:   60,
+    policy:        'fail-soft',
   });
   if (rl.exceeded) {
     return { statusCode: 429, body: JSON.stringify({ error: 'Too many listing updates. Please try again later.' }) };
@@ -201,13 +235,16 @@ export const handler: Handler = async (event) => {
   }
 
   // ── Build update payload ──────────────────────────────────────────────────
-  // Strip fields that should never be overwritten via this endpoint
-  const updateData = { ...updateFields };
-  delete updateData.id;
-  delete updateData.sellerId;  // seller cannot change
-  delete updateData.isApproved; // approval status is admin-managed
-  delete updateData.createdAt;
-  delete updateData.updatedAt;
+  const updateData = pickAllowedFields(updateFields);
+
+  if (hasOwn(updateData, 'price')) {
+    const nextPrice = updateData.price;
+    if (typeof nextPrice !== 'number' || !Number.isFinite(nextPrice) || nextPrice <= 0) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'price must be a positive number' }) };
+    }
+    updateData.priceExVat = nextPrice / 1.20;
+    updateData.vatRate = 0.20;
+  }
 
   // ── Validate and resolve listingContext ───────────────────────────────────
   // The incoming listingContext (if provided) is validated but kept as-is.

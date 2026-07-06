@@ -25,6 +25,54 @@ import { createClient } from '@supabase/supabase-js';
 import { isMaintenanceMode, getFeatureFlags } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 
+const CREATE_ALLOWED_FIELDS = [
+  'description',
+  'type',
+  'listingType',
+  'condition',
+  'categoryId',
+  'subcategoryId',
+  'stockQuantity',
+  'stockStatus',
+  'images',
+  'specifications',
+  'weight',
+  'dimensions',
+  'palletInfo',
+  'logisticsInfo',
+  'isHandmade',
+  'isUnique',
+  'artistName',
+] as const;
+
+function pickAllowedFields(source: Record<string, unknown>): Record<string, unknown> {
+  const picked: Record<string, unknown> = {};
+  for (const field of CREATE_ALLOWED_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(source, field)) {
+      picked[field] = source[field];
+    }
+  }
+  return picked;
+}
+
+function parseStockQuantity(raw: unknown): number | null {
+  if (typeof raw === 'number') return Number.isInteger(raw) ? raw : null;
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!/^\d+$/.test(trimmed)) return null;
+    return Number.parseInt(trimmed, 10);
+  }
+  if (raw == null) return 0;
+  return null;
+}
+
+function calculateStockStatus(listingContext: string, stockQuantity: number): 'in_stock' | 'low_stock' | 'out_of_stock' {
+  if (listingContext === 'service') return 'in_stock';
+  if (stockQuantity > 10) return 'in_stock';
+  if (stockQuantity > 0) return 'low_stock';
+  return 'out_of_stock';
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -60,6 +108,7 @@ export const handler: Handler = async (event) => {
     identifier:    callerId,
     windowMinutes: 60,
     maxAttempts:   20,
+    policy:        'fail-soft',
   });
   if (rl.exceeded) {
     return { statusCode: 429, body: JSON.stringify({ error: 'Too many listings created. Please try again later.' }) };
@@ -114,7 +163,7 @@ export const handler: Handler = async (event) => {
     [key: string]: unknown;
   };
 
-  if (!title || typeof price !== 'number' || price < 0) {
+  if (!title || typeof price !== 'number' || !Number.isFinite(price) || price <= 0) {
     return { statusCode: 400, body: JSON.stringify({ error: '"title" and a positive "price" are required' }) };
   }
 
@@ -173,10 +222,16 @@ export const handler: Handler = async (event) => {
   // VAT calculation (UK 20%)
   const vatRate = 0.20;
   const priceExVat = price / (1 + vatRate);
+  const allowedFields = pickAllowedFields(rest);
+  const parsedStockQuantity = parseStockQuantity(allowedFields.stockQuantity);
+  if (parsedStockQuantity === null) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'stockQuantity must be a whole number greater than or equal to 0' }) };
+  }
+  const stockQuantity = normalizedListingContext === 'service' ? 0 : parsedStockQuantity;
 
-  // Build DB row — strip out fields the client must not control
+  // Build DB row from a strict allow-list; backend-owned columns are set below.
   const productData: Record<string, unknown> = {
-    ...rest,
+    ...allowedFields,
     title,
     price,
     priceExVat,
@@ -185,11 +240,9 @@ export const handler: Handler = async (event) => {
     isApproved,              // backend-only; overrides any value from client
     sellerId: callerId,
     listingContext: normalizedListingContext,
+    stockQuantity,
+    stockStatus: calculateStockStatus(normalizedListingContext, stockQuantity),
   };
-  // Prevent client from sneaking in fields that would break integrity
-  delete productData.id;
-  delete productData.createdAt;
-  delete productData.updatedAt;
 
   // ── Insert product ────────────────────────────────────────────────────────
   const { data: inserted, error: insertError } = await supabase

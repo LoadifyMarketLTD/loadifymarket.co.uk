@@ -4,7 +4,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const serviceWorkerPath = '/home/runner/work/loadifymarket.co.uk/loadifymarket.co.uk/public/sw.js';
+const serviceWorkerPath = path.resolve(process.cwd(), 'public/sw.js');
 
 type FetchListener = (event: { request: Request; respondWith: (value: Promise<Response> | Response) => void }) => void;
 
