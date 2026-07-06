@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Mail, Lock, Shield, Activity } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mail, Lock } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -200,15 +200,6 @@ export default function MobileSecurityPage() {
   const { user } = useAuthStore();
   const email = user?.email ?? '';
 
-  const rowStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    paddingInline: 'var(--mob-side, 16px)',
-    paddingTop: 14,
-    paddingBottom: 14,
-    gap: 12,
-  };
-
   const dividerStyle: React.CSSProperties = {
     height: 1,
     marginInlineStart: 'var(--mob-side, 16px)',
@@ -248,28 +239,6 @@ export default function MobileSecurityPage() {
 
         {/* Password */}
         <PasswordSection />
-
-        <div aria-hidden="true" className="bg-white/[0.05]" style={dividerStyle} />
-
-        {/* 2FA — placeholder */}
-        <div style={rowStyle}>
-          <Shield className="text-muted-foreground" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
-          <div style={{ flex: 1 }}>
-            <p className="text-[15px] font-medium text-foreground/90 m-0">Two-factor authentication</p>
-            <p className="text-xs text-muted-foreground m-0">Coming soon</p>
-          </div>
-        </div>
-
-        <div aria-hidden="true" className="bg-white/[0.05]" style={dividerStyle} />
-
-        {/* Login activity — placeholder */}
-        <div style={rowStyle}>
-          <Activity className="text-muted-foreground" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
-          <div style={{ flex: 1 }}>
-            <p className="text-[15px] font-medium text-foreground/90 m-0">Login activity</p>
-            <p className="text-xs text-muted-foreground m-0">Coming soon</p>
-          </div>
-        </div>
       </div>
 
       <MobileBottomNav />

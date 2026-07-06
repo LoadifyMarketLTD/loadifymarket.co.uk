@@ -34,7 +34,7 @@ const SUPABASE_STORAGE_PREFIX = 'sb-';
 const DEFAULT_FEATURES: Features = {
   sellerRegistration: true,
   buyerRegistration: true,
-  rfqSystem: true,
+  rfqSystem: false,
   reviewSystem: true,
   maintenanceMode: false,
   autoApproveProducts: false,
@@ -240,7 +240,7 @@ const AdminSettings = () => {
           {[
             { key: "sellerRegistration" as const, label: "Seller Registration", desc: "Allow new sellers to register on the platform" },
             { key: "buyerRegistration" as const, label: "Buyer Registration", desc: "Allow new buyers to create accounts" },
-            { key: "rfqSystem" as const, label: "RFQ / Quote System", desc: "Enable buyers to request custom quotes from sellers" },
+            { key: "rfqSystem" as const, label: "RFQ / Quote System", desc: "Optional custom quotes flow. Keep disabled for fixed-price marketplace launch." },
             { key: "reviewSystem" as const, label: "Reviews & Ratings", desc: "Allow buyers to leave reviews on sellers" },
             { key: "autoApproveProducts" as const, label: "Auto-Approve Products", desc: "Skip manual review for new product listings" },
             { key: "maintenanceMode" as const, label: "Maintenance Mode", desc: "Show maintenance page to all users (admins excluded)" },

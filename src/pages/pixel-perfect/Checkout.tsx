@@ -72,6 +72,7 @@ const Checkout = () => {
   // Derived: the currently selected shipping option
   const selectedOption: ShippingOption =
     shippingOptions.find((o) => o.methodId === selectedMethodId) ?? SELLER_ARRANGED;
+  const noDeliveryMethodAvailable = !shippingLoading && shippingOptions.length === 0;
 
   // Stable sorted cart product IDs — only changes when the product set changes.
   // This drives the shipping fetch effect without re-triggering on quantity updates.
@@ -177,6 +178,10 @@ const Checkout = () => {
   }, [user?.email]);
 
   const handleContinueToPayment = () => {
+    if (noDeliveryMethodAvailable) {
+      setShippingError("This seller has not configured a delivery method for the items in your cart yet. Please contact the seller or try again later.");
+      return;
+    }
     // Validate required shipping fields before advancing
     if (!shippingData.firstName.trim() || !shippingData.lastName.trim()) {
       setShippingError("Please enter your first and last name.");
@@ -237,6 +242,12 @@ const Checkout = () => {
       setCheckoutError(
         "For now, please complete purchases from one seller at a time. Please split your cart and checkout each seller separately."
       );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (noDeliveryMethodAvailable || selectedOption.methodId === SELLER_ARRANGED.methodId) {
+      setCheckoutError("This seller has not configured a delivery method for the items in your cart yet. Please contact the seller or try again later.");
       setIsSubmitting(false);
       return;
     }
@@ -552,15 +563,18 @@ const Checkout = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm text-muted-foreground">
+                      <div className="flex items-start gap-2 rounded-lg border border-destructive/25 bg-destructive/5 p-3 text-sm text-destructive">
                         <Truck className="h-4 w-4 shrink-0" />
-                        Delivery cost will be confirmed by the seller after purchase.
+                        <span>
+                          This seller has not configured delivery for these items yet. Checkout is unavailable until a delivery method is added.
+                        </span>
                       </div>
                     )}
                   </div>
 
                   <Button
                     onClick={handleContinueToPayment}
+                    disabled={shippingLoading || noDeliveryMethodAvailable}
                     className="w-full sm:w-auto h-11 bg-primary hover:bg-primary-hover text-black font-semibold px-8"
                   >
                     Continue to Payment <ArrowRight className="ml-2 h-4 w-4" />
@@ -699,7 +713,7 @@ const Checkout = () => {
                     </Button>
                     <Button
                       onClick={handlePlaceOrder}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || noDeliveryMethodAvailable || selectedOption.methodId === SELLER_ARRANGED.methodId}
                       className="flex-1 h-12 bg-primary hover:bg-primary-hover text-black font-bold text-base hover:opacity-90 transition-opacity"
                     >
                       {isSubmitting ? (

@@ -127,7 +127,7 @@ const SellerOrders = () => {
     }
   };
 
-  const markJobDone = async (orderId: string) => {
+  const markDelivered = async (orderId: string) => {
     setActionLoading(orderId);
     try {
       const res = await authorizedFetch("/.netlify/functions/seller-order-status", {
@@ -135,12 +135,12 @@ const SellerOrders = () => {
         body: JSON.stringify({ orderId, status: "delivered" }),
       });
       const json = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed to complete job");
+      if (!res.ok) throw new Error(json.error ?? "Failed to mark order as delivered");
 
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: "delivered" } : o))
       );
-      toast({ title: "Job marked as done", description: "The client has been notified to confirm." });
+      toast({ title: "Order marked as delivered", description: "The buyer has been notified to confirm delivery." });
     } catch (err) {
       toast({ title: "Update failed", description: (err as Error).message, variant: "destructive" });
     } finally {
@@ -246,12 +246,12 @@ const SellerOrders = () => {
                           )}
                           {(o.status === "paid" || o.status === "packed") && (
                             <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
-                              Mark as In Progress
+                              Mark as Shipped
                             </DropdownMenuItem>
                           )}
                           {o.status === "shipped" && (
-                            <DropdownMenuItem onClick={() => markJobDone(o.id)}>
-                              Mark Job Done
+                            <DropdownMenuItem onClick={() => markDelivered(o.id)}>
+                              Mark as Delivered
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -335,12 +335,12 @@ const SellerOrders = () => {
                               )}
                               {(o.status === "paid" || o.status === "packed") && (
                                 <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
-                                  Mark as In Progress
+                                  Mark as Shipped
                                 </DropdownMenuItem>
                               )}
                               {o.status === "shipped" && (
-                                <DropdownMenuItem onClick={() => markJobDone(o.id)}>
-                                  Mark Job Done
+                                <DropdownMenuItem onClick={() => markDelivered(o.id)}>
+                                  Mark as Delivered
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>

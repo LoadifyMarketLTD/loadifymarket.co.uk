@@ -289,7 +289,7 @@ export default function ProductFormPage() {
   }, [id, fetchProduct]);
 
   // ─── Validate ──────────────────────────────────────────────────────────────
-  const validate = (): FormErrors => {
+  const validate = (publishMode = false): FormErrors => {
     const e: FormErrors = {};
     if (!formData.title.trim()) e.title = 'Product title is required.';
     if (!formData.description.trim()) e.description = 'Description is required.';
@@ -307,6 +307,9 @@ export default function ProductFormPage() {
     if (listingContext === 'product') {
       if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
         e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
+      }
+      if (publishMode && selectedShippingMethodIds.length === 0) {
+        e.shipping = 'Select at least one shipping method before publishing this product.';
       }
     }
     return e;
@@ -347,7 +350,7 @@ export default function ProductFormPage() {
   // ─── Core save function ────────────────────────────────────────────────────
   const saveProduct = async (publishMode: boolean) => {
     if (!user) return;
-    const newErrors = validate();
+    const newErrors = validate(publishMode);
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       // Scroll to top to show errors
@@ -1055,6 +1058,9 @@ export default function ProductFormPage() {
                     selectedMethodIds={selectedShippingMethodIds}
                     onChange={setSelectedShippingMethodIds}
                   />
+                  {errors.shipping && (
+                    <p className="text-red-400 text-xs mt-2">{errors.shipping}</p>
+                  )}
                   {selectedShippingMethodIds.length > 0 && (
                     <div className="mt-3">
                       <label className="block text-sm font-medium text-slate-300 mb-1">Estimated Dispatch Time</label>
@@ -1073,6 +1079,29 @@ export default function ProductFormPage() {
                   <p className="text-sm text-slate-300">
                     <strong>Pallet &amp; bulk listings</strong> — ensure your shipping details and dimensions are accurate so buyers can arrange collection or delivery.
                   </p>
+                  <div className="mt-4">
+                    <h3 className="text-sm font-semibold text-slate-300 mb-2">Shipping Methods</h3>
+                    <p className="text-xs text-slate-400 mb-3">Select at least one delivery option before publishing this product.</p>
+                    <ShippingMethodSelector
+                      selectedMethodIds={selectedShippingMethodIds}
+                      onChange={setSelectedShippingMethodIds}
+                    />
+                    {errors.shipping && (
+                      <p className="text-red-400 text-xs mt-2">{errors.shipping}</p>
+                    )}
+                    {selectedShippingMethodIds.length > 0 && (
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Estimated Dispatch Time</label>
+                        <input
+                          type="text"
+                          value={dispatchTime}
+                          onChange={(e) => setDispatchTime(e.target.value)}
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                          placeholder="e.g. 1-2 working days"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </Section>

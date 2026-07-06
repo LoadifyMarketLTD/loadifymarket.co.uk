@@ -181,6 +181,13 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  if (Boolean(isActive) && normalizedListingContext === 'product' && (!Array.isArray(shippingMethodIds) || shippingMethodIds.length === 0)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Select at least one shipping method before publishing this product.' }),
+    };
+  }
+
   // ── autoApproveProducts (Step 5.5) ────────────────────────────────────────
   const flags = await getFeatureFlags(supabase);
   // Admin creates are always approved; sellers depend on the flag

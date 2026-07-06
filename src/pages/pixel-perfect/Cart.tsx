@@ -31,6 +31,7 @@ const Cart = () => {
       .filter((id): id is string => Boolean(id))
   );
   const isMultiSellerCart = uniqueSellerIds.size > 1;
+  const isCheckoutBlocked = isMultiSellerCart || ownProductIds.length > 0;
 
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
@@ -239,7 +240,7 @@ const Cart = () => {
                   </div>
                 </div>
 
-                {isMultiSellerCart ? (
+                {isCheckoutBlocked ? (
                   <Button
                     className="w-full h-12 bg-primary hover:bg-primary-hover text-black font-semibold text-base opacity-50 cursor-not-allowed"
                     disabled
@@ -281,7 +282,7 @@ const Cart = () => {
         className="lg:hidden fixed inset-x-0 z-[9996] px-4 py-3 bg-background/95 backdrop-blur border-t border-border"
         style={{ bottom: "calc(60px + env(safe-area-inset-bottom, 0px))" }}
       >
-        {isMultiSellerCart ? (
+        {isCheckoutBlocked ? (
           <Button
             className="w-full h-12 bg-primary hover:bg-primary-hover text-black font-semibold text-base opacity-50 cursor-not-allowed"
             disabled

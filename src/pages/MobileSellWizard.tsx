@@ -8,7 +8,7 @@
  *
  * Desktop product form (/seller/products/new) is untouched.
  * Backend: calls /.netlify/functions/create-product unchanged.
- * Defaults: listingContext=goods, stockQuantity=1, shippingMethodIds=[].
+ * Defaults: listingContext=product, stockQuantity=1, seller-selected shipping methods.
  */
 
 import { useRef, useState } from 'react';
@@ -27,6 +27,7 @@ import { useAuthStore } from '@/store';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { trackStartListing, trackPublishListing } from '@/lib/analytics';
 import CategorySelector from '@/components/CategorySelector';
+import ShippingMethodSelector from '@/components/ShippingMethodSelector';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -294,7 +295,9 @@ export default function MobileSellWizard() {
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishedId, setPublishedId] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ photos?: string; title?: string; price?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ photos?: string; title?: string; price?: string; shipping?: string }>({});
+  const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
+  const [dispatchTime, setDispatchTime] = useState('');
   const [moreDetailsOpen, setMoreDetailsOpen] = useState(false);
 
   // Track listing start once
@@ -336,6 +339,8 @@ export default function MobileSellWizard() {
     const price = parseFloat(form.price);
     if (!form.price || isNaN(price) || price <= 0)
       errs.price = 'Please enter a valid price greater than £0.';
+    if (selectedShippingMethodIds.length === 0)
+      errs.shipping = 'Please select at least one shipping method.';
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
       return;
@@ -360,8 +365,8 @@ export default function MobileSellWizard() {
         stockQuantity: 1,
         stockStatus: 'in_stock',
         isActive: true,
-        shippingMethodIds: [],
-        dispatchTime: null,
+        shippingMethodIds: selectedShippingMethodIds,
+        dispatchTime: dispatchTime || null,
       };
 
       const res = await authorizedFetch('/.netlify/functions/create-product', {
@@ -391,6 +396,8 @@ export default function MobileSellWizard() {
   const handleSellAnother = () => {
     setForm(INITIAL_FORM);
     setFieldErrors({});
+    setSelectedShippingMethodIds([]);
+    setDispatchTime('');
     setPublishedId(null);
     setPublishError(null);
     setMoreDetailsOpen(false);
@@ -591,6 +598,31 @@ export default function MobileSellWizard() {
         />
 
         {/* ── More details (collapsible) ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
+            Shipping method <span className="text-primary">*</span>
+          </label>
+          <ShippingMethodSelector
+            selectedMethodIds={selectedShippingMethodIds}
+            onChange={(ids) => {
+              setSelectedShippingMethodIds(ids);
+              if (fieldErrors.shipping) setFieldErrors((e) => ({ ...e, shipping: undefined }));
+            }}
+          />
+          {fieldErrors.shipping && (
+            <p className="text-danger" style={{ fontSize: '12px', margin: 0 }}>{fieldErrors.shipping}</p>
+          )}
+          {selectedShippingMethodIds.length > 0 && (
+            <FieldInput
+              label="Dispatch time"
+              value={dispatchTime}
+              onChange={setDispatchTime}
+              placeholder="e.g. 1-2 working days"
+              hint="Shown to buyers at checkout."
+            />
+          )}
+        </div>
+
         <div
           style={{
             border: '1px solid rgba(255,255,255,0.10)',

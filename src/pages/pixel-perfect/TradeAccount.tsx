@@ -150,7 +150,7 @@ export default function TradeAccount() {
       setErrors((prev) => ({ ...prev, postcode: "Please enter a postcode first" }));
       return;
     }
-    toast({ title: "Address lookup coming soon", description: "Manual entry is available in the fields below." });
+    toast({ title: "Enter address manually", description: "Use the address fields below to complete your application." });
   };
 
   // ── Validation ──────────────────────────────────────────────────────────────

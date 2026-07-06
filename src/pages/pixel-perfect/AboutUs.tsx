@@ -34,7 +34,7 @@ const AboutUs = () => {
                 Our Mission
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                To create a trusted and efficient UK marketplace connecting independent sellers and buyers across a wide range of physical goods and service‑based offerings, supporting both inventory‑led sales and bespoke, RFQ‑driven transactions.
+                To create a trusted and efficient UK marketplace connecting independent sellers and buyers across a wide range of physical goods and service-based offerings, with clear fixed-price purchasing and secure seller-managed fulfilment.
               </p>
             </section>
 
@@ -45,7 +45,7 @@ const AboutUs = () => {
               </h2>
               <ul className="text-muted-foreground space-y-2">
                 <li>• <strong className="text-foreground">Sellers</strong> — Independent UK businesses and individuals offering physical products and service‑based listings across multiple categories, including electronics, fashion, home & garden, handmade items, logistics capacity, and bespoke supply.</li>
-                <li>• <strong className="text-foreground">Buyers</strong> — Consumers, retailers, resellers and businesses sourcing physical goods and service solutions at competitive prices, including standard purchases and RFQ‑based engagements.</li>
+                <li>� <strong className="text-foreground">Buyers</strong> � Consumers, retailers, resellers and businesses sourcing physical goods and service solutions at clear fixed prices.</li>
               </ul>
             </section>
 

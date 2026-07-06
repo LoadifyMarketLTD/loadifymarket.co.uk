@@ -116,7 +116,7 @@ const BuyerOrders = () => {
           o.id === confirmDeliveryOrder.id ? { ...o, status: "completed" } : o
         )
       );
-      toast({ title: "Job confirmed", description: "Thank you for confirming. Funds have been released to the provider." });
+      toast({ title: "Delivery confirmed", description: "Thank you for confirming. Funds have been released to the seller." });
       setConfirmDeliveryOrder(null);
     } catch (err) {
       toast({ title: "Failed to confirm", description: (err as Error).message, variant: "destructive" });
@@ -323,7 +323,7 @@ const BuyerOrders = () => {
                     variant="ghost"
                     size="icon"
                     className={`h-8 w-8 ${o.status === "delivered" ? "text-emerald-600" : ""}`}
-                    title={o.status === "delivered" ? "Confirm job completion" : o.status === "completed" ? "Job completed" : "Confirm once provider marks job done"}
+                    title={o.status === "delivered" ? "Confirm delivery" : o.status === "completed" ? "Delivery confirmed" : "Confirm once the seller marks the order delivered"}
                     disabled={o.status !== "delivered"}
                     onClick={() => setConfirmDeliveryOrder(o)}
                   >
@@ -333,7 +333,7 @@ const BuyerOrders = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    title={o.status === "completed" ? "Request return" : "Returns available after job completion"}
+                    title={o.status === "completed" ? "Request return" : "Returns available after delivery confirmation"}
                     disabled={o.status !== "completed"}
                     onClick={() => {
                       setReturnOrder(o);
@@ -397,7 +397,7 @@ const BuyerOrders = () => {
         <TabsList>
           <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
           <TabsTrigger value="processing">Processing</TabsTrigger>
-          <TabsTrigger value="shipped">In Progress</TabsTrigger>
+          <TabsTrigger value="shipped">Shipped</TabsTrigger>
           <TabsTrigger value="delivered">Pending Confirmation</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
@@ -515,24 +515,24 @@ const BuyerOrders = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm Job Completion Dialog */}
+      {/* Confirm Delivery Dialog */}
       <Dialog open={!!confirmDeliveryOrder} onOpenChange={(open) => { if (!open) setConfirmDeliveryOrder(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCheck className="h-5 w-5 text-emerald-600" /> Confirm Job Completion
+              <CheckCheck className="h-5 w-5 text-emerald-600" /> Confirm Delivery
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-2">
             <p className="text-sm text-foreground">
-              Please confirm that the work for order{" "}
+              Please confirm that order{" "}
               <span className="font-semibold">
                 {confirmDeliveryOrder?.orderNumber || confirmDeliveryOrder?.id?.slice(0, 8).toUpperCase()}
               </span>{" "}
-              has been completed to your satisfaction.
+              has been delivered to your satisfaction.
             </p>
             <p className="text-xs text-muted-foreground">
-              Once confirmed, the escrow will be released to the provider. You can still open a dispute if there is a problem.
+              Once confirmed, the escrow will be released to the seller. You can still open a dispute if there is a problem.
             </p>
           </div>
           <DialogFooter>
@@ -544,7 +544,7 @@ const BuyerOrders = () => {
               onClick={handleConfirmDelivery}
               disabled={confirmDeliveryLoading}
             >
-              {confirmDeliveryLoading ? "Confirming…" : "Yes, job is done"}
+              {confirmDeliveryLoading ? "Confirming…" : "Yes, order delivered"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -32,7 +32,6 @@ const MobileNotificationsPage = lazy(() => import('./pages/MobileNotificationsPa
 const MobileSecurityPage  = lazy(() => import('./pages/MobileSecurityPage'));
 const MobileBalancePage   = lazy(() => import('./pages/MobileBalancePage'));
 const MobileFavouritesPage = lazy(() => import('./pages/MobileFavouritesPage'));
-const MobilePromotionalToolsPage = lazy(() => import('./pages/MobilePromotionalToolsPage'));
 const MobileSettingsPage  = lazy(() => import('./pages/MobileSettingsPage'));
 const MobileSellerPaymentsPage = lazy(() => import('./pages/MobileSellerPaymentsPage'));
 
@@ -104,7 +103,6 @@ const PPSellerProducts      = lazy(() => import('./pages/pixel-perfect/seller/Se
 const PPSellerOrders        = lazy(() => import('./pages/pixel-perfect/seller/SellerOrders'));
 const PPSellerShipments     = lazy(() => import('./pages/pixel-perfect/seller/SellerShipments'));
 const PPSellerReturns       = lazy(() => import('./pages/pixel-perfect/seller/SellerReturns'));
-const PPSellerRFQ           = lazy(() => import('./pages/pixel-perfect/seller/SellerRFQ'));
 const PPSellerProfile       = lazy(() => import('./pages/pixel-perfect/seller/SellerProfile'));
 const PPSellerSettings      = lazy(() => import('./pages/pixel-perfect/seller/SellerSettings'));
 const PPSellerReviews       = lazy(() => import('./pages/pixel-perfect/seller/SellerReviewsPage'));
@@ -122,7 +120,6 @@ const PPBuyerSettings      = lazy(() => import('./pages/pixel-perfect/buyer/Buye
 const PPBuyerWishlist      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerWishlist'));
 const PPBuyerNotifications = lazy(() => import('./pages/pixel-perfect/buyer/BuyerNotifications'));
 const PPBuyerMessages      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerMessages'));
-const PPBuyerRFQ           = lazy(() => import('./pages/pixel-perfect/buyer/BuyerRFQ'));
 const PPBuyerDisputes      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDisputes'));
 
 const PPAdminShell          = lazy(() => import('./pages/pixel-perfect/admin/AdminShell'));
@@ -546,7 +543,7 @@ function App() {
           <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPSellerOrders /></Suspense>} />
           <Route path="shipments" element={<Suspense fallback={<PageLoader />}><PPSellerShipments /></Suspense>} />
           <Route path="returns" element={<Suspense fallback={<PageLoader />}><PPSellerReturns /></Suspense>} />
-          <Route path="rfq" element={<Suspense fallback={<PageLoader />}><PPSellerRFQ /></Suspense>} />
+          <Route path="rfq" element={<Navigate to="/seller" replace />} />
           <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPSellerReviews /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPSellerSettings /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPSellerNotifications /></Suspense>} />
@@ -571,7 +568,7 @@ function App() {
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPBuyerSettings /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPBuyerNotifications /></Suspense>} />
           <Route path="messages" element={<Suspense fallback={<PageLoader />}><PPBuyerMessages /></Suspense>} />
-          <Route path="rfq" element={<Suspense fallback={<PageLoader />}><PPBuyerRFQ /></Suspense>} />
+          <Route path="rfq" element={<Navigate to="/buyer" replace />} />
           <Route path="disputes" element={<Suspense fallback={<PageLoader />}><PPBuyerDisputes /></Suspense>} />
         </Route>
 
@@ -614,11 +611,7 @@ function App() {
         <Route path="profile/balance" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileBalancePage /></Suspense></RequireAuth>} />
         <Route path="profile/favourites" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileFavouritesPage /></Suspense></RequireAuth>} />
         <Route path="profile/settings" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileSettingsPage /></Suspense></RequireAuth>} />
-        <Route path="seller/promote" element={
-          <RequireSellerAny>
-            <Suspense fallback={<PageLoader />}><MobilePromotionalToolsPage /></Suspense>
-          </RequireSellerAny>
-        } />
+        <Route path="seller/promote" element={<Navigate to="/seller" replace />} />
         <Route path="seller/mobile-payments" element={
           <RequireSellerAny>
             <Suspense fallback={<PageLoader />}><MobileSellerPaymentsPage /></Suspense>

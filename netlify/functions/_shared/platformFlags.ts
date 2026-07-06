@@ -38,7 +38,7 @@ export interface FeatureFlags {
 const FLAG_DEFAULTS: FeatureFlags = {
   sellerRegistration: true,
   buyerRegistration: true,
-  rfqSystem: true,
+  rfqSystem: false,
   reviewSystem: true,
   autoApproveProducts: false,
   requireCompanyApproval: false,

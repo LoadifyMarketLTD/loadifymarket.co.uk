@@ -41,14 +41,6 @@ function buildSections(role: string | undefined): Section[] {
         { label: 'Balance', to: '/profile/balance' },
       ],
     },
-    ...(isSellerOrAdmin ? [
-      {
-        title: 'Tools',
-        items: [
-          { label: 'Promotional tools', to: '/seller/promote' },
-        ],
-      },
-    ] : []),
     {
       title: 'Settings',
       items: [

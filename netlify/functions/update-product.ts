@@ -290,6 +290,19 @@ export const handler: Handler = async (event) => {
     updateData.stockStatus = calculateStockStatus(nextListingContext, normalizedStockQuantity);
   }
 
+  const publishingPhysicalListing =
+    updateData.isActive === true &&
+    isPhysicalContext(nextListingContext) &&
+    Array.isArray(shippingMethodIds) &&
+    shippingMethodIds.length === 0;
+
+  if (publishingPhysicalListing) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Select at least one shipping method before publishing this product.' }),
+    };
+  }
+
   // ── Listing lock enforcement ──────────────────────────────────────────────
   const { data: orderLocks } = await supabase
     .from('orders')

@@ -160,8 +160,8 @@ const WholesaleInfo = () => {
                     a: "No. Any registered buyer can purchase from any listing. There are no trade or business requirements imposed by the platform.",
                   },
                   {
-                    q: "Can I request a quote before ordering?",
-                    a: "Yes. Use the Request for Quote (RFQ) feature to post your requirements and receive quotes from suppliers on the platform.",
+                    q: "Can I ask a seller questions before ordering?",
+                    a: "Yes. Use the seller profile or product contact options to ask questions before you buy.",
                   },
                   {
                     q: "Are all sellers UK-based?",
@@ -173,7 +173,7 @@ const WholesaleInfo = () => {
                   },
                   {
                     q: "How do I contact a seller before buying?",
-                    a: "Each product listing includes a seller profile page. You can use the platform's contact or RFQ feature to send enquiries directly to sellers.",
+                    a: "Each product listing includes a seller profile page. Use the available contact options to send enquiries directly to sellers.",
                   },
                 ].map(({ q, a }) => (
                   <div key={q}>
