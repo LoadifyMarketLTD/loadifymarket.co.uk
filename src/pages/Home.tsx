@@ -1,31 +1,18 @@
-/**
- * src/pages/Home.tsx — root "/" route
- *
- * MOBILE (< md / 768 px):
- *   MobileAppHeader → MobileCategoryShortcuts → MobileHeroBanner →
- *   2-col product grid (infinite scroll) → MobileBottomNav (via MainLayout)
- *
- * DESKTOP (>= md / 768 px):
- *   GlobalHeader → HeroSection (full-screen) → TrustStrip → FeaturesGrid →
- *   HowItWorksSection → SecurityTrust → SellerCTA → Footer
- */
-
 import { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 
-// Mobile-only components
 import MobileAppHeader from "@/components/MobileAppHeader";
 import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
 import MobileGridCard from "@/components/MobileGridCard";
 import { useMobileGrid } from "@/hooks/useMobileGrid";
 
-// Desktop-only components
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
+import FeaturedProducts from "@/components/FeaturedProducts";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
@@ -33,7 +20,6 @@ import SellerCTA from "@/components/SellerCTA";
 import LazySection from "@/components/LazySection";
 import { trackViewHome } from "@/lib/analytics";
 
-// ── Mobile skeleton cards ─────────────────────────────────────────────────────
 function SkeletonGridCard() {
   return (
     <div
@@ -51,12 +37,10 @@ function SkeletonGridCard() {
   );
 }
 
-// ── Mobile home section ───────────────────────────────────────────────────────
 function MobileHome() {
   const { products, loading, loadingMore, hasMore, loadMore } = useMobileGrid();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Infinite scroll via IntersectionObserver
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -70,16 +54,10 @@ function MobileHome() {
 
   return (
     <div className="md:hidden min-h-screen bg-background">
-      {/* 1. App Header */}
       <MobileAppHeader />
-
-      {/* 2. Category chips */}
       <MobileCategoryShortcuts />
-
-      {/* 3. Simple hero */}
       <MobileHeroBanner />
 
-      {/* 4. 2-column product grid */}
       <section
         aria-label="Products"
         style={{
@@ -108,11 +86,9 @@ function MobileHome() {
                   priority={i < 4}
                 />
               ))}
-          {/* Loading-more skeletons */}
           {loadingMore && Array.from({ length: 4 }).map((_, i) => <SkeletonGridCard key={`more-${i}`} />)}
         </div>
 
-        {/* Infinite-scroll sentinel */}
         {!loading && hasMore && (
           <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
         )}
@@ -126,9 +102,6 @@ export default function Home() {
 
   return (
     <MainLayout>
-      {/* Preload LCP hero image for desktop only — WebP only; JPEG is never used since
-          all browsers that support <picture> also support WebP.
-          HeroSection is inside `hidden md:block` so the image is only used on desktop. */}
       <Helmet>
         <link
           rel="preload"
@@ -136,33 +109,31 @@ export default function Home() {
           href="/hero-gold.webp"
           type="image/webp"
           media="(min-width: 768px)"
-          // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
+          // @ts-expect-error fetchpriority is a valid HTML attr not yet in React types
           fetchpriority="high"
         />
       </Helmet>
       <SEO
-        title="The UK Marketplace Built for Modern Sellers — 0% Commission | Loadify Market"
-        description="Sell products, manage orders, and get paid — all in one secure platform. 0% commission until 31 December 2026. Free to list, no monthly charges."
+        title="Sell in the UK with 0% Commission | Loadify Market"
+        description="List products for free, sell at fixed prices, and get paid through Stripe. Buyers can shop trusted UK marketplace sellers with secure checkout."
         canonical="/"
       />
 
       <main id="main-content">
-
-        {/* ── Mobile APK home UI (< md) ────────────────────────────────────── */}
         <MobileHome />
 
-        {/* ── Desktop-only layout (>= md) — unchanged ──────────────────────── */}
         <div className="hidden md:block">
-
-          {/* Full-screen hero with gold background image */}
           <HeroSection />
 
-          {/* Platform overview section */}
           <section
             className="bg-background py-6 px-8"
             aria-label="Platform overview"
           >
             <TrustStrip />
+
+            <div className="mt-8">
+              <FeaturedProducts />
+            </div>
 
             <div className="mt-8">
               <FeaturesGrid />
@@ -178,11 +149,8 @@ export default function Home() {
             </LazySection>
           </section>
 
-          {/* Seller call-to-action */}
           <SellerCTA />
-
         </div>
-
       </main>
     </MainLayout>
   );

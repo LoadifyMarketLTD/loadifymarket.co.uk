@@ -74,7 +74,7 @@ export default function MobileHeroBanner() {
               letterSpacing: '-0.02em',
             }}
           >
-            Sell fast. Get paid.
+            Sell on Loadify Market
           </h2>
           <p
             className="text-foreground/55"
@@ -84,7 +84,7 @@ export default function MobileHeroBanner() {
               lineHeight: 1.4,
             }}
           >
-            List anything in seconds.
+            Free listings. Fixed prices. Stripe payouts.
           </p>
 
           {/* CTAs */}

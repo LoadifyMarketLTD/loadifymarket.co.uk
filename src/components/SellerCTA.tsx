@@ -24,7 +24,7 @@ export default function SellerCTA() {
 
           {/* Subtext */}
           <p style={{ fontSize: '14px', lineHeight: 1.55, marginBottom: '22px' }} className="text-muted-foreground">
-            List products, sell at fixed prices, get paid securely.
+            List products free, sell at fixed prices, and keep more from every order.
           </p>
 
           {/* Gold CTA button */}
@@ -44,11 +44,11 @@ export default function SellerCTA() {
               marginBottom: '12px',
             }}
           >
-            Become a Seller
+            Open Your Seller Account
           </Link>
 
           <p style={{ fontSize: '12px' }} className="text-muted-foreground">
-            No fees. No monthly charges. No risk.
+            0% seller commission until 31 December 2026.
           </p>
         </div>
       </div>
@@ -57,7 +57,7 @@ export default function SellerCTA() {
       <div className="hidden sm:block px-8 py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-foreground font-medium text-base text-center sm:text-left">
-            Join UK sellers earning more with 0% commission until 31 December 2026.
+            List products free, sell at fixed prices, and keep more from every order with 0% seller commission until 31 December 2026.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
             <Link
@@ -65,10 +65,10 @@ export default function SellerCTA() {
               data-magnetic
               className="bg-primary hover:shadow-[0_0_22px_rgba(212,175,55,0.25)] hover:-translate-y-0.5 text-background font-bold px-6 py-2.5 rounded-xl transition-all duration-300 text-sm whitespace-nowrap"
             >
-              Create Your Free Seller Account
+              Open Your Free Seller Account
             </Link>
             <p className="text-muted-foreground/80 text-sm whitespace-nowrap">
-              No fees. No monthly charges. No risk.
+              Stripe payments. Fixed prices. No monthly fee.
             </p>
           </div>
         </div>

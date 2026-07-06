@@ -24,10 +24,10 @@ interface TrustItem {
 }
 
 const ITEMS: TrustItem[] = [
-  { icon: ShieldCheck, label: "Secure Payments", sub: "with Stripe" },
-  { icon: BadgeCheck,  label: "Stripe Verified", sub: "Platform" },
-  { flag: true,        label: "UK Marketplace",  sub: "Platform" },
-  { icon: Percent,     label: "0% Commission",   sub: "Until 31 Dec 2026" },
+  { icon: ShieldCheck, label: "Secure Checkout", sub: "Powered by Stripe" },
+  { icon: BadgeCheck,  label: "Seller Accounts", sub: "Profile checks" },
+  { flag: true,        label: "UK Marketplace",  sub: "Built for UK trade" },
+  { icon: Percent,     label: "0% Seller Fee",   sub: "Until 31 Dec 2026" },
 ];
 
 const TrustStrip = () => (
