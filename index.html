@@ -56,8 +56,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Loadify Market" />
 
-    <!-- Preconnect to Supabase (API/auth requests fire immediately on load) -->
-    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Google Fonts: Inter + Space Grotesk -->
@@ -68,11 +66,11 @@
          Set VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX in Netlify environment variables.
          Guard checks for empty string AND the unreplaced placeholder literal to
          ensure the script never fires with an invalid measurement ID. -->
-    <script>
-      (function () {
-        var id = '%VITE_GA_MEASUREMENT_ID%';
+    <script type="module">
+      {
+        const id = import.meta.env.VITE_GA_MEASUREMENT_ID;
         // If env var was not set, Vite leaves the literal placeholder — skip.
-        if (!id || id.charAt(0) === '%') return;
+        if (id) {
         window.dataLayer = window.dataLayer || [];
         function gtag() { window.dataLayer.push(arguments); }
         // GDPR: deny all tracking by default until the user grants consent.
@@ -86,9 +84,10 @@
         gtag('config', id);
         var s = document.createElement('script');
         s.async = true;
-        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
         document.head.appendChild(s);
-      })();
+        }
+      }
     </script>
 
     <!-- Structured Data - Organization -->

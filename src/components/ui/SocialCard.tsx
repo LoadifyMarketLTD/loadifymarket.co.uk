@@ -42,7 +42,7 @@ export default function SocialCard({ href, label, Icon, platform, size = 'defaul
         `bg-elevated ` +
         `border border-white/[0.07] ` +
         `shadow-[0_10px_24px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.05)] ` +
-        `transition-all duration-[280ms] ease-out ` +
+        `transition-all duration-300 ease-out ` +
         `hover:-translate-y-1 hover:scale-[1.04] ` +
         `hover:border-primary/40/[0.34]`
       }
@@ -51,7 +51,7 @@ export default function SocialCard({ href, label, Icon, platform, size = 'defaul
         className={
           `relative z-10 ${iconSize} text-slate-400 ` +
           `group-hover:text-primary group-hover:scale-110 ` +
-          `transition-all duration-[280ms]`
+          `transition-all duration-300`
         }
         style={{ filter: 'none' }}
         aria-hidden="true"

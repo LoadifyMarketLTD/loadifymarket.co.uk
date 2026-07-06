@@ -31,7 +31,7 @@ export default function PaymentCard({ variant, size = 'default' }: PaymentCardPr
     `payment-card group inline-flex items-center justify-center gap-2 ` +
     `border border-white/[0.07] ` +
     `shadow-[0_10px_24px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.05)] ` +
-    `transition-all duration-[280ms] ease-out ` +
+    `transition-all duration-300 ease-out ` +
     `hover:-translate-y-1 ` +
     `hover:border-primary/40/[0.35] ` +
     `hover:shadow-[0_0_26px_rgba(212,175,55,0.16),0_16px_36px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.07)]`;

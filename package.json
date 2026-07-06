@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "generate:icons": "capacitor-assets generate --iconBackgroundColor '#0A0E1A' --iconBackgroundColorDark '#0A0E1A'"
+    "generate:icons": "npx @capacitor/assets@3.0.5 generate --iconBackgroundColor '#0A0E1A' --iconBackgroundColorDark '#0A0E1A'"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
@@ -81,8 +81,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^8.3.0",
+    "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.39.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -92,7 +91,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
-    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -104,8 +103,8 @@
     "terser": "^5.46.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "vite": "^7.3.2",
-    "vitest": "^4.1.5"
+    "vite": "^7.3.6",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "form-data": "4.0.6",
