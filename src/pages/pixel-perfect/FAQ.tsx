@@ -94,9 +94,9 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
         ),
       },
       {
-        question: "Can I request a custom quote?",
+        question: "Can I negotiate the price?",
         answer:
-          "Yes. If you have specific requirements, use the Request for Quote feature to describe what you need. Registered sellers in the relevant category can respond with details and pricing, and you can purchase directly at their listed price.",
+          "Loadify Market uses fixed seller prices for launch. Buyers can purchase directly at the listed price through secure Stripe checkout.",
       },
       {
         question: "What payment methods are accepted?",

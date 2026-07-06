@@ -1,5 +1,5 @@
 import {
-  FileText,
+  CreditCard,
   MessageSquare,
   Truck,
   Banknote,
@@ -15,9 +15,9 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    icon: FileText,
-    title: "Request for Quote",
-    description: "Get custom pricing for bulk orders.",
+    icon: CreditCard,
+    title: "Fixed-Price Checkout",
+    description: "Buy instantly at the seller's listed price.",
   },
   {
     icon: MessageSquare,
@@ -72,8 +72,8 @@ export default function FeaturesGrid() {
                   width: '40px',
                   height: '40px',
                   borderRadius: '12px',
-                  background: 'rgba(212,175,55,0.1)',
-                  border: '1px solid rgba(212,175,55,0.2)',
+                  background: 'rgba(38,185,130,0.1)',
+                  border: '1px solid rgba(38,185,130,0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -106,7 +106,7 @@ export default function FeaturesGrid() {
             <div
               key={feature.title}
               data-parallax
-              className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-elevated p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] hover:border-primary/40"
+              className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-elevated p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(38,185,130,0.16)] hover:border-primary/40"
             >
               <Icon
                 className="w-7 h-7 text-primary shrink-0 icon-pulse"

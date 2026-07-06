@@ -10,10 +10,10 @@ export default function CategoriesOverview() {
       <div className="max-w-6xl mx-auto px-4">
 
         <div className="text-center mb-12">
-          <h2 id="categories-heading" className="text-3xl font-bold text-white mb-4">
+          <h2 id="categories-heading" className="text-3xl font-bold text-foreground mb-4">
             Browse All Categories
           </h2>
-          <p className="text-lg text-slate-400">
+          <p className="text-lg text-muted-foreground">
             Discover products and services across every major UK marketplace category.
           </p>
         </div>
@@ -23,7 +23,7 @@ export default function CategoriesOverview() {
             {Array.from({ length: 15 }).map((_, i) => (
               <div
                 key={i}
-                className="h-20 rounded-2xl bg-white/5 animate-pulse"
+                className="h-20 rounded-2xl bg-muted animate-pulse"
                 aria-hidden="true"
               />
             ))}
@@ -39,18 +39,18 @@ export default function CategoriesOverview() {
                 <Link
                   key={cat.slug}
                   to={`/catalog?category=${encodeURIComponent(cat.name)}`}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/5 bg-surface transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_22px_rgba(212,175,55,0.15)] hover:border-primary/40 group text-center"
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-secondary/10 bg-surface transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(23,53,95,0.16)] hover:border-primary/50 group text-center"
                 >
                   {Icon ? (
                     <Icon
                       className="w-7 h-7 text-primary shrink-0"
-                      style={{ filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.35))' }}
+                      style={{ filter: 'drop-shadow(0 0 6px rgba(38,185,130,0.35))' }}
                       aria-hidden="true"
                     />
                   ) : (
                     <span
                       className="text-primary font-bold text-lg"
-                      style={{ filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.35))' }}
+                      style={{ filter: 'drop-shadow(0 0 6px rgba(38,185,130,0.35))' }}
                       aria-hidden="true"
                     >
                       {cat.name.charAt(0)}

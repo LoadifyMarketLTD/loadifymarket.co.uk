@@ -72,13 +72,13 @@ const PlatformFeatures = () => {
       {/* Ambient glow */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(circle at 20% 50%, rgba(31,138,112,0.07), transparent 40%)" }}
+        style={{ background: "radial-gradient(circle at 20% 50%, rgba(38,185,130,0.10), transparent 40%)" }}
       />
       {/* Dot texture */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, rgba(23,53,95,0.05) 1px, transparent 1px)",
           backgroundSize: "28px 28px",
         }}
       />
@@ -89,10 +89,10 @@ const PlatformFeatures = () => {
           <span className="text-xs font-semibold uppercase tracking-wider text-primary">
             Built for UK Buyers &amp; Sellers
           </span>
-          <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
+          <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-foreground">
             Everything You Need — Whether You Buy or Sell
           </h2>
-          <p className="mt-2 text-sm text-white/75">
+          <p className="mt-2 text-sm text-muted-foreground">
             Loadify Market is the UK's trusted multi-category marketplace for physical goods and service-based commerce, with clear fixed prices, secure checkout and seller-managed fulfilment.
           </p>
         </div>
