@@ -14,6 +14,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 import { openExternalUrl } from "@/lib/capacitorUtils";
+import { supabase } from "@/lib/supabase";
 
 // ── Shipping option types ──────────────────────────────────────────────────
 interface ShippingOption {
@@ -87,8 +88,6 @@ const Checkout = () => {
     const fetchShippingOptions = async () => {
       setShippingLoading(true);
       try {
-        const { supabase } = await import("@/lib/supabase");
-
         // Fetch product_shipping rows joined to shipping_methods and shipping_rates
         // for all products in the cart, taking the lowest-price rate per method.
         const { data, error } = await supabase
@@ -276,7 +275,6 @@ const Checkout = () => {
       };
 
       // Send the Supabase session token so the server can verify buyerId.
-      const { supabase } = await import("@/lib/supabase");
       const { data: { session: authSession } } = await supabase.auth.getSession();
 
       const headers: Record<string, string> = { "Content-Type": "application/json" };

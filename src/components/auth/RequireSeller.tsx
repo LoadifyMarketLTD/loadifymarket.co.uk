@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasSellerAccess, hasAdminAccess } from '../../lib/roleUtils';
 import { authorizedFetch } from '../../lib/authorizedFetch';
+import { supabase } from '../../lib/supabase';
 
 interface Props {
   children: ReactNode;
@@ -68,7 +69,7 @@ export default function RequireSeller({ children }: Props) {
     // Only run the seller status check for actual seller accounts.
     if (!user || user.role !== 'seller') return;
     if (hasAdminAccess(user ?? null)) {
-      setFetchState('active');
+      queueMicrotask(() => setFetchState('active'));
       return;
     }
 
@@ -78,7 +79,7 @@ export default function RequireSeller({ children }: Props) {
     // Active sellers (isActive=true) get access unless explicitly suspended.
     // We do not gate on profile completion or Stripe Connect status here.
     if (user.isActive && user.sellerStatus !== 'suspended') {
-      setFetchState('active');
+      queueMicrotask(() => setFetchState('active'));
       return;
     }
 
@@ -86,15 +87,13 @@ export default function RequireSeller({ children }: Props) {
     // deterministic value, use it immediately — no DB round-trip needed.
     const cached = user.sellerStatus;
     if (cached === 'active' || cached === 'suspended') {
-      setFetchState(cached);
+      queueMicrotask(() => setFetchState(cached));
       return;
     }
 
     let cancelled = false;
 
     const checkStatus = async () => {
-      const { supabase } = await import('../../lib/supabase');
-
       let dbStatus: FetchState = 'draft';
 
       if (cached === 'draft' || cached === 'submitted') {

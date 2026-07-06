@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store";
 import MobileDrawer from "@/components/MobileDrawer";
 import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Marketplace-style desktop header — always renders with the opaque dark-navy background.
@@ -31,10 +32,6 @@ const Header = () => {
   const navigate = useNavigate();
   const { categories } = useCategories();
 
-  useEffect(() => {
-    setHoveredCat(null);
-  }, []);
-
   const scheduleClose = useCallback(() => {
     closeTimerRef.current = setTimeout(() => setHoveredCat(null), 80);
   }, []);
@@ -57,7 +54,6 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
-    const { supabase } = await import('@/lib/supabase');
     await supabase.auth.signOut();
     logout();
     navigate("/login", { replace: true });

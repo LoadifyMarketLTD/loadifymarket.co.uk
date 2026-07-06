@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
 import { sanitizeRedirectUrl } from "@/lib/sanitizeRedirectUrl";
 import SEO from "@/components/SEO";
+import { supabase } from "@/lib/supabase";
 
 /* ── Shared Google / Facebook SVG logos ─────────────────────────────────── */
 const GoogleIcon = () => (
@@ -59,7 +60,6 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { supabase } = await import("@/lib/supabase");
       const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (authError) throw authError;
 
@@ -84,8 +84,6 @@ const Login = () => {
     setError("");
     setGoogleLoading(true);
     try {
-      const { supabase } = await import("@/lib/supabase");
-
       // Detect if running inside a Capacitor APK.
       if (isCapacitorNative()) {
         // In the APK we cannot use a browser redirect back into the WebView.
@@ -129,8 +127,6 @@ const Login = () => {
     setError("");
     setFacebookLoading(true);
     try {
-      const { supabase } = await import("@/lib/supabase");
-
       if (isCapacitorNative()) {
         const { data, error: oauthErr } = await supabase.auth.signInWithOAuth({
           provider: "facebook",

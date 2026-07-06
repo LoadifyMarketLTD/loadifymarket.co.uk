@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Mail, RefreshCw, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../../store';
 import { Button } from '../ui/button';
+import { supabase } from '../../lib/supabase';
 
 interface Props {
   children: ReactNode;
@@ -37,7 +38,6 @@ export default function RequireEmailVerified({ children }: Props) {
     setResendState('sending');
     setResendError('');
     try {
-      const { supabase } = await import('../../lib/supabase');
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
@@ -69,7 +69,6 @@ export default function RequireEmailVerified({ children }: Props) {
 
   const handleRefresh = async () => {
     try {
-      const { supabase } = await import('../../lib/supabase');
       // Refresh the session — Supabase will return an updated token if the user
       // has since confirmed their email (email_confirmed_at will be set).
       const { data } = await supabase.auth.refreshSession();

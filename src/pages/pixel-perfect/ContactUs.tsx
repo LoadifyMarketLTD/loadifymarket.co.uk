@@ -9,6 +9,7 @@ import SEO from "@/components/SEO";
 import { Label } from "@/components/ui/label";
 import { BRAND } from "@/constants/brand";
 import { formatPhoneNumber } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 const SUPPORT_EMAIL = BRAND.supportEmail;
 
@@ -33,7 +34,6 @@ const ContactUs = () => {
 
     try {
       const authHeader = await (async () => {
-        const { supabase } = await import("@/lib/supabase");
         const { data } = await supabase.auth.getSession();
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (data.session?.access_token) {

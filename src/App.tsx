@@ -8,6 +8,7 @@ import Header from './components/Header';
 import AmbientLayer from './components/AmbientLayer';
 import { isCapacitorNative } from './lib/capacitorUtils';
 import { usePushTokenRegistration } from './hooks/usePushTokenRegistration';
+import { supabase } from './lib/supabase';
 
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireAuth from './components/auth/RequireAuth';
@@ -197,17 +198,15 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
   const [maintenanceMode, setMaintenanceMode] = useState<boolean | null>(null);
 
   useEffect(() => {
-    import('./lib/supabase').then(({ supabase }) => {
-      supabase
-        .from('platform_settings')
-        .select('value')
-        .eq('key', 'maintenance_mode')
-        .maybeSingle()
-        .then(({ data }) => {
-          const val = data?.value;
-          setMaintenanceMode(val === true || val === 'true');
-        }, () => setMaintenanceMode(false));
-    });
+    supabase
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .maybeSingle()
+      .then(({ data }) => {
+        const val = data?.value;
+        setMaintenanceMode(val === true || val === 'true');
+      }, () => setMaintenanceMode(false));
   }, []);
 
   // While loading auth or the maintenance flag, render normally (avoids flash)
@@ -275,7 +274,6 @@ function App() {
           // OAuth callback — exchange the code/token with Supabase and
           // let onAuthStateChange update the store automatically.
           if (parsed.pathname.startsWith('/auth/callback')) {
-            const { supabase } = await import('./lib/supabase');
             await supabase.auth.getSession();
             navigate('/auth/callback' + parsed.search + parsed.hash, { replace: true });
             return;
@@ -354,7 +352,7 @@ function App() {
     // bytes parsed before first paint.
     let cleanup: (() => void) | undefined;
 
-    import('./lib/supabase').then(({ supabase }) => {
+    {
       // Supabase JS v2 fires onAuthStateChange with an INITIAL_SESSION event
       // synchronously when the subscription is created — this covers the
       // page-load / existing-session path without needing a separate
@@ -420,10 +418,7 @@ function App() {
       });
 
       cleanup = () => subscription.unsubscribe();
-    }).catch((err: unknown) => {
-      console.error('[App] Failed to load supabase module:', err);
-      setLoading(false);
-    });
+    }
 
     return () => cleanup?.();
   }, [setUser, setLoading]);
