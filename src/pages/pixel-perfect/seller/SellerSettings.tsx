@@ -485,7 +485,7 @@ const SellerSettings = () => {
                 size="sm"
                 disabled={connectLoading}
                 onClick={handleConnectStripe}
-                className="flex-1"
+                className={stripeConnectStatus === "active" ? "hidden" : "flex-1"}
               >
                 {connectLoading ? (
                   <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Connecting…</>
