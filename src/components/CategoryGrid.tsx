@@ -11,7 +11,7 @@ const CategoryGrid = () => {
 
   return (
     <section
-    className="bg-background border-b border-border"
+    className="bg-background border-b border-white/10"
       aria-labelledby="cats-heading"
     >
       <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-7">
@@ -21,11 +21,11 @@ const CategoryGrid = () => {
           <div>
             <h2
               id="cats-heading"
-              className="text-[13px] font-black text-foreground uppercase tracking-widest"
+              className="text-[13px] font-black text-white uppercase tracking-widest"
             >
               Shop by Category
             </h2>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-[11px] text-slate-400 mt-0.5">
               {loading ? "Loading…" : `${categories.length} marketplace categories`}
             </p>
           </div>
@@ -39,12 +39,12 @@ const CategoryGrid = () => {
 
         {/* Tile grid — gap-px creates hairline borders between tiles */}
         {!loading && categories.length === 0 && (
-          <p className="text-[11px] text-muted-foreground text-center py-4">
+          <p className="text-[11px] text-slate-400 text-center py-4">
             No categories available.
           </p>
         )}
         {!loading && categories.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-px bg-border">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-px bg-white/5">
             {categories.map((cat) => {
               const sub =
                 cat.children.slice(0, 2).map((c) => c.name).join(" • ") +

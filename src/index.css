@@ -5,56 +5,56 @@
 @layer base {
   :root {
     /* ── Master color system ───────────────────────────────────────────── */
-    --background: 210 40% 98%;       /* #F8FAFC */
-    --foreground: 222 47% 11%;       /* #0F172A */
+    --background: 225 44% 7%;        /* #0A0E1A */
+    --foreground: 213 27% 97%;       /* #F5F7FA */
 
-    --card: 0 0% 100%;               /* #FFFFFF */
-    --card-foreground: 222 47% 11%;
+    --card: 220 40% 12%;             /* #121A2B */
+    --card-foreground: 213 27% 97%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 220 32% 16%;          /* #182235 */
+    --popover-foreground: 213 27% 97%;
 
-    --primary: 158 64% 42%;          /* #26B982 */
-    --primary-foreground: 222 47% 11%;
-    --primary-hover: 158 73% 34%;    /* #178F61 */
-    --primary-soft: 158 64% 42%;
+    --primary: 45 64% 52%;           /* #D4AF37 */
+    --primary-foreground: 0 0% 5%;
+    --primary-hover: 39 63% 48%;     /* #C69B2D */
+    --primary-soft: 45 64% 52%;
 
-    --secondary: 217 58% 22%;        /* #17355F */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 220 54% 40%;        /* #2E4F9B */
+    --secondary-foreground: 213 27% 97%;
 
-    --muted: 210 40% 96%;            /* #F1F5F9 */
-    --muted-foreground: 215 16% 47%; /* #64748B */
+    --muted: 220 40% 12%;
+    --muted-foreground: 217 18% 70%; /* #A7B0C0 */
 
-    --accent: 43 74% 49%;            /* #D4A017 */
-    --accent-foreground: 222 47% 11%;
+    --accent: 166 63% 33%;           /* #1F8A70 */
+    --accent-foreground: 213 27% 97%;
 
     --destructive: 0 62% 56%;        /* #D64545 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;           /* #E2E8F0 */
-    --input: 214 32% 91%;
-    --ring: 158 64% 42%;
+    --border: 221 28% 23%;           /* #2A344A */
+    --input: 221 28% 23%;
+    --ring: 45 64% 52%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 217 58% 15%;
-    --sidebar-foreground: 210 40% 92%;
-    --sidebar-primary: 158 64% 42%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 45% 20%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 217 33% 25%;
-    --sidebar-ring: 158 64% 42%;
+    --sidebar-background: 225 44% 7%;
+    --sidebar-foreground: 217 18% 70%;
+    --sidebar-primary: 45 64% 52%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 220 40% 12%;
+    --sidebar-accent-foreground: 213 27% 97%;
+    --sidebar-border: 221 28% 23%;
+    --sidebar-ring: 45 64% 52%;
 
     /* Custom tokens */
-    --primary-dark: 158 73% 34%;
-    --primary-light: 157 69% 52%;
-    --surface: 217 58% 15%;
-    --surface-raised: 217 45% 20%;
-    --gradient-hero: linear-gradient(135deg, #17355F 0%, #26B982 100%);
-    --gradient-accent: linear-gradient(135deg, #26B982 0%, #D4A017 100%);
-    --shadow-card: 0 12px 32px rgba(15,23,42,0.08);
-    --shadow-elevated: 0 18px 44px rgba(15,23,42,0.14);
+    --primary-dark: 39 63% 48%;
+    --primary-light: 45 64% 58%;
+    --surface: 220 40% 12%;
+    --surface-raised: 220 32% 16%;
+    --gradient-hero: linear-gradient(135deg, #C69B2D 0%, #D4AF37 100%);
+    --gradient-accent: linear-gradient(135deg, #D4AF37 0%, #C69B2D 100%);
+    --shadow-card: 0 10px 40px rgba(0,0,0,0.6);
+    --shadow-elevated: 0 0 20px rgba(212,175,55,0.15), 0 10px 40px rgba(0,0,0,0.8);
 
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
@@ -106,10 +106,7 @@
     /* Ensure full-width on all devices */
     min-width: 320px;
     position: relative;
-    background:
-      radial-gradient(circle at top left, rgba(38,185,130,0.10), transparent 32rem),
-      radial-gradient(circle at top right, rgba(23,53,95,0.08), transparent 34rem),
-      #F8FAFC;
+    background: radial-gradient(circle at top, #182235, #0A0E1A);
     background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -202,7 +199,7 @@ body::before {
 
   background: radial-gradient(
     400px circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
-    rgba(38, 185, 130, 0.06),
+    rgba(212, 175, 55, 0.08),
     transparent 60%
   );
 }
@@ -354,7 +351,7 @@ body::before {
   bottom: -6px;
   width: 0%;
   height: 2px;
-  background: #26B982;
+  background: #D4AF37;
   border-radius: 999px;
   transition: width 0.3s ease;
 }
