@@ -602,8 +602,8 @@ export default function ProductFormPage() {
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-foreground">{id ? 'Edit Listing' : 'Create New Listing'}</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <h1 className="text-3xl font-bold text-white">{id ? 'Edit Listing' : 'Create New Listing'}</h1>
+            <p className="text-slate-400 mt-1 text-sm">
               {id ? 'Update your product information below.' : 'Fill in the details below to list your product on the marketplace.'}
             </p>
           </div>
