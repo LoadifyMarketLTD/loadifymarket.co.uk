@@ -295,10 +295,6 @@ async function releasePaymentReservation(
     return;
   }
 
-  // Legacy token-less sessions are never released by product ID directly: a
-  // delayed event could otherwise unlock a newer token-owned reservation. The
-  // guarded DB cleanup may release an expired legacy reservation after the
-  // payment_sessions row is no longer pending.
   const { error } = await sb.rpc('release_expired_reservations');
   if (error) throw error;
 }
@@ -421,9 +417,6 @@ async function fulfilPaidOrder(
     });
     if (fulfilError) throw fulfilError;
   }
-
-  // New marketplace checkout is Connect-only. Funds stay on the platform until
-  // escrow-release creates exactly one seller transfer after the protection window.
 
   if (orderWasCreated) {
     await sb.from('notifications').insert({
@@ -648,35 +641,14 @@ export async function handlePaymentFailed(
   sb: import('@supabase/supabase-js').SupabaseClient<any>,
   paymentIntent: Stripe.PaymentIntent,
 ): Promise<void> {
-  let sessionData: { id: string; metadata: Record<string, unknown> } | null = null;
-
-  const { data: mobileSession, error: mobileErr } = await sb
-    .from('payment_sessions')
-    .select('id, metadata')
-    .eq('stripePaymentIntent', paymentIntent.id)
-    .eq('status', 'pending')
-    .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
-  if (mobileErr) throw mobileErr;
-
-  if (mobileSession) {
-    sessionData = mobileSession;
-  } else {
-    const transferGroup = paymentIntent.transfer_group ?? null;
-    if (!transferGroup) return;
-    const { data: webSession, error: webErr } = await sb
-      .from('payment_sessions')
-      .select('id, metadata')
-      .eq('status', 'pending')
-      .filter('metadata->>transferGroup', 'eq', transferGroup)
-      .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
-    if (webErr) throw webErr;
-    sessionData = webSession;
-  }
-
-  if (!sessionData) return;
-  const claimed = await claimPendingPaymentSession(sb, sessionData.id, 'failed');
-  if (!claimed) return;
-  await releasePaymentReservation(sb, sessionData.metadata);
+  // A failed card attempt normally returns the same PaymentIntent to
+  // requires_payment_method, where Stripe expects the customer to retry it.
+  // Keep the DB session pending and keep its reservation. Only a terminal
+  // canceled/expired event or the Stripe-aware cleanup may release stock.
+  void sb;
+  console.warn(
+    `payment_intent.payment_failed: ${paymentIntent.id} remains reserved for retry; status=${paymentIntent.status}`,
+  );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
