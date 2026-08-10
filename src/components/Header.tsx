@@ -59,8 +59,6 @@ const Header = () => {
     navigate("/login", { replace: true });
   };
 
-  // Priority order for the category quick-links bar (canonical slugs from migration 400).
-  // Shown in this order; any slug not yet in the DB is silently skipped.
   const PRIORITY_SLUGS = [
     "electronics",
     "clothing-fashion",
@@ -74,8 +72,6 @@ const Header = () => {
     .map((slug) => categories.find((c) => c.slug === slug))
     .filter((c): c is NonNullable<typeof c> => c !== undefined);
 
-  // Fall back to the first 6 DB categories if none of the priority slugs are
-  // found (e.g. legacy DB that hasn't run migration 400 yet).
   const displayCategories =
     priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 6);
 
@@ -96,11 +92,7 @@ const Header = () => {
       className="fixed top-0 left-0 right-0 z-40 bg-surface border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)] hidden md:block"
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
-
-      {/* ── Row 1: Hamburger | Logo | Search | Actions ──────────────────── */}
       <div className="w-full px-4 sm:px-6 lg:px-8 h-[60px] md:h-[72px] flex items-center gap-4">
-
-        {/* Hamburger — LEFT side, all screen sizes */}
         <button
           className="p-2.5 text-muted-foreground bg-white/[0.10] hover:text-primary hover:bg-white/[0.18] active:bg-white/[0.22] rounded-xl transition-all shrink-0 ring-1 ring-white/20"
           onClick={() => setMobileOpen(true)}
@@ -111,7 +103,6 @@ const Header = () => {
           <Menu size={22} aria-hidden="true" />
         </button>
 
-        {/* Logo */}
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2.5 shrink-0 ml-0.5">
           <img src={logo} alt="" aria-hidden="true" className="h-9 w-9" />
           <span className="flex flex-col leading-tight">
@@ -120,7 +111,6 @@ const Header = () => {
           </span>
         </Link>
 
-        {/* Prominent search bar — hidden on mobile, visible md+ */}
         <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl mx-auto min-w-0">
           <div className="relative flex items-center w-full">
             <Search className="absolute left-3.5 h-4 w-4 sm:left-4 sm:h-[18px] sm:w-[18px] text-white/35 pointer-events-none" aria-hidden="true" />
@@ -143,7 +133,6 @@ const Header = () => {
           </div>
         </form>
 
-        {/* Mobile cart icon */}
         <Link
           to="/cart"
           className="lg:hidden relative p-2.5 text-muted-foreground hover:text-primary hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(212,175,55,0.35)] hover:bg-white/10 rounded-xl transition-all shrink-0"
@@ -157,13 +146,12 @@ const Header = () => {
           )}
         </Link>
 
-        {/* Right actions (desktop) */}
         <div className="hidden lg:flex items-center gap-1.5 shrink-0">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
             <Link to="/register?type=seller">Sell Stock</Link>
           </Button>
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
-            <Link to="/shipping">Transport</Link>
+            <Link to="/shipping-policy">Shipping Policy</Link>
           </Button>
           <Link
             to="/cart"
@@ -216,7 +204,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* ── Row 2: Category quick-links (desktop only) ──────────────────── */}
       <nav aria-label="Category navigation" className="hidden md:block border-t border-white/[0.08]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="h-[50px] overflow-x-auto scrollbar-none">
@@ -273,7 +260,6 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* ── Mobile drawer (renders via portal) ─────────────────────────── */}
       <MobileDrawer
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
