@@ -29,6 +29,8 @@ export interface Product {
   isAvailable?: boolean;
   /** User-facing reason when the listing is not currently purchasable. */
   availabilityMessage?: string;
+  /** Current maximum purchasable quantity for physical listings; undefined for services. */
+  maxPurchaseQuantity?: number;
 }
 
 const conditionColor: Record<string, string> = {
