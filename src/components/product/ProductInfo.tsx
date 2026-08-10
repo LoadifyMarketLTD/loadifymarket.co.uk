@@ -75,10 +75,10 @@ const ProductInfo = ({
   const hasDistinctSubcategory =
     normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
 
-  // True when the logged-in user is the seller/owner of this product
   const isOwner = !!(user && sellerId && user.id === sellerId);
+  const isAvailable = product.isAvailable !== false;
+  const availabilityMessage = product.availabilityMessage || "This listing is not currently available for purchase.";
 
-  // Check if this product is already in the user's wishlist
   useEffect(() => {
     if (!user || !product.id) return;
     supabase
@@ -140,11 +140,19 @@ const ProductInfo = ({
   };
 
   const handleBuyNow = () => {
+    if (!isAvailable) {
+      toast({ title: "Listing unavailable", description: availabilityMessage, variant: "destructive" });
+      return;
+    }
     addToCart(product);
     navigate("/cart");
   };
 
   const handleAddToCart = () => {
+    if (!isAvailable) {
+      toast({ title: "Listing unavailable", description: availabilityMessage, variant: "destructive" });
+      return;
+    }
     addToCart(product);
     toast({
       title: "Added to cart",
@@ -181,7 +189,6 @@ const ProductInfo = ({
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <a href="/catalog" className="hover:text-foreground transition-colors">Catalog</a>
         <span>/</span>
@@ -194,7 +201,6 @@ const ProductInfo = ({
         )}
       </div>
 
-      {/* Title & condition */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${conditionColor[condition] || ""}`}>
@@ -206,7 +212,6 @@ const ProductInfo = ({
         </h1>
       </div>
 
-      {/* Meta info */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Package className="h-4 w-4 text-primary" />
@@ -230,7 +235,6 @@ const ProductInfo = ({
         </div>
       </div>
 
-      {/* Trust badges */}
       <div className="flex flex-wrap gap-4 py-3 border-t border-border">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-primary" />
@@ -246,14 +250,18 @@ const ProductInfo = ({
         </div>
       </div>
 
-      {/* Fulfilment note */}
       <div className="rounded-lg bg-muted/50 border border-border px-4 py-3 text-xs text-muted-foreground leading-relaxed">
         <span className="font-semibold text-foreground">Sold by: {product.seller}</span>
         {" — "}
         This product is listed, supplied, fulfilled, and delivered by the seller. Loadify Market provides the marketplace platform only.
       </div>
 
-      {/* CTA buttons — owner sees management actions; buyers see purchase actions */}
+      {!isOwner && !isAvailable && (
+        <div className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-foreground" role="status">
+          {availabilityMessage}
+        </div>
+      )}
+
       {isOwner ? (
         <div className="flex flex-col sm:flex-row gap-3">
           <Link to={`/seller/products/${product.id}/edit`} className="flex-1">
@@ -284,8 +292,9 @@ const ProductInfo = ({
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               size="lg"
-              className="flex-1 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity"
+              className="flex-1 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity disabled:opacity-50"
               onClick={handleBuyNow}
+              disabled={!isAvailable}
             >
               Buy from Seller <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
@@ -294,6 +303,7 @@ const ProductInfo = ({
               variant="outline"
               className="flex-1 text-base"
               onClick={handleAddToCart}
+              disabled={!isAvailable}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
@@ -381,7 +391,6 @@ const ProductInfo = ({
         </div>
       </div>
 
-      {/* Accepted payment methods */}
       <PaymentMethodBadges size="sm" />
     </div>
   );
