@@ -142,6 +142,10 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
       : "";
 
   const availability = getDBProductAvailability(dbProduct);
+  const maxPurchaseQuantity =
+    dbProduct.listingContext === "product" || dbProduct.listingContext === "goods"
+      ? Math.max(0, Math.floor(Number(dbProduct.stockQuantity) || 0))
+      : undefined;
 
   return {
     id: dbProduct.id,
@@ -163,6 +167,7 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     listed: formatRelativeTime(dbProduct.createdAt),
     isAvailable: availability.isAvailable,
     availabilityMessage: availability.message,
+    maxPurchaseQuantity,
   };
 }
 
