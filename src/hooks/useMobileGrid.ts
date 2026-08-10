@@ -44,6 +44,8 @@ async function fetchPage(offset: number): Promise<Product[]> {
     .select(PRODUCT_QUERY)
     .eq('isActive', true)
     .eq('isApproved', true)
+    .eq('listingStatus', 'active')
+    .or('listingContext.eq.service,stockQuantity.gt.0')
     .not('type', 'eq', 'logistics')
     .order('createdAt', { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
