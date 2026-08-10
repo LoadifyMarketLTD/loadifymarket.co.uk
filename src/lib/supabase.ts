@@ -33,21 +33,24 @@ if (!supabaseUrl.startsWith('https://')) {
 }
 
 // Detect hidden characters (internal whitespace, embedded newlines, etc.) in
-// the anon key.  Both values were .trim()-ed above, so any /\s/ match here
-// indicates internal whitespace (e.g. a secret saved with an embedded newline)
-// which will cause "Failed to construct 'Headers': Invalid value" at runtime.
+// the public client key. Both values were .trim()-ed above, so any /\s/ match
+// here indicates internal whitespace which will cause invalid request headers.
 if (/\s/.test(supabaseAnonKey)) {
   throw new Error(
-    '[Supabase] Invalid Supabase anon key in APK build env: VITE_SUPABASE_ANON_KEY contains whitespace or newline. ' +
-    'Edit the GitHub secret and ensure it is a single-line JWT with no surrounding quotes.'
+    '[Supabase] Invalid public client key: VITE_SUPABASE_ANON_KEY contains whitespace or newline. ' +
+    'Edit the environment variable and ensure it is a single-line key with no surrounding quotes.'
   );
 }
 
-if (!supabaseAnonKey.startsWith('eyJ')) {
+// Supabase supports both the legacy JWT anon key (eyJ...) and the modern
+// publishable key (sb_publishable_...). Accept either public-client format so
+// rotating to the new key format does not break the web app or APK bootstrap.
+const isLegacyAnonKey = supabaseAnonKey.startsWith('eyJ');
+const isPublishableKey = supabaseAnonKey.startsWith('sb_publishable_');
+if (!isLegacyAnonKey && !isPublishableKey) {
   throw new Error(
-    '[Supabase] Invalid Supabase anon key in APK build env: VITE_SUPABASE_ANON_KEY does not start with "eyJ". ' +
-    `First 10 chars: "${supabaseAnonKey.slice(0, 10)}". ` +
-    'Check that the secret value is the full JWT anon key, not the project URL or service role key.'
+    '[Supabase] Invalid public client key in VITE_SUPABASE_ANON_KEY. ' +
+    'Expected a legacy anon JWT (eyJ...) or a modern publishable key (sb_publishable_...).'
   );
 }
 
@@ -163,4 +166,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     fetch: mobileSafeFetch,
   },
 });
-
