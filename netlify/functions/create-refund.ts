@@ -175,8 +175,6 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  // If the protection window already released a seller transfer, recover it.
-  // If funds are still held there is no payout row and nothing needs reversing.
   let transferReversalId: string | null = null;
   let transferRecoveryWarning: string | null = null;
 
@@ -194,17 +192,13 @@ export const handler: Handler = async (event) => {
     console.error('create-refund:', transferRecoveryWarning, payoutLookupError.message);
   } else if (payoutRecord?.stripeTransferId) {
     try {
+      // Keep this request byte-for-byte compatible with charge.refunded in the
+      // webhook. If Stripe completed the reversal but DB reconciliation failed,
+      // both paths receive the same reversal instead of attempting it twice.
       const reversal = await stripe.transfers.createReversal(
         payoutRecord.stripeTransferId,
-        {
-          metadata: {
-            orderId,
-            orderNumber: order.orderNumber,
-            refundId: refund.id,
-            reversedByAdminId: user.id,
-          },
-        },
-        { idempotencyKey: `order-refund-reversal:${orderId}` },
+        { metadata: { orderId } },
+        { idempotencyKey: `order-refund-transfer:${orderId}` },
       );
       transferReversalId = reversal.id;
 
