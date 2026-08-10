@@ -22,9 +22,11 @@ interface CartContextType {
   priceChangedBanner: boolean;
   /** Dismiss the price-changed banner. */
   dismissPriceBanner: () => void;
-  /** Batch-fetch current prices/availability from DB and reconcile cart state.
-   *  Removes inactive/unapproved products and updates prices to DB values.
-   *  Sets priceChangedBanner=true if any price changed. */
+  /**
+   * Batch-fetch current prices/availability from DB and reconcile cart state.
+   * Removes unavailable products, updates prices, and clamps quantities to the
+   * current physical stock before checkout.
+   */
   refreshCartPrices: () => Promise<void>;
 }
 
@@ -32,26 +34,20 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = "loadify_cart";
 
-/** Parse a raw JSON string into CartItem[]; returns [] on any error. */
 function parseCart(raw: string | null): CartItem[] {
   if (!raw) return [];
   try { return JSON.parse(raw) as CartItem[]; } catch { return []; }
 }
 
-/** Synchronous web-only load — used as the initial useState value on the web. */
 function loadCartSync(): CartItem[] {
   return isCapacitorNative() ? [] : parseCart(safeLocalStorage.getItem(CART_STORAGE_KEY));
 }
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  // On web: synchronously populated from localStorage (no flash).
-  // On APK: starts empty and is populated by the async useEffect below.
   const [cartItems, setCartItems] = useState<CartItem[]>(loadCartSync);
   const [priceChangedBanner, setPriceChangedBanner] = useState(false);
-  // Tracks whether the initial async load from @capacitor/preferences has completed.
   const storageReadyRef = useRef(!isCapacitorNative());
 
-  // ── APK: async load from @capacitor/preferences on mount ──────────────────
   useEffect(() => {
     if (!isCapacitorNative()) return;
     let cancelled = false;
@@ -68,25 +64,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return () => { cancelled = true; };
   }, []);
 
-  // ── Persist cart whenever it changes ──────────────────────────────────────
   useEffect(() => {
-    // Skip the first render on APK until the initial load has run, to avoid
-    // overwriting persisted data with the empty initial state.
     if (!storageReadyRef.current) return;
 
     const serialised = JSON.stringify(cartItems);
     if (isCapacitorNative()) {
-      // Fire-and-forget async write to native SharedPreferences.
       import('@capacitor/preferences').then(({ Preferences }) =>
         Preferences.set({ key: CART_STORAGE_KEY, value: serialised })
       ).catch(() => { /* non-fatal — fall through to web fallback */ });
     }
-    // Always write to localStorage as well.  On web this is the primary store;
-    // on APK it acts as a fallback in case Preferences fails.
     safeLocalStorage.setItem(CART_STORAGE_KEY, serialised);
   }, [cartItems]);
 
   const addToCart = (product: Product, quantity = 1) => {
+    // Defense-in-depth: listing pages should already disable purchase actions,
+    // but never persist an explicitly unavailable product into the cart.
+    if (product.isAvailable === false || quantity <= 0) return;
+
     setCartItems((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
@@ -121,16 +115,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const dismissPriceBanner = useCallback(() => setPriceChangedBanner(false), []);
 
   /**
-   * Batch-fetch current product prices and availability from the DB.
-   * - Removes inactive or unapproved products silently from the cart.
-   * - Updates in-cart prices to the current DB value.
-   * - Sets priceChangedBanner=true if any price changed so the UI can inform
-   *   the user before they proceed to checkout.
-   * Uses a single query for all cart items (no N+1).
+   * Reconcile persisted cart state against the canonical listing state.
+   * Checkout remains authoritative, but the cart should not knowingly present
+   * items that checkout will reject.
    */
   const refreshCartPrices = useCallback(async () => {
-    // Use the functional updater pattern to read the latest cart state
-    // rather than a stale closure or a localStorage re-read.
     let snapshot: CartItem[] = [];
     setCartItems((prev) => {
       snapshot = prev;
@@ -144,12 +133,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, price, isActive, isApproved")
+        .select("id, price, isActive, isApproved, listingStatus, listingContext, stockQuantity")
         .in("id", productIds);
 
       if (error || !data) return;
 
-      type DBRow = { id: string; price: number; isActive: boolean; isApproved: boolean };
+      type DBRow = {
+        id: string;
+        price: number;
+        isActive: boolean;
+        isApproved: boolean;
+        listingStatus: string | null;
+        listingContext: string | null;
+        stockQuantity: number | null;
+      };
       const dbMap = new Map<string, DBRow>(data.map((row: DBRow) => [row.id, row]));
 
       let anyPriceChanged = false;
@@ -157,16 +154,34 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const updated = snapshot
         .filter((item) => {
           const row = dbMap.get(item.product.id);
-          // Remove products that are no longer active or approved
-          return row?.isActive && row?.isApproved;
+          if (!row?.isActive || !row.isApproved || row.listingStatus !== "active") {
+            return false;
+          }
+          if (row.listingContext === "service") return true;
+          return Number(row.stockQuantity ?? 0) > 0;
         })
         .map((item) => {
           const row = dbMap.get(item.product.id) as DBRow;
-          if (row.price !== item.product.price) {
+          const nextProduct: Product = {
+            ...item.product,
+            price: Number(row.price),
+            isAvailable: true,
+            availabilityMessage: undefined,
+          };
+
+          if (Number(row.price) !== item.product.price) {
             anyPriceChanged = true;
-            return { ...item, product: { ...item.product, price: row.price } };
           }
-          return item;
+
+          const nextQuantity = row.listingContext === "service"
+            ? item.quantity
+            : Math.min(item.quantity, Math.max(1, Number(row.stockQuantity ?? 1)));
+
+          return {
+            ...item,
+            product: nextProduct,
+            quantity: nextQuantity,
+          };
         });
 
       setCartItems(updated);
@@ -174,8 +189,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setPriceChangedBanner(true);
       }
     } catch {
-      // Non-fatal: if the refresh fails, the server-side validation in
-      // create-checkout.ts will still catch any price mismatches.
+      // Non-fatal: server-side checkout validation remains authoritative.
     }
   }, []);
 
