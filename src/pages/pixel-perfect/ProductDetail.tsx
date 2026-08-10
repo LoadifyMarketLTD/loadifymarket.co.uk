@@ -9,7 +9,7 @@ import ProductReviews from "@/components/product/ProductReviews";
 import ProductCard from "@/components/catalog/ProductCard";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
-import { adaptProduct } from "@/lib/productAdapter";
+import { adaptProduct, adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
@@ -130,8 +130,6 @@ const ProductDetail = () => {
 
   // Mobile CTA state
   const [ctaLoadingAction, setCtaLoadingAction] = useState<"message" | null>(null);
-  // Listing availability state (active | reserved | sold)
-  const [listingStatus, setListingStatus] = useState<string>("active");
   // Mobile wishlist state (mirrored for the mobile overlay header)
   const [mobileWishlisted, setMobileWishlisted] = useState(false);
   const [mobileWishlistLoading, setMobileWishlistLoading] = useState(false);
@@ -177,14 +175,13 @@ const ProductDetail = () => {
           sellerId: data.sellerId as string | undefined,
         } as unknown as DBProduct;
 
-        // Step 5: Adapt to UI shape
+        // Step 5: Adapt to UI shape, including canonical purchase availability.
         const adapted = adaptProduct(normalised);
         setProduct(adapted);
         setProductDescription(
           typeof data.description === "string" ? data.description : "",
         );
         setProductSellerId(data.sellerId ?? null);
-        setListingStatus((data as Record<string, unknown>).listingStatus as string ?? "active");
 
         // Sync mobile wishlist state
         if (user?.id) {
@@ -212,20 +209,22 @@ const ProductDetail = () => {
           : [adapted.image];
         setGalleryImages(imgs);
 
-        // Fetch related products from the same category
+        // Fetch related products from the same category. These must satisfy the
+        // same sellability contract as the marketplace grids and checkout.
         if (data.categoryId) {
           const { data: relData } = await supabase
             .from("products")
             .select(PRODUCT_QUERY)
             .eq("isActive", true)
             .eq("isApproved", true)
+            .eq("listingStatus", "active")
+            .or("listingContext.eq.service,stockQuantity.gt.0")
             .eq("categoryId", data.categoryId)
-            .neq("id", id)
+            .neq("id", data.id)
             .order("rating", { ascending: false })
             .limit(3);
 
           if (relData && relData.length > 0) {
-            // Fetch sellers for related products
             const relSellerIds = [...new Set(relData.map((p: Record<string, unknown>) => p.sellerId as string).filter(Boolean))];
             const relSellerMap = await fetchSellerMap(relSellerIds);
 
@@ -235,11 +234,13 @@ const ProductDetail = () => {
               subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
               seller: relSellerMap.get(p.sellerId as string) ?? null,
             }));
-            setRelated(normRel.map((p) => adaptProduct(p as unknown as DBProduct)));
+            setRelated(adaptProducts(normRel as unknown as DBProduct[]));
+          } else {
+            setRelated([]);
           }
         }
 
-        // Fetch seller's active listing count, store slug, and join date
+        // Fetch seller's public active listing count, store slug, and join date.
         if (data.sellerId) {
           const [countRes, storeRes, joinRes] = await Promise.all([
             supabase
@@ -247,7 +248,9 @@ const ProductDetail = () => {
               .select("id", { count: "exact", head: true })
               .eq("sellerId", data.sellerId)
               .eq("isActive", true)
-              .eq("isApproved", true),
+              .eq("isApproved", true)
+              .eq("listingStatus", "active")
+              .or("listingContext.eq.service,stockQuantity.gt.0"),
             supabase
               .from("seller_stores")
               .select("storeSlug")
@@ -255,7 +258,7 @@ const ProductDetail = () => {
               .eq("isActive", true)
               .maybeSingle(),
             supabase
-              .from("seller_profiles")
+              .from("seller_profiles_public")
               .select("createdAt")
               .eq("userId", data.sellerId)
               .maybeSingle(),
@@ -397,13 +400,19 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
+    if (product.isAvailable === false) {
+      toast({
+        title: "Listing unavailable",
+        description: product.availabilityMessage || "This listing is not currently available for purchase.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!user) { promptAuth('buy'); return; }
-    if (!product) return;
     trackAddToCart(product.id, product.title, product.price);
     addToCart(product, mobileQty);
     navigate("/checkout");
   };
-
 
   const handleMessage = async () => {
     const convId = await requireConversation("message", "message");
@@ -464,7 +473,9 @@ const ProductDetail = () => {
       "@type": "Offer",
       price: product.price.toFixed(2),
       priceCurrency: "GBP",
-      availability: "https://schema.org/InStock",
+      availability: product.isAvailable === false
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
       seller: {
         "@type": "Organization",
         name: product.seller || "Loadify Market Seller",
@@ -678,12 +689,10 @@ const ProductDetail = () => {
                   borderTop: "1px solid rgba(255,255,255,0.07)",
                 }}
               >
-                {/* Title */}
                 <h1 style={{ fontSize: "20px", fontWeight: 800, color: "rgba(255,255,255,1)", lineHeight: 1.3, marginBottom: "8px" }}>
                   {product.title}
                 </h1>
 
-                {/* Price */}
                 <p style={{ fontSize: "26px", fontWeight: 800, color: "rgba(255,255,255,1)", marginBottom: "4px" }}>
                   £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                 </p>
@@ -696,7 +705,6 @@ const ProductDetail = () => {
 
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.07)" }} />
 
-                {/* Condition row */}
                 <div
                   style={{
                     display: "flex",
@@ -713,7 +721,6 @@ const ProductDetail = () => {
                   </div>
                 </div>
 
-                {/* Location row */}
                 {product.location ? (
                   <div
                     style={{
@@ -729,7 +736,6 @@ const ProductDetail = () => {
                   </div>
                 ) : null}
 
-                {/* Seller row */}
                 <div
                   style={{
                     display: "flex",
@@ -743,7 +749,6 @@ const ProductDetail = () => {
                   <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,1)" }}>{product.seller}</span>
                 </div>
 
-                {/* Quantity row */}
                 <div
                   style={{
                     display: "flex",
@@ -758,6 +763,7 @@ const ProductDetail = () => {
                   <select
                     value={mobileQty}
                     onChange={(e) => setMobileQty(Number(e.target.value))}
+                    disabled={product.isAvailable === false}
                     style={{
                       background: "rgba(255,255,255,0.08)",
                       border: "1px solid rgba(255,255,255,0.15)",
@@ -767,7 +773,8 @@ const ProductDetail = () => {
                       fontWeight: 600,
                       padding: "6px 10px",
                       outline: "none",
-                      cursor: "pointer",
+                      cursor: product.isAvailable === false ? "not-allowed" : "pointer",
+                      opacity: product.isAvailable === false ? 0.5 : 1,
                     }}
                     aria-label="Quantity"
                   >
@@ -777,7 +784,6 @@ const ProductDetail = () => {
                   </select>
                 </div>
 
-                {/* Activity indicator */}
                 {(product.views ?? 0) > 0 && (
                   <p
                     style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "5px" }}
@@ -788,20 +794,16 @@ const ProductDetail = () => {
                   </p>
                 )}
 
-                {listingStatus === "reserved" && (
-                  <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/15 border border-primary/40 py-3 px-4 mb-3">
-                    <span className="text-primary text-sm font-semibold">⏳ Reserved — awaiting payment</span>
-                  </div>
-                )}
-                {listingStatus === "sold" && (
-                  <div className="flex items-center justify-center gap-2 rounded-xl bg-danger/100/15 border border-red-500/25 py-3 px-4 mb-3">
-                    <span className="text-danger text-sm font-semibold">✕ This item has been sold</span>
+                {product.isAvailable === false && (
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/15 border border-primary/40 py-3 px-4 mb-3" role="status">
+                    <span className="text-primary text-sm font-semibold">
+                      {product.availabilityMessage || "This listing is not currently available for purchase."}
+                    </span>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Info + Seller — hidden on mobile (replaced by inline section above), right column on desktop */}
             <div className="order-2 hidden md:block lg:col-start-2 lg:row-start-1 lg:row-span-2 space-y-6">
               <div className="lg:sticky lg:top-24 space-y-6">
                 <div className="bg-card rounded-xl border border-border p-6">
@@ -839,7 +841,6 @@ const ProductDetail = () => {
                   joinDate={sellerJoinDate}
                 />
 
-                {/* Report Listing */}
                 {user && (
                   <button
                     onClick={() => setReportOpen(true)}
@@ -852,9 +853,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Description + Reviews — third on mobile, below gallery on desktop */}
             <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8">
-              {/* Description */}
               {productDescription.trim().length > 0 && (
                 <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                   <div className="flex items-center justify-between">
@@ -867,7 +866,6 @@ const ProductDetail = () => {
                       {descExpanded ? "Show less" : "Show more"}
                     </button>
                   </div>
-                  {/* Desktop: always visible. Mobile: collapsed until expanded. */}
                   <div
                     className={`text-sm text-muted-foreground leading-relaxed whitespace-pre-line md:max-h-none md:overflow-visible ${!descExpanded ? "overflow-hidden max-h-[72px]" : ""}`}
                   >
@@ -876,7 +874,6 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Reviews — desktop only (hidden on mobile per product page spec) */}
               <div className="hidden md:block">
                 <ProductReviews
                   productId={id ?? ""}
@@ -888,7 +885,6 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Related products */}
           {related.length > 0 && (
             <div className="mt-16">
               <h2 className="font-display text-xl font-bold text-foreground mb-6">Similar Listings</h2>
@@ -904,7 +900,6 @@ const ProductDetail = () => {
         </div>
       </main>
 
-      {/* Report Listing Dialog */}
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
         <DialogContent>
           <DialogHeader>
@@ -953,14 +948,10 @@ const ProductDetail = () => {
         </DialogContent>
       </Dialog>
 
-
-      {/* ── Mobile sticky bottom CTA — hidden on desktop ─────────────────────── */}
       {isMobileCtaVisible && (
         <div
           className="md:hidden fixed left-0 right-0 z-[9998]"
           style={{
-            // Keep the CTA above the mobile bottom nav so its touch targets
-            // remain clickable on small screens and inside the APK webview.
             bottom: mobileBottomNavOffset,
             background: "rgba(7,8,11,0.97)",
             backdropFilter: "blur(16px)",
@@ -970,22 +961,7 @@ const ProductDetail = () => {
             pointerEvents: "auto",
           }}
         >
-          {listingStatus === "sold" ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "14px",
-                borderRadius: "12px",
-                background: "rgba(239,68,68,0.10)",
-                border: "1px solid rgba(239,68,68,0.25)",
-                color: "rgba(248,113,113,1)",
-                fontSize: "14px",
-                fontWeight: 700,
-              }}
-            >
-              ✕ This item has been sold
-            </div>
-          ) : listingStatus === "reserved" ? (
+          {product.isAvailable === false ? (
             <div
               style={{
                 textAlign: "center",
@@ -997,12 +973,12 @@ const ProductDetail = () => {
                 fontSize: "14px",
                 fontWeight: 700,
               }}
+              role="status"
             >
-              ⏳ Reserved — awaiting payment
+              {product.availabilityMessage || "This listing is not currently available for purchase."}
             </div>
           ) : (
             <div style={{ display: "flex", gap: "8px" }}>
-              {/* Message */}
               <button
                 onClick={() => void handleMessage()}
                 disabled={ctaLoadingAction !== null}
@@ -1038,7 +1014,6 @@ const ProductDetail = () => {
                 )}
               </button>
 
-              {/* Buy Now */}
               <button
                 onClick={handleBuyNow}
                 style={{
