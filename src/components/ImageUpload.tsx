@@ -9,6 +9,13 @@ interface ImageUploadProps {
 }
 
 const STORAGE_BUCKET = 'product-images';
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
 
 /** Returns the URL only if it is a valid http/https URL, otherwise empty string. */
 function safeSrc(url: string): string {
@@ -22,17 +29,31 @@ function safeSrc(url: string): string {
   }
 }
 
-async function uploadImageToStorage(file: File, sellerId?: string): Promise<string> {
-  // Generate a unique file path
+async function uploadImageToStorage(file: File): Promise<string> {
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    throw new Error('Unsupported image type. Use JPG, PNG or WebP.');
+  }
+  if (file.size <= 0 || file.size > MAX_IMAGE_SIZE) {
+    throw new Error('Image must be smaller than 5MB.');
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) {
+    throw new Error('You must be signed in as a seller to upload product images.');
+  }
+
   const timestamp = Date.now();
   const random = Math.random().toString(36).slice(2, 9);
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-  const folder = sellerId ? `sellers/${sellerId}` : 'uploads';
-  const filePath = `${folder}/${timestamp}-${random}.${ext}`;
+  const ext = MIME_TO_EXT[file.type];
+  const filePath = `sellers/${authData.user.id}/${timestamp}-${random}.${ext}`;
 
   const { error: uploadError } = await supabase.storage
     .from(STORAGE_BUCKET)
-    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type,
+    });
 
   if (uploadError) throw uploadError;
 
@@ -40,10 +61,10 @@ async function uploadImageToStorage(file: File, sellerId?: string): Promise<stri
   return data.publicUrl;
 }
 
-export default function ImageUpload({ 
-  images, 
-  onImagesChange, 
-  maxImages = 10 
+export default function ImageUpload({
+  images,
+  onImagesChange,
+  maxImages = 10,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -59,18 +80,15 @@ export default function ImageUpload({
     setUploadError(null);
 
     try {
-      const uploadPromises = Array.from(files).map(file => uploadImageToStorage(file));
-      const uploadedUrls = await Promise.all(uploadPromises);
-      const updatedImages = [...images, ...uploadedUrls].slice(0, maxImages);
-      onImagesChange(updatedImages);
+      const remainingSlots = Math.max(0, maxImages - images.length);
+      const selectedFiles = Array.from(files).slice(0, remainingSlots);
+      const uploadedUrls = await Promise.all(selectedFiles.map((file) => uploadImageToStorage(file)));
+      onImagesChange([...images, ...uploadedUrls]);
     } catch (err) {
       console.error('Image upload error:', err);
-      setUploadError(
-        'Failed to upload image(s). The storage bucket may not be configured yet. You can use "Add URL" instead.'
-      );
+      setUploadError(err instanceof Error ? err.message : 'Failed to upload image(s). Please try again.');
     } finally {
       setUploading(false);
-      // Reset file input so the same file can be re-selected
       e.target.value = '';
     }
   };
@@ -83,7 +101,6 @@ export default function ImageUpload({
   const openUrlInput = () => {
     setUrlValue('');
     setShowUrlInput(true);
-    // Focus the input on the next tick after it mounts
     setTimeout(() => urlInputRef.current?.focus(), 0);
   };
 
@@ -129,7 +146,6 @@ export default function ImageUpload({
         </div>
       </div>
 
-      {/* Inline URL input */}
       {showUrlInput && (
         <div className="flex items-center gap-2">
           <input
@@ -165,16 +181,13 @@ export default function ImageUpload({
         </div>
       )}
 
-      {/* Upload Error */}
       {uploadError && (
         <div className="bg-primary-soft border border-primary/40 text-primary px-3 py-2 rounded text-sm">
           {uploadError}
         </div>
       )}
 
-      {/* Image Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Existing Images */}
         {images.map((image, index) => (
           <div key={index} className="relative group aspect-square">
             <img
@@ -199,13 +212,12 @@ export default function ImageUpload({
           </div>
         ))}
 
-        {/* Upload Button */}
         {images.length < maxImages && (
           <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-navy-800 hover:bg-gray-50 transition-colors">
             <input
               type="file"
               multiple
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               onChange={handleImageAdd}
               className="hidden"
               disabled={uploading}
@@ -222,11 +234,10 @@ export default function ImageUpload({
         )}
       </div>
 
-      {/* Helper Text */}
       <div className="flex items-start space-x-2 text-sm text-gray-600">
         <ImageIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
         <p>
-          Upload up to {maxImages} images. First image will be the main product photo. 
+          Upload up to {maxImages} images. First image will be the main product photo.
           Supported formats: JPG, PNG, WebP. Max 5MB per image.
         </p>
       </div>
