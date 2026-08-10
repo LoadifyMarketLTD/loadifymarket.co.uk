@@ -43,6 +43,12 @@ function loadCartSync(): CartItem[] {
   return isCapacitorNative() ? [] : parseCart(safeLocalStorage.getItem(CART_STORAGE_KEY));
 }
 
+function clampQuantity(product: Product, quantity: number): number {
+  const positive = Math.max(0, quantity);
+  if (product.maxPurchaseQuantity == null) return positive;
+  return Math.min(positive, Math.max(0, product.maxPurchaseQuantity));
+}
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>(loadCartSync);
   const [priceChangedBanner, setPriceChangedBanner] = useState(false);
@@ -91,11 +97,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       if (existing) {
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: clampQuantity(product, item.quantity + quantity) }
             : item
         );
       }
-      return [...prev, { product, quantity }];
+      const clamped = clampQuantity(product, quantity);
+      return clamped > 0 ? [...prev, { product, quantity: clamped }] : prev;
     });
   };
 
@@ -108,7 +115,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       prev
         .map((item) =>
           item.product.id === productId
-            ? { ...item, quantity: Math.max(0, item.quantity + delta) }
+            ? { ...item, quantity: clampQuantity(item.product, item.quantity + delta) }
             : item
         )
         .filter((item) => item.quantity > 0)
@@ -162,27 +169,28 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         })
         .map((item) => {
           const row = dbMap.get(item.product.id) as DBRow;
+          const maxPurchaseQuantity = row.listingContext === "service"
+            ? undefined
+            : Math.max(0, Math.floor(Number(row.stockQuantity ?? 0)));
           const nextProduct: Product = {
             ...item.product,
             price: Number(row.price),
             isAvailable: true,
             availabilityMessage: undefined,
+            maxPurchaseQuantity,
           };
 
           if (Number(row.price) !== item.product.price) {
             anyPriceChanged = true;
           }
 
-          const nextQuantity = row.listingContext === "service"
-            ? item.quantity
-            : Math.min(item.quantity, Math.max(1, Number(row.stockQuantity ?? 1)));
-
           return {
             ...item,
             product: nextProduct,
-            quantity: nextQuantity,
+            quantity: clampQuantity(nextProduct, item.quantity),
           };
-        });
+        })
+        .filter((item) => item.quantity > 0);
 
       setCartItems(updated);
       if (anyPriceChanged) {
