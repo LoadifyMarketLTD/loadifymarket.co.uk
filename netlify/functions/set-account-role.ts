@@ -47,6 +47,9 @@ export const handler: Handler = async (event) => {
     return jsonResponse(400, { error: 'Invalid role. Allowed values: buyer, seller.' }, METHODS);
   }
 
+  // public.users remains the canonical database source of truth for role and
+  // onboarding state. The authenticated user can only update their own account
+  // through this service-role endpoint, never an attacker-supplied user id.
   const { error: userUpdateError } = await supabase
     .from('users')
     .update({
@@ -100,6 +103,25 @@ export const handler: Handler = async (event) => {
       console.error('set-account-role: buyer init failed:', buyerProfileError.message);
       return jsonResponse(500, { error: 'Failed to initialize buyer account' }, METHODS);
     }
+  }
+
+  // Mirror the server-validated role into app_metadata so an auth-session
+  // fallback never has to trust user-editable user_metadata for authorization.
+  // Preserve provider/custom metadata already maintained by Supabase.
+  const { error: appMetadataError } = await supabase.auth.admin.updateUserById(userId, {
+    app_metadata: {
+      ...(authData.user.app_metadata ?? {}),
+      role,
+    },
+  });
+
+  if (appMetadataError) {
+    console.error('set-account-role: app_metadata sync failed:', appMetadataError.message);
+    return jsonResponse(
+      500,
+      { error: 'Account role was saved but session authorization could not be synchronized. Please try again.' },
+      METHODS,
+    );
   }
 
   return jsonResponse(200, { ok: true, role }, METHODS);
