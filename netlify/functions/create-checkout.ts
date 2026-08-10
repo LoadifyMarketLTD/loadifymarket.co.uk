@@ -37,6 +37,9 @@ interface DBProduct {
   listingStatus: string;
 }
 
+const STRIPE_CHECKOUT_WINDOW_MINUTES = 30;
+const DB_RESERVATION_FAILSAFE_MINUTES = 60;
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -86,14 +89,16 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  const reservationToken = randomUUID();
   let reservedProductIds: string[] = [];
   const releaseReservedProducts = async () => {
     if (reservedProductIds.length === 0) return;
     await supabase
       .from('products')
-      .update({ listingStatus: 'active', reservedUntil: null })
+      .update({ listingStatus: 'active', reservedUntil: null, reservationToken: null })
       .in('id', reservedProductIds)
       .eq('listingStatus', 'reserved')
+      .eq('reservationToken', reservationToken)
       .catch((err: unknown) => {
         console.error('create-checkout: failed to release product reservations:', err);
       });
@@ -318,9 +323,6 @@ export const handler: Handler = async (event) => {
   const isB2BBuyer = Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
   const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
 
-  // Money crossing the Stripe boundary is represented in integer pence. Stripe
-  // Checkout rounds each unit amount independently, so derive the persisted total
-  // from the exact same per-unit pence values rather than from floating-point sums.
   const catalogSubtotalPence = enrichedItems.reduce(
     (sum, item) => sum + Math.round(item.price * 100) * item.quantity,
     0,
@@ -340,11 +342,13 @@ export const handler: Handler = async (event) => {
   const reservableProductIds = enrichedItems
     .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
     .map((item) => item.productId);
-  const reservedUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const reservedUntil = new Date(
+    Date.now() + DB_RESERVATION_FAILSAFE_MINUTES * 60 * 1000,
+  ).toISOString();
   for (const productId of reservableProductIds) {
     const { count } = await supabase
       .from('products')
-      .update({ listingStatus: 'reserved', reservedUntil })
+      .update({ listingStatus: 'reserved', reservedUntil, reservationToken })
       .eq('id', productId)
       .eq('listingStatus', 'active')
       .select('id', { count: 'exact', head: true });
@@ -398,6 +402,7 @@ export const handler: Handler = async (event) => {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items: lineItems,
+      expires_at: Math.floor(Date.now() / 1000) + STRIPE_CHECKOUT_WINDOW_MINUTES * 60,
       success_url: `${siteUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cart`,
       payment_intent_data: { transfer_group: transferGroup },
@@ -405,6 +410,7 @@ export const handler: Handler = async (event) => {
         buyerId: verifiedBuyerId,
         productIds: productIds.join(','),
         transferGroup,
+        reservationToken,
       },
     });
 
@@ -432,6 +438,7 @@ export const handler: Handler = async (event) => {
           catalogTotal: total,
           buyerId: verifiedBuyerId,
           transferGroup,
+          reservationToken,
           isB2B: isB2BBuyer,
           applyReverseCharge,
         },
