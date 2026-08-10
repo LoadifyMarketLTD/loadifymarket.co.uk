@@ -25,6 +25,10 @@ export interface Product {
   reviewCount?: number;
   views: number;
   listed: string;
+  /** Canonical purchase availability from the underlying listing state. */
+  isAvailable?: boolean;
+  /** User-facing reason when the listing is not currently purchasable. */
+  availabilityMessage?: string;
 }
 
 const conditionColor: Record<string, string> = {
@@ -40,8 +44,6 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
 
   const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
-    // Only navigate if the click wasn't on a button or link already.
-    // Guard against Text nodes (Capacitor WebView) which lack .closest().
     const target = e.target instanceof Element ? e.target : null;
     if (!target) return;
     if (target.closest("a") || target.closest("button")) return;
@@ -60,7 +62,6 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
       onClick={handleCardClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCardClick(e); } }}
     >
-      {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <NativeImg
           src={productThumbnail(product.image)}
@@ -85,7 +86,6 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
         )}
       </div>
 
-      {/* Content */}
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-primary">{product.category}</span>
@@ -98,7 +98,6 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
         <h3 className="font-display text-sm font-semibold text-foreground line-clamp-2 leading-snug">
           {product.title}
         </h3>
-
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
