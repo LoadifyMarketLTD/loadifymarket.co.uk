@@ -48,6 +48,8 @@ async function fetchPage(page: number): Promise<Product[]> {
     .select(PRODUCT_QUERY)
     .eq('isActive', true)
     .eq('isApproved', true)
+    .eq('listingStatus', 'active')
+    .or('listingContext.eq.service,stockQuantity.gt.0')
     .not('type', 'eq', 'logistics')
     .order('createdAt', { ascending: false })
     .range(from, to);
