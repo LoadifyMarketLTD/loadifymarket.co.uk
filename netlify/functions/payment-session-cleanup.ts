@@ -14,8 +14,7 @@ interface PendingPaymentSession {
 }
 
 function productIdsFromMetadata(metadata: Record<string, unknown> | null): string[] {
-  if (!metadata) return [];
-  const items = metadata.items;
+  const items = metadata?.items;
   if (!Array.isArray(items)) return [];
 
   return [...new Set(
@@ -69,7 +68,6 @@ export const handler = schedule('*/5 * * * *', async () => {
         const checkoutSession = await stripe.checkout.sessions.retrieve(sessionRow.stripeSessionId);
 
         if (checkoutSession.payment_status === 'paid' || checkoutSession.status === 'complete') {
-          // Payment may be waiting for webhook reconciliation. Never release stock.
           console.warn(
             `payment-session-cleanup: Checkout ${sessionRow.stripeSessionId} is complete/paid while DB session ${sessionRow.id} is pending; leaving for webhook recovery`,
           );
@@ -98,7 +96,6 @@ export const handler = schedule('*/5 * * * *', async () => {
 
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
         if (paymentIntent.status === 'succeeded') {
-          // The buyer paid; the webhook must reconcile the DB before stock moves.
           console.warn(
             `payment-session-cleanup: PaymentIntent ${paymentIntentId} succeeded while DB session ${sessionRow.id} is pending; leaving for webhook recovery`,
           );
@@ -118,8 +115,6 @@ export const handler = schedule('*/5 * * * *', async () => {
           });
           stripeConfirmedUnpayable = true;
         } else {
-          // In particular, do not release stock for a PaymentIntent that Stripe
-          // reports as processing. Wait for a terminal webhook/state instead.
           console.warn(
             `payment-session-cleanup: PaymentIntent ${paymentIntentId} is ${paymentIntent.status}; stock remains reserved`,
           );
@@ -129,25 +124,37 @@ export const handler = schedule('*/5 * * * *', async () => {
 
       if (!stripeConfirmedUnpayable) continue;
 
-      // Stripe is now unable to collect this payment. Release its product locks
-      // first; only then mark the DB session cancelled so a transient DB error is
-      // retried on the next scheduled run rather than leaving stock stranded.
-      const productIds = productIdsFromMetadata(sessionRow.metadata);
-      if (productIds.length > 0) {
-        const { error: releaseError } = await supabase
-          .from('products')
-          .update({ listingStatus: 'active', reservedUntil: null })
-          .in('id', productIds)
-          .eq('listingStatus', 'reserved');
-        if (releaseError) throw releaseError;
-      }
-
-      const { error: cancelDbError } = await supabase
+      // First atomically claim the still-pending DB session. A concurrent paid,
+      // failed, cancelled or webhook-processed session must never release stock.
+      const { data: cancelledSession, error: cancelDbError } = await supabase
         .from('payment_sessions')
         .update({ status: 'cancelled' })
         .eq('id', sessionRow.id)
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .select('id')
+        .maybeSingle<{ id: string }>();
       if (cancelDbError) throw cancelDbError;
+      if (!cancelledSession) continue;
+
+      const productIds = productIdsFromMetadata(sessionRow.metadata);
+      const reservationToken = typeof sessionRow.metadata?.reservationToken === 'string'
+        ? sessionRow.metadata.reservationToken
+        : null;
+
+      if (reservationToken && productIds.length > 0) {
+        const { error: releaseError } = await supabase
+          .from('products')
+          .update({ listingStatus: 'active', reservedUntil: null, reservationToken: null })
+          .in('id', productIds)
+          .eq('listingStatus', 'reserved')
+          .eq('reservationToken', reservationToken);
+        if (releaseError) throw releaseError;
+      } else {
+        // Legacy token-less sessions are released only by the guarded DB RPC
+        // after the session is no longer pending. Never unlock by product ID.
+        const { error: releaseError } = await supabase.rpc('release_expired_reservations');
+        if (releaseError) throw releaseError;
+      }
 
       console.log(`payment-session-cleanup: cancelled abandoned DB session ${sessionRow.id}`);
     } catch (cleanupError) {
