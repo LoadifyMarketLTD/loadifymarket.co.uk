@@ -178,6 +178,7 @@ const ProductDetail = () => {
         // Step 5: Adapt to UI shape, including canonical purchase availability.
         const adapted = adaptProduct(normalised);
         setProduct(adapted);
+        setMobileQty(1);
         setProductDescription(
           typeof data.description === "string" ? data.description : "",
         );
@@ -313,11 +314,11 @@ const ProductDetail = () => {
   }
 
   const handleReportSubmit = async () => {
-    if (!id || !user || !reportReason) return;
+    if (!user || !reportReason) return;
     setReportLoading(true);
     try {
       const { error } = await supabase.from("reported_listings").insert({
-        productId: id,
+        productId: product.id,
         reportedBy: user.id,
         reason: reportReason,
         description: reportDescription.trim() || null,
@@ -336,10 +337,10 @@ const ProductDetail = () => {
   };
 
   const getOrCreateConversation = async (): Promise<string | null> => {
-    if (!user?.id || !productSellerId || !id) return null;
+    if (!user?.id || !productSellerId) return null;
     const res = await authorizedFetch("/.netlify/functions/conversation-get-or-create", {
       method: "POST",
-      body: JSON.stringify({ productId: id, sellerId: productSellerId }),
+      body: JSON.stringify({ productId: product.id, sellerId: productSellerId }),
     });
     const json = await res.json().catch(() => ({})) as { conversationId?: string; error?: string };
     if (!res.ok) {
@@ -374,7 +375,6 @@ const ProductDetail = () => {
 
   const handleMobileToggleWishlist = async () => {
     if (!user) { promptAuth('save'); return; }
-    if (!product) return;
     setMobileWishlistLoading(true);
     try {
       const { data: wl } = await supabase
@@ -422,8 +422,9 @@ const ProductDetail = () => {
   };
 
   // True when the logged-in user is the seller/owner of this product
-  const isMobileCtaVisible = !!(product && productSellerId && (!user || user.id !== productSellerId));
+  const isMobileCtaVisible = !!(productSellerId && (!user || user.id !== productSellerId));
   const mobileBottomNavOffset = "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))";
+  const mobileQuantityLimit = Math.max(1, Math.min(10, product.maxPurchaseQuantity ?? 10));
 
   const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
   const currentProductUrl = typeof window !== "undefined"
@@ -586,7 +587,6 @@ const ProductDetail = () => {
         structuredData={productJsonLd}
       />
 
-      {/* ── Mobile overlay header (back + share + heart) — hidden on desktop ── */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-[9998] flex items-center justify-between px-4"
         style={{
@@ -635,7 +635,6 @@ const ProductDetail = () => {
 
       <main id="main-content" className="pt-0 md:pt-28 pb-16">
         <div className="container mx-auto px-4">
-          {/* Breadcrumb — desktop only */}
           <div className="hidden md:block">
             {(() => {
               const isClearance = navState.flow === "clearance" || navState.flow === "deals";
@@ -670,14 +669,11 @@ const ProductDetail = () => {
             })()}
           </div>
 
-          {/* Main content — mobile: Gallery → mobile info → Desc/Reviews  |  desktop: 2-column grid */}
           <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_420px]">
-            {/* Gallery — edge-to-edge on mobile (overlay header sits above it), in-flow on desktop */}
             <div className="order-1 lg:col-start-1 lg:row-start-1 -mx-4 md:mx-0">
               <ProductGallery images={galleryImages} title={product.title} />
             </div>
 
-            {/* ── Mobile-only inline product info card ── */}
             {isMobileCtaVisible && (
               <div
                 className="order-2 md:hidden"
@@ -778,7 +774,7 @@ const ProductDetail = () => {
                     }}
                     aria-label="Quantity"
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                    {Array.from({ length: mobileQuantityLimit }, (_, index) => index + 1).map((n) => (
                       <option key={n} value={n} className="bg-surface">{n}</option>
                     ))}
                   </select>
@@ -876,12 +872,11 @@ const ProductDetail = () => {
 
               <div className="hidden md:block">
                 <ProductReviews
-                  productId={id ?? ""}
+                  productId={product.id}
                   productRating={product.rating ?? 0}
                   reviewCount={product.reviewCount ?? 0}
                 />
               </div>
-
             </div>
           </div>
 
