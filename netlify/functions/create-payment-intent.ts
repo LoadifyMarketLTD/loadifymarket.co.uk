@@ -40,6 +40,8 @@ interface DBProduct {
   listingStatus: string;
 }
 
+const DB_RESERVATION_FAILSAFE_MINUTES = 60;
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -80,6 +82,7 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  const reservationToken = randomUUID();
 
   let verifiedBuyerId = '';
   const authHeader = event.headers['authorization'];
@@ -289,17 +292,17 @@ export const handler: Handler = async (event) => {
   const chargeableSubtotal = chargeableSubtotalPence / 100;
   const chargeableTotal = totalPence / 100;
 
-  // Reserve before creating a PaymentIntent so a buyer never receives a usable
-  // client_secret for stock that another checkout already reserved.
   const reservedProductIds: string[] = [];
-  const reservedUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const reservedUntil = new Date(
+    Date.now() + DB_RESERVATION_FAILSAFE_MINUTES * 60 * 1000,
+  ).toISOString();
   for (const item of enrichedItems) {
     const dbProduct = productMap.get(item.productId) as DBProduct;
     if (dbProduct.listingContext === 'service') continue;
 
     const { count } = await supabase
       .from('products')
-      .update({ listingStatus: 'reserved', reservedUntil })
+      .update({ listingStatus: 'reserved', reservedUntil, reservationToken })
       .eq('id', item.productId)
       .eq('listingStatus', 'active')
       .select('id', { count: 'exact', head: true });
@@ -308,9 +311,10 @@ export const handler: Handler = async (event) => {
       if (reservedProductIds.length > 0) {
         await supabase
           .from('products')
-          .update({ listingStatus: 'active', reservedUntil: null })
+          .update({ listingStatus: 'active', reservedUntil: null, reservationToken: null })
           .in('id', reservedProductIds)
-          .eq('listingStatus', 'reserved');
+          .eq('listingStatus', 'reserved')
+          .eq('reservationToken', reservationToken);
       }
       return { statusCode: 409, body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }) };
     }
@@ -330,6 +334,7 @@ export const handler: Handler = async (event) => {
         buyerId: verifiedBuyerId,
         productIds: productIds.join(','),
         transferGroup,
+        reservationToken,
         source: 'mobile',
       },
     });
@@ -359,6 +364,7 @@ export const handler: Handler = async (event) => {
           catalogTotal: total,
           buyerId: verifiedBuyerId,
           transferGroup,
+          reservationToken,
           isB2B: isB2BBuyer,
           applyReverseCharge,
           source: 'mobile',
@@ -373,9 +379,10 @@ export const handler: Handler = async (event) => {
       if (reservedProductIds.length > 0) {
         await supabase
           .from('products')
-          .update({ listingStatus: 'active', reservedUntil: null })
+          .update({ listingStatus: 'active', reservedUntil: null, reservationToken: null })
           .in('id', reservedProductIds)
-          .eq('listingStatus', 'reserved');
+          .eq('listingStatus', 'reserved')
+          .eq('reservationToken', reservationToken);
       }
       return { statusCode: 500, body: JSON.stringify({ error: 'Order initialisation failed. Please try again.' }) };
     }
@@ -392,9 +399,10 @@ export const handler: Handler = async (event) => {
     if (reservedProductIds.length > 0) {
       await supabase
         .from('products')
-        .update({ listingStatus: 'active', reservedUntil: null })
+        .update({ listingStatus: 'active', reservedUntil: null, reservationToken: null })
         .in('id', reservedProductIds)
-        .eq('listingStatus', 'reserved');
+        .eq('listingStatus', 'reserved')
+        .eq('reservationToken', reservationToken);
     }
     console.error('create-payment-intent: PaymentIntent creation failed:', err);
     return { statusCode: 500, body: JSON.stringify({ error: 'PaymentIntent creation failed. Please try again.' }) };
