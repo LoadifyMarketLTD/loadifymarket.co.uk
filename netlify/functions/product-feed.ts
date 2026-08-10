@@ -192,7 +192,9 @@ export const handler: Handler = async (event) => {
         auth: { autoRefreshToken: false, persistSession: false },
       });
 
-      // Join products with categories to get the category slug for taxonomy mapping.
+      // Match the same sellability rules enforced by checkout. Reserved/sold
+      // listings are excluded, and physical products must have positive stock.
+      // Services are allowed with stockQuantity=0 because stock does not apply.
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -206,6 +208,8 @@ export const handler: Handler = async (event) => {
         `)
         .eq('isActive', true)
         .eq('isApproved', true)
+        .eq('listingStatus', 'active')
+        .or('listingContext.eq.service,stockQuantity.gt.0')
         .range(offset, offset + PAGE_SIZE - 1)
         .order('id');
 
