@@ -587,6 +587,7 @@ const ProductDetail = () => {
         structuredData={productJsonLd}
       />
 
+      {/* ── Mobile overlay header (back + share + heart) — hidden on desktop ── */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-[9998] flex items-center justify-between px-4"
         style={{
@@ -635,6 +636,7 @@ const ProductDetail = () => {
 
       <main id="main-content" className="pt-0 md:pt-28 pb-16">
         <div className="container mx-auto px-4">
+          {/* Breadcrumb — desktop only */}
           <div className="hidden md:block">
             {(() => {
               const isClearance = navState.flow === "clearance" || navState.flow === "deals";
@@ -669,11 +671,14 @@ const ProductDetail = () => {
             })()}
           </div>
 
+          {/* Main content — mobile: Gallery → mobile info → Desc/Reviews  |  desktop: 2-column grid */}
           <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_420px]">
+            {/* Gallery — edge-to-edge on mobile (overlay header sits above it), in-flow on desktop */}
             <div className="order-1 lg:col-start-1 lg:row-start-1 -mx-4 md:mx-0">
               <ProductGallery images={galleryImages} title={product.title} />
             </div>
 
+            {/* ── Mobile-only inline product info card ── */}
             {isMobileCtaVisible && (
               <div
                 className="order-2 md:hidden"
@@ -877,6 +882,7 @@ const ProductDetail = () => {
                   reviewCount={product.reviewCount ?? 0}
                 />
               </div>
+
             </div>
           </div>
 
