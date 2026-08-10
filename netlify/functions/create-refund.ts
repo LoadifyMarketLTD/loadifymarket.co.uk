@@ -1,40 +1,9 @@
-/**
- * create-refund
- *
- * Issues a Stripe refund for a completed order.
- * Only admin users may call this endpoint.
- *
- * The function looks up the Stripe PaymentIntent associated with the order's
- * payment session and calls stripe.refunds.create().  The order status is
- * then updated to 'refunded' in the database.
- *
- * Transfer reversal (Separate Charges and Transfers model):
- *   After the refund is created, the function explicitly reverses the Stripe
- *   transfer that was sent to the seller's connected account. This is required
- *   because the platform uses the "separate charges and transfers" model — in
- *   this model Stripe's built-in reverse_transfer flag on stripe.refunds.create()
- *   is a no-op (it only works with destination charges). The explicit reversal
- *   via stripe.transfers.createReversal() ensures the seller's funds are
- *   recovered so the platform does not bear the cost of the refund.
- *
- * Security:
- *   – Requires Authorization: Bearer <admin-jwt>
- *   – Caller must have role = 'admin'
- *   – Order must be in a refundable status (paid | packed | shipped | delivered | disputed)
- *   – Idempotency: if a refund already exists for the PaymentIntent, Stripe
- *     returns the existing refund object (no double-refund possible).
- *
- * Method: POST
- * Body:   { orderId: string; reason?: 'duplicate' | 'fraudulent' | 'requested_by_customer' }
- */
-
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
 
-const REFUNDABLE_STATUSES = new Set(['paid', 'packed', 'shipped', 'delivered', 'disputed']);
-
+const REFUNDABLE_STATUSES = new Set(['paid', 'packed', 'shipped', 'delivered', 'completed']);
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
 
 const corsHeaders = {
@@ -47,7 +16,6 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' };
   }
-
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -55,44 +23,40 @@ export const handler: Handler = async (event) => {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!stripeSecretKey || !supabaseUrl || !supabaseServiceRoleKey) {
+  if (!stripeSecretKey || !stripeSecretKey.startsWith('sk_') || !supabaseUrl || !supabaseServiceRoleKey) {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
-  // ── Authenticate caller ───────────────────────────────────────────────────
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
   if (!token) {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
 
-  // ── Verify admin role ─────────────────────────────────────────────────────
   const { data: callerRow } = await supabase
     .from('users')
     .select('role')
     .eq('id', user.id)
-    .single<{ role: string }>();
-
+    .maybeSingle<{ role: string }>();
   if (callerRow?.role !== 'admin') {
     return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Admin access required' }) };
   }
 
-  // Rate-limit: 10 refunds per admin per 60-minute window to prevent accidental
-  // mass-refunds and provide an audit trail.
   const refundRl = await checkRateLimit({
     supabase,
     tableName: 'create_refund_rate_limits',
     identifier: user.id,
     windowMinutes: 60,
     maxAttempts: 10,
+    policy: 'fail-closed',
   });
   if (refundRl.exceeded) {
     return {
@@ -102,7 +66,6 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── Parse body ────────────────────────────────────────────────────────────
   let body: { orderId?: string; reason?: string };
   try {
     body = JSON.parse(event.body || '{}') as { orderId?: string; reason?: string };
@@ -118,28 +81,41 @@ export const handler: Handler = async (event) => {
   const validReasons = new Set(['duplicate', 'fraudulent', 'requested_by_customer']);
   const safeReason = validReasons.has(reason) ? reason : 'requested_by_customer';
 
-  // ── Fetch order ───────────────────────────────────────────────────────────
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select('id, orderNumber, status, total')
+    .select('id, orderNumber, status, escrowStatus, total, sellerId, buyerId, stripePaymentIntentId')
     .eq('id', orderId)
-    .single<{ id: string; orderNumber: string; status: string; total: number }>();
+    .maybeSingle<{
+      id: string;
+      orderNumber: string;
+      status: string;
+      escrowStatus: string;
+      total: number;
+      sellerId: string;
+      buyerId: string;
+      stripePaymentIntentId: string | null;
+    }>();
 
   if (orderError || !order) {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Order not found' }) };
+  }
+
+  if (order.status === 'refunded' || order.escrowStatus === 'refunded') {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: JSON.stringify({ success: true, alreadyRefunded: true, message: 'Order is already marked as refunded.' }),
+    };
   }
 
   if (!REFUNDABLE_STATUSES.has(order.status)) {
     return {
       statusCode: 400,
       headers: corsHeaders,
-      body: JSON.stringify({
-        error: `Order status '${order.status}' is not eligible for refund. Eligible statuses: ${[...REFUNDABLE_STATUSES].join(', ')}`,
-      }),
+      body: JSON.stringify({ error: `Order status '${order.status}' is not eligible for refund.` }),
     };
   }
 
-  // ── Find payment session ──────────────────────────────────────────────────
   const { data: paymentSession } = await supabase
     .from('payment_sessions')
     .select('stripeSessionId, stripePaymentIntent, status')
@@ -148,19 +124,17 @@ export const handler: Handler = async (event) => {
     .limit(1)
     .maybeSingle<{ stripeSessionId: string | null; stripePaymentIntent: string | null; status: string }>();
 
-  // Try to get stripePaymentIntent directly; fall back to resolving via Stripe session
-  let paymentIntentId = paymentSession?.stripePaymentIntent ?? null;
+  let paymentIntentId = order.stripePaymentIntentId || paymentSession?.stripePaymentIntent || null;
+  const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
-  const stripe = new Stripe(stripeSecretKey);
-
-  if (!paymentIntentId && paymentSession?.stripeSessionId) {
+  if (!paymentIntentId && paymentSession?.stripeSessionId?.startsWith('cs_')) {
     try {
       const session = await stripe.checkout.sessions.retrieve(paymentSession.stripeSessionId);
       paymentIntentId = typeof session.payment_intent === 'string'
         ? session.payment_intent
         : session.payment_intent?.id ?? null;
-    } catch (e) {
-      console.error('create-refund: failed to retrieve Stripe session:', e);
+    } catch (error) {
+      console.error('create-refund: unable to resolve PaymentIntent from Checkout Session:', error);
     }
   }
 
@@ -168,137 +142,125 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 422,
       headers: corsHeaders,
+      body: JSON.stringify({ error: 'No Stripe PaymentIntent is linked to this order. Manual payment review is required.' }),
+    };
+  }
+
+  let refund: Stripe.Refund;
+  try {
+    refund = await stripe.refunds.create(
+      {
+        payment_intent: paymentIntentId,
+        reason: safeReason as Stripe.RefundCreateParams.Reason,
+        metadata: {
+          orderId,
+          orderNumber: order.orderNumber,
+          issuedByAdminId: user.id,
+        },
+      },
+      { idempotencyKey: `order-refund:${orderId}` },
+    );
+  } catch (error) {
+    const stripeError = error as Stripe.errors.StripeError;
+    if (stripeError.code === 'charge_already_refunded') {
+      const existing = await stripe.refunds.list({ payment_intent: paymentIntentId, limit: 1 });
+      const first = existing.data[0];
+      if (!first) {
+        return { statusCode: 502, headers: corsHeaders, body: JSON.stringify({ error: 'Stripe reports the charge as refunded but no refund record could be resolved.' }) };
+      }
+      refund = first;
+    } else {
+      console.error('create-refund: Stripe refund failed:', stripeError.message);
+      return { statusCode: 502, headers: corsHeaders, body: JSON.stringify({ error: 'Stripe refund failed. Please try again or review the payment in Stripe.' }) };
+    }
+  }
+
+  // If the protection window already released a seller transfer, recover it.
+  // If funds are still held there is no payout row and nothing needs reversing.
+  let transferReversalId: string | null = null;
+  let transferRecoveryWarning: string | null = null;
+
+  const { data: payoutRecord, error: payoutLookupError } = await supabase
+    .from('payouts')
+    .select('id, stripeTransferId, status')
+    .eq('orderId', orderId)
+    .eq('status', 'paid')
+    .not('stripeTransferId', 'is', null)
+    .limit(1)
+    .maybeSingle<{ id: string; stripeTransferId: string; status: string }>();
+
+  if (payoutLookupError) {
+    transferRecoveryWarning = 'Seller transfer lookup failed after buyer refund.';
+    console.error('create-refund:', transferRecoveryWarning, payoutLookupError.message);
+  } else if (payoutRecord?.stripeTransferId) {
+    try {
+      const reversal = await stripe.transfers.createReversal(
+        payoutRecord.stripeTransferId,
+        {
+          metadata: {
+            orderId,
+            orderNumber: order.orderNumber,
+            refundId: refund.id,
+            reversedByAdminId: user.id,
+          },
+        },
+        { idempotencyKey: `order-refund-reversal:${orderId}` },
+      );
+      transferReversalId = reversal.id;
+
+      const { error: payoutUpdateError } = await supabase
+        .from('payouts')
+        .update({
+          status: 'cancelled',
+          reference: reversal.id,
+          notes: `Seller transfer reversed after refund. Stripe reversal ID: ${reversal.id}`,
+        })
+        .eq('id', payoutRecord.id);
+      if (payoutUpdateError) {
+        transferRecoveryWarning = 'Seller transfer was reversed in Stripe but payout reconciliation failed in the database.';
+        console.error('create-refund:', transferRecoveryWarning, payoutUpdateError.message);
+      }
+    } catch (reversalError) {
+      transferRecoveryWarning = 'Buyer refund succeeded, but the released seller transfer could not be automatically reversed. Manual Stripe recovery is required.';
+      console.error('create-refund:', transferRecoveryWarning, reversalError);
+    }
+  }
+
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update({ status: 'refunded', escrowStatus: 'refunded' })
+    .eq('id', orderId);
+
+  if (updateError) {
+    console.error('create-refund: refund succeeded but order reconciliation failed:', updateError.message);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({
-        error: 'No Stripe PaymentIntent found for this order. The order may have been placed before Stripe was connected, or the payment may not have been captured. Use the Stripe Dashboard to issue this refund manually.',
+        error: 'Refund was issued in Stripe, but order reconciliation failed. Do not issue another refund; review this order in admin.',
+        refundId: refund.id,
       }),
     };
   }
 
-  // ── Issue Stripe refund ───────────────────────────────────────────────────
-  let refund: Stripe.Refund;
-  try {
-    refund = await stripe.refunds.create({
-      payment_intent: paymentIntentId,
-      reason: safeReason as Stripe.RefundCreateParams.Reason,
-      metadata: {
-        orderId,
-        orderNumber: order.orderNumber,
-        issuedByAdminId: user.id,
-      },
-    });
-  } catch (err) {
-    const stripeErr = err as Stripe.errors.StripeError;
-    // charge_already_refunded means the refund was already issued — treat as success
-    if (stripeErr.code === 'charge_already_refunded') {
-      // Update DB status even if Stripe already has the refund
-      await supabase.from('orders').update({ status: 'refunded' }).eq('id', orderId);
-      return {
-        statusCode: 200,
-        headers: corsHeaders,
-        body: JSON.stringify({ success: true, message: 'Order was already refunded in Stripe. Status updated.' }),
-      };
-    }
-    console.error('create-refund: Stripe refund failed:', stripeErr.message);
-    return {
-      statusCode: 502,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: `Stripe refund failed: ${stripeErr.message}` }),
-    };
-  }
+  await supabase.from('notifications').insert({
+    userId: order.buyerId,
+    type: 'order_refunded',
+    title: 'Refund Issued',
+    message: `Your refund for order ${order.orderNumber} has been processed. It may take several business days to appear in your account.`,
+    isRead: false,
+    link: '/buyer/orders',
+  }).catch((error: unknown) => console.warn('create-refund: buyer notification failed:', error));
 
-  // ── Update order status in DB ─────────────────────────────────────────────
-  const { error: updateError } = await supabase
-    .from('orders')
-    .update({ status: 'refunded' })
-    .eq('id', orderId);
-
-  if (updateError) {
-    console.error('create-refund: DB status update failed after successful Stripe refund:', updateError.message);
-    // Non-fatal: refund is issued in Stripe; DB can be updated manually if needed
-  }
-
-  // ── Reverse the seller's Stripe transfer ─────────────────────────────────
-  // The platform uses "separate charges and transfers": the buyer pays the
-  // platform account and the platform explicitly transfers funds to the seller.
-  // Stripe's reverse_transfer flag on stripe.refunds.create() is a no-op in
-  // this model (it only works with destination charges). We must explicitly
-  // call stripe.transfers.createReversal() to claw back the seller's funds so
-  // the platform does not absorb the cost of the refund.
-  //
-  // This is best-effort: a failed reversal does NOT roll back the refund — the
-  // buyer has already been returned their money. Admin is alerted via log so
-  // they can reverse the transfer manually from the Stripe Dashboard if needed.
-  let transferReversalId: string | null = null;
-
-  const { data: payoutRecord } = await supabase
-    .from('payouts')
-    .select('id, stripeTransferId')
-    .eq('orderId', orderId)
-    .eq('status', 'paid')
-    .maybeSingle<{ id: string; stripeTransferId: string | null }>();
-
-  if (payoutRecord?.stripeTransferId) {
-    try {
-      const reversal = await stripe.transfers.createReversal(payoutRecord.stripeTransferId, {
-        metadata: {
-          orderId,
-          orderNumber: order.orderNumber,
-          refundId: refund.id,
-          reversedByAdminId: user.id,
-        },
-      });
-      transferReversalId = reversal.id;
-
-      // Mark the payout record as reversed so the admin dashboard reflects it.
-      await supabase
-        .from('payouts')
-        .update({
-          status: 'cancelled',
-          notes: `Transfer reversed on refund. Stripe reversal ID: ${reversal.id}`,
-          reference: reversal.id,
-        })
-        .eq('id', payoutRecord.id)
-        .catch((e: unknown) =>
-          console.warn('create-refund: payout status update failed (non-fatal):', (e as Error).message),
-        );
-
-      console.log(
-        `create-refund: transfer ${payoutRecord.stripeTransferId} reversed (reversal ${reversal.id}) for order ${orderId}`,
-      );
-    } catch (reversalErr) {
-      // Log clearly so admin can action this manually in the Stripe Dashboard.
-      console.error(
-        `create-refund: MANUAL ACTION REQUIRED — failed to reverse transfer ` +
-          `${payoutRecord.stripeTransferId} for order ${orderId}. ` +
-          `Refund ${refund.id} was issued to buyer but seller funds were NOT recovered. ` +
-          `Reverse manually at https://dashboard.stripe.com/connect/transfers/${payoutRecord.stripeTransferId}`,
-        reversalErr,
-      );
-    }
-  } else {
-    // No payout record found — order was placed before Connect was active, or
-    // the transfer failed and was never recorded. No reversal needed.
-    console.log(
-      `create-refund: no paid payout record found for order ${orderId} — transfer reversal skipped`,
-    );
-  }
-  // ─────────────────────────────────────────────────────────────────────────
-
-  // ── Notify buyer (best-effort) ────────────────────────────────────────────
-  const { data: orderFull } = await supabase
-    .from('orders')
-    .select('buyerId')
-    .eq('id', orderId)
-    .single<{ buyerId: string | null }>();
-
-  if (orderFull?.buyerId) {
+  if (transferRecoveryWarning) {
     await supabase.from('notifications').insert({
-      userId: orderFull.buyerId,
-      type: 'order_refunded',
-      title: 'Refund Issued',
-      message: `Your refund for order ${order.orderNumber} has been processed. It may take 3–5 business days to appear in your account.`,
+      userId: user.id,
+      type: 'payment',
+      title: 'Refund requires payout review',
+      message: `${order.orderNumber}: ${transferRecoveryWarning}`,
       isRead: false,
-    }).catch((e: unknown) => console.warn('create-refund: notification insert failed:', (e as Error).message));
+      link: '/admin/payouts',
+    }).catch((error: unknown) => console.warn('create-refund: admin warning notification failed:', error));
   }
 
   return {
@@ -310,6 +272,7 @@ export const handler: Handler = async (event) => {
       amount: refund.amount / 100,
       status: refund.status,
       transferReversalId,
+      warning: transferRecoveryWarning,
       message: `Refund of £${(refund.amount / 100).toFixed(2)} issued successfully.`,
     }),
   };
