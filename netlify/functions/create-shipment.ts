@@ -113,6 +113,13 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    if (shipping_cost !== undefined && (!Number.isFinite(shipping_cost) || shipping_cost < 0)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'shipping_cost must be a non-negative number' }),
+      };
+    }
+
     // Verify the order exists and user is the seller (or admin)
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -196,16 +203,21 @@ export const handler: Handler = async (event) => {
         });
     }
 
-    // Update order shipping_method and shipping_cost if provided
+    // The API payload keeps snake_case for backwards compatibility, but the
+    // canonical orders schema uses camelCase column names.
     if (shipping_method || shipping_cost !== undefined) {
-      const updateData: { shipping_method?: string; shipping_cost?: number } = {};
-      if (shipping_method) updateData.shipping_method = shipping_method;
-      if (shipping_cost !== undefined) updateData.shipping_cost = shipping_cost;
+      const updateData: { shippingMethod?: string; shippingAmount?: number } = {};
+      if (shipping_method) updateData.shippingMethod = shipping_method;
+      if (shipping_cost !== undefined) updateData.shippingAmount = shipping_cost;
 
-      await supabase
+      const { error: orderShippingError } = await supabase
         .from('orders')
         .update(updateData)
         .eq('id', order_id);
+
+      if (orderShippingError) {
+        throw new Error(`Failed to persist order shipping details: ${orderShippingError.message}`);
+      }
     }
 
     return {
