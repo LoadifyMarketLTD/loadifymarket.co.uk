@@ -2,6 +2,11 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
+import {
+  findOrderTransfer,
+  reconcilePaidOrderPayout,
+  reverseOrderTransfer,
+} from './_shared/orderTransfer';
 
 const REFUNDABLE_STATUSES = new Set(['paid', 'packed', 'shipped', 'delivered', 'completed']);
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
@@ -83,7 +88,7 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select('id, orderNumber, status, escrowStatus, total, sellerId, buyerId, stripePaymentIntentId')
+    .select('id, orderNumber, status, escrowStatus, total, commission, sellerId, buyerId, stripePaymentIntentId')
     .eq('id', orderId)
     .maybeSingle<{
       id: string;
@@ -91,6 +96,7 @@ export const handler: Handler = async (event) => {
       status: string;
       escrowStatus: string;
       total: number;
+      commission: number;
       sellerId: string;
       buyerId: string;
       stripePaymentIntentId: string | null;
@@ -178,27 +184,52 @@ export const handler: Handler = async (event) => {
   let transferReversalId: string | null = null;
   let transferRecoveryWarning: string | null = null;
 
-  const { data: payoutRecord, error: payoutLookupError } = await supabase
-    .from('payouts')
-    .select('id, stripeTransferId, status')
-    .eq('orderId', orderId)
-    .eq('status', 'paid')
-    .not('stripeTransferId', 'is', null)
-    .limit(1)
-    .maybeSingle<{ id: string; stripeTransferId: string; status: string }>();
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const { data: sellerProfile, error: sellerError } = await supabase
+      .from('seller_profiles')
+      .select('stripeAccountId')
+      .eq('userId', order.sellerId)
+      .maybeSingle<{ stripeAccountId: string | null }>();
+    if (sellerError) throw sellerError;
 
-  if (payoutLookupError) {
-    transferRecoveryWarning = 'Seller transfer lookup failed after buyer refund.';
-    console.error('create-refund:', transferRecoveryWarning, payoutLookupError.message);
-  } else if (payoutRecord?.stripeTransferId) {
-    try {
-      // Keep this request byte-for-byte compatible with charge.refunded in the
-      // webhook. If Stripe completed the reversal but DB reconciliation failed,
-      // both paths receive the same reversal instead of attempting it twice.
-      const reversal = await stripe.transfers.createReversal(
-        payoutRecord.stripeTransferId,
-        { metadata: { orderId } },
-        { idempotencyKey: `order-refund-transfer:${orderId}` },
+    const netSellerPence = Math.round(
+      (Number(order.total) - Number(order.commission || 0)) * 100,
+    );
+
+    const { data: payoutRecord, error: payoutLookupError } = await supabase
+      .from('payouts')
+      .select('id, stripeTransferId, status')
+      .eq('orderId', orderId)
+      .not('stripeTransferId', 'is', null)
+      .limit(1)
+      .maybeSingle<{ id: string; stripeTransferId: string; status: string }>();
+    if (payoutLookupError) throw payoutLookupError;
+
+    const transfer = await findOrderTransfer(stripe, {
+      orderId,
+      knownTransferId: payoutRecord?.stripeTransferId ?? null,
+      transferGroup: paymentIntent.transfer_group,
+      expectedAmountPence: Number.isSafeInteger(netSellerPence) && netSellerPence > 0
+        ? netSellerPence
+        : null,
+      expectedDestination: sellerProfile?.stripeAccountId ?? null,
+    });
+
+    if (transfer) {
+      const payoutId = await reconcilePaidOrderPayout(supabase, {
+        sellerId: order.sellerId,
+        orderId,
+        amount: transfer.amount / 100,
+        transferId: transfer.id,
+        note: 'Recovered/reconciled while processing order refund.',
+      });
+
+      const reversal = await reverseOrderTransfer(
+        stripe,
+        transfer,
+        `order-refund-transfer:${orderId}`,
+        { orderId },
       );
       transferReversalId = reversal.id;
 
@@ -209,15 +240,12 @@ export const handler: Handler = async (event) => {
           reference: reversal.id,
           notes: `Seller transfer reversed after refund. Stripe reversal ID: ${reversal.id}`,
         })
-        .eq('id', payoutRecord.id);
-      if (payoutUpdateError) {
-        transferRecoveryWarning = 'Seller transfer was reversed in Stripe but payout reconciliation failed in the database.';
-        console.error('create-refund:', transferRecoveryWarning, payoutUpdateError.message);
-      }
-    } catch (reversalError) {
-      transferRecoveryWarning = 'Buyer refund succeeded, but the released seller transfer could not be automatically reversed. Manual Stripe recovery is required.';
-      console.error('create-refund:', transferRecoveryWarning, reversalError);
+        .eq('id', payoutId);
+      if (payoutUpdateError) throw payoutUpdateError;
     }
+  } catch (recoveryError) {
+    transferRecoveryWarning = 'Buyer refund succeeded, but seller-transfer reconciliation could not be completed automatically. Manual Stripe review is required.';
+    console.error('create-refund:', transferRecoveryWarning, recoveryError);
   }
 
   const { error: updateError } = await supabase
