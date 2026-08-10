@@ -92,11 +92,7 @@ async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClie
     const staleBefore = new Date(Date.now() - STRIPE_EVENT_LEASE_MS).toISOString();
     const { data: reclaimed, error: reclaimError } = await sb
       .from('stripe_events')
-      .update({
-        status: 'processing',
-        error_message: null,
-        processed_at: now,
-      })
+      .update({ status: 'processing', error_message: null, processed_at: now })
       .eq('event_id', event.id)
       .eq('status', 'processing')
       .lt('processed_at', staleBefore)
@@ -110,11 +106,7 @@ async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClie
   if (existing.status === 'failed') {
     const { data: claimed, error: retryError } = await sb
       .from('stripe_events')
-      .update({
-        status: 'processing',
-        error_message: null,
-        processed_at: now,
-      })
+      .update({ status: 'processing', error_message: null, processed_at: now })
       .eq('event_id', event.id)
       .eq('status', 'failed')
       .select('id')
@@ -131,11 +123,7 @@ async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClie
 async function markStripeEvent(sb: import('@supabase/supabase-js').SupabaseClient<any>, eventId: string, status: 'processed' | 'failed', errorMessage: string | null = null): Promise<void> {
   const { error } = await sb
     .from('stripe_events')
-    .update({
-      status,
-      error_message: errorMessage,
-      processed_at: new Date().toISOString(),
-    })
+    .update({ status, error_message: errorMessage, processed_at: new Date().toISOString() })
     .eq('event_id', eventId);
   if (error) console.error(`stripe_events: failed to mark ${eventId} ${status}:`, error.message);
 }
@@ -182,14 +170,17 @@ export const handler: Handler = async (event) => {
       case 'checkout.session.completed':
         await handleCheckoutCompleted(stripeEvent.data.object as Stripe.Checkout.Session);
         break;
+      case 'checkout.session.expired':
+        await handleCheckoutExpired(supabase, stripeEvent.data.object as Stripe.Checkout.Session);
+        break;
       case 'payment_intent.succeeded':
-        await handleMobilePaymentIntentSucceeded(
-          supabase,
-          stripeEvent.data.object as Stripe.PaymentIntent,
-        );
+        await handleMobilePaymentIntentSucceeded(supabase, stripeEvent.data.object as Stripe.PaymentIntent);
         break;
       case 'payment_intent.payment_failed':
         await handlePaymentFailed(supabase, stripeEvent.data.object as Stripe.PaymentIntent);
+        break;
+      case 'payment_intent.canceled':
+        await handlePaymentIntentCanceled(supabase, stripeEvent.data.object as Stripe.PaymentIntent);
         break;
       case 'charge.refunded':
         await handleRefund(stripeEvent.data.object as Stripe.Charge);
@@ -204,10 +195,7 @@ export const handler: Handler = async (event) => {
         await handleTransferCreated(stripeEvent.data.object as Stripe.Transfer);
         break;
       case 'payout.paid':
-        await handlePayoutPaid(
-          stripeEvent.data.object as Stripe.Payout,
-          stripeEvent.account ?? null,
-        );
+        await handlePayoutPaid(stripeEvent.data.object as Stripe.Payout, stripeEvent.account ?? null);
         break;
       default:
         console.log(`Unhandled Stripe event type: ${stripeEvent.type}`);
@@ -251,16 +239,12 @@ interface OrderData {
   totalPence?: number;
   buyerId: string;
   transferGroup?: string;
+  reservationToken?: string;
   isB2B?: boolean;
   applyReverseCharge?: boolean;
 }
 
-function resolveOrderMoney(orderData: OrderData): {
-  subtotal: number;
-  vat: number;
-  shipping: number;
-  total: number;
-} {
+function resolveOrderMoney(orderData: OrderData): { subtotal: number; vat: number; shipping: number; total: number } {
   const totalPence = Number.isInteger(orderData.totalPence)
     ? Number(orderData.totalPence)
     : Math.round(Number(orderData.total) * 100);
@@ -277,12 +261,63 @@ function resolveOrderMoney(orderData: OrderData): {
   const subtotal = isReverseCharge ? money(productPaid) : money(productPaid / 1.20);
   const vat = isReverseCharge ? 0 : money(productPaid - subtotal);
 
-  return {
-    subtotal,
-    vat,
-    shipping: shippingPence / 100,
-    total: totalPence / 100,
-  };
+  return { subtotal, vat, shipping: shippingPence / 100, total: totalPence / 100 };
+}
+
+function productIdsFromMetadata(metadata: Record<string, unknown> | null | undefined): string[] {
+  const items = metadata?.items;
+  if (!Array.isArray(items)) return [];
+  return [...new Set(items.map((item) => {
+    if (!item || typeof item !== 'object') return null;
+    const id = (item as Record<string, unknown>).productId;
+    return typeof id === 'string' && id ? id : null;
+  }).filter((id): id is string => Boolean(id)))];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function releasePaymentReservation(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  metadata: Record<string, unknown> | null | undefined,
+): Promise<void> {
+  const productIds = productIdsFromMetadata(metadata);
+  const reservationToken = typeof metadata?.reservationToken === 'string'
+    ? metadata.reservationToken
+    : null;
+
+  if (reservationToken && productIds.length > 0) {
+    const { error } = await sb
+      .from('products')
+      .update({ listingStatus: 'active', reservedUntil: null, reservationToken: null })
+      .in('id', productIds)
+      .eq('listingStatus', 'reserved')
+      .eq('reservationToken', reservationToken);
+    if (error) throw error;
+    return;
+  }
+
+  // Legacy token-less sessions are never released by product ID directly: a
+  // delayed event could otherwise unlock a newer token-owned reservation. The
+  // guarded DB cleanup may release an expired legacy reservation after the
+  // payment_sessions row is no longer pending.
+  const { error } = await sb.rpc('release_expired_reservations');
+  if (error) throw error;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function claimPendingPaymentSession(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sessionId: string,
+  nextStatus: 'failed' | 'cancelled',
+): Promise<boolean> {
+  const { data, error } = await sb
+    .from('payment_sessions')
+    .update({ status: nextStatus })
+    .eq('id', sessionId)
+    .eq('status', 'pending')
+    .select('id')
+    .maybeSingle<{ id: string }>();
+  if (error) throw error;
+  return Boolean(data);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -304,6 +339,9 @@ async function fulfilPaidOrder(
   const sellerId = sellerIds[0];
   const VAT_RATE = 0.20;
   const resolvedMoney = resolveOrderMoney(orderData);
+  const reservationToken = typeof orderData.reservationToken === 'string'
+    ? orderData.reservationToken
+    : null;
 
   const configuredRate = await fetchConfiguredCommissionRate(sb);
   const commissionRate = getCommissionRate(configuredRate ?? undefined);
@@ -314,12 +352,7 @@ async function fulfilPaidOrder(
     .from('orders')
     .select('id, orderNumber, sellerId, total')
     .eq('stripePaymentIntentId', paymentIntentId)
-    .maybeSingle<{
-      id: string;
-      orderNumber: string;
-      sellerId: string;
-      total: number;
-    }>();
+    .maybeSingle<{ id: string; orderNumber: string; sellerId: string; total: number }>();
 
   if (existingOrderError) throw existingOrderError;
   let orderWasCreated = false;
@@ -384,13 +417,13 @@ async function fulfilPaidOrder(
     const { error: fulfilError } = await sb.rpc('finalize_paid_order_item', {
       p_order_id: order!.id,
       p_product_id: item.productId,
+      p_reservation_token: reservationToken,
     });
     if (fulfilError) throw fulfilError;
   }
 
-  // New marketplace checkout is Connect-only. Do not credit seller_balance here:
-  // the buyer's funds stay on the platform until escrow-release creates exactly
-  // one Stripe transfer after delivery/protection checks pass.
+  // New marketplace checkout is Connect-only. Funds stay on the platform until
+  // escrow-release creates exactly one seller transfer after the protection window.
 
   if (orderWasCreated) {
     await sb.from('notifications').insert({
@@ -424,12 +457,7 @@ async function fulfilPaidOrder(
     }
   }
 
-  return {
-    orderId: order!.id,
-    orderNumber: order!.orderNumber,
-    sellerId,
-    sellerTotal: resolvedMoney.total,
-  };
+  return { orderId: order!.id, orderNumber: order!.orderNumber, sellerId, sellerTotal: resolvedMoney.total };
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
@@ -471,12 +499,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
 
   const { error: updateError } = await supabase!
     .from('payment_sessions')
-    .update({
-      orderId: result.orderId,
-      stripePaymentIntent: paymentIntentId,
-      amount: expectedPence / 100,
-      status: 'completed',
-    })
+    .update({ orderId: result.orderId, stripePaymentIntent: paymentIntentId, amount: expectedPence / 100, status: 'completed' })
     .eq('id', pendingSession.id)
     .eq('status', 'pending');
   if (updateError) throw updateError;
@@ -500,12 +523,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
         to: sellerUser.email,
         subject: `New Order Received — ${result.orderNumber}`,
         template: 'seller_new_order',
-        data: {
-          orderNumber: result.orderNumber,
-          orderDate: new Date().toLocaleDateString('en-GB'),
-          items: orderData.items,
-          sellerTotal: result.sellerTotal,
-        },
+        data: { orderNumber: result.orderNumber, orderDate: new Date().toLocaleDateString('en-GB'), items: orderData.items, sellerTotal: result.sellerTotal },
       }),
     }).catch((err: unknown) => console.warn('Seller email failed:', err));
   }
@@ -518,16 +536,29 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
         to: session.customer_email,
         subject: 'Order Confirmation',
         template: 'order_confirmation',
-        data: {
-          customerName: 'Customer',
-          orderNumber: result.orderNumber,
-          orderDate: new Date().toLocaleDateString('en-GB'),
-          total: expectedPence / 100,
-          items: orderData.items,
-        },
+        data: { customerName: 'Customer', orderNumber: result.orderNumber, orderDate: new Date().toLocaleDateString('en-GB'), total: expectedPence / 100, items: orderData.items },
       }),
     }).catch((err: unknown) => console.warn('Buyer email failed:', err));
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function handleCheckoutExpired(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  session: Stripe.Checkout.Session,
+): Promise<void> {
+  const { data: pending, error } = await sb
+    .from('payment_sessions')
+    .select('id, metadata')
+    .eq('stripeSessionId', session.id)
+    .eq('status', 'pending')
+    .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
+  if (error) throw error;
+  if (!pending) return;
+
+  const claimed = await claimPendingPaymentSession(sb, pending.id, 'cancelled');
+  if (!claimed) return;
+  await releasePaymentReservation(sb, pending.metadata);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -560,12 +591,7 @@ async function handleMobilePaymentIntentSucceeded(
   const result = await fulfilPaidOrder(sb, paymentIntent.id, orderData);
   const { error: updateError } = await sb
     .from('payment_sessions')
-    .update({
-      orderId: result.orderId,
-      stripePaymentIntent: paymentIntent.id,
-      amount: expectedPence / 100,
-      status: 'completed',
-    })
+    .update({ orderId: result.orderId, stripePaymentIntent: paymentIntent.id, amount: expectedPence / 100, status: 'completed' })
     .eq('id', pendingSession.id)
     .eq('status', 'pending');
   if (updateError) throw updateError;
@@ -604,8 +630,6 @@ async function handleRefund(charge: Stripe.Charge): Promise<void> {
     .maybeSingle<{ id: string; stripeTransferId: string | null; status: string }>();
 
   if (payout?.stripeTransferId && stripe) {
-    // Same parameters + same idempotency key as create-refund.ts. This makes a
-    // Stripe-success/DB-failure retry converge on one transfer reversal.
     const reversal = await stripe.transfers.createReversal(
       payout.stripeTransferId,
       { metadata: { orderId: payment.orderId } },
@@ -613,11 +637,7 @@ async function handleRefund(charge: Stripe.Charge): Promise<void> {
     );
     const { error: payoutError } = await supabase!
       .from('payouts')
-      .update({
-        status: 'cancelled',
-        reference: reversal.id,
-        notes: `Transfer reversed after Stripe refund. Reversal ID: ${reversal.id}`,
-      })
+      .update({ status: 'cancelled', reference: reversal.id, notes: `Transfer reversed after Stripe refund. Reversal ID: ${reversal.id}` })
       .eq('id', payout.id);
     if (payoutError) throw payoutError;
   }
@@ -636,7 +656,7 @@ export async function handlePaymentFailed(
     .eq('stripePaymentIntent', paymentIntent.id)
     .eq('status', 'pending')
     .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
-  if (mobileErr) console.error('payment_failed mobile lookup:', mobileErr.message);
+  if (mobileErr) throw mobileErr;
 
   if (mobileSession) {
     sessionData = mobileSession;
@@ -649,33 +669,33 @@ export async function handlePaymentFailed(
       .eq('status', 'pending')
       .filter('metadata->>transferGroup', 'eq', transferGroup)
       .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
-    if (webErr) {
-      console.error('payment_failed web lookup:', webErr.message);
-      return;
-    }
+    if (webErr) throw webErr;
     sessionData = webSession;
   }
 
   if (!sessionData) return;
+  const claimed = await claimPendingPaymentSession(sb, sessionData.id, 'failed');
+  if (!claimed) return;
+  await releasePaymentReservation(sb, sessionData.metadata);
+}
 
-  const { error: updateError } = await sb
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function handlePaymentIntentCanceled(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  paymentIntent: Stripe.PaymentIntent,
+): Promise<void> {
+  const { data: pending, error } = await sb
     .from('payment_sessions')
-    .update({ status: 'failed' })
-    .eq('id', sessionData.id)
-    .eq('status', 'pending');
-  if (updateError) console.error('payment_failed status update:', updateError.message);
+    .select('id, metadata')
+    .eq('stripePaymentIntent', paymentIntent.id)
+    .eq('status', 'pending')
+    .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
+  if (error) throw error;
+  if (!pending) return;
 
-  const items = sessionData.metadata?.items as Array<{ productId?: string }> | undefined;
-  if (!items?.length) return;
-
-  for (const item of items) {
-    if (!item.productId) continue;
-    await sb
-      .from('products')
-      .update({ listingStatus: 'active', reservedUntil: null })
-      .eq('id', item.productId)
-      .eq('listingStatus', 'reserved');
-  }
+  const claimed = await claimPendingPaymentSession(sb, pending.id, 'cancelled');
+  if (!claimed) return;
+  await releasePaymentReservation(sb, pending.metadata);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -811,10 +831,7 @@ export async function handleTransferCreated(transfer: Stripe.Transfer): Promise<
 
   const { error } = await supabase!
     .from('payouts')
-    .update({
-      status: 'paid',
-      notes: `Transfer confirmed by Stripe webhook. Transfer ID: ${transfer.id}`,
-    })
+    .update({ status: 'paid', notes: `Transfer confirmed by Stripe webhook. Transfer ID: ${transfer.id}` })
     .eq('orderId', orderId)
     .eq('stripeTransferId', transfer.id);
   if (error) console.error('transfer.created payout update failed:', error.message);
