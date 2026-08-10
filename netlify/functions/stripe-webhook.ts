@@ -1,707 +1,537 @@
 import Stripe from 'stripe';
-import { Handler } from '@netlify/functions';
+import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
 
-// Collect all available webhook signing secrets.
-// STRIPE_WEBHOOK_SECRET       — standard account webhook (checkout events)
-// STRIPE_CONNECT_WEBHOOK_SECRET — Connect platform webhook (account.updated events)
-// At least one must be set; both can be set simultaneously when you register
-// two separate webhook endpoints in the Stripe Dashboard.
 const WEBHOOK_SECRETS = [
   process.env.STRIPE_WEBHOOK_SECRET?.trim(),
   process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim(),
-].filter((s): s is string => s !== undefined && s.length > 0);
+].filter((s): s is string => Boolean(s));
 
-if (!process.env.STRIPE_SECRET_KEY || WEBHOOK_SECRETS.length === 0) {
-  console.warn('Stripe webhook not configured - missing environment variables');
-}
-
-const stripe = process.env.STRIPE_SECRET_KEY 
-  ? new Stripe(process.env.STRIPE_SECRET_KEY.trim(), {
-      apiVersion: '2025-08-27.basil',
-    })
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY.trim(), { apiVersion: '2025-08-27.basil' })
   : null;
 
 const supabase = process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
-  ? createClient(
-      process.env.VITE_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    )
+  ? createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   : null;
 
-// ── 0% Commission Promotion ───────────────────────────────────────────────────
-// The platform charges 0% commission on all transactions until
-// 31 December 2026 23:59:59 UTC. After that date the normal
-// configured commission rate resumes automatically without any manual intervention.
-//
-// Exported so the unit test can reference the exact deadline value.
 export const ZERO_COMMISSION_PROMO_END_UTC = new Date('2026-12-31T23:59:59Z').getTime();
-
-/** Default post-promo commission rate used as a fallback if DB read fails. */
 export const DEFAULT_COMMISSION_RATE = 0.07;
 
-/**
- * Returns the effective commission rate for the current moment.
- *   - 0          during the promotion  (now < ZERO_COMMISSION_PROMO_END_UTC)
- *   - configuredRate (or DEFAULT_COMMISSION_RATE) once the promotion ends
- *
- * Exported for unit testing — use vi.useFakeTimers / vi.setSystemTime to
- * pin Date.now() to a specific point in time when testing.
- *
- * @param configuredRate - The commission rate from platform_settings (as a
- *   fraction, e.g. 0.07 for 7%). When omitted the DEFAULT_COMMISSION_RATE is used.
- */
 export function getCommissionRate(configuredRate?: number): number {
   if (Date.now() < ZERO_COMMISSION_PROMO_END_UTC) return 0;
-  return typeof configuredRate === 'number' && configuredRate >= 0 ? configuredRate : DEFAULT_COMMISSION_RATE;
+  return typeof configuredRate === 'number' && configuredRate >= 0
+    ? configuredRate
+    : DEFAULT_COMMISSION_RATE;
 }
 
-/**
- * Reads the platform-configured commission rate from platform_settings.
- * Returns null when the setting is absent or unreadable (caller should fall
- * back to DEFAULT_COMMISSION_RATE). The admin stores commissionRate as a
- * percentage (e.g. 7 = 7%), so we divide by 100 before returning.
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchConfiguredCommissionRate(sb: import('@supabase/supabase-js').SupabaseClient<any>): Promise<number | null> {
   try {
-    const { data } = await sb
+    const { data: config } = await sb
       .from('platform_settings')
       .select('value')
       .eq('key', 'platform_config')
       .maybeSingle<{ value: unknown }>();
-    if (!data?.value) return null;
-    const val = typeof data.value === 'object' && data.value !== null
-      ? (data.value as Record<string, unknown>)
+
+    const configValue = config?.value && typeof config.value === 'object'
+      ? config.value as Record<string, unknown>
       : null;
-    const raw = val?.commissionRate;
-    if (typeof raw !== 'number' || raw < 0) return null;
-    // Admin stores as percentage (e.g. 7 for 7%); convert to fraction
-    return raw / 100;
+    const rawConfig = configValue?.commissionRate;
+    if (typeof rawConfig === 'number' && rawConfig >= 0) return rawConfig / 100;
+
+    const { data: legacy } = await sb
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'commission_rate')
+      .maybeSingle<{ value: unknown }>();
+    const rawLegacy = typeof legacy?.value === 'number'
+      ? legacy.value
+      : Number(legacy?.value);
+    return Number.isFinite(rawLegacy) && rawLegacy >= 0 ? rawLegacy / 100 : null;
   } catch {
     return null;
   }
 }
-// ─────────────────────────────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClient<any>, event: Stripe.Event): Promise<'claimed' | 'done' | 'busy'> {
+  const { error: insertError } = await sb.from('stripe_events').insert({
+    event_id: event.id,
+    event_type: event.type,
+    livemode: event.livemode,
+    status: 'processing',
+    error_message: null,
+    processed_at: new Date().toISOString(),
+  });
+
+  if (!insertError) return 'claimed';
+  if (insertError.code !== '23505') {
+    throw new Error(`Stripe event idempotency storage failed: ${insertError.message}`);
+  }
+
+  const { data: existing, error: readError } = await sb
+    .from('stripe_events')
+    .select('id, status')
+    .eq('event_id', event.id)
+    .maybeSingle<{ id: string; status: string }>();
+
+  if (readError || !existing) {
+    throw new Error(`Stripe event idempotency lookup failed: ${readError?.message ?? 'row missing'}`);
+  }
+  if (existing.status === 'processed' || existing.status === 'skipped') return 'done';
+  if (existing.status === 'processing') return 'busy';
+
+  if (existing.status === 'failed') {
+    const { data: claimed, error: retryError } = await sb
+      .from('stripe_events')
+      .update({
+        status: 'processing',
+        error_message: null,
+        processed_at: new Date().toISOString(),
+      })
+      .eq('event_id', event.id)
+      .eq('status', 'failed')
+      .select('id')
+      .maybeSingle<{ id: string }>();
+
+    if (retryError) throw new Error(`Stripe event retry claim failed: ${retryError.message}`);
+    return claimed ? 'claimed' : 'busy';
+  }
+
+  return 'busy';
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function markStripeEvent(sb: import('@supabase/supabase-js').SupabaseClient<any>, eventId: string, status: 'processed' | 'failed', errorMessage: string | null = null): Promise<void> {
+  const { error } = await sb
+    .from('stripe_events')
+    .update({
+      status,
+      error_message: errorMessage,
+      processed_at: new Date().toISOString(),
+    })
+    .eq('event_id', eventId);
+  if (error) console.error(`stripe_events: failed to mark ${eventId} ${status}:`, error.message);
+}
 
 export const handler: Handler = async (event) => {
-  // Return 501 if not configured — require at least one webhook signing secret.
   if (!stripe || !supabase || WEBHOOK_SECRETS.length === 0) {
-    return { 
-      statusCode: 501, 
-      body: JSON.stringify({ error: 'Stripe webhook not configured' })
-    };
+    return { statusCode: 501, body: JSON.stringify({ error: 'Stripe webhook not configured' }) };
   }
-
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const sig = event.headers['stripe-signature'];
-  if (!sig) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'No signature' }),
-    };
+  const signature = event.headers['stripe-signature'];
+  if (!signature || !event.body) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Missing webhook signature or body' }) };
   }
 
   let stripeEvent: Stripe.Event | null = null;
-
-  // Try each available signing secret in order. This allows one endpoint to
-  // serve both the standard account webhook (STRIPE_WEBHOOK_SECRET) and the
-  // Stripe Connect webhook (STRIPE_CONNECT_WEBHOOK_SECRET) simultaneously,
-  // which is the recommended setup for Connect platforms.
   for (const secret of WEBHOOK_SECRETS) {
     try {
-      stripeEvent = stripe.webhooks.constructEvent(event.body!, sig, secret);
-      break; // verified successfully
+      stripeEvent = stripe.webhooks.constructEvent(event.body, signature, secret);
+      break;
     } catch {
-      // try next secret
+      // Try the next configured endpoint secret.
     }
   }
 
   if (!stripeEvent) {
-    console.error('Webhook signature verification failed with all available secrets');
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Webhook signature verification failed' }),
-    };
+    return { statusCode: 400, body: JSON.stringify({ error: 'Webhook signature verification failed' }) };
   }
 
+  let claimed = false;
   try {
-    // ── Event-level idempotency via stripe_events table ────────────────────
-    // Insert the event ID before processing. If the ID already exists
-    // (UNIQUE constraint), the insert fails and we skip processing to
-    // avoid duplicate orders / double stock decrements on Stripe retries.
-    if (supabase) {
-      const { error: dedupError } = await supabase
-        .from('stripe_events')
-        .insert({
-          event_id:   stripeEvent.id,
-          event_type: stripeEvent.type,
-          livemode:   stripeEvent.livemode,
-          status:     'processed',
-        });
-
-      if (dedupError) {
-        if (dedupError.code === '23505') {
-          // Unique violation — already processed
-          console.log(`stripe_events: duplicate event ${stripeEvent.id} (${stripeEvent.type}) — skipping`);
-          return { statusCode: 200, body: JSON.stringify({ received: true, skipped: true }) };
-        }
-        // Any other DB error means we cannot guarantee idempotency — abort
-        // to prevent duplicate orders on Stripe retries.
-        console.error(`stripe_events insert failed for ${stripeEvent.id}, aborting to preserve idempotency: ${dedupError.message}`);
-        return {
-          statusCode: 500,
-          body: JSON.stringify({ error: 'Idempotency check failed — event not processed' }),
-        };
-      }
+    const claim = await claimStripeEvent(supabase, stripeEvent);
+    if (claim === 'done') {
+      return { statusCode: 200, body: JSON.stringify({ received: true, skipped: true }) };
     }
-    // ──────────────────────────────────────────────────────────────────────
+    if (claim === 'busy') {
+      // Another invocation currently owns this event. Returning 500 asks Stripe
+      // to retry later instead of falsely acknowledging unfinished processing.
+      return { statusCode: 500, body: JSON.stringify({ error: 'Event is already being processed; retry later' }) };
+    }
+    claimed = true;
 
     switch (stripeEvent.type) {
-      case 'checkout.session.completed': {
-        const session = stripeEvent.data.object as Stripe.Checkout.Session;
-        await handleCheckoutCompleted(session);
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(stripeEvent.data.object as Stripe.Checkout.Session);
         break;
-      }
-
-      case 'payment_intent.succeeded': {
-        const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
-        // For web checkout the orders are already created by checkout.session.completed
-        // (which fires before payment_intent.succeeded).  For mobile the payment
-        // session is pre-populated by create-payment-intent.ts with
-        // stripePaymentIntent set at insert time (status='pending'), so the handler
-        // below will pick it up and create orders. Web pending sessions do NOT have
-        // stripePaymentIntent set at insert time, so they are never matched here.
-        await handleMobilePaymentIntentSucceeded(supabase!, stripe!, paymentIntent);
+      case 'payment_intent.succeeded':
+        await handleMobilePaymentIntentSucceeded(
+          supabase,
+          stripeEvent.data.object as Stripe.PaymentIntent,
+        );
         break;
-      }
-
-      case 'payment_intent.payment_failed': {
-        const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
-        console.error('PaymentIntent failed:', paymentIntent.id);
-        await handlePaymentFailed(supabase!, paymentIntent);
+      case 'payment_intent.payment_failed':
+        await handlePaymentFailed(supabase, stripeEvent.data.object as Stripe.PaymentIntent);
         break;
-      }
-
-      case 'charge.refunded': {
-        const charge = stripeEvent.data.object as Stripe.Charge;
-        await handleRefund(charge);
+      case 'charge.refunded':
+        await handleRefund(stripeEvent.data.object as Stripe.Charge);
         break;
-      }
-
-      // ── Stripe charge dispute (chargeback) ────────────────────────────────
-      // Triggered when a buyer raises a dispute / chargeback with their bank.
-      // We store the dispute record and mark the linked order for manual review.
-      // We do NOT auto-refund or auto-close — admin must handle each dispute.
-      case 'charge.dispute.created': {
-        const dispute = stripeEvent.data.object as Stripe.Dispute;
-        await handleStripeDispute(supabase!, dispute);
+      case 'charge.dispute.created':
+        await handleStripeDispute(supabase, stripeEvent.data.object as Stripe.Dispute);
         break;
-      }
-      // ──────────────────────────────────────────────────────────────────────
-
-      // ── Stripe Connect account status updates ──────────────────────────────
-      // Triggered by Stripe when a connected Express account's verification
-      // state changes (e.g. seller completes onboarding, payouts are enabled,
-      // or restrictions are added). Keeps our DB in sync automatically.
-      case 'account.updated': {
-        const account = stripeEvent.data.object as Stripe.Account;
-        await handleConnectAccountUpdated(account);
+      case 'account.updated':
+        await handleConnectAccountUpdated(stripeEvent.data.object as Stripe.Account);
         break;
-      }
-      // ──────────────────────────────────────────────────────────────────────
-
-      // ── Stripe Connect transfer confirmation ──────────────────────────────
-      // Fired when a transfer to a seller's connected account is created.
-      // We log the transfer and update the corresponding payouts row (matched
-      // by stripeTransferId) so the admin audit trail is complete.
-      case 'transfer.created': {
-        const transfer = stripeEvent.data.object as Stripe.Transfer;
-        await handleTransferCreated(transfer);
+      case 'transfer.created':
+        await handleTransferCreated(stripeEvent.data.object as Stripe.Transfer);
         break;
-      }
-      // ──────────────────────────────────────────────────────────────────────
-
-      // ── Stripe payout to seller's bank account ────────────────────────────
-      // Fired when Stripe pays out a seller's connected-account balance to
-      // their bank. We update the matching payouts row with the Stripe payout
-      // ID so the seller and admin can see the settled amount.
-      case 'payout.paid': {
-        const payout = stripeEvent.data.object as Stripe.Payout;
-        // stripeEvent.account is set on Connect webhooks and identifies the
-        // connected seller account that triggered the payout.
-        await handlePayoutPaid(payout, stripeEvent.account ?? null);
+      case 'payout.paid':
+        await handlePayoutPaid(
+          stripeEvent.data.object as Stripe.Payout,
+          stripeEvent.account ?? null,
+        );
         break;
-      }
-      // ──────────────────────────────────────────────────────────────────────
-
       default:
-        console.log(`Unhandled event type: ${stripeEvent.type}`);
+        console.log(`Unhandled Stripe event type: ${stripeEvent.type}`);
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ received: true }),
-    };
+    await markStripeEvent(supabase, stripeEvent.id, 'processed');
+    return { statusCode: 200, body: JSON.stringify({ received: true }) };
   } catch (error) {
-    console.error('Webhook handler error:', error);
-    // Mark the event as failed in stripe_events so admin can see it
-    if (supabase) {
-      await supabase
-        .from('stripe_events')
-        .update({
-          status:        'failed',
-          error_message: error instanceof Error ? error.message : String(error),
-        })
-        .eq('event_id', stripeEvent.id)
-        .catch((e: unknown) => console.error('Failed to update stripe_events status:', e));
+    console.error(`Stripe webhook ${stripeEvent.id} failed:`, error);
+    if (claimed) {
+      await markStripeEvent(
+        supabase,
+        stripeEvent.id,
+        'failed',
+        (error instanceof Error ? error.message : String(error)).slice(0, 500),
+      );
     }
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Webhook processing failed' }) };
   }
 };
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  // ── Idempotency guard ──────────────────────────────────────────────────────
-  // The primary idempotency guarantee comes from the stripe_events table INSERT
-  // with a UNIQUE constraint on event_id performed in the main handler.
-  // We add a secondary check: if this session already has a 'completed'
-  // payment_sessions record, skip. (The 'pending' record is written by
-  // create-checkout.ts before the customer is redirected to Stripe, so we must
-  // filter by status='completed' to avoid false-positive skips.)
-  const sessionCheckResult = await supabase!
-    .from('payment_sessions')
-    .select('id')
-    .eq('stripeSessionId', session.id)
-    .eq('status', 'completed')
-    .maybeSingle();
+interface CartItem {
+  productId: string;
+  sellerId: string;
+  quantity: number;
+  price: number;
+  title: string;
+}
 
-  if (sessionCheckResult.data) {
-    console.log(`Idempotency: checkout session ${session.id} already processed — skipping`);
-    return;
+interface OrderData {
+  items: CartItem[];
+  shippingAddress: Record<string, string>;
+  billingAddress: Record<string, string>;
+  subtotal: number;
+  shippingAmount: number;
+  shippingMethod: string;
+  total: number;
+  buyerId: string;
+  transferGroup?: string;
+  isB2B?: boolean;
+  applyReverseCharge?: boolean;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fulfilPaidOrder(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  paymentIntentId: string,
+  orderData: OrderData,
+): Promise<{ orderId: string; orderNumber: string; sellerId: string; sellerTotal: number }> {
+  const items = orderData.items ?? [];
+  if (!items.length) throw new Error('Payment session contains no order items');
+
+  const sellerIds = [...new Set(items.map((item) => item.sellerId))];
+  if (sellerIds.length !== 1) {
+    throw new Error('Payment session violates single-seller checkout invariant');
   }
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // ── Fetch pre-populated order data from payment_sessions ──────────────────
-  // create-checkout.ts writes a 'pending' record with all order details before
-  // redirecting the customer to Stripe, avoiding Stripe's 500-char metadata
-  // limit and ensuring sellerId / price integrity (values come from the DB).
-  const { data: pendingSession, error: pendingError } = await supabase!
-    .from('payment_sessions')
-    .select('id, metadata')
-    .eq('stripeSessionId', session.id)
-    .eq('status', 'pending')
-    .maybeSingle();
-
-  if (pendingError || !pendingSession) {
-    throw new Error(
-      `No pending payment_sessions record found for Stripe session ${session.id}. ` +
-      'This may indicate create-checkout did not complete successfully.'
-    );
-  }
-
-
-  // CartItem interface — matches the shape written by create-checkout.ts
-  interface CartItem {
-    productId: string;
-    sellerId: string;
-    quantity: number;
-    price: number;
-    title: string;
-  }
-
-  interface OrderData {
-    items: CartItem[];
-    shippingAddress: Record<string, string>;
-    billingAddress: Record<string, string>;
-    subtotal: number;
-    shippingAmount: number;
-    shippingMethod: string;
-    total: number;
-    buyerId: string;
-    transferGroup: string;
-    isB2B?: boolean;
-    applyReverseCharge?: boolean;
-  }
-
-  const orderData = pendingSession.metadata as OrderData;
-  const items: CartItem[] = orderData.items;
-  const shippingAddress = orderData.shippingAddress;
-  const billingAddress = orderData.billingAddress;
-  const transferGroup = orderData.transferGroup;
-
-  if (!items?.length) throw new Error('Order data contains no items');
-
-  // ── Split items by seller ──────────────────────────────────────────────────
-  // The marketplace model requires one order per seller so each seller only
-  // sees their own items and is responsible for shipping their portion.
-  const sellerGroups = new Map<string, CartItem[]>();
-  for (const item of items) {
-    const group = sellerGroups.get(item.sellerId) ?? [];
-    group.push(item);
-    sellerGroups.set(item.sellerId, group);
-  }
-
+  const sellerId = sellerIds[0];
   const VAT_RATE = 0.20;
-  // Dynamic commission rate: 0% during the promo period, admin-configured rate after.
-  // Read from platform_settings for live admin control; fall back to DEFAULT_COMMISSION_RATE.
-  const configuredRate = await fetchConfiguredCommissionRate(supabase);
-  const COMMISSION_RATE = getCommissionRate(configuredRate ?? undefined);
-  const totalShipping = orderData.shippingAmount ?? 0;
-  const totalSubtotal = orderData.subtotal;
+  const isReverseCharge = Boolean(orderData.applyReverseCharge);
 
-  let firstOrderId: string | null = null;
+  const sellerSubtotal = items.reduce(
+    (sum, item) => sum + (item.price / (1 + VAT_RATE)) * item.quantity,
+    0,
+  );
+  const sellerVat = isReverseCharge
+    ? 0
+    : items.reduce(
+        (sum, item) => sum + item.price * (VAT_RATE / (1 + VAT_RATE)) * item.quantity,
+        0,
+      );
+  // Use the same ex-VAT basis in numerator and denominator. This fixes the old
+  // ex-VAT/VAT-inclusive ratio that silently under-allocated shipping.
+  const totalExVatSubtotal = items.reduce(
+    (sum, item) => sum + (item.price / (1 + VAT_RATE)) * item.quantity,
+    0,
+  );
+  const sellerShipping = totalExVatSubtotal > 0
+    ? (sellerSubtotal / totalExVatSubtotal) * (orderData.shippingAmount ?? 0)
+    : 0;
+  const sellerGrandTotal = sellerSubtotal + sellerVat + sellerShipping;
 
-  for (const [sellerId, sellerItems] of sellerGroups) {
-    // item.price in the enriched metadata is always the VAT-inclusive DB price.
-    // For B2B reverse charge, Stripe was charged the ex-VAT amount
-    // (item.price / 1.20), but the metadata still stores the original price.
-    // sellerSubtotal = item.price / (1 + VAT_RATE) gives the ex-VAT amount
-    // which equals what Stripe charged — correct in both B2C and B2B cases.
-    // For B2B reverse charge: vatAmount = 0 (customer accounts for VAT).
-    const isReverseCharge = Boolean(orderData.applyReverseCharge);
-    const sellerSubtotal = sellerItems.reduce(
-      (sum, i) => sum + (i.price / (1 + VAT_RATE)) * i.quantity,
-      0
-    );
-    const sellerVat = isReverseCharge
-      ? 0
-      : sellerItems.reduce(
-          (sum, i) => sum + i.price * (VAT_RATE / (1 + VAT_RATE)) * i.quantity,
-          0
-        );
-    // Distribute shipping proportionally by ex-VAT order value
-    const sellerShipping =
-      totalSubtotal > 0 ? (sellerSubtotal / totalSubtotal) * totalShipping : 0;
-    const sellerGrandTotal = sellerSubtotal + sellerVat + sellerShipping;
-    const sellerCommission = sellerSubtotal * COMMISSION_RATE;
-    const primaryItem = sellerItems[0];
+  const configuredRate = await fetchConfiguredCommissionRate(sb);
+  const commissionRate = getCommissionRate(configuredRate ?? undefined);
+  const sellerCommission = sellerSubtotal * commissionRate;
+  const primaryItem = items[0];
 
-    // Create one order row for this seller
-    const { data: order, error: orderError } = await supabase
+  let { data: order, error: existingOrderError } = await sb
+    .from('orders')
+    .select('id, orderNumber, sellerId, total')
+    .eq('stripePaymentIntentId', paymentIntentId)
+    .maybeSingle<{
+      id: string;
+      orderNumber: string;
+      sellerId: string;
+      total: number;
+    }>();
+
+  if (existingOrderError) throw existingOrderError;
+  let orderWasCreated = false;
+
+  if (!order) {
+    const insertResult = await sb
       .from('orders')
-      .insert([
-        {
-          buyerId: orderData.buyerId || null,
-          sellerId,
-          productId: primaryItem.productId,
-          quantity: sellerItems.reduce((sum, i) => sum + i.quantity, 0),
-          subtotal: sellerSubtotal,
-          vatAmount: sellerVat,
-          shippingAmount: sellerShipping,
-          total: sellerGrandTotal,
-          commission: sellerCommission,
-          status: 'paid',
-          escrowStatus: 'held',
-          shippingAddress,
-          billingAddress,
-          shippingMethod: orderData.shippingMethod || 'Standard',
-          isB2B: Boolean(orderData.isB2B),
-        },
-      ])
-      .select()
+      .insert({
+        buyerId: orderData.buyerId,
+        sellerId,
+        productId: primaryItem.productId,
+        quantity: items.reduce((sum, item) => sum + item.quantity, 0),
+        subtotal: sellerSubtotal,
+        vatAmount: sellerVat,
+        shippingAmount: sellerShipping,
+        total: sellerGrandTotal,
+        commission: sellerCommission,
+        status: 'paid',
+        escrowStatus: 'held',
+        shippingAddress: orderData.shippingAddress ?? {},
+        billingAddress: orderData.billingAddress ?? {},
+        shippingMethod: orderData.shippingMethod || 'Standard',
+        isB2B: Boolean(orderData.isB2B),
+        stripePaymentIntentId: paymentIntentId,
+      })
+      .select('id, orderNumber, sellerId, total')
       .single();
 
-    if (orderError) {
-      console.error(`Error creating order for seller ${sellerId}:`, orderError);
-      throw orderError;
-    }
-
-    if (!firstOrderId) firstOrderId = order.id;
-
-    // Create order items — subtotal is ex-VAT to match orders.subtotal semantics.
-    const orderItems = sellerItems.map((item) => ({
-      orderId: order.id,
-      productId: item.productId,
-      quantity: item.quantity,
-      pricePerUnit: item.price,
-      vatRate: VAT_RATE,
-      subtotal: (item.price / (1 + VAT_RATE)) * item.quantity,
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) {
-      console.error('Error creating order items:', itemsError);
-      // Roll back the orphaned order to keep the DB consistent.
-      await supabase
-        .from('orders')
-        .delete()
-        .eq('id', order.id)
-        .catch((e: unknown) => console.error('Failed to delete orphaned order after items insert failure:', e));
-      throw itemsError;
-    }
-
-    // Atomically decrement stock for each purchased goods listing.
-    // Service listings (listingContext = 'service') have no inventory — skip.
-    for (const item of sellerItems) {
-      // Check listingContext before decrementing stock
-      const { data: productMeta } = await supabase
-        .from('products')
-        .select('listingContext, stockQuantity')
-        .eq('id', item.productId)
-        .single<{ listingContext: string | null; stockQuantity: number }>();
-
-      if (productMeta?.listingContext === 'service') {
-        continue; // service listings have no stock to decrement
-      }
-
-      const { error: rpcError } = await supabase.rpc('decrement_product_stock', {
-        p_product_id: item.productId,
-        p_qty: item.quantity,
-      });
-
-      if (rpcError) {
-        // RPC not yet deployed — fall back to a conditional (CAS) update that
-        // only writes if the stock value has not changed since we read it,
-        // preventing a race condition between two concurrent orders.
-        console.warn('decrement_product_stock RPC failed, using fallback:', rpcError.message);
-        const currentQty = productMeta?.stockQuantity ?? 0;
-        const newQty = Math.max(0, currentQty - item.quantity);
-        const newStatus =
-          newQty <= 0 ? 'out_of_stock' : newQty <= 10 ? 'low_stock' : 'in_stock';
-
-        const { count } = await supabase
-          .from('products')
-          .update({ stockQuantity: newQty, stockStatus: newStatus })
-          .eq('id', item.productId)
-          .eq('stockQuantity', currentQty) // CAS: only update if unchanged
-          .select('id', { count: 'exact', head: true });
-
-        if (!count || count === 0) {
-          console.warn(`Stock decrement fallback: stock for product ${item.productId} changed concurrently — skipping update to avoid corruption`);
-        }
-      }
-
-      // Mark this goods listing as sold — consistent with handleMobilePaymentIntentSucceeded.
-      // Without this, a product paid for via web checkout would remain 'active' and
-      // could be added to another buyer's cart immediately after payment.
-      await supabase!
-        .from('products')
-        .update({ listingStatus: 'sold', reservedUntil: null })
-        .eq('id', item.productId);
-    }
-
-    const confirmedOrderNumber: string =
-      (order as { orderNumber?: string }).orderNumber ?? order.id;
-    console.log(`Seller order ${confirmedOrderNumber} created for seller ${sellerId}`);
-
-    // Credit seller balance (net of commission) using the DB RPC.
-    const { error: balanceError } = await supabase!.rpc('credit_seller_balance', {
-      p_seller_id: sellerId,
-      p_order_id: order.id,
-    });
-    if (balanceError) {
-      // PostgREST code 42883 = "function does not exist" — the RPC is missing
-      // from the database. Log an actionable message so the on-call engineer
-      // knows exactly which migration to re-apply and which order was affected.
-      if ((balanceError as { code?: string }).code === '42883') {
-        console.error(
-          `credit_seller_balance RPC does not exist in the database. ` +
-          `Re-apply 90_launch_features.sql (or the migration that defines this function). ` +
-          `Affected: seller=${sellerId}, order=${order.id}`,
-        );
+    if (insertResult.error || !insertResult.data) {
+      // A concurrent retry may have won the unique PaymentIntent insert.
+      if (insertResult.error?.code === '23505') {
+        const retryLookup = await sb
+          .from('orders')
+          .select('id, orderNumber, sellerId, total')
+          .eq('stripePaymentIntentId', paymentIntentId)
+          .single();
+        if (retryLookup.error || !retryLookup.data) throw insertResult.error;
+        order = retryLookup.data;
       } else {
-        console.warn('credit_seller_balance RPC failed:', balanceError.message);
+        throw insertResult.error ?? new Error('Order insert failed');
       }
+    } else {
+      order = insertResult.data;
+      orderWasCreated = true;
     }
+  }
 
-    // ── Stripe Connect automatic Transfer ────────────────────────────────────
-    // If the seller has a fully-active Stripe Connect Express account, create
-    // an automatic Transfer for their net payout (order total minus commission).
-    // This is the "separate charges and transfers" model: the platform collects
-    // the full payment and then pushes funds to each connected seller account.
-    // transfer_group links all transfers for this checkout back to the same
-    // originating payment, satisfying Stripe Connect compliance requirements.
-    // Falls back gracefully: sellers without Connect continue to use the manual
-    // payout / credit_seller_balance flow above.
-    const { data: sellerConnectProfile } = await supabase!
-      .from('seller_profiles')
-      .select('stripeAccountId, stripeConnectStatus')
-      .eq('userId', sellerId)
-      .single<{ stripeAccountId: string | null; stripeConnectStatus: string | null }>();
+  const orderItems = items.map((item) => ({
+    orderId: order!.id,
+    productId: item.productId,
+    quantity: item.quantity,
+    pricePerUnit: item.price,
+    vatRate: VAT_RATE,
+    subtotal: (item.price / (1 + VAT_RATE)) * item.quantity,
+  }));
 
-    if (
-      sellerConnectProfile?.stripeAccountId &&
-      sellerConnectProfile.stripeConnectStatus === 'active'
-    ) {
-      const netSellerAmount = sellerGrandTotal - sellerCommission;
-      try {
-        if (!transferGroup) {
-          // transferGroup is set by create-checkout.ts for all sessions created
-          // after the Connect activation. Missing means the order was placed
-          // before the code was deployed — proceed without it but log for audit.
-          console.warn(
-            `stripe-webhook: transferGroup missing from order data for session ${session.id} — ` +
-            'transfer will proceed without transfer_group (legacy order before Connect activation)'
-          );
-        }
+  const { error: itemError } = await sb
+    .from('order_items')
+    .upsert(orderItems, { onConflict: 'orderId,productId', ignoreDuplicates: true });
+  if (itemError) throw itemError;
 
-        const transfer = await stripe!.transfers.create({
-          amount: Math.round(netSellerAmount * 100), // convert to pence
-          currency: 'gbp',
-          destination: sellerConnectProfile.stripeAccountId,
-          // Link this transfer to the originating payment so Stripe can
-          // properly associate payouts with the charge in its Dashboard.
-          ...(transferGroup ? { transfer_group: transferGroup } : {}),
-          metadata: { orderId: order.id, sellerId },
-        });
+  for (const item of items) {
+    const { error: fulfilError } = await sb.rpc('finalize_paid_product', {
+      p_product_id: item.productId,
+      p_qty: item.quantity,
+    });
+    if (fulfilError) throw fulfilError;
+  }
 
-        await supabase!.from('payouts').insert({
-          sellerId,
-          orderId: order.id,
-          amount: netSellerAmount,
-          currency: 'GBP',
-          status: 'paid',
-          stripeTransferId: transfer.id,
-          paidAt: new Date().toISOString(),
-        });
+  // For active Stripe Connect sellers this RPC intentionally does nothing.
+  // Funds remain on the platform until escrow-release creates the transfer.
+  const { error: balanceError } = await sb.rpc('credit_seller_balance', {
+    p_seller_id: sellerId,
+    p_order_id: order!.id,
+  });
+  if (balanceError) throw balanceError;
 
-        console.log(
-          `Stripe transfer ${transfer.id} created for seller ${sellerId}: £${netSellerAmount.toFixed(2)}`
-        );
-      } catch (transferError) {
-        // Log but do not throw — the order is already recorded. Admin can
-        // investigate and retry the transfer from the Stripe Dashboard.
-        console.error(`Stripe Connect transfer failed for seller ${sellerId}:`, transferError);
-
-        // Record the failure in the payouts table so admins can see it in the
-        // payouts dashboard and take corrective action (manual Stripe transfer).
-        // Sanitise the error: include only the generic message, not any raw
-        // Stripe object that might contain card/account details.
-        const errMsg = transferError instanceof Error
-          ? transferError.message.substring(0, 200)
-          : 'Unknown transfer error';
-        await supabase!.from('payouts').insert({
-          sellerId,
-          orderId: order.id,
-          amount: netSellerAmount,
-          currency: 'GBP',
-          status: 'failed',
-          notes: `Automatic Stripe Connect transfer failed: ${errMsg}`,
-        });
-      }
-    }
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // Send seller new-order notification email (async, don't wait).
-    const { data: sellerUser } = await supabase!
-      .from('users')
-      .select('email')
-      .eq('id', sellerId)
-      .single<{ email: string }>();
-
-    if (sellerUser?.email) {
-      fetch(`${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/.netlify/functions/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
-        },
-        body: JSON.stringify({
-          to: sellerUser.email,
-          subject: `New Order Received — ${confirmedOrderNumber}`,
-          template: 'seller_new_order',
-          data: {
-            orderNumber: confirmedOrderNumber,
-            orderDate: new Date().toLocaleDateString('en-GB'),
-            items: sellerItems.map((i) => ({
-              title: i.title,
-              quantity: i.quantity,
-              price: i.price,
-            })),
-            sellerTotal: sellerGrandTotal,
-          },
-        }),
-      }).catch(err => console.error('Seller email send failed:', err));
-    }
-
-    // Insert in-app notification for seller — fire-and-forget, non-blocking
-    supabase!.from('notifications').insert({
+  if (orderWasCreated) {
+    await sb.from('notifications').insert({
       userId: sellerId,
       type: 'order',
       title: 'New order received',
-      message: `Order ${confirmedOrderNumber} has been placed. Total: £${sellerGrandTotal.toFixed(2)}`,
-      link: '/pp/seller/orders',
-    }).catch((err: unknown) => console.warn('Seller notification insert failed (non-fatal):', err));
+      message: `Order ${order!.orderNumber} has been placed. Total: £${sellerGrandTotal.toFixed(2)}`,
+      link: '/seller/orders',
+    }).catch((err: unknown) => console.warn('Seller notification failed:', err));
 
-    // Push notification to seller (mobile — non-fatal)
-    sendPushToUser(supabase!, sellerId, {
+    sendPushToUser(sb, sellerId, {
       title: 'New order received',
-      body: `Order ${confirmedOrderNumber} placed. Total: £${sellerGrandTotal.toFixed(2)}`,
-      data: { type: 'new_order', orderId: order.id },
-    }).catch((err: unknown) => console.warn('Seller push notification failed (non-fatal):', err));
+      body: `Order ${order!.orderNumber} placed. Total: £${sellerGrandTotal.toFixed(2)}`,
+      data: { type: 'new_order', orderId: order!.id },
+    }).catch((err: unknown) => console.warn('Seller push failed:', err));
+
+    if (orderData.buyerId) {
+      await sb.from('notifications').insert({
+        userId: orderData.buyerId,
+        type: 'order',
+        title: 'Order confirmed',
+        message: `Your order has been placed successfully. We'll notify you when it ships.`,
+        link: '/buyer/orders',
+      }).catch((err: unknown) => console.warn('Buyer notification failed:', err));
+
+      sendPushToUser(sb, orderData.buyerId, {
+        title: 'Order confirmed ✓',
+        body: `Your order has been placed. We'll notify you when it ships.`,
+        data: { type: 'order_confirmed', orderId: order!.id },
+      }).catch((err: unknown) => console.warn('Buyer push failed:', err));
+    }
   }
 
-  // Insert in-app notification for buyer — fire-and-forget, non-blocking
-  if (orderData.buyerId) {
-    supabase!.from('notifications').insert({
-      userId: orderData.buyerId,
-      type: 'order',
-      title: 'Order confirmed',
-      message: `Your order has been placed successfully. We'll notify you when it ships.`,
-      link: '/pp/buyer/orders',
-    }).catch((err: unknown) => console.warn('Buyer notification insert failed (non-fatal):', err));
+  return {
+    orderId: order!.id,
+    orderNumber: order!.orderNumber,
+    sellerId,
+    sellerTotal: sellerGrandTotal,
+  };
+}
 
-    // Push notification to buyer (mobile — non-fatal)
-    sendPushToUser(supabase!, orderData.buyerId, {
-      title: 'Order confirmed ✓',
-      body: `Your order has been placed. We'll notify you when it ships.`,
-      data: { type: 'order_confirmed', orderId: firstOrderId ?? '' },
-    }).catch((err: unknown) => console.warn('Buyer push notification failed (non-fatal):', err));
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
+  if (session.payment_status !== 'paid') {
+    throw new Error(`Checkout session ${session.id} completed without paid status`);
   }
 
-  // Mark the pre-populated payment_sessions record as completed now that all
-  // orders have been created. Also record the payment intent and order link.
-  await supabase!
+  const paymentIntentId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id;
+  if (!paymentIntentId) throw new Error(`Checkout session ${session.id} has no PaymentIntent`);
+
+  const { data: pendingSession, error } = await supabase!
+    .from('payment_sessions')
+    .select('id, status, metadata')
+    .eq('stripeSessionId', session.id)
+    .maybeSingle<{ id: string; status: string; metadata: OrderData }>();
+
+  if (error || !pendingSession) {
+    throw new Error(`No payment_sessions row found for Stripe session ${session.id}`);
+  }
+  if (pendingSession.status === 'completed') return;
+  if (pendingSession.status !== 'pending') {
+    throw new Error(`Payment session ${pendingSession.id} is not processable (${pendingSession.status})`);
+  }
+
+  const orderData = pendingSession.metadata;
+  const expectedPence = Math.round(Number(orderData.total) * 100);
+  if (!Number.isFinite(expectedPence) || session.amount_total !== expectedPence) {
+    throw new Error(`Checkout amount mismatch for session ${session.id}`);
+  }
+  if (session.currency?.toLowerCase() !== 'gbp') {
+    throw new Error(`Unexpected checkout currency for session ${session.id}`);
+  }
+
+  const result = await fulfilPaidOrder(supabase!, paymentIntentId, orderData);
+
+  const { error: updateError } = await supabase!
     .from('payment_sessions')
     .update({
-      orderId: firstOrderId,
-      stripePaymentIntent: session.payment_intent as string,
+      orderId: result.orderId,
+      stripePaymentIntent: paymentIntentId,
       amount: orderData.total,
       status: 'completed',
     })
-    .eq('id', pendingSession.id);
+    .eq('id', pendingSession.id)
+    .eq('status', 'pending');
+  if (updateError) throw updateError;
 
-  // Send buyer confirmation email (async, don't wait)
-  const sellerCount = sellerGroups.size;
-  const subjectSuffix = sellerCount > 1 ? ` (${sellerCount} sellers)` : '';
-  fetch(`${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/.netlify/functions/send-email`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
-    },
-    body: JSON.stringify({
-      to: session.customer_email,
-      subject: `Order Confirmation${subjectSuffix}`,
-      template: 'order_confirmation',
-      data: {
-        customerName: 'Customer',
-        orderNumber: firstOrderId ?? 'unknown',
-        orderDate: new Date().toLocaleDateString('en-GB'),
-        total: orderData.total,
-        items: (items as CartItem[]).map((item) => ({
-          title: item.title,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-      },
-    }),
-  }).catch(err => console.error('Email send failed:', err));
+  const { data: sellerUser } = await supabase!
+    .from('users')
+    .select('email')
+    .eq('id', result.sellerId)
+    .maybeSingle<{ email: string }>();
+  const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+  };
 
-  console.log(`Checkout session ${session.id} processed: ${sellerGroups.size} seller order(s) created`);
+  if (sellerUser?.email) {
+    fetch(`${appUrl}/.netlify/functions/send-email`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        to: sellerUser.email,
+        subject: `New Order Received — ${result.orderNumber}`,
+        template: 'seller_new_order',
+        data: {
+          orderNumber: result.orderNumber,
+          orderDate: new Date().toLocaleDateString('en-GB'),
+          items: orderData.items,
+          sellerTotal: result.sellerTotal,
+        },
+      }),
+    }).catch((err: unknown) => console.warn('Seller email failed:', err));
+  }
+
+  if (session.customer_email) {
+    fetch(`${appUrl}/.netlify/functions/send-email`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        to: session.customer_email,
+        subject: 'Order Confirmation',
+        template: 'order_confirmation',
+        data: {
+          customerName: 'Customer',
+          orderNumber: result.orderNumber,
+          orderDate: new Date().toLocaleDateString('en-GB'),
+          total: orderData.total,
+          items: orderData.items,
+        },
+      }),
+    }).catch((err: unknown) => console.warn('Buyer email failed:', err));
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function handleMobilePaymentIntentSucceeded(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  paymentIntent: Stripe.PaymentIntent,
+): Promise<void> {
+  const { data: pendingSession, error } = await sb
+    .from('payment_sessions')
+    .select('id, status, metadata')
+    .eq('stripePaymentIntent', paymentIntent.id)
+    .maybeSingle<{ id: string; status: string; metadata: OrderData }>();
+
+  if (error) throw error;
+  if (!pendingSession || pendingSession.status === 'completed') return;
+  if (pendingSession.status !== 'pending') return;
+
+  const orderData = pendingSession.metadata;
+  const expectedPence = Math.round(Number(orderData.total) * 100);
+  const received = paymentIntent.amount_received || paymentIntent.amount;
+  if (!Number.isFinite(expectedPence) || received !== expectedPence) {
+    throw new Error(`PaymentIntent amount mismatch for ${paymentIntent.id}`);
+  }
+  if (paymentIntent.currency.toLowerCase() !== 'gbp') {
+    throw new Error(`Unexpected PaymentIntent currency for ${paymentIntent.id}`);
+  }
+
+  const result = await fulfilPaidOrder(sb, paymentIntent.id, orderData);
+  const { error: updateError } = await sb
+    .from('payment_sessions')
+    .update({
+      orderId: result.orderId,
+      stripePaymentIntent: paymentIntent.id,
+      amount: orderData.total,
+      status: 'completed',
+    })
+    .eq('id', pendingSession.id)
+    .eq('status', 'pending');
+  if (updateError) throw updateError;
 }
 
 interface PaymentSessionWithOrder {
@@ -709,191 +539,131 @@ interface PaymentSessionWithOrder {
   orders?: { orderNumber?: string } | null;
 }
 
-async function handleRefund(charge: Stripe.Charge) {
+async function handleRefund(charge: Stripe.Charge): Promise<void> {
+  const paymentIntentId = typeof charge.payment_intent === 'string'
+    ? charge.payment_intent
+    : charge.payment_intent?.id;
+  if (!paymentIntentId) return;
+
   const { data: payment } = await supabase!
     .from('payment_sessions')
     .select('orderId, orders(orderNumber)')
-    .eq('stripePaymentIntent', charge.payment_intent)
-    .single<PaymentSessionWithOrder>();
+    .eq('stripePaymentIntent', paymentIntentId)
+    .maybeSingle<PaymentSessionWithOrder>();
 
-  if (payment?.orderId) {
-    await supabase!
-      .from('orders')
-      .update({ status: 'refunded' })
-      .eq('id', payment.orderId);
+  if (!payment?.orderId) return;
 
-    const orderNumber = payment.orders?.orderNumber ?? payment.orderId;
-    console.log(`Order ${orderNumber} refunded`);
+  const { error: orderError } = await supabase!
+    .from('orders')
+    .update({ status: 'refunded', escrowStatus: 'refunded' })
+    .eq('id', payment.orderId);
+  if (orderError) throw orderError;
+
+  // Covers refunds initiated directly in Stripe Dashboard as well as the admin
+  // endpoint. If escrow had already released a Connect transfer, claw it back.
+  const { data: payout } = await supabase!
+    .from('payouts')
+    .select('id, stripeTransferId, status')
+    .eq('orderId', payment.orderId)
+    .eq('status', 'paid')
+    .maybeSingle<{ id: string; stripeTransferId: string | null; status: string }>();
+
+  if (payout?.stripeTransferId && stripe) {
+    const reversal = await stripe.transfers.createReversal(
+      payout.stripeTransferId,
+      { metadata: { orderId: payment.orderId, source: 'charge.refunded-webhook' } },
+      { idempotencyKey: `refund-reversal:${charge.id}:${payout.stripeTransferId}` },
+    );
+    const { error: payoutError } = await supabase!
+      .from('payouts')
+      .update({
+        status: 'cancelled',
+        reference: reversal.id,
+        notes: `Transfer reversed after Stripe refund. Reversal ID: ${reversal.id}`,
+      })
+      .eq('id', payout.id);
+    if (payoutError) throw payoutError;
   }
 }
 
-/**
- * Handles payment_intent.payment_failed events.
- *
- * 1. Finds the pending payment_sessions record:
- *    - Mobile sessions: matched by stripePaymentIntent = paymentIntent.id
- *      (set at insert time by create-payment-intent.ts)
- *    - Web sessions:    matched by metadata->>'transferGroup' = transfer_group
- *      (stripePaymentIntent is not set at insert time for web sessions)
- * 2. Marks the session as 'failed'.
- * 3. Immediately releases any product reservations (listingStatus → 'active')
- *    listed in session.metadata.items so the items become purchasable again
- *    without waiting for the 15-minute scheduled expiry.
- *
- * Exported for unit testing.
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function handlePaymentFailed(sb: import('@supabase/supabase-js').SupabaseClient<any>, paymentIntent: Stripe.PaymentIntent): Promise<void> {
-  // ── 1. Locate the pending session ────────────────────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let sessionData: { id: string; metadata: Record<string, any> } | null = null;
+export async function handlePaymentFailed(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  paymentIntent: Stripe.PaymentIntent,
+): Promise<void> {
+  let sessionData: { id: string; metadata: Record<string, unknown> } | null = null;
 
-  // Mobile path: stripePaymentIntent is set at insert time, so we can look up
-  // the session directly by PaymentIntent ID.
   const { data: mobileSession, error: mobileErr } = await sb
     .from('payment_sessions')
     .select('id, metadata')
     .eq('stripePaymentIntent', paymentIntent.id)
     .eq('status', 'pending')
     .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
-
-  if (mobileErr) {
-    console.error(`payment_intent.payment_failed: mobile session lookup error for PI ${paymentIntent.id}:`, mobileErr.message);
-  }
+  if (mobileErr) console.error('payment_failed mobile lookup:', mobileErr.message);
 
   if (mobileSession) {
     sessionData = mobileSession;
   } else {
-    // Web path: fall back to matching by transferGroup stored in metadata JSON.
     const transferGroup = paymentIntent.transfer_group ?? null;
-    if (!transferGroup) {
-      console.warn(
-        `payment_intent.payment_failed: no mobile session and no transfer_group for PI ${paymentIntent.id} — cannot locate session`,
-      );
-      return;
-    }
-
+    if (!transferGroup) return;
     const { data: webSession, error: webErr } = await sb
       .from('payment_sessions')
       .select('id, metadata')
       .eq('status', 'pending')
       .filter('metadata->>transferGroup', 'eq', transferGroup)
       .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
-
     if (webErr) {
-      console.error(`payment_intent.payment_failed: web session lookup error for transfer_group ${transferGroup}:`, webErr.message);
+      console.error('payment_failed web lookup:', webErr.message);
       return;
     }
-
     sessionData = webSession;
   }
 
-  if (!sessionData) {
-    // No matching pending session — may have already been processed or cancelled.
-    console.warn(`payment_intent.payment_failed: no pending session found for PI ${paymentIntent.id} — nothing to do`);
-    return;
-  }
+  if (!sessionData) return;
 
-  // ── 2. Mark session as failed ─────────────────────────────────────────────
-  const { error: updateErr } = await sb
+  const { error: updateError } = await sb
     .from('payment_sessions')
     .update({ status: 'failed' })
     .eq('id', sessionData.id)
-    .eq('status', 'pending'); // guard against double-processing
+    .eq('status', 'pending');
+  if (updateError) console.error('payment_failed status update:', updateError.message);
 
-  if (updateErr) {
-    console.error(
-      `payment_intent.payment_failed: failed to mark session ${sessionData.id} as failed:`,
-      updateErr.message,
-    );
-    // Continue — still attempt to release reservations even if status update failed.
-  }
-
-  // ── 3. Release product reservations immediately ───────────────────────────
-  // Without this, reserved products stay locked for up to 15 minutes until the
-  // scheduled release_expired_reservations() RPC runs.
   const items = sessionData.metadata?.items as Array<{ productId?: string }> | undefined;
+  if (!items?.length) return;
 
-  if (!items?.length) {
-    console.log(`payment_intent.payment_failed: session ${sessionData.id} marked failed (no items to unreserve)`);
-    return;
-  }
-
-  let releasedCount = 0;
   for (const item of items) {
     if (!item.productId) continue;
-
-    const { error: releaseErr } = await sb
+    await sb
       .from('products')
       .update({ listingStatus: 'active', reservedUntil: null })
       .eq('id', item.productId)
-      .eq('listingStatus', 'reserved'); // only release if still reserved (idempotent)
-
-    if (releaseErr) {
-      console.warn(
-        `payment_intent.payment_failed: could not release reservation for product ${item.productId} (non-fatal):`,
-        releaseErr.message,
-      );
-    } else {
-      releasedCount++;
-    }
+      .eq('listingStatus', 'reserved');
   }
-
-  console.log(
-    `payment_intent.payment_failed: session ${sessionData.id} marked failed; ` +
-    `${releasedCount}/${items.length} reservation(s) released for PI ${paymentIntent.id}`,
-  );
 }
 
-/**
- * Handles charge.dispute.created events (Stripe chargebacks).
- *
- * Stores a dispute record in the disputes table so admin can see the
- * chargeback and act on it manually. We do NOT auto-refund or auto-close.
- * The order is NOT status-updated because 'disputed' is not in the schema
- * check constraint — admin must update manually via the orders UI.
- *
- * Exported for unit testing.
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function handleStripeDispute(sb: import('@supabase/supabase-js').SupabaseClient<any>, dispute: Stripe.Dispute): Promise<void> {
-  const paymentIntentId =
-    typeof dispute.payment_intent === 'string'
-      ? dispute.payment_intent
-      : dispute.payment_intent?.id ?? null;
+export async function handleStripeDispute(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  dispute: Stripe.Dispute,
+): Promise<void> {
+  const paymentIntentId = typeof dispute.payment_intent === 'string'
+    ? dispute.payment_intent
+    : dispute.payment_intent?.id ?? null;
+  if (!paymentIntentId) return;
 
-  if (!paymentIntentId) {
-    console.warn('charge.dispute.created: no payment_intent on dispute', dispute.id);
-    return;
-  }
-
-  // Find the payment session linked to this PaymentIntent.
   const { data: session } = await sb
     .from('payment_sessions')
     .select('orderId')
     .eq('stripePaymentIntent', paymentIntentId)
     .maybeSingle<{ orderId: string | null }>();
+  if (!session?.orderId) return;
 
-  if (!session?.orderId) {
-    console.warn(
-      `charge.dispute.created: no order found for payment_intent ${paymentIntentId} — dispute ${dispute.id} not recorded`,
-    );
-    return;
-  }
-
-  // Fetch buyer/seller IDs from the linked order.
   const { data: order } = await sb
     .from('orders')
     .select('id, buyerId, sellerId')
     .eq('id', session.orderId)
     .single<{ id: string; buyerId: string | null; sellerId: string | null }>();
-
-  if (!order?.buyerId || !order?.sellerId) {
-    console.warn(
-      `charge.dispute.created: order ${session.orderId} missing buyer/seller ids — dispute ${dispute.id} not recorded`,
-    );
-    return;
-  }
+  if (!order?.buyerId || !order.sellerId) return;
 
   const { error } = await sb.from('disputes').insert({
     orderId: order.id,
@@ -901,7 +671,7 @@ export async function handleStripeDispute(sb: import('@supabase/supabase-js').Su
     sellerId: order.sellerId,
     subject: `Stripe Chargeback — Dispute ID: ${dispute.id}`,
     description: [
-      `A Stripe chargeback was raised. REQUIRES MANUAL REVIEW.`,
+      'A Stripe chargeback was raised. REQUIRES MANUAL REVIEW.',
       `Stripe Dispute ID: ${dispute.id}`,
       `Reason: ${dispute.reason}`,
       `Amount: £${(dispute.amount / 100).toFixed(2)}`,
@@ -911,564 +681,129 @@ export async function handleStripeDispute(sb: import('@supabase/supabase-js').Su
     status: 'in_review',
     escrowStatus: 'held',
   });
-
-  if (error) {
-    console.error(
-      `charge.dispute.created: failed to insert dispute record for ${dispute.id}:`,
-      error.message,
-    );
-  } else {
-    console.log(`charge.dispute.created: dispute ${dispute.id} recorded for order ${order.id}`);
-  }
+  if (error) throw error;
 }
 
-/**
- * Handles Stripe Connect `account.updated` webhook events.
- *
- * Stripe sends this event whenever a connected Express account's state
- * changes — e.g. the seller completes onboarding, payouts become enabled,
- * or Stripe adds a restriction. We map the live account flags to our
- * three-state stripeConnectStatus and persist it so the seller dashboard
- * reflects the current state without needing a separate status-sync call.
- *
- * After updating stripeConnectStatus, we call tryAutoActivateSeller to
- * automatically activate the seller if all conditions are now met.
- *
- * When a seller first becomes fully active, we also configure a 7-day payout
- * delay on their connected account (Phase 2A owner-protection). This reduces
- * the window in which the platform could be left holding a chargeback after
- * funds have already been paid out to the seller.
- *
- * The `stripeClientOverride` parameter is accepted for unit-test injection
- * only — production calls omit it and the module-level `stripe` singleton is
- * used instead.
- *
- * Exported for unit testing.
- */
 export async function handleConnectAccountUpdated(
   account: Stripe.Account,
   stripeClientOverride?: Stripe | null,
-) {
-  let stripeConnectStatus: 'pending' | 'restricted' | 'active';
-
-  if (account.charges_enabled && account.payouts_enabled) {
-    stripeConnectStatus = 'active';
-  } else if (account.details_submitted) {
-    stripeConnectStatus = 'restricted';
-  } else {
-    stripeConnectStatus = 'pending';
-  }
+): Promise<void> {
+  const stripeConnectStatus: 'pending' | 'restricted' | 'active' =
+    account.charges_enabled && account.payouts_enabled
+      ? 'active'
+      : account.details_submitted
+        ? 'restricted'
+        : 'pending';
 
   const { data: updated, error } = await supabase!
     .from('seller_profiles')
-    .update({ stripeConnectStatus })
+    .update({
+      stripeConnectStatus,
+      stripeChargesEnabled: Boolean(account.charges_enabled),
+      stripePayoutsEnabled: Boolean(account.payouts_enabled),
+      stripeDetailsSubmitted: Boolean(account.details_submitted),
+    })
     .eq('stripeAccountId', account.id)
     .select('userId');
+  if (error) throw error;
+  if (!updated?.length) return;
 
-  if (error) {
-    console.error(`account.updated: failed to update seller_profiles for ${account.id}:`, error.message);
-    return;
-  }
-
-  if (!updated || updated.length === 0) {
-    console.warn(`account.updated: no seller_profiles row found for stripeAccountId=${account.id} — skipping`);
-    return;
-  }
-
-  console.log(`account.updated: ${account.id} → stripeConnectStatus=${stripeConnectStatus}`);
-
-  // ── Phase 2A: Payout delay for newly-active connected accounts ────────────
-  // When a seller's Connect account first becomes fully active, configure a
-  // 7-day payout delay on their connected account. This means Stripe will not
-  // automatically pay out their balance until 7 days after each transaction,
-  // reducing the window where funds could have already been paid out before a
-  // dispute or refund is raised against the platform.
-  // This is a best-effort call: if Stripe rejects it (e.g. the account type
-  // does not support platform-controlled payout schedules) we log the error and
-  // continue — we must not block or corrupt the seller's activation state.
   if (stripeConnectStatus === 'active') {
     const stripeClient = stripeClientOverride ?? stripe!;
     try {
       await stripeClient.accounts.update(account.id, {
         settings: { payouts: { schedule: { delay_days: 7 } } },
       });
-      console.log(`account.updated: 7-day payout delay set for connected account ${account.id}`);
-    } catch (payoutDelayErr) {
-      console.warn(
-        `account.updated: failed to set payout delay for ${account.id} (non-fatal — seller activation proceeds):`,
-        payoutDelayErr,
-      );
+    } catch (payoutDelayError) {
+      console.warn('account.updated: unable to set payout delay:', payoutDelayError);
     }
   }
-  // ──────────────────────────────────────────────────────────────────────────
 
-  // ── Auto-activation check ──────────────────────────────────────────────
-  // Import lazily so this module stays loadable even when the helper file is
-  // temporarily absent (e.g. first deploy before functions are bundled).
   try {
     const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
     const sellerId = (updated[0] as { userId: string }).userId;
     const result = await tryAutoActivateSeller(supabase!, sellerId, stripeConnectStatus);
+    if (!result?.firstActivation) return;
 
-    if (result?.firstActivation) {
-      // Send notifications — fire-and-forget, non-blocking.
-      const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
-      const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
-      const activatedAt = new Date().toLocaleString('en-GB');
-      const internalHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
-      };
+    const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+    const internalHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+    };
+    const activatedAt = new Date().toLocaleString('en-GB');
 
-      // Notify admin
-      if (adminEmail) {
-        fetch(`${appUrl}/.netlify/functions/send-email`, {
-          method: 'POST',
-          headers: internalHeaders,
-          body: JSON.stringify({
-            to: adminEmail,
-            subject: 'Loadify: Seller Account Now Active',
-            template: 'admin_seller_active',
-            data: { activatedAt },
-          }),
-        }).catch((err: unknown) => console.warn('account.updated: admin notification failed (non-fatal):', err));
-      }
+    if (process.env.ADMIN_NOTIFICATION_EMAIL) {
+      fetch(`${appUrl}/.netlify/functions/send-email`, {
+        method: 'POST',
+        headers: internalHeaders,
+        body: JSON.stringify({
+          to: process.env.ADMIN_NOTIFICATION_EMAIL,
+          subject: 'Loadify: Seller Account Now Active',
+          template: 'admin_seller_active',
+          data: { activatedAt },
+        }),
+      }).catch((err: unknown) => console.warn('Admin activation email failed:', err));
+    }
 
-      // Notify the seller themselves — look up their email from the users table
-      const { data: userRow } = await supabase!
-        .from('users')
-        .select('email')
-        .eq('id', sellerId)
-        .single<{ email: string }>();
-      if (userRow?.email) {
-        fetch(`${appUrl}/.netlify/functions/send-email`, {
-          method: 'POST',
-          headers: internalHeaders,
-          body: JSON.stringify({
-            to: userRow.email,
-            subject: 'Your Loadify Market store is now live!',
-            template: 'seller_account_active',
-            data: { activatedAt },
-          }),
-        }).catch((err: unknown) => console.warn('account.updated: seller activation email failed (non-fatal):', err));
-      }
+    const { data: userRow } = await supabase!
+      .from('users')
+      .select('email')
+      .eq('id', sellerId)
+      .maybeSingle<{ email: string }>();
+    if (userRow?.email) {
+      fetch(`${appUrl}/.netlify/functions/send-email`, {
+        method: 'POST',
+        headers: internalHeaders,
+        body: JSON.stringify({
+          to: userRow.email,
+          subject: 'Your Loadify Market store is now live!',
+          template: 'seller_account_active',
+          data: { activatedAt },
+        }),
+      }).catch((err: unknown) => console.warn('Seller activation email failed:', err));
     }
   } catch (activationError) {
-    // Non-fatal: the stripeConnectStatus update already succeeded above.
-    // Activation will be re-evaluated next time connect-status is called.
-    console.warn('account.updated: auto-activation check failed (non-fatal):', activationError);
+    console.warn('account.updated: auto-activation check failed:', activationError);
   }
-  // ──────────────────────────────────────────────────────────────────────
 }
 
-/**
- * Handles `transfer.created` events.
- *
- * Fired by Stripe when a transfer to a seller's connected Express account is
- * successfully created (immediately after stripe.transfers.create() returns).
- * We match the transfer to a payouts row by stripeTransferId and confirm the
- * status is 'paid' for the audit trail.
- * If no matching row is found the event is still acknowledged — the webhook
- * handler already inserts a payouts row synchronously during
- * checkout.session.completed processing, so misses here are harmless.
- *
- * Exported for unit testing.
- */
 export async function handleTransferCreated(transfer: Stripe.Transfer): Promise<void> {
   const orderId = typeof transfer.metadata?.orderId === 'string' ? transfer.metadata.orderId : null;
+  if (!orderId) return;
 
-  console.log(
-    `transfer.created: ${transfer.id} — amount £${(transfer.amount / 100).toFixed(2)} ` +
-      `→ destination ${String(transfer.destination)} | orderId=${orderId ?? 'unknown'}`,
-  );
-
-  if (!orderId) {
-    // Transfer was not originated by our checkout flow (e.g. a manual transfer).
-    // Log and skip — nothing to link.
-    console.warn(`transfer.created: no orderId in metadata for transfer ${transfer.id} — skipping DB update`);
-    return;
-  }
-
-  // Update the payout row that was inserted during checkout.session.completed.
-  // stripeTransferId is already set; we confirm status is 'paid'.
   const { error } = await supabase!
     .from('payouts')
-    .update({ status: 'paid', notes: `Transfer confirmed by Stripe webhook. Transfer ID: ${transfer.id}` })
+    .update({
+      status: 'paid',
+      notes: `Transfer confirmed by Stripe webhook. Transfer ID: ${transfer.id}`,
+    })
     .eq('orderId', orderId)
     .eq('stripeTransferId', transfer.id);
-
-  if (error) {
-    console.error(`transfer.created: DB update failed for transfer ${transfer.id}:`, error.message);
-  } else {
-    console.log(`transfer.created: payout row updated for order ${orderId}`);
-  }
+  if (error) console.error('transfer.created payout update failed:', error.message);
 }
 
-/**
- * Handles `payout.paid` events.
- *
- * Fired by Stripe when funds move from a connected Express account's Stripe
- * balance to the seller's bank account. This is the final step of the payout
- * lifecycle. One Stripe payout can cover multiple transfers (multiple orders),
- * so we cannot reliably link it to a single `payouts` row without knowing the
- * underlying transfers. Instead we:
- *   1. Resolve the seller ID from `seller_profiles` via the connected account ID
- *      (`connectedAccountId`, taken from `stripeEvent.account` by the caller).
- *   2. Update all paid, unlinked `payouts` rows for that seller, recording the
- *      Stripe payout ID and bank arrival date for reconciliation.
- *
- * Exported for unit testing.
- */
-export async function handlePayoutPaid(payout: Stripe.Payout, connectedAccountId: string | null): Promise<void> {
-  console.log(
-    `payout.paid: ${payout.id} — amount £${(payout.amount / 100).toFixed(2)} ` +
-      `| arrival ${new Date((payout.arrival_date) * 1000).toISOString()} ` +
-      `| account=${connectedAccountId ?? 'unknown'}`,
-  );
+export async function handlePayoutPaid(
+  payout: Stripe.Payout,
+  connectedAccountId: string | null,
+): Promise<void> {
+  if (!connectedAccountId) return;
 
-  if (!connectedAccountId) {
-    // Without the connected account ID we cannot link the payout to a seller.
-    // This should not happen on a correctly configured Connect webhook.
-    console.warn(`payout.paid: no connectedAccountId for payout ${payout.id} — skipping DB update`);
-    return;
-  }
-
-  // Resolve sellerId from seller_profiles using the connected Stripe account ID.
   const { data: sellerProfile } = await supabase!
     .from('seller_profiles')
     .select('userId')
     .eq('stripeAccountId', connectedAccountId)
     .maybeSingle<{ userId: string }>();
+  if (!sellerProfile?.userId) return;
 
-  if (!sellerProfile?.userId) {
-    console.warn(
-      `payout.paid: no seller_profiles row found for stripeAccountId=${connectedAccountId} — skipping DB update for payout ${payout.id}`,
-    );
-    return;
-  }
-
-  const sellerId = sellerProfile.userId;
-
-  // Update all paid, unlinked payout rows for this seller with the Stripe payout
-  // ID and arrival date. This covers the case where one bank payout settles
-  // multiple order-level transfers.
   const { error } = await supabase!
     .from('payouts')
     .update({
       stripePayoutId: payout.id,
-      paidAt: new Date((payout.arrival_date) * 1000).toISOString(),
+      paidAt: new Date(payout.arrival_date * 1000).toISOString(),
       notes: `Bank payout confirmed by Stripe. Payout ID: ${payout.id}`,
     })
-    .eq('sellerId', sellerId)
+    .eq('sellerId', sellerProfile.userId)
     .eq('status', 'paid')
     .is('stripePayoutId', null);
-
-  if (error) {
-    console.error(`payout.paid: DB update failed for payout ${payout.id}:`, error.message);
-  } else {
-    console.log(`payout.paid: payout ${payout.id} recorded for seller ${sellerId}`);
-  }
+  if (error) console.error('payout.paid DB update failed:', error.message);
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Mobile PaymentIntent handler
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Handles `payment_intent.succeeded` for orders originating from the mobile
- * app (create-payment-intent.ts).
- *
- * Mobile sessions are distinguished from web sessions by having
- * `stripePaymentIntent` set at insert time in payment_sessions.  Web sessions
- * only get `stripePaymentIntent` written by handleCheckoutCompleted after
- * checkout.session.completed fires (which runs before payment_intent.succeeded),
- * leaving the web session in 'completed' status — not matched here.
- *
- * Creates orders using the same logic as handleCheckoutCompleted, then:
- *   - Marks product(s) as `listingStatus = 'sold'`
- *   - Sends push notifications to buyer and seller(s)
- */
-async function handleMobilePaymentIntentSucceeded(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
-  stripeClient: Stripe,
-  paymentIntent: Stripe.PaymentIntent,
-): Promise<void> {
-  // Idempotency: only process pending sessions — completed sessions are skipped.
-  const { data: pendingSession, error: sessionErr } = await sb
-    .from('payment_sessions')
-    .select('id, metadata')
-    .eq('stripePaymentIntent', paymentIntent.id)
-    .eq('status', 'pending')
-    .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
-
-  if (sessionErr) {
-    console.error('handleMobilePaymentIntentSucceeded: payment_sessions query failed:', sessionErr.message);
-    return;
-  }
-  if (!pendingSession) {
-    // Not a mobile session (or already processed) — skip silently.
-    return;
-  }
-
-  interface CartItem {
-    productId: string;
-    sellerId: string;
-    quantity: number;
-    price: number;
-    title: string;
-  }
-
-  interface MobileOrderData {
-    items: CartItem[];
-    shippingAddress: Record<string, string>;
-    billingAddress: Record<string, string>;
-    subtotal: number;
-    shippingAmount: number;
-    shippingMethod: string;
-    total: number;
-    buyerId: string;
-    transferGroup: string;
-    isB2B?: boolean;
-    applyReverseCharge?: boolean;
-  }
-
-  const orderData = pendingSession.metadata as MobileOrderData;
-  const items: CartItem[] = orderData.items ?? [];
-  if (!items.length) {
-    console.error(`handleMobilePaymentIntentSucceeded: no items in session ${pendingSession.id}`);
-    return;
-  }
-
-  const VAT_RATE = 0.20;
-  const configuredRate = await fetchConfiguredCommissionRate(sb);
-  const COMMISSION_RATE = getCommissionRate(configuredRate ?? undefined);
-  const totalShipping = orderData.shippingAmount ?? 0;
-  const totalSubtotal = orderData.subtotal;
-  const transferGroup = orderData.transferGroup;
-
-  // Split items by seller (matches handleCheckoutCompleted logic)
-  const sellerGroups = new Map<string, CartItem[]>();
-  for (const item of items) {
-    const group = sellerGroups.get(item.sellerId) ?? [];
-    group.push(item);
-    sellerGroups.set(item.sellerId, group);
-  }
-
-  let firstOrderId: string | null = null;
-  const now = new Date().toISOString();
-
-  for (const [sellerId, sellerItems] of sellerGroups) {
-    const isReverseCharge = Boolean(orderData.applyReverseCharge);
-    const sellerSubtotal = sellerItems.reduce(
-      (sum, i) => sum + (i.price / (1 + VAT_RATE)) * i.quantity,
-      0,
-    );
-    const sellerVat = isReverseCharge
-      ? 0
-      : sellerItems.reduce(
-          (sum, i) => sum + i.price * (VAT_RATE / (1 + VAT_RATE)) * i.quantity,
-          0,
-        );
-    const sellerShipping =
-      totalSubtotal > 0 ? (sellerSubtotal / totalSubtotal) * totalShipping : 0;
-    const sellerGrandTotal = sellerSubtotal + sellerVat + sellerShipping;
-    const sellerCommission = sellerSubtotal * COMMISSION_RATE;
-    const primaryItem = sellerItems[0];
-
-    const { data: order, error: orderError } = await sb
-      .from('orders')
-      .insert([
-        {
-          buyerId:         orderData.buyerId || null,
-          sellerId,
-          productId:       primaryItem.productId,
-          quantity:        sellerItems.reduce((sum, i) => sum + i.quantity, 0),
-          subtotal:        sellerSubtotal,
-          vatAmount:       sellerVat,
-          shippingAmount:  sellerShipping,
-          total:           sellerGrandTotal,
-          commission:      sellerCommission,
-          status:          'paid',
-          escrowStatus:    'held',
-          shippingAddress: orderData.shippingAddress,
-          billingAddress:  orderData.billingAddress,
-          shippingMethod:  orderData.shippingMethod || 'Standard',
-          isB2B:           Boolean(orderData.isB2B),
-        },
-      ])
-      .select()
-      .single();
-
-    if (orderError) {
-      console.error(`handleMobilePaymentIntentSucceeded: order insert failed for seller ${sellerId}:`, orderError);
-      throw orderError;
-    }
-
-    if (!firstOrderId) firstOrderId = order.id;
-
-    // Order items
-    const orderItemsRows = sellerItems.map((item) => ({
-      orderId:      order.id,
-      productId:    item.productId,
-      quantity:     item.quantity,
-      pricePerUnit: item.price,
-      vatRate:      VAT_RATE,
-      subtotal:     (item.price / (1 + VAT_RATE)) * item.quantity,
-    }));
-
-    const { error: itemsError } = await sb.from('order_items').insert(orderItemsRows);
-    if (itemsError) {
-      console.error('handleMobilePaymentIntentSucceeded: order_items insert failed:', itemsError);
-      await sb.from('orders').delete().eq('id', order.id)
-        .catch((e: unknown) => console.error('Failed to delete orphaned mobile order:', e));
-      throw itemsError;
-    }
-
-    // Decrement stock (goods only)
-    for (const item of sellerItems) {
-      const { data: productMeta } = await sb
-        .from('products')
-        .select('listingContext, stockQuantity')
-        .eq('id', item.productId)
-        .single<{ listingContext: string | null; stockQuantity: number }>();
-
-      if (productMeta?.listingContext === 'service') continue;
-
-      const { error: rpcError } = await sb.rpc('decrement_product_stock', {
-        p_product_id: item.productId,
-        p_qty: item.quantity,
-      });
-
-      if (rpcError) {
-        const currentQty = productMeta?.stockQuantity ?? 0;
-        const newQty = Math.max(0, currentQty - item.quantity);
-        const newStatus = newQty <= 0 ? 'out_of_stock' : newQty <= 10 ? 'low_stock' : 'in_stock';
-        const { count } = await sb
-          .from('products')
-          .update({ stockQuantity: newQty, stockStatus: newStatus })
-          .eq('id', item.productId)
-          .eq('stockQuantity', currentQty)
-          .select('id', { count: 'exact', head: true });
-        if (!count || count === 0) {
-          console.warn(`handleMobilePaymentIntentSucceeded: concurrent stock change for product ${item.productId}`);
-        }
-      }
-
-      // Mark product as sold
-      await sb
-        .from('products')
-        .update({ listingStatus: 'sold', reservedUntil: null })
-        .eq('id', item.productId);
-    }
-
-    const confirmedOrderNumber: string =
-      (order as { orderNumber?: string }).orderNumber ?? order.id;
-
-    // Credit seller balance
-    const { error: balanceError } = await sb.rpc('credit_seller_balance', {
-      p_seller_id: sellerId,
-      p_order_id:  order.id,
-    });
-    if (balanceError) {
-      console.warn('handleMobilePaymentIntentSucceeded: credit_seller_balance RPC failed:', balanceError.message);
-    }
-
-    // Stripe Connect transfer
-    const { data: sellerConnectProfile } = await sb
-      .from('seller_profiles')
-      .select('stripeAccountId, stripeConnectStatus')
-      .eq('userId', sellerId)
-      .single<{ stripeAccountId: string | null; stripeConnectStatus: string | null }>();
-
-    if (
-      sellerConnectProfile?.stripeAccountId &&
-      sellerConnectProfile.stripeConnectStatus === 'active'
-    ) {
-      const netSellerAmount = sellerGrandTotal - sellerCommission;
-      try {
-        const transfer = await stripeClient.transfers.create({
-          amount:      Math.round(netSellerAmount * 100),
-          currency:    'gbp',
-          destination: sellerConnectProfile.stripeAccountId,
-          ...(transferGroup ? { transfer_group: transferGroup } : {}),
-          metadata: { orderId: order.id, sellerId },
-        });
-
-        await sb.from('payouts').insert({
-          sellerId,
-          orderId:         order.id,
-          amount:          netSellerAmount,
-          currency:        'GBP',
-          status:          'paid',
-          stripeTransferId: transfer.id,
-          paidAt:          now,
-        });
-
-        console.log(`handleMobilePaymentIntentSucceeded: transfer ${transfer.id} for seller ${sellerId}`);
-      } catch (transferError) {
-        const errMsg = transferError instanceof Error
-          ? transferError.message.substring(0, 200)
-          : 'Unknown transfer error';
-        await sb.from('payouts').insert({
-          sellerId,
-          orderId:  order.id,
-          amount:   netSellerAmount,
-          currency: 'GBP',
-          status:   'failed',
-          notes:    `Automatic Stripe Connect transfer failed: ${errMsg}`,
-        });
-        console.error(`handleMobilePaymentIntentSucceeded: transfer failed for seller ${sellerId}:`, transferError);
-      }
-    }
-
-    // Seller notifications
-    sb.from('notifications').insert({
-      userId:  sellerId,
-      type:    'order',
-      title:   'New order received',
-      message: `Order ${confirmedOrderNumber} has been placed. Total: £${sellerGrandTotal.toFixed(2)}`,
-      link:    '/pp/seller/orders',
-    }).catch((err: unknown) => console.warn('Mobile seller notification insert failed (non-fatal):', err));
-
-    sendPushToUser(sb, sellerId, {
-      title: 'New order received',
-      body:  `Order ${confirmedOrderNumber} placed. Total: £${sellerGrandTotal.toFixed(2)}`,
-      data:  { type: 'new_order', orderId: order.id },
-    }).catch((err: unknown) => console.warn('Mobile seller push failed (non-fatal):', err));
-  }
-
-  // Buyer notifications
-  if (orderData.buyerId) {
-    sb.from('notifications').insert({
-      userId:  orderData.buyerId,
-      type:    'order',
-      title:   'Order confirmed',
-      message: `Your order has been placed successfully. We'll notify you when it ships.`,
-      link:    '/pp/buyer/orders',
-    }).catch((err: unknown) => console.warn('Mobile buyer notification insert failed (non-fatal):', err));
-
-    sendPushToUser(sb, orderData.buyerId, {
-      title: 'Order confirmed ✓',
-      body:  `Your order has been placed. We'll notify you when it ships.`,
-      data:  { type: 'order_confirmed', orderId: firstOrderId ?? '' },
-    }).catch((err: unknown) => console.warn('Mobile buyer push failed (non-fatal):', err));
-  }
-
-  // Mark payment_sessions as completed
-  await sb
-    .from('payment_sessions')
-    .update({
-      orderId:             firstOrderId,
-      stripePaymentIntent: paymentIntent.id,
-      amount:              orderData.total,
-      status:              'completed',
-    })
-    .eq('id', pendingSession.id);
-
-  console.log(
-    `handleMobilePaymentIntentSucceeded: PI ${paymentIntent.id} processed — ` +
-    `${sellerGroups.size} order(s) created; firstOrderId=${firstOrderId}`,
-  );
-}
-
