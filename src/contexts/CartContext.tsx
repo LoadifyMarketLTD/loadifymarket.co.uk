@@ -47,6 +47,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>(loadCartSync);
   const [priceChangedBanner, setPriceChangedBanner] = useState(false);
   const storageReadyRef = useRef(!isCapacitorNative());
+  const cartItemsRef = useRef(cartItems);
+
+  // Keep the stable refresh callback pointed at the exact cart from the current
+  // render. This avoids relying on setState updater timing to read React state.
+  cartItemsRef.current = cartItems;
 
   useEffect(() => {
     if (!isCapacitorNative()) return;
@@ -120,12 +125,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
    * items that checkout will reject.
    */
   const refreshCartPrices = useCallback(async () => {
-    let snapshot: CartItem[] = [];
-    setCartItems((prev) => {
-      snapshot = prev;
-      return prev;
-    });
-
+    const snapshot = cartItemsRef.current;
     if (snapshot.length === 0) return;
 
     const productIds = snapshot.map((i) => i.product.id);
