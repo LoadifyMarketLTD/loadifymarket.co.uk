@@ -14,7 +14,7 @@ interface ShowcaseProduct {
 
 /**
  * Latest Products — clean B2B product grid.
- * Fetches up to 6 active, approved products from Supabase.
+ * Fetches up to 10 currently sellable, approved products from Supabase.
  * Shows a professional empty state when no live listings exist yet.
  * Never renders fake or hardcoded product data.
  */
@@ -28,6 +28,8 @@ const FeaturedProducts = () => {
       .select("id, title, price, images, slug, category:categories!categoryId(name, slug)")
       .eq("isActive", true)
       .eq("isApproved", true)
+      .eq("listingStatus", "active")
+      .or("listingContext.eq.service,stockQuantity.gt.0")
       .order("createdAt", { ascending: false })
       .limit(10)
       .then(({ data, error }) => {
