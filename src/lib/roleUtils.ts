@@ -1,39 +1,35 @@
 import type { User } from '../types';
 
 /**
- * Returns true if the user has admin-level access.
- * Mirrors the is_admin() RLS helper in the database.
- * Admins bypass ALL restrictions on the platform.
+ * Admin access is granted only after the profile has been hydrated from the
+ * authoritative public.users row. App.tsx sets isAdmin=true from that DB role.
+ * A user-editable auth user_metadata.role value can therefore never unlock the
+ * admin UI during a profile-fetch fallback.
  */
 export function hasAdminAccess(user: User | null | undefined): boolean {
-  return user?.role === 'admin';
+  return user?.role === 'admin' && user?.isAdmin === true;
 }
 
 /**
- * Returns true if the user has seller-level access (sellers only).
- * Mirrors the is_seller() RLS helper in the database.
- * Admins are NOT included here — they use hasAdminAccess() for their own bypass.
+ * Seller-role helper used for onboarding paths. Server endpoints remain the
+ * authority for every mutation.
  */
 export function hasSellerAccess(user: User | null | undefined): boolean {
   return user?.role === 'seller';
 }
 
 /**
- * Returns true if the seller is active and not suspended.
- * Full seller access rule: role=seller AND isActive=true AND sellerStatus!=suspended.
+ * Full seller-workspace access requires the canonical seller profile to be
+ * active. Missing/draft/submitted status is never treated as active.
  */
 export function isActiveSellerAccess(user: User | null | undefined): boolean {
   return (
     user?.role === 'seller' &&
     user?.isActive === true &&
-    user?.sellerStatus !== 'suspended'
+    user?.sellerStatus === 'active'
   );
 }
 
-/**
- * Returns true if the user has buyer-level access (buyers only).
- * Admins are NOT included — they have their own access via hasAdminAccess().
- */
 export function hasBuyerAccess(user: User | null | undefined): boolean {
   return user?.role === 'buyer';
 }
