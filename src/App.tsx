@@ -306,7 +306,7 @@ function App() {
       const appMeta = authUser.app_metadata || {};
       const strVal = (obj: Record<string, unknown>, key: string) =>
         typeof obj[key] === 'string' ? (obj[key] as string) : undefined;
-      const candidateRole = strVal(appMeta, 'role') || strVal(userMeta, 'role');
+      const candidateRole = strVal(appMeta, 'role');
       const role: import('./types').UserRole =
         candidateRole === 'admin' || candidateRole === 'seller' || candidateRole === 'buyer'
           ? candidateRole
