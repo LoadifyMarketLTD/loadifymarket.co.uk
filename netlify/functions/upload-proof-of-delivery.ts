@@ -1,359 +1,251 @@
 import { createClient } from '@supabase/supabase-js';
-import { Handler, HandlerEvent } from '@netlify/functions';
+import type { Handler, HandlerEvent } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  console.error('upload-proof-of-delivery: missing required environment variables');
-}
-
-const supabase = createClient(
-  supabaseUrl!,
-  supabaseServiceRoleKey!
-);
+const supabase = createClient(supabaseUrl!, supabaseServiceRoleKey!);
 
 const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || 'proof-of-delivery';
-const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
-const ALLOWED_EXTENSIONS = new Set(['jpg', 'png', 'webp']);
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+]);
+const MIME_TO_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
+const EXT_TO_MIME: Record<string, string> = {
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  pdf: 'application/pdf',
+};
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function isSafeProofPath(shipmentId: string, filePath: string): boolean {
-  if (!filePath || filePath.includes('..') || filePath.includes('\\') || filePath.startsWith('/')) {
-    return false;
-  }
-  const pattern = new RegExp(`^${escapeRegex(shipmentId)}/${escapeRegex(shipmentId)}-\\d+\\.(jpg|png|webp)$`);
+  if (!filePath || filePath.includes('..') || filePath.includes('\\') || filePath.startsWith('/')) return false;
+  const pattern = new RegExp(`^${escapeRegex(shipmentId)}/${escapeRegex(shipmentId)}-\\d+\\.(jpg|png|webp|pdf)$`);
   return pattern.test(filePath);
 }
 
-function deriveMimeFromPath(filePath: string): string | null {
+function expectedMime(filePath: string): string | null {
   const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
-  if (!ALLOWED_EXTENSIONS.has(ext)) return null;
-  if (ext === 'jpg') return 'image/jpeg';
-  if (ext === 'png') return 'image/png';
-  if (ext === 'webp') return 'image/webp';
-  return null;
+  return EXT_TO_MIME[ext] ?? null;
 }
 
-// Helper to get user from Authorization header
 async function getAuthUser(event: HandlerEvent) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
+  if (!authHeader?.startsWith('Bearer ')) return null;
 
-  const token = authHeader.substring(7);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  
-  if (error || !user) {
-    return null;
-  }
+  const { data: { user }, error } = await supabase.auth.getUser(authHeader.substring(7));
+  if (error || !user) return null;
 
-  // Get user role
   const { data: userData } = await supabase
     .from('users')
-    .select('*')
+    .select('id, role')
     .eq('id', user.id)
-    .single();
-
+    .maybeSingle<{ id: string; role: string }>();
   return userData;
 }
 
 export const handler: Handler = async (event) => {
   if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'Server configuration error' }) };
+  }
+
+  const user = await getAuthUser(event);
+  if (!user) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+  }
+  if (user.role !== 'seller' && user.role !== 'admin' && user.role !== 'buyer') {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden' }) };
+  }
+
+  const pathParts = event.path.split('/');
+  const shipmentId = pathParts[pathParts.length - 2];
+  if (!shipmentId) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Shipment ID is required' }) };
+  }
+
+  const { data: shipment, error: shipmentError } = await supabase
+    .from('shipments')
+    .select('id, seller_id, buyer_id, status, proof_of_delivery_url')
+    .eq('id', shipmentId)
+    .maybeSingle<{
+      id: string;
+      seller_id: string;
+      buyer_id: string;
+      status: string;
+      proof_of_delivery_url: string | null;
+    }>();
+
+  if (shipmentError || !shipment) {
+    return { statusCode: 404, body: JSON.stringify({ error: 'Shipment not found' }) };
+  }
+
+  const isAdmin = user.role === 'admin';
+  const isSeller = shipment.seller_id === user.id;
+  const isBuyer = shipment.buyer_id === user.id;
+  if (!isAdmin && !isSeller && !isBuyer) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized for this shipment' }) };
+  }
+
+  // GET returns a short-lived signed URL. The database stores only the private
+  // object path; private bucket objects are never exposed via getPublicUrl().
+  if (event.httpMethod === 'GET') {
+    if (!shipment.proof_of_delivery_url) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Proof of delivery has not been uploaded' }) };
+    }
+    if (!isSafeProofPath(shipmentId, shipment.proof_of_delivery_url)) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'Stored proof path is invalid' }) };
+    }
+
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(shipment.proof_of_delivery_url, 10 * 60);
+    if (error || !data?.signedUrl) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'Unable to open proof of delivery' }) };
+    }
+    return { statusCode: 200, body: JSON.stringify({ url: data.signedUrl, expiresIn: 600 }) };
+  }
+
+  // Only the seller responsible for the shipment or an admin may upload/confirm.
+  if (!isAdmin && !isSeller) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Only the seller or admin may upload proof of delivery' }) };
+  }
+
+  const uploadRl = await checkRateLimit({
+    supabase,
+    tableName: 'upload_proof_rate_limits',
+    identifier: user.id,
+    windowMinutes: 60,
+    maxAttempts: 20,
+    policy: 'fail-closed',
+  });
+  if (uploadRl.exceeded) {
+    return { statusCode: 429, body: JSON.stringify({ error: 'Too many upload requests. Please wait and try again.' }) };
+  }
+
+  if (event.httpMethod === 'POST') {
+    let requestBody: { contentType?: string; fileSize?: number };
+    try {
+      requestBody = JSON.parse(event.body || '{}') as { contentType?: string; fileSize?: number };
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+
+    const contentType = (requestBody.contentType ?? '').toLowerCase().trim();
+    const fileSize = Number(requestBody.fileSize);
+    if (!ALLOWED_MIME_TYPES.has(contentType)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Allowed proof formats: JPG, PNG, WebP or PDF.' }) };
+    }
+    if (!Number.isFinite(fileSize) || fileSize <= 0 || fileSize > MAX_FILE_SIZE_BYTES) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Proof file must be between 1 byte and 10 MB.' }) };
+    }
+
+    const ext = MIME_TO_EXT[contentType];
+    const filePath = `${shipmentId}/${shipmentId}-${Date.now()}.${ext}`;
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUploadUrl(filePath);
+    if (error || !data?.signedUrl) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'Unable to create secure upload URL' }) };
+    }
+
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Server configuration error' }),
+      statusCode: 200,
+      body: JSON.stringify({ uploadUrl: data.signedUrl, path: data.path, token: data.token }),
     };
   }
 
-  try {
-    // Authenticate user
-    const user = await getAuthUser(event);
-    if (!user) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+  if (event.httpMethod === 'PUT') {
+    let body: { filePath?: string };
+    try {
+      body = JSON.parse(event.body || '{}') as { filePath?: string };
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON in request body' }) };
     }
 
-    // Only sellers and admins may upload proof of delivery.
-    if (user.role !== 'seller' && user.role !== 'admin') {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Forbidden – seller or admin role required' }),
-      };
+    const filePath = body.filePath ?? '';
+    if (!isSafeProofPath(shipmentId, filePath)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid upload path' }) };
     }
 
-    // Rate-limit: 20 uploads per user per 60-minute window.
-    const uploadRl = await checkRateLimit({
-      supabase,
-      tableName: 'upload_proof_rate_limits',
-      identifier: user.id as string,
-      windowMinutes: 60,
-      maxAttempts: 20,
-    });
-    if (uploadRl.exceeded) {
-      return {
-        statusCode: 429,
-        body: JSON.stringify({ error: 'Too many upload requests. Please wait and try again.' }),
-      };
+    const fileName = filePath.split('/').pop() ?? '';
+    const { data: listedObjects, error: listError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .list(shipmentId, { limit: 100, search: fileName });
+    if (listError) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to validate uploaded file' }) };
     }
 
-    // Get shipment ID from path
-    const pathParts = event.path.split('/');
-    const shipmentId = pathParts[pathParts.length - 2]; // .../shipments/:id/proof
-
-    if (!shipmentId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Shipment ID is required' }),
-      };
+    const matched = (listedObjects ?? []).find((entry) => entry.name === fileName) as
+      | { name: string; metadata?: { size?: number; mimetype?: string; contentType?: string }; size?: number; mimetype?: string }
+      | undefined;
+    if (!matched) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Uploaded file was not found' }) };
     }
 
-    // Get shipment and verify authorization
-    const { data: shipment, error: shipmentError } = await supabase
+    let actualSize = Number(matched.metadata?.size ?? matched.size ?? 0);
+    let actualMime = String(
+      matched.metadata?.mimetype ?? matched.metadata?.contentType ?? matched.mimetype ?? '',
+    ).toLowerCase();
+
+    if (!Number.isFinite(actualSize) || actualSize <= 0 || !actualMime) {
+      const { data: downloaded, error: downloadError } = await supabase.storage.from(BUCKET_NAME).download(filePath);
+      if (downloadError || !downloaded) {
+        return { statusCode: 500, body: JSON.stringify({ error: 'Failed to validate uploaded file metadata' }) };
+      }
+      actualSize = downloaded.size;
+      actualMime = downloaded.type.toLowerCase();
+    }
+
+    const requiredMime = expectedMime(filePath);
+    const normalizedActualMime = actualMime === 'image/jpg' ? 'image/jpeg' : actualMime;
+    if (
+      actualSize <= 0 ||
+      actualSize > MAX_FILE_SIZE_BYTES ||
+      !requiredMime ||
+      normalizedActualMime !== requiredMime
+    ) {
+      await supabase.storage.from(BUCKET_NAME).remove([filePath]).catch(() => undefined);
+      return { statusCode: 400, body: JSON.stringify({ error: 'Uploaded proof file failed server validation' }) };
+    }
+
+    const { data: updatedShipment, error: updateError } = await supabase
       .from('shipments')
-      .select('*')
+      .update({
+        proof_of_delivery_url: filePath,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', shipmentId)
+      .select()
       .single();
+    if (updateError) throw updateError;
 
-    if (shipmentError || !shipment) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Shipment not found' }),
-      };
-    }
+    await supabase.from('shipment_events').insert({
+      shipment_id: shipmentId,
+      status: shipment.status,
+      message: 'Proof of delivery uploaded',
+      changed_by: user.id,
+    });
 
-    // Check authorization (seller or admin)
-    if (user.role !== 'admin' && shipment.seller_id !== user.id) {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Not authorized' }),
-      };
-    }
-
-    if (event.httpMethod === 'POST') {
-      // Extension map derived from ALLOWED_MIME_TYPES to keep a single source of truth.
-      const MIME_TO_EXT: Record<string, string> = {
-        'image/jpeg': 'jpg',
-        'image/jpg':  'jpg',
-        'image/png':  'png',
-        'image/webp': 'webp',
-      };
-      // Confirm the map covers every allowed type (compile-time parity check).
-      ALLOWED_MIME_TYPES.forEach((m) => {
-        if (!MIME_TO_EXT[m]) console.warn(`upload-proof-of-delivery: MIME_TO_EXT missing extension for ${m}`);
-      });
-
-      let requestBody: { contentType?: string; fileSize?: number } = {};
-      try {
-        requestBody = JSON.parse(event.body || '{}') as { contentType?: string; fileSize?: number };
-      } catch (parseErr) {
-        console.warn('upload-proof-of-delivery: failed to parse request body:', (parseErr as Error).message);
-        // body parse failure is non-fatal for POST — proceed with defaults
-      }
-
-      const contentType = requestBody.contentType ?? '';
-      const fileSize = typeof requestBody.fileSize === 'number' ? requestBody.fileSize : NaN;
-      const normalizedContentType = contentType.toLowerCase().trim();
-
-      if (!normalizedContentType || !Number.isFinite(fileSize) || fileSize <= 0) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'contentType and fileSize are required' }),
-        };
-      }
-
-      if (!ALLOWED_MIME_TYPES.has(normalizedContentType)) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({
-            error: `File type not allowed. Accepted types: ${Array.from(ALLOWED_MIME_TYPES).join(', ')}`,
-          }),
-        };
-      }
-
-      if (fileSize > MAX_FILE_SIZE_BYTES) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'File too large. Maximum allowed size is 10 MB.' }),
-        };
-      }
-
-      // Derive a safe file extension from the declared content type.
-      const ext = MIME_TO_EXT[normalizedContentType] ?? 'jpg';
-      const fileName = `${shipmentId}-${Date.now()}.${ext}`;
-      const filePath = `${shipmentId}/${fileName}`;
-
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from(BUCKET_NAME)
-        .createSignedUploadUrl(filePath);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          success: true,
-          uploadUrl: uploadData.signedUrl,
-          path: uploadData.path,
-          token: uploadData.token,
-        }),
-      };
-    } else if (event.httpMethod === 'PUT') {
-      // Confirm upload and save public URL
-      let body: { filePath?: string };
-      try {
-        body = JSON.parse(event.body || '{}') as { filePath?: string };
-      } catch {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Invalid JSON in request body' }),
-        };
-      }
-      const { filePath } = body;
-
-      if (!filePath) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'filePath is required' }),
-        };
-      }
-
-      // Strict path validation: only shipment-scoped, server-issued naming format.
-      if (!isSafeProofPath(shipmentId, filePath)) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Invalid upload path' }),
-        };
-      }
-
-      // Server-side post-upload validation of stored object (actual size + MIME).
-      const fileName = filePath.split('/').pop() ?? '';
-      const { data: listedObjects, error: listError } = await supabase
-        .storage
-        .from(BUCKET_NAME)
-        .list(shipmentId, { limit: 100, search: fileName });
-
-      if (listError) {
-        return {
-          statusCode: 500,
-          body: JSON.stringify({ error: 'Failed to validate uploaded file' }),
-        };
-      }
-
-      const matched = (listedObjects ?? []).find((entry) => entry.name === fileName) as
-        | { name: string; metadata?: { size?: number; mimetype?: string; contentType?: string }; size?: number; mimetype?: string }
-        | undefined;
-
-      if (!matched) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Uploaded file was not found' }),
-        };
-      }
-
-      let actualSize = Number(matched.metadata?.size ?? matched.size ?? 0);
-      let actualMime = String(
-        matched.metadata?.mimetype ??
-        matched.metadata?.contentType ??
-        matched.mimetype ??
-        ''
-      ).toLowerCase();
-
-      if (!Number.isFinite(actualSize) || actualSize <= 0 || !actualMime) {
-        const { data: downloaded, error: downloadError } = await supabase
-          .storage
-          .from(BUCKET_NAME)
-          .download(filePath);
-        if (downloadError || !downloaded) {
-          return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Failed to validate uploaded file metadata' }),
-          };
-        }
-        actualSize = downloaded.size;
-        actualMime = downloaded.type.toLowerCase();
-      }
-
-      if (actualSize > MAX_FILE_SIZE_BYTES) {
-        await supabase.storage.from(BUCKET_NAME).remove([filePath]).catch(() => undefined);
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Uploaded file exceeds the maximum allowed size (10 MB).' }),
-        };
-      }
-
-      const expectedMimeFromPath = deriveMimeFromPath(filePath);
-      if (!expectedMimeFromPath || !ALLOWED_MIME_TYPES.has(actualMime) || actualMime !== expectedMimeFromPath) {
-        await supabase.storage.from(BUCKET_NAME).remove([filePath]).catch(() => undefined);
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Uploaded file type is invalid or does not match file extension.' }),
-        };
-      }
-
-      // Get public URL
-      const { data: urlData } = supabase
-        .storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(filePath);
-
-      const publicUrl = urlData.publicUrl;
-
-      // Update shipment with proof of delivery URL
-      const { data: updatedShipment, error: updateError } = await supabase
-        .from('shipments')
-        .update({
-          proof_of_delivery_url: publicUrl,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', shipmentId)
-        .select()
-        .single();
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Insert shipment event
-      await supabase
-        .from('shipment_events')
-        .insert({
-          shipment_id: shipmentId,
-          status: shipment.status,
-          message: 'Proof of delivery uploaded',
-          changed_by: user.id,
-        });
-
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          success: true,
-          shipment: updatedShipment,
-          message: 'Proof of delivery uploaded successfully',
-        }),
-      };
-    } else {
-      return {
-        statusCode: 405,
-        body: JSON.stringify({ error: 'Method not allowed' }),
-      };
-    }
-  } catch (error) {
-    console.error('Error handling proof of delivery:', error);
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to handle proof of delivery' }),
+      statusCode: 200,
+      body: JSON.stringify({ success: true, shipment: updatedShipment, message: 'Proof of delivery uploaded successfully' }),
     };
   }
+
+  return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
 };
