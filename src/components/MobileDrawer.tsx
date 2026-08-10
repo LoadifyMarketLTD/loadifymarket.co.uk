@@ -22,8 +22,6 @@ import logo from "@/assets/loadify-logo.svg";
 import type { User } from "@/types";
 import { useCategories } from "@/hooks/useCategories";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 import type { CategoryNode } from "@/hooks/useCategories";
 
 interface MobileDrawerProps {
@@ -45,7 +43,6 @@ interface MainScreenProps {
   onCategoryExpand: (slug: string | null) => void;
 }
 
-/** Icon / colour overrides for known category slugs. */
 const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
   "electronics":       { icon: Smartphone,    iconColor: "text-cyan-400"   },
   "home-garden":       { icon: Home,          iconColor: "text-success"  },
@@ -62,11 +59,6 @@ const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
 
 const DEFAULT_ICON = { icon: Briefcase, iconColor: "text-white/75" };
 
-// ── Main screen ────────────────────────────────────────────────────────────────
-// Categories always remain visible. When a category is hovered (desktop) or
-// tapped (mobile) its subcategories expand inline BELOW the parent row so the
-// full list is never replaced.
-
 const MainScreen = ({
   user,
   dashboardPath,
@@ -78,7 +70,6 @@ const MainScreen = ({
   onCategoryExpand,
 }: MainScreenProps) => (
   <div className="flex flex-col h-full">
-    {/* Header bar */}
     <div className="h-14 px-4 flex items-center justify-between border-b border-white/[0.12] shrink-0">
       <Link to="/" onClick={onClose} className="flex items-center gap-2" aria-label="Loadify Market — Home">
         <img src={logo} alt="" aria-hidden="true" className="h-7 w-7" />
@@ -96,9 +87,7 @@ const MainScreen = ({
       </button>
     </div>
 
-    {/* Scrollable body */}
     <div className="flex-1 overflow-y-auto">
-      {/* Account block */}
       <DrawerAccountBlock
         user={user}
         dashboardPath={dashboardPath}
@@ -106,10 +95,8 @@ const MainScreen = ({
         onClose={onClose}
       />
 
-      {/* Divider */}
       <div className="h-px bg-white/10 mx-4" />
 
-      {/* Quick Actions */}
       <div className="pt-4">
         <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
           Quick Actions
@@ -117,10 +104,8 @@ const MainScreen = ({
         <DrawerCTACards onClose={onClose} />
       </div>
 
-      {/* Divider */}
       <div className="h-px bg-white/10 mx-4" />
 
-      {/* Categories — accordion, subcategories expand inline */}
       <p className="px-4 pt-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
         Browse Categories
       </p>
@@ -132,7 +117,6 @@ const MainScreen = ({
 
           return (
             <div key={cat.slug}>
-              {/* Parent row — hover opens on desktop, click toggles on mobile */}
               <button
                 onClick={() => onCategoryExpand(isOpen ? null : cat.slug)}
                 onMouseEnter={() => onCategoryExpand(cat.slug)}
@@ -157,10 +141,8 @@ const MainScreen = ({
                 />
               </button>
 
-              {/* Inline subcategory expansion — slides down below the parent row */}
               {isOpen && (
                 <div className="bg-white/[0.04] border-b border-white/[0.07]">
-                  {/* View All link */}
                   <Link
                     to={categoryUrl}
                     onClick={onClose}
@@ -171,7 +153,6 @@ const MainScreen = ({
                     </span>
                   </Link>
 
-                  {/* Subcategory rows */}
                   {cat.children.map((sub) => (
                     <Link
                       key={sub.slug}
@@ -191,10 +172,8 @@ const MainScreen = ({
         })}
       </nav>
 
-      {/* Divider */}
       <div className="h-px bg-white/10 mx-4 mt-2" />
 
-      {/* Footer links */}
       <nav aria-label="Support links" className="flex flex-col py-2">
         <Link
           to="/register?type=seller"
@@ -204,11 +183,11 @@ const MainScreen = ({
           Sell Stock
         </Link>
         <Link
-          to="/shipping"
+          to="/shipping-policy"
           onClick={onClose}
           className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
         >
-          Transport
+          Shipping Policy
         </Link>
         <Link
           to="/wholesale-info"
@@ -233,39 +212,31 @@ const MainScreen = ({
         </Link>
       </nav>
 
-      {/* Safe-area spacer for iOS */}
       <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
     </div>
   </div>
 );
 
-// ── Drawer shell ──────────────────────────────────────────────────────────────
-
 const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDrawerProps) => {
-  // Which category accordion is currently open (null = all collapsed)
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const { categories } = useCategories();
 
-  // Collapse accordion and handle focus / Escape key when drawer state changes
   useEffect(() => {
     if (!open) {
       const t = setTimeout(() => setExpandedSlug(null), 300);
       return () => clearTimeout(t);
     }
 
-    // Focus close button when drawer opens
     const focusTimer = setTimeout(() => closeBtnRef.current?.focus(), 50);
 
-    // Escape closes drawer
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
         return;
       }
 
-      // Focus trap — keep Tab / Shift+Tab cycling within the panel
       if (e.key === "Tab" && panelRef.current) {
         const focusable = panelRef.current.querySelectorAll<HTMLElement>(
           'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -279,11 +250,9 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
             e.preventDefault();
             last?.focus();
           }
-        } else {
-          if (document.activeElement === last) {
-            e.preventDefault();
-            first?.focus();
-          }
+        } else if (document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
         }
       }
     };
@@ -295,7 +264,6 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
     };
   }, [open, onClose]);
 
-  // Prevent body scroll while drawer is open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -309,7 +277,6 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
 
   return createPortal(
     <>
-      {/* Backdrop overlay */}
       <div
         className={[
           "fixed inset-0 z-[9998] bg-black/40 transition-opacity duration-300",
@@ -319,7 +286,6 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         aria-hidden="true"
       />
 
-      {/* Drawer panel — slides from LEFT */}
       <div
         ref={panelRef}
         className={[
