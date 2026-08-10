@@ -56,6 +56,8 @@ async function fetchProductSet(
     .select(PRODUCT_QUERY)
     .eq('isActive', true)
     .eq('isApproved', true)
+    .eq('listingStatus', 'active')
+    .or('listingContext.eq.service,stockQuantity.gt.0')
     .not('type', 'eq', 'logistics')
     .order(orderColumn, { ascending: false })
     .limit(limit);
