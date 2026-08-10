@@ -6,18 +6,7 @@
  *
  *  - maintenanceMode  → 503 for non-admin sellers
  *  - autoApproveProducts → backend sets isApproved (client cannot override)
- *
- * Payload (JSON body, POST only):
- *  {
- *    title, description, type, condition, price (number, VAT-inclusive),
- *    stockQuantity, stockStatus?, categoryId?, subcategoryId?,
- *    images?, specifications?, weight?, dimensions?, palletInfo?,
- *    isActive (boolean — publish vs draft),
- *    listingContext? ('product' | 'service', default 'product'),
- *    shippingMethodIds? (string[]),
- *    dispatchTime? (string),
- *    // any other valid products column
- *  }
+ *  - seller activation → only fully active sellers may publish public listings
  */
 
 import type { Handler } from '@netlify/functions';
@@ -56,7 +45,7 @@ function pickAllowedFields(source: Record<string, unknown>): Record<string, unkn
 }
 
 function parseStockQuantity(raw: unknown): number | null {
-  if (typeof raw === 'number') return Number.isInteger(raw) ? raw : null;
+  if (typeof raw === 'number') return Number.isInteger(raw) && raw >= 0 ? raw : null;
   if (typeof raw === 'string') {
     const trimmed = raw.trim();
     if (!/^\d+$/.test(trimmed)) return null;
@@ -84,12 +73,10 @@ export const handler: Handler = async (event) => {
     return { statusCode: 503, body: JSON.stringify({ error: 'Server misconfiguration' }) };
   }
 
-  // Service-role client — bypasses RLS so the function is authoritative.
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
   });
 
-  // ── Authentication ────────────────────────────────────────────────────────
   const authHeader = event.headers['authorization'] || '';
   if (!authHeader.startsWith('Bearer ')) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
@@ -101,20 +88,18 @@ export const handler: Handler = async (event) => {
   }
   const callerId = authData.user.id;
 
-  // ── Rate limiting — 20 listings per hour per user ─────────────────────────
   const rl = await checkRateLimit({
     supabase,
-    tableName:     'create_product_rate_limits',
-    identifier:    callerId,
+    tableName: 'create_product_rate_limits',
+    identifier: callerId,
     windowMinutes: 60,
-    maxAttempts:   20,
-    policy:        'fail-soft',
+    maxAttempts: 20,
+    policy: 'fail-soft',
   });
   if (rl.exceeded) {
     return { statusCode: 429, body: JSON.stringify({ error: 'Too many listings created. Please try again later.' }) };
   }
 
-  // ── Role check ────────────────────────────────────────────────────────────
   const { data: userRow } = await supabase
     .from('users')
     .select('role')
@@ -128,7 +113,6 @@ export const handler: Handler = async (event) => {
 
   const isAdmin = role === 'admin';
 
-  // ── Maintenance mode (Step 5.2) ───────────────────────────────────────────
   const maintenance = await isMaintenanceMode(supabase);
   if (maintenance && !isAdmin) {
     return {
@@ -137,7 +121,6 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── Parse body ────────────────────────────────────────────────────────────
   let body: Record<string, unknown>;
   try {
     body = JSON.parse(event.body || '{}');
@@ -188,45 +171,66 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── autoApproveProducts (Step 5.5) ────────────────────────────────────────
-  const flags = await getFeatureFlags(supabase);
-  // Admin creates are always approved; sellers depend on the flag
-  const isApproved: boolean = isAdmin ? true : Boolean(flags.autoApproveProducts);
+  let sellerCanPublish = isAdmin;
+  let sellerListingLimit: number | null = null;
 
-  // ── Listing limit check ───────────────────────────────────────────────────
-  // Non-admin sellers are capped by seller_profiles.listingLimit (default 5).
-  // Count all their existing listings regardless of isActive — drafts use up
-  // capacity the same as published ones, preventing limit circumvention.
   if (!isAdmin) {
-    const [profileRes, countRes] = await Promise.all([
-      supabase
-        .from('seller_profiles')
-        .select('listingLimit')
-        .eq('userId', callerId)
-        .maybeSingle<{ listingLimit: number | null }>(),
-      supabase
-        .from('products')
-        .select('id', { count: 'exact', head: true })
-        .eq('sellerId', callerId),
-    ]);
+    const { data: sellerProfile, error: profileError } = await supabase
+      .from('seller_profiles')
+      .select('sellerStatus, stripeConnectStatus, isPaused, listingLimit')
+      .eq('userId', callerId)
+      .maybeSingle<{
+        sellerStatus: string | null;
+        stripeConnectStatus: string | null;
+        isPaused: boolean | null;
+        listingLimit: number | null;
+      }>();
 
-    const limit = profileRes.data?.listingLimit ?? null;
-    const currentCount = countRes.count ?? 0;
-
-    // A limit of 0 intentionally blocks all new listings (e.g., can be used
-    // as a lightweight admin tool to freeze a seller's listings without
-    // suspending their account). Use a large listingLimit value for "unlimited".
-    if (limit !== null && currentCount >= limit) {
+    if (profileError || !sellerProfile) {
       return {
-        statusCode: 429,
+        statusCode: 409,
+        body: JSON.stringify({ error: 'Complete your seller setup before creating listings.' }),
+      };
+    }
+
+    sellerListingLimit = sellerProfile.listingLimit ?? null;
+    sellerCanPublish =
+      sellerProfile.sellerStatus === 'active' &&
+      sellerProfile.stripeConnectStatus === 'active' &&
+      sellerProfile.isPaused !== true;
+
+    if (Boolean(isActive) && !sellerCanPublish) {
+      return {
+        statusCode: 409,
         body: JSON.stringify({
-          error: `Listing limit reached. You can have a maximum of ${limit} listing(s). Archive or delete existing listings to create new ones.`,
+          error: 'Complete seller setup and activate Stripe payments before publishing. You can still save the listing as a draft.',
         }),
       };
     }
   }
 
-  // VAT calculation (UK 20%)
+  const flags = await getFeatureFlags(supabase);
+  const isApproved: boolean = isAdmin
+    ? true
+    : sellerCanPublish && Boolean(flags.autoApproveProducts);
+
+  if (!isAdmin) {
+    const countRes = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('sellerId', callerId);
+
+    const currentCount = countRes.count ?? 0;
+    if (sellerListingLimit !== null && currentCount >= sellerListingLimit) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({
+          error: `Listing limit reached. You can have a maximum of ${sellerListingLimit} listing(s). Archive or delete existing listings to create new ones.`,
+        }),
+      };
+    }
+  }
+
   const vatRate = 0.20;
   const priceExVat = price / (1 + vatRate);
   const allowedFields = pickAllowedFields(rest);
@@ -236,22 +240,20 @@ export const handler: Handler = async (event) => {
   }
   const stockQuantity = normalizedListingContext === 'service' ? 0 : parsedStockQuantity;
 
-  // Build DB row from a strict allow-list; backend-owned columns are set below.
   const productData: Record<string, unknown> = {
     ...allowedFields,
     title,
     price,
     priceExVat,
     vatRate,
-    isActive: Boolean(isActive),
-    isApproved,              // backend-only; overrides any value from client
+    isActive: Boolean(isActive) && sellerCanPublish,
+    isApproved,
     sellerId: callerId,
     listingContext: normalizedListingContext,
     stockQuantity,
     stockStatus: calculateStockStatus(normalizedListingContext, stockQuantity),
   };
 
-  // ── Insert product ────────────────────────────────────────────────────────
   const { data: inserted, error: insertError } = await supabase
     .from('products')
     .insert([productData])
@@ -263,7 +265,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create listing. Please try again.' }) };
   }
 
-  // ── Sync shipping methods ─────────────────────────────────────────────────
   if (Array.isArray(shippingMethodIds) && shippingMethodIds.length > 0) {
     const rows = shippingMethodIds.map((method_id) => ({
       product_id: inserted.id,
@@ -273,12 +274,20 @@ export const handler: Handler = async (event) => {
     const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
     if (shippingError) {
       console.error('create-product: shipping sync error:', shippingError.message);
-      // Non-fatal — product created, shipping sync failed
+      await supabase.from('products').update({ isActive: false }).eq('id', inserted.id);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Listing was saved as a draft because shipping setup could not be saved. Please try again.' }),
+      };
     }
   }
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ id: inserted.id, isApproved }),
+    body: JSON.stringify({
+      id: inserted.id,
+      isApproved,
+      isActive: Boolean(productData.isActive),
+    }),
   };
 };
