@@ -1,36 +1,12 @@
 /**
  * delete-account
  *
- * GDPR / UK Data Protection Act 2018 compliant account deletion.
- *
- * The caller must be authenticated (Bearer JWT).  They may only delete their
- * own account.  Admin users may additionally supply a `targetUserId` to delete
- * another user's account.
- *
- * What happens on deletion:
- *   1. PII in public.users is anonymised (email, firstName, lastName, phone
- *      replaced with placeholder values).
- *   2. buyer_profiles and seller_profiles PII columns are cleared.
- *   3. The Supabase Auth user record is hard-deleted via the service role API
- *      so the email address is freed and no further auth is possible.
- *   4. push_tokens for the user are deleted.
- *   5. A deletion audit record is inserted into user_deletion_log (if the
- *      table exists — non-fatal otherwise).
- *
- * What is NOT deleted:
- *   - orders, payment_sessions, payouts, disputes — financial records must
- *     be retained for legal and accounting purposes (UK VAT regulations,
- *     Stripe Connect compliance).  These rows are anonymised (buyerId /
- *     sellerId preserved as-is; all PII columns already de-referenced through
- *     the users join, which is now anonymised).
- *   - messages — retained for dispute resolution.  Sender identity is
- *     already anonymised via the users join.
- *
- * Method: DELETE
- * Auth:   Bearer <jwt>
- * Body:   { targetUserId?: string }  — only admins may supply this
+ * Account deletion with UK GDPR / Data Protection Act data minimisation.
+ * Transaction records that must remain for accounting, fraud, disputes and
+ * payment reconciliation are retained, but profile/contact data is removed.
  */
 
+import { createHash } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
@@ -58,7 +34,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
-  // ── Authenticate caller ───────────────────────────────────────────────────
   const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) {
@@ -74,13 +49,13 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
 
-  // ── Rate limit: 3 deletion attempts per hour ──────────────────────────────
   const rl = await checkRateLimit({
     supabase,
-    tableName: 'create_refund_rate_limits', // reuse admin rate-limit table — same schema
+    tableName: 'create_refund_rate_limits',
     identifier: `delete:${callerAuth.id}`,
     windowMinutes: 60,
     maxAttempts: 3,
+    policy: 'fail-closed',
   });
   if (rl.exceeded) {
     return {
@@ -90,12 +65,11 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── Determine target user ─────────────────────────────────────────────────
   let body: { targetUserId?: string } = {};
   try {
     if (event.body) body = JSON.parse(event.body) as { targetUserId?: string };
   } catch {
-    // Ignore — targetUserId is optional
+    return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
   const { data: callerRow } = await supabase
@@ -115,88 +89,131 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── Verify target user exists ─────────────────────────────────────────────
-  const { data: targetUser } = await supabase
+  const { data: targetUser, error: targetLookupError } = await supabase
     .from('users')
     .select('id, email, role')
     .eq('id', targetUserId)
     .maybeSingle<{ id: string; email: string; role: string | null }>();
 
-  if (!targetUser) {
+  if (targetLookupError || !targetUser) {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'User not found' }) };
   }
 
-  // Prevent accidental deletion of another admin account.
-  if (targetUser.role === 'admin' && callerAuth.id !== targetUserId) {
+  // Admin accounts are deliberately excluded from this self-service endpoint.
+  // Removing an admin must be a controlled operational action so the platform
+  // cannot accidentally lose its last privileged account.
+  if (targetUser.role === 'admin') {
     return {
       statusCode: 403,
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Admin accounts cannot be deleted via this endpoint' }),
+      body: JSON.stringify({ error: 'Admin accounts must be removed through the controlled admin process.' }),
     };
   }
 
   const now = new Date().toISOString();
   const anonEmail = `deleted_${targetUserId.slice(0, 8)}@removed.invalid`;
+  const emailHash = `sha256:${createHash('sha256').update(targetUser.email.trim().toLowerCase()).digest('hex')}`;
 
-  // ── 1. Anonymise public.users ─────────────────────────────────────────────
-  await supabase
-    .from('users')
-    .update({
-      email: anonEmail,
-      firstName: 'Deleted',
-      lastName: 'User',
-      phone: null,
-      isActive: false,
-    })
-    .eq('id', targetUserId);
+  // Core anonymisation must succeed before the Auth identity is deleted. If any
+  // of these operations fail, keep the Auth account so the request can be retried.
+  const coreOperations = [
+    await supabase
+      .from('users')
+      .update({
+        email: anonEmail,
+        firstName: 'Deleted',
+        lastName: 'User',
+        phone: null,
+        avatarUrl: null,
+        isActive: false,
+      })
+      .eq('id', targetUserId),
 
-  // ── 2. Anonymise buyer_profiles ───────────────────────────────────────────
-  await supabase
-    .from('buyer_profiles')
-    .update({
-      phone: null,
-      dateOfBirth: null,
-      vatNumber: null,
-    })
-    .eq('userId', targetUserId)
-    .catch(() => { /* non-fatal if row doesn't exist */ });
+    await supabase
+      .from('buyer_profiles')
+      .update({
+        shippingAddress: null,
+        billingAddress: null,
+        businessAddress: null,
+        companyName: null,
+        vatNumber: null,
+        preferences: null,
+        isVatVerified: false,
+      })
+      .eq('userId', targetUserId),
 
-  // ── 3. Anonymise seller_profiles ─────────────────────────────────────────
-  await supabase
-    .from('seller_profiles')
-    .update({
-      fullName: 'Deleted Seller',
-      phone: null,
-      vatNumber: null,
-      addressLine1: null,
-      addressLine2: null,
-      city: null,
-      postcode: null,
-    })
-    .eq('userId', targetUserId)
-    .catch(() => { /* non-fatal if row doesn't exist */ });
+    await supabase
+      .from('seller_profiles')
+      .update({
+        fullName: 'Deleted Seller',
+        storeName: 'Deleted Seller',
+        phone: null,
+        country: null,
+        businessName: 'Deleted Seller',
+        vatNumber: null,
+        companyRegistrationNumber: null,
+        businessAddress: null,
+        payoutDetails: null,
+        contactPhone: null,
+        shippingDefaults: null,
+        addressLine1: null,
+        addressLine2: null,
+        city: null,
+        postcode: null,
+        isApproved: false,
+        isVerified: false,
+        isPaused: true,
+        profileCompleted: false,
+        sellerStatus: 'suspended',
+      })
+      .eq('userId', targetUserId),
 
-  // ── 4. Delete push tokens ─────────────────────────────────────────────────
-  await supabase
+    await supabase
+      .from('products')
+      .update({ isActive: false })
+      .eq('sellerId', targetUserId),
+
+    await supabase
+      .from('seller_stores')
+      .update({ isActive: false })
+      .eq('userId', targetUserId),
+  ];
+
+  const coreError = coreOperations.find((result) => result.error)?.error;
+  if (coreError) {
+    console.error('delete-account: core anonymisation failed:', coreError.message);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Account deletion could not be completed safely. No authentication record was removed; please try again.' }),
+    };
+  }
+
+  const { error: tokenDeleteError } = await supabase
     .from('push_tokens')
     .delete()
-    .eq('userId', targetUserId)
-    .catch(() => { /* non-fatal */ });
+    .eq('userId', targetUserId);
+  if (tokenDeleteError) {
+    console.warn('delete-account: push token cleanup failed:', tokenDeleteError.message);
+  }
 
-  // ── 5. Audit log ──────────────────────────────────────────────────────────
-  await supabase
+  const { error: auditError } = await supabase
     .from('user_deletion_log')
     .insert({
       deletedUserId: targetUserId,
       deletedByAdminId: callerAuth.id !== targetUserId ? callerAuth.id : null,
-      originalEmail: targetUser.email,
+      originalEmail: emailHash,
       deletedAt: now,
-    })
-    .catch(() => { /* table may not exist yet — non-fatal */ });
+    });
+  if (auditError) {
+    console.error('delete-account: deletion audit write failed:', auditError.message);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Account data was anonymised, but the deletion audit could not be recorded. Please contact support.' }),
+    };
+  }
 
-  // ── 6. Hard-delete the Supabase Auth user ─────────────────────────────────
-  // This must be done last so that if any earlier step fails the caller can
-  // retry using their still-valid JWT.
   const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(targetUserId);
   if (deleteAuthError) {
     console.error('delete-account: auth.admin.deleteUser failed:', deleteAuthError.message);
@@ -212,6 +229,9 @@ export const handler: Handler = async (event) => {
   return {
     statusCode: 200,
     headers: corsHeaders,
-    body: JSON.stringify({ success: true, message: 'Account deleted and all personal data removed.' }),
+    body: JSON.stringify({
+      success: true,
+      message: 'Account deleted. Profile/contact data was removed; transaction records required for accounting, fraud prevention, disputes and payment reconciliation are retained.',
+    }),
   };
 };
