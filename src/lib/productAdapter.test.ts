@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  adaptProduct,
   adaptProducts,
   getDBProductAvailability,
   isSellableDBProduct,
@@ -64,6 +65,18 @@ describe('getDBProductAvailability', () => {
       product({ listingContext: 'service', stockQuantity: 0, stockStatus: 'in_stock' }),
     );
     expect(result).toEqual({ isAvailable: true });
+  });
+});
+
+describe('adaptProduct', () => {
+  it('exposes live stock as the physical purchase limit', () => {
+    expect(adaptProduct(product({ stockQuantity: 3 })).maxPurchaseQuantity).toBe(3);
+  });
+
+  it('does not impose a stock-derived purchase limit on services', () => {
+    expect(
+      adaptProduct(product({ listingContext: 'service', stockQuantity: 0 })).maxPurchaseQuantity,
+    ).toBeUndefined();
   });
 });
 
