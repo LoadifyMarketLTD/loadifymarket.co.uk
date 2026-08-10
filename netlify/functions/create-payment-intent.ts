@@ -71,6 +71,14 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Every payment item must have a valid product and positive whole-number quantity.' }) };
   }
 
+  const submittedProductIds = items.map((item) => item.productId);
+  if (new Set(submittedProductIds).size !== submittedProductIds.length) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Each product may appear only once in a payment. Please update the quantity instead of adding a duplicate line.' }),
+    };
+  }
+
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
   let verifiedBuyerId = '';
@@ -122,7 +130,7 @@ export const handler: Handler = async (event) => {
     console.warn('create-payment-intent: release_stale_unpaid_listing_locks RPC failed (non-fatal):', err);
   });
 
-  const productIds = [...new Set(items.map((i) => i.productId))];
+  const productIds = submittedProductIds;
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
     .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus')
@@ -166,9 +174,9 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Please select a valid shipping method.' }) };
     }
 
-    const goodsProductIds = [...new Set(items
+    const goodsProductIds = items
       .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
-      .map((item) => item.productId))];
+      .map((item) => item.productId);
 
     const { data: productShippingRows, error: psError } = await supabase
       .from('product_shipping')
@@ -255,10 +263,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'This seller is not currently available to accept payments.' }) };
   }
 
-  const subtotal = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const total = subtotal + shippingAmount;
   const VAT_RATE = 0.20;
-
   const { data: buyerProfile } = await supabase
     .from('buyer_profiles')
     .select('accountType, isVatVerified')
@@ -267,10 +272,22 @@ export const handler: Handler = async (event) => {
 
   const isB2BBuyer = Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
   const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
-  const chargeableSubtotal = applyReverseCharge
-    ? enrichedItems.reduce((sum, i) => sum + (i.price / (1 + VAT_RATE)) * i.quantity, 0)
-    : subtotal;
-  const chargeableTotal = chargeableSubtotal + shippingAmount;
+
+  const catalogSubtotalPence = enrichedItems.reduce(
+    (sum, item) => sum + Math.round(item.price * 100) * item.quantity,
+    0,
+  );
+  const chargeableSubtotalPence = enrichedItems.reduce((sum, item) => {
+    const unitPrice = applyReverseCharge ? item.price / (1 + VAT_RATE) : item.price;
+    return sum + Math.round(unitPrice * 100) * item.quantity;
+  }, 0);
+  const shippingAmountPence = Math.round(shippingAmount * 100);
+  shippingAmount = shippingAmountPence / 100;
+  const totalPence = chargeableSubtotalPence + shippingAmountPence;
+  const subtotal = catalogSubtotalPence / 100;
+  const total = (catalogSubtotalPence + shippingAmountPence) / 100;
+  const chargeableSubtotal = chargeableSubtotalPence / 100;
+  const chargeableTotal = totalPence / 100;
 
   // Reserve before creating a PaymentIntent so a buyer never receives a usable
   // client_secret for stock that another checkout already reserved.
@@ -305,7 +322,7 @@ export const handler: Handler = async (event) => {
     const transferGroup = randomUUID();
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(chargeableTotal * 100),
+      amount: totalPence,
       currency: 'gbp',
       payment_method_types: ['card'],
       transfer_group: transferGroup,
@@ -332,10 +349,13 @@ export const handler: Handler = async (event) => {
           billingAddress,
           subtotal,
           chargeableSubtotal,
+          chargeableSubtotalPence,
           shippingAmount,
+          shippingAmountPence,
           shippingMethodId: shippingMethodId ?? null,
           shippingMethod: resolvedShippingMethodLabel || shippingMethod || 'Standard',
           total: chargeableTotal,
+          totalPence,
           catalogTotal: total,
           buyerId: verifiedBuyerId,
           transferGroup,
@@ -365,7 +385,7 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({
         client_secret: paymentIntent.client_secret,
         payment_intent_id: paymentIntent.id,
-        amount_pence: Math.round(chargeableTotal * 100),
+        amount_pence: totalPence,
       }),
     };
   } catch (err: unknown) {
