@@ -3,7 +3,7 @@
  *
  * Account deletion with UK GDPR / Data Protection Act data minimisation.
  * Transaction records that must remain for accounting, fraud, disputes and
- * payment reconciliation are retained, but profile/contact data is removed.
+ * payment reconciliation are retained, but profile/contact/storefront data is removed.
  */
 
 import { createHash } from 'crypto';
@@ -23,7 +23,6 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' };
   }
-
   if (event.httpMethod !== 'DELETE') {
     return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -51,8 +50,8 @@ export const handler: Handler = async (event) => {
 
   const rl = await checkRateLimit({
     supabase,
-    tableName: 'create_refund_rate_limits',
-    identifier: `delete:${callerAuth.id}`,
+    tableName: 'delete_account_rate_limits',
+    identifier: callerAuth.id,
     windowMinutes: 60,
     maxAttempts: 3,
     policy: 'fail-closed',
@@ -79,14 +78,10 @@ export const handler: Handler = async (event) => {
     .maybeSingle<{ role: string | null }>();
 
   const isAdmin = callerRow?.role === 'admin';
-  const targetUserId: string = body.targetUserId && isAdmin ? body.targetUserId : callerAuth.id;
+  const targetUserId = body.targetUserId && isAdmin ? body.targetUserId : callerAuth.id;
 
   if (body.targetUserId && body.targetUserId !== callerAuth.id && !isAdmin) {
-    return {
-      statusCode: 403,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: 'You can only delete your own account' }),
-    };
+    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'You can only delete your own account' }) };
   }
 
   const { data: targetUser, error: targetLookupError } = await supabase
@@ -99,9 +94,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'User not found' }) };
   }
 
-  // Admin accounts are deliberately excluded from this self-service endpoint.
-  // Removing an admin must be a controlled operational action so the platform
-  // cannot accidentally lose its last privileged account.
   if (targetUser.role === 'admin') {
     return {
       statusCode: 403,
@@ -111,11 +103,12 @@ export const handler: Handler = async (event) => {
   }
 
   const now = new Date().toISOString();
-  const anonEmail = `deleted_${targetUserId.slice(0, 8)}@removed.invalid`;
+  const shortId = targetUserId.slice(0, 8);
+  const anonEmail = `deleted_${shortId}@removed.invalid`;
   const emailHash = `sha256:${createHash('sha256').update(targetUser.email.trim().toLowerCase()).digest('hex')}`;
 
-  // Core anonymisation must succeed before the Auth identity is deleted. If any
-  // of these operations fail, keep the Auth account so the request can be retried.
+  // Every operation in this set is core anonymisation. The Auth identity is
+  // removed only after all of them succeed, so a partial failure can be retried.
   const coreOperations = [
     await supabase
       .from('users')
@@ -175,7 +168,17 @@ export const handler: Handler = async (event) => {
 
     await supabase
       .from('seller_stores')
-      .update({ isActive: false })
+      .update({
+        storeName: 'Deleted Store',
+        storeSlug: `deleted-${shortId}`,
+        storeLogo: null,
+        storeDescription: null,
+        storeBanner: null,
+        socialLinks: null,
+        returnPolicy: null,
+        shippingPolicy: null,
+        isActive: false,
+      })
       .eq('userId', targetUserId),
   ];
 
@@ -189,13 +192,8 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const { error: tokenDeleteError } = await supabase
-    .from('push_tokens')
-    .delete()
-    .eq('userId', targetUserId);
-  if (tokenDeleteError) {
-    console.warn('delete-account: push token cleanup failed:', tokenDeleteError.message);
-  }
+  const { error: tokenDeleteError } = await supabase.from('push_tokens').delete().eq('userId', targetUserId);
+  if (tokenDeleteError) console.warn('delete-account: push token cleanup failed:', tokenDeleteError.message);
 
   const { error: auditError } = await supabase
     .from('user_deletion_log')
@@ -205,6 +203,7 @@ export const handler: Handler = async (event) => {
       originalEmail: emailHash,
       deletedAt: now,
     });
+
   if (auditError) {
     console.error('delete-account: deletion audit write failed:', auditError.message);
     return {
@@ -220,9 +219,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({
-        error: 'Account data was anonymised but the authentication record could not be deleted. Please contact support.',
-      }),
+      body: JSON.stringify({ error: 'Account data was anonymised but the authentication record could not be deleted. Please contact support.' }),
     };
   }
 
@@ -231,7 +228,7 @@ export const handler: Handler = async (event) => {
     headers: corsHeaders,
     body: JSON.stringify({
       success: true,
-      message: 'Account deleted. Profile/contact data was removed; transaction records required for accounting, fraud prevention, disputes and payment reconciliation are retained.',
+      message: 'Account deleted. Profile, contact and storefront data was removed; transaction records required for accounting, fraud prevention, disputes and payment reconciliation are retained.',
     }),
   };
 };
