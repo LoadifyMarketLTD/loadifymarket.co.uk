@@ -77,6 +77,14 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Every checkout item must have a valid product and positive whole-number quantity.' }) };
   }
 
+  const submittedProductIds = items.map((item) => item.productId);
+  if (new Set(submittedProductIds).size !== submittedProductIds.length) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Each product may appear only once in a checkout. Please update the quantity instead of adding a duplicate line.' }),
+    };
+  }
+
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
   let reservedProductIds: string[] = [];
   const releaseReservedProducts = async () => {
@@ -150,7 +158,7 @@ export const handler: Handler = async (event) => {
     });
   }
 
-  const productIds = [...new Set(items.map((i) => i.productId))];
+  const productIds = submittedProductIds;
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
     .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus')
@@ -251,9 +259,9 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Please select a valid shipping method.' }) };
     }
 
-    const goodsProductIds = [...new Set(items
+    const goodsProductIds = items
       .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
-      .map((item) => item.productId))];
+      .map((item) => item.productId);
 
     const { data: productShippingRows, error: psError } = await supabase
       .from('product_shipping')
@@ -300,9 +308,6 @@ export const handler: Handler = async (event) => {
     resolvedShippingMethodLabel = method.name?.trim() || 'Standard';
   }
 
-  const subtotal = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const total = subtotal + shippingAmount;
-
   const VAT_RATE = 0.20;
   const { data: buyerProfile } = await supabase
     .from('buyer_profiles')
@@ -312,16 +317,29 @@ export const handler: Handler = async (event) => {
 
   const isB2BBuyer = Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
   const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
-  const chargeableSubtotal = applyReverseCharge
-    ? enrichedItems.reduce((sum, i) => sum + (i.price / (1 + VAT_RATE)) * i.quantity, 0)
-    : subtotal;
-  const chargeableTotal = chargeableSubtotal + shippingAmount;
 
-  const reservableProductIds = [...new Set(
-    enrichedItems
-      .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
-      .map((item) => item.productId),
-  )];
+  // Money crossing the Stripe boundary is represented in integer pence. Stripe
+  // Checkout rounds each unit amount independently, so derive the persisted total
+  // from the exact same per-unit pence values rather than from floating-point sums.
+  const catalogSubtotalPence = enrichedItems.reduce(
+    (sum, item) => sum + Math.round(item.price * 100) * item.quantity,
+    0,
+  );
+  const chargeableSubtotalPence = enrichedItems.reduce((sum, item) => {
+    const unitPrice = applyReverseCharge ? item.price / (1 + VAT_RATE) : item.price;
+    return sum + Math.round(unitPrice * 100) * item.quantity;
+  }, 0);
+  const shippingAmountPence = Math.round(shippingAmount * 100);
+  shippingAmount = shippingAmountPence / 100;
+  const totalPence = chargeableSubtotalPence + shippingAmountPence;
+  const subtotal = catalogSubtotalPence / 100;
+  const total = (catalogSubtotalPence + shippingAmountPence) / 100;
+  const chargeableSubtotal = chargeableSubtotalPence / 100;
+  const chargeableTotal = totalPence / 100;
+
+  const reservableProductIds = enrichedItems
+    .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
+    .map((item) => item.productId);
   const reservedUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
   for (const productId of reservableProductIds) {
     const { count } = await supabase
@@ -353,14 +371,12 @@ export const handler: Handler = async (event) => {
       };
     });
 
-    // Shipping must be part of Stripe's line_items. Previously it was only
-    // written to payment_sessions, causing Stripe to charge less than the DB total.
-    if (shippingAmount > 0) {
+    if (shippingAmountPence > 0) {
       lineItems.push({
         price_data: {
           currency: 'gbp',
           product_data: { name: `Shipping — ${resolvedShippingMethodLabel}` },
-          unit_amount: Math.round(shippingAmount * 100),
+          unit_amount: shippingAmountPence,
         },
         quantity: 1,
       });
@@ -406,10 +422,13 @@ export const handler: Handler = async (event) => {
           billingAddress,
           subtotal,
           chargeableSubtotal,
+          chargeableSubtotalPence,
           shippingAmount,
+          shippingAmountPence,
           shippingMethodId: shippingMethodId ?? null,
           shippingMethod: resolvedShippingMethodLabel || shippingMethod || 'Standard',
           total: chargeableTotal,
+          totalPence,
           catalogTotal: total,
           buyerId: verifiedBuyerId,
           transferGroup,
