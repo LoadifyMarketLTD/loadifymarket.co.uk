@@ -89,8 +89,6 @@ async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClie
   if (existing.status === 'processed' || existing.status === 'skipped') return 'done';
 
   if (existing.status === 'processing') {
-    // A process can die after claiming an event. Reclaim only an expired lease;
-    // a current invocation keeps ownership and Stripe is asked to retry later.
     const staleBefore = new Date(Date.now() - STRIPE_EVENT_LEASE_MS).toISOString();
     const { data: reclaimed, error: reclaimError } = await sb
       .from('stripe_events')
@@ -606,10 +604,12 @@ async function handleRefund(charge: Stripe.Charge): Promise<void> {
     .maybeSingle<{ id: string; stripeTransferId: string | null; status: string }>();
 
   if (payout?.stripeTransferId && stripe) {
+    // Same parameters + same idempotency key as create-refund.ts. This makes a
+    // Stripe-success/DB-failure retry converge on one transfer reversal.
     const reversal = await stripe.transfers.createReversal(
       payout.stripeTransferId,
-      { metadata: { orderId: payment.orderId, source: 'charge.refunded-webhook' } },
-      { idempotencyKey: `refund-reversal:${charge.id}:${payout.stripeTransferId}` },
+      { metadata: { orderId: payment.orderId } },
+      { idempotencyKey: `order-refund-transfer:${payment.orderId}` },
     );
     const { error: payoutError } = await supabase!
       .from('payouts')
