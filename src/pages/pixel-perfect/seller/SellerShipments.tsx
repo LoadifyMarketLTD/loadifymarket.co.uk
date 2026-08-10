@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Truck, Search, Clock, Plus, Loader2, RefreshCw } from "lucide-react";
+import { Truck, Search, Clock, Plus, Loader2, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,6 @@ interface ShipmentRow extends Shipment {
   } | null;
 }
 
-/** Map DB status to the display config keys */
 function mapStatus(status: string): string {
   const s = status.toLowerCase().replace(/ /g, "_");
   if (s === "dispatched" || s === "in_transit") return "in_transit";
@@ -54,8 +53,6 @@ const SellerShipments = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ShipmentRow | null>(null);
-
-  // Create Shipment dialog state
   const [createOpen, setCreateOpen] = useState(false);
   const [sellerOrders, setSellerOrders] = useState<{ id: string; orderNumber: string; status: string }[]>([]);
   const [createForm, setCreateForm] = useState({ orderId: "", courierName: "", trackingNumber: "", dispatchedAt: "" });
@@ -63,6 +60,7 @@ const SellerShipments = () => {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [uploadingPod, setUploadingPod] = useState(false);
+  const [openingPod, setOpeningPod] = useState(false);
 
   const loadShipments = useCallback(async () => {
     if (!user) return;
@@ -75,7 +73,6 @@ const SellerShipments = () => {
       const rows = (data ?? []) as ShipmentRow[];
       setShipments(rows);
 
-      // Resolve buyer names via secondary query
       const uniqueBuyerIds = [...new Set(rows.map((s) => s.buyer_id).filter(Boolean))];
       if (uniqueBuyerIds.length > 0) {
         const { data: buyers } = await supabase
@@ -94,9 +91,8 @@ const SellerShipments = () => {
     }
   }, [user]);
 
-  useEffect(() => { loadShipments(); }, [loadShipments]);
+  useEffect(() => { void loadShipments(); }, [loadShipments]);
 
-  // Load seller's orders when the create dialog opens
   const handleOpenCreate = async () => {
     if (!user) return;
     const { data } = await supabase
@@ -124,7 +120,6 @@ const SellerShipments = () => {
       });
       const json = await res.json() as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to create shipment");
-
       toast({ title: "Shipment created", description: "The shipment has been logged successfully." });
       setCreateOpen(false);
       await loadShipments();
@@ -138,10 +133,6 @@ const SellerShipments = () => {
   const handleUploadProofOfDelivery = async (shipmentId: string, file: File) => {
     setUploadingPod(true);
     try {
-      // Step 1: Request a signed upload URL from the Netlify function.
-      // The server validates auth, ownership, and file constraints before
-      // issuing the URL. The shipment ID is embedded in the path so the
-      // server can look up the correct shipment row.
       const initRes = await authorizedFetch(
         `/.netlify/functions/upload-proof-of-delivery/${shipmentId}/proof`,
         {
@@ -149,18 +140,10 @@ const SellerShipments = () => {
           body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
         },
       );
-      const initJson = await initRes.json() as {
-        uploadUrl?: string;
-        path?: string;
-        token?: string;
-        error?: string;
-      };
+      const initJson = await initRes.json() as { uploadUrl?: string; path?: string; error?: string };
       if (!initRes.ok) throw new Error(initJson.error ?? "Failed to request upload URL");
       if (!initJson.uploadUrl || !initJson.path) throw new Error("Invalid server response: missing upload URL");
 
-      // Step 2: Upload the file directly to Supabase Storage using the signed URL.
-      // This is a direct PUT to the storage service — no auth header needed here
-      // as the signed URL already encodes the authorisation.
       const uploadRes = await fetch(initJson.uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -168,28 +151,37 @@ const SellerShipments = () => {
       });
       if (!uploadRes.ok) throw new Error("File upload to storage failed");
 
-      // Step 3: Confirm the upload to the Netlify function. The server reads the
-      // public URL from Supabase Storage and saves it on the shipment row.
       const confirmRes = await authorizedFetch(
         `/.netlify/functions/upload-proof-of-delivery/${shipmentId}/proof`,
-        {
-          method: "PUT",
-          body: JSON.stringify({ filePath: initJson.path }),
-        },
+        { method: "PUT", body: JSON.stringify({ filePath: initJson.path }) },
       );
-      const confirmJson = await confirmRes.json() as { error?: string; shipment?: { proof_of_delivery_url?: string } };
+      const confirmJson = await confirmRes.json() as { error?: string; shipment?: ShipmentRow };
       if (!confirmRes.ok) throw new Error(confirmJson.error ?? "Failed to confirm upload");
 
       toast({ title: "Proof of delivery uploaded" });
       await loadShipments();
-      const podUrl = confirmJson.shipment?.proof_of_delivery_url;
-      if (podUrl) {
-        setSelected((prev) => (prev && prev.id === shipmentId ? { ...prev, proof_of_delivery_url: podUrl } : prev));
-      }
+      if (confirmJson.shipment) setSelected(confirmJson.shipment);
     } catch (err) {
       toast({ title: "Upload failed", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setUploadingPod(false);
+    }
+  };
+
+  const handleViewProofOfDelivery = async (shipmentId: string) => {
+    setOpeningPod(true);
+    try {
+      const res = await authorizedFetch(
+        `/.netlify/functions/upload-proof-of-delivery/${shipmentId}/proof`,
+        { method: "GET" },
+      );
+      const json = await res.json() as { url?: string; error?: string };
+      if (!res.ok || !json.url) throw new Error(json.error ?? "Unable to open proof of delivery");
+      window.open(json.url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast({ title: "Unable to open proof", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setOpeningPod(false);
     }
   };
 
@@ -204,7 +196,6 @@ const SellerShipments = () => {
       const json = await res.json() as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to update status");
 
-      // Notify buyer about the status change
       await supabase.from("notifications").insert({
         userId: shipment.buyer_id,
         type: "shipment",
@@ -225,13 +216,10 @@ const SellerShipments = () => {
 
   const filtered = shipments.filter((s) => {
     const q = search.toLowerCase();
-    return (
-      s.id.toLowerCase().includes(q) ||
-      (s.tracking_number ?? "").toLowerCase().includes(q) ||
-      (s.orders?.orderNumber ?? "").toLowerCase().includes(q)
-    );
+    return s.id.toLowerCase().includes(q)
+      || (s.tracking_number ?? "").toLowerCase().includes(q)
+      || (s.orders?.orderNumber ?? "").toLowerCase().includes(q);
   });
-
   const byStatus = (status: string) => filtered.filter((s) => mapStatus(s.status) === status);
   const activeShipments = filtered.filter((s) => mapStatus(s.status) !== "delivered");
 
@@ -239,24 +227,16 @@ const SellerShipments = () => {
     if (loading) return <div className="px-3 py-6 text-center text-muted-foreground text-xs">Loading shipments…</div>;
     if (data.length === 0) return (
       <div className="px-3 py-6 text-center text-muted-foreground text-xs">
-        <Truck className="h-6 w-6 mx-auto mb-1.5 opacity-40" />
-        No shipments found.
+        <Truck className="h-6 w-6 mx-auto mb-1.5 opacity-40" />No shipments found.
       </div>
     );
     return (
       <div className="divide-y divide-border">
         {data.map((s) => {
-          const displayStatus = mapStatus(s.status);
-          const sc = statusConfig[displayStatus];
+          const sc = statusConfig[mapStatus(s.status)];
           return (
-            <button
-              key={s.id}
-              onClick={() => setSelected(s)}
-              className="w-full flex items-center gap-3 px-3 py-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left"
-            >
-              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Truck className="h-4 w-4 text-muted-foreground" />
-              </div>
+            <button key={s.id} onClick={() => setSelected(s)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left">
+              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0"><Truck className="h-4 w-4 text-muted-foreground" /></div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[13px] font-semibold text-foreground">{s.orders?.orderNumber ?? s.id.slice(0, 8).toUpperCase()}</span>
@@ -264,9 +244,7 @@ const SellerShipments = () => {
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">{buyerNames[s.buyer_id] ?? "Customer"}{s.courier_name ? ` · ${s.courier_name}` : ""}</p>
               </div>
-              <div className="text-right shrink-0">
-                <div className="text-[11px] text-muted-foreground">{s.tracking_number ? s.tracking_number.slice(0, 12) : "—"}</div>
-              </div>
+              <div className="text-right shrink-0"><div className="text-[11px] text-muted-foreground">{s.tracking_number ? s.tracking_number.slice(0, 12) : "—"}</div></div>
             </button>
           );
         })}
@@ -277,18 +255,10 @@ const SellerShipments = () => {
   return (
     <div className="px-3 pt-3 pb-4 sm:p-6 space-y-3 sm:space-y-6 max-w-[1200px]">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-base font-bold text-foreground">Shipments</h1>
-          <p className="text-[11px] text-muted-foreground">
-            {loading ? "Loading…" : `${shipments.length} total · ${activeShipments.length} active`}
-          </p>
-        </div>
-        <Button size="sm" className="h-9 text-xs" onClick={handleOpenCreate}>
-          <Plus className="mr-1.5 h-3.5 w-3.5" /> Log Shipment
-        </Button>
+        <div><h1 className="text-base font-bold text-foreground">Shipments</h1><p className="text-[11px] text-muted-foreground">{loading ? "Loading…" : `${shipments.length} total · ${activeShipments.length} active`}</p></div>
+        <Button size="sm" className="h-9 text-xs" onClick={handleOpenCreate}><Plus className="mr-1.5 h-3.5 w-3.5" /> Log Shipment</Button>
       </div>
 
-      {/* Compact stats grid */}
       <div className="grid grid-cols-4 gap-1.5">
         {[
           { label: "Created", count: byStatus("label_created").length, color: "text-muted-foreground" },
@@ -296,20 +266,12 @@ const SellerShipments = () => {
           { label: "Out for Del.", count: byStatus("out_for_delivery").length, color: "text-primary" },
           { label: "Delivered", count: byStatus("delivered").length, color: "text-emerald-500" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-lg border border-border p-2 text-center">
-            <div className={`text-lg font-bold ${stat.color}`}>{stat.count}</div>
-            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{stat.label}</p>
-          </div>
+          <div key={stat.label} className="bg-card rounded-lg border border-border p-2 text-center"><div className={`text-lg font-bold ${stat.color}`}>{stat.count}</div><p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{stat.label}</p></div>
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input placeholder="Search shipments..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
-      </div>
+      <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" /><Input placeholder="Search shipments..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" /></div>
 
-      {/* Tabs */}
       <Tabs defaultValue="all">
         <TabsList className="h-8">
           <TabsTrigger value="all" className="text-xs h-7">All <Badge variant="secondary" className="ml-1 text-[10px] px-1 h-4">{filtered.length}</Badge></TabsTrigger>
@@ -321,19 +283,12 @@ const SellerShipments = () => {
         <TabsContent value="delivered"><Card><CardContent className="p-0">{renderList(byStatus("delivered"))}</CardContent></Card></TabsContent>
       </Tabs>
 
-      {/* Tracking Dialog */}
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setPendingStatus(""); } }}>
         {selected && (() => {
-          const displayStatus = mapStatus(selected.status);
-          const sc = statusConfig[displayStatus];
+          const sc = statusConfig[mapStatus(selected.status)];
           return (
             <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-primary" /> {selected.id.slice(0, 8).toUpperCase()}
-                </DialogTitle>
-                <DialogDescription>{selected.courier_name ?? "Carrier"} · {selected.tracking_number ?? "No tracking"}</DialogDescription>
-              </DialogHeader>
+              <DialogHeader><DialogTitle className="flex items-center gap-2"><Truck className="h-5 w-5 text-primary" /> {selected.id.slice(0, 8).toUpperCase()}</DialogTitle><DialogDescription>{selected.courier_name ?? "Carrier"} · {selected.tracking_number ?? "No tracking"}</DialogDescription></DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div><span className="text-muted-foreground">Buyer</span><p className="font-medium text-foreground">{buyerNames[selected.buyer_id] ?? "Customer"}</p></div>
@@ -341,59 +296,38 @@ const SellerShipments = () => {
                   <div><span className="text-muted-foreground">Order</span><p className="font-medium text-foreground">{selected.orders?.orderNumber ?? selected.order_id.slice(0, 8)}</p></div>
                   <div><span className="text-muted-foreground">Dispatched</span><p className="font-medium text-foreground">{selected.dispatched_at ? new Date(selected.dispatched_at).toLocaleDateString("en-GB") : "—"}</p></div>
                 </div>
+
                 {selected.proof_of_delivery_url ? (
                   <div className="rounded-lg bg-muted/50 border border-border p-3">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">PROOF OF DELIVERY</p>
-                    <a href={selected.proof_of_delivery_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">View document</a>
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">PROOF OF DELIVERY</p>
+                    <Button type="button" variant="outline" size="sm" disabled={openingPod} onClick={() => handleViewProofOfDelivery(selected.id)}>
+                      {openingPod ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5 mr-1.5" />}
+                      View document
+                    </Button>
                   </div>
                 ) : (
                   <div className="rounded-lg bg-muted/50 border border-border p-3">
                     <p className="text-xs font-semibold text-muted-foreground mb-2">PROOF OF DELIVERY</p>
                     <label className="block">
                       <span className="sr-only">Upload proof of delivery</span>
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        disabled={uploadingPod}
-                        className="block w-full text-xs text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleUploadProofOfDelivery(selected.id, file);
-                        }}
-                      />
+                      <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" disabled={uploadingPod} className="block w-full text-xs text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer" onChange={(e) => { const file = e.target.files?.[0]; if (file) void handleUploadProofOfDelivery(selected.id, file); }} />
                     </label>
                     {uploadingPod && <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Uploading…</p>}
                   </div>
                 )}
-                <div className="rounded-lg bg-muted/50 border border-border p-3">
-                  <p className="text-xs font-semibold text-muted-foreground mb-1">SHIPMENT CREATED</p>
-                  <p className="text-sm text-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {new Date(selected.created_at).toLocaleString("en-GB")}</p>
-                </div>
-                {/* Status update */}
+
+                <div className="rounded-lg bg-muted/50 border border-border p-3"><p className="text-xs font-semibold text-muted-foreground mb-1">SHIPMENT CREATED</p><p className="text-sm text-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {new Date(selected.created_at).toLocaleString("en-GB")}</p></div>
+
                 <div className="space-y-2">
                   <Label className="text-xs">Update Status</Label>
                   <div className="flex gap-2">
                     <Select value={pendingStatus} onValueChange={setPendingStatus}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select new status…" />
-                      </SelectTrigger>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder="Select new status…" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Processing">Processing</SelectItem>
-                        <SelectItem value="Dispatched">Dispatched</SelectItem>
-                        <SelectItem value="In Transit">In Transit</SelectItem>
-                        <SelectItem value="Out for Delivery">Out for Delivery</SelectItem>
-                        <SelectItem value="Delivered">Delivered</SelectItem>
-                        <SelectItem value="Delivery Failed">Delivery Failed</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem><SelectItem value="Processing">Processing</SelectItem><SelectItem value="Dispatched">Dispatched</SelectItem><SelectItem value="In Transit">In Transit</SelectItem><SelectItem value="Out for Delivery">Out for Delivery</SelectItem><SelectItem value="Delivered">Delivered</SelectItem><SelectItem value="Delivery Failed">Delivery Failed</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button
-                      size="sm"
-                      disabled={!pendingStatus || pendingStatus === selected.status || updatingStatus}
-                      onClick={() => handleUpdateStatus(selected, pendingStatus)}
-                    >
-                      {updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    </Button>
+                    <Button size="sm" disabled={!pendingStatus || pendingStatus === selected.status || updatingStatus} onClick={() => void handleUpdateStatus(selected, pendingStatus)}>{updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</Button>
                   </div>
                 </div>
               </div>
@@ -402,69 +336,16 @@ const SellerShipments = () => {
         })()}
       </Dialog>
 
-      {/* Create Shipment Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" /> Log Shipment
-            </DialogTitle>
-            <DialogDescription>Record a new shipment for one of your orders.</DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Log Shipment</DialogTitle><DialogDescription>Record a new shipment for one of your orders.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
-            <div>
-              <Label className="text-xs">Order *</Label>
-              <Select value={createForm.orderId} onValueChange={(v) => setCreateForm((f) => ({ ...f, orderId: v }))}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select an order…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sellerOrders.length === 0 ? (
-                    <SelectItem value="_none" disabled>No orders found</SelectItem>
-                  ) : (
-                    sellerOrders.map((o) => (
-                      <SelectItem key={o.id} value={o.id}>
-                        {o.orderNumber || o.id.slice(0, 8).toUpperCase()} — {o.status}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Carrier / Courier</Label>
-              <Input
-                className="mt-1"
-                placeholder="e.g. Royal Mail, DPD, UPS"
-                value={createForm.courierName}
-                onChange={(e) => setCreateForm((f) => ({ ...f, courierName: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Tracking Number</Label>
-              <Input
-                className="mt-1"
-                placeholder="e.g. JD000123456789"
-                value={createForm.trackingNumber}
-                onChange={(e) => setCreateForm((f) => ({ ...f, trackingNumber: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Dispatch Date (optional)</Label>
-              <Input
-                type="date"
-                className="mt-1"
-                value={createForm.dispatchedAt}
-                onChange={(e) => setCreateForm((f) => ({ ...f, dispatchedAt: e.target.value }))}
-              />
-            </div>
+            <div><Label className="text-xs">Order *</Label><Select value={createForm.orderId} onValueChange={(v) => setCreateForm((f) => ({ ...f, orderId: v }))}><SelectTrigger className="mt-1"><SelectValue placeholder="Select an order…" /></SelectTrigger><SelectContent>{sellerOrders.length === 0 ? <SelectItem value="_none" disabled>No orders found</SelectItem> : sellerOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.orderNumber || o.id.slice(0, 8).toUpperCase()} — {o.status}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label className="text-xs">Carrier / Courier</Label><Input className="mt-1" placeholder="e.g. Royal Mail, DPD, UPS" value={createForm.courierName} onChange={(e) => setCreateForm((f) => ({ ...f, courierName: e.target.value }))} /></div>
+            <div><Label className="text-xs">Tracking Number</Label><Input className="mt-1" placeholder="e.g. JD000123456789" value={createForm.trackingNumber} onChange={(e) => setCreateForm((f) => ({ ...f, trackingNumber: e.target.value }))} /></div>
+            <div><Label className="text-xs">Dispatch Date (optional)</Label><Input type="date" className="mt-1" value={createForm.dispatchedAt} onChange={(e) => setCreateForm((f) => ({ ...f, dispatchedAt: e.target.value }))} /></div>
           </div>
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Cancel</Button>
-            <Button onClick={handleCreateShipment} disabled={!createForm.orderId || creating}>
-              {creating ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Creating…</> : "Create Shipment"}
-            </Button>
-          </DialogFooter>
+          <DialogFooter className="flex gap-2"><Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Cancel</Button><Button onClick={() => void handleCreateShipment()} disabled={!createForm.orderId || creating}>{creating ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Creating…</> : "Create Shipment"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
