@@ -2,11 +2,17 @@ import Stripe from 'stripe';
 import { schedule } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
+import {
+  findOrderTransfer,
+  isTransferFullyReversed,
+  reconcilePaidOrderPayout,
+  reverseOrderTransfer,
+} from './_shared/orderTransfer';
 
 /**
  * Releases marketplace-held funds only after delivery/completion, the configured
- * protection window, and a final open-dispute check. No seller Transfer is made
- * by the payment webhook; this scheduled function is the release point.
+ * protection window, and a final open-dispute/refund check. No seller Transfer
+ * is made by the payment webhook; this scheduled function is the release point.
  */
 
 const ESCROW_WINDOW_DAYS = (() => {
@@ -22,6 +28,58 @@ type CandidateOrder = {
   commission: number;
   stripePaymentIntentId: string | null;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getOpenDispute(
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  orderId: string,
+): Promise<{ id: string } | null> {
+  const { data, error } = await sb
+    .from('disputes')
+    .select('id')
+    .eq('orderId', orderId)
+    .in('status', ['open', 'in_review'])
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  if (error) throw error;
+  return data ?? null;
+}
+
+async function compensateTransfer(
+  stripe: Stripe,
+  transfer: Stripe.Transfer,
+  input: {
+    orderId: string;
+    orderStatus?: string | null;
+    escrowStatus?: string | null;
+    disputeId?: string | null;
+  },
+): Promise<Stripe.TransferReversal> {
+  if (input.orderStatus === 'refunded' || input.escrowStatus === 'refunded') {
+    return reverseOrderTransfer(
+      stripe,
+      transfer,
+      `order-refund-transfer:${input.orderId}`,
+      { orderId: input.orderId },
+    );
+  }
+
+  if (input.disputeId) {
+    return reverseOrderTransfer(
+      stripe,
+      transfer,
+      `order-dispute-transfer:${input.disputeId}`,
+      { orderId: input.orderId, disputeId: input.disputeId },
+    );
+  }
+
+  return reverseOrderTransfer(
+    stripe,
+    transfer,
+    `escrow-release-abort:${input.orderId}`,
+    { orderId: input.orderId, reason: 'release_eligibility_changed' },
+  );
+}
 
 export const handler = schedule('0 2 * * *', async () => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -77,16 +135,7 @@ export const handler = schedule('0 2 * * *', async () => {
 
   for (const order of candidates) {
     try {
-      const { data: openDispute, error: disputeError } = await supabase
-        .from('disputes')
-        .select('id')
-        .eq('orderId', order.id)
-        .not('status', 'in', '("resolved","closed","rejected")')
-        .limit(1)
-        .maybeSingle();
-
-      if (disputeError) throw disputeError;
-      if (openDispute) {
+      if (await getOpenDispute(supabase, order.id)) {
         console.log(`escrow-release: ${order.orderNumber} held because a dispute is open`);
         continue;
       }
@@ -96,66 +145,90 @@ export const handler = schedule('0 2 * * *', async () => {
         continue;
       }
 
-      // If a prior invocation already created and recorded the transfer but did
-      // not finish the order update, resume safely without sending money twice.
-      const { data: existingPaidPayout, error: payoutLookupError } = await supabase
-        .from('payouts')
-        .select('id, stripeTransferId, amount')
-        .eq('orderId', order.id)
-        .eq('status', 'paid')
-        .not('stripeTransferId', 'is', null)
-        .limit(1)
-        .maybeSingle<{ id: string; stripeTransferId: string; amount: number }>();
-      if (payoutLookupError) throw payoutLookupError;
+      const { data: sellerProfile, error: sellerError } = await supabase
+        .from('seller_profiles')
+        .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
+        .eq('userId', order.sellerId)
+        .maybeSingle<{
+          stripeAccountId: string | null;
+          stripeConnectStatus: string | null;
+          sellerStatus: string | null;
+          isPaused: boolean | null;
+        }>();
 
-      const netSellerAmount = Math.max(0, Number(order.total) - Number(order.commission || 0));
-      if (!Number.isFinite(netSellerAmount) || netSellerAmount <= 0) {
-        console.error(`escrow-release: ${order.orderNumber} has invalid release amount`);
+      if (sellerError) throw sellerError;
+      if (
+        !sellerProfile?.stripeAccountId ||
+        sellerProfile.stripeConnectStatus !== 'active' ||
+        sellerProfile.sellerStatus !== 'active' ||
+        sellerProfile.isPaused === true
+      ) {
+        console.warn(`escrow-release: ${order.orderNumber} retained because seller payout capability is not active`);
         continue;
       }
 
-      let transferId = existingPaidPayout?.stripeTransferId ?? null;
+      const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
+      if (paymentIntent.status !== 'succeeded') {
+        console.error(`escrow-release: ${order.orderNumber} PaymentIntent is not succeeded`);
+        continue;
+      }
 
-      if (!transferId) {
-        const { data: sellerProfile, error: sellerError } = await supabase
-          .from('seller_profiles')
-          .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
-          .eq('userId', order.sellerId)
-          .maybeSingle<{
-            stripeAccountId: string | null;
-            stripeConnectStatus: string | null;
-            sellerStatus: string | null;
-            isPaused: boolean | null;
-          }>();
+      const latestCharge = typeof paymentIntent.latest_charge === 'string'
+        ? paymentIntent.latest_charge
+        : paymentIntent.latest_charge?.id ?? null;
+      if (!latestCharge) {
+        console.error(`escrow-release: ${order.orderNumber} has no source charge`);
+        continue;
+      }
 
-        if (sellerError) throw sellerError;
-        if (
-          !sellerProfile?.stripeAccountId ||
-          sellerProfile.stripeConnectStatus !== 'active' ||
-          sellerProfile.sellerStatus !== 'active' ||
-          sellerProfile.isPaused === true
-        ) {
-          console.warn(`escrow-release: ${order.orderNumber} retained because seller payout capability is not active`);
-          continue;
+      const netSellerPence = Math.round(
+        (Number(order.total) - Number(order.commission || 0)) * 100,
+      );
+      if (!Number.isSafeInteger(netSellerPence) || netSellerPence <= 0) {
+        console.error(`escrow-release: ${order.orderNumber} has invalid release amount`);
+        continue;
+      }
+      const netSellerAmount = netSellerPence / 100;
+
+      const { data: payoutRow, error: payoutLookupError } = await supabase
+        .from('payouts')
+        .select('id, status, stripeTransferId')
+        .eq('orderId', order.id)
+        .not('stripeTransferId', 'is', null)
+        .limit(1)
+        .maybeSingle<{ id: string; status: string; stripeTransferId: string }>();
+      if (payoutLookupError) throw payoutLookupError;
+
+      // A cancelled payout represents a prior clawback/refund/dispute. Never
+      // silently re-pay it; an admin must intentionally resolve that case.
+      if (payoutRow?.status === 'cancelled') {
+        console.warn(`escrow-release: ${order.orderNumber} has a cancelled prior payout; manual review required`);
+        continue;
+      }
+
+      let transfer = await findOrderTransfer(stripe, {
+        orderId: order.id,
+        knownTransferId: payoutRow?.stripeTransferId ?? null,
+        transferGroup: paymentIntent.transfer_group,
+        expectedAmountPence: netSellerPence,
+        expectedDestination: sellerProfile.stripeAccountId,
+      });
+
+      if (transfer && isTransferFullyReversed(transfer)) {
+        if (payoutRow) {
+          await supabase
+            .from('payouts')
+            .update({ status: 'cancelled', notes: 'Stripe transfer is fully reversed; release requires manual review.' })
+            .eq('id', payoutRow.id);
         }
+        console.warn(`escrow-release: ${order.orderNumber} transfer is already reversed; manual review required`);
+        continue;
+      }
 
-        const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
-        if (paymentIntent.status !== 'succeeded') {
-          console.error(`escrow-release: ${order.orderNumber} PaymentIntent is not succeeded`);
-          continue;
-        }
-
-        const latestCharge = typeof paymentIntent.latest_charge === 'string'
-          ? paymentIntent.latest_charge
-          : paymentIntent.latest_charge?.id ?? null;
-        if (!latestCharge) {
-          console.error(`escrow-release: ${order.orderNumber} has no source charge`);
-          continue;
-        }
-
-        const transfer = await stripe.transfers.create(
+      if (!transfer) {
+        transfer = await stripe.transfers.create(
           {
-            amount: Math.round(netSellerAmount * 100),
+            amount: netSellerPence,
             currency: 'gbp',
             destination: sellerProfile.stripeAccountId,
             source_transaction: latestCharge,
@@ -170,38 +243,57 @@ export const handler = schedule('0 2 * * *', async () => {
           },
           { idempotencyKey: `escrow-release:${order.id}` },
         );
-        transferId = transfer.id;
-
-        const { error: payoutInsertError } = await supabase
-          .from('payouts')
-          .insert({
-            sellerId: order.sellerId,
-            orderId: order.id,
-            amount: netSellerAmount,
-            currency: 'GBP',
-            status: 'paid',
-            stripeTransferId: transfer.id,
-            paidAt: new Date().toISOString(),
-            notes: `Released after ${ESCROW_WINDOW_DAYS}-day protection window.`,
-          });
-
-        if (payoutInsertError && payoutInsertError.code !== '23505') {
-          // Stripe idempotency guarantees the same transfer is returned on the
-          // next run, so leaving the order held is safer than falsely releasing.
-          throw payoutInsertError;
-        }
       }
 
-      if (!transferId) continue;
+      const payoutId = await reconcilePaidOrderPayout(supabase, {
+        sellerId: order.sellerId,
+        orderId: order.id,
+        amount: netSellerAmount,
+        transferId: transfer.id,
+        note: `Released after ${ESCROW_WINDOW_DAYS}-day protection window.`,
+      });
+
+      // Re-check BOTH dispute state and order state after the external Stripe
+      // call. If a refund/dispute won the race, compensate the transfer before
+      // ever marking escrow released.
+      const [{ data: latestOrder, error: latestOrderError }, postTransferDispute] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('status, escrowStatus')
+          .eq('id', order.id)
+          .maybeSingle<{ status: string; escrowStatus: string }>(),
+        getOpenDispute(supabase, order.id),
+      ]);
+      if (latestOrderError) throw latestOrderError;
+
+      if (
+        !latestOrder ||
+        latestOrder.status !== 'delivered' ||
+        latestOrder.escrowStatus !== 'held' ||
+        postTransferDispute
+      ) {
+        const reversal = await compensateTransfer(stripe, transfer, {
+          orderId: order.id,
+          orderStatus: latestOrder?.status,
+          escrowStatus: latestOrder?.escrowStatus,
+          disputeId: postTransferDispute?.id,
+        });
+        await supabase
+          .from('payouts')
+          .update({
+            status: 'cancelled',
+            reference: reversal.id,
+            notes: `Escrow release was compensated before finalisation. Reversal ID: ${reversal.id}`,
+          })
+          .eq('id', payoutId);
+        console.warn(`escrow-release: ${order.orderNumber} eligibility changed; transfer compensated`);
+        continue;
+      }
 
       const now = new Date().toISOString();
       const { data: releasedOrder, error: updateError } = await supabase
         .from('orders')
-        .update({
-          status: 'completed',
-          escrowStatus: 'released',
-          escrowReleasedAt: now,
-        })
+        .update({ status: 'completed', escrowStatus: 'released', escrowReleasedAt: now })
         .eq('id', order.id)
         .eq('status', 'delivered')
         .eq('escrowStatus', 'held')
@@ -209,7 +301,29 @@ export const handler = schedule('0 2 * * *', async () => {
         .maybeSingle<{ id: string }>();
 
       if (updateError) throw updateError;
-      if (!releasedOrder) continue;
+      if (!releasedOrder) {
+        // A final race occurred after the post-transfer read. Inspect the newest
+        // state and compensate instead of leaving seller funds out with held DB state.
+        const [{ data: finalOrder }, finalDispute] = await Promise.all([
+          supabase
+            .from('orders')
+            .select('status, escrowStatus')
+            .eq('id', order.id)
+            .maybeSingle<{ status: string; escrowStatus: string }>(),
+          getOpenDispute(supabase, order.id),
+        ]);
+        const reversal = await compensateTransfer(stripe, transfer, {
+          orderId: order.id,
+          orderStatus: finalOrder?.status,
+          escrowStatus: finalOrder?.escrowStatus,
+          disputeId: finalDispute?.id,
+        });
+        await supabase
+          .from('payouts')
+          .update({ status: 'cancelled', reference: reversal.id, notes: `Escrow finalisation race compensated. Reversal ID: ${reversal.id}` })
+          .eq('id', payoutId);
+        continue;
+      }
 
       await supabase.from('notifications').insert({
         userId: order.sellerId,
@@ -225,7 +339,7 @@ export const handler = schedule('0 2 * * *', async () => {
         data: { type: 'escrow_released', orderId: order.id },
       }).catch((err: unknown) => console.warn('escrow-release: push failed:', err));
 
-      console.log(`escrow-release: ${order.orderNumber} released via transfer ${transferId}`);
+      console.log(`escrow-release: ${order.orderNumber} released via transfer ${transfer.id}`);
     } catch (error) {
       console.error(`escrow-release: ${order.orderNumber} release failed and remains held:`, error);
     }
