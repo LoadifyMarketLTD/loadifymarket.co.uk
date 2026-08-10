@@ -23,6 +23,8 @@ export interface DBProduct {
   createdAt: string;
   sellerId?: string;
   type?: string;
+  isActive?: boolean | null;
+  isApproved?: boolean | null;
   listingStatus?: string | null;
   listingContext?: string | null;
   stockStatus?: string | null;
@@ -58,24 +60,46 @@ export function formatRelativeTime(isoDate: string): string {
 }
 
 /**
- * Public product grids should never promote a listing that checkout would
- * reject. Only apply the extra rules when the canonical DB fields are present,
- * so legacy fixtures without those fields remain backwards-compatible.
+ * Returns the canonical availability state used by public listing surfaces.
+ * Undefined legacy fixture fields are treated as unknown rather than blocked;
+ * production rows include the canonical listing fields.
  */
-export function isSellableDBProduct(dbProduct: DBProduct): boolean {
+export function getDBProductAvailability(dbProduct: DBProduct): {
+  isAvailable: boolean;
+  message?: string;
+} {
+  if (dbProduct.isActive === false) {
+    return { isAvailable: false, message: "This listing is no longer active." };
+  }
+  if (dbProduct.isApproved === false) {
+    return { isAvailable: false, message: "This listing is not currently available for purchase." };
+  }
+  if (dbProduct.listingStatus === "reserved") {
+    return { isAvailable: false, message: "Reserved — awaiting payment." };
+  }
+  if (dbProduct.listingStatus === "sold") {
+    return { isAvailable: false, message: "This item has been sold." };
+  }
   if (dbProduct.listingStatus != null && dbProduct.listingStatus !== "active") {
-    return false;
+    return { isAvailable: false, message: "This listing is not currently available for purchase." };
   }
 
   if (dbProduct.listingContext === "service") {
-    return true;
+    return { isAvailable: true };
   }
 
   if (dbProduct.listingContext === "product" || dbProduct.listingContext === "goods") {
-    return Number(dbProduct.stockQuantity) > 0;
+    if (Number(dbProduct.stockQuantity) <= 0) {
+      return { isAvailable: false, message: "Out of stock." };
+    }
   }
 
-  return true;
+  return { isAvailable: true };
+}
+
+/** Public product grids should never promote a listing checkout would reject. */
+export function isSellableDBProduct(dbProduct: DBProduct): boolean {
+  return getDBProductAvailability(dbProduct).isAvailable;
 }
 
 export function adaptProduct(dbProduct: DBProduct): UIProduct {
@@ -117,6 +141,8 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
       ? (dbProduct.specifications["location"] as string | undefined) ?? ""
       : "";
 
+  const availability = getDBProductAvailability(dbProduct);
+
   return {
     id: dbProduct.id,
     title: dbProduct.title,
@@ -135,6 +161,8 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     reviewCount: dbProduct.reviewCount ?? 0,
     views: dbProduct.views ?? 0,
     listed: formatRelativeTime(dbProduct.createdAt),
+    isAvailable: availability.isAvailable,
+    availabilityMessage: availability.message,
   };
 }
 
