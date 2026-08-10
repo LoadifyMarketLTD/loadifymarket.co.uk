@@ -3,10 +3,10 @@
  *
  * Returns a complete XML sitemap containing:
  *   1. All static pages (identical to the original public/sitemap.xml).
- *   2. Every active, approved product page — /product/:id.
+ *   2. Every currently sellable, approved product page — /product/:id.
  *
- * Products are fetched with the public anon key so only rows visible to
- * anonymous visitors (isActive=true AND isApproved=true) are included.
+ * Products are fetched with the public anon key. Reserved listings and physical
+ * products with no stock are intentionally excluded from discovery surfaces.
  *
  * The response is cached at the CDN edge for 1 hour (Cache-Control: public,
  * max-age=3600) to avoid hitting the database on every crawler request.
@@ -20,7 +20,6 @@ import type { Handler } from '@netlify/functions';
 
 const BASE_URL = 'https://loadifymarket.co.uk';
 
-// ── Static pages (mirrors public/sitemap.xml) ─────────────────────────────────
 type StaticEntry = { loc: string; changefreq: string; priority: string };
 
 const STATIC_PAGES: StaticEntry[] = [
@@ -78,7 +77,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  // ── Fetch product IDs from Supabase ──────────────────────────────────────────
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
@@ -89,13 +87,13 @@ export const handler: Handler = async (event) => {
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
-      // Fetch in a single paginated pass (Supabase default page size is 1,000;
-      // use a high limit to capture all active products in one request).
       const { data, error } = await supabase
         .from('products')
         .select('id')
         .eq('isActive', true)
         .eq('isApproved', true)
+        .eq('listingStatus', 'active')
+        .or('listingContext.eq.service,stockQuantity.gt.0')
         .limit(50000);
 
       if (!error && Array.isArray(data)) {
@@ -106,7 +104,6 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  // ── Build XML ─────────────────────────────────────────────────────────────────
   const staticUrls = STATIC_PAGES.map((p) =>
     urlEntry(`${BASE_URL}${p.loc}`, p.changefreq, p.priority),
   );
@@ -132,7 +129,6 @@ export const handler: Handler = async (event) => {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      // Cache at the CDN edge for 1 hour; background revalidation allowed.
       'Cache-Control': 'public, max-age=3600, stale-while-revalidate=600',
     },
     body: xml,
