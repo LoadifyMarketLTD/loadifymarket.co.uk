@@ -3,14 +3,6 @@
  *
  * Converts real Supabase product records into the simplified `Product` shape
  * used by the pixel-perfect catalog components.
- *
- * Usage pattern:
- *  1. Fetch products (with category joins only)
- *  2. Fetch seller_profiles rows by userId in a separate query
- *  3. Merge seller data into product objects in code
- *  4. Call adaptProduct() / adaptProducts() to get UI-ready shapes
- *
- * This avoids ambiguous PostgREST embedded joins on views and respects RLS.
  */
 
 import type { Product as UIProduct } from "@/components/catalog/ProductCard";
@@ -21,31 +13,28 @@ export interface DBProduct {
   id: string;
   title: string;
   price: number;
-  /** Optional pre-VAT price stored on product (may be null) */
   priceExVat?: number | null;
   images: string[];
-  condition: string; // 'new' | 'used' | 'refurbished' | 'returns_stock' | 'mixed' | 'other'
+  condition: string;
   stockQuantity: number;
   views: number;
   rating: number;
   reviewCount: number;
   createdAt: string;
-  /** The seller's user ID — passed through to the UI for owner-awareness */
   sellerId?: string;
   type?: string;
+  listingStatus?: string | null;
+  listingContext?: string | null;
+  stockStatus?: string | null;
   specifications?: Record<string, unknown> | null;
-  // Joined from categories table (PostgREST embeds as object or array)
   category?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
   subcategory?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
-  // Seller info — fetched separately from seller_profiles and merged in code
   seller?:
     | { businessName?: string | null; isApproved?: boolean | null; rating?: number | null; userId?: string }
     | Array<{ businessName?: string | null; isApproved?: boolean | null; rating?: number | null; userId?: string }>
     | null;
 }
 
-// ── Condition mapping ─────────────────────────────────────────────────────────
-// DB conditions → pixel-perfect display conditions
 const DB_TO_UI_CONDITION: Record<string, UIProduct["condition"]> = {
   new: "New",
   used: "Like New",
@@ -55,7 +44,6 @@ const DB_TO_UI_CONDITION: Record<string, UIProduct["condition"]> = {
   other: "Mixed",
 };
 
-// ── Relative time helper ──────────────────────────────────────────────────────
 export function formatRelativeTime(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
   const mins = Math.floor(diff / 60_000);
@@ -69,9 +57,28 @@ export function formatRelativeTime(isoDate: string): string {
   return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
 }
 
-// ── Main adapter ──────────────────────────────────────────────────────────────
+/**
+ * Public product grids should never promote a listing that checkout would
+ * reject. Only apply the extra rules when the canonical DB fields are present,
+ * so legacy fixtures without those fields remain backwards-compatible.
+ */
+export function isSellableDBProduct(dbProduct: DBProduct): boolean {
+  if (dbProduct.listingStatus != null && dbProduct.listingStatus !== "active") {
+    return false;
+  }
+
+  if (dbProduct.listingContext === "service") {
+    return true;
+  }
+
+  if (dbProduct.listingContext === "product" || dbProduct.listingContext === "goods") {
+    return Number(dbProduct.stockQuantity) > 0;
+  }
+
+  return true;
+}
+
 export function adaptProduct(dbProduct: DBProduct): UIProduct {
-  // PostgREST returns joined rows as arrays when using !left — normalise both
   const cat = Array.isArray(dbProduct.category)
     ? dbProduct.category[0]
     : dbProduct.category;
@@ -98,7 +105,6 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
   const sellerName = seller?.businessName ?? "Loadify Seller";
   const sellerVerified = seller?.isApproved ?? false;
 
-  // Use seller rating if product rating is 0 (newly listed)
   const rating =
     typeof dbProduct.rating === "number" && dbProduct.rating > 0
       ? Number(dbProduct.rating)
@@ -106,7 +112,6 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
       ? Number(seller.rating)
       : 0;
 
-  // Use specifications.location if the seller set one, otherwise leave blank
   const specLocation =
     dbProduct.specifications && typeof dbProduct.specifications === "object"
       ? (dbProduct.specifications["location"] as string | undefined) ?? ""
@@ -133,7 +138,7 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
   };
 }
 
-/** Convenience helper to adapt an array of DB products */
+/** Convenience helper for public product grids. */
 export function adaptProducts(dbProducts: DBProduct[]): UIProduct[] {
-  return dbProducts.map(adaptProduct);
+  return dbProducts.filter(isSellableDBProduct).map(adaptProduct);
 }
