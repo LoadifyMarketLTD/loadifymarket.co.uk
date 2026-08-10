@@ -3,7 +3,7 @@ import { schedule } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 const PAYMENT_WINDOW_MINUTES = 30;
-const MAX_SESSIONS_PER_RUN = 50;
+const MAX_SESSIONS_PER_RUN = 10;
 
 interface PendingPaymentSession {
   id: string;
@@ -124,8 +124,6 @@ export const handler = schedule('*/5 * * * *', async () => {
 
       if (!stripeConfirmedUnpayable) continue;
 
-      // First atomically claim the still-pending DB session. A concurrent paid,
-      // failed, cancelled or webhook-processed session must never release stock.
       const { data: cancelledSession, error: cancelDbError } = await supabase
         .from('payment_sessions')
         .update({ status: 'cancelled' })
@@ -150,15 +148,12 @@ export const handler = schedule('*/5 * * * *', async () => {
           .eq('reservationToken', reservationToken);
         if (releaseError) throw releaseError;
       } else {
-        // Legacy token-less sessions are released only by the guarded DB RPC
-        // after the session is no longer pending. Never unlock by product ID.
         const { error: releaseError } = await supabase.rpc('release_expired_reservations');
         if (releaseError) throw releaseError;
       }
 
       console.log(`payment-session-cleanup: cancelled abandoned DB session ${sessionRow.id}`);
     } catch (cleanupError) {
-      // Never release on an uncertain Stripe outcome. A later run can retry.
       console.error(`payment-session-cleanup: session ${sessionRow.id} cleanup failed:`, cleanupError);
     }
   }
