@@ -18,6 +18,11 @@ const supabase = process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_R
 
 export const ZERO_COMMISSION_PROMO_END_UTC = new Date('2026-12-31T23:59:59Z').getTime();
 export const DEFAULT_COMMISSION_RATE = 0.07;
+const STRIPE_EVENT_LEASE_MS = 5 * 60 * 1000;
+
+function money(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
 
 export function getCommissionRate(configuredRate?: number): number {
   if (Date.now() < ZERO_COMMISSION_PROMO_END_UTC) return 0;
@@ -57,13 +62,14 @@ async function fetchConfiguredCommissionRate(sb: import('@supabase/supabase-js')
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClient<any>, event: Stripe.Event): Promise<'claimed' | 'done' | 'busy'> {
+  const now = new Date().toISOString();
   const { error: insertError } = await sb.from('stripe_events').insert({
     event_id: event.id,
     event_type: event.type,
     livemode: event.livemode,
     status: 'processing',
     error_message: null,
-    processed_at: new Date().toISOString(),
+    processed_at: now,
   });
 
   if (!insertError) return 'claimed';
@@ -73,15 +79,35 @@ async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClie
 
   const { data: existing, error: readError } = await sb
     .from('stripe_events')
-    .select('id, status')
+    .select('id, status, processed_at')
     .eq('event_id', event.id)
-    .maybeSingle<{ id: string; status: string }>();
+    .maybeSingle<{ id: string; status: string; processed_at: string }>();
 
   if (readError || !existing) {
     throw new Error(`Stripe event idempotency lookup failed: ${readError?.message ?? 'row missing'}`);
   }
   if (existing.status === 'processed' || existing.status === 'skipped') return 'done';
-  if (existing.status === 'processing') return 'busy';
+
+  if (existing.status === 'processing') {
+    // A process can die after claiming an event. Reclaim only an expired lease;
+    // a current invocation keeps ownership and Stripe is asked to retry later.
+    const staleBefore = new Date(Date.now() - STRIPE_EVENT_LEASE_MS).toISOString();
+    const { data: reclaimed, error: reclaimError } = await sb
+      .from('stripe_events')
+      .update({
+        status: 'processing',
+        error_message: null,
+        processed_at: now,
+      })
+      .eq('event_id', event.id)
+      .eq('status', 'processing')
+      .lt('processed_at', staleBefore)
+      .select('id')
+      .maybeSingle<{ id: string }>();
+
+    if (reclaimError) throw new Error(`Stripe event stale-lease reclaim failed: ${reclaimError.message}`);
+    return reclaimed ? 'claimed' : 'busy';
+  }
 
   if (existing.status === 'failed') {
     const { data: claimed, error: retryError } = await sb
@@ -89,7 +115,7 @@ async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClie
       .update({
         status: 'processing',
         error_message: null,
-        processed_at: new Date().toISOString(),
+        processed_at: now,
       })
       .eq('event_id', event.id)
       .eq('status', 'failed')
@@ -150,8 +176,6 @@ export const handler: Handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ received: true, skipped: true }) };
     }
     if (claim === 'busy') {
-      // Another invocation currently owns this event. Returning 500 asks Stripe
-      // to retry later instead of falsely acknowledging unfinished processing.
       return { statusCode: 500, body: JSON.stringify({ error: 'Event is already being processed; retry later' }) };
     }
     claimed = true;
@@ -220,13 +244,47 @@ interface OrderData {
   shippingAddress: Record<string, string>;
   billingAddress: Record<string, string>;
   subtotal: number;
+  chargeableSubtotal?: number;
+  chargeableSubtotalPence?: number;
   shippingAmount: number;
+  shippingAmountPence?: number;
   shippingMethod: string;
   total: number;
+  totalPence?: number;
   buyerId: string;
   transferGroup?: string;
   isB2B?: boolean;
   applyReverseCharge?: boolean;
+}
+
+function resolveOrderMoney(orderData: OrderData): {
+  subtotal: number;
+  vat: number;
+  shipping: number;
+  total: number;
+} {
+  const totalPence = Number.isInteger(orderData.totalPence)
+    ? Number(orderData.totalPence)
+    : Math.round(Number(orderData.total) * 100);
+  const shippingPence = Number.isInteger(orderData.shippingAmountPence)
+    ? Number(orderData.shippingAmountPence)
+    : Math.round(Number(orderData.shippingAmount ?? 0) * 100);
+
+  if (!Number.isFinite(totalPence) || !Number.isFinite(shippingPence) || totalPence < 0 || shippingPence < 0 || shippingPence > totalPence) {
+    throw new Error('Payment session contains invalid monetary totals');
+  }
+
+  const productPaid = (totalPence - shippingPence) / 100;
+  const isReverseCharge = Boolean(orderData.applyReverseCharge);
+  const subtotal = isReverseCharge ? money(productPaid) : money(productPaid / 1.20);
+  const vat = isReverseCharge ? 0 : money(productPaid - subtotal);
+
+  return {
+    subtotal,
+    vat,
+    shipping: shippingPence / 100,
+    total: totalPence / 100,
+  };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -237,6 +295,9 @@ async function fulfilPaidOrder(
 ): Promise<{ orderId: string; orderNumber: string; sellerId: string; sellerTotal: number }> {
   const items = orderData.items ?? [];
   if (!items.length) throw new Error('Payment session contains no order items');
+  if (new Set(items.map((item) => item.productId)).size !== items.length) {
+    throw new Error('Payment session contains duplicate product lines');
+  }
 
   const sellerIds = [...new Set(items.map((item) => item.sellerId))];
   if (sellerIds.length !== 1) {
@@ -244,32 +305,11 @@ async function fulfilPaidOrder(
   }
   const sellerId = sellerIds[0];
   const VAT_RATE = 0.20;
-  const isReverseCharge = Boolean(orderData.applyReverseCharge);
-
-  const sellerSubtotal = items.reduce(
-    (sum, item) => sum + (item.price / (1 + VAT_RATE)) * item.quantity,
-    0,
-  );
-  const sellerVat = isReverseCharge
-    ? 0
-    : items.reduce(
-        (sum, item) => sum + item.price * (VAT_RATE / (1 + VAT_RATE)) * item.quantity,
-        0,
-      );
-  // Use the same ex-VAT basis in numerator and denominator. This fixes the old
-  // ex-VAT/VAT-inclusive ratio that silently under-allocated shipping.
-  const totalExVatSubtotal = items.reduce(
-    (sum, item) => sum + (item.price / (1 + VAT_RATE)) * item.quantity,
-    0,
-  );
-  const sellerShipping = totalExVatSubtotal > 0
-    ? (sellerSubtotal / totalExVatSubtotal) * (orderData.shippingAmount ?? 0)
-    : 0;
-  const sellerGrandTotal = sellerSubtotal + sellerVat + sellerShipping;
+  const resolvedMoney = resolveOrderMoney(orderData);
 
   const configuredRate = await fetchConfiguredCommissionRate(sb);
   const commissionRate = getCommissionRate(configuredRate ?? undefined);
-  const sellerCommission = sellerSubtotal * commissionRate;
+  const sellerCommission = money(resolvedMoney.subtotal * commissionRate);
   const primaryItem = items[0];
 
   let { data: order, error: existingOrderError } = await sb
@@ -294,10 +334,10 @@ async function fulfilPaidOrder(
         sellerId,
         productId: primaryItem.productId,
         quantity: items.reduce((sum, item) => sum + item.quantity, 0),
-        subtotal: sellerSubtotal,
-        vatAmount: sellerVat,
-        shippingAmount: sellerShipping,
-        total: sellerGrandTotal,
+        subtotal: resolvedMoney.subtotal,
+        vatAmount: resolvedMoney.vat,
+        shippingAmount: resolvedMoney.shipping,
+        total: resolvedMoney.total,
         commission: sellerCommission,
         status: 'paid',
         escrowStatus: 'held',
@@ -311,7 +351,6 @@ async function fulfilPaidOrder(
       .single();
 
     if (insertResult.error || !insertResult.data) {
-      // A concurrent retry may have won the unique PaymentIntent insert.
       if (insertResult.error?.code === '23505') {
         const retryLookup = await sb
           .from('orders')
@@ -335,7 +374,7 @@ async function fulfilPaidOrder(
     quantity: item.quantity,
     pricePerUnit: item.price,
     vatRate: VAT_RATE,
-    subtotal: (item.price / (1 + VAT_RATE)) * item.quantity,
+    subtotal: money((item.price / (1 + VAT_RATE)) * item.quantity),
   }));
 
   const { error: itemError } = await sb
@@ -344,33 +383,29 @@ async function fulfilPaidOrder(
   if (itemError) throw itemError;
 
   for (const item of items) {
-    const { error: fulfilError } = await sb.rpc('finalize_paid_product', {
+    const { error: fulfilError } = await sb.rpc('finalize_paid_order_item', {
+      p_order_id: order!.id,
       p_product_id: item.productId,
-      p_qty: item.quantity,
     });
     if (fulfilError) throw fulfilError;
   }
 
-  // For active Stripe Connect sellers this RPC intentionally does nothing.
-  // Funds remain on the platform until escrow-release creates the transfer.
-  const { error: balanceError } = await sb.rpc('credit_seller_balance', {
-    p_seller_id: sellerId,
-    p_order_id: order!.id,
-  });
-  if (balanceError) throw balanceError;
+  // New marketplace checkout is Connect-only. Do not credit seller_balance here:
+  // the buyer's funds stay on the platform until escrow-release creates exactly
+  // one Stripe transfer after delivery/protection checks pass.
 
   if (orderWasCreated) {
     await sb.from('notifications').insert({
       userId: sellerId,
       type: 'order',
       title: 'New order received',
-      message: `Order ${order!.orderNumber} has been placed. Total: £${sellerGrandTotal.toFixed(2)}`,
+      message: `Order ${order!.orderNumber} has been placed. Total: £${resolvedMoney.total.toFixed(2)}`,
       link: '/seller/orders',
     }).catch((err: unknown) => console.warn('Seller notification failed:', err));
 
     sendPushToUser(sb, sellerId, {
       title: 'New order received',
-      body: `Order ${order!.orderNumber} placed. Total: £${sellerGrandTotal.toFixed(2)}`,
+      body: `Order ${order!.orderNumber} placed. Total: £${resolvedMoney.total.toFixed(2)}`,
       data: { type: 'new_order', orderId: order!.id },
     }).catch((err: unknown) => console.warn('Seller push failed:', err));
 
@@ -395,7 +430,7 @@ async function fulfilPaidOrder(
     orderId: order!.id,
     orderNumber: order!.orderNumber,
     sellerId,
-    sellerTotal: sellerGrandTotal,
+    sellerTotal: resolvedMoney.total,
   };
 }
 
@@ -424,7 +459,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   }
 
   const orderData = pendingSession.metadata;
-  const expectedPence = Math.round(Number(orderData.total) * 100);
+  const expectedPence = Number.isInteger(orderData.totalPence)
+    ? Number(orderData.totalPence)
+    : Math.round(Number(orderData.total) * 100);
   if (!Number.isFinite(expectedPence) || session.amount_total !== expectedPence) {
     throw new Error(`Checkout amount mismatch for session ${session.id}`);
   }
@@ -439,7 +476,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     .update({
       orderId: result.orderId,
       stripePaymentIntent: paymentIntentId,
-      amount: orderData.total,
+      amount: expectedPence / 100,
       status: 'completed',
     })
     .eq('id', pendingSession.id)
@@ -487,7 +524,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
           customerName: 'Customer',
           orderNumber: result.orderNumber,
           orderDate: new Date().toLocaleDateString('en-GB'),
-          total: orderData.total,
+          total: expectedPence / 100,
           items: orderData.items,
         },
       }),
@@ -511,7 +548,9 @@ async function handleMobilePaymentIntentSucceeded(
   if (pendingSession.status !== 'pending') return;
 
   const orderData = pendingSession.metadata;
-  const expectedPence = Math.round(Number(orderData.total) * 100);
+  const expectedPence = Number.isInteger(orderData.totalPence)
+    ? Number(orderData.totalPence)
+    : Math.round(Number(orderData.total) * 100);
   const received = paymentIntent.amount_received || paymentIntent.amount;
   if (!Number.isFinite(expectedPence) || received !== expectedPence) {
     throw new Error(`PaymentIntent amount mismatch for ${paymentIntent.id}`);
@@ -526,7 +565,7 @@ async function handleMobilePaymentIntentSucceeded(
     .update({
       orderId: result.orderId,
       stripePaymentIntent: paymentIntent.id,
-      amount: orderData.total,
+      amount: expectedPence / 100,
       status: 'completed',
     })
     .eq('id', pendingSession.id)
@@ -559,8 +598,6 @@ async function handleRefund(charge: Stripe.Charge): Promise<void> {
     .eq('id', payment.orderId);
   if (orderError) throw orderError;
 
-  // Covers refunds initiated directly in Stripe Dashboard as well as the admin
-  // endpoint. If escrow had already released a Connect transfer, claw it back.
   const { data: payout } = await supabase!
     .from('payouts')
     .select('id, stripeTransferId, status')
@@ -669,6 +706,7 @@ export async function handleStripeDispute(
     orderId: order.id,
     buyerId: order.buyerId,
     sellerId: order.sellerId,
+    stripeDisputeId: dispute.id,
     subject: `Stripe Chargeback — Dispute ID: ${dispute.id}`,
     description: [
       'A Stripe chargeback was raised. REQUIRES MANUAL REVIEW.',
@@ -681,7 +719,7 @@ export async function handleStripeDispute(
     status: 'in_review',
     escrowStatus: 'held',
   });
-  if (error) throw error;
+  if (error && error.code !== '23505') throw error;
 }
 
 export async function handleConnectAccountUpdated(
