@@ -92,9 +92,8 @@ export async function reverseOrderTransfer(
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function reconcilePaidOrderPayout(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   input: {
     sellerId: string;
     orderId: string;

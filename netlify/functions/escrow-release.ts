@@ -29,9 +29,8 @@ type CandidateOrder = {
   stripePaymentIntentId: string | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getOpenDispute(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   orderId: string,
 ): Promise<{ id: string } | null> {
   const { data, error } = await sb

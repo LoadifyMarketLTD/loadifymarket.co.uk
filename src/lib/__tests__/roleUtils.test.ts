@@ -15,8 +15,12 @@ function makeUser(role: User['role']): User {
 }
 
 describe('hasAdminAccess', () => {
-  it('returns true for admin role', () => {
-    expect(hasAdminAccess(makeUser('admin'))).toBe(true);
+  it('returns true for admin role with trusted isAdmin flag', () => {
+    expect(hasAdminAccess({ ...makeUser('admin'), isAdmin: true })).toBe(true);
+  });
+
+  it('returns false for admin role without trusted isAdmin flag', () => {
+    expect(hasAdminAccess(makeUser('admin'))).toBe(false);
   });
 
   it('returns false for buyer role', () => {

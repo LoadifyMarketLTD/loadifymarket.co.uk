@@ -211,6 +211,14 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
     process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
+
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false, attempts: 1 }),
+    }));
+
+    vi.doMock('../_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
   });
 
   afterEach(() => {
@@ -305,7 +313,7 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     );
 
     expect(res.statusCode).toBe(400);
-    expect(JSON.parse(res.body as string).error).toMatch(/unavailable/i);
+    expect(JSON.parse(res.body as string).error).toMatch(/not currently available to accept payments/i);
   });
 
   // ── Test 5: Seller without Stripe account → 400 (P2) ───────────────────
@@ -324,7 +332,7 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     );
 
     expect(res.statusCode).toBe(400);
-    expect(JSON.parse(res.body as string).error).toMatch(/not ready/i);
+    expect(JSON.parse(res.body as string).error).toMatch(/not currently available to accept payments/i);
   });
 
   // ── Test 6: Seller Stripe status not active → 400 (P2) ─────────────────
@@ -343,7 +351,7 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     );
 
     expect(res.statusCode).toBe(400);
-    expect(JSON.parse(res.body as string).error).toMatch(/not ready/i);
+    expect(JSON.parse(res.body as string).error).toMatch(/not currently available to accept payments/i);
   });
 
   // ── Test 7: Valid seller + single seller → 200 (all checks pass) ────────
@@ -387,53 +395,24 @@ describe('handlePaymentFailed – marks payment_sessions as failed (P4A)', () =>
     vi.restoreAllMocks();
   });
 
-  it('Test 8: updates payment_sessions status to failed using transfer_group', async () => {
-    // 1st from() call: mobile lookup by stripePaymentIntent → no session found
-    const mobileMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    const mobileChain = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      filter: vi.fn().mockReturnThis(),
-      maybeSingle: mobileMaybeSingle,
-    };
-
-    // 2nd from() call: web lookup by transfer_group → session found
-    const webMaybeSingle = vi.fn().mockResolvedValue({
-      data: { id: 'ps_1', metadata: { items: [] } },
-      error: null,
-    });
-    const webChain = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      filter: vi.fn().mockReturnThis(),
-      maybeSingle: webMaybeSingle,
-    };
-
-    // 3rd from() call: update session status to failed
-    const updateEq = vi.fn().mockReturnThis();
-    const update = vi.fn().mockReturnValue({ eq: updateEq });
-    const updateChain = { update };
-
-    const mockSb = {
-      from: vi.fn()
-        .mockReturnValueOnce(mobileChain)
-        .mockReturnValueOnce(webChain)
-        .mockReturnValueOnce(updateChain),
-    };
+  it('Test 8: keeps payment session reserved for retry after payment failure', async () => {
+    const from = vi.fn();
+    const mockSb = { from };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const { handlePaymentFailed } = await import('../stripe-webhook');
     await handlePaymentFailed(
       mockSb as never,
-      { id: 'pi_failed_123', transfer_group: 'tg_abc' } as import('stripe').default.PaymentIntent,
+      {
+        id: 'pi_failed_123',
+        status: 'requires_payment_method',
+      } as import('stripe').default.PaymentIntent,
     );
 
-    // Web lookup used transfer_group filter
-    expect(webChain.filter).toHaveBeenCalledWith('metadata->>transferGroup', 'eq', 'tg_abc');
-
-    // Update was called with failed status
-    expect(update).toHaveBeenCalledWith({ status: 'failed' });
-    expect(updateEq).toHaveBeenCalledWith('id', 'ps_1');
-    expect(updateEq).toHaveBeenCalledWith('status', 'pending');
+    expect(from).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('remains reserved for retry'),
+    );
   });
 
   it('Test 8b: skips update when transfer_group is absent (legacy intent)', async () => {
@@ -578,25 +557,22 @@ describe('create-refund – P4C column name fix (stripePaymentIntent)', () => {
 // ── Phase 2A: Refund clawback protection ─────────────────────────────────────
 
 describe('create-refund – Phase 2A refund clawback (explicit transfer reversal)', () => {
-  it('source code calls stripe.transfers.createReversal for explicit transfer clawback', async () => {
+  it('delegates transfer clawback to the shared reversal helper', async () => {
     const { readFileSync } = await import('fs');
     const { resolve, dirname } = await import('path');
     const { fileURLToPath } = await import('url');
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-    const src = readFileSync(resolve(__dirname, '../create-refund.ts'), 'utf-8');
+    const refundSrc = readFileSync(resolve(__dirname, '../create-refund.ts'), 'utf-8');
+    const transferSrc = readFileSync(resolve(__dirname, '../_shared/orderTransfer.ts'), 'utf-8');
 
-    // The explicit reversal call must appear
-    expect(src).toContain('transfers.createReversal');
-    // The payout record must be looked up by orderId and status='paid'
-    expect(src).toContain("eq('orderId', orderId)");
-    expect(src).toContain("eq('status', 'paid')");
-    // The old no-op flag must NOT be present (it gave false confidence)
-    expect(src).not.toContain('reverse_transfer: true');
+    expect(refundSrc).toContain('reverseOrderTransfer(');
+    expect(refundSrc).toContain("eq('orderId', orderId)");
+    expect(refundSrc).toContain(".not('stripeTransferId', 'is', null)");
+    expect(transferSrc).toContain('stripe.transfers.createReversal(');
+    expect(refundSrc).not.toContain('reverse_transfer: true');
   });
 });
-
-// ── Phase 2A: Payout delay for connected accounts ────────────────────────────
 
 describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
   const originalEnv = { ...process.env };

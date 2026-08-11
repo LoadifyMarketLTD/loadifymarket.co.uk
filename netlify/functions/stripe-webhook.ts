@@ -31,8 +31,7 @@ export function getCommissionRate(configuredRate?: number): number {
     : DEFAULT_COMMISSION_RATE;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchConfiguredCommissionRate(sb: import('@supabase/supabase-js').SupabaseClient<any>): Promise<number | null> {
+async function fetchConfiguredCommissionRate(sb: import('@supabase/supabase-js').SupabaseClient): Promise<number | null> {
   try {
     const { data: config } = await sb
       .from('platform_settings')
@@ -60,8 +59,7 @@ async function fetchConfiguredCommissionRate(sb: import('@supabase/supabase-js')
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClient<any>, event: Stripe.Event): Promise<'claimed' | 'done' | 'busy'> {
+async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClient, event: Stripe.Event): Promise<'claimed' | 'done' | 'busy'> {
   const now = new Date().toISOString();
   const { error: insertError } = await sb.from('stripe_events').insert({
     event_id: event.id,
@@ -119,8 +117,7 @@ async function claimStripeEvent(sb: import('@supabase/supabase-js').SupabaseClie
   return 'busy';
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function markStripeEvent(sb: import('@supabase/supabase-js').SupabaseClient<any>, eventId: string, status: 'processed' | 'failed', errorMessage: string | null = null): Promise<void> {
+async function markStripeEvent(sb: import('@supabase/supabase-js').SupabaseClient, eventId: string, status: 'processed' | 'failed', errorMessage: string | null = null): Promise<void> {
   const { error } = await sb
     .from('stripe_events')
     .update({ status, error_message: errorMessage, processed_at: new Date().toISOString() })
@@ -274,9 +271,8 @@ function productIdsFromMetadata(metadata: Record<string, unknown> | null | undef
   }).filter((id): id is string => Boolean(id)))];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function releasePaymentReservation(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   metadata: Record<string, unknown> | null | undefined,
 ): Promise<void> {
   const productIds = productIdsFromMetadata(metadata);
@@ -299,9 +295,8 @@ async function releasePaymentReservation(
   if (error) throw error;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function claimPendingPaymentSession(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   sessionId: string,
   nextStatus: 'failed' | 'cancelled',
 ): Promise<boolean> {
@@ -316,9 +311,8 @@ async function claimPendingPaymentSession(
   return Boolean(data);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fulfilPaidOrder(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   paymentIntentId: string,
   orderData: OrderData,
 ): Promise<{ orderId: string; orderNumber: string; sellerId: string; sellerTotal: number }> {
@@ -344,13 +338,14 @@ async function fulfilPaidOrder(
   const sellerCommission = money(resolvedMoney.subtotal * commissionRate);
   const primaryItem = items[0];
 
-  let { data: order, error: existingOrderError } = await sb
+  const { data: existingOrder, error: existingOrderError } = await sb
     .from('orders')
     .select('id, orderNumber, sellerId, total')
     .eq('stripePaymentIntentId', paymentIntentId)
     .maybeSingle<{ id: string; orderNumber: string; sellerId: string; total: number }>();
 
   if (existingOrderError) throw existingOrderError;
+  let order = existingOrder;
   let orderWasCreated = false;
 
   if (!order) {
@@ -535,9 +530,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleCheckoutExpired(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   session: Stripe.Checkout.Session,
 ): Promise<void> {
   const { data: pending, error } = await sb
@@ -554,9 +548,8 @@ async function handleCheckoutExpired(
   await releasePaymentReservation(sb, pending.metadata);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleMobilePaymentIntentSucceeded(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   paymentIntent: Stripe.PaymentIntent,
 ): Promise<void> {
   const { data: pendingSession, error } = await sb
@@ -636,9 +629,8 @@ async function handleRefund(charge: Stripe.Charge): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function handlePaymentFailed(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   paymentIntent: Stripe.PaymentIntent,
 ): Promise<void> {
   // A failed card attempt normally returns the same PaymentIntent to
@@ -651,9 +643,8 @@ export async function handlePaymentFailed(
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handlePaymentIntentCanceled(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   paymentIntent: Stripe.PaymentIntent,
 ): Promise<void> {
   const { data: pending, error } = await sb
@@ -670,9 +661,8 @@ async function handlePaymentIntentCanceled(
   await releasePaymentReservation(sb, pending.metadata);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function handleStripeDispute(
-  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  sb: import('@supabase/supabase-js').SupabaseClient,
   dispute: Stripe.Dispute,
 ): Promise<void> {
   const paymentIntentId = typeof dispute.payment_intent === 'string'

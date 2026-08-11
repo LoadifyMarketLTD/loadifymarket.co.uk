@@ -80,6 +80,21 @@ describe('update-product', () => {
           };
         }
 
+        if (table === 'seller_profiles') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: {
+                sellerStatus: 'active',
+                stripeConnectStatus: 'active',
+                isPaused: false,
+              },
+              error: null,
+            }),
+          };
+        }
+
         if (table === 'products') {
           return {
             select: vi.fn().mockReturnThis(),
@@ -128,10 +143,10 @@ describe('update-product', () => {
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => supabase),
     }));
-    vi.doMock('./_shared/platformFlags', () => ({
+    vi.doMock('../_shared/platformFlags', () => ({
       isMaintenanceMode: vi.fn().mockResolvedValue(false),
     }));
-    vi.doMock('./_shared/rateLimiter', () => ({
+    vi.doMock('../_shared/rateLimiter', () => ({
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
 
@@ -157,7 +172,7 @@ describe('update-product', () => {
     expect(productUpdates).toHaveLength(1);
     expect(productUpdates[0]).toMatchObject({
       description: 'Updated description',
-      listingContext: 'goods',
+      listingContext: 'product',
       stockQuantity: 10,
       stockStatus: 'low_stock',
     });
@@ -184,7 +199,7 @@ describe('update-product', () => {
 
     expect(res.statusCode).toBe(200);
     expect(productUpdates[0]).toMatchObject({
-      listingContext: 'goods',
+      listingContext: 'product',
       stockQuantity: 1,
       stockStatus: 'low_stock',
     });
@@ -262,7 +277,7 @@ describe('update-product', () => {
     expect(productUpdates).toHaveLength(0);
     const body = JSON.parse(res.body as string) as { code?: string; error?: string; locks?: Array<{ orderLabel?: string }> };
     expect(body.code).toBe('LISTING_LOCKED');
-    expect(body.error).toMatch(/stock quantity cannot be changed/i);
+    expect(body.error).toMatch(/critical listing fields are locked/i);
     expect(body.locks?.[0]?.orderLabel).toBe('LM-1000001');
   });
 });

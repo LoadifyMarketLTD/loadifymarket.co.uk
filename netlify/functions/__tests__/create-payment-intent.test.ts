@@ -102,10 +102,10 @@ describe('create-payment-intent – shipping tamper protection', () => {
         return {};
       }),
     }));
-    vi.doMock('./_shared/platformFlags', () => ({
+    vi.doMock('../_shared/platformFlags', () => ({
       isMaintenanceMode: vi.fn().mockResolvedValue(false),
     }));
-    vi.doMock('./_shared/rateLimiter', () => ({
+    vi.doMock('../_shared/rateLimiter', () => ({
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
     mockCommonSupabase();
@@ -134,10 +134,10 @@ describe('create-payment-intent – shipping tamper protection', () => {
         return {};
       }),
     }));
-    vi.doMock('./_shared/platformFlags', () => ({
+    vi.doMock('../_shared/platformFlags', () => ({
       isMaintenanceMode: vi.fn().mockResolvedValue(false),
     }));
-    vi.doMock('./_shared/rateLimiter', () => ({
+    vi.doMock('../_shared/rateLimiter', () => ({
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
     mockCommonSupabase({ productShippingRows: [] });
