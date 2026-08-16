@@ -53,7 +53,7 @@ function MobileHome() {
   }, [loadMore]);
 
   return (
-    <div className="md:hidden min-h-screen bg-background">
+    <div className="md:hidden bg-background">
       <MobileAppHeader />
       <MobileCategoryShortcuts />
       <MobileHeroBanner />
@@ -63,7 +63,7 @@ function MobileHome() {
         style={{
           paddingInline: 'var(--mob-side, 16px)',
           paddingTop: 12,
-          paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 20px)',
+          paddingBottom: 20,
         }}
       >
         <div
