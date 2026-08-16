@@ -112,6 +112,8 @@ export default function ProductFormPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [publishedProductId, setPublishedProductId] = useState<string | null>(null);
+  const [existingIsActive, setExistingIsActive] = useState(false);
+  const [existingIsApproved, setExistingIsApproved] = useState(true);
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
   // True when the product has active reservation/paid-order locks — critical fields are locked for sellers
@@ -186,11 +188,13 @@ export default function ProductFormPage() {
       // Ownership check — only the seller who created the product (or admin/owner) may edit it.
       if (data.sellerId !== user?.id && user?.role !== 'admin') {
         toast({ title: 'Access denied', description: 'You do not have permission to edit this product.', variant: 'destructive' });
-        navigate('/seller');
+        navigate('/seller/products');
         return;
       }
 
       if (data) {
+        setExistingIsActive(Boolean(data.isActive));
+        setExistingIsApproved(data.isApproved !== false);
         // Restore listing context from the saved product.
         // Production physical listings use listingContext='product'.
         // Any non-service legacy value is treated as physical product.
@@ -305,8 +309,11 @@ export default function ProductFormPage() {
     }
     // Stock quantity only required for physical products
     if (listingContext === 'product') {
-      if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
+      const stockQuantity = Number.parseInt(formData.stockQuantity, 10);
+      if (!formData.stockQuantity || Number.isNaN(stockQuantity) || stockQuantity < 0) {
         e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
+      } else if (publishMode && stockQuantity <= 0) {
+        e.stockQuantity = 'Add at least 1 unit of stock before publishing this product.';
       }
       if (publishMode && selectedShippingMethodIds.length === 0) {
         e.shipping = 'Select at least one shipping method before publishing this product.';
@@ -348,7 +355,7 @@ export default function ProductFormPage() {
   };
 
   // ─── Core save function ────────────────────────────────────────────────────
-  const saveProduct = async (publishMode: boolean) => {
+  const saveProduct = async (publishMode: boolean, preservePublicationState = false) => {
     if (!user) return;
     const newErrors = validate(publishMode);
     if (Object.keys(newErrors).length > 0) {
@@ -393,7 +400,7 @@ export default function ProductFormPage() {
         palletInfo: (formData.type === 'pallet' && formData.palletInfo.palletCount)
           ? formData.palletInfo
           : null,
-        isActive: publishMode,
+        ...(!id || !preservePublicationState ? { isActive: publishMode } : {}),
       };
 
       if (id && hasActiveOrders && !isAdmin) {
@@ -437,7 +444,16 @@ export default function ProductFormPage() {
           const payload = await extractUpdateError(res);
           throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
         }
-        setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
+        if (publishMode) {
+          setExistingIsActive(true);
+          setSuccessMessage('Product updated and published.');
+        } else if (!existingIsApproved && !isAdmin) {
+          setSuccessMessage('Changes saved. Listing remains on moderation hold.');
+        } else if (existingIsActive) {
+          setSuccessMessage('Changes saved. Listing remains live.');
+        } else {
+          setSuccessMessage('Draft saved successfully.');
+        }
       } else {
         // Create new product via create-product; server owns publication state.
         const res = await authorizedFetch('/.netlify/functions/create-product', {
@@ -516,8 +532,12 @@ export default function ProductFormPage() {
         }
       }
 
-      // Brief success feedback, then navigate back
-      setTimeout(() => navigate('/seller'), SUCCESS_REDIRECT_DELAY_MS);
+      // Brief success feedback, then return seller workflows to Products.
+      // Admin bypass keeps its existing seller-root return behavior.
+      setTimeout(
+        () => navigate(user.role === 'admin' ? '/seller' : '/seller/products'),
+        SUCCESS_REDIRECT_DELAY_MS,
+      );
     } catch (error) {
       console.error('Error saving product:', error);
       const msg =
@@ -532,11 +552,19 @@ export default function ProductFormPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveProduct(true);
+    if (id && user?.role !== 'admin') {
+      saveProduct(false, true);
+    } else {
+      saveProduct(true);
+    }
   };
 
   const handleSaveDraft = () => {
     saveProduct(false);
+  };
+
+  const handlePublishExisting = () => {
+    saveProduct(true);
   };
 
   const deleteProduct = async () => {
@@ -712,6 +740,18 @@ export default function ProductFormPage() {
                </div>
              </div>
            )}
+
+          {id && user.role !== 'admin' && !existingIsApproved && (
+            <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-danger flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-danger font-semibold text-sm">This listing is on moderation hold</p>
+                <p className="text-danger text-xs mt-0.5">
+                  You can save corrections, but this listing cannot be published until Loadify releases the moderation hold.
+                </p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} noValidate>
 
@@ -1325,14 +1365,24 @@ export default function ProductFormPage() {
             <div className="bg-surface border border-white/10 rounded-xl p-6">
               <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">
                 {id
-                  ? `${sectionNumber('publish')}. Save Changes`
+                  ? `${sectionNumber('publish')}. ${user.role !== 'admin' && !existingIsActive && existingIsApproved && !hasActiveOrders ? 'Save or Publish' : 'Save Changes'}`
                   : `${sectionNumber('publish')}. Publish Listing`}
               </h2>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="text-sm text-slate-400">
                   {id ? (
-                    <p>Save your changes. Eligible published listings remain live immediately; Loadify may moderate or remove listings that breach marketplace rules.</p>
+                    user.role === 'admin' ? (
+                      <p>Save your changes. Eligible published listings remain live immediately; Loadify may moderate or remove listings that breach marketplace rules.</p>
+                    ) : !existingIsApproved ? (
+                      <p>Save corrections while the listing is on moderation hold. Publishing remains unavailable until the hold is released.</p>
+                    ) : existingIsActive ? (
+                      <p>Save your changes without changing the listing's current live state.</p>
+                    ) : hasActiveOrders ? (
+                      <p>Save the fields that are not locked by order activity. Publishing is unavailable while this listing has an active reservation or paid order lock.</p>
+                    ) : (
+                      <p>This listing is a draft. Save your changes or publish it when seller eligibility and listing requirements are satisfied.</p>
+                    )
                   ) : (
                     <>
                       <p className="font-medium text-slate-300 mb-1">Ready to list your product?</p>
@@ -1344,7 +1394,7 @@ export default function ProductFormPage() {
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <button
                     type="button"
-                    onClick={() => navigate('/seller')}
+                    onClick={() => navigate(user.role === 'admin' ? '/seller' : '/seller/products')}
                     className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
                   >
                     Cancel
@@ -1359,14 +1409,26 @@ export default function ProductFormPage() {
                       {savingDraft ? 'Saving...' : 'Save as Draft'}
                     </button>
                   )}
+                  {id && user.role !== 'admin' && !existingIsActive && existingIsApproved && !hasActiveOrders && (
+                    <button
+                      type="button"
+                      onClick={handlePublishExisting}
+                      disabled={saving || savingDraft}
+                      className="px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover"
+                    >
+                      {saving ? 'Publishing...' : 'Publish Listing'}
+                    </button>
+                  )}
                   <button
                     type="submit"
                     disabled={saving || savingDraft}
                     className="px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover"
                   >
-                    {saving
-                      ? (id && hasActiveOrders ? 'Saving...' : 'Publishing...')
-                      : id ? 'Save Changes' : 'Publish Listing'}
+                    {id
+                      ? (user.role === 'admin'
+                          ? (saving ? (hasActiveOrders ? 'Saving...' : 'Publishing...') : 'Save Changes')
+                          : (savingDraft ? 'Saving...' : 'Save Changes'))
+                      : (saving ? 'Publishing...' : 'Publish Listing')}
                   </button>
                 </div>
               </div>
