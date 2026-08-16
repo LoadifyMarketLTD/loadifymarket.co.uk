@@ -11,8 +11,7 @@
  * │ key                │ value (JSONB)                                        │
  * ├────────────────────┼─────────────────────────────────────────────────────┤
  * │ feature_flags      │ { sellerRegistration, buyerRegistration, rfqSystem, │
- * │                    │   reviewSystem, autoApproveProducts,                 │
- * │                    │   requireCompanyApproval }                           │
+ * │                    │   reviewSystem, requireCompanyApproval }             │
  * │ maintenance_mode   │ true | false                                        │
  * └────────────────────┴─────────────────────────────────────────────────────┘
  */
@@ -24,7 +23,6 @@ export interface FeatureFlags {
   buyerRegistration: boolean;
   rfqSystem: boolean;
   reviewSystem: boolean;
-  autoApproveProducts: boolean;
   /**
    * When true, newly registered company sellers (sellerType='company') are
    * flagged with requiresAdminApproval=true and cannot auto-activate via
@@ -34,13 +32,12 @@ export interface FeatureFlags {
   requireCompanyApproval: boolean;
 }
 
-/** Safe defaults — everything enabled except auto-approve and company gate. */
+/** Safe defaults for platform capabilities. Product publication is not approval-gated. */
 const FLAG_DEFAULTS: FeatureFlags = {
   sellerRegistration: true,
   buyerRegistration: true,
   rfqSystem: false,
   reviewSystem: true,
-  autoApproveProducts: false,
   requireCompanyApproval: false,
 };
 
