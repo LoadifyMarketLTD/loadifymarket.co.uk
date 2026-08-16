@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Camera,
+  Images,
   X,
   Loader2,
   CheckCircle2,
@@ -274,7 +275,8 @@ const INITIAL_FORM: FormState = {
 export default function MobileSellWizard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const photoInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -524,41 +526,67 @@ export default function MobileSellWizard() {
             ))}
 
             {form.photos.length < MAX_PHOTOS && (
-              <button
-                aria-label="Add photo"
-                onClick={() => photoInputRef.current?.click()}
-                disabled={busy}
-                style={{
-                  aspectRatio: '1',
-                  borderRadius: '14px',
-                  border: `2px dashed ${fieldErrors.photos ? 'hsl(var(--danger))' : 'rgba(212,175,55,0.35)'}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: busy ? 'not-allowed' : 'pointer',
-                  opacity: busy ? 0.6 : 1,
-                }}
-                className={fieldErrors.photos ? 'bg-danger/[0.04]' : 'bg-primary/[0.04]'}
-              >
-                {photoUploading ? (
-                  <Loader2
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      animation: 'spin 1s linear infinite',
-                    }}
-                  />
-                ) : (
-                  <>
-                    <Camera className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ width: '24px', height: '24px' }} />
-                    <span className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ fontSize: '11px', fontWeight: 600 }}>
-                      Add photo
-                    </span>
-                  </>
-                )}
-              </button>
+              <>
+                <button
+                  aria-label="Take photo"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={busy}
+                  style={{
+                    aspectRatio: '1',
+                    borderRadius: '14px',
+                    border: `2px dashed ${fieldErrors.photos ? 'hsl(var(--danger))' : 'rgba(212,175,55,0.35)'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: busy ? 'not-allowed' : 'pointer',
+                    opacity: busy ? 0.6 : 1,
+                  }}
+                  className={fieldErrors.photos ? 'bg-danger/[0.04]' : 'bg-primary/[0.04]'}
+                >
+                  {photoUploading ? (
+                    <Loader2
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        animation: 'spin 1s linear infinite',
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <Camera className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ width: '24px', height: '24px' }} />
+                      <span className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ fontSize: '11px', fontWeight: 600 }}>
+                        Take photo
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  aria-label="Choose photos from gallery"
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={busy}
+                  style={{
+                    aspectRatio: '1',
+                    borderRadius: '14px',
+                    border: `2px dashed ${fieldErrors.photos ? 'hsl(var(--danger))' : 'rgba(212,175,55,0.35)'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: busy ? 'not-allowed' : 'pointer',
+                    opacity: busy ? 0.6 : 1,
+                  }}
+                  className={fieldErrors.photos ? 'bg-danger/[0.04]' : 'bg-primary/[0.04]'}
+                >
+                  <Images className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ width: '24px', height: '24px' }} />
+                  <span className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ fontSize: '11px', fontWeight: 600 }}>
+                    Gallery
+                  </span>
+                </button>
+              </>
             )}
           </div>
 
@@ -580,15 +608,26 @@ export default function MobileSellWizard() {
             </p>
           )}
           <p className="text-foreground/40" style={{ fontSize: '12px', margin: 0 }}>
-            JPG, PNG or WebP. Up to 5MB per photo.
+            Take a new photo or choose JPG, PNG or WebP from your gallery. Up to 5MB per photo.
           </p>
 
           <input
-            ref={photoInputRef}
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) void handleAddPhotos(e.target.files);
+              e.target.value = '';
+            }}
+          />
+
+          <input
+            ref={galleryInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
-            capture="environment"
             style={{ display: 'none' }}
             onChange={(e) => {
               if (e.target.files && e.target.files.length > 0) void handleAddPhotos(e.target.files);
