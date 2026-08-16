@@ -11,7 +11,7 @@
  * Defaults: listingContext=product, stockQuantity=1, seller-selected shipping methods.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -27,9 +27,7 @@ import { authorizedFetch } from '@/lib/authorizedFetch';
 import { trackStartListing, trackPublishListing } from '@/lib/analytics';
 import {
   deleteProductImage,
-  deleteProductImages,
   getProductImageErrorMessage,
-  ProductImageStorageError,
   type ProductImageAsset,
   uploadProductImageBatch,
 } from '@/lib/productImageStorage';
@@ -277,7 +275,6 @@ export default function MobileSellWizard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const stagedPhotoPathsRef = useRef<Set<string>>(new Set());
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -290,14 +287,6 @@ export default function MobileSellWizard() {
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
   const [moreDetailsOpen, setMoreDetailsOpen] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      const stagedPaths = [...stagedPhotoPathsRef.current];
-      stagedPhotoPathsRef.current.clear();
-      if (stagedPaths.length > 0) void deleteProductImages(stagedPaths);
-    };
-  }, []);
 
   // Track listing start once
   const startTrackedRef = useRef(false);
@@ -326,15 +315,11 @@ export default function MobileSellWizard() {
 
     try {
       const uploaded = await uploadProductImageBatch(batch, user.id);
-      uploaded.forEach((photo) => stagedPhotoPathsRef.current.add(photo.path));
       setForm((prev) => ({
         ...prev,
         photos: [...prev.photos, ...uploaded].slice(0, MAX_PHOTOS),
       }));
     } catch (error) {
-      if (error instanceof ProductImageStorageError) {
-        error.cleanupFailedPaths.forEach((path) => stagedPhotoPathsRef.current.add(path));
-      }
       setPhotoError(getProductImageErrorMessage(error));
     } finally {
       setPhotoUploading(false);
@@ -350,7 +335,6 @@ export default function MobileSellWizard() {
 
     try {
       await deleteProductImage(photo.path);
-      stagedPhotoPathsRef.current.delete(photo.path);
       setForm((prev) => ({
         ...prev,
         photos: prev.photos.filter((item) => item.path !== photo.path),
@@ -412,7 +396,6 @@ export default function MobileSellWizard() {
       }
 
       const created = await res.json() as { id: string };
-      stagedPhotoPathsRef.current.clear();
       trackPublishListing(created.id, form.title.trim());
       setPublishedId(created.id);
     } catch (err) {
