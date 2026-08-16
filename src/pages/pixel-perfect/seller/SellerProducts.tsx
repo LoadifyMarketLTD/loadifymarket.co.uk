@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Share2, Package, Trash2, CheckSquare, MoreVertical } from "lucide-react";
+import { Plus, Search, Pencil, Share2, Package, Trash2, CheckSquare, MoreVertical, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -64,28 +64,46 @@ interface Product {
   isActive: boolean;
   isApproved: boolean;
   views: number;
-  shareCount?: number;
   images?: string[];
   listingContext?: string | null;
 }
 
-const statusConfig: Record<string, { label: string; className: string }> = {
+type SellerProductStatus = "active" | "moderation_hold" | "out_of_stock" | "low_stock" | "draft";
+
+const statusConfig: Record<SellerProductStatus, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-success/10 text-success" },
-  pending_review: { label: "Pending Review", className: "bg-primary/10 text-primary" },
-  out_of_stock: { label: "Out of Stock", className: "bg-danger/100/10 text-danger" },
+  moderation_hold: { label: "Moderation Hold", className: "bg-danger/10 text-danger" },
+  out_of_stock: { label: "Out of Stock", className: "bg-danger/10 text-danger" },
   low_stock: { label: "Low Stock", className: "bg-primary/10 text-primary" },
   draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
 };
 
-function deriveStatus(p: Product): string {
+function deriveStatus(p: Product): SellerProductStatus {
+  // The legacy isApproved column is now a platform-owned moderation marker.
+  // A hold must remain visible to the seller even when moderation also hides the listing.
+  if (!p.isApproved) return "moderation_hold";
   if (!p.isActive) return "draft";
-  if (!p.isApproved) return "pending_review";
   // Service listings are reusable — skip stock checks entirely.
   if (p.listingContext === "service") return "active";
   const qty = p.stockQuantity ?? 0;
   if (qty === 0) return "out_of_stock";
   if (qty <= 5) return "low_stock";
   return "active";
+}
+
+function isPubliclyShareable(p: Product): boolean {
+  if (!p.isActive || !p.isApproved) return false;
+  if (p.listingContext === "service") return true;
+  return (p.stockQuantity ?? 0) > 0;
+}
+
+function sharingUnavailableReason(p: Product): string {
+  if (!p.isApproved) return "Sharing is unavailable while this listing is on moderation hold.";
+  if (!p.isActive) return "Publish this draft before sharing it with buyers.";
+  if (p.listingContext !== "service" && (p.stockQuantity ?? 0) <= 0) {
+    return "Add stock and publish the listing before sharing it with buyers.";
+  }
+  return "This listing is not currently public.";
 }
 
 /** Returns the URL of the first image, or null when there are none. */
@@ -111,7 +129,7 @@ const SellerProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | SellerProductStatus>("all");
 
   // Confirm dialogs
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
@@ -125,14 +143,14 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, shareCount, images, listingContext")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, images, listingContext")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
         setProducts(data ?? []);
       } catch (err) {
         console.error("Error fetching products:", err);
-        toast({ title: "Could not load products", description: "Please try refreshing the page.", variant: "destructive" });
+        toast({ title: "Could not load listings", description: "Please try refreshing the page.", variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -140,64 +158,55 @@ const SellerProducts = () => {
     load();
   }, [user]);
 
-  const persistShareCount = (productId: string) => {
-    setProducts((prev) => {
-      const updated = prev.map((p) =>
-        p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
-      );
-      const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
-      supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(undefined, () => {/* non-fatal */});
-      return updated;
-    });
-  };
-
-  const shareOnFacebook = (productId: string, status: string) => {
-    if (status === "pending_review" || status === "draft") {
-      toast({
-        title: "Preview may not be visible",
-        description: "Facebook previews only show for active, approved products. Your link will still be shared.",
-      });
-    } else {
-      toast({
-        title: "Your product is ready to share",
-        description: "Facebook will open so you can publish it to your timeline.",
-      });
+  const shareOnFacebook = (product: Product) => {
+    if (!isPubliclyShareable(product)) {
+      toast({ title: "Listing is not public", description: sharingUnavailableReason(product), variant: "destructive" });
+      return;
     }
-    trackShareProduct("facebook", productId);
-    persistShareCount(productId);
-    window.open(facebookShareUrl(productId), "_blank", "noopener,noreferrer");
+    trackShareProduct("facebook", product.id, product.title);
+    window.open(facebookShareUrl(product.id), "_blank", "noopener,noreferrer");
   };
 
-  const shareOnWhatsApp = (productId: string, title: string, price: number) => {
-    trackShareProduct("whatsapp", productId, title);
-    persistShareCount(productId);
-    const text = encodeURIComponent(`Check out ${title} — £${price.toLocaleString("en-GB")} on Loadify Market: ${BASE_URL}/product/${productId}`);
+  const shareOnWhatsApp = (product: Product) => {
+    if (!isPubliclyShareable(product)) {
+      toast({ title: "Listing is not public", description: sharingUnavailableReason(product), variant: "destructive" });
+      return;
+    }
+    trackShareProduct("whatsapp", product.id, product.title);
+    const text = encodeURIComponent(`Check out ${product.title} — £${product.price.toLocaleString("en-GB")} on Loadify Market: ${BASE_URL}/product/${product.id}`);
     window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   };
 
-  const copyProductLink = async (productId: string) => {
+  const copyProductLink = async (product: Product) => {
+    if (!isPubliclyShareable(product)) {
+      toast({ title: "Listing is not public", description: sharingUnavailableReason(product), variant: "destructive" });
+      return;
+    }
     try {
-      await copyToClipboard(`${BASE_URL}/product/${productId}`);
-      trackCopyLink(productId);
-      toast({ title: "Link copied", description: "Product link copied to clipboard." });
+      await copyToClipboard(`${BASE_URL}/product/${product.id}`);
+      trackCopyLink(product.id);
+      toast({ title: "Link copied", description: "Public listing link copied to clipboard." });
     } catch {
-      toast({ title: "Could not copy link", description: "Please copy the URL manually.", variant: "destructive" });
+      toast({ title: "Could not copy link", description: "Please try again.", variant: "destructive" });
     }
   };
 
-  const nativeShareProduct = async (productId: string, title: string, price: number) => {
+  const nativeShareProduct = async (product: Product) => {
+    if (!isPubliclyShareable(product)) {
+      toast({ title: "Listing is not public", description: sharingUnavailableReason(product), variant: "destructive" });
+      return;
+    }
     if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
-      await copyProductLink(productId);
+      await copyProductLink(product);
       return;
     }
     try {
       await navigator.share({
-        title: `${title} — £${price.toLocaleString("en-GB")}`,
-        text: `Check out this product on Loadify Market: ${title}`,
-        url: `${BASE_URL}/product/${productId}`,
+        title: `${product.title} — £${product.price.toLocaleString("en-GB")}`,
+        text: `Check out this listing on Loadify Market: ${product.title}`,
+        url: `${BASE_URL}/product/${product.id}`,
       });
-      trackShareProduct("native", productId, title);
-      persistShareCount(productId);
+      trackShareProduct("native", product.id, product.title);
     } catch {
       // User cancelled — non-fatal.
     }
@@ -208,26 +217,60 @@ const SellerProducts = () => {
     if (!deleteTarget || !user) return;
     setDeleteLoading(true);
     try {
+      // Order history is intentionally retained and has a DB-level RESTRICT FK.
+      // Give the seller a useful explanation before relying on the database error.
+      const { data: linkedOrders, error: orderLookupError } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("productId", deleteTarget.id)
+        .limit(1);
+      if (orderLookupError) {
+        console.warn("Could not pre-check listing order history:", orderLookupError.message);
+      } else if ((linkedOrders?.length ?? 0) > 0) {
+        toast({
+          title: "Listing cannot be deleted",
+          description: "This listing has order history that must be retained. Keep it unpublished instead.",
+          variant: "destructive",
+        });
+        setDeleteTarget(null);
+        return;
+      }
+
       const { error } = await supabase
         .from("products")
         .delete()
         .eq("id", deleteTarget.id)
         .eq("sellerId", user.id); // RLS: only owner can delete
-      if (error) throw error;
+      if (error) {
+        if ((error as { code?: string }).code === "23503") {
+          toast({
+            title: "Listing cannot be deleted",
+            description: "This listing is linked to retained marketplace records. Keep it unpublished instead.",
+            variant: "destructive",
+          });
+          setDeleteTarget(null);
+          return;
+        }
+        throw error;
+      }
       setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
-      toast({ title: "Listing deleted", description: `"${deleteTarget.title}" has been removed.` });
+      toast({ title: "Listing deleted", description: `"${deleteTarget.title}" has been permanently removed.` });
+      setDeleteTarget(null);
     } catch (err) {
       console.error("Delete failed:", err);
       toast({ title: "Delete failed", description: "Could not delete this listing. Please try again.", variant: "destructive" });
     } finally {
       setDeleteLoading(false);
-      setDeleteTarget(null);
     }
   };
 
   // ── Mark as Sold ──────────────────────────────────────────────────────────
   const handleMarkSoldConfirm = async () => {
     if (!soldTarget || !user) return;
+    if (soldTarget.listingContext === "service") {
+      setSoldTarget(null);
+      return;
+    }
     setSoldLoading(true);
     try {
       const res = await authorizedFetch("/.netlify/functions/update-product", {
@@ -240,8 +283,14 @@ const SellerProducts = () => {
         }),
       });
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+        const payload = await res.json().catch(() => ({})) as { error?: string; code?: string };
+        const title = payload.code === "LISTING_LOCKED" ? "Listing is locked" : "Could not mark listing as sold";
+        toast({
+          title,
+          description: payload.error ?? `Server returned ${res.status}`,
+          variant: "destructive",
+        });
+        return;
       }
       setProducts((prev) =>
         prev.map((p) =>
@@ -250,13 +299,13 @@ const SellerProducts = () => {
             : p
         )
       );
-      toast({ title: "Listing marked as sold", description: `"${soldTarget.title}" is now marked as sold.` });
+      toast({ title: "Listing marked as sold", description: `"${soldTarget.title}" is now unpublished and marked sold.` });
+      setSoldTarget(null);
     } catch (err) {
       console.error("Mark as sold failed:", err);
       toast({ title: "Update failed", description: "Could not update this listing. Please try again.", variant: "destructive" });
     } finally {
       setSoldLoading(false);
-      setSoldTarget(null);
     }
   };
 
@@ -264,13 +313,64 @@ const SellerProducts = () => {
     .filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
     .filter((p) => statusFilter === "all" || deriveStatus(p) === statusFilter);
 
+  const renderActions = (p: Product, iconSize = "h-4 w-4") => {
+    const shareable = isPubliclyShareable(p);
+    const canMarkSold = p.listingContext !== "service" && p.isActive && p.isApproved && (p.stockQuantity ?? 0) > 0;
+
+    return (
+      <DropdownMenuContent align="end">
+        {shareable ? (
+          <>
+            <DropdownMenuItem onClick={() => shareOnFacebook(p)}>
+              <Share2 className={`${iconSize} mr-2`} /> Share on Facebook
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => shareOnWhatsApp(p)}>
+              <Share2 className={`${iconSize} mr-2`} /> Share on WhatsApp
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => nativeShareProduct(p)}>
+              <Share2 className={`${iconSize} mr-2`} /> Share via…
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => copyProductLink(p)}>Copy public link</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
+                Refresh Facebook Preview
+              </a>
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <DropdownMenuItem disabled>
+            <ShieldAlert className={`${iconSize} mr-2`} /> {p.isApproved ? "Publish to enable sharing" : "Sharing blocked by moderation"}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        {canMarkSold && (
+          <DropdownMenuItem
+            className="text-primary focus:text-primary"
+            onClick={() => setSoldTarget(p)}
+          >
+            <CheckSquare className={`${iconSize} mr-2`} />
+            Mark as Sold
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={() => setDeleteTarget(p)}
+        >
+          <Trash2 className={`${iconSize} mr-2`} />
+          Delete Listing
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    );
+  };
+
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Products</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {loading ? "Loading…" : `${products.length} products listed`}
+            {loading ? "Loading…" : `${products.length} listings`}
           </p>
         </div>
         <Button size="sm" className="bg-primary hover:bg-primary-hover text-black" asChild>
@@ -285,16 +385,19 @@ const SellerProducts = () => {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            aria-label="Search seller listings"
             placeholder="Search products..."
             className="pl-9 h-10"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {(["all", "active", "pending_review", "draft", "low_stock", "out_of_stock"] as const).map((s) => (
+        <div className="flex gap-2 flex-wrap" aria-label="Filter listings by status">
+          {(["all", "active", "moderation_hold", "draft", "low_stock", "out_of_stock"] as const).map((s) => (
             <button
               key={s}
+              type="button"
+              aria-pressed={statusFilter === s}
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                 statusFilter === s
@@ -310,15 +413,14 @@ const SellerProducts = () => {
 
       {/* Table (desktop) + Card list (mobile) */}
       <div className="bg-card rounded-xl border border-border overflow-hidden">
-
         {/* ── Mobile: card list ─────────────────────────────────── */}
         <div className="sm:hidden divide-y divide-border">
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Loading products…</div>
+            <div className="p-8 text-center text-muted-foreground text-sm">Loading listings…</div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
               <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              {search ? "No products match your search." : "No products yet. Start by listing your first product."}
+              {search ? "No listings match your search." : "No listings yet. Start by listing your first product."}
             </div>
           ) : (
             filtered.map((p) => {
@@ -326,7 +428,6 @@ const SellerProducts = () => {
               const s = statusConfig[status];
               return (
                 <div key={p.id} className="flex items-center gap-3 p-4">
-                  {/* Thumbnail */}
                   {(() => {
                     const thumb = getProductThumbnail(p);
                     return thumb ? (
@@ -342,22 +443,25 @@ const SellerProducts = () => {
                   })()}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{p.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-sm font-bold text-foreground">£{p.price.toLocaleString()}</span>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.className}`}>{s.label}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Stock: {p.stockQuantity} · Views: {p.views ?? 0} · Shares: {p.shareCount ?? 0}
+                      {p.listingContext === "service" ? "Reusable service" : `Stock: ${p.stockQuantity}`} · Views: {p.views ?? 0}
                     </p>
-                    {status === "active" && (p.views ?? 0) === 0 && (
-                      <p className="text-xs text-primary font-medium mt-1">📢 Share this product to get more views</p>
+                    {isPubliclyShareable(p) && (p.views ?? 0) === 0 && (
+                      <p className="text-xs text-primary font-medium mt-1">📢 Share this listing to get more views</p>
+                    )}
+                    {status === "moderation_hold" && (
+                      <p className="text-xs text-danger font-medium mt-1">Platform moderation has restricted public visibility.</p>
                     )}
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="shrink-0 h-9 w-9 p-0"
-                    aria-label="Edit product"
+                    aria-label={`Edit ${p.title}`}
                     onClick={() => navigate(`/seller/products/${p.id}/edit`)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -368,48 +472,12 @@ const SellerProducts = () => {
                         variant="ghost"
                         size="sm"
                         className="shrink-0 h-9 w-9 p-0"
-                        aria-label="More actions"
+                        aria-label={`More actions for ${p.title}`}
                       >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => shareOnFacebook(p.id, status)}>
-                        <Share2 className="h-4 w-4 mr-2" /> Share on Facebook
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => shareOnWhatsApp(p.id, p.title, p.price)}>
-                        <Share2 className="h-4 w-4 mr-2" /> Share on WhatsApp
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => nativeShareProduct(p.id, p.title, p.price)}>
-                        <Share2 className="h-4 w-4 mr-2" /> Share via…
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => copyProductLink(p.id)}>
-                        Copy link
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
-                          Refresh Facebook Preview
-                        </a>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {status !== "out_of_stock" && (
-                        <DropdownMenuItem
-                          className="text-primary focus:text-primary"
-                          onClick={() => setSoldTarget(p)}
-                        >
-                          <CheckSquare className="h-4 w-4 mr-2" />
-                          Mark as Sold
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setDeleteTarget(p)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Listing
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
+                    {renderActions(p)}
                   </DropdownMenu>
                 </div>
               );
@@ -427,22 +495,21 @@ const SellerProducts = () => {
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Stock</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Status</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Views</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground p-4">Shares</th>
                 <th className="text-right text-xs font-semibold text-muted-foreground p-4">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">
-                    Loading products…
+                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                    Loading listings…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">
+                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
                     <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                    {search ? "No products match your search." : "No products yet. Start by listing your first product."}
+                    {search ? "No listings match your search." : "No listings yet. Start by listing your first product."}
                   </td>
                 </tr>
               ) : (
@@ -468,19 +535,21 @@ const SellerProducts = () => {
                           })()}
                           <div className="min-w-0">
                             <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
-                            {status === "active" && (p.views ?? 0) === 0 && (
+                            {isPubliclyShareable(p) && (p.views ?? 0) === 0 && (
                               <p className="text-xs text-primary font-medium mt-0.5">📢 Share to get views</p>
+                            )}
+                            {status === "moderation_hold" && (
+                              <p className="text-xs text-danger font-medium mt-0.5">Public visibility restricted by moderation</p>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="p-4 text-sm font-semibold text-foreground">£{p.price.toLocaleString()}</td>
-                      <td className="p-4 text-sm text-foreground">{p.stockQuantity}</td>
+                      <td className="p-4 text-sm text-foreground">{p.listingContext === "service" ? "—" : p.stockQuantity}</td>
                       <td className="p-4">
                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.className}`}>{s.label}</span>
                       </td>
                       <td className="p-4 text-sm text-muted-foreground">{p.views ?? 0}</td>
-                      <td className="p-4 text-sm text-muted-foreground">{p.shareCount ?? 0}</td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
@@ -497,48 +566,12 @@ const SellerProducts = () => {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                aria-label="More actions"
+                                aria-label={`More actions for ${p.title}`}
                               >
                                 <MoreVertical className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => shareOnFacebook(p.id, status)}>
-                                <Share2 className="h-4 w-4 mr-2" /> Share on Facebook
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => shareOnWhatsApp(p.id, p.title, p.price)}>
-                                <Share2 className="h-4 w-4 mr-2" /> Share on WhatsApp
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => nativeShareProduct(p.id, p.title, p.price)}>
-                                <Share2 className="h-4 w-4 mr-2" /> Share via…
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => copyProductLink(p.id)}>
-                                Copy link
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
-                                  Refresh Facebook Preview
-                                </a>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              {status !== "out_of_stock" && (
-                                <DropdownMenuItem
-                                  className="text-primary focus:text-primary"
-                                  onClick={() => setSoldTarget(p)}
-                                >
-                                  <CheckSquare className="h-3.5 w-3.5 mr-2" />
-                                  Mark as Sold
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => setDeleteTarget(p)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                Delete Listing
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
+                            {renderActions(p, "h-3.5 w-3.5")}
                           </DropdownMenu>
                         </div>
                       </td>
@@ -549,34 +582,33 @@ const SellerProducts = () => {
             </tbody>
           </table>
         </div>
-
       </div>
 
       {/* ── Delete confirm dialog ─────────────────────────────────────────── */}
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleteLoading) setDeleteTarget(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete listing?</DialogTitle>
             <DialogDescription>
-              This will permanently remove <strong>"{deleteTarget?.title}"</strong> from Loadify Market. This action cannot be undone.
+              This permanently removes <strong>"{deleteTarget?.title}"</strong> only when no retained order history depends on it. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteLoading}>Cancel</Button>
             <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteLoading}>
-              {deleteLoading ? "Deleting…" : "Delete"}
+              {deleteLoading ? "Checking…" : "Delete permanently"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* ── Mark as Sold confirm dialog ───────────────────────────────────── */}
-      <Dialog open={!!soldTarget} onOpenChange={(open) => { if (!open) setSoldTarget(null); }}>
+      <Dialog open={!!soldTarget} onOpenChange={(open) => { if (!open && !soldLoading) setSoldTarget(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Mark as sold?</DialogTitle>
             <DialogDescription>
-              <strong>"{soldTarget?.title}"</strong> will be marked as sold and hidden from new buyers. You can re-activate it by editing the listing.
+              <strong>"{soldTarget?.title}"</strong> will be unpublished and its stock set to zero. If no order/reservation lock applies, you can add stock and explicitly publish it again later.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
