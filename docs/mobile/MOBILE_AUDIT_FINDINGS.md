@@ -4,11 +4,25 @@
 **Hardening branch:** `mobile-production-hardening`  
 **Rule:** findings are not marked resolved until the applicable static, build and device gates pass.
 
+## Validation authority
+
+The authoritative engineering gate for mobile hardening is the local Windows repository executed in **PowerShell**, not GitHub Actions.
+
+Required static/build sequence:
+
+1. `npm run lint`
+2. `npm run typecheck`
+3. focused/unit tests for the remediation
+4. `npm run build`
+5. Android/device validation where applicable
+
+GitHub is used for branch isolation, diff review, PR history and merge control. GitHub Actions is supplementary only. If Actions cannot start because of billing/account state, that is an external CI condition and **must not be reported as a code failure or as a blocker to local PowerShell validation**.
+
 ## Status legend
 
 - `OPEN` — verified defect/risk, remediation not yet accepted.
 - `IN PROGRESS` — isolated remediation exists but validation is incomplete.
-- `BLOCKED` — verification/remediation depends on an external prerequisite.
+- `BLOCKED` — that specific check/dependency cannot currently execute; this does not automatically block other independent gates.
 - `RESOLVED` — all required PASS criteria have been demonstrated.
 
 ---
@@ -30,7 +44,7 @@
 | MOB-013 | P1 | PWA correctness | `main.tsx` comments describe a cleanup/no-cache service worker while `public/sw.js` implements real cache-first/network-first behaviour. Source documentation and runtime behaviour disagree. | IN PROGRESS |
 | MOB-014 | P1 | Lifecycle | Android Back/predictive Back, background/resume and listener restoration do not yet have an accepted device validation matrix. | OPEN |
 | MOB-015 | P0 | Release identity | Native Gradle metadata remains `versionCode 1` / `versionName 1.0`; automated release tags exist, but app-version identity is not yet a monotonic production release contract. | OPEN |
-| MOB-016 | P1 | Release validation | GitHub CI is currently unable to start because the GitHub account is locked by a billing issue. The hardening branch therefore has no CI test/lint/typecheck evidence yet. | BLOCKED |
+| MOB-016 | P2 | CI infrastructure | GitHub Actions jobs currently cannot start because the GitHub account is locked by a billing issue. This removes supplementary CI evidence, but local PowerShell remains the authoritative lint/typecheck/test/build gate. | BLOCKED |
 | MOB-017 | P2 | UI system | Mobile pages contain duplicated inline spacing/colour/layout values and do not consistently use shared mobile primitives/tokens. | OPEN |
 | MOB-018 | P2 | Accessibility | Touch targets/focus work is partially present, but no end-to-end mobile accessibility certification exists for large text, screen reader, keyboard/IME and contrast across critical flows. | OPEN |
 | MOB-019 | P2 | Observability/privacy | `MobileInboxPage` and `MobileChatPage` emit detailed session/user/conversation diagnostic logs outside a `DEV` guard; `?debug=1` can expose internal debug state panels in production. | OPEN |
@@ -52,7 +66,7 @@ Current branch changes make `MobileAppLayout` own `100dvh`, reserve the top safe
 
 - exact diff reviewed and formatting churn self-corrected;
 - Netlify deploy preview built successfully;
-- GitHub Actions lint/typecheck/tests did **not** execute because of the account billing lock;
+- local PowerShell lint/typecheck/tests/build remain the authoritative static/build gate;
 - Android APK/device validation remains pending.
 
 Therefore MOB-001/MOB-002 remain `IN PROGRESS`, not `RESOLVED`.
@@ -65,7 +79,7 @@ A separate draft PR (`#483`) now keeps PWA service-worker registration on regula
 
 - exact diff reviewed: one source file, no business/auth/payment/schema/dependency changes;
 - Netlify deploy preview built successfully;
-- GitHub Actions remains blocked by the account billing issue;
+- local PowerShell lint/typecheck/tests/build remain the authoritative static/build gate;
 - native WebView cleanup and web PWA behaviour still require runtime verification.
 
 Therefore MOB-012/MOB-013 remain `IN PROGRESS`, not `RESOLVED`.
@@ -84,8 +98,9 @@ A separate draft PR (`#484`) isolates the mobile seller media remediation from s
 
 - final branch diff is isolated to three files: the product-image helper, its focused tests, and `MobileSellWizard`;
 - no payment, auth, RLS, schema, shipping, product lifecycle or `create-product` contract changes are present;
-- GitHub Actions jobs did **not** execute. GitHub's check annotation states: `The job was not started because your account is locked due to a billing issue.`;
-- Netlify checks are independent and may provide build evidence, but they do not replace the blocked unit/lint/typecheck gates unless their executed command proves the same coverage;
+- Netlify deploy/check suite completed successfully and produced a deploy preview;
+- GitHub Actions did not execute because of the account billing condition; this is supplementary CI only and is not treated as a code failure;
+- authoritative static/build evidence must come from local PowerShell: lint → typecheck → focused/unit tests → production build;
 - Android camera/gallery, large-file rejection, multi-photo, forced partial failure/retry, Storage cleanup and final publish still require real-device validation.
 
 Therefore MOB-004/MOB-023 remain `IN PROGRESS`, not `RESOLVED`.
@@ -94,4 +109,4 @@ Therefore MOB-004/MOB-023 remain `IN PROGRESS`, not `RESOLVED`.
 
 ## Release rule
 
-No finding may be closed merely because code was written. A finding is closed only when its defined PASS evidence is available and the Branch Guard has checked the final diff for business/security regressions.
+No finding may be closed merely because code was written. A finding is closed only when its defined PASS evidence is available and the Branch Guard has checked the final diff for business/security regressions. For mobile code, the static/build PASS evidence is produced from the local Windows repository in PowerShell; GitHub Actions is not a substitute for that gate.
