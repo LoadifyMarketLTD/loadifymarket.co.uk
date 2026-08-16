@@ -254,7 +254,7 @@ export default function MobileOrdersPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-background"
+      className="h-[100dvh] min-h-0 overflow-hidden flex flex-col bg-background"
     >
       {/* ── Header ── */}
       <div
@@ -300,7 +300,7 @@ export default function MobileOrdersPage() {
 
       {/* ── Content ── */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-4"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4"
         style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}
       >
         {loading ? (
