@@ -11,7 +11,7 @@
  * Defaults: listingContext=product, stockQuantity=1, seller-selected shipping methods.
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -22,16 +22,22 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { trackStartListing, trackPublishListing } from '@/lib/analytics';
+import {
+  deleteProductImage,
+  deleteProductImages,
+  getProductImageErrorMessage,
+  ProductImageStorageError,
+  type ProductImageAsset,
+  uploadProductImageBatch,
+} from '@/lib/productImageStorage';
 import CategorySelector from '@/components/CategorySelector';
 import ShippingMethodSelector from '@/components/ShippingMethodSelector';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const STORAGE_BUCKET = 'product-images';
 const MAX_PHOTOS = 6;
 
 const CONDITION_OPTIONS = [
@@ -42,23 +48,6 @@ const CONDITION_OPTIONS = [
   { value: 'fair', label: 'Fair' },
   { value: 'poor', label: 'Poor' },
 ] as const;
-
-// ── Upload helper ──────────────────────────────────────────────────────────────
-
-async function uploadPhoto(file: File, userId: string): Promise<string> {
-  const ts = Date.now();
-  const rand = Math.random().toString(36).slice(2, 8);
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-  const path = `sellers/${userId}/${ts}-${rand}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(path, file, { cacheControl: '3600', upsert: false });
-
-  if (error) throw error;
-
-  return supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
-}
 
 // ── Input primitive ────────────────────────────────────────────────────────────
 
@@ -263,7 +252,7 @@ function SuccessSheet({
 // ── Form state ─────────────────────────────────────────────────────────────────
 
 interface FormState {
-  photos: string[];
+  photos: ProductImageAsset[];
   title: string;
   price: string;
   description: string;
@@ -288,9 +277,11 @@ export default function MobileSellWizard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const stagedPhotoPathsRef = useRef<Set<string>>(new Set());
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoRemovingPath, setPhotoRemovingPath] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
@@ -299,6 +290,14 @@ export default function MobileSellWizard() {
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
   const [moreDetailsOpen, setMoreDetailsOpen] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      const stagedPaths = [...stagedPhotoPathsRef.current];
+      stagedPhotoPathsRef.current.clear();
+      if (stagedPaths.length > 0) void deleteProductImages(stagedPaths);
+    };
+  }, []);
 
   // Track listing start once
   const startTrackedRef = useRef(false);
@@ -310,24 +309,57 @@ export default function MobileSellWizard() {
   // ── Photo handlers ────────────────────────────────────────────────────────
 
   const handleAddPhotos = async (files: FileList) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setPhotoError('You must be signed in as a seller to upload photos.');
+      return;
+    }
+
+    const remaining = MAX_PHOTOS - form.photos.length;
+    if (remaining <= 0) return;
+
+    const batch = Array.from(files).slice(0, remaining);
+    if (batch.length === 0) return;
+
     setPhotoUploading(true);
     setPhotoError(null);
     if (fieldErrors.photos) setFieldErrors((e) => ({ ...e, photos: undefined }));
+
     try {
-      const remaining = MAX_PHOTOS - form.photos.length;
-      const batch = Array.from(files).slice(0, remaining);
-      const urls = await Promise.all(batch.map((f) => uploadPhoto(f, user.id)));
-      setForm((prev) => ({ ...prev, photos: [...prev.photos, ...urls].slice(0, MAX_PHOTOS) }));
-    } catch {
-      setPhotoError('Photo upload failed. Please try again.');
+      const uploaded = await uploadProductImageBatch(batch, user.id);
+      uploaded.forEach((photo) => stagedPhotoPathsRef.current.add(photo.path));
+      setForm((prev) => ({
+        ...prev,
+        photos: [...prev.photos, ...uploaded].slice(0, MAX_PHOTOS),
+      }));
+    } catch (error) {
+      if (error instanceof ProductImageStorageError) {
+        error.cleanupFailedPaths.forEach((path) => stagedPhotoPathsRef.current.add(path));
+      }
+      setPhotoError(getProductImageErrorMessage(error));
     } finally {
       setPhotoUploading(false);
     }
   };
 
-  const handleRemovePhoto = (idx: number) => {
-    setForm((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== idx) }));
+  const handleRemovePhoto = async (idx: number) => {
+    const photo = form.photos[idx];
+    if (!photo) return;
+
+    setPhotoRemovingPath(photo.path);
+    setPhotoError(null);
+
+    try {
+      await deleteProductImage(photo.path);
+      stagedPhotoPathsRef.current.delete(photo.path);
+      setForm((prev) => ({
+        ...prev,
+        photos: prev.photos.filter((item) => item.path !== photo.path),
+      }));
+    } catch (error) {
+      setPhotoError(getProductImageErrorMessage(error));
+    } finally {
+      setPhotoRemovingPath(null);
+    }
   };
 
   // ── Publish ───────────────────────────────────────────────────────────────
@@ -357,7 +389,7 @@ export default function MobileSellWizard() {
         title: form.title.trim(),
         description: form.description.trim() || form.title.trim(),
         price,
-        images: form.photos,
+        images: form.photos.map((photo) => photo.url),
         categoryId: form.categoryId || null,
         subcategoryId: form.subcategoryId || null,
         specifications: Object.keys(specs).length > 0 ? specs : undefined,
@@ -380,6 +412,7 @@ export default function MobileSellWizard() {
       }
 
       const created = await res.json() as { id: string };
+      stagedPhotoPathsRef.current.clear();
       trackPublishListing(created.id, form.title.trim());
       setPublishedId(created.id);
     } catch (err) {
@@ -400,6 +433,7 @@ export default function MobileSellWizard() {
     setDispatchTime('');
     setPublishedId(null);
     setPublishError(null);
+    setPhotoError(null);
     setMoreDetailsOpen(false);
   };
 
@@ -409,7 +443,7 @@ export default function MobileSellWizard() {
     return <SuccessSheet productId={publishedId} onSellAnother={handleSellAnother} />;
   }
 
-  const busy = publishing || photoUploading;
+  const busy = publishing || photoUploading || photoRemovingPath !== null;
 
   return (
     <div className="bg-background" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
@@ -472,27 +506,36 @@ export default function MobileSellWizard() {
             Photos <span className="text-primary">*</span>
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-            {form.photos.map((url, idx) => (
+            {form.photos.map((photo, idx) => (
               <div
-                key={idx}
+                key={photo.path}
                 style={{
                   position: 'relative',
                   aspectRatio: '1',
                   borderRadius: '14px',
                   overflow: 'hidden',
                 }}
-                className="bg-surface"              >
+                className="bg-surface"
+              >
                 <img
-                  src={url}
+                  src={photo.url}
                   alt={`Photo ${idx + 1}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <button
                   className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border-none flex items-center justify-center cursor-pointer"
                   aria-label={`Remove photo ${idx + 1}`}
-                  onClick={() => handleRemovePhoto(idx)}
+                  onClick={() => void handleRemovePhoto(idx)}
+                  disabled={busy}
                 >
-                  <X className="text-foreground" style={{ width: '14px', height: '14px' }} />
+                  {photoRemovingPath === photo.path ? (
+                    <Loader2
+                      className="text-foreground"
+                      style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }}
+                    />
+                  ) : (
+                    <X className="text-foreground" style={{ width: '14px', height: '14px' }} />
+                  )}
                 </button>
               </div>
             ))}
@@ -501,7 +544,7 @@ export default function MobileSellWizard() {
               <button
                 aria-label="Add photo"
                 onClick={() => photoInputRef.current?.click()}
-                disabled={photoUploading}
+                disabled={busy}
                 style={{
                   aspectRatio: '1',
                   borderRadius: '14px',
@@ -511,8 +554,8 @@ export default function MobileSellWizard() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  cursor: photoUploading ? 'not-allowed' : 'pointer',
-                  opacity: photoUploading ? 0.6 : 1,
+                  cursor: busy ? 'not-allowed' : 'pointer',
+                  opacity: busy ? 0.6 : 1,
                 }}
                 className={fieldErrors.photos ? 'bg-danger/[0.04]' : 'bg-primary/[0.04]'}
               >
@@ -521,7 +564,6 @@ export default function MobileSellWizard() {
                     style={{
                       width: '24px',
                       height: '24px',
-                      
                       animation: 'spin 1s linear infinite',
                     }}
                   />
@@ -554,16 +596,19 @@ export default function MobileSellWizard() {
               {photoError}
             </p>
           )}
+          <p className="text-foreground/40" style={{ fontSize: '12px', margin: 0 }}>
+            JPG, PNG or WebP. Up to 5MB per photo.
+          </p>
 
           <input
             ref={photoInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             multiple
             capture="environment"
             style={{ display: 'none' }}
             onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) handleAddPhotos(e.target.files);
+              if (e.target.files && e.target.files.length > 0) void handleAddPhotos(e.target.files);
               e.target.value = '';
             }}
           />
