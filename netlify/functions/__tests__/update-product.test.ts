@@ -45,6 +45,7 @@ describe('update-product', () => {
       listingStatus: string | null;
       reservedUntil: string | null;
       isActive: boolean;
+      isApproved: boolean | null;
     }>;
   }) {
     const productUpdates: Array<Record<string, unknown>> = [];
@@ -60,6 +61,7 @@ describe('update-product', () => {
       listingStatus: 'active',
       reservedUntil: null,
       isActive: false,
+      isApproved: true,
       ...args?.productRow,
     };
 
@@ -285,10 +287,11 @@ describe('update-product', () => {
     expect(body.locks?.[0]?.orderLabel).toBe('LM-1000001');
   });
 
-  it('publishes an existing eligible seller draft and clears the legacy manual-approval blocker', async () => {
+  it('publishes an eligible seller draft without an admin approval step', async () => {
     const { productUpdates } = mockSupabase({
       productRow: {
         isActive: false,
+        isApproved: true,
         listingContext: 'product',
         stockQuantity: 5,
         stockStatus: 'low_stock',
@@ -307,9 +310,31 @@ describe('update-product', () => {
 
     expect(res.statusCode).toBe(200);
     expect(productUpdates).toHaveLength(1);
-    expect(productUpdates[0]).toMatchObject({
-      isActive: true,
-      isApproved: true,
+    expect(productUpdates[0]).toMatchObject({ isActive: true });
+    expect(productUpdates[0]).not.toHaveProperty('isApproved');
+  });
+
+  it('blocks a seller from republishing a listing placed on moderation hold', async () => {
+    const { productUpdates } = mockSupabase({
+      productRow: {
+        isActive: false,
+        isApproved: false,
+        listingContext: 'product',
+        stockQuantity: 5,
+        stockStatus: 'low_stock',
+      },
     });
+    const { handler } = await import('../update-product');
+
+    const res = await handler(
+      makeEvent({ id: 'product-1', isActive: true }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(409);
+    expect(productUpdates).toHaveLength(0);
+    const body = JSON.parse(res.body as string) as { code?: string; error?: string };
+    expect(body.code).toBe('LISTING_MODERATION_HOLD');
+    expect(body.error).toMatch(/platform moderation/i);
   });
 });
