@@ -17,6 +17,11 @@ const MIME_TO_EXT: Record<string, string> = {
   'image/webp': 'webp',
 };
 
+interface UploadedImage {
+  url: string;
+  path: string;
+}
+
 /** Returns the URL only if it is a valid http/https URL, otherwise empty string. */
 function safeSrc(url: string): string {
   try {
@@ -29,14 +34,16 @@ function safeSrc(url: string): string {
   }
 }
 
-async function uploadImageToStorage(file: File): Promise<string> {
+function validateImageFile(file: File): void {
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     throw new Error('Unsupported image type. Use JPG, PNG or WebP.');
   }
   if (file.size <= 0 || file.size > MAX_IMAGE_SIZE) {
     throw new Error('Image must be smaller than 5MB.');
   }
+}
 
+async function uploadValidatedImageToStorage(file: File): Promise<UploadedImage> {
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError || !authData.user) {
     throw new Error('You must be signed in as a seller to upload product images.');
@@ -58,7 +65,7 @@ async function uploadImageToStorage(file: File): Promise<string> {
   if (uploadError) throw uploadError;
 
   const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
-  return data.publicUrl;
+  return { url: data.publicUrl, path: filePath };
 }
 
 export default function ImageUpload({
@@ -82,8 +89,29 @@ export default function ImageUpload({
     try {
       const remainingSlots = Math.max(0, maxImages - images.length);
       const selectedFiles = Array.from(files).slice(0, remainingSlots);
-      const uploadedUrls = await Promise.all(selectedFiles.map((file) => uploadImageToStorage(file)));
-      onImagesChange([...images, ...uploadedUrls]);
+
+      // Validate the whole selection before the first network write.
+      selectedFiles.forEach(validateImageFile);
+
+      const results = await Promise.allSettled(selectedFiles.map((file) => uploadValidatedImageToStorage(file)));
+      const uploaded = results
+        .filter((result): result is PromiseFulfilledResult<UploadedImage> => result.status === 'fulfilled')
+        .map((result) => result.value);
+      const failed = results.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+
+      if (failed) {
+        if (uploaded.length > 0) {
+          const { error: rollbackError } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .remove(uploaded.map((asset) => asset.path));
+          if (rollbackError) {
+            console.error('Image upload rollback error:', rollbackError);
+          }
+        }
+        throw failed.reason;
+      }
+
+      onImagesChange([...images, ...uploaded.map((asset) => asset.url)]);
     } catch (err) {
       console.error('Image upload error:', err);
       setUploadError(err instanceof Error ? err.message : 'Failed to upload image(s). Please try again.');
