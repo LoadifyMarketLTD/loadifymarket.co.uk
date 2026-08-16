@@ -4,9 +4,9 @@
  * Shows: M logo + branding (left) | Bell notification icon (right)
  *        Inline search bar + filter button (second row)
  *
- * Top safe-area ownership belongs to MobileAppLayout.  Keeping the inset in one
- * place prevents double padding at rest and prevents content from scrolling
- * underneath the Android status bar.
+ * Top safe-area ownership belongs to MobileAppLayout. Keeping the inset in one
+ * place prevents double padding and prevents content from scrolling underneath
+ * the Android status bar.
  */
 
 import { useEffect, useState } from 'react';
@@ -40,146 +40,145 @@ export default function MobileAppHeader() {
     })();
     return () => { cancelled = true; };
   }, [user?.id]);
-
   return (
     <>
-      <header
-        style={{
-          paddingTop: '0.75rem',
-          paddingBottom: '0.75rem',
-          paddingLeft: 16,
-          paddingRight: 16,
-        }}
-        className="bg-background"
-      >
-        {/* ── Row 1: logo + brand name (left) | bell (right) ─── */}
-        <div className="flex items-center justify-between">
-          {/* Left: logo + brand */}
-          <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-            {/* Logo */}
-            <img
-              src={logo}
-              alt=""
-              aria-hidden="true"
-              width={38}
-              height={38}
-              style={{ width: 38, height: 38, flexShrink: 0 }}
-            />
+    <header
+      style={{
+        paddingTop: '0.75rem',
+        paddingBottom: '0.75rem',
+        paddingLeft: 16,
+        paddingRight: 16,
+      }}
+      className="bg-background"
+    >
+      {/* ── Row 1: logo + brand name (left) | bell (right) ─── */}
+      <div className="flex items-center justify-between">
+        {/* Left: logo + brand */}
+        <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          {/* Logo */}
+          <img
+            src={logo}
+            alt=""
+            aria-hidden="true"
+            width={38}
+            height={38}
+            style={{ width: 38, height: 38, flexShrink: 0 }}
+          />
 
-            {/* Brand text */}
-            <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>
-              <span
-                className="text-foreground"
-                style={{
-                  fontSize: 'clamp(14px, 4.2vw, 19px)',
-                  fontWeight: 800,
-                  letterSpacing: 'clamp(0.5px, 0.2vw, 1px)',
-                  lineHeight: 1,
-                  fontFamily: 'var(--font-display)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Loadify
-              </span>
-              <span
-                style={{
-                  fontSize: 'clamp(10px, 2.8vw, 13px)',
-                  fontWeight: 800,
-                  letterSpacing: 'clamp(0.5px, 0.3vw, 1.5px)',
-                  lineHeight: 1,
-                  fontFamily: 'var(--font-display)',
-                  whiteSpace: 'nowrap',
-                }}
-                className="text-primary"
-              >
-                MARKET
-              </span>
-            </div>
-          </div>
-
-          {/* Right: bell */}
-          <button
-            onClick={() => navigate('/inbox')}
-            aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
-            className="relative h-11 w-11 shrink-0 cursor-pointer border-0 bg-transparent p-0 flex items-center justify-center"
-          >
-            <Bell
-              style={{ width: 22, height: 22 }} className="text-white"
-              aria-hidden="true"
-            />
-            {unread > 0 && (
-              <span
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  top: 4,
-                  right: 4,
-                  minWidth: 17,
-                  height: 17,
-                  borderRadius: 9999,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingLeft: 2,
-                  paddingRight: 2,
-                }}
-                className="bg-primary text-black"
-              >
-                {unread > 9 ? '9+' : unread}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* ── Row 2: search bar + filter button ─── */}
-        <div className="flex items-center gap-2" style={{ marginTop: 10 }}>
-          {/* Search bar — taps open full-screen overlay */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            aria-label="Search for items or members"
-            className="h-11 flex-1 rounded-xl border border-white/10 bg-white/[0.07] px-3.5 text-left flex items-center gap-2.5 cursor-pointer"
-          >
-            <Search
-              style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
-              aria-hidden="true"
-            />
+          {/* Brand text */}
+          <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>
             <span
-              className="text-foreground/55"
+              className="text-foreground"
               style={{
-                fontSize: 14,
+                fontSize: 'clamp(14px, 4.2vw, 19px)',
+                fontWeight: 800,
+                letterSpacing: 'clamp(0.5px, 0.2vw, 1px)',
+                lineHeight: 1,
+                fontFamily: 'var(--font-display)',
                 whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                flex: 1,
               }}
             >
-              Search for items or members
+              Loadify
             </span>
-            <Camera
-              style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
-              aria-hidden="true"
-            />
-          </button>
-
-          {/* Filter button */}
-          <button
-            aria-label="Filter"
-            onClick={() => navigate('/catalog')}
-            className="h-11 w-11 shrink-0 rounded-xl border border-[#f2b84b66] bg-[#1c1400] flex items-center justify-center cursor-pointer"
-          >
-            <Filter
-              style={{ width: 18, height: 18 }}
+            <span
+              style={{
+                fontSize: 'clamp(10px, 2.8vw, 13px)',
+                fontWeight: 800,
+                letterSpacing: 'clamp(0.5px, 0.3vw, 1.5px)',
+                lineHeight: 1,
+                fontFamily: 'var(--font-display)',
+                whiteSpace: 'nowrap',
+              }}
               className="text-primary"
-              aria-hidden="true"
-            />
-          </button>
+            >
+              MARKET
+            </span>
+          </div>
         </div>
-      </header>
 
-      {/* Full-screen search overlay — rendered outside the header flow */}
-      {searchOpen && <MobileSearchOverlay onClose={() => setSearchOpen(false)} />}
-    </>
+        {/* Right: bell */}
+        <button
+          onClick={() => navigate('/inbox')}
+          aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
+          className="relative h-11 w-11 shrink-0 cursor-pointer border-0 bg-transparent p-0 flex items-center justify-center"
+        >
+          <Bell
+            style={{ width: 22, height: 22 }} className="text-white"
+            aria-hidden="true"
+          />
+          {unread > 0 && (
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: 4,
+                right: 4,
+                minWidth: 17,
+                height: 17,
+                borderRadius: 9999,
+                fontSize: 9,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingLeft: 2,
+                paddingRight: 2,
+              }}
+              className="bg-primary text-black"
+            >
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* ── Row 2: search bar + filter button ─── */}
+      <div className="flex items-center gap-2" style={{ marginTop: 10 }}>
+        {/* Search bar — taps open full-screen overlay */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          aria-label="Search for items or members"
+          className="h-11 flex-1 rounded-xl border border-white/10 bg-white/[0.07] px-3.5 text-left flex items-center gap-2.5 cursor-pointer"
+        >
+          <Search
+            style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
+            aria-hidden="true"
+          />
+          <span
+            className="text-foreground/55"
+            style={{
+              fontSize: 14,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              flex: 1,
+            }}
+          >
+            Search for items or members
+          </span>
+          <Camera
+            style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
+            aria-hidden="true"
+          />
+        </button>
+
+        {/* Filter button */}
+        <button
+          aria-label="Filter"
+          onClick={() => navigate('/catalog')}
+          className="h-11 w-11 shrink-0 rounded-xl border border-[#f2b84b66] bg-[#1c1400] flex items-center justify-center cursor-pointer"
+        >
+          <Filter
+            style={{ width: 18, height: 18 }}
+            className="text-primary"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+    </header>
+
+    {/* Full-screen search overlay — rendered outside the header flow */}
+    {searchOpen && <MobileSearchOverlay onClose={() => setSearchOpen(false)} />}
+  </>
   );
 }
