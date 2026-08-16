@@ -32,7 +32,9 @@ Independent and company UK sellers list and sell physical products across all co
 
 ### Sellers
 - List physical products across all supported categories, with optional listing attributes including condition (new, used, refurbished), stock quantity, weight, dimensions, and pallet or lot-specific fields
-- Seller account lifecycle: `draft` → `submitted` → `active` → `suspended` (admin-approved)
+- Seller account lifecycle: `draft` → `submitted` → `active` → `suspended` (admin-approved account lifecycle; separate from product publication)
+- Eligible active sellers publish listings directly without mandatory per-product admin approval
+- Seller is responsible for listing accuracy, product description/photos, price, ownership/right to sell and compliance with marketplace rules
 - Order management dashboard — status progression: `paid` → `packed` → `shipped` → `delivered`
 - Shipment creation with courier name, tracking number, and dispatch date
 - Respond to buyer RFQ requests via the quote inbox
@@ -41,8 +43,8 @@ Independent and company UK sellers list and sell physical products across all co
 - Pause account (deactivates all listings) or delete seller account
 
 ### Admin
-- Seller approval and suspension workflow
-- Product listing moderation (approve, deactivate, review flagged listings)
+- Seller approval and suspension workflow (seller/account verification, not product certification)
+- Post-publication product moderation and enforcement — review reports/flagged listings and hide or remove listings that breach marketplace rules
 - Platform-wide order and user management
 - Dispute resolution with refund amount control
 - Support ticket inbox
@@ -52,7 +54,9 @@ Independent and company UK sellers list and sell physical products across all co
 
 ## 💰 Business Model
 
-The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect. The platform acts solely as an intermediary — it does not own products, hold inventory, or operate a fulfilment depot. Sellers are responsible for their own inventory management and order fulfilment.
+The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect. The platform acts solely as an intermediary — it does not own products, hold inventory, or operate a fulfilment depot. Sellers are responsible for their own inventory management, listing accuracy and order fulfilment.
+
+Loadify does **not** manually certify the truth, quality or physical condition of every product before publication. Eligible sellers may publish directly, while Loadify retains post-publication moderation and enforcement powers for prohibited content, fraud/spam, marketplace-rule violations, reports and suspicious activity.
 
 > **Launch promotion:** 0% commission on all transactions until **31 December 2026 23:59:59 UTC**. The standard 7% rate resumes automatically after that date.
 
@@ -207,6 +211,7 @@ For detailed instructions see the [Netlify documentation](https://docs.netlify.c
 - Supabase JWT with short-lived access tokens and refresh tokens.
 - Rate limiting on registration, Stripe Connect onboarding, email, and error-reporting endpoints.
 - Content-Security-Policy with violation reporting.
+- Product publication eligibility is enforced server-side; the client cannot supply or override the compatibility `isApproved` field.
 
 ---
 
