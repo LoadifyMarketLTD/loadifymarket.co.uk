@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Search, Eye, Ban, CheckCircle2, MoreHorizontal, Loader2, ShieldCheck, ShieldX } from "lucide-react";
+import { Package, Search, Eye, Ban, MoreHorizontal, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,6 @@ interface Product {
   price: number;
   stockQuantity: number;
   isActive: boolean;
-  isApproved: boolean;
   createdAt: string;
 }
 
@@ -30,7 +29,6 @@ type ProductRow = {
   price: number | null;
   stockQuantity: number | null;
   isActive: boolean | null;
-  isApproved: boolean | null;
   createdAt: string | null;
   sellerId: string | null;
 };
@@ -53,8 +51,7 @@ const AdminProducts = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState(""
-);
+  const [search, setSearch] = useState("");
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -63,7 +60,7 @@ const AdminProducts = () => {
       // 1) Fetch products first (include sellerId)
       const { data: productsData, error: productsError } = await supabase
         .from("products")
-        .select("id,title,price,stockQuantity,isActive,isApproved,createdAt,sellerId")
+        .select("id,title,price,stockQuantity,isActive,createdAt,sellerId")
         .order("createdAt", { ascending: false })
         .limit(200);
 
@@ -128,7 +125,6 @@ const AdminProducts = () => {
           price: p.price ?? 0,
           stockQuantity: p.stockQuantity ?? 0,
           isActive: p.isActive ?? true,
-          isApproved: p.isApproved ?? false,
           createdAt: p.createdAt
             ? new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
             : "—",
@@ -145,35 +141,22 @@ const AdminProducts = () => {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const toggleActive = async (id: string, currentActive: boolean) => {
+  // Product moderation is post-publication enforcement. Admin may hide a live
+  // listing, but this screen must not publish an inactive seller draft on the
+  // seller's behalf. A dedicated moderation state would be required to safely
+  // distinguish an admin-hidden listing from a seller-owned draft for restore.
+  const hideListing = async (id: string) => {
     setActionLoading(id);
     setError(null);
     try {
       const { error } = await supabase
         .from("products")
-        .update({ isActive: !currentActive })
+        .update({ isActive: false })
         .eq("id", id);
       if (error) throw error;
-      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isActive: !currentActive } : p));
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isActive: false } : p));
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to update product");
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const toggleApprove = async (id: string, currentApproved: boolean) => {
-    setActionLoading(id);
-    setError(null);
-    try {
-      const { error } = await supabase
-        .from("products")
-        .update({ isApproved: !currentApproved })
-        .eq("id", id);
-      if (error) throw error;
-      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isApproved: !currentApproved } : p));
-    } catch (err: unknown) {
-      setError((err as Error).message || "Failed to update approval status");
+      setError((err as Error).message || "Failed to hide listing");
     } finally {
       setActionLoading(null);
     }
@@ -197,20 +180,19 @@ const AdminProducts = () => {
           <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Price</TableHead>
           <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Stock</TableHead>
           <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Published</TableHead>
-          <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Approved</TableHead>
           <TableHead className="text-right text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-8">
+            <TableCell colSpan={6} className="text-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground/65" />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground/65">
+            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground/65">
               <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />No products found.
             </TableCell>
           </TableRow>
@@ -245,18 +227,6 @@ const AdminProducts = () => {
                   {p.isActive ? "Published" : "Unpublished"}
                 </Badge>
               </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                <Badge
-                  variant="outline"
-                  className={
-                    p.isApproved
-                      ? "border-emerald-500/30 text-success bg-success/10"
-                      : "border-primary/40 text-primary bg-primary/10"
-                  }
-                >
-                  {p.isApproved ? "Approved" : "Pending"}
-                </Badge>
-              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -272,22 +242,9 @@ const AdminProducts = () => {
                     <DropdownMenuItem onClick={() => navigate(`/product/${p.id}`)}>
                       <Eye className="h-3.5 w-3.5 mr-2" /> View Listing
                     </DropdownMenuItem>
-                    {p.isApproved ? (
-                      <DropdownMenuItem onClick={() => toggleApprove(p.id, p.isApproved)} className="text-primary">
-                        <ShieldX className="h-3.5 w-3.5 mr-2" /> Revoke Approval
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem onClick={() => toggleApprove(p.id, p.isApproved)} className="text-emerald-500">
-                        <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Approve
-                      </DropdownMenuItem>
-                    )}
-                    {p.isActive ? (
-                      <DropdownMenuItem onClick={() => toggleActive(p.id, p.isActive)} className="text-destructive">
-                        <Ban className="h-3.5 w-3.5 mr-2" /> Deactivate
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem onClick={() => toggleActive(p.id, p.isActive)}>
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Activate
+                    {p.isActive && (
+                      <DropdownMenuItem onClick={() => hideListing(p.id)} className="text-destructive">
+                        <Ban className="h-3.5 w-3.5 mr-2" /> Hide Listing
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -305,7 +262,10 @@ const AdminProducts = () => {
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Product Moderation</h1>
         <p className="text-sm mt-1 text-muted-foreground/85">
-          {products.length} total listings · {activeProducts.length} published · {inactiveProducts.length} unpublished · {products.filter(p => !p.isApproved).length} pending approval
+          {products.length} total listings · {activeProducts.length} published · {inactiveProducts.length} unpublished
+        </p>
+        <p className="text-xs mt-1 text-muted-foreground/65">
+          Listings publish without mandatory product approval. Use moderation actions to review and hide live listings that breach marketplace rules.
         </p>
       </div>
 
@@ -322,7 +282,7 @@ const AdminProducts = () => {
             placeholder="Search products or sellers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 h-10 border border-white/5 text-white"
+            className="pl-9 h-10 border border-white/5 text-white"
           />
         </div>
       </div>
