@@ -263,6 +263,14 @@ export const handler: Handler = async (event) => {
     });
   }
 
+  // Mandatory per-product review is not part of the marketplace contract.
+  // When an eligible seller publishes (including an older draft that may have
+  // isApproved=false), the server marks the listing approved. The client still
+  // cannot submit or override isApproved directly.
+  if (wantsPublished && sellerCanPublish) {
+    dataToUpdate.isApproved = true;
+  }
+
   // Save shipping first. If that fails, the listing itself remains unchanged.
   if (Array.isArray(shippingMethodIds)) {
     const { data: previousShipping, error: previousError } = await supabase
