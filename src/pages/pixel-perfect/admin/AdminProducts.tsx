@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Search, Eye, Ban, MoreHorizontal, Loader2 } from "lucide-react";
+import { Package, Search, Eye, Ban, MoreHorizontal, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ interface Product {
   price: number;
   stockQuantity: number;
   isActive: boolean;
+  isApproved: boolean;
   createdAt: string;
 }
 
@@ -29,6 +30,7 @@ type ProductRow = {
   price: number | null;
   stockQuantity: number | null;
   isActive: boolean | null;
+  isApproved: boolean | null;
   createdAt: string | null;
   sellerId: string | null;
 };
@@ -57,22 +59,19 @@ const AdminProducts = () => {
     setLoading(true);
     setError(null);
     try {
-      // 1) Fetch products first (include sellerId)
       const { data: productsData, error: productsError } = await supabase
         .from("products")
-        .select("id,title,price,stockQuantity,isActive,createdAt,sellerId")
+        .select("id,title,price,stockQuantity,isActive,isApproved,createdAt,sellerId")
         .order("createdAt", { ascending: false })
         .limit(200);
 
       if (productsError) throw productsError;
 
       const productRows: ProductRow[] = (productsData || []) as ProductRow[];
-
       const sellerIds = Array.from(
         new Set(productRows.map((p) => p.sellerId).filter((id): id is string => Boolean(id)))
       );
 
-      // 2) Fetch seller_profiles by userId IN sellerIds
       const sellerProfilesByUserId = new Map<string, SellerProfileRow>();
       if (sellerIds.length > 0) {
         const { data: sellerProfiles, error: sellerProfilesError } = await supabase
@@ -81,14 +80,12 @@ const AdminProducts = () => {
           .in("userId", sellerIds);
 
         if (sellerProfilesError) throw sellerProfilesError;
-
         (sellerProfiles || []).forEach((sp) => {
           const row = sp as SellerProfileRow;
           if (row?.userId) sellerProfilesByUserId.set(row.userId, row);
         });
       }
 
-      // 3) Fetch users by id IN sellerIds
       const usersById = new Map<string, UserRow>();
       if (sellerIds.length > 0) {
         const { data: usersData, error: usersError } = await supabase
@@ -97,14 +94,12 @@ const AdminProducts = () => {
           .in("id", sellerIds);
 
         if (usersError) throw usersError;
-
         (usersData || []).forEach((u) => {
           const row = u as UserRow;
           if (row?.id) usersById.set(row.id, row);
         });
       }
 
-      // 4) Map seller display name in code
       const mapped: Product[] = productRows.map((p) => {
         const sellerId = p.sellerId;
         const sellerProfile = sellerId ? sellerProfilesByUserId.get(sellerId) : undefined;
@@ -124,7 +119,8 @@ const AdminProducts = () => {
           seller: sellerName,
           price: p.price ?? 0,
           stockQuantity: p.stockQuantity ?? 0,
-          isActive: p.isActive ?? true,
+          isActive: p.isActive ?? false,
+          isApproved: p.isApproved !== false,
           createdAt: p.createdAt
             ? new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
             : "—",
@@ -141,22 +137,41 @@ const AdminProducts = () => {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  // Product moderation is post-publication enforcement. Admin may hide a live
-  // listing, but this screen must not publish an inactive seller draft on the
-  // seller's behalf. A dedicated moderation state would be required to safely
-  // distinguish an admin-hidden listing from a seller-owned draft for restore.
-  const hideListing = async (id: string) => {
+  const placeModerationHold = async (id: string) => {
     setActionLoading(id);
     setError(null);
     try {
+      // Legacy isApproved is now a moderation marker, not a pre-publication
+      // approval queue. Setting both values makes enforcement immediate and
+      // prevents the seller from simply republishing through update-product.
       const { error } = await supabase
         .from("products")
-        .update({ isActive: false })
+        .update({ isActive: false, isApproved: false })
         .eq("id", id);
       if (error) throw error;
-      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isActive: false } : p));
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isActive: false, isApproved: false } : p));
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to hide listing");
+      setError((err as Error).message || "Failed to place listing on moderation hold");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const releaseModerationHold = async (id: string) => {
+    setActionLoading(id);
+    setError(null);
+    try {
+      // Releasing a hold does not publish the seller's listing on their behalf.
+      // It only removes the enforcement block; the seller remains responsible
+      // for choosing to publish and must still pass normal eligibility gates.
+      const { error } = await supabase
+        .from("products")
+        .update({ isApproved: true })
+        .eq("id", id);
+      if (error) throw error;
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isApproved: true } : p));
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to release moderation hold");
     } finally {
       setActionLoading(null);
     }
@@ -168,8 +183,9 @@ const AdminProducts = () => {
       p.seller.toLowerCase().includes(search.toLowerCase())
   );
 
-  const activeProducts = filtered.filter((p) => p.isActive);
-  const inactiveProducts = filtered.filter((p) => !p.isActive);
+  const publishedProducts = filtered.filter((p) => p.isActive && p.isApproved);
+  const moderationHolds = filtered.filter((p) => !p.isApproved);
+  const unpublishedProducts = filtered.filter((p) => !p.isActive && p.isApproved);
 
   const renderTable = (data: Product[]) => (
     <Table>
@@ -179,7 +195,7 @@ const AdminProducts = () => {
           <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Seller</TableHead>
           <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Price</TableHead>
           <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Stock</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Published</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Status</TableHead>
           <TableHead className="text-right text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -219,12 +235,14 @@ const AdminProducts = () => {
                 <Badge
                   variant="outline"
                   className={
-                    p.isActive
-                      ? "border-emerald-500/30 text-success bg-success/10"
-                      : "border-slate-200 text-slate-400"
+                    !p.isApproved
+                      ? "border-red-500/30 text-danger bg-danger/10"
+                      : p.isActive
+                        ? "border-emerald-500/30 text-success bg-success/10"
+                        : "border-slate-200 text-slate-400"
                   }
                 >
-                  {p.isActive ? "Published" : "Unpublished"}
+                  {!p.isApproved ? "Moderation Hold" : p.isActive ? "Published" : "Unpublished"}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
@@ -242,9 +260,14 @@ const AdminProducts = () => {
                     <DropdownMenuItem onClick={() => navigate(`/product/${p.id}`)}>
                       <Eye className="h-3.5 w-3.5 mr-2" /> View Listing
                     </DropdownMenuItem>
-                    {p.isActive && (
-                      <DropdownMenuItem onClick={() => hideListing(p.id)} className="text-destructive">
-                        <Ban className="h-3.5 w-3.5 mr-2" /> Hide Listing
+                    {p.isApproved && p.isActive && (
+                      <DropdownMenuItem onClick={() => placeModerationHold(p.id)} className="text-destructive">
+                        <Ban className="h-3.5 w-3.5 mr-2" /> Place Moderation Hold
+                      </DropdownMenuItem>
+                    )}
+                    {!p.isApproved && (
+                      <DropdownMenuItem onClick={() => releaseModerationHold(p.id)}>
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Release Moderation Hold
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -262,10 +285,10 @@ const AdminProducts = () => {
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Product Moderation</h1>
         <p className="text-sm mt-1 text-muted-foreground/85">
-          {products.length} total listings · {activeProducts.length} published · {inactiveProducts.length} unpublished
+          {products.length} total · {publishedProducts.length} published · {moderationHolds.length} moderation holds · {unpublishedProducts.length} unpublished
         </p>
         <p className="text-xs mt-1 text-muted-foreground/65">
-          Listings publish without mandatory product approval. Use moderation actions to review and hide live listings that breach marketplace rules.
+          Eligible sellers publish directly. Moderation holds are post-publication enforcement and prevent a held listing from being republished until the hold is released.
         </p>
       </div>
 
@@ -290,14 +313,23 @@ const AdminProducts = () => {
       <Tabs defaultValue="all">
         <TabsList style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
           <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="active" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Published</TabsTrigger>
-          <TabsTrigger value="inactive" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Unpublished</TabsTrigger>
+          <TabsTrigger value="published" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Published</TabsTrigger>
+          <TabsTrigger value="holds" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Moderation Holds</TabsTrigger>
+          <TabsTrigger value="unpublished" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Unpublished</TabsTrigger>
         </TabsList>
-        {(["all", "active", "inactive"] as const).map((tab) => (
+        {(["all", "published", "holds", "unpublished"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
-                {renderTable(tab === "all" ? filtered : tab === "active" ? activeProducts : inactiveProducts)}
+                {renderTable(
+                  tab === "all"
+                    ? filtered
+                    : tab === "published"
+                      ? publishedProducts
+                      : tab === "holds"
+                        ? moderationHolds
+                        : unpublishedProducts,
+                )}
               </div>
             </div>
           </TabsContent>
