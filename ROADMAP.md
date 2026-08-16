@@ -1,6 +1,6 @@
 # Loadify Market — Status & Roadmap
 
-_Last updated: April 2026_
+_Last updated: 16 August 2026_
 
 This document reflects the actual completed state of the platform and remaining work.
 
@@ -26,8 +26,9 @@ This document reflects the actual completed state of the platform and remaining 
 - [x] Product Catalog page (grid/list, filters, sort, pagination, search)
 - [x] Product Detail page (image gallery, specs, seller info, reviews, add to cart/wishlist)
 - [x] Product Creation/Edit (multi-image upload, description, category, VAT calculator, stock)
-- [x] Product approval flow (admin approves / autoApprove feature flag)
-- [x] Products go through serverless functions (`create-product.ts`, `update-product.ts`)
+- [x] Seller self-publish flow: eligible sellers publish listings live without mandatory per-product admin approval
+- [x] Post-publication product moderation/enforcement remains available to admins for marketplace-rule violations, reports, fraud/spam and prohibited content
+- [x] Products go through serverless functions (`create-product.ts`, `update-product.ts`), which own publication eligibility server-side
 - [x] Service listings (listingContext=service skips stock/shipping)
 - [x] Featured categories on homepage
 
@@ -90,8 +91,8 @@ This document reflects the actual completed state of the platform and remaining 
 #### Admin Panel ✅
 - [x] User management (view, suspend, edit roles)
 - [x] Buyer management
-- [x] Seller approvals (list, force-activate, suspend, warn, reactivate)
-- [x] Product moderation (approve/reject, `autoApproveProducts` flag)
+- [x] Seller approvals (list, force-activate, suspend, warn, reactivate) — seller verification/account control, not product approval
+- [x] Post-publication product moderation (view, hide/deactivate, review flagged listings); no mandatory product approval queue
 - [x] Order oversight (view all, force status)
 - [x] Payout requests (approve, reject, complete)
 - [x] Stripe Connect events viewer
@@ -133,7 +134,8 @@ This document reflects the actual completed state of the platform and remaining 
 - [x] CSRF-equivalent protection (internal secret header on function-to-function calls)
 - [x] Secure headers (netlify.toml: CSP, X-Frame-Options, HSTS, etc.)
 - [x] Role escalation prevention (migration 410, RLS policies)
-- [x] Feature flags (sellerRegistration, buyerRegistration, rfqSystem, reviewSystem, autoApproveProducts, maintenanceMode)
+- [x] Feature flags (sellerRegistration, buyerRegistration, rfqSystem, reviewSystem, maintenanceMode)
+- [x] Product publication eligibility enforced server-side; clients cannot supply `isApproved`
 - [x] Maintenance mode gate (frontend + backend 503)
 
 ### 5.2 Performance
@@ -197,10 +199,19 @@ This document reflects the actual completed state of the platform and remaining 
 
 ---
 
+## Product publication business contract
+
+- Seller/account verification and product moderation are separate concerns.
+- An eligible seller may publish a valid listing directly; Loadify does not manually certify the truth or physical condition of each product before publication.
+- The seller remains responsible for listing accuracy, product description, photos, price, ownership/right to sell and compliance with marketplace rules.
+- Loadify retains post-publication moderation and enforcement powers, including reviewing reports and suspicious activity and hiding/removing listings or restricting seller accounts where appropriate.
+- Drafts remain seller-controlled and are not published by admin merely because they exist.
+- Seller publication eligibility remains enforced by the existing seller-status, Stripe activation, pause-state, listing-limit and listing/shipping requirements.
+
 ## Notes
 
 - All core marketplace flows (browse → cart → checkout → orders → returns → disputes) are fully functional
 - Database schema is complete with 50+ migrations applied
 - All serverless functions use service-role Supabase client where needed and JWT verification for protected endpoints
-- Feature flags allow gradual rollout / emergency disabling of any subsystem without a deployment
+- Feature flags remain available for actual optional subsystems; mandatory product approval is not a feature toggle
 - PostCSS and all direct dependencies have no known vulnerabilities (`npm audit` clean)
