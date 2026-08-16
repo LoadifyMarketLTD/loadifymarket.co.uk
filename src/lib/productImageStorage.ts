@@ -71,7 +71,8 @@ export function resolveProductImageMetadata(file: File): {
     );
   }
 
-  const contentType = normalizeMime(file.type) ?? mimeFromFilename(file.name);
+  const suppliedMime = file.type.trim();
+  const contentType = suppliedMime ? normalizeMime(suppliedMime) : mimeFromFilename(file.name);
   if (!contentType) {
     throw new ProductImageStorageError(
       'UNSUPPORTED_TYPE',
