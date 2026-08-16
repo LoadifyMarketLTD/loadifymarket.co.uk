@@ -44,6 +44,8 @@ describe('update-product', () => {
       stockStatus: string | null;
       listingStatus: string | null;
       reservedUntil: string | null;
+      isActive: boolean;
+      isApproved: boolean | null;
     }>;
   }) {
     const productUpdates: Array<Record<string, unknown>> = [];
@@ -58,6 +60,8 @@ describe('update-product', () => {
       stockStatus: 'out_of_stock',
       listingStatus: 'active',
       reservedUntil: null,
+      isActive: false,
+      isApproved: true,
       ...args?.productRow,
     };
 
@@ -125,6 +129,8 @@ describe('update-product', () => {
 
         if (table === 'product_shipping') {
           return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ count: 1, data: [], error: null }),
             delete: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null }),
             }),
@@ -279,5 +285,56 @@ describe('update-product', () => {
     expect(body.code).toBe('LISTING_LOCKED');
     expect(body.error).toMatch(/critical listing fields are locked/i);
     expect(body.locks?.[0]?.orderLabel).toBe('LM-1000001');
+  });
+
+  it('publishes an eligible seller draft without an admin approval step', async () => {
+    const { productUpdates } = mockSupabase({
+      productRow: {
+        isActive: false,
+        isApproved: true,
+        listingContext: 'product',
+        stockQuantity: 5,
+        stockStatus: 'low_stock',
+      },
+    });
+    const { handler } = await import('../update-product');
+
+    const res = await handler(
+      makeEvent({
+        id: 'product-1',
+        isActive: true,
+        isApproved: false,
+      }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(productUpdates).toHaveLength(1);
+    expect(productUpdates[0]).toMatchObject({ isActive: true });
+    expect(productUpdates[0]).not.toHaveProperty('isApproved');
+  });
+
+  it('blocks a seller from republishing a listing placed on moderation hold', async () => {
+    const { productUpdates } = mockSupabase({
+      productRow: {
+        isActive: false,
+        isApproved: false,
+        listingContext: 'product',
+        stockQuantity: 5,
+        stockStatus: 'low_stock',
+      },
+    });
+    const { handler } = await import('../update-product');
+
+    const res = await handler(
+      makeEvent({ id: 'product-1', isActive: true }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(409);
+    expect(productUpdates).toHaveLength(0);
+    const body = JSON.parse(res.body as string) as { code?: string; error?: string };
+    expect(body.code).toBe('LISTING_MODERATION_HOLD');
+    expect(body.error).toMatch(/platform moderation/i);
   });
 });
