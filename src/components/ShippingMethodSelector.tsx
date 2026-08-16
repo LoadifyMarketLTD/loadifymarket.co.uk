@@ -10,6 +10,12 @@ interface ShippingMethodSelectorProps {
   onChange: (selectedIds: string[]) => void;
 }
 
+function getValidRates(method: ShippingMethod): number[] {
+  return (method.shipping_rates ?? [])
+    .map((rate) => Number(rate.price))
+    .filter((price) => Number.isFinite(price) && price >= 0);
+}
+
 export default function ShippingMethodSelector({
   selectedMethodIds,
   onChange,
@@ -24,11 +30,10 @@ export default function ShippingMethodSelector({
           .from('shipping_methods')
           .select('*, shipping_rates(*)')
           .eq('active', true)
-          .eq('courier', 'Royal Mail')
           .order('name', { ascending: true });
 
         if (error) throw error;
-        setMethods(data || []);
+        setMethods((data || []).filter((method) => getValidRates(method).length > 0));
       } catch (err) {
         console.error('Error fetching shipping methods:', err);
       } finally {
@@ -59,8 +64,7 @@ export default function ShippingMethodSelector({
     <div className="space-y-2">
       {methods.map((method) => {
         const isSelected = selectedMethodIds.includes(method.id);
-        const rate = method.shipping_rates?.[0];
-        const price = rate ? `£${Number(rate.price).toFixed(2)}` : 'Free';
+        const price = Math.min(...getValidRates(method));
 
         return (
           <button
@@ -105,7 +109,7 @@ export default function ShippingMethodSelector({
                 isSelected ? 'text-success' : 'text-gray-600'
               }`}
             >
-              {price}
+              £{price.toFixed(2)}
             </span>
           </button>
         );
