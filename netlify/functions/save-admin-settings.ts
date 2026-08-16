@@ -25,6 +25,18 @@ const METHODS = 'POST, OPTIONS';
 // Only these keys may be upserted via this endpoint.
 const ALLOWED_KEYS = new Set(['feature_flags', 'maintenance_mode', 'platform_config']);
 
+function sanitizeSettingValue(key: string, value: unknown): unknown {
+  if (key !== 'feature_flags' || value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return value;
+  }
+
+  // Mandatory per-product approval is no longer part of the business contract.
+  // Strip the legacy flag at the trusted server boundary so an older admin UI
+  // cannot silently reintroduce it when saving unrelated platform settings.
+  const { autoApproveProducts: _legacyProductApprovalFlag, ...featureFlags } = value as Record<string, unknown>;
+  return featureFlags;
+}
+
 async function authenticateAdmin(event: HandlerEvent) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -102,7 +114,7 @@ export const handler: Handler = async (event) => {
   for (const row of settings) {
     const { error } = await supabase
       .from('platform_settings')
-      .upsert({ key: row.key, value: row.value }, { onConflict: 'key' });
+      .upsert({ key: row.key, value: sanitizeSettingValue(row.key, row.value) }, { onConflict: 'key' });
     if (error) errors.push(`${row.key}: ${error.message}`);
   }
 
