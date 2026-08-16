@@ -340,14 +340,14 @@ export default function MobileInboxPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="h-[100dvh] bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="h-[100dvh] min-h-0 overflow-hidden flex flex-col bg-background">
       {/* ── Header ── */}
       <div
         className="shrink-0 sticky top-0 z-40 bg-background/[0.97]"
@@ -459,7 +459,10 @@ export default function MobileInboxPage() {
       )}
 
       {/* ── List ── */}
-      <div style={{ flex: 1, paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}>
+      <div
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+        style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}
+      >
         {loading ? (
           <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
             {[...Array(6)].map((_, i) => (
