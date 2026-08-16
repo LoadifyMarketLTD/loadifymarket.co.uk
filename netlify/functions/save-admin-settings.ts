@@ -33,7 +33,8 @@ function sanitizeSettingValue(key: string, value: unknown): unknown {
   // Mandatory per-product approval is no longer part of the business contract.
   // Strip the legacy flag at the trusted server boundary so an older admin UI
   // cannot silently reintroduce it when saving unrelated platform settings.
-  const { autoApproveProducts: _legacyProductApprovalFlag, ...featureFlags } = value as Record<string, unknown>;
+  const featureFlags = { ...(value as Record<string, unknown>) };
+  delete featureFlags.autoApproveProducts;
   return featureFlags;
 }
 
