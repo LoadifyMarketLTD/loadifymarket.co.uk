@@ -71,7 +71,7 @@ export default function MobileCategoriesPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-background"
+      className="h-[100dvh] min-h-0 overflow-hidden flex flex-col bg-background"
     >
       {/* ── Sticky header ── */}
       <div
@@ -99,7 +99,7 @@ export default function MobileCategoriesPage() {
 
       {/* ── Category rows ── */}
       <div
-        className="flex-1 overflow-y-auto"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
       >
         {/* "All Categories" is always the first row */}
