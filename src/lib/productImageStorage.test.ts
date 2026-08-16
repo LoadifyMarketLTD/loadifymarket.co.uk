@@ -60,6 +60,12 @@ describe('productImageStorage', () => {
     );
   });
 
+  it('does not trust a supported filename extension when the browser reports an unsupported MIME', () => {
+    expect(() => resolveProductImageMetadata(makeFile('renamed.jpg', 'image/heic'))).toThrow(
+      ProductImageStorageError,
+    );
+  });
+
   it('rejects oversized files before upload', () => {
     const file = makeFile('large.jpg', 'image/jpeg', MAX_PRODUCT_IMAGE_SIZE + 1);
     expect(() => resolveProductImageMetadata(file)).toThrow(/up to 5MB/i);
