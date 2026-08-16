@@ -117,7 +117,7 @@ export const handler: Handler = async (event) => {
 
   const { data: existingProduct, error: fetchError } = await supabase
     .from('products')
-    .select('sellerId, title, type, condition, price, listingContext, stockQuantity, stockStatus, listingStatus, reservedUntil, isActive')
+    .select('sellerId, title, type, condition, price, listingContext, stockQuantity, stockStatus, listingStatus, reservedUntil, isActive, isApproved')
     .eq('id', productId)
     .maybeSingle<{
       sellerId: string;
@@ -131,6 +131,7 @@ export const handler: Handler = async (event) => {
       listingStatus: string | null;
       reservedUntil: string | null;
       isActive: boolean;
+      isApproved: boolean | null;
     }>();
   if (fetchError || !existingProduct) {
     return { statusCode: 404, body: JSON.stringify({ error: 'Product not found' }) };
@@ -190,9 +191,23 @@ export const handler: Handler = async (event) => {
     updateData.stockStatus = calculateStockStatus(nextContext, normalizedStockQuantity);
   }
 
-  const wantsPublished = updateData.isActive === true || (!hasOwn(updateData, 'isActive') && existingProduct.isActive);
+  const explicitlyPublishing = updateData.isActive === true;
+  const wantsPublished = explicitlyPublishing || (!hasOwn(updateData, 'isActive') && existingProduct.isActive);
   if (wantsPublished && !sellerCanPublish) {
     return { statusCode: 409, body: JSON.stringify({ error: 'Complete seller setup and activate Stripe payments before publishing.' }) };
+  }
+
+  // isApproved is retained as a legacy compatibility/moderation marker only.
+  // New listings start true; false means an admin has placed this listing on a
+  // moderation hold. Sellers may edit a held listing but cannot republish it.
+  if (!isAdmin && explicitlyPublishing && existingProduct.isApproved === false) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: 'This listing is currently restricted by platform moderation and cannot be published. Contact support if you believe this is a mistake.',
+        code: 'LISTING_MODERATION_HOLD',
+      }),
+    };
   }
 
   if (wantsPublished && nextContext === 'product') {
@@ -261,14 +276,6 @@ export const handler: Handler = async (event) => {
     Object.keys(dataToUpdate).forEach((key) => {
       if (dataToUpdate[key] === undefined) delete dataToUpdate[key];
     });
-  }
-
-  // Mandatory per-product review is not part of the marketplace contract.
-  // When an eligible seller publishes (including an older draft that may have
-  // isApproved=false), the server marks the listing approved. The client still
-  // cannot submit or override isApproved directly.
-  if (wantsPublished && sellerCanPublish) {
-    dataToUpdate.isApproved = true;
   }
 
   // Save shipping first. If that fails, the listing itself remains unchanged.
