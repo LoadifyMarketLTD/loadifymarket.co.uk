@@ -370,7 +370,7 @@ export default function ProductFormPage() {
       const isAdmin = user.role === 'admin';
       const specs = buildSpecs();
 
-      // Build the product payload (isApproved is now set server-side via create-product / update-product)
+      // Publication visibility fields are owned by create-product / update-product.
       const productData = {
         title: formData.title,
         description: formData.description,
@@ -439,7 +439,7 @@ export default function ProductFormPage() {
         }
         setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
       } else {
-        // Create new product via create-product (backend sets isApproved)
+        // Create new product via create-product; server owns publication state.
         const res = await authorizedFetch('/.netlify/functions/create-product', {
           method: 'POST',
           body: JSON.stringify({
@@ -453,7 +453,7 @@ export default function ProductFormPage() {
           const payload = await res.json().catch(() => ({}));
           throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
         }
-        const created = await res.json() as { id: string; isApproved: boolean };
+        const created = await res.json() as { id: string; isActive: boolean };
 
         // Mark first product created for onboarding completion tracking.
         // Non-fatal: onboarding checklist will still derive this from product count.
@@ -505,12 +505,12 @@ export default function ProductFormPage() {
 
         setSuccessMessage(
           publishMode
-            ? (created.isApproved
+            ? (created.isActive
                 ? 'Product created and is now live!'
-                : 'Product created! It will be visible after admin approval.')
+                : 'Product created, but it is not live yet. Check seller eligibility and listing requirements.')
             : 'Draft saved. You can continue editing and publish when ready.'
         );
-        if (publishMode && created.id) {
+        if (publishMode && created.id && created.isActive) {
           setPublishedProductId(created.id);
           trackPublishListing(created.id, formData.title);
         }
@@ -595,6 +595,18 @@ export default function ProductFormPage() {
   }
 
   const isBulkType = BULK_PRODUCT_TYPES.includes(formData.type);
+  const visibleSections = [
+    'basic',
+    'category',
+    'pricing',
+    ...(listingContext === 'product' ? ['inventory'] : []),
+    'images',
+    ...(listingContext === 'product' ? ['shipping'] : []),
+    'specifications',
+    ...(isBulkType ? ['typeDetails'] : []),
+    'publish',
+  ];
+  const sectionNumber = (section: string) => visibleSections.indexOf(section) + 1;
 
   return (
     <div className="bg-background min-h-screen">
@@ -741,8 +753,8 @@ export default function ProductFormPage() {
               </div>
             )}
 
-            {/* ─── SECTION 1: Basic Information ─────────────────────────── */}
-            <Section title="1. Basic Information">
+            {/* ─── Basic Information ─────────────────────────────────────── */}
+            <Section title={`${sectionNumber('basic')}. Basic Information`}>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
                   Product Title {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
@@ -832,8 +844,8 @@ export default function ProductFormPage() {
               </div>
             </Section>
 
-            {/* ─── SECTION 2: Category ──────────────────────────────────── */}
-            <Section title="2. Category">
+            {/* ─── Category ──────────────────────────────────────────────── */}
+            <Section title={`${sectionNumber('category')}. Category`}>
               {errors.categoryId && (
                 <div className="mb-3 p-2 bg-red-950/30 border border-danger/30 rounded flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
@@ -850,8 +862,8 @@ export default function ProductFormPage() {
               />
             </Section>
 
-            {/* ─── SECTION 3: Pricing ───────────────────────────────────── */}
-            <Section title="3. Pricing">
+            {/* ─── Pricing ───────────────────────────────────────────────── */}
+            <Section title={`${sectionNumber('pricing')}. Pricing`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
@@ -905,9 +917,9 @@ export default function ProductFormPage() {
               )}
             </Section>
 
-            {/* ─── SECTION 4: Inventory ─────────────────────────────────── */}
+            {/* ─── Inventory ─────────────────────────────────────────────── */}
             {listingContext === 'product' && (
-            <Section title="4. Inventory">
+            <Section title={`${sectionNumber('inventory')}. Inventory`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
@@ -959,8 +971,8 @@ export default function ProductFormPage() {
             </Section>
             )} {/* end listingContext === 'product' — Inventory section */}
 
-            {/* ─── SECTION 5: Media ─────────────────────────────────────── */}
-            <Section title="5. Product Images">
+            {/* ─── Media ─────────────────────────────────────────────────── */}
+            <Section title={`${sectionNumber('images')}. Product Images`}>
               <p className="text-sm text-slate-400 mb-4">
                 Upload up to 10 images. The first image will be your main product photo.
                 Use clear, well-lit photos showing the actual product.
@@ -972,9 +984,9 @@ export default function ProductFormPage() {
               />
             </Section>
 
-            {/* ─── SECTION 6: Dimensions & Shipping ────────────────────── */}
+            {/* ─── Dimensions & Shipping ─────────────────────────────────── */}
             {listingContext === 'product' && (
-            <Section title="6. Dimensions &amp; Shipping">
+            <Section title={`${sectionNumber('shipping')}. Dimensions & Shipping`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Length (cm)</label>
@@ -1107,8 +1119,8 @@ export default function ProductFormPage() {
             </Section>
             )} {/* end listingContext === 'product' — Dimensions & Shipping section */}
 
-            {/* ─── SECTION 7: Specifications ────────────────────────────── */}
-            <Section title="7. Specifications">
+            {/* ─── Specifications ────────────────────────────────────────── */}
+            <Section title={`${sectionNumber('specifications')}. Specifications`}>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Brand</label>
@@ -1191,9 +1203,9 @@ export default function ProductFormPage() {
               </div>
             </Section>
 
-            {/* ─── SECTION 8: Listing Type Details (conditional) ─────────── */}
+            {/* ─── Listing Type Details (conditional) ───────────────────── */}
             {isBulkType && (
-              <Section title="8. Listing Type Details">
+              <Section title={`${sectionNumber('typeDetails')}. Listing Type Details`}>
                 {/* Pallet-specific fields */}
                 {formData.type === 'pallet' && (
                   <div className="mb-4">
@@ -1309,20 +1321,22 @@ export default function ProductFormPage() {
               </Section>
             )}
 
-            {/* ─── SECTION 9: Publish / Save ────────────────────────────── */}
+            {/* ─── Publish / Save ────────────────────────────────────────── */}
             <div className="bg-surface border border-white/10 rounded-xl p-6">
               <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">
-                {id ? '9. Save Changes' : '9. Publish Listing'}
+                {id
+                  ? `${sectionNumber('publish')}. Save Changes`
+                  : `${sectionNumber('publish')}. Publish Listing`}
               </h2>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="text-sm text-slate-400">
                   {id ? (
-                    <p>Save your changes. Published listings require admin approval before going live.</p>
+                    <p>Save your changes. Eligible published listings remain live immediately; Loadify may moderate or remove listings that breach marketplace rules.</p>
                   ) : (
                     <>
                       <p className="font-medium text-slate-300 mb-1">Ready to list your product?</p>
-                      <p>Use <strong>Save as Draft</strong> to continue editing later, or <strong>Publish</strong> to submit for admin approval.</p>
+                      <p>Use <strong>Save as Draft</strong> to continue editing later, or <strong>Publish</strong> to make the listing live once seller eligibility and listing requirements are satisfied. Loadify moderates and enforces marketplace rules after publication.</p>
                     </>
                   )}
                 </div>
