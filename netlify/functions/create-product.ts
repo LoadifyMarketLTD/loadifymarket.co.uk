@@ -2,16 +2,17 @@
  * create-product
  *
  * Serverless function responsible for all new product/listing inserts.
- * Moving this out of the client enforces platform flags server-side:
+ * Marketplace publication is controlled by seller eligibility, not mandatory
+ * per-product admin approval. Admin moderation/enforcement remains separate.
  *
- *  - maintenanceMode  → 503 for non-admin sellers
- *  - autoApproveProducts → backend sets isApproved (client cannot override)
+ *  - maintenanceMode → 503 for non-admin sellers
  *  - seller activation → only fully active sellers may publish public listings
+ *  - approval state → eligible sellers/admins publish without a manual review gate
  */
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-import { isMaintenanceMode, getFeatureFlags } from './_shared/platformFlags';
+import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 
 const CREATE_ALLOWED_FIELDS = [
@@ -209,10 +210,10 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const flags = await getFeatureFlags(supabase);
-  const isApproved: boolean = isAdmin
-    ? true
-    : sellerCanPublish && Boolean(flags.autoApproveProducts);
+  // Product truth is the seller's responsibility. Loadify does not certify each
+  // listing before publication. Eligibility still gates public publication, while
+  // admin moderation/enforcement can hide or remove listings after publication.
+  const isApproved = isAdmin || sellerCanPublish;
 
   if (!isAdmin) {
     const countRes = await supabase
