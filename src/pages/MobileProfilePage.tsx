@@ -231,7 +231,7 @@ export default function MobileProfilePage() {
 
   return (
     <div
-      className="md:hidden min-h-screen bg-background"
+      className="md:hidden h-[100dvh] overflow-y-auto overscroll-y-contain bg-background"
       style={{
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
