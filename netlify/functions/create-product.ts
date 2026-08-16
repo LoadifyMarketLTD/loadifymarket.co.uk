@@ -241,6 +241,13 @@ export const handler: Handler = async (event) => {
   }
   const stockQuantity = normalizedListingContext === 'service' ? 0 : parsedStockQuantity;
 
+  if (Boolean(isActive) && normalizedListingContext === 'product' && stockQuantity <= 0) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Add at least 1 unit of stock before publishing this product.' }),
+    };
+  }
+
   const productData: Record<string, unknown> = {
     ...allowedFields,
     title,
