@@ -149,7 +149,7 @@ describe('create-product seller self-publish contract', () => {
     });
   });
 
-  it('does not allow the client to override the server-owned approval marker', async () => {
+  it('does not allow the client to override the server-owned moderation marker', async () => {
     const { insertedProducts } = mockSupabase();
     const { handler } = await import('../create-product');
 
@@ -173,7 +173,7 @@ describe('create-product seller self-publish contract', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/seller setup|stripe payments/i);
   });
 
-  it('keeps a seller draft inactive without requiring an admin review step', async () => {
+  it('keeps a seller draft inactive without putting it on moderation hold', async () => {
     const { insertedProducts } = mockSupabase();
     const { handler } = await import('../create-product');
 
@@ -191,6 +191,7 @@ describe('create-product seller self-publish contract', () => {
     expect(res.statusCode).toBe(200);
     expect(insertedProducts[0]).toMatchObject({
       isActive: false,
+      isApproved: true,
       sellerId: 'seller-1',
     });
   });
