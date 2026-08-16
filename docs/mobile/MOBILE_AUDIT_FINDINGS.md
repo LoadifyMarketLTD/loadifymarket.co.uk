@@ -11,10 +11,12 @@ The authoritative engineering gate for mobile hardening is the local Windows rep
 Required static/build sequence:
 
 1. `npm run lint`
-2. `npm run typecheck`
+2. `npx tsc -b --pretty false`
 3. focused/unit tests for the remediation
 4. `npm run build`
 5. Android/device validation where applicable
+
+The repository currently has no `npm run typecheck` script. `npm run build` also executes `tsc -b`, but the explicit TypeScript command above is used as a separately visible validation gate.
 
 GitHub is used for branch isolation, diff review, PR history and merge control. GitHub Actions is supplementary only. If Actions cannot start because of billing/account state, that is an external CI condition and **must not be reported as a code failure or as a blocker to local PowerShell validation**.
 
@@ -66,7 +68,7 @@ Current branch changes make `MobileAppLayout` own `100dvh`, reserve the top safe
 
 - exact diff reviewed and formatting churn self-corrected;
 - Netlify deploy preview built successfully;
-- local PowerShell lint/typecheck/tests/build remain the authoritative static/build gate;
+- local PowerShell lint/TypeScript/tests/build remain the authoritative static/build gate;
 - Android APK/device validation remains pending.
 
 Therefore MOB-001/MOB-002 remain `IN PROGRESS`, not `RESOLVED`.
@@ -79,7 +81,7 @@ A separate draft PR (`#483`) now keeps PWA service-worker registration on regula
 
 - exact diff reviewed: one source file, no business/auth/payment/schema/dependency changes;
 - Netlify deploy preview built successfully;
-- local PowerShell lint/typecheck/tests/build remain the authoritative static/build gate;
+- local PowerShell lint/TypeScript/tests/build remain the authoritative static/build gate;
 - native WebView cleanup and web PWA behaviour still require runtime verification.
 
 Therefore MOB-012/MOB-013 remain `IN PROGRESS`, not `RESOLVED`.
@@ -100,10 +102,11 @@ A separate draft PR (`#484`) isolates the mobile seller media remediation from s
 - no payment, auth, RLS, schema, shipping, product lifecycle or `create-product` contract changes are present;
 - Netlify deploy/check suite completed successfully and produced a deploy preview;
 - GitHub Actions did not execute because of the account billing condition; this is supplementary CI only and is not treated as a code failure;
-- authoritative static/build evidence must come from local PowerShell: lint → typecheck → focused/unit tests → production build;
+- **local PowerShell static/build gate PASSED on 16 August 2026 on exact PR head `1ee7d90eda78c048deda6672bdb6135ef411d7ab`**;
+- PowerShell evidence: clean/stashed worktree before checkout, `origin/main` verified at `22e13a6933c7c7a3bc423bffbd0364eb34f35a04`, exact PR head checkout verified, lint PASS, explicit `npx tsc -b --pretty false` PASS, focused seller-media suite **7/7 PASS**, full suite **138/138 PASS across 21/21 test files**, production build PASS, `git diff --check` PASS, and diff surface exactly the expected three files;
 - Android camera/gallery, large-file rejection, multi-photo, forced partial failure/retry, Storage cleanup and final publish still require real-device validation.
 
-Therefore MOB-004/MOB-023 remain `IN PROGRESS`, not `RESOLVED`.
+Therefore MOB-004/MOB-023 remain `IN PROGRESS`, not `RESOLVED`: the code/static/build gate is accepted, but the required real-device seller-media gate is still outstanding.
 
 ---
 
