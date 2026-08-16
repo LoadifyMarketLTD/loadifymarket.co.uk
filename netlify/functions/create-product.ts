@@ -7,7 +7,7 @@
  *
  *  - maintenanceMode → 503 for non-admin sellers
  *  - seller activation → only fully active sellers may publish public listings
- *  - approval state → eligible sellers/admins publish without a manual review gate
+ *  - moderation marker → new listings are not held for manual review
  */
 
 import type { Handler } from '@netlify/functions';
@@ -210,10 +210,11 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  // Product truth is the seller's responsibility. Loadify does not certify each
-  // listing before publication. Eligibility still gates public publication, while
-  // admin moderation/enforcement can hide or remove listings after publication.
-  const isApproved = isAdmin || sellerCanPublish;
+  // Legacy column compatibility: true now means "not held by moderation", not
+  // "manually approved by admin". New listings and drafts therefore start true.
+  // Publication visibility remains controlled independently by isActive plus
+  // seller eligibility; admin enforcement may later place a listing on hold.
+  const isApproved = true;
 
   if (!isAdmin) {
     const countRes = await supabase
