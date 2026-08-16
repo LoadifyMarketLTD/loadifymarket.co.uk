@@ -213,6 +213,13 @@ export const handler: Handler = async (event) => {
     return { statusCode: 409, body: JSON.stringify({ error: 'Complete seller setup and activate Stripe payments before publishing.' }) };
   }
 
+  if (explicitlyPublishing && nextContext === 'product' && normalizedStockQuantity <= 0) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Add at least 1 unit of stock before publishing this product.' }),
+    };
+  }
+
   // isApproved is retained as a legacy compatibility/moderation marker only.
   // New listings start true; false means an admin has placed this listing on a
   // moderation hold. Sellers may edit a held listing but cannot republish it.
