@@ -14,7 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 
-type FeatureKey = "sellerRegistration" | "buyerRegistration" | "rfqSystem" | "reviewSystem" | "maintenanceMode" | "autoApproveProducts";
+type FeatureKey = "sellerRegistration" | "buyerRegistration" | "rfqSystem" | "reviewSystem" | "maintenanceMode";
 type Features = Record<FeatureKey, boolean>;
 
 interface PlatformConfig {
@@ -37,7 +37,6 @@ const DEFAULT_FEATURES: Features = {
   rfqSystem: false,
   reviewSystem: true,
   maintenanceMode: false,
-  autoApproveProducts: false,
 };
 
 const DEFAULT_CONFIG: PlatformConfig = {
@@ -242,7 +241,6 @@ const AdminSettings = () => {
             { key: "buyerRegistration" as const, label: "Buyer Registration", desc: "Allow new buyers to create accounts" },
             { key: "rfqSystem" as const, label: "RFQ / Quote System", desc: "Optional custom quotes flow. Keep disabled for fixed-price marketplace launch." },
             { key: "reviewSystem" as const, label: "Reviews & Ratings", desc: "Allow buyers to leave reviews on sellers" },
-            { key: "autoApproveProducts" as const, label: "Auto-Approve Products", desc: "Skip manual review for new product listings" },
             { key: "maintenanceMode" as const, label: "Maintenance Mode", desc: "Show maintenance page to all users (admins excluded)" },
           ].map((item) => (
             <div key={item.key} className="flex items-center justify-between">
