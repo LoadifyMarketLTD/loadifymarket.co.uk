@@ -19,6 +19,7 @@ const UPDATE_ALLOWED_FIELDS = [
   'images', 'specifications', 'weight', 'dimensions', 'palletInfo', 'logisticsInfo',
   'isHandmade', 'isUnique', 'artistName', 'isActive',
 ] as const;
+const PRODUCT_IMAGES_BUCKET = 'product-images';
 
 function hasOwn(obj: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key);
@@ -47,6 +48,20 @@ function calculateStockStatus(context: 'product' | 'service', quantity: number):
   if (quantity > 10) return 'in_stock';
   if (quantity > 0) return 'low_stock';
   return 'out_of_stock';
+}
+
+function extractOwnedProductImagePath(rawUrl: string, supabaseUrl: string, sellerId: string): string | null {
+  try {
+    const url = new URL(rawUrl);
+    const storageOrigin = new URL(supabaseUrl).origin;
+    const publicPrefix = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
+    if (url.origin !== storageOrigin || !url.pathname.startsWith(publicPrefix)) return null;
+
+    const path = decodeURIComponent(url.pathname.slice(publicPrefix.length));
+    return path.startsWith(`sellers/${sellerId}/`) ? path : null;
+  } catch {
+    return null;
+  }
 }
 
 export const handler: Handler = async (event) => {
@@ -117,7 +132,7 @@ export const handler: Handler = async (event) => {
 
   const { data: existingProduct, error: fetchError } = await supabase
     .from('products')
-    .select('sellerId, title, type, condition, price, listingContext, stockQuantity, stockStatus, listingStatus, reservedUntil, isActive, isApproved')
+    .select('sellerId, title, type, condition, price, listingContext, stockQuantity, stockStatus, listingStatus, reservedUntil, isActive, isApproved, images')
     .eq('id', productId)
     .maybeSingle<{
       sellerId: string;
@@ -132,6 +147,7 @@ export const handler: Handler = async (event) => {
       reservedUntil: string | null;
       isActive: boolean;
       isApproved: boolean | null;
+      images: string[] | null;
     }>();
   if (fetchError || !existingProduct) {
     return { statusCode: 404, body: JSON.stringify({ error: 'Product not found' }) };
@@ -278,6 +294,16 @@ export const handler: Handler = async (event) => {
     });
   }
 
+  const removedImagePaths = (() => {
+    if (!Array.isArray(dataToUpdate.images)) return [];
+    const nextImages = dataToUpdate.images.filter((value): value is string => typeof value === 'string');
+    const previousImages = Array.isArray(existingProduct.images) ? existingProduct.images : [];
+    return [...new Set(previousImages
+      .filter((url) => !nextImages.includes(url))
+      .map((url) => extractOwnedProductImagePath(url, supabaseUrl, existingProduct.sellerId))
+      .filter((path): path is string => Boolean(path)))];
+  })();
+
   // Save shipping first. If that fails, the listing itself remains unchanged.
   if (Array.isArray(shippingMethodIds)) {
     const { data: previousShipping, error: previousError } = await supabase
@@ -308,6 +334,17 @@ export const handler: Handler = async (event) => {
     if (updateError) {
       console.error('update-product: update failed:', updateError.message);
       return { statusCode: 500, body: JSON.stringify({ error: 'Failed to update listing. Please try again.' }) };
+    }
+  }
+
+  // Cleanup only after the database no longer references the removed images.
+  // Failure here leaves an orphaned object, never a broken product image reference.
+  if (removedImagePaths.length > 0) {
+    const { error: cleanupError } = await supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .remove(removedImagePaths);
+    if (cleanupError) {
+      console.error('update-product: image cleanup failed after listing save:', cleanupError.message);
     }
   }
 

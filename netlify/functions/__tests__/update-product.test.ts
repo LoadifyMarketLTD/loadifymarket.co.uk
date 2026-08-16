@@ -33,6 +33,7 @@ describe('update-product', () => {
   function mockSupabase(args?: {
     role?: 'seller' | 'admin';
     orders?: Array<{ id: string; orderNumber?: string | null; status: string; createdAt?: string | null }>;
+    productUpdateError?: string;
     productRow?: Partial<{
       sellerId: string;
       title: string | null;
@@ -46,9 +47,11 @@ describe('update-product', () => {
       reservedUntil: string | null;
       isActive: boolean;
       isApproved: boolean | null;
+      images: string[] | null;
     }>;
   }) {
     const productUpdates: Array<Record<string, unknown>> = [];
+    const storageRemovals: string[][] = [];
     const productRow = {
       sellerId: 'seller-1',
       title: 'Existing listing',
@@ -62,6 +65,7 @@ describe('update-product', () => {
       reservedUntil: null,
       isActive: false,
       isApproved: true,
+      images: [] as string[],
       ...args?.productRow,
     };
 
@@ -71,6 +75,14 @@ describe('update-product', () => {
           data: { user: { id: 'seller-1' } },
           error: null,
         }),
+      },
+      storage: {
+        from: vi.fn(() => ({
+          remove: vi.fn().mockImplementation(async (paths: string[]) => {
+            storageRemovals.push(paths);
+            return { error: null };
+          }),
+        })),
       },
       from: vi.fn((table: string) => {
         if (table === 'users') {
@@ -110,7 +122,11 @@ describe('update-product', () => {
             update: vi.fn((payload: Record<string, unknown>) => ({
               eq: vi.fn().mockImplementation(async () => {
                 productUpdates.push(payload);
-                return { error: null };
+                return {
+                  error: args?.productUpdateError
+                    ? { message: args.productUpdateError }
+                    : null,
+                };
               }),
             })),
           };
@@ -156,7 +172,7 @@ describe('update-product', () => {
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
 
-    return { productUpdates };
+    return { productUpdates, storageRemovals };
   }
 
   it('persists stock when a goods listing changes from 0 to 10', async () => {
@@ -336,5 +352,45 @@ describe('update-product', () => {
     const body = JSON.parse(res.body as string) as { code?: string; error?: string };
     expect(body.code).toBe('LISTING_MODERATION_HOLD');
     expect(body.error).toMatch(/platform moderation/i);
+  });
+
+  it('deletes only removed seller-owned Loadify images after a successful listing update', async () => {
+    const ownedRemoved = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/removed.jpg';
+    const ownedRetained = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/keep.jpg';
+    const externalRemoved = 'https://images.example.com/external.jpg';
+    const legacyRemoved = 'https://test.supabase.co/storage/v1/object/public/product-images/uploads/legacy.jpg';
+    const otherSellerRemoved = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-2/other.jpg';
+
+    const { storageRemovals } = mockSupabase({
+      productRow: {
+        images: [ownedRemoved, ownedRetained, externalRemoved, legacyRemoved, otherSellerRemoved],
+      },
+    });
+    const { handler } = await import('../update-product');
+
+    const res = await handler(
+      makeEvent({ id: 'product-1', images: [ownedRetained] }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(storageRemovals).toEqual([['sellers/seller-1/removed.jpg']]);
+  });
+
+  it('never deletes storage objects when the listing update fails', async () => {
+    const ownedRemoved = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/removed.jpg';
+    const { storageRemovals } = mockSupabase({
+      productUpdateError: 'database write failed',
+      productRow: { images: [ownedRemoved] },
+    });
+    const { handler } = await import('../update-product');
+
+    const res = await handler(
+      makeEvent({ id: 'product-1', images: [] }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(500);
+    expect(storageRemovals).toEqual([]);
   });
 });
