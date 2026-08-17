@@ -213,7 +213,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 409, body: JSON.stringify({ error: 'Complete seller setup and activate Stripe payments before publishing.' }) };
   }
 
-  if (explicitlyPublishing && nextContext === 'product' && normalizedStockQuantity <= 0) {
+  if (wantsPublished && nextContext === 'product' && normalizedStockQuantity <= 0) {
     return {
       statusCode: 400,
       body: JSON.stringify({ error: 'Add at least 1 unit of stock before publishing this product.' }),
