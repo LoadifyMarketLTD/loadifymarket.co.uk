@@ -38,4 +38,11 @@ describe('ProductFormPage edit lifecycle contract', () => {
     expect(source).toContain("navigate(user.role === 'admin' ? '/seller' : '/seller/products')");
     expect(source).not.toContain("setTimeout(() => navigate('/seller'), SUCCESS_REDIRECT_DELAY_MS)");
   });
+
+  it('keeps shipping validation for a live listing when Save Changes preserves publication state', () => {
+    expect(source).toContain('const validate = (publishMode = false, requireShipping = publishMode): FormErrors =>');
+    expect(source).toContain('if (requireShipping && selectedShippingMethodIds.length === 0)');
+    expect(source).toContain('const requireShipping = publishMode || (Boolean(id) && preservePublicationState && existingIsActive);');
+    expect(source).toContain('const newErrors = validate(publishMode, requireShipping);');
+  });
 });
