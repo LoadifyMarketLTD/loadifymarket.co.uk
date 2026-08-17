@@ -30,13 +30,20 @@ describe('create-product seller self-publish contract', () => {
     vi.restoreAllMocks();
   });
 
-  function mockSupabase(profile?: Partial<{
-    sellerStatus: string;
-    stripeConnectStatus: string;
-    isPaused: boolean;
-    listingLimit: number | null;
-  }>) {
+  function mockSupabase(
+    profile?: Partial<{
+      sellerStatus: string;
+      stripeConnectStatus: string;
+      isPaused: boolean;
+      listingLimit: number | null;
+    }>,
+    failures?: {
+      shippingError?: string;
+      activationError?: string;
+    },
+  ) {
     const insertedProducts: Array<Record<string, unknown>> = [];
+    const productUpdates: Array<Record<string, unknown>> = [];
     const shippingRows: Array<Record<string, unknown>> = [];
 
     const sellerProfile = {
@@ -58,8 +65,13 @@ describe('create-product seller self-publish contract', () => {
           }),
         };
       }),
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null }),
+      update: vi.fn((payload: Record<string, unknown>) => {
+        productUpdates.push(payload);
+        return {
+          eq: vi.fn().mockResolvedValue({
+            error: failures?.activationError ? { message: failures.activationError } : null,
+          }),
+        };
       }),
     };
 
@@ -90,7 +102,9 @@ describe('create-product seller self-publish contract', () => {
           return {
             insert: vi.fn((rows: Array<Record<string, unknown>>) => {
               shippingRows.push(...rows);
-              return Promise.resolve({ error: null });
+              return Promise.resolve({
+                error: failures?.shippingError ? { message: failures.shippingError } : null,
+              });
             }),
           };
         }
@@ -112,7 +126,7 @@ describe('create-product seller self-publish contract', () => {
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
 
-    return { insertedProducts, shippingRows };
+    return { insertedProducts, productUpdates, shippingRows };
   }
 
   const validPublishBody = {
@@ -125,8 +139,8 @@ describe('create-product seller self-publish contract', () => {
     dispatchTime: '1-2 working days',
   };
 
-  it('publishes an eligible seller listing live without manual product approval', async () => {
-    const { insertedProducts, shippingRows } = mockSupabase();
+  it('stages an eligible seller listing inactive and publishes only after shipping succeeds', async () => {
+    const { insertedProducts, productUpdates, shippingRows } = mockSupabase();
     const { handler } = await import('../create-product');
 
     const res = await handler(makeEvent(validPublishBody), {} as never);
@@ -135,13 +149,14 @@ describe('create-product seller self-publish contract', () => {
     expect(insertedProducts).toHaveLength(1);
     expect(insertedProducts[0]).toMatchObject({
       sellerId: 'seller-1',
-      isActive: true,
+      isActive: false,
       isApproved: true,
       listingContext: 'product',
       stockQuantity: 4,
       stockStatus: 'low_stock',
     });
     expect(shippingRows).toHaveLength(1);
+    expect(productUpdates).toEqual([{ isActive: true }]);
     expect(JSON.parse(res.body as string)).toMatchObject({
       id: 'product-1',
       isActive: true,
@@ -173,8 +188,8 @@ describe('create-product seller self-publish contract', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/seller setup|stripe payments/i);
   });
 
-  it('keeps a seller draft inactive without putting it on moderation hold', async () => {
-    const { insertedProducts } = mockSupabase();
+  it('keeps a seller draft inactive and clear of moderation hold', async () => {
+    const { insertedProducts, productUpdates } = mockSupabase();
     const { handler } = await import('../create-product');
 
     const res = await handler(
@@ -193,6 +208,58 @@ describe('create-product seller self-publish contract', () => {
       isActive: false,
       isApproved: true,
       sellerId: 'seller-1',
+    });
+    expect(productUpdates).toEqual([]);
+  });
+
+  it('does not turn a paused seller draft into a moderation hold', async () => {
+    const { insertedProducts } = mockSupabase({ isPaused: true });
+    const { handler } = await import('../create-product');
+
+    const res = await handler(
+      makeEvent({
+        title: 'Paused seller draft',
+        price: 50,
+        isActive: false,
+        listingContext: 'product',
+        stockQuantity: 1,
+      }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(insertedProducts[0]).toMatchObject({ isActive: false, isApproved: true });
+  });
+
+  it('keeps the created listing as a draft when shipping persistence fails instead of inviting a duplicate retry', async () => {
+    const { insertedProducts, productUpdates } = mockSupabase(undefined, { shippingError: 'shipping insert failed' });
+    const { handler } = await import('../create-product');
+
+    const res = await handler(makeEvent(validPublishBody), {} as never);
+    const body = JSON.parse(res.body as string) as { id?: string; isActive?: boolean; warningCode?: string };
+
+    expect(res.statusCode).toBe(200);
+    expect(insertedProducts[0]?.isActive).toBe(false);
+    expect(productUpdates).toEqual([]);
+    expect(body).toMatchObject({
+      id: 'product-1',
+      isActive: false,
+      warningCode: 'SHIPPING_SETUP_FAILED',
+    });
+  });
+
+  it('keeps the listing as a draft when staged public activation fails', async () => {
+    const { productUpdates } = mockSupabase(undefined, { activationError: 'activation failed' });
+    const { handler } = await import('../create-product');
+
+    const res = await handler(makeEvent(validPublishBody), {} as never);
+    const body = JSON.parse(res.body as string) as { isActive?: boolean; warningCode?: string };
+
+    expect(res.statusCode).toBe(200);
+    expect(productUpdates).toEqual([{ isActive: true }]);
+    expect(body).toMatchObject({
+      isActive: false,
+      warningCode: 'ACTIVATION_FAILED',
     });
   });
 });
