@@ -53,11 +53,11 @@ export default function ShippingMethodSelector({
   };
 
   if (loading) {
-    return <div className="text-gray-500 text-sm py-2">Loading shipping options…</div>;
+    return <div className="text-slate-400 text-sm py-2" role="status">Loading shipping options…</div>;
   }
 
   if (methods.length === 0) {
-    return <div className="text-gray-500 text-sm py-2">No shipping methods available.</div>;
+    return <div className="text-slate-400 text-sm py-2">No shipping methods available.</div>;
   }
 
   return (
@@ -71,42 +71,40 @@ export default function ShippingMethodSelector({
             key={method.id}
             type="button"
             onClick={() => toggle(method.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors ${
+            aria-pressed={isSelected}
+            aria-label={`${method.name}, from £${price.toFixed(2)}${isSelected ? ', selected' : ''}`}
+            className={`min-h-12 w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
               isSelected
-                ? 'border-success bg-success/10 text-elevated'
-                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                ? 'border-primary bg-primary/10 text-white'
+                : 'border-white/10 bg-surface text-slate-300 hover:border-primary/40 hover:bg-white/5'
             }`}
           >
-            {/* Checkbox indicator */}
-            <span className="flex-shrink-0">
+            <span className="flex-shrink-0" aria-hidden="true">
               {isSelected ? (
-                <CheckSquare className="w-5 h-5 text-success" />
+                <CheckSquare className="w-5 h-5 text-primary" />
               ) : (
-                <Square className="w-5 h-5 text-gray-400" />
+                <Square className="w-5 h-5 text-slate-500" />
               )}
             </span>
 
-            {/* Method icon */}
-            <span className="flex-shrink-0">
+            <span className="flex-shrink-0" aria-hidden="true">
               {method.tracking ? (
-                <Truck className="w-5 h-5 text-gray-500" />
+                <Truck className="w-5 h-5 text-slate-400" />
               ) : (
-                <Package className="w-5 h-5 text-gray-500" />
+                <Package className="w-5 h-5 text-slate-400" />
               )}
             </span>
 
-            {/* Details */}
             <span className="flex-1 min-w-0">
-              <span className="block font-medium text-sm">{method.name}</span>
+              <span className="block font-medium text-sm break-words">{method.name}</span>
               {method.courier && (
-                <span className="block text-xs text-gray-500">{method.courier}</span>
+                <span className="block text-xs text-slate-400 break-words">{method.courier}</span>
               )}
             </span>
 
-            {/* Price badge */}
             <span
               className={`flex-shrink-0 text-sm font-semibold ${
-                isSelected ? 'text-success' : 'text-gray-600'
+                isSelected ? 'text-primary' : 'text-slate-300'
               }`}
             >
               £{price.toFixed(2)}
