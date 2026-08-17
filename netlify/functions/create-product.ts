@@ -7,7 +7,8 @@
  *
  *  - maintenanceMode → 503 for non-admin sellers
  *  - seller activation → only fully active sellers may publish public listings
- *  - approval state → eligible sellers/admins publish without a manual review gate
+ *  - approval state → new listings start clear of moderation hold
+ *  - staged activation → public visibility is enabled only after dependent setup succeeds
  */
 
 import type { Handler } from '@netlify/functions';
@@ -210,10 +211,10 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  // Product truth is the seller's responsibility. Loadify does not certify each
-  // listing before publication. Eligibility still gates public publication, while
-  // admin moderation/enforcement can hide or remove listings after publication.
-  const isApproved = isAdmin || sellerCanPublish;
+  // Product truth is the seller's responsibility. New listings are not put on a
+  // moderation hold merely because the seller is saving a draft or is temporarily
+  // ineligible to publish. Moderation can set isApproved=false later when justified.
+  const isApproved = true;
 
   if (!isAdmin) {
     const countRes = await supabase
@@ -248,13 +249,16 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  const requestedActive = Boolean(isActive) && sellerCanPublish;
   const productData: Record<string, unknown> = {
     ...allowedFields,
     title,
     price,
     priceExVat,
     vatRate,
-    isActive: Boolean(isActive) && sellerCanPublish,
+    // Stage every new listing as inactive until dependent shipping/setup writes
+    // succeed. This prevents a brief public listing with incomplete checkout data.
+    isActive: false,
     isApproved,
     sellerId: callerId,
     listingContext: normalizedListingContext,
@@ -273,6 +277,9 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create listing. Please try again.' }) };
   }
 
+  let warningCode: 'SHIPPING_SETUP_FAILED' | 'ACTIVATION_FAILED' | null = null;
+  let warning: string | null = null;
+
   if (Array.isArray(shippingMethodIds) && shippingMethodIds.length > 0) {
     const rows = shippingMethodIds.map((method_id) => ({
       product_id: inserted.id,
@@ -282,11 +289,24 @@ export const handler: Handler = async (event) => {
     const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
     if (shippingError) {
       console.error('create-product: shipping sync error:', shippingError.message);
-      await supabase.from('products').update({ isActive: false }).eq('id', inserted.id);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Listing was saved as a draft because shipping setup could not be saved. Please try again.' }),
-      };
+      warningCode = 'SHIPPING_SETUP_FAILED';
+      warning = 'Listing was saved as a draft because shipping setup could not be saved. Open Products to review and complete shipping before publishing.';
+    }
+  }
+
+  let finalIsActive = false;
+  if (requestedActive && !warningCode) {
+    const { error: activationError } = await supabase
+      .from('products')
+      .update({ isActive: true })
+      .eq('id', inserted.id);
+
+    if (activationError) {
+      console.error('create-product: staged activation error:', activationError.message);
+      warningCode = 'ACTIVATION_FAILED';
+      warning = 'Listing was saved as a draft because public activation could not be completed. Open Products to review it before publishing.';
+    } else {
+      finalIsActive = true;
     }
   }
 
@@ -295,7 +315,8 @@ export const handler: Handler = async (event) => {
     body: JSON.stringify({
       id: inserted.id,
       isApproved,
-      isActive: Boolean(productData.isActive),
+      isActive: finalIsActive,
+      ...(warningCode ? { warningCode, warning } : {}),
     }),
   };
 };
