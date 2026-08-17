@@ -35,6 +35,8 @@ import {
 import CategorySelector from '@/components/CategorySelector';
 import ShippingMethodSelector from '@/components/ShippingMethodSelector';
 
+// ── Constants ──────────────────────────────────────────────────────────────────
+
 const MAX_PHOTOS = 6;
 
 const CONDITION_OPTIONS = [
@@ -45,6 +47,8 @@ const CONDITION_OPTIONS = [
   { value: 'fair', label: 'Fair' },
   { value: 'poor', label: 'Poor' },
 ] as const;
+
+// ── Input primitive ────────────────────────────────────────────────────────────
 
 function FieldInput({
   label,
@@ -116,6 +120,8 @@ function FieldInput({
     </div>
   );
 }
+
+// ── Success sheet ──────────────────────────────────────────────────────────────
 
 function SuccessSheet({
   productId,
@@ -242,6 +248,8 @@ function SuccessSheet({
   );
 }
 
+// ── Form state ─────────────────────────────────────────────────────────────────
+
 interface FormState {
   photos: ProductImageAsset[];
   title: string;
@@ -262,6 +270,8 @@ const INITIAL_FORM: FormState = {
   condition: '',
 };
 
+// ── Main component ─────────────────────────────────────────────────────────────
+
 export default function MobileSellWizard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -280,11 +290,14 @@ export default function MobileSellWizard() {
   const [dispatchTime, setDispatchTime] = useState('');
   const [moreDetailsOpen, setMoreDetailsOpen] = useState(false);
 
+  // Track listing start once
   const startTrackedRef = useRef(false);
   if (!startTrackedRef.current) {
     startTrackedRef.current = true;
     trackStartListing();
   }
+
+  // ── Photo handlers ────────────────────────────────────────────────────────
 
   const handleAddPhotos = async (files: FileList) => {
     if (!user?.id) {
@@ -334,6 +347,8 @@ export default function MobileSellWizard() {
       setPhotoRemovingPath(null);
     }
   };
+
+  // ── Publish ───────────────────────────────────────────────────────────────
 
   const handlePublish = async () => {
     const errs: typeof fieldErrors = {};
@@ -394,6 +409,8 @@ export default function MobileSellWizard() {
     }
   };
 
+  // ── Reset ─────────────────────────────────────────────────────────────────
+
   const handleSellAnother = () => {
     setForm(INITIAL_FORM);
     setFieldErrors({});
@@ -405,6 +422,8 @@ export default function MobileSellWizard() {
     setMoreDetailsOpen(false);
   };
 
+  // ── Success screen ────────────────────────────────────────────────────────
+
   if (publishedId) {
     return <SuccessSheet productId={publishedId} onSellAnother={handleSellAnother} />;
   }
@@ -413,6 +432,7 @@ export default function MobileSellWizard() {
 
   return (
     <div className="bg-background" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+      {/* ── Header ── */}
       <div
         style={{
           position: 'sticky',
@@ -453,6 +473,7 @@ export default function MobileSellWizard() {
         </h1>
       </div>
 
+      {/* ── Scrollable form ── */}
       <div
         style={{
           flex: 1,
@@ -464,6 +485,7 @@ export default function MobileSellWizard() {
           gap: '20px',
         }}
       >
+        {/* Photos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
             Photos <span className="text-primary">*</span>
@@ -614,6 +636,7 @@ export default function MobileSellWizard() {
           />
         </div>
 
+        {/* Title */}
         <FieldInput
           label="Title"
           value={form.title}
@@ -626,6 +649,7 @@ export default function MobileSellWizard() {
           error={fieldErrors.title}
         />
 
+        {/* Price */}
         <FieldInput
           label="Price (£)"
           value={form.price}
@@ -640,6 +664,7 @@ export default function MobileSellWizard() {
           error={fieldErrors.price}
         />
 
+        {/* ── More details (collapsible) ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
             Shipping method <span className="text-primary">*</span>
@@ -708,6 +733,7 @@ export default function MobileSellWizard() {
                 gap: '16px',
               }}
             >
+              {/* Description */}
               <FieldInput
                 label="Description"
                 value={form.description}
@@ -716,6 +742,7 @@ export default function MobileSellWizard() {
                 multiline
               />
 
+              {/* Category */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
                   Category
@@ -728,6 +755,7 @@ export default function MobileSellWizard() {
                 />
               </div>
 
+              {/* Condition */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
                   Condition
@@ -760,6 +788,7 @@ export default function MobileSellWizard() {
         </div>
       </div>
 
+      {/* ── Sticky CTA ── */}
       <div
         className="bg-background/[0.97]"
         style={{
