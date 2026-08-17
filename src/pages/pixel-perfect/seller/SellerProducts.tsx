@@ -301,32 +301,32 @@ const SellerProducts = () => {
       <DropdownMenuContent align="end">
         {shareable ? (
           <>
-            <DropdownMenuItem onClick={() => shareOnFacebook(p)}>
+            <DropdownMenuItem className="min-h-11" onClick={() => shareOnFacebook(p)}>
               <Share2 className={`${iconSize} mr-2`} /> Share on Facebook
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => shareOnWhatsApp(p)}>
+            <DropdownMenuItem className="min-h-11" onClick={() => shareOnWhatsApp(p)}>
               <Share2 className={`${iconSize} mr-2`} /> Share on WhatsApp
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => nativeShareProduct(p)}>
+            <DropdownMenuItem className="min-h-11" onClick={() => nativeShareProduct(p)}>
               <Share2 className={`${iconSize} mr-2`} /> Share via…
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => copyProductLink(p)}>Copy public link</DropdownMenuItem>
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem className="min-h-11" onClick={() => copyProductLink(p)}>Copy public link</DropdownMenuItem>
+            <DropdownMenuItem className="min-h-11" asChild>
               <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
                 Refresh Facebook Preview
               </a>
             </DropdownMenuItem>
           </>
         ) : (
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem className="min-h-11" disabled>
             <ShieldAlert className={`${iconSize} mr-2`} /> {p.isApproved ? "Publish to enable sharing" : "Sharing blocked by moderation"}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         {canMarkSold && (
           <DropdownMenuItem
-            className="text-primary focus:text-primary"
+            className="min-h-11 text-primary focus:text-primary"
             onClick={() => setSoldTarget(p)}
           >
             <CheckSquare className={`${iconSize} mr-2`} />
@@ -334,7 +334,7 @@ const SellerProducts = () => {
           </DropdownMenuItem>
         )}
         <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
+          className="min-h-11 text-destructive focus:text-destructive"
           onClick={() => setDeleteTarget(p)}
         >
           <Trash2 className={`${iconSize} mr-2`} />
@@ -353,7 +353,7 @@ const SellerProducts = () => {
             {loading ? "Loading…" : `${products.length} listings`}
           </p>
         </div>
-        <Button size="sm" className="bg-primary hover:bg-primary-hover text-black" asChild>
+        <Button size="sm" className="min-h-11 bg-primary hover:bg-primary-hover text-black" asChild>
           <Link to={isMobile ? '/sell' : '/seller/products/new'}>
             <Plus className="mr-2 h-4 w-4" /> Add Product
           </Link>
@@ -363,11 +363,11 @@ const SellerProducts = () => {
       {/* Search & Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input
             aria-label="Search seller listings"
             placeholder="Search products..."
-            className="pl-9 h-10"
+            className="pl-9 h-11"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -379,7 +379,7 @@ const SellerProducts = () => {
               type="button"
               aria-pressed={statusFilter === s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              className={`min-h-11 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                 statusFilter === s
                   ? "bg-primary text-black border-primary"
                   : "bg-background text-muted-foreground border-border hover:border-primary/40"
@@ -440,7 +440,7 @@ const SellerProducts = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="shrink-0 h-9 w-9 p-0"
+                    className="shrink-0 h-11 w-11 p-0"
                     aria-label={`Edit ${p.title}`}
                     onClick={() => navigate(`/seller/products/${p.id}/edit`)}
                   >
@@ -451,7 +451,7 @@ const SellerProducts = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="shrink-0 h-9 w-9 p-0"
+                        className="shrink-0 h-11 w-11 p-0"
                         aria-label={`More actions for ${p.title}`}
                       >
                         <MoreVertical className="h-4 w-4" />
@@ -574,8 +574,8 @@ const SellerProducts = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteLoading}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteLoading}>
+            <Button className="min-h-11" variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteLoading}>Cancel</Button>
+            <Button className="min-h-11" variant="destructive" onClick={handleDeleteConfirm} disabled={deleteLoading}>
               {deleteLoading ? "Checking…" : "Delete permanently"}
             </Button>
           </DialogFooter>
@@ -592,8 +592,8 @@ const SellerProducts = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setSoldTarget(null)} disabled={soldLoading}>Cancel</Button>
-            <Button className="bg-primary hover:bg-primary-hover text-black" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
+            <Button className="min-h-11" variant="outline" onClick={() => setSoldTarget(null)} disabled={soldLoading}>Cancel</Button>
+            <Button className="min-h-11 bg-primary hover:bg-primary-hover text-black" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
               {soldLoading ? "Updating…" : "Mark as Sold"}
             </Button>
           </DialogFooter>
