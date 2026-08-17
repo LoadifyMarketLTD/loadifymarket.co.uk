@@ -293,7 +293,7 @@ export default function ProductFormPage() {
   }, [id, fetchProduct]);
 
   // ─── Validate ──────────────────────────────────────────────────────────────
-  const validate = (publishMode = false, requireShipping = publishMode): FormErrors => {
+  const validate = (publishMode = false, requirePublicationRequirements = publishMode): FormErrors => {
     const e: FormErrors = {};
     if (!formData.title.trim()) e.title = 'Product title is required.';
     if (!formData.description.trim()) e.description = 'Description is required.';
@@ -312,10 +312,10 @@ export default function ProductFormPage() {
       const stockQuantity = Number.parseInt(formData.stockQuantity, 10);
       if (!formData.stockQuantity || Number.isNaN(stockQuantity) || stockQuantity < 0) {
         e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
-      } else if (publishMode && stockQuantity <= 0) {
+      } else if (requirePublicationRequirements && stockQuantity <= 0) {
         e.stockQuantity = 'Add at least 1 unit of stock before publishing this product.';
       }
-      if (requireShipping && selectedShippingMethodIds.length === 0) {
+      if (requirePublicationRequirements && selectedShippingMethodIds.length === 0) {
         e.shipping = 'Select at least one shipping method before publishing this product.';
       }
     }
@@ -357,8 +357,8 @@ export default function ProductFormPage() {
   // ─── Core save function ────────────────────────────────────────────────────
   const saveProduct = async (publishMode: boolean, preservePublicationState = false) => {
     if (!user) return;
-    const requireShipping = publishMode || (Boolean(id) && preservePublicationState && existingIsActive);
-    const newErrors = validate(publishMode, requireShipping);
+    const requirePublicationRequirements = publishMode || (Boolean(id) && preservePublicationState && existingIsActive);
+    const newErrors = validate(publishMode, requirePublicationRequirements);
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       // Scroll to top to show errors

@@ -32,17 +32,17 @@ describe('ProductFormPage edit lifecycle contract', () => {
     expect(source).toContain("id && user.role !== 'admin' && !existingIsActive && existingIsApproved && !hasActiveOrders");
   });
 
-  it('requires positive stock only for physical publication and returns seller workflows to Products', () => {
-    expect(source).toContain('else if (publishMode && stockQuantity <= 0)');
+  it('requires positive stock only when a physical listing will be public and returns seller workflows to Products', () => {
+    expect(source).toContain('else if (requirePublicationRequirements && stockQuantity <= 0)');
     expect(source).toContain('Add at least 1 unit of stock before publishing this product.');
     expect(source).toContain("navigate(user.role === 'admin' ? '/seller' : '/seller/products')");
     expect(source).not.toContain("setTimeout(() => navigate('/seller'), SUCCESS_REDIRECT_DELAY_MS)");
   });
 
-  it('keeps shipping validation for a live listing when Save Changes preserves publication state', () => {
-    expect(source).toContain('const validate = (publishMode = false, requireShipping = publishMode): FormErrors =>');
-    expect(source).toContain('if (requireShipping && selectedShippingMethodIds.length === 0)');
-    expect(source).toContain('const requireShipping = publishMode || (Boolean(id) && preservePublicationState && existingIsActive);');
-    expect(source).toContain('const newErrors = validate(publishMode, requireShipping);');
+  it('keeps stock and shipping validation for a live listing when Save Changes preserves publication state', () => {
+    expect(source).toContain('const validate = (publishMode = false, requirePublicationRequirements = publishMode): FormErrors =>');
+    expect(source).toContain('if (requirePublicationRequirements && selectedShippingMethodIds.length === 0)');
+    expect(source).toContain('const requirePublicationRequirements = publishMode || (Boolean(id) && preservePublicationState && existingIsActive);');
+    expect(source).toContain('const newErrors = validate(publishMode, requirePublicationRequirements);');
   });
 });
