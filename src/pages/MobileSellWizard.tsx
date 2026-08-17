@@ -458,8 +458,8 @@ export default function MobileSellWizard() {
           disabled={busy}
           className="bg-white/[0.07] flex items-center justify-center"
           style={{
-            width: '36px',
-            height: '36px',
+            width: '44px',
+            height: '44px',
             borderRadius: '50%',
             border: 'none',
             cursor: 'pointer',
@@ -508,19 +508,21 @@ export default function MobileSellWizard() {
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <button
-                  className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border-none flex items-center justify-center cursor-pointer"
+                  className="absolute top-0 right-0 w-11 h-11 border-none flex items-center justify-center cursor-pointer bg-transparent"
                   aria-label={`Remove photo ${idx + 1}`}
                   onClick={() => void handleRemovePhoto(idx)}
                   disabled={busy}
                 >
-                  {photoRemovingPath === photo.path ? (
-                    <Loader2
-                      className="text-foreground"
-                      style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }}
-                    />
-                  ) : (
-                    <X className="text-foreground" style={{ width: '14px', height: '14px' }} />
-                  )}
+                  <span className="w-7 h-7 rounded-full bg-black/70 flex items-center justify-center">
+                    {photoRemovingPath === photo.path ? (
+                      <Loader2
+                        className="text-foreground"
+                        style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }}
+                      />
+                    ) : (
+                      <X className="text-foreground" style={{ width: '14px', height: '14px' }} />
+                    )}
+                  </span>
                 </button>
               </div>
             ))}
