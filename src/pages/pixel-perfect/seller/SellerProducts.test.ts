@@ -14,6 +14,11 @@ describe('SellerProducts publication-state contract', () => {
     expect(source).not.toContain('Pending Review');
   });
 
+  it('keeps seller stock status aligned with the backend threshold', () => {
+    expect(source).toContain('if (qty <= 10) return "low_stock";');
+    expect(source).not.toContain('if (qty <= 5) return "low_stock";');
+  });
+
   it('only offers public sharing for listings that are actually visible', () => {
     expect(source).toContain('function isPubliclyShareable');
     expect(source).toContain('if (!p.isActive || !p.isApproved) return false;');
