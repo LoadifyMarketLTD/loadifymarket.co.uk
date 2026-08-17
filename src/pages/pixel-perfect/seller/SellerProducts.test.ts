@@ -26,4 +26,10 @@ describe('SellerProducts publication-state contract', () => {
     expect(source).not.toContain('· Shares:');
     expect(source).not.toContain('>Shares<');
   });
+
+  it('routes destructive deletion through the authenticated server contract', () => {
+    expect(source).toContain('authorizedFetch("/.netlify/functions/delete-product"');
+    expect(source).not.toContain('.from("products")\n        .delete()');
+    expect(source).not.toContain('Could not pre-check listing order history');
+  });
 });
