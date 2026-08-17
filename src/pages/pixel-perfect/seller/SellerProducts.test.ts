@@ -32,4 +32,11 @@ describe('SellerProducts publication-state contract', () => {
     expect(source).not.toContain('.from("products")\n        .delete()');
     expect(source).not.toContain('Could not pre-check listing order history');
   });
+
+  it('keeps mobile controls and action menus touch-sized', () => {
+    expect(source).toContain('className="shrink-0 h-11 w-11 p-0"');
+    expect(source).toContain('className="min-h-11" onClick={() => shareOnFacebook(p)}');
+    expect(source).toContain('className={`min-h-11 px-3 py-1.5 rounded-full');
+    expect(source).toContain('className="pl-9 h-11"');
+  });
 });
