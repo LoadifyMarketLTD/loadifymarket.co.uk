@@ -297,13 +297,29 @@ export const handler: Handler = async (event) => {
       .filter((path): path is string => Boolean(path)))];
   })();
 
-  // Save shipping first. If that fails, the listing itself remains unchanged.
+  let previousShipping: Array<{ method_id: string; dispatch_time: string | null }> | null = null;
+  const restorePreviousShipping = async () => {
+    const { error: clearError } = await supabase.from('product_shipping').delete().eq('product_id', productId);
+    if (clearError) return clearError;
+    if (!previousShipping?.length) return null;
+    const { error: restoreError } = await supabase.from('product_shipping').insert(
+      previousShipping.map((row) => ({
+        product_id: productId,
+        method_id: row.method_id,
+        dispatch_time: row.dispatch_time,
+      })),
+    );
+    return restoreError;
+  };
+
+  // Save shipping first. If any later product write fails, restore this snapshot.
   if (Array.isArray(shippingMethodIds)) {
-    const { data: previousShipping, error: previousError } = await supabase
+    const { data, error: previousError } = await supabase
       .from('product_shipping')
       .select('method_id, dispatch_time')
       .eq('product_id', productId);
     if (previousError) return { statusCode: 500, body: JSON.stringify({ error: 'Unable to update shipping setup.' }) };
+    previousShipping = data ?? [];
 
     const { error: deleteError } = await supabase.from('product_shipping').delete().eq('product_id', productId);
     if (deleteError) return { statusCode: 500, body: JSON.stringify({ error: 'Unable to update shipping setup.' }) };
@@ -312,10 +328,9 @@ export const handler: Handler = async (event) => {
       const rows = shippingMethodIds.map((method_id) => ({ product_id: productId, method_id, dispatch_time: dispatchTime || null }));
       const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
       if (shippingError) {
-        if (previousShipping?.length) {
-          await supabase.from('product_shipping').insert(
-            previousShipping.map((row) => ({ product_id: productId, method_id: row.method_id, dispatch_time: row.dispatch_time })),
-          );
+        const restoreError = await restorePreviousShipping();
+        if (restoreError) {
+          console.error('update-product: failed to restore previous shipping after shipping insert error:', restoreError.message);
         }
         return { statusCode: 500, body: JSON.stringify({ error: 'Shipping setup could not be saved; listing changes were not applied.' }) };
       }
@@ -326,6 +341,18 @@ export const handler: Handler = async (event) => {
     const { error: updateError } = await supabase.from('products').update(dataToUpdate).eq('id', productId);
     if (updateError) {
       console.error('update-product: update failed:', updateError.message);
+      if (Array.isArray(shippingMethodIds)) {
+        const restoreError = await restorePreviousShipping();
+        if (restoreError) {
+          console.error('update-product: failed to restore previous shipping after product update error:', restoreError.message);
+          return {
+            statusCode: 500,
+            body: JSON.stringify({
+              error: 'Listing update failed and previous shipping could not be restored. Refresh the listing before trying again.',
+            }),
+          };
+        }
+      }
       return { statusCode: 500, body: JSON.stringify({ error: 'Failed to update listing. Please try again.' }) };
     }
   }
