@@ -34,6 +34,7 @@ describe('update-product', () => {
     role?: 'seller' | 'admin';
     orders?: Array<{ id: string; orderNumber?: string | null; status: string; createdAt?: string | null }>;
     productUpdateError?: string;
+    previousShipping?: Array<{ method_id: string; dispatch_time: string | null }>;
     productRow?: Partial<{
       sellerId: string;
       title: string | null;
@@ -52,6 +53,8 @@ describe('update-product', () => {
   }) {
     const productUpdates: Array<Record<string, unknown>> = [];
     const storageRemovals: string[][] = [];
+    const shippingInserts: Array<Array<Record<string, unknown>>> = [];
+    let shippingDeleteCount = 0;
     const productRow = {
       sellerId: 'seller-1',
       title: 'Existing listing',
@@ -145,12 +148,23 @@ describe('update-product', () => {
 
         if (table === 'product_shipping') {
           return {
-            select: vi.fn().mockReturnThis(),
-            eq: vi.fn().mockResolvedValue({ count: 1, data: [], error: null }),
+            select: vi.fn((_columns?: string, options?: { head?: boolean }) => ({
+              eq: vi.fn().mockResolvedValue(
+                options?.head
+                  ? { count: 1, data: null, error: null }
+                  : { data: args?.previousShipping ?? [], error: null },
+              ),
+            })),
             delete: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null }),
+              eq: vi.fn().mockImplementation(async () => {
+                shippingDeleteCount += 1;
+                return { error: null };
+              }),
             }),
-            insert: vi.fn().mockResolvedValue({ error: null }),
+            insert: vi.fn().mockImplementation(async (rows: Array<Record<string, unknown>>) => {
+              shippingInserts.push(rows);
+              return { error: null };
+            }),
           };
         }
 
@@ -172,7 +186,12 @@ describe('update-product', () => {
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
 
-    return { productUpdates, storageRemovals };
+    return {
+      productUpdates,
+      storageRemovals,
+      shippingInserts,
+      getShippingDeleteCount: () => shippingDeleteCount,
+    };
   }
 
   it('persists stock when a goods listing changes from 0 to 10', async () => {
@@ -392,5 +411,33 @@ describe('update-product', () => {
 
     expect(res.statusCode).toBe(500);
     expect(storageRemovals).toEqual([]);
+  });
+
+  it('restores previous shipping when the product update fails after shipping replacement', async () => {
+    const previousShipping = [
+      { method_id: 'shipping-old', dispatch_time: '2 working days' },
+    ];
+    const { shippingInserts, getShippingDeleteCount } = mockSupabase({
+      productUpdateError: 'database write failed',
+      previousShipping,
+    });
+    const { handler } = await import('../update-product');
+
+    const res = await handler(
+      makeEvent({
+        id: 'product-1',
+        description: 'Updated description',
+        shippingMethodIds: ['shipping-new'],
+        dispatchTime: '1 working day',
+      }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(500);
+    expect(getShippingDeleteCount()).toBe(2);
+    expect(shippingInserts).toEqual([
+      [{ product_id: 'product-1', method_id: 'shipping-new', dispatch_time: '1 working day' }],
+      [{ product_id: 'product-1', method_id: 'shipping-old', dispatch_time: '2 working days' }],
+    ]);
   });
 });
