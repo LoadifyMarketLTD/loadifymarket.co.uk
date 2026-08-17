@@ -47,4 +47,13 @@ describe('SellerProducts publication-state contract', () => {
     expect(source).toContain('className="h-11 w-11 p-0"');
     expect(source).not.toContain('className="h-8 w-8 p-0"');
   });
+
+  it('keeps failed loading separate from a genuinely empty seller catalog and offers retry', () => {
+    expect(source).toContain('const [loadError, setLoadError] = useState<string | null>(null);');
+    expect(source).toContain('const loadProducts = useCallback(async () =>');
+    expect(source).toContain('setLoadError("Could not load your listings. Check your connection and try again.");');
+    expect(source).toContain('role="alert"');
+    expect(source).toContain('onClick={() => void loadProducts()}');
+    expect(source).toContain('loadError ? "hidden" : ""');
+  });
 });
