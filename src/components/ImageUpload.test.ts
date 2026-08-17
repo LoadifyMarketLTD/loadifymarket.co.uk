@@ -24,4 +24,16 @@ describe('ImageUpload batch integrity', () => {
     );
     expect(removeHandler).not.toContain('.remove(');
   });
+
+  it('keeps destructive image controls visible and touch-sized on small screens', () => {
+    expect(source).toContain('min-h-11 min-w-11');
+    expect(source).toContain('opacity-100 transition-opacity sm:top-2 sm:right-2 sm:opacity-0');
+    expect(source).toContain('aria-label={`Remove image ${index + 1}`}');
+  });
+
+  it('keeps URL controls adaptive instead of forcing a narrow horizontal row', () => {
+    expect(source).toContain('flex flex-col gap-2 sm:flex-row sm:items-center');
+    expect(source).toContain('grid grid-cols-2 gap-2 sm:flex sm:flex-none');
+    expect(source).toContain('min-h-11 px-4');
+  });
 });
