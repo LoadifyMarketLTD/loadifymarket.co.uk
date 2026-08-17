@@ -155,27 +155,25 @@ export default function ImageUpload({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <label className="block text-sm font-medium text-slate-300">
           Product Images ({images.length}/{maxImages})
         </label>
-        <div className="flex gap-2">
-          {!showUrlInput && (
-            <button
-              type="button"
-              onClick={openUrlInput}
-              className="text-sm text-navy-800 hover:text-navy-600 flex items-center gap-1"
-              disabled={images.length >= maxImages}
-            >
-              <LinkIcon className="h-4 w-4" />
-              Add URL
-            </button>
-          )}
-        </div>
+        {!showUrlInput && (
+          <button
+            type="button"
+            onClick={openUrlInput}
+            className="min-h-11 self-start rounded-lg px-3 text-sm font-medium text-primary hover:text-primary-hover flex items-center gap-1 disabled:opacity-50"
+            disabled={images.length >= maxImages}
+          >
+            <LinkIcon className="h-4 w-4" />
+            Add URL
+          </button>
+        )}
       </div>
 
       {showUrlInput && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             ref={urlInputRef}
             type="url"
@@ -187,53 +185,55 @@ export default function ImageUpload({
             }}
             placeholder="Paste image URL (https://...)"
             aria-label="Image URL input"
-            className="flex-1 h-9 rounded-lg border border-gray-300 bg-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-navy-800/40 focus:border-navy-800"
+            className="min-w-0 flex-1 h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
           />
-          <button
-            type="button"
-            onClick={confirmUrlAdd}
-            className="h-9 px-3 rounded-lg bg-navy-800 text-white text-sm font-medium hover:bg-navy-700 flex items-center gap-1"
-            aria-label="Confirm add URL"
-          >
-            <Check className="h-4 w-4" />
-            Add
-          </button>
-          <button
-            type="button"
-            onClick={cancelUrlInput}
-            className="h-9 px-3 rounded-lg border border-gray-300 text-sm text-gray-600 hover:bg-gray-50"
-            aria-label="Cancel"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-none">
+            <button
+              type="button"
+              onClick={confirmUrlAdd}
+              className="min-h-11 px-4 rounded-lg bg-primary text-black text-sm font-semibold hover:bg-primary-hover flex items-center justify-center gap-1"
+              aria-label="Confirm add URL"
+            >
+              <Check className="h-4 w-4" />
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={cancelUrlInput}
+              className="min-h-11 px-4 rounded-lg border border-white/10 text-sm text-slate-300 hover:bg-white/5 flex items-center justify-center"
+              aria-label="Cancel"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
 
       {uploadError && (
-        <div className="bg-primary-soft border border-primary/40 text-primary px-3 py-2 rounded text-sm">
+        <div className="bg-primary-soft border border-primary/40 text-primary px-3 py-2 rounded text-sm" role="alert">
           {uploadError}
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
         {images.map((image, index) => (
           <div key={index} className="relative group aspect-square">
             <img
               src={safeSrc(image)}
               alt={`Product ${index + 1}`}
-              className="w-full h-full object-cover rounded-lg border-2 border-gray-200"
+              className="w-full h-full object-cover rounded-lg border-2 border-white/10 bg-surface"
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = ''; }}
             />
             <button
               type="button"
               onClick={() => handleImageRemove(index)}
-              className="absolute top-2 right-2 bg-red-600 text-gray-900 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Remove image"
+              className="absolute top-1 right-1 min-h-11 min-w-11 rounded-full bg-red-600 text-white flex items-center justify-center opacity-100 transition-opacity sm:top-2 sm:right-2 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus:opacity-100"
+              aria-label={`Remove image ${index + 1}`}
             >
               <X className="h-4 w-4" />
             </button>
             {index === 0 && (
-              <span className="absolute bottom-2 left-2 bg-navy-800 text-white text-xs px-2 py-1 rounded">
+              <span className="absolute bottom-2 left-2 bg-background/90 text-white text-xs px-2 py-1 rounded">
                 Main
               </span>
             )}
@@ -241,28 +241,28 @@ export default function ImageUpload({
         ))}
 
         {images.length < maxImages && (
-          <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-navy-800 hover:bg-gray-50 transition-colors">
+          <label className="aspect-square min-h-24 border-2 border-dashed border-white/15 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/60 hover:bg-white/5 focus-within:ring-2 focus-within:ring-primary/40 transition-colors">
             <input
               type="file"
               multiple
               accept="image/jpeg,image/png,image/webp"
               onChange={handleImageAdd}
-              className="hidden"
+              className="sr-only"
               disabled={uploading}
             />
             {uploading ? (
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-navy-800"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             ) : (
               <>
-                <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-600">Upload</span>
+                <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                <span className="text-sm text-slate-300">Upload</span>
               </>
             )}
           </label>
         )}
       </div>
 
-      <div className="flex items-start space-x-2 text-sm text-gray-600">
+      <div className="flex items-start space-x-2 text-sm text-slate-400">
         <ImageIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
         <p>
           Upload up to {maxImages} images. First image will be the main product photo.
