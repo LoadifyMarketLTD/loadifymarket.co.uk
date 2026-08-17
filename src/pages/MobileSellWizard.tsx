@@ -6,7 +6,7 @@
  * WebView reloads and process recreation do not erase seller input.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -53,10 +53,11 @@ const DRAFT_SAVE_DELAY_MS = 250;
 const CONDITION_OPTIONS = [
   { value: '', label: 'Select condition' },
   { value: 'new', label: 'New' },
-  { value: 'like_new', label: 'Like new' },
-  { value: 'good', label: 'Good' },
-  { value: 'fair', label: 'Fair' },
-  { value: 'poor', label: 'Poor' },
+  { value: 'used', label: 'Used' },
+  { value: 'refurbished', label: 'Refurbished' },
+  { value: 'returns_stock', label: 'Returns stock' },
+  { value: 'mixed', label: 'Mixed condition' },
+  { value: 'other', label: 'Other' },
 ] as const;
 
 // ── Input primitive ────────────────────────────────────────────────────────────
@@ -314,7 +315,7 @@ export default function MobileSellWizard() {
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [discardingDraft, setDiscardingDraft] = useState(false);
 
-  const draftPayload: SellerListingDraftPayload = {
+  const draftPayload = useMemo<SellerListingDraftPayload>(() => ({
     photos: form.photos,
     title: form.title,
     price: form.price,
@@ -325,7 +326,7 @@ export default function MobileSellWizard() {
     shippingMethodIds: selectedShippingMethodIds,
     dispatchTime,
     moreDetailsOpen,
-  };
+  }), [dispatchTime, form, moreDetailsOpen, selectedShippingMethodIds]);
   const hasMeaningfulDraft = !isSellerListingDraftEmpty(draftPayload);
 
   const queueDraftClear = async (userId: string) => {
@@ -414,15 +415,7 @@ export default function MobileSellWizard() {
     }, DRAFT_SAVE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [
-    createdListing,
-    dispatchTime,
-    draftHydratedUserId,
-    form,
-    moreDetailsOpen,
-    selectedShippingMethodIds,
-    user?.id,
-  ]);
+  }, [createdListing, draftHydratedUserId, draftPayload, user?.id]);
 
   useEffect(() => {
     if (user?.id && draftHydratedUserId === user.id) trackStartListing();
