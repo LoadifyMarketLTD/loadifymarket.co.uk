@@ -6,6 +6,7 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { PRODUCT_IMAGES_BUCKET, extractOwnedProductImagePath } from './_shared/productImagePaths';
 import {
   deriveSellerListingLocks,
   formatSellerListingLockReason,
@@ -19,7 +20,6 @@ const UPDATE_ALLOWED_FIELDS = [
   'images', 'specifications', 'weight', 'dimensions', 'palletInfo', 'logisticsInfo',
   'isHandmade', 'isUnique', 'artistName', 'isActive',
 ] as const;
-const PRODUCT_IMAGES_BUCKET = 'product-images';
 
 function hasOwn(obj: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key);
@@ -48,20 +48,6 @@ function calculateStockStatus(context: 'product' | 'service', quantity: number):
   if (quantity > 10) return 'in_stock';
   if (quantity > 0) return 'low_stock';
   return 'out_of_stock';
-}
-
-function extractOwnedProductImagePath(rawUrl: string, supabaseUrl: string, sellerId: string): string | null {
-  try {
-    const url = new URL(rawUrl);
-    const storageOrigin = new URL(supabaseUrl).origin;
-    const publicPrefix = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
-    if (url.origin !== storageOrigin || !url.pathname.startsWith(publicPrefix)) return null;
-
-    const path = decodeURIComponent(url.pathname.slice(publicPrefix.length));
-    return path.startsWith(`sellers/${sellerId}/`) ? path : null;
-  } catch {
-    return null;
-  }
 }
 
 export const handler: Handler = async (event) => {
