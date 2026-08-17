@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, Pencil, Share2, Package, Trash2, CheckSquare, MoreVertical, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -128,6 +128,7 @@ const SellerProducts = () => {
   const isMobile = useIsMobile();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | SellerProductStatus>("all");
 
@@ -137,26 +138,30 @@ const SellerProducts = () => {
   const [soldTarget, setSoldTarget] = useState<Product | null>(null);
   const [soldLoading, setSoldLoading] = useState(false);
 
-  useEffect(() => {
+  const loadProducts = useCallback(async () => {
     if (!user) return;
-    const load = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, images, listingContext")
-          .eq("sellerId", user.id)
-          .order("createdAt", { ascending: false });
-        if (error) throw error;
-        setProducts(data ?? []);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-        toast({ title: "Could not load listings", description: "Please try refreshing the page.", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, images, listingContext")
+        .eq("sellerId", user.id)
+        .order("createdAt", { ascending: false });
+      if (error) throw error;
+      setProducts(data ?? []);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      setLoadError("Could not load your listings. Check your connection and try again.");
+      toast({ title: "Could not load listings", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
 
   const shareOnFacebook = (product: Product) => {
     if (!isPubliclyShareable(product)) {
@@ -350,7 +355,7 @@ const SellerProducts = () => {
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Products</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {loading ? "Loading…" : `${products.length} listings`}
+            {loading ? "Loading…" : loadError ? "Listings unavailable" : `${products.length} listings`}
           </p>
         </div>
         <Button size="sm" className="min-h-11 bg-primary hover:bg-primary-hover text-black" asChild>
@@ -391,8 +396,20 @@ const SellerProducts = () => {
         </div>
       </div>
 
+      {!loading && loadError && (
+        <div role="alert" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-danger/30 bg-danger/10 p-4">
+          <div>
+            <p className="text-sm font-semibold text-danger">Listings could not be loaded</p>
+            <p className="mt-1 text-sm text-muted-foreground">{loadError}</p>
+          </div>
+          <Button type="button" variant="outline" className="min-h-11 w-full sm:w-auto" onClick={() => void loadProducts()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
       {/* Table (desktop) + Card list (mobile) */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className={`bg-card rounded-xl border border-border overflow-hidden ${loadError ? "hidden" : ""}`}>
         {/* ── Mobile: card list ─────────────────────────────────── */}
         <div className="sm:hidden divide-y divide-border">
           {loading ? (
