@@ -20,6 +20,7 @@ import {
 import { useAuthStore } from '@/store';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { trackStartListing, trackPublishListing } from '@/lib/analytics';
+import { normalizeDecimalInput, parseDecimalInput } from '@/lib/decimalInput';
 import {
   deleteProductImage,
   deleteProductImages,
@@ -45,8 +46,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-
 const MAX_PHOTOS = 6;
 const DRAFT_SAVE_DELAY_MS = 250;
 
@@ -59,8 +58,6 @@ const CONDITION_OPTIONS = [
   { value: 'mixed', label: 'Mixed condition' },
   { value: 'other', label: 'Other' },
 ] as const;
-
-// ── Input primitive ────────────────────────────────────────────────────────────
 
 function FieldInput({
   label,
@@ -133,8 +130,6 @@ function FieldInput({
   );
 }
 
-// ── Success sheet ──────────────────────────────────────────────────────────────
-
 function SuccessSheet({
   productId,
   isLive,
@@ -168,7 +163,6 @@ function SuccessSheet({
       >
         <CheckCircle2 className="text-success" style={{ width: '44px', height: '44px' }} />
       </div>
-
       <h2
         className="text-foreground"
         style={{ fontSize: '26px', fontWeight: 800, textAlign: 'center', marginBottom: '10px' }}
@@ -183,7 +177,6 @@ function SuccessSheet({
           ? 'Buyers can now find and purchase your listing.'
           : 'The listing was created, but it is not public yet. Open Products to review its status.'}
       </p>
-
       {cleanupWarning && (
         <p
           role="alert"
@@ -201,7 +194,6 @@ function SuccessSheet({
           {cleanupWarning}
         </p>
       )}
-
       <div style={{ width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {isLive && (
           <button
@@ -221,7 +213,6 @@ function SuccessSheet({
             View listing
           </button>
         )}
-
         <button
           onClick={() => navigate('/seller/products')}
           className="text-foreground bg-white/[0.06]"
@@ -238,7 +229,6 @@ function SuccessSheet({
         >
           Back to Products
         </button>
-
         <button
           onClick={onSellAnother}
           className="text-muted-foreground"
@@ -260,8 +250,6 @@ function SuccessSheet({
     </div>
   );
 }
-
-// ── Form state ─────────────────────────────────────────────────────────────────
 
 interface FormState {
   photos: ProductImageAsset[];
@@ -288,8 +276,6 @@ interface CreatedListingState {
   isActive: boolean;
   cleanupWarning: string | null;
 }
-
-// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function MobileSellWizard() {
   const navigate = useNavigate();
@@ -338,7 +324,6 @@ export default function MobileSellWizard() {
     await operation;
   };
 
-  // Hydrate the correct user's draft before autosave is allowed to write anything.
   useEffect(() => {
     let cancelled = false;
     const userId = user?.id ?? null;
@@ -386,8 +371,6 @@ export default function MobileSellWizard() {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  // Debounced, serialized autosave. The hydration guard prevents the empty initial
-  // React state from overwriting a persisted draft before restoration completes.
   useEffect(() => {
     const userId = user?.id;
     if (!userId || draftHydratedUserId !== userId || createdListing) return;
@@ -421,14 +404,11 @@ export default function MobileSellWizard() {
     if (user?.id && draftHydratedUserId === user.id) trackStartListing();
   }, [draftHydratedUserId, user?.id]);
 
-  // ── Photo handlers ────────────────────────────────────────────────────────
-
   const handleAddPhotos = async (files: FileList) => {
     if (!user?.id) {
       setPhotoError('You must be signed in as a seller to upload photos.');
       return;
     }
-
     const remaining = MAX_PHOTOS - form.photos.length;
     if (remaining <= 0) return;
     const batch = Array.from(files).slice(0, remaining);
@@ -437,13 +417,9 @@ export default function MobileSellWizard() {
     setPhotoUploading(true);
     setPhotoError(null);
     if (fieldErrors.photos) setFieldErrors((e) => ({ ...e, photos: undefined }));
-
     try {
       const uploaded = await uploadProductImageBatch(batch, user.id);
-      setForm((prev) => ({
-        ...prev,
-        photos: [...prev.photos, ...uploaded].slice(0, MAX_PHOTOS),
-      }));
+      setForm((prev) => ({ ...prev, photos: [...prev.photos, ...uploaded].slice(0, MAX_PHOTOS) }));
     } catch (error) {
       setPhotoError(getProductImageErrorMessage(error));
     } finally {
@@ -454,23 +430,17 @@ export default function MobileSellWizard() {
   const handleRemovePhoto = async (idx: number) => {
     const photo = form.photos[idx];
     if (!photo) return;
-
     setPhotoRemovingPath(photo.path);
     setPhotoError(null);
     try {
       await deleteProductImage(photo.path);
-      setForm((prev) => ({
-        ...prev,
-        photos: prev.photos.filter((item) => item.path !== photo.path),
-      }));
+      setForm((prev) => ({ ...prev, photos: prev.photos.filter((item) => item.path !== photo.path) }));
     } catch (error) {
       setPhotoError(getProductImageErrorMessage(error));
     } finally {
       setPhotoRemovingPath(null);
     }
   };
-
-  // ── Publish ───────────────────────────────────────────────────────────────
 
   const handlePublish = async () => {
     if (!user?.id) {
@@ -481,8 +451,8 @@ export default function MobileSellWizard() {
     const errs: typeof fieldErrors = {};
     if (form.photos.length === 0) errs.photos = 'Please add at least one photo.';
     if (!form.title.trim()) errs.title = 'Please enter a title.';
-    const price = parseFloat(form.price);
-    if (!form.price || isNaN(price) || price <= 0) errs.price = 'Please enter a valid price greater than £0.';
+    const price = parseDecimalInput(form.price) ?? 0;
+    if (!form.price || price <= 0) errs.price = 'Please enter a valid price greater than £0.';
     if (selectedShippingMethodIds.length === 0) errs.shipping = 'Please select at least one shipping method.';
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
@@ -491,7 +461,6 @@ export default function MobileSellWizard() {
 
     setPublishing(true);
     setPublishError(null);
-
     try {
       const payload = {
         title: form.title.trim(),
@@ -513,7 +482,6 @@ export default function MobileSellWizard() {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(data.error ?? `Server error (${res.status})`);
@@ -537,8 +505,6 @@ export default function MobileSellWizard() {
     }
   };
 
-  // ── Draft reset/discard ───────────────────────────────────────────────────
-
   const resetFormState = () => {
     setForm(INITIAL_FORM);
     setFieldErrors({});
@@ -558,9 +524,6 @@ export default function MobileSellWizard() {
       await queueDraftClear(user.id);
       resetFormState();
       setDiscardConfirmOpen(false);
-
-      // Draft is already cleared. Storage cleanup is best-effort and can only leave
-      // an orphan; it cannot break a live listing because this draft was never published.
       void deleteProductImages(imagePaths).then((failedPaths) => {
         if (failedPaths.length > 0) {
           console.error('MobileSellWizard: discarded draft left orphaned image paths:', failedPaths);
@@ -578,8 +541,6 @@ export default function MobileSellWizard() {
     resetFormState();
     setCreatedListing(null);
   };
-
-  // ── Hydration/success screens ─────────────────────────────────────────────
 
   if (user?.id && draftHydratedUserId !== user.id) {
     return (
@@ -610,7 +571,6 @@ export default function MobileSellWizard() {
 
   return (
     <div className="bg-background" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      {/* ── Header ── */}
       <div
         style={{
           position: 'sticky',
@@ -662,7 +622,6 @@ export default function MobileSellWizard() {
         )}
       </div>
 
-      {/* ── Scrollable form ── */}
       <div
         style={{
           flex: 1,
@@ -690,7 +649,6 @@ export default function MobileSellWizard() {
           </p>
         )}
 
-        {/* Photos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
             Photos <span className="text-primary">*</span>
@@ -820,7 +778,6 @@ export default function MobileSellWizard() {
           />
         </div>
 
-        {/* Title */}
         <FieldInput
           label="Title"
           value={form.title}
@@ -833,12 +790,11 @@ export default function MobileSellWizard() {
           error={fieldErrors.title}
         />
 
-        {/* Price */}
         <FieldInput
           label="Price (£)"
           value={form.price}
           onChange={(v) => {
-            setForm((p) => ({ ...p, price: v }));
+            setForm((p) => ({ ...p, price: normalizeDecimalInput(v) }));
             if (fieldErrors.price) setFieldErrors((e) => ({ ...e, price: undefined }));
           }}
           type="text"
@@ -871,7 +827,6 @@ export default function MobileSellWizard() {
           )}
         </div>
 
-        {/* ── More details (collapsible) ── */}
         <div style={{ border: '1px solid rgba(255,255,255,0.10)', borderRadius: '16px', overflow: 'hidden' }}>
           <button
             type="button"
@@ -951,7 +906,6 @@ export default function MobileSellWizard() {
         </div>
       </div>
 
-      {/* ── Sticky CTA ── */}
       <div
         className="bg-background/[0.97]"
         style={{
