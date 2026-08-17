@@ -45,4 +45,9 @@ describe('ProductFormPage edit lifecycle contract', () => {
     expect(source).toContain('const requirePublicationRequirements = publishMode || (Boolean(id) && preservePublicationState && existingIsActive);');
     expect(source).toContain('const newErrors = validate(publishMode, requirePublicationRequirements);');
   });
+
+  it('routes destructive deletion through the authenticated server contract', () => {
+    expect(source).toContain("authorizedFetch('/.netlify/functions/delete-product'");
+    expect(source).not.toContain("supabase.from('products').delete()");
+  });
 });

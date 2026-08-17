@@ -572,13 +572,24 @@ export default function ProductFormPage() {
     if (!user || !id) return;
     setDeleting(true);
     try {
-      // product_shipping rows cascade-delete via FK ON DELETE CASCADE
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      const res = await authorizedFetch('/.netlify/functions/delete-product', {
+        method: 'POST',
+        body: JSON.stringify({ id }),
+      });
+      const payload = await res.json().catch(() => ({})) as { error?: string; code?: string };
+      if (!res.ok) {
+        setErrors({
+          _form: payload.error ?? (res.status === 409
+            ? 'This listing is linked to retained marketplace history and cannot be deleted.'
+            : `Failed to delete listing. Server returned ${res.status}.`),
+        });
+        setShowDeleteConfirm(false);
+        return;
+      }
       navigate('/seller/products');
     } catch (err) {
       console.error('Error deleting product:', err);
-      setErrors({ _form: `Failed to delete product: ${(err as { message?: string })?.message ?? 'Unknown error'}` });
+      setErrors({ _form: 'Failed to delete listing. Please check your connection and try again.' });
       setShowDeleteConfirm(false);
     } finally {
       setDeleting(false);
