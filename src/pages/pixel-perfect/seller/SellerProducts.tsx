@@ -87,7 +87,7 @@ function deriveStatus(p: Product): SellerProductStatus {
   if (p.listingContext === "service") return "active";
   const qty = p.stockQuantity ?? 0;
   if (qty === 0) return "out_of_stock";
-  if (qty <= 5) return "low_stock";
+  if (qty <= 10) return "low_stock";
   return "active";
 }
 
