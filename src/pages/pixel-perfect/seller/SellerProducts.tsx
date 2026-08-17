@@ -535,7 +535,7 @@ const SellerProducts = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-xs"
+                            className="min-h-11 text-xs"
                             onClick={() => navigate(`/seller/products/${p.id}/edit`)}
                           >
                             <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
@@ -545,7 +545,7 @@ const SellerProducts = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0"
+                                className="h-11 w-11 p-0"
                                 aria-label={`More actions for ${p.title}`}
                               >
                                 <MoreVertical className="h-3.5 w-3.5" />
