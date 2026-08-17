@@ -83,7 +83,7 @@ type FormErrors = Partial<Record<string, string>>;
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-surface border border-white/10 rounded-xl p-6 mb-6 shadow-lg shadow-black/20 ${className}`}>
+    <div className={`bg-surface border border-white/10 rounded-xl p-4 sm:p-6 mb-6 shadow-lg shadow-black/20 ${className}`}>
       <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">{title}</h2>
       {children}
     </div>
@@ -650,11 +650,11 @@ export default function ProductFormPage() {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 pt-4 md:pt-28 pb-8">
+      <div className="container mx-auto px-3 sm:px-4 pt-4 md:pt-28 pb-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-white">{id ? 'Edit Listing' : 'Create New Listing'}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">{id ? 'Edit Listing' : 'Create New Listing'}</h1>
             <p className="text-slate-400 mt-1 text-sm">
               {id ? 'Update your product information below.' : 'Fill in the details below to list your product on the marketplace.'}
             </p>
@@ -673,7 +673,7 @@ export default function ProductFormPage() {
                   <p className="text-xs font-semibold text-green-200">
                     🚀 Your product is live — share it now to get more views!
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => {
@@ -681,7 +681,7 @@ export default function ProductFormPage() {
                         trackShareProduct('facebook', publishedProductId, formData.title);
                         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
                       }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#1877F2] transition-opacity hover:opacity-80"
+                      className="min-h-11 w-full sm:w-auto px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#1877F2] transition-opacity hover:opacity-80"
                     >
                       Share on Facebook
                     </button>
@@ -693,7 +693,7 @@ export default function ProductFormPage() {
                         trackShareProduct('whatsapp', publishedProductId, formData.title);
                         window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
                       }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#25D366] transition-opacity hover:opacity-80"
+                      className="min-h-11 w-full sm:w-auto px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#25D366] transition-opacity hover:opacity-80"
                     >
                       Share on WhatsApp
                     </button>
@@ -709,7 +709,7 @@ export default function ProductFormPage() {
                           toast({ title: 'Could not copy', description: 'Please copy the URL manually.', variant: 'destructive' });
                         }
                       }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80 bg-primary"
+                      className="min-h-11 w-full sm:w-auto px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80 bg-primary"
                     >
                       Copy Link
                     </button>
@@ -769,10 +769,10 @@ export default function ProductFormPage() {
 
             {/* ─── LISTING CONTEXT SELECTOR ─────────────────────────────── */}
             {!id && (
-              <div className="bg-surface border border-white/10 rounded-xl p-6 mb-6">
+              <div className="bg-surface border border-white/10 rounded-xl p-4 sm:p-6 mb-6">
                 <h2 className="text-lg font-semibold text-white mb-1">Listing Type</h2>
                 <p className="text-sm text-slate-400 mb-4">Choose whether you are listing a service or a physical product.</p>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
                     <input
                       type="radio"
@@ -1093,8 +1093,8 @@ export default function ProductFormPage() {
                 />
               </div>
 
-              <div className="flex gap-6 mb-4">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="flex flex-wrap gap-4 sm:gap-6 mb-4">
+                <label className="min-h-11 flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.collectionAvailable}
@@ -1103,7 +1103,7 @@ export default function ProductFormPage() {
                   />
                   <span className="text-sm text-slate-300">Collection available</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="min-h-11 flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.deliveryAvailable}
@@ -1213,7 +1213,7 @@ export default function ProductFormPage() {
                   <button
                     type="button"
                     onClick={addCustomSpec}
-                    className="text-xs text-primary hover:text-primary flex items-center gap-1 font-medium"
+                    className="min-h-11 px-2 text-xs text-primary hover:text-primary flex items-center gap-1 font-medium"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Add Spec
@@ -1226,7 +1226,7 @@ export default function ProductFormPage() {
                 )}
                 <div className="space-y-2">
                   {customSpecs.map((spec, i) => (
-                    <div key={i} className="flex gap-2 items-center">
+                    <div key={i} className="flex flex-col sm:flex-row gap-2 sm:items-center">
                       <input
                         type="text"
                         value={spec.key}
@@ -1244,7 +1244,7 @@ export default function ProductFormPage() {
                       <button
                         type="button"
                         onClick={() => removeCustomSpec(i)}
-                        className="p-2 text-red-500 hover:text-danger flex-shrink-0"
+                        className="min-h-11 min-w-11 p-2 text-red-500 hover:text-danger flex items-center justify-center flex-shrink-0 self-end sm:self-auto"
                         aria-label="Remove spec"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -1374,7 +1374,7 @@ export default function ProductFormPage() {
             )}
 
             {/* ─── Publish / Save ────────────────────────────────────────── */}
-            <div className="bg-surface border border-white/10 rounded-xl p-6">
+            <div className="bg-surface border border-white/10 rounded-xl p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">
                 {id
                   ? `${sectionNumber('publish')}. ${user.role !== 'admin' && !existingIsActive && existingIsApproved && !hasActiveOrders ? 'Save or Publish' : 'Save Changes'}`
@@ -1403,11 +1403,11 @@ export default function ProductFormPage() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => navigate(user.role === 'admin' ? '/seller' : '/seller/products')}
-                    className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
+                    className="min-h-11 w-full sm:w-auto px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
                   >
                     Cancel
                   </button>
@@ -1416,7 +1416,7 @@ export default function ProductFormPage() {
                       type="button"
                       onClick={handleSaveDraft}
                       disabled={savingDraft || saving}
-                      className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
+                      className="min-h-11 w-full sm:w-auto px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
                     >
                       {savingDraft ? 'Saving...' : 'Save as Draft'}
                     </button>
@@ -1426,7 +1426,7 @@ export default function ProductFormPage() {
                       type="button"
                       onClick={handlePublishExisting}
                       disabled={saving || savingDraft}
-                      className="px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover"
+                      className="min-h-11 w-full sm:w-auto px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover"
                     >
                       {saving ? 'Publishing...' : 'Publish Listing'}
                     </button>
@@ -1434,7 +1434,7 @@ export default function ProductFormPage() {
                   <button
                     type="submit"
                     disabled={saving || savingDraft}
-                    className="px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover"
+                    className="min-h-11 w-full sm:w-auto px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover"
                   >
                     {id
                       ? (user.role === 'admin'
@@ -1453,19 +1453,19 @@ export default function ProductFormPage() {
                       <p className="text-sm font-medium text-red-300 mb-3">
                         Permanently delete this listing? This cannot be undone.
                       </p>
-                      <div className="flex gap-3">
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <button
                           type="button"
                           onClick={deleteProduct}
                           disabled={deleting}
-                          className="px-4 py-2 bg-red-600 text-black text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+                          className="min-h-11 w-full sm:w-auto px-4 py-2 bg-red-600 text-black text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
                         >
                           {deleting ? 'Deleting…' : 'Yes, delete permanently'}
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowDeleteConfirm(false)}
-                          className="px-4 py-2 border border-white/10 text-slate-300 text-sm font-medium rounded-lg hover:bg-white/5"
+                          className="min-h-11 w-full sm:w-auto px-4 py-2 border border-white/10 text-slate-300 text-sm font-medium rounded-lg hover:bg-white/5"
                         >
                           Cancel
                         </button>
@@ -1477,14 +1477,14 @@ export default function ProductFormPage() {
                         type="button"
                         onClick={() => setShowDeleteConfirm(true)}
                         disabled={hasActiveOrders}
-                        className="flex items-center gap-2 text-sm text-danger hover:text-danger font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="min-h-11 self-start flex items-center gap-2 text-sm text-danger hover:text-danger font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <Trash2 className="h-4 w-4" />
                         Delete this listing
                       </button>
                       {hasActiveOrders && (
                         <p className="text-xs text-primary">
-                          Cannot delete — this product has active or completed orders.
+                          Cannot delete while this listing has an active reservation or paid order lock.
                         </p>
                       )}
                     </div>
