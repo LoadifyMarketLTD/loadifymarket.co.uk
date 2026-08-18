@@ -47,8 +47,10 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
     }
 
-    const { orderNumber, order_id, email } = body;
-    if (!orderNumber && !order_id) {
+    const orderNumber = typeof body.orderNumber === 'string' ? body.orderNumber.trim() : '';
+    const orderId = typeof body.order_id === 'string' ? body.order_id.trim() : '';
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+    if (!orderNumber && !orderId) {
       return { statusCode: 400, body: JSON.stringify({ error: 'orderNumber or order_id is required' }) };
     }
 
@@ -63,15 +65,14 @@ export const handler: Handler = async (event) => {
         id,
         orderNumber,
         buyerId,
-        sellerId,
         status,
         total,
         createdAt,
-        products (id, title, images),
-        users!orders_sellerId_fkey (id, firstName, lastName)
+        products (title, images),
+        users!orders_sellerId_fkey (firstName, lastName)
       `);
 
-    query = orderNumber ? query.eq('orderNumber', orderNumber) : query.eq('id', order_id!);
+    query = orderNumber ? query.eq('orderNumber', orderNumber) : query.eq('id', orderId);
     const { data: order, error: orderError } = await query.maybeSingle();
     if (orderError || !order) return genericLookupFailure;
 
@@ -84,24 +85,37 @@ export const handler: Handler = async (event) => {
 
     const { data: shipment } = await supabase
       .from('shipments')
-      .select('*')
+      .select('id, status, courier_name, tracking_number, proof_of_delivery_url, created_at, updated_at')
       .eq('order_id', order.id)
-      .maybeSingle();
+      .maybeSingle<{
+        id: string;
+        status: string;
+        courier_name: string | null;
+        tracking_number: string | null;
+        proof_of_delivery_url: string | null;
+        created_at: string;
+        updated_at: string;
+      }>();
 
-    let shipmentEvents: unknown[] = [];
+    let shipmentEvents: Array<{
+      id: string;
+      status: string;
+      location: string | null;
+      message: string | null;
+      created_at: string;
+    }> = [];
     let signedProofUrl: string | null = null;
+
     if (shipment) {
       const { data: events } = await supabase
         .from('shipment_events')
-        .select('*')
+        .select('id, status, location, message, created_at')
         .eq('shipment_id', shipment.id)
         .order('created_at', { ascending: true });
-      shipmentEvents = events || [];
+      shipmentEvents = events ?? [];
 
       if (shipment.proof_of_delivery_url) {
         const proofPath = String(shipment.proof_of_delivery_url);
-        // Private proof paths are stored as <shipmentId>/<file>. If the value is
-        // not scoped to this shipment, do not expose it.
         if (proofPath.startsWith(`${shipment.id}/`) && !proofPath.includes('..')) {
           const { data: signed } = await supabase.storage
             .from(POD_BUCKET)
@@ -126,7 +140,6 @@ export const handler: Handler = async (event) => {
         } : null,
       },
       shipment: shipment ? {
-        id: shipment.id,
         status: shipment.status,
         courier_name: shipment.courier_name,
         tracking_number: shipment.tracking_number,
