@@ -121,12 +121,12 @@ const BuyerDisputes = () => {
 
   const openNewDisputeDialog = async () => {
     if (!user?.id) return;
-    // Load eligible orders (paid, shipped, or delivered) for dispute
+    // Keep this list aligned with can_open_dispute() in the database.
     const { data } = await supabase
       .from("orders")
       .select("id, orderNumber")
       .eq("buyerId", user.id)
-      .in("status", ["paid", "shipped", "delivered", "completed"])
+      .in("status", ["paid", "packed", "shipped", "delivered", "completed"])
       .order("createdAt", { ascending: false })
       .limit(50);
     setOrders((data ?? []) as BuyerOrder[]);
