@@ -1,57 +1,17 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  PushNotifications,
+  type ActionPerformed,
+  type PluginListenerHandle,
+  type RegistrationError,
+  type Token,
+} from '@capacitor/push-notifications';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { isCapacitorNative } from '@/lib/capacitorUtils';
 
-type PushPermissionState = 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale' | string;
-
-interface PushPermissionResult {
-  receive?: PushPermissionState;
-}
-
-interface PushToken {
-  value?: string;
-}
-
-interface PushRegistrationError {
-  error?: string;
-}
-
-interface PushListenerHandle {
-  remove: () => void | Promise<void>;
-}
-
-interface PushNotificationsPlugin {
-  checkPermissions?: () => Promise<PushPermissionResult>;
-  requestPermissions: () => Promise<PushPermissionResult>;
-  register: () => Promise<void>;
-  addListener: (
-    eventName: 'registration' | 'registrationError',
-    listener: (payload: PushToken | PushRegistrationError) => void,
-  ) => Promise<PushListenerHandle> | PushListenerHandle;
-}
-
 const PUSH_TOKEN_STORAGE_KEY = 'loadify:push-token:last-registered';
 const PUSH_TOKEN_USER_STORAGE_KEY = 'loadify:push-token:last-user';
-
-function getPushNotificationsPlugin(): PushNotificationsPlugin | null {
-  if (typeof window === 'undefined') return null;
-
-  const plugin = (
-    window as Window & {
-      Capacitor?: {
-        Plugins?: {
-          PushNotifications?: PushNotificationsPlugin;
-        };
-      };
-    }
-  ).Capacitor?.Plugins?.PushNotifications;
-
-  if (!plugin?.requestPermissions || !plugin.register || !plugin.addListener) {
-    return null;
-  }
-
-  return plugin;
-}
 
 function getPushPlatform(): 'android' | 'ios' {
   const platform = (
@@ -84,23 +44,39 @@ async function persistTokenRegistration(userId: string, token: string): Promise<
   window.localStorage.setItem(PUSH_TOKEN_USER_STORAGE_KEY, userId);
 }
 
+function routeFromPushAction(action: ActionPerformed): string {
+  const data = action.notification.data ?? {};
+  const candidates = [data.path, data.route, data.url];
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string' || !candidate.trim()) continue;
+
+    try {
+      const parsed = new URL(candidate, 'https://loadifymarket.co.uk');
+      if (parsed.origin === 'https://loadifymarket.co.uk') {
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+    } catch {
+      // Ignore malformed notification routes and fall back to notifications.
+    }
+  }
+
+  return '/notifications';
+}
+
 export function usePushTokenRegistration(userId?: string): void {
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (!userId || !isCapacitorNative() || typeof window === 'undefined') {
       return;
     }
 
-    const plugin = getPushNotificationsPlugin();
-    if (!plugin) {
-      console.warn('push-token: PushNotifications plugin unavailable; skipping token registration');
-      return;
-    }
-
     let active = true;
-    const handles: PushListenerHandle[] = [];
+    const handles: PluginListenerHandle[] = [];
 
     const registerHandle = async (
-      maybeHandle: Promise<PushListenerHandle> | PushListenerHandle,
+      maybeHandle: Promise<PluginListenerHandle>,
     ): Promise<void> => {
       const resolved = await maybeHandle;
       if (!active) {
@@ -129,27 +105,34 @@ export function usePushTokenRegistration(userId?: string): void {
 
     const setup = async () => {
       await registerHandle(
-        plugin.addListener('registration', (payload) => {
-          void syncToken((payload as PushToken).value);
+        PushNotifications.addListener('registration', (token: Token) => {
+          void syncToken(token.value);
         }),
       );
 
       await registerHandle(
-        plugin.addListener('registrationError', (payload) => {
-          console.warn('push-token: native registration failed (non-fatal):', (payload as PushRegistrationError).error ?? payload);
+        PushNotifications.addListener('registrationError', (error: RegistrationError) => {
+          console.warn('push-token: native registration failed (non-fatal):', error.error ?? error);
         }),
       );
 
-      let permission = await plugin.checkPermissions?.();
-      if (!permission || (permission.receive !== 'granted' && permission.receive !== 'denied')) {
-        permission = await plugin.requestPermissions();
+      await registerHandle(
+        PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
+          if (!active) return;
+          navigate(routeFromPushAction(action));
+        }),
+      );
+
+      let permission = await PushNotifications.checkPermissions();
+      if (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale') {
+        permission = await PushNotifications.requestPermissions();
       }
 
       if (permission.receive !== 'granted') {
         return;
       }
 
-      await plugin.register();
+      await PushNotifications.register();
     };
 
     void setup().catch((error) => {
@@ -162,5 +145,5 @@ export function usePushTokenRegistration(userId?: string): void {
         void handle.remove();
       });
     };
-  }, [userId]);
+  }, [navigate, userId]);
 }
