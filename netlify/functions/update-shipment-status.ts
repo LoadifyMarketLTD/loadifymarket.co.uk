@@ -296,6 +296,22 @@ export const handler: Handler = async (event) => {
         .eq('id', shipment.order_id);
     }
 
+    // Create the buyer's in-app notification server-side. The seller cannot
+    // insert a notification for another user under the notifications RLS policy,
+    // so this belongs in the authenticated service-role transition handler.
+    const { error: notificationError } = await supabase
+      .from('notifications')
+      .insert({
+        userId: shipment.buyer_id,
+        type: 'shipment',
+        title: 'Shipment update',
+        message: `Your order ${shipment.orders?.orderNumber ?? shipment.order_id} shipment status is now: ${status}.`,
+        link: '/buyer/orders',
+      });
+    if (notificationError) {
+      console.error('Failed to create shipment notification:', notificationError.message);
+    }
+
     // Send email notification for certain statuses
     await sendStatusEmail(shipment.orders, updatedShipment, status);
 
