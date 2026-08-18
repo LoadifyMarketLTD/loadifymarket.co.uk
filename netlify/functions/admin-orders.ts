@@ -304,6 +304,29 @@ export const handler: Handler = async (event) => {
           };
         }
 
+        // Cancellation and refund are financial lifecycle operations, not
+        // cosmetic status changes. Keep them on their dedicated, audited paths:
+        // - unpaid/test orders -> release_unpaid_lock
+        // - paid orders -> create-refund (Stripe + transfer reconciliation)
+        if (status === 'cancelled') {
+          return {
+            statusCode: 409,
+            headers: JSON_HEADERS,
+            body: JSON.stringify({
+              error: 'Orders cannot be cancelled by changing status directly. For unpaid/test orders use the safe lock-release action; for paid orders issue a Stripe refund.',
+            }),
+          };
+        }
+        if (status === 'refunded') {
+          return {
+            statusCode: 409,
+            headers: JSON_HEADERS,
+            body: JSON.stringify({
+              error: 'Orders cannot be marked refunded manually. Use the Stripe refund action so the payment and seller transfer are reconciled.',
+            }),
+          };
+        }
+
         if (status === 'packed' || status === 'shipped' || status === 'delivered') {
           const { data: product } = await admin
             .from('products')
@@ -413,10 +436,10 @@ export const handler: Handler = async (event) => {
         }
 
         const previousStatus = order.status;
-        if (order.status !== 'cancelled') {
+        if (order.status !== 'cancelled' || order.escrowStatus !== 'released') {
           const { error: cancelErr } = await admin
             .from('orders')
-            .update({ status: 'cancelled' })
+            .update({ status: 'cancelled', escrowStatus: 'released' })
             .eq('id', orderId);
 
           if (cancelErr) throw cancelErr;
