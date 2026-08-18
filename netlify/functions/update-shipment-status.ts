@@ -140,6 +140,12 @@ function validateOrderStateForShipmentStatus(orderStatus: string, shipmentStatus
       : `Shipment cannot be marked Delivery Failed while the order is ${orderStatus}.`;
   }
 
+  if (shipmentStatus === 'Returned') {
+    return ['delivered', 'completed'].includes(orderStatus)
+      ? null
+      : `Shipment cannot be marked Returned while the order is ${orderStatus}.`;
+  }
+
   return null;
 }
 
@@ -298,13 +304,15 @@ export const handler: Handler = async (event) => {
       const orderUpdate: Record<string, unknown> = { status: targetOrderStatus };
       if (targetOrderStatus === 'delivered') orderUpdate.deliveredAt = now;
 
-      const { error: orderUpdateError } = await supabase
+      const { data: synchronizedOrder, error: orderUpdateError } = await supabase
         .from('orders')
         .update(orderUpdate)
         .eq('id', shipment.order_id)
-        .eq('status', shipment.orders.status);
+        .eq('status', shipment.orders.status)
+        .select('id')
+        .maybeSingle<{ id: string }>();
 
-      if (orderUpdateError) {
+      if (orderUpdateError || !synchronizedOrder) {
         const { error: rollbackError } = await supabase
           .from('shipments')
           .update({
@@ -315,8 +323,15 @@ export const handler: Handler = async (event) => {
           .eq('id', shipmentId);
         if (rollbackError) {
           console.error('update-shipment-status: shipment rollback failed:', rollbackError.message);
+          throw new Error('Order status changed concurrently and shipment rollback failed. Manual review required.');
         }
-        throw new Error(`Failed to synchronize order status: ${orderUpdateError.message}`);
+        if (orderUpdateError) {
+          throw new Error(`Failed to synchronize order status: ${orderUpdateError.message}`);
+        }
+        return {
+          statusCode: 409,
+          body: JSON.stringify({ error: 'Order status changed while the shipment was being updated. Please refresh and try again.' }),
+        };
       }
     }
 
