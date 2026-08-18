@@ -105,6 +105,7 @@ const BuyerOrders = () => {
           const errBody = await res.json() as { error?: string };
           serverMessage = errBody.error;
         } catch {
+          // Response body was not valid JSON — use status text instead
           serverMessage = res.statusText || undefined;
         }
         throw new Error(serverMessage ?? `Server error ${res.status}`);
@@ -134,11 +135,14 @@ const BuyerOrders = () => {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { error?: string }).error || 'Failed to generate invoice');
       }
+      // The function returns an HTML page — open it in a new tab so the user
+      // can print or save as PDF using their browser's built-in print dialog.
       const html = await res.text();
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const win = window.open(url, '_blank', 'noopener,noreferrer');
       if (!win) {
+        // Popup was blocked — inform the user and fall back to direct download
         toast({
           title: 'Pop-up blocked',
           description:
@@ -151,6 +155,7 @@ const BuyerOrders = () => {
         a.download = `invoice-${orderNumber || orderId.slice(0, 8)}.html`;
         a.click();
       }
+      // Revoke after a short delay to allow the new tab to fully load
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (err) {
       toast({ title: 'Invoice generation failed', description: (err as Error).message, variant: 'destructive' });
@@ -195,6 +200,7 @@ const BuyerOrders = () => {
     }
     setReturnLoading(true);
     try {
+      // Prevent duplicate open returns for the same order
       const { data: existing } = await supabase
         .from("returns")
         .select("id")
