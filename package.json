@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vitest run src/components/ImageUpload.test.ts src/components/ShippingMethodSelector.test.ts src/lib/decimalInput.test.ts src/lib/productImageStorage.test.ts src/lib/sellerListingDraft.test.ts src/pages/MobileSellWizard.draft.test.ts src/pages/ProductFormPage.lifecycle.test.ts src/pages/ProductFormPage.numbering.test.ts src/pages/ProductFormPage.responsive.test.ts src/pages/pixel-perfect/seller/SellerProducts.test.ts && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
