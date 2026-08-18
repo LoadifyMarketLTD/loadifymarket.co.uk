@@ -14,6 +14,11 @@ import type { User } from "@/types";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
+type ListingContextRelation =
+  | { listingContext?: string | null }
+  | Array<{ listingContext?: string | null }>
+  | null;
+
 interface Order {
   id: string;
   orderNumber: string;
@@ -22,6 +27,7 @@ interface Order {
   total: number;
   status: string;
   createdAt: string;
+  listingContext: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -40,6 +46,18 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function relationListingContext(relation: ListingContextRelation): string | null {
+  const row = Array.isArray(relation) ? relation[0] : relation;
+  return row?.listingContext ?? null;
+}
+
+function hasSellerAction(order: Order): boolean {
+  if (order.listingContext === "service") {
+    return ["paid", "packed", "shipped"].includes(order.status);
+  }
+  return ["paid", "packed"].includes(order.status);
+}
+
 const SellerOrders = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -55,7 +73,7 @@ const SellerOrders = () => {
       setLoadError(null);
       const { data, error: fetchError } = await supabase
         .from("orders")
-        .select(`id, orderNumber, total, status, createdAt, buyerId`)
+        .select(`id, orderNumber, total, status, createdAt, buyerId, products(listingContext)`)
         .eq("sellerId", user.id)
         .order("createdAt", { ascending: false });
 
@@ -66,11 +84,16 @@ const SellerOrders = () => {
         return;
       }
 
-      const rows = (data ?? []) as Array<{
-        id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
+      const rows = (data ?? []) as unknown as Array<{
+        id: string;
+        orderNumber: string;
+        total: number;
+        status: string;
+        createdAt: string;
+        buyerId: string;
+        products: ListingContextRelation;
       }>;
 
-      // Resolve buyer names via secondary query
       const buyerIds = [...new Set(rows.map((o) => o.buyerId).filter(Boolean))];
       const buyerNames: Record<string, string> = {};
       if (buyerIds.length > 0) {
@@ -93,17 +116,18 @@ const SellerOrders = () => {
           total: o.total,
           status: o.status,
           createdAt: o.createdAt,
-        }))
+          listingContext: relationListingContext(o.products),
+        })),
       );
       setLoading(false);
     };
-    load();
+    void load();
   }, [user]);
 
   const filtered = orders.filter(
     (o) =>
       o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
-      o.buyerName.toLowerCase().includes(search.toLowerCase())
+      o.buyerName.toLowerCase().includes(search.toLowerCase()),
   );
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -117,7 +141,7 @@ const SellerOrders = () => {
       if (!res.ok) throw new Error(json.error ?? "Failed to update order status");
 
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
       );
       toast({ title: "Order updated", description: `Status changed to ${newStatus}.` });
     } catch (err) {
@@ -127,7 +151,7 @@ const SellerOrders = () => {
     }
   };
 
-  const markDelivered = async (orderId: string) => {
+  const markServiceCompleted = async (orderId: string) => {
     setActionLoading(orderId);
     try {
       const res = await authorizedFetch("/.netlify/functions/seller-order-status", {
@@ -135,18 +159,65 @@ const SellerOrders = () => {
         body: JSON.stringify({ orderId, status: "delivered" }),
       });
       const json = await res.json() as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed to mark order as delivered");
+      if (!res.ok) throw new Error(json.error ?? "Failed to mark the job complete");
 
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: "delivered" } : o))
+        prev.map((o) => (o.id === orderId ? { ...o, status: "delivered" } : o)),
       );
-      toast({ title: "Order marked as delivered", description: "The buyer has been notified to confirm delivery." });
+      toast({ title: "Job marked complete", description: "The buyer has been notified to confirm completion." });
     } catch (err) {
       toast({ title: "Update failed", description: (err as Error).message, variant: "destructive" });
     } finally {
       setActionLoading(null);
     }
   };
+
+  const renderOrderActions = (o: Order, compact: boolean) => (
+    <div className="flex items-center justify-end gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className={compact ? "h-7 text-xs" : "text-xs"}
+        onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
+      >
+        View
+      </Button>
+      {hasSellerAction(o) && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={compact ? "h-7 text-xs gap-1" : "text-xs gap-1"}
+              disabled={actionLoading === o.id}
+            >
+              Update <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {o.listingContext === "service" ? (
+              <DropdownMenuItem onClick={() => markServiceCompleted(o.id)}>
+                Mark Job Complete
+              </DropdownMenuItem>
+            ) : (
+              <>
+                {o.status === "paid" && (
+                  <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>
+                    Mark as Packed
+                  </DropdownMenuItem>
+                )}
+                {(o.status === "paid" || o.status === "packed") && (
+                  <DropdownMenuItem onClick={() => navigate("/seller/shipments")}>
+                    Manage Shipment
+                  </DropdownMenuItem>
+                )}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
@@ -157,7 +228,6 @@ const SellerOrders = () => {
         </p>
       </div>
 
-      {/* Awaiting-payment highlight banner */}
       {!loading && orders.some((o) => o.status === "awaiting_payment") && (
         <div className="flex items-start gap-3 rounded-xl bg-primary/10 border border-primary/40 p-3.5">
           <span className="text-primary text-xl leading-none mt-0.5">⚠</span>
@@ -190,8 +260,6 @@ const SellerOrders = () => {
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
-
-        {/* ── Mobile: card list ─────────────────────────────────── */}
         <div className="sm:hidden divide-y divide-border">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Loading orders…</div>
@@ -217,54 +285,13 @@ const SellerOrders = () => {
                 </div>
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</span>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
-                    >
-                      View
-                    </Button>
-                    {["paid", "packed", "shipped"].includes(o.status) && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs gap-1"
-                            disabled={actionLoading === o.id}
-                          >
-                            Update <ChevronDown className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {o.status === "paid" && (
-                            <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>
-                              Mark as Packed
-                            </DropdownMenuItem>
-                          )}
-                          {(o.status === "paid" || o.status === "packed") && (
-                            <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
-                              Mark as Shipped
-                            </DropdownMenuItem>
-                          )}
-                          {o.status === "shipped" && (
-                            <DropdownMenuItem onClick={() => markDelivered(o.id)}>
-                              Mark as Delivered
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
+                  {renderOrderActions(o, true)}
                 </div>
               </div>
             ))
           )}
         </div>
 
-        {/* ── Desktop: table ────────────────────────────────────── */}
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -305,56 +332,13 @@ const SellerOrders = () => {
                       </span>
                     </td>
                     <td className="p-4 text-sm text-muted-foreground">{formatDate(o.createdAt)}</td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
-                        >
-                          View
-                        </Button>
-                        {["paid", "packed", "shipped"].includes(o.status) && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs gap-1"
-                                disabled={actionLoading === o.id}
-                              >
-                                Update <ChevronDown className="h-3 w-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {o.status === "paid" && (
-                                <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>
-                                  Mark as Packed
-                                </DropdownMenuItem>
-                              )}
-                              {(o.status === "paid" || o.status === "packed") && (
-                                <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
-                                  Mark as Shipped
-                                </DropdownMenuItem>
-                              )}
-                              {o.status === "shipped" && (
-                                <DropdownMenuItem onClick={() => markDelivered(o.id)}>
-                                  Mark as Delivered
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                    </td>
+                    <td className="p-4 text-right">{renderOrderActions(o, false)}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
   );
