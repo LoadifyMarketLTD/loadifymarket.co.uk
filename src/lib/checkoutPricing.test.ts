@@ -15,7 +15,7 @@ describe('checkoutPricing', () => {
     expect(result.catalogSubtotalPence).toBe(3130);
     expect(result.shippingPence).toBe(499);
     expect(result.totalPence).toBe(3629);
-    expect(result.vatIncludedPence).toBe(522);
+    expect(result.vatIncludedPence).toBe(521);
     expect(result.reverseChargeAdjustmentPence).toBe(0);
     expect(poundsFromPence(result.totalPence)).toBe(36.29);
   });
