@@ -32,6 +32,7 @@ describe('create-product publication stock contract', () => {
 
   function mockSupabase() {
     const insertedProducts: Array<Record<string, unknown>> = [];
+    const productUpdates: Array<Record<string, unknown>> = [];
 
     const supabase = {
       auth: {
@@ -78,8 +79,11 @@ describe('create-product publication stock contract', () => {
                 }),
               };
             }),
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null }),
+            update: vi.fn((payload: Record<string, unknown>) => {
+              productUpdates.push(payload);
+              return {
+                eq: vi.fn().mockResolvedValue({ error: null }),
+              };
             }),
           };
         }
@@ -108,7 +112,7 @@ describe('create-product publication stock contract', () => {
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
 
-    return { insertedProducts };
+    return { insertedProducts, productUpdates };
   }
 
   it('rejects publishing a physical product with zero stock', async () => {
@@ -133,7 +137,7 @@ describe('create-product publication stock contract', () => {
   });
 
   it('allows a physical draft with zero stock', async () => {
-    const { insertedProducts } = mockSupabase();
+    const { insertedProducts, productUpdates } = mockSupabase();
     const { handler } = await import('../create-product');
 
     const res = await handler(
@@ -150,10 +154,11 @@ describe('create-product publication stock contract', () => {
     expect(res.statusCode).toBe(200);
     expect(insertedProducts).toHaveLength(1);
     expect(insertedProducts[0]).toMatchObject({ isActive: false, stockQuantity: 0 });
+    expect(productUpdates).toEqual([]);
   });
 
-  it('allows publishing a service with zero stock', async () => {
-    const { insertedProducts } = mockSupabase();
+  it('allows publishing a service with zero stock through staged activation', async () => {
+    const { insertedProducts, productUpdates } = mockSupabase();
     const { handler } = await import('../create-product');
 
     const res = await handler(
@@ -170,10 +175,16 @@ describe('create-product publication stock contract', () => {
     expect(res.statusCode).toBe(200);
     expect(insertedProducts).toHaveLength(1);
     expect(insertedProducts[0]).toMatchObject({
-      isActive: true,
+      isActive: false,
       listingContext: 'service',
       stockQuantity: 0,
       stockStatus: 'in_stock',
+    });
+    expect(productUpdates).toEqual([{ isActive: true }]);
+    expect(JSON.parse(res.body as string)).toMatchObject({
+      id: 'product-1',
+      isActive: true,
+      isApproved: true,
     });
   });
 });
