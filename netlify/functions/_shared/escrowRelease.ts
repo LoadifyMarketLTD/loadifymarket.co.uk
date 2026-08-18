@@ -13,6 +13,7 @@ export type EscrowReleaseHoldReason =
   | 'order_not_found'
   | 'order_not_releasable'
   | 'open_dispute'
+  | 'open_return'
   | 'missing_payment_intent'
   | 'seller_payout_inactive'
   | 'payment_not_succeeded'
@@ -57,6 +58,21 @@ async function getOpenDispute(
     .select('id')
     .eq('orderId', orderId)
     .in('status', ['open', 'in_review'])
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  if (error) throw error;
+  return data ?? null;
+}
+
+async function getOpenReturn(
+  sb: import('@supabase/supabase-js').SupabaseClient,
+  orderId: string,
+): Promise<{ id: string } | null> {
+  const { data, error } = await sb
+    .from('returns')
+    .select('id')
+    .eq('orderId', orderId)
+    .in('status', ['requested', 'approved'])
     .limit(1)
     .maybeSingle<{ id: string }>();
   if (error) throw error;
@@ -129,6 +145,9 @@ export async function releaseHeldOrder(args: {
   if (orderError) throw orderError;
   if (!order) return { released: false, reason: 'order_not_found' };
 
+  // If another invocation already completed the release, that completed payout
+  // remains authoritative. A return opened afterwards is handled by create-refund,
+  // which performs the corresponding seller-transfer reversal safely.
   if (order.status === 'completed' && order.escrowStatus === 'released') {
     return {
       released: true,
@@ -146,6 +165,10 @@ export async function releaseHeldOrder(args: {
 
   if (await getOpenDispute(supabase, order.id)) {
     return { released: false, reason: 'open_dispute', orderNumber: order.orderNumber };
+  }
+
+  if (await getOpenReturn(supabase, order.id)) {
+    return { released: false, reason: 'open_return', orderNumber: order.orderNumber };
   }
 
   if (!order.stripePaymentIntentId) {
@@ -253,18 +276,24 @@ export async function releaseHeldOrder(args: {
     note: releaseNote(reason, protectionWindowDays),
   });
 
-  const [{ data: latestOrder, error: latestOrderError }, postTransferDispute] = await Promise.all([
+  const [
+    { data: latestOrder, error: latestOrderError },
+    postTransferDispute,
+    postTransferReturn,
+  ] = await Promise.all([
     supabase
       .from('orders')
       .select('status, escrowStatus')
       .eq('id', order.id)
       .maybeSingle<{ status: string; escrowStatus: string }>(),
     getOpenDispute(supabase, order.id),
+    getOpenReturn(supabase, order.id),
   ]);
   if (latestOrderError) throw latestOrderError;
 
   // Another concurrent release invocation may have finalized the exact same
   // idempotent Stripe Transfer. Treat that as success; never reverse good funds.
+  // A return opened after completed/released belongs to the refund path instead.
   if (
     latestOrder?.status === 'completed' &&
     latestOrder.escrowStatus === 'released' &&
@@ -284,7 +313,8 @@ export async function releaseHeldOrder(args: {
     !latestOrder ||
     latestOrder.status !== 'delivered' ||
     latestOrder.escrowStatus !== 'held' ||
-    postTransferDispute
+    postTransferDispute ||
+    postTransferReturn
   ) {
     const reversal = await compensateTransfer(stripe, transfer, {
       orderId: order.id,
@@ -315,13 +345,18 @@ export async function releaseHeldOrder(args: {
   if (updateError) throw updateError;
 
   if (!releasedOrder) {
-    const [{ data: finalOrder }, finalDispute] = await Promise.all([
+    const [
+      { data: finalOrder },
+      finalDispute,
+      finalReturn,
+    ] = await Promise.all([
       supabase
         .from('orders')
         .select('status, escrowStatus')
         .eq('id', order.id)
         .maybeSingle<{ status: string; escrowStatus: string }>(),
       getOpenDispute(supabase, order.id),
+      getOpenReturn(supabase, order.id),
     ]);
 
     if (
@@ -350,7 +385,7 @@ export async function releaseHeldOrder(args: {
       .update({
         status: 'cancelled',
         reference: reversal.id,
-        notes: `Escrow finalisation race compensated. Reversal ID: ${reversal.id}`,
+        notes: `Escrow finalisation race compensated. Reversal ID: ${reversal.id}${finalReturn ? ' Open return detected.' : ''}`,
       })
       .eq('id', payoutId);
     return { released: false, reason: 'eligibility_changed', orderNumber: order.orderNumber };
