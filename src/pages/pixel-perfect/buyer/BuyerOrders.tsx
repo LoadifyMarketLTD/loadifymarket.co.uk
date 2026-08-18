@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
+import { Package, Search, Eye, RotateCcw, FileDown, AlertTriangle, CheckCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -14,12 +17,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown, CheckCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 
 interface OrderRow {
@@ -28,139 +28,65 @@ interface OrderRow {
   total: number;
   status: string;
   createdAt: string;
-  sellerId: string | null;
+  sellerId: string;
+  productId: string;
   products: { title: string } | null;
 }
 
 const statusColor: Record<string, string> = {
-  pending: "bg-primary/15 text-primary border-primary/40",
-  paid: "bg-primary/15 text-primary border-primary/40",
-  packed: "bg-primary/15 text-primary border-primary/40",
-  shipped: "bg-blue-500/15 text-blue-700 border-blue-200",
-  delivered: "bg-orange-500/15 text-orange-700 border-orange-200",
-  completed: "bg-success/15 text-success border-success/40",
-  cancelled: "bg-destructive/15 text-destructive border-destructive/20",
-  refunded: "bg-destructive/15 text-destructive border-destructive/20",
-  invoice_requested: "bg-blue-500/15 text-blue-700 border-blue-200",
+  pending: "bg-primary/10 text-primary border-primary/40",
+  awaiting_payment: "bg-primary/10 text-primary border-primary/40",
+  paid: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  packed: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  shipped: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20",
+  delivered: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+  refunded: "bg-slate-500/10 text-slate-600 border-slate-500/20",
 };
 
 const RETURN_REASONS = [
-  { value: "damaged", label: "Item arrived damaged" },
-  { value: "wrong_item", label: "Wrong item received" },
-  { value: "not_as_described", label: "Not as described" },
-  { value: "changed_mind", label: "Changed my mind" },
+  { value: "defective", label: "Defective / Not Working" },
+  { value: "not_as_described", label: "Not as Described" },
+  { value: "wrong_item", label: "Wrong Item Received" },
+  { value: "damaged", label: "Damaged in Transit" },
+  { value: "changed_mind", label: "Changed My Mind" },
   { value: "other", label: "Other" },
 ];
 
-const DISPUTE_REASONS: { value: string; label: string }[] = [
-  { value: "item_not_received", label: "Item not received" },
-  { value: "not_as_described", label: "Not as described" },
-  { value: "item_damaged", label: "Item arrived damaged" },
-  { value: "defective_product", label: "Defective product" },
-  { value: "seller_not_responding", label: "Seller not responding" },
+const DISPUTE_REASONS = [
+  { value: "item_not_received", label: "Item Not Received" },
+  { value: "not_as_described", label: "Not as Described" },
+  { value: "item_damaged", label: "Item Damaged" },
+  { value: "defective_product", label: "Defective Product" },
+  { value: "seller_not_responding", label: "Seller Not Responding" },
   { value: "other", label: "Other" },
 ];
 
 const BuyerOrders = () => {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  // Return request dialog state
+  // Return request dialog
   const [returnOrder, setReturnOrder] = useState<OrderRow | null>(null);
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnLoading, setReturnLoading] = useState(false);
 
-  // Dispute dialog state
+  // Dispute dialog
   const [disputeOrder, setDisputeOrder] = useState<OrderRow | null>(null);
   const [disputeSubject, setDisputeSubject] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeLoading, setDisputeLoading] = useState(false);
 
-  // Confirm delivery dialog state
+  // Confirm-delivery dialog
   const [confirmDeliveryOrder, setConfirmDeliveryOrder] = useState<OrderRow | null>(null);
   const [confirmDeliveryLoading, setConfirmDeliveryLoading] = useState(false);
-
-  const handleConfirmDelivery = async () => {
-    if (!confirmDeliveryOrder || !user) return;
-    setConfirmDeliveryLoading(true);
-    try {
-      // Route escrow release through the server-side function so it can enforce
-      // pre-conditions (order must belong to this buyer, status must be
-      // shipped/delivered, no double-release) and handle seller notification
-      // safely server-side rather than writing escrow fields from the browser.
-      const res = await authorizedFetch("/.netlify/functions/confirm-delivery", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: confirmDeliveryOrder.id }),
-      });
-
-      if (!res.ok) {
-        let serverMessage: string | undefined;
-        try {
-          const errBody = await res.json() as { error?: string };
-          serverMessage = errBody.error;
-        } catch {
-          // Response body was not valid JSON — use status text instead
-          serverMessage = res.statusText || undefined;
-        }
-        throw new Error(serverMessage ?? `Server error ${res.status}`);
-      }
-
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === confirmDeliveryOrder.id ? { ...o, status: "completed" } : o
-        )
-      );
-      toast({ title: "Delivery confirmed", description: "Thank you for confirming. Funds have been released to the seller." });
-      setConfirmDeliveryOrder(null);
-    } catch (err) {
-      toast({ title: "Failed to confirm", description: (err as Error).message, variant: "destructive" });
-    } finally {
-      setConfirmDeliveryLoading(false);
-    }
-  };
-
-  const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
-    try {
-      const res = await authorizedFetch('/.netlify/functions/generate-invoice', {
-        method: 'POST',
-        body: JSON.stringify({ orderId }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || 'Failed to generate invoice');
-      }
-      // The function returns an HTML page — open it in a new tab so the user
-      // can print or save as PDF using their browser's built-in print dialog.
-      const html = await res.text();
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!win) {
-        // Popup was blocked — inform the user and fall back to direct download
-        toast({
-          title: 'Pop-up blocked',
-          description:
-            'Your browser blocked the invoice from opening. Please allow pop-ups for this site and try again. ' +
-            'The invoice has been downloaded as an HTML file as a fallback.',
-          variant: 'destructive',
-        });
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invoice-${orderNumber || orderId.slice(0, 8)}.html`;
-        a.click();
-      }
-      // Revoke after a short delay to allow the new tab to fully load
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    } catch (err) {
-      toast({ title: 'Invoice generation failed', description: (err as Error).message, variant: 'destructive' });
-    }
-  };
 
   useEffect(() => {
     if (!user) return;
@@ -169,14 +95,13 @@ const BuyerOrders = () => {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("id, orderNumber, total, status, createdAt, sellerId, products(title)")
+          .select("id, orderNumber, total, status, createdAt, sellerId, productId, products(title)")
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
         setOrders((data as unknown as OrderRow[]) || []);
       } catch (err) {
-        console.error("Error fetching orders:", err);
-        toast({ title: "Failed to load orders", description: "Please refresh the page.", variant: "destructive" });
+        console.error("Error fetching buyer orders:", err);
       } finally {
         setLoading(false);
       }
@@ -186,18 +111,59 @@ const BuyerOrders = () => {
 
   const filtered = orders.filter(
     (o) =>
-      (o.orderNumber || o.id).toLowerCase().includes(search.toLowerCase()) ||
+      (o.orderNumber ?? "").toLowerCase().includes(search.toLowerCase()) ||
       (o.products?.title ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const byStatus = (status: string) => filtered.filter((o) => o.status === status);
+  const byStatus = (s: string) => filtered.filter((o) => o.status === s);
+
+  const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
+    try {
+      const res = await authorizedFetch("/.netlify/functions/generate-invoice", {
+        method: "POST",
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error || "Failed to generate invoice");
+      }
+      const html = await res.text();
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${orderNumber || orderId.slice(0, 8)}.html`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast({ title: "Invoice unavailable", description: (err as Error).message, variant: "destructive" });
+    }
+  };
+
+  const handleConfirmDelivery = async () => {
+    if (!confirmDeliveryOrder) return;
+    setConfirmDeliveryLoading(true);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/confirm-delivery", {
+        method: "POST",
+        body: JSON.stringify({ orderId: confirmDeliveryOrder.id }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(data.error || "Failed to confirm delivery");
+      setOrders((prev) => prev.map((o) => o.id === confirmDeliveryOrder.id ? { ...o, status: "completed" } : o));
+      toast({ title: "Delivery confirmed", description: "The seller's funds have been released. Thank you!" });
+      setConfirmDeliveryOrder(null);
+    } catch (err) {
+      toast({ title: "Could not confirm delivery", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setConfirmDeliveryLoading(false);
+    }
+  };
 
   const handleReturnSubmit = async () => {
-    if (!returnOrder || !user || !returnReason || !returnDescription.trim()) return;
-    if (!returnOrder.sellerId) {
-      toast({ title: "Cannot submit return", description: "Seller information is unavailable for this order. Please contact support for assistance.", variant: "destructive" });
-      return;
-    }
+    if (!user || !returnOrder || !returnReason || !returnDescription.trim()) return;
     setReturnLoading(true);
     try {
       // Prevent duplicate open returns for the same order
@@ -206,13 +172,11 @@ const BuyerOrders = () => {
         .select("id")
         .eq("orderId", returnOrder.id)
         .neq("status", "rejected")
-        .maybeSingle();
-      if (existing) {
-        toast({ title: "Return already submitted", description: "A return request for this order is already open or in progress.", variant: "destructive" });
-        setReturnOrder(null);
+        .limit(1);
+      if (existing && existing.length > 0) {
+        toast({ title: "Return already requested", description: "A return request for this order already exists.", variant: "destructive" });
         return;
       }
-
       const { error } = await supabase.from("returns").insert({
         orderId: returnOrder.id,
         buyerId: user.id,
@@ -222,25 +186,33 @@ const BuyerOrders = () => {
         status: "requested",
       });
       if (error) throw error;
-      toast({ title: "Return requested", description: "Your return request has been submitted. We'll be in touch shortly." });
+      toast({ title: "Return requested", description: "Your return request has been submitted to the seller." });
       setReturnOrder(null);
       setReturnReason("");
       setReturnDescription("");
     } catch (err) {
-      toast({ title: "Failed to submit return", description: (err as Error).message, variant: "destructive" });
+      toast({ title: "Return request failed", description: (err as Error).message, variant: "destructive" });
     } finally {
       setReturnLoading(false);
     }
   };
 
   const handleDisputeSubmit = async () => {
-    if (!disputeOrder || !user || !disputeSubject.trim() || !disputeReason || !disputeDescription.trim()) return;
-    if (!disputeOrder.sellerId) {
-      toast({ title: "Cannot open dispute", description: "Seller information is unavailable. Please contact support.", variant: "destructive" });
-      return;
-    }
+    if (!user || !disputeOrder || !disputeSubject.trim() || !disputeReason || !disputeDescription.trim()) return;
     setDisputeLoading(true);
     try {
+      const { data: existingDispute, error: existingError } = await supabase
+        .from("disputes")
+        .select("id")
+        .eq("orderId", disputeOrder.id)
+        .in("status", ["open", "in_review"])
+        .limit(1);
+      if (existingError) throw existingError;
+      if (existingDispute && existingDispute.length > 0) {
+        toast({ title: "Dispute already open", description: "An active dispute for this order already exists.", variant: "destructive" });
+        return;
+      }
+
       const { error } = await supabase.from("disputes").insert({
         orderId: disputeOrder.id,
         buyerId: user.id,
@@ -333,8 +305,8 @@ const BuyerOrders = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    title={o.status === "completed" ? "Request return" : "Returns available after delivery confirmation"}
-                    disabled={o.status !== "completed"}
+                    title={["delivered", "completed"].includes(o.status) ? "Request return" : "Returns available after delivery"}
+                    disabled={!["delivered", "completed"].includes(o.status)}
                     onClick={() => {
                       setReturnOrder(o);
                       setReturnReason("");
@@ -347,8 +319,8 @@ const BuyerOrders = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-primary"
-                    title={["paid", "packed", "shipped", "delivered"].includes(o.status) ? "Open dispute" : "Disputes available after payment"}
-                    disabled={!["paid", "packed", "shipped", "delivered"].includes(o.status)}
+                    title={["paid", "packed", "shipped", "delivered", "completed"].includes(o.status) ? "Open dispute" : "Disputes available after payment"}
+                    disabled={!["paid", "packed", "shipped", "delivered", "completed"].includes(o.status)}
                     onClick={() => {
                       setDisputeOrder(o);
                       setDisputeSubject("");
