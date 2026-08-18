@@ -158,7 +158,6 @@ export default function MobileNotificationsPage() {
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -179,7 +178,6 @@ export default function MobileNotificationsPage() {
         <h1 className="text-xl font-extrabold text-foreground m-0">Activity</h1>
       </div>
 
-      {/* Content */}
       {loading ? (
         <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: 32 }}>
           {[...Array(4)].map((_, i) => (
@@ -219,71 +217,123 @@ export default function MobileNotificationsPage() {
         >
           {items.map((item, i) => (
             <div key={item.id}>
+              <div
+                className={item.isRead ? 'bg-transparent' : 'bg-primary/[0.04]'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  width: '100%',
+                }}
+              >
                 <button
+                  type="button"
                   onClick={() => {
                     void handleTap(item);
                   }}
                   disabled={openingNotificationId === item.id}
-                  className={item.isRead ? 'bg-transparent' : 'bg-primary/[0.04]'}
+                  aria-label={`Open notification: ${item.title}`}
                   style={{
                     display: 'flex',
-                  alignItems: 'flex-start',
-                  width: '100%',
-                  paddingInline: 'var(--mob-side, 16px)',
-                  paddingTop: 14,
-                  paddingBottom: 14,
-                  border: 'none',
+                    alignItems: 'flex-start',
+                    flex: 1,
+                    minWidth: 0,
+                    paddingInlineStart: 'var(--mob-side, 16px)',
+                    paddingInlineEnd: 8,
+                    paddingTop: 14,
+                    paddingBottom: 14,
+                    border: 'none',
+                    background: 'transparent',
                     cursor: openingNotificationId === item.id ? 'wait' : (item.link ? 'pointer' : 'default'),
                     opacity: openingNotificationId === item.id ? 0.85 : 1,
                     textAlign: 'left',
                     gap: 10,
                   }}
-              >
-                {/* Unread dot */}
-                <div
-                  className={item.isRead ? '' : 'bg-primary'}
-                  style={{ width: 8, height: 8, borderRadius: '50%', background: item.isRead ? 'transparent' : undefined, flexShrink: 0, marginTop: 6 }}
-                />
-                 <div style={{ flex: 1, minWidth: 0 }}>
-                   <p className={`text-sm text-foreground/90 m-0 ${item.isRead ? 'font-medium' : 'font-bold'}`} style={{ lineHeight: 1.3 }}>
-                     {item.title}
-                   </p>
-                  {item.message ? (
-                    <p className="text-[13px] text-muted-foreground" style={{ margin: '3px 0 0', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {item.message}
+                >
+                  <div
+                    className={item.isRead ? '' : 'bg-primary'}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: item.isRead ? 'transparent' : undefined,
+                      flexShrink: 0,
+                      marginTop: 6,
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className={`text-sm text-foreground/90 m-0 ${item.isRead ? 'font-medium' : 'font-bold'}`} style={{ lineHeight: 1.3 }}>
+                      {item.title}
                     </p>
-                  ) : null}
-                   <p className="text-[11px] text-foreground/25" style={{ margin: '4px 0 0' }}>
-                     {formatDate(item.createdAt)}
-                   </p>
-                 </div>
-                 <div className="flex items-center gap-1 shrink-0">
-                   <button
-                     type="button"
-                     aria-label="Archive notification"
-                     disabled={archivingId === item.id}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       void archiveNotification(item.id);
-                     }}
-                     style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', opacity: archivingId === item.id ? 0.5 : 0.85 }}
-                   >
-                     <Archive style={{ width: 16, height: 16 }} />
-                   </button>
-                   <button
-                     type="button"
-                     aria-label="Delete notification"
-                     disabled={deletingId === item.id}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       void deleteNotification(item.id);
-                     }}
-                     style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', opacity: deletingId === item.id ? 0.5 : 0.85 }}
-                   >
-                     <Trash2 style={{ width: 16, height: 16 }} />
-                   </button>
-                 </div>
-               </button>
+                    {item.message ? (
+                      <p
+                        className="text-[13px] text-muted-foreground"
+                        style={{
+                          margin: '3px 0 0',
+                          lineHeight: 1.4,
+                          overflow: 'hidden',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {item.message}
+                      </p>
+                    ) : null}
+                    <p className="text-[11px] text-foreground/25" style={{ margin: '4px 0 0' }}>
+                      {formatDate(item.createdAt)}
+                    </p>
+                  </div>
+                </button>
+
+                <div
+                  className="flex items-center gap-1 shrink-0"
+                  style={{ paddingInlineEnd: 'var(--mob-side, 16px)' }}
+                >
+                  <button
+                    type="button"
+                    aria-label="Archive notification"
+                    disabled={archivingId === item.id}
+                    onClick={() => {
+                      void archiveNotification(item.id);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      minWidth: 44,
+                      minHeight: 44,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      opacity: archivingId === item.id ? 0.5 : 0.85,
+                    }}
+                  >
+                    <Archive style={{ width: 16, height: 16 }} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Delete notification"
+                    disabled={deletingId === item.id}
+                    onClick={() => {
+                      void deleteNotification(item.id);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      minWidth: 44,
+                      minHeight: 44,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      opacity: deletingId === item.id ? 0.5 : 0.85,
+                    }}
+                  >
+                    <Trash2 style={{ width: 16, height: 16 }} />
+                  </button>
+                </div>
+              </div>
+
               {i < items.length - 1 && (
                 <div
                   aria-hidden="true"
