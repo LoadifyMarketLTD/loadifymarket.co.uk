@@ -31,11 +31,12 @@ BEGIN
   v_old_core := to_jsonb(OLD) - 'updatedAt';
   v_new_core := to_jsonb(NEW) - 'updatedAt';
 
-  -- Helpful voting: the caller may only append their own UUID exactly once and
-  -- increment helpfulCount by exactly one. No review content/moderation field
-  -- may change in the same statement.
+  -- Helpful voting: only published reviews may receive votes. The caller may
+  -- append their own UUID exactly once and increment helpfulCount by one. No
+  -- review content/moderation field may change in the same statement.
   IF
-    v_new_core - ARRAY['helpfulCount', 'helpfulVoters']::TEXT[]
+    OLD.status = 'published'
+    AND v_new_core - ARRAY['helpfulCount', 'helpfulVoters']::TEXT[]
       = v_old_core - ARRAY['helpfulCount', 'helpfulVoters']::TEXT[]
     AND NOT (v_uid = ANY(COALESCE(OLD."helpfulVoters", '{}'::UUID[])))
     AND NEW."helpfulCount" = OLD."helpfulCount" + 1
