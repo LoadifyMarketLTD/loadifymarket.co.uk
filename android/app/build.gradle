@@ -1,5 +1,22 @@
 apply plugin: 'com.android.application'
 
+def loadifyUploadStoreFile = project.findProperty('LOADIFY_UPLOAD_STORE_FILE') ?: System.getenv('LOADIFY_UPLOAD_STORE_FILE')
+def loadifyUploadKeyAlias = project.findProperty('LOADIFY_UPLOAD_KEY_ALIAS') ?: System.getenv('LOADIFY_UPLOAD_KEY_ALIAS')
+def loadifyUploadStorePassword = project.findProperty('LOADIFY_UPLOAD_STORE_PASSWORD') ?: System.getenv('LOADIFY_UPLOAD_STORE_PASSWORD')
+def loadifyUploadKeyPassword = project.findProperty('LOADIFY_UPLOAD_KEY_PASSWORD') ?: System.getenv('LOADIFY_UPLOAD_KEY_PASSWORD')
+def loadifyReleaseSigningValues = [
+    loadifyUploadStoreFile,
+    loadifyUploadKeyAlias,
+    loadifyUploadStorePassword,
+    loadifyUploadKeyPassword,
+]
+def loadifyReleaseSigningConfigured = loadifyReleaseSigningValues.every { value -> value != null && value.toString().trim() }
+def loadifyReleaseSigningPartiallyConfigured = loadifyReleaseSigningValues.any { value -> value != null && value.toString().trim() } && !loadifyReleaseSigningConfigured
+
+if (loadifyReleaseSigningPartiallyConfigured) {
+    throw new GradleException('Loadify release signing is partially configured. Set all four LOADIFY_UPLOAD_* properties or none of them.')
+}
+
 android {
     namespace = "co.uk.loadifymarket.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +33,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (loadifyReleaseSigningConfigured) {
+            release {
+                storeFile file(loadifyUploadStoreFile)
+                storePassword loadifyUploadStorePassword
+                keyAlias loadifyUploadKeyAlias
+                keyPassword loadifyUploadKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (loadifyReleaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
