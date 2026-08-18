@@ -1,21 +1,10 @@
 /**
  * generate-invoice
  *
- * Generates a printable HTML invoice for a given order and streams it
- * back to the buyer's browser.  The buyer uses their browser's built-in
- * Print → Save as PDF to create a PDF copy.
- *
- * This approach avoids bundling a large PDF library into the serverless
- * function and works reliably in all browsers.
- *
- * Security:
- *   – Requires a valid JWT (Authorization: Bearer <token>).
- *   – The authenticated user must be the order's buyer OR an admin.
- *   – Uses the service-role client to query order data (bypasses RLS for
- *     admin use) but enforces ownership check in application code.
- *
- * Method: POST
- * Body:   { orderId: string }
+ * Generates a printable HTML invoice for a paid marketplace order.
+ * Monetary totals come from the immutable order snapshot written after Stripe
+ * confirms payment; current buyer-profile VAT verification never changes the
+ * tax treatment of an historical order.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -23,8 +12,8 @@ import type { Handler } from '@netlify/functions';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
+const VAT_DIVISOR = 1.2;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
@@ -32,63 +21,57 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+function pence(value: unknown): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? Math.round(numeric * 100) : 0;
+}
+
+function formatGBP(value: number): string {
+  return `£${(value / 100).toFixed(2)}`;
+}
+
+function escapeHtml(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' };
   }
-
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
+    return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
-
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    return {
-      statusCode: 500,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: 'Server configuration error' }),
-    };
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
-  // ── Authenticate caller ───────────────────────────────────────────────────
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+  const authHeader = event.headers.authorization || event.headers.Authorization;
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
   if (!token) {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  if (!anonKey) {
-    return {
-      statusCode: 500,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: 'Server configuration error: VITE_SUPABASE_ANON_KEY not set' }),
-    };
-  }
-
-  // Use anon client to verify token (getUser validates with Supabase auth server)
-  const anonClient = createClient(supabaseUrl, anonKey);
-  const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
 
-  // Service-role client for data access
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-  // Check caller role
-  const { data: callerRow } = await supabase
+  const { data: caller } = await supabase
     .from('users')
-    .select('role, firstName, lastName')
+    .select('role')
     .eq('id', user.id)
-    .single<{ role: string; firstName?: string; lastName?: string }>();
+    .maybeSingle<{ role: string | null }>();
+  const isAdmin = caller?.role === 'admin';
 
-  const isAdmin = callerRow?.role === 'admin';
-
-  // ── Parse body ────────────────────────────────────────────────────────────
   let body: { orderId?: string };
   try {
     body = JSON.parse(event.body || '{}') as { orderId?: string };
@@ -96,12 +79,11 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { orderId } = body;
-  if (!orderId || typeof orderId !== 'string' || orderId.length > 100) {
+  const orderId = typeof body.orderId === 'string' ? body.orderId.trim() : '';
+  if (!orderId || orderId.length > 100) {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'orderId is required' }) };
   }
 
-  // ── Fetch order ───────────────────────────────────────────────────────────
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select(`
@@ -114,12 +96,13 @@ export const handler: Handler = async (event) => {
       shippingAmount,
       total,
       shippingAddress,
+      billingAddress,
       buyerId,
       sellerId,
-      products ( title, images )
+      isB2B
     `)
     .eq('id', orderId)
-    .single<{
+    .maybeSingle<{
       id: string;
       orderNumber: string;
       status: string;
@@ -128,160 +111,162 @@ export const handler: Handler = async (event) => {
       vatAmount: number;
       shippingAmount: number;
       total: number;
-      shippingAddress: Record<string, string>;
+      shippingAddress: Record<string, string> | null;
+      billingAddress: Record<string, string> | null;
       buyerId: string | null;
       sellerId: string;
-      products: { title?: string; images?: string[] } | null;
+      isB2B: boolean | null;
     }>();
 
   if (orderError || !order) {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Order not found' }) };
   }
-
-  // ── Ownership check ───────────────────────────────────────────────────────
   if (!isAdmin && order.buyerId !== user.id) {
     return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Forbidden' }) };
   }
 
-  // ── Fetch order items ─────────────────────────────────────────────────────
-  const { data: items } = await supabase
-    .from('order_items')
-    .select('quantity, pricePerUnit, subtotal, products ( title )')
-    .eq('orderId', orderId);
+  const [itemsResult, buyerResult, buyerProfileResult, sellerResult] = await Promise.all([
+    supabase
+      .from('order_items')
+      .select('quantity, pricePerUnit, products(title)')
+      .eq('orderId', order.id),
+    order.buyerId
+      ? supabase
+          .from('users')
+          .select('firstName, lastName, email')
+          .eq('id', order.buyerId)
+          .maybeSingle<{ firstName?: string; lastName?: string; email?: string }>()
+      : Promise.resolve({ data: null, error: null }),
+    order.buyerId
+      ? supabase
+          .from('buyer_profiles')
+          .select('companyName, vatNumber')
+          .eq('userId', order.buyerId)
+          .maybeSingle<{ companyName?: string | null; vatNumber?: string | null }>()
+      : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from('seller_profiles')
+      .select('businessName')
+      .eq('userId', order.sellerId)
+      .maybeSingle<{ businessName?: string | null }>(),
+  ]);
 
-  // ── Fetch buyer name & B2B profile ────────────────────────────────────────
-  const buyerRow = order.buyerId
-    ? (await supabase
-        .from('users')
-        .select('firstName, lastName, email')
-        .eq('id', order.buyerId)
-        .single<{ firstName?: string; lastName?: string; email?: string }>()
-      ).data
-    : null;
+  if (itemsResult.error) {
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Failed to load invoice items' }) };
+  }
 
-  const buyerProfileRow = order.buyerId
-    ? (await supabase
-        .from('buyer_profiles')
-        .select('accountType, companyName, vatNumber, isVatVerified')
-        .eq('userId', order.buyerId)
-        .maybeSingle<{
-          accountType?: string | null;
-          companyName?: string | null;
-          vatNumber?: string | null;
-          isVatVerified?: boolean | null;
-        }>()
-      ).data
-    : null;
+  const buyer = buyerResult.data;
+  const buyerProfile = buyerProfileResult.data;
+  const seller = sellerResult.data;
 
-  const isB2B =
-    Boolean(buyerProfileRow?.accountType) &&
-    buyerProfileRow?.accountType !== 'individual';
-  const isReverseCharge = isB2B && Boolean(buyerProfileRow?.isVatVerified);
+  // The payment webhook persists isB2B and vatAmount at the moment the Stripe
+  // payment is fulfilled. That order snapshot is the authority for historical
+  // invoices; a later buyer-profile VAT change must not rewrite old tax treatment.
+  const isB2B = Boolean(order.isB2B);
+  const isReverseCharge = isB2B && pence(order.vatAmount) === 0;
 
-  // ── Fetch seller name ─────────────────────────────────────────────────────
-  const { data: sellerRow } = await supabase
-    .from('seller_profiles')
-    .select('businessName')
-    .eq('userId', order.sellerId)
-    .single<{ businessName?: string }>();
-
-  // ── Build HTML invoice ────────────────────────────────────────────────────
-  const addr = order.shippingAddress ?? {};
-  const buyerName = [buyerRow?.firstName, buyerRow?.lastName].filter(Boolean).join(' ') || 'Customer';
-  const sellerName = sellerRow?.businessName || 'Seller';
+  const buyerName = [buyer?.firstName, buyer?.lastName].filter(Boolean).join(' ').trim() || 'Customer';
+  const billToName = isB2B && buyerProfile?.companyName ? buyerProfile.companyName : buyerName;
+  const billToContact = isB2B && buyerProfile?.companyName ? buyerName : null;
+  const sellerName = seller?.businessName || 'Seller';
+  const orderNumber = order.orderNumber || order.id.slice(0, 8).toUpperCase();
   const orderDate = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
     : '—';
-  const orderNum = order.orderNumber || order.id.slice(0, 8).toUpperCase();
 
-  // For B2B invoices the primary display name is the company, with the
-  // contact person listed underneath. For B2C it's the buyer's full name.
-  const billToName = isB2B && buyerProfileRow?.companyName
-    ? buyerProfileRow.companyName
-    : buyerName;
-  const billToContact = isB2B && buyerProfileRow?.companyName ? buyerName : null;
-
-  const formatGBP = (v: number) => `£${(v ?? 0).toFixed(2)}`;
-
-  const itemRows = (items ?? [])
-    .map((item) => {
-      const productObj = Array.isArray(item.products) ? item.products[0] : item.products;
-      const title = (productObj as { title?: string } | null)?.title ?? 'Product';
-      return `
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${escapeHtml(title)}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">${item.quantity}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">${formatGBP(item.pricePerUnit)}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">${formatGBP(item.subtotal)}</td>
-        </tr>`;
-    })
-    .join('');
-
-  const addrLine = [
-    addr.address1,
-    addr.address2,
-    addr.city,
-    addr.county,
-    addr.postcode,
-    addr.country,
+  const billingAddress = order.billingAddress && Object.keys(order.billingAddress).length > 0
+    ? order.billingAddress
+    : order.shippingAddress ?? {};
+  const addressLine = [
+    billingAddress.line1 ?? billingAddress.address1,
+    billingAddress.line2 ?? billingAddress.address2,
+    billingAddress.city,
+    billingAddress.county,
+    billingAddress.postal_code ?? billingAddress.postcode,
+    billingAddress.country,
   ].filter(Boolean).join(', ');
 
-  const vatNumber = process.env.VITE_VAT_NUMBER || '';
+  const itemRows = (itemsResult.data ?? []).map((item) => {
+    const productRelation = Array.isArray(item.products) ? item.products[0] : item.products;
+    const title = (productRelation as { title?: string } | null)?.title ?? 'Product';
+    const quantity = Number.isInteger(item.quantity) && item.quantity > 0 ? item.quantity : 1;
+    const catalogUnitPence = pence(item.pricePerUnit);
+    const chargedUnitPence = isReverseCharge
+      ? Math.round((catalogUnitPence / 100 / VAT_DIVISOR) * 100)
+      : catalogUnitPence;
+    const lineTotalPence = chargedUnitPence * quantity;
+
+    return `
+      <tr>
+        <td>${escapeHtml(title)}</td>
+        <td class="number">${quantity}</td>
+        <td class="number">${formatGBP(chargedUnitPence)}</td>
+        <td class="number">${formatGBP(lineTotalPence)}</td>
+      </tr>`;
+  }).join('');
+
+  const subtotalPence = pence(order.subtotal);
+  const vatPence = pence(order.vatAmount);
+  const shippingPence = pence(order.shippingAmount);
+  const totalPence = pence(order.total);
+  const reconstructedTotal = subtotalPence + vatPence + shippingPence;
+  if (Math.abs(reconstructedTotal - totalPence) > 1) {
+    console.warn(
+      `generate-invoice: order ${order.id} monetary snapshot differs by ${reconstructedTotal - totalPence}p; displaying stored order total`,
+    );
+  }
+
   const companyName = process.env.VITE_COMPANY_NAME || 'Loadify Market';
   const companyAddress = process.env.VITE_COMPANY_ADDRESS || 'United Kingdom';
+  const platformVatNumber = process.env.VITE_VAT_NUMBER || '';
   const supportEmail = process.env.VITE_SUPPORT_EMAIL || 'contact@loadifymarket.co.uk';
+  const unitHeading = isReverseCharge ? 'Unit Price (ex VAT)' : 'Unit Price (VAT incl.)';
+  const lineHeading = isReverseCharge ? 'Line Total (ex VAT)' : 'Line Total (VAT incl.)';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Invoice ${escapeHtml(orderNum)} — Loadify Market</title>
+  <title>Invoice ${escapeHtml(orderNumber)} — Loadify Market</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; color: #121A2B; background: #fff; padding: 40px; max-width: 800px; margin: 0 auto; font-size: 14px; }
-    h1 { font-size: 28px; font-weight: 700; color: #0A1930; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-    .brand { color: #0A1930; }
-    .brand span { display: block; font-size: 11px; color: #6b7280; margin-top: 4px; }
-    .invoice-meta { text-align: right; }
-    .invoice-meta h2 { font-size: 20px; font-weight: 600; color: #121A2B; margin-bottom: 6px; }
-    .invoice-meta p { font-size: 12px; color: #6b7280; line-height: 1.6; }
-    .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 32px; }
-    .party h3 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin-bottom: 8px; }
-    .party p { font-size: 13px; line-height: 1.7; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; color: #121A2B; background: #fff; margin: 0 auto; padding: 40px; max-width: 820px; font-size: 14px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 4px; font-size: 28px; color: #0A1930; }
+    .muted { color: #6b7280; }
+    .header { display: flex; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
+    .meta { text-align: right; line-height: 1.7; font-size: 12px; }
+    .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 28px; }
+    .party h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; margin-bottom: 8px; }
+    .party p { line-height: 1.7; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-    thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
-    thead th:not(:first-child) { text-align: right; }
-    .totals { margin-left: auto; width: 280px; }
-    .totals table { margin-bottom: 0; }
-    .totals td { padding: 6px 12px; font-size: 13px; }
-    .totals td:last-child { text-align: right; }
-    .totals .grand-total td { font-weight: 700; font-size: 15px; border-top: 2px solid #121A2B; padding-top: 10px; }
-    .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.8; }
-    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: capitalize; background: #dcfce7; color: #166534; }
-    @media print {
-      body { padding: 20px; }
-      @page { margin: 15mm; }
-    }
+    th { background: #f3f4f6; color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; text-align: left; padding: 10px 12px; }
+    td { padding: 9px 12px; border-bottom: 1px solid #e5e7eb; }
+    .number { text-align: right; white-space: nowrap; }
+    .totals { width: 320px; margin-left: auto; }
+    .totals td { border: 0; padding: 6px 10px; }
+    .totals .grand td { border-top: 2px solid #121A2B; padding-top: 10px; font-weight: 700; font-size: 15px; }
+    .notice { margin: 16px 0; padding: 11px 14px; border-radius: 7px; background: #fefce8; border: 1px solid #fde68a; color: #713f12; font-size: 12px; line-height: 1.5; }
+    .footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid #e5e7eb; color: #9ca3af; text-align: center; font-size: 11px; line-height: 1.7; }
+    .print { margin-top: 12px; background: #0A1930; color: #fff; border: 0; padding: 8px 20px; border-radius: 6px; cursor: pointer; }
+    @media print { body { padding: 20px; } .print { display: none; } @page { margin: 15mm; } }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="brand">
+    <div>
       <h1>Loadify Market</h1>
-      <span>${escapeHtml(companyName)}</span>
-      <span>${escapeHtml(companyAddress)}</span>
-      ${vatNumber ? `<span>VAT: ${escapeHtml(vatNumber)}</span>` : ''}
+      <div class="muted">${escapeHtml(companyName)}</div>
+      <div class="muted">${escapeHtml(companyAddress)}</div>
+      ${platformVatNumber ? `<div class="muted">VAT: ${escapeHtml(platformVatNumber)}</div>` : ''}
     </div>
-    <div class="invoice-meta">
+    <div class="meta">
       <h2>INVOICE</h2>
-      <p>
-        Order: <strong>${escapeHtml(orderNum)}</strong><br />
-        Date: ${escapeHtml(orderDate)}<br />
-        Status: <span class="status-badge">${escapeHtml(order.status)}</span><br />
-        Seller: ${escapeHtml(sellerName)}
-      </p>
+      <div>Order: <strong>${escapeHtml(orderNumber)}</strong></div>
+      <div>Date: ${escapeHtml(orderDate)}</div>
+      <div>Status: ${escapeHtml(order.status)}</div>
+      <div>Seller: ${escapeHtml(sellerName)}</div>
     </div>
   </div>
 
@@ -291,19 +276,15 @@ export const handler: Handler = async (event) => {
       <p>
         <strong>${escapeHtml(billToName)}</strong><br />
         ${billToContact ? `${escapeHtml(billToContact)}<br />` : ''}
-        ${buyerRow?.email ? `${escapeHtml(buyerRow.email)}<br />` : ''}
-        ${isB2B && buyerProfileRow?.vatNumber ? `VAT: ${escapeHtml(buyerProfileRow.vatNumber)}<br />` : ''}
-        ${addrLine ? escapeHtml(addrLine) : ''}
+        ${buyer?.email ? `${escapeHtml(buyer.email)}<br />` : ''}
+        ${isB2B && buyerProfile?.vatNumber ? `VAT: ${escapeHtml(buyerProfile.vatNumber)}<br />` : ''}
+        ${addressLine ? escapeHtml(addressLine) : ''}
       </p>
-      ${isB2B ? `<p style="margin-top:6px;font-size:11px;color:#374151;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Business Account</p>` : ''}
+      ${isB2B ? '<div class="muted">Business Account</div>' : ''}
     </div>
     <div class="party">
       <h3>Sold By</h3>
-      <p>
-        <strong>${escapeHtml(sellerName)}</strong><br />
-        via Loadify Market<br />
-        ${escapeHtml(supportEmail)}
-      </p>
+      <p><strong>${escapeHtml(sellerName)}</strong><br />via Loadify Market<br />${escapeHtml(supportEmail)}</p>
     </div>
   </div>
 
@@ -311,38 +292,37 @@ export const handler: Handler = async (event) => {
     <thead>
       <tr>
         <th>Item</th>
-        <th style="text-align:right;">Qty</th>
-        <th style="text-align:right;">Unit Price</th>
-        <th style="text-align:right;">Subtotal</th>
+        <th class="number">Qty</th>
+        <th class="number">${unitHeading}</th>
+        <th class="number">${lineHeading}</th>
       </tr>
     </thead>
     <tbody>
-      ${itemRows || `<tr><td colspan="4" style="padding:12px;color:#6b7280;">No items found</td></tr>`}
+      ${itemRows || '<tr><td colspan="4" class="muted">No items found</td></tr>'}
     </tbody>
   </table>
 
   <div class="totals">
     <table>
-      <tr><td>Subtotal (ex VAT)</td><td>${formatGBP(order.subtotal)}</td></tr>
+      <tr><td>Items subtotal (ex VAT)</td><td class="number">${formatGBP(subtotalPence)}</td></tr>
       ${isReverseCharge
-        ? `<tr><td>VAT — Reverse Charge (Customer Accounts for VAT)</td><td>${formatGBP(0)}</td></tr>`
-        : `<tr><td>VAT (20%)</td><td>${formatGBP(order.vatAmount)}</td></tr>`
-      }
-      <tr><td>Shipping</td><td>${formatGBP(order.shippingAmount)}</td></tr>
-      <tr class="grand-total"><td>Total</td><td>${formatGBP(order.total)}</td></tr>
+        ? '<tr><td>VAT — Reverse Charge</td><td class="number">£0.00</td></tr>'
+        : `<tr><td>VAT (20%)</td><td class="number">${formatGBP(vatPence)}</td></tr>`}
+      <tr><td>Shipping</td><td class="number">${formatGBP(shippingPence)}</td></tr>
+      <tr class="grand"><td>Total paid</td><td class="number">${formatGBP(totalPence)}</td></tr>
     </table>
   </div>
 
   ${isReverseCharge ? `
-  <div style="margin:12px 0;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#713f12;">
-    <strong>VAT Reverse Charge:</strong> As a VAT-registered business customer, you are liable to account for VAT on this supply under the reverse charge mechanism. The seller has not charged VAT.
-  </div>` : ''}
+    <div class="notice">
+      <strong>VAT Reverse Charge:</strong> This order was completed as a VAT-verified business reverse-charge purchase. The seller did not charge VAT on the item prices; the customer is responsible for accounting for VAT where applicable.
+    </div>` : ''}
 
   <div class="footer">
-    <p>This invoice was generated by Loadify Market · ${escapeHtml(supportEmail)}</p>
-    <p>For queries about this order, please contact us quoting order number <strong>${escapeHtml(orderNum)}</strong>.</p>
-    ${vatNumber ? `<p>VAT Registration Number: ${escapeHtml(vatNumber)}</p>` : ''}
-    <p style="margin-top:12px;"><button onclick="window.print()" style="background:#0A1930;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button></p>
+    <div>This invoice was generated by Loadify Market · ${escapeHtml(supportEmail)}</div>
+    <div>For queries, quote order number <strong>${escapeHtml(orderNumber)}</strong>.</div>
+    ${platformVatNumber ? `<div>VAT Registration Number: ${escapeHtml(platformVatNumber)}</div>` : ''}
+    <button class="print" onclick="window.print()">Print / Save as PDF</button>
   </div>
 </body>
 </html>`;
@@ -352,20 +332,9 @@ export const handler: Handler = async (event) => {
     headers: {
       ...corsHeaders,
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Disposition': `inline; filename="invoice-${orderNum}.html"`,
+      'Content-Disposition': `inline; filename="invoice-${orderNumber}.html"`,
       'Cache-Control': 'no-store',
     },
     body: html,
   };
 };
-
-/** Escape HTML special characters to prevent XSS in the generated document. */
-function escapeHtml(str: unknown): string {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
