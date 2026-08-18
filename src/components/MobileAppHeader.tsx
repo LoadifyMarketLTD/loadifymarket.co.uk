@@ -5,11 +5,12 @@
  *        Inline search bar + filter button (second row)
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Search, Filter, Camera } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
+import { MOBILE_NOTIFICATION_QUERY_TYPES } from '@/lib/notificationUtils';
 import MobileSearchOverlay from '@/components/MobileSearchOverlay';
 import logo from '@/assets/loadify-logo.svg';
 
@@ -19,23 +20,56 @@ export default function MobileAppHeader() {
   const [unread, setUnread] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
 
+  const loadUnreadNotifications = useCallback(async () => {
+    if (!user?.id) {
+      setUnread(0);
+      return;
+    }
+
+    try {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('userId', user.id)
+        .eq('isRead', false)
+        .not('isArchived', 'is', true)
+        .in('type', MOBILE_NOTIFICATION_QUERY_TYPES);
+
+      if (error) throw error;
+      setUnread(count ?? 0);
+    } catch {
+      // Non-critical: unread badge stays at its current value on error.
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    void loadUnreadNotifications();
+  }, [loadUnreadNotifications]);
+
   useEffect(() => {
     if (!user?.id) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const { count } = await supabase
-          .from('messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('receiverId', user.id)
-          .eq('isRead', false);
-        if (!cancelled) setUnread(count ?? 0);
-      } catch {
-        // Non-critical: unread badge stays at 0 on error
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [user?.id]);
+
+    const channel = supabase
+      .channel(`mobile-header-notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `userId=eq.${user.id}`,
+        },
+        () => {
+          void loadUnreadNotifications();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [loadUnreadNotifications, user?.id]);
+
   return (
     <>
     <header
@@ -94,7 +128,7 @@ export default function MobileAppHeader() {
 
         {/* Right: bell */}
         <button
-          onClick={() => navigate('/inbox')}
+          onClick={() => navigate('/profile/notifications')}
           aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
           className="relative h-11 w-11 shrink-0 cursor-pointer border-0 bg-transparent p-0 flex items-center justify-center"
         >
