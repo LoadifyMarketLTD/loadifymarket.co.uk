@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { Handler, HandlerEvent } from '@netlify/functions';
+import type { Handler, HandlerEvent } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { enforcePaymentBackedTransition } from './_shared/orderTransitionGuards';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -11,36 +12,38 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
 
 const supabase = createClient(
   supabaseUrl!,
-  supabaseServiceRoleKey!
+  supabaseServiceRoleKey!,
 );
 
 interface CreateShipmentRequest {
   order_id: string;
   courier_name?: string;
   tracking_number?: string;
-  dispatched_at?: string | null;
-  shipping_method?: string;
-  shipping_cost?: number;
 }
 
-// Helper to get user from Authorization header
+interface ShipmentOrder {
+  id: string;
+  orderNumber: string;
+  buyerId: string;
+  sellerId: string;
+  status: string;
+  productId: string;
+  stripePaymentIntentId?: string | null;
+  rfqId?: string | null;
+  rfqResponseId?: string | null;
+}
+
 async function getAuthUser(event: HandlerEvent) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
 
   const token = authHeader.substring(7);
   const { data: { user }, error } = await supabase.auth.getUser(token);
-  
-  if (error || !user) {
-    return null;
-  }
+  if (error || !user) return null;
 
-  // Get user role
   const { data: userData } = await supabase
     .from('users')
-    .select('*')
+    .select('id, role')
     .eq('id', user.id)
     .single();
 
@@ -49,38 +52,23 @@ async function getAuthUser(event: HandlerEvent) {
 
 export const handler: Handler = async (event) => {
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Server configuration error' }),
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
-    // Authenticate user
     const user = await getAuthUser(event);
     if (!user) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
+      return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
 
-    // Only sellers and admins can create shipments
     if (user.role !== 'seller' && user.role !== 'admin') {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Forbidden - seller role required' }),
-      };
+      return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - seller role required' }) };
     }
 
-    // Rate-limit: 30 shipment creates/updates per user per 60-minute window.
     const shipRl = await checkRateLimit({
       supabase,
       tableName: 'create_shipment_rate_limits',
@@ -95,138 +83,149 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    let body: CreateShipmentRequest;
+    let rawBody: Record<string, unknown>;
     try {
-      body = JSON.parse(event.body || '{}') as CreateShipmentRequest;
+      rawBody = JSON.parse(event.body || '{}') as Record<string, unknown>;
     } catch {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid JSON in request body' }),
-      };
-    }
-    const { order_id, courier_name, tracking_number, dispatched_at, shipping_method, shipping_cost } = body;
-
-    if (!order_id) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'order_id is required' }),
-      };
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON in request body' }) };
     }
 
-    if (shipping_cost !== undefined && (!Number.isFinite(shipping_cost) || shipping_cost < 0)) {
+    // Shipping price/method are fixed by the server-authoritative checkout. A
+    // shipment record may never rewrite paid order money or commercial terms.
+    if ('shipping_cost' in rawBody || 'shipping_method' in rawBody) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'shipping_cost must be a non-negative number' }),
+        body: JSON.stringify({ error: 'Shipping price and method cannot be changed after checkout.' }),
       };
     }
 
-    // Verify the order exists and user is the seller (or admin)
+    // Dispatch is a status transition, not shipment metadata. It must go through
+    // update-shipment-status so payment evidence and order lifecycle stay aligned.
+    if ('dispatched_at' in rawBody) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Set dispatch through the shipment status workflow.' }),
+      };
+    }
+
+    const body = rawBody as unknown as CreateShipmentRequest;
+    const orderId = typeof body.order_id === 'string' ? body.order_id.trim() : '';
+    if (!orderId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'order_id is required' }) };
+    }
+
+    const courierName = typeof body.courier_name === 'string' ? body.courier_name.trim() : '';
+    const trackingNumber = typeof body.tracking_number === 'string' ? body.tracking_number.trim() : '';
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('*, products(sellerId)')
-      .eq('id', order_id)
-      .single();
+      .select('id, orderNumber, buyerId, sellerId, status, productId, stripePaymentIntentId, rfqId, rfqResponseId')
+      .eq('id', orderId)
+      .maybeSingle<ShipmentOrder>();
 
-    if (orderError || !order) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Order not found' }),
-      };
+    if (orderError) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to load order' }) };
+    }
+    if (!order) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Order not found' }) };
     }
 
-    // Check authorization
     if (user.role !== 'admin' && order.sellerId !== user.id) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized for this order' }) };
+    }
+
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('id, listingContext')
+      .eq('id', order.productId)
+      .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
+
+    if (productError) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to load order product' }) };
+    }
+    if (!product || product.listingContext === 'service') {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Service orders do not use shipment tracking.' }) };
+    }
+
+    if (!['paid', 'packed', 'shipped'].includes(order.status)) {
       return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Not authorized for this order' }),
+        statusCode: 409,
+        body: JSON.stringify({ error: `A shipment cannot be logged for an order with status '${order.status}'.` }),
       };
     }
 
-    // Check if shipment already exists for this order
-    const { data: existingShipment } = await supabase
-      .from('shipments')
-      .select('*')
-      .eq('order_id', order_id)
-      .single();
+    const paymentGuard = await enforcePaymentBackedTransition({
+      supabase,
+      order,
+      product: { id: product.id, listingContext: product.listingContext },
+      nextStatus: 'shipped',
+      actorRole: user.role === 'admin' ? 'admin' : 'seller',
+    });
+    if (!paymentGuard.ok) {
+      return {
+        statusCode: paymentGuard.statusCode,
+        body: JSON.stringify({ error: paymentGuard.error }),
+      };
+    }
 
-    let shipment;
-    let isNew = false;
+    const { data: existingShipment, error: existingError } = await supabase
+      .from('shipments')
+      .select('id, status')
+      .eq('order_id', orderId)
+      .maybeSingle<{ id: string; status: string }>();
+    if (existingError) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to inspect existing shipment' }) };
+    }
 
     if (existingShipment) {
-      // Update existing shipment
       const { data, error } = await supabase
         .from('shipments')
         .update({
-          courier_name,
-          tracking_number,
-          ...(dispatched_at !== undefined ? { dispatched_at } : {}),
+          courier_name: courierName || null,
+          tracking_number: trackingNumber || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingShipment.id)
         .select()
         .single();
+      if (error) throw error;
 
-      if (error) {
-        throw error;
-      }
-      shipment = data;
-    } else {
-      // Create new shipment
-      const { data, error } = await supabase
-        .from('shipments')
-        .insert({
-          order_id,
-          seller_id: order.sellerId,
-          buyer_id: order.buyerId,
-          courier_name,
-          tracking_number,
-          dispatched_at: dispatched_at || null,
-          status: dispatched_at ? 'Dispatched' : 'Pending',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-      shipment = data;
-      isNew = true;
-
-      // Create initial shipment event
-      await supabase
-        .from('shipment_events')
-        .insert({
-          shipment_id: shipment.id,
-          status: dispatched_at ? 'Dispatched' : 'Pending',
-          message: dispatched_at ? `Shipment dispatched on ${new Date(dispatched_at).toLocaleDateString('en-GB')}` : 'Shipment created',
-          changed_by: user.id,
-        });
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ success: true, shipment: data, message: 'Shipment updated' }),
+      };
     }
 
-    // The API payload keeps snake_case for backwards compatibility, but the
-    // canonical orders schema uses camelCase column names.
-    if (shipping_method || shipping_cost !== undefined) {
-      const updateData: { shippingMethod?: string; shippingAmount?: number } = {};
-      if (shipping_method) updateData.shippingMethod = shipping_method;
-      if (shipping_cost !== undefined) updateData.shippingAmount = shipping_cost;
+    const { data: shipment, error: insertError } = await supabase
+      .from('shipments')
+      .insert({
+        order_id: order.id,
+        seller_id: order.sellerId,
+        buyer_id: order.buyerId,
+        courier_name: courierName || null,
+        tracking_number: trackingNumber || null,
+        dispatched_at: null,
+        status: 'Pending',
+      })
+      .select()
+      .single();
+    if (insertError) throw insertError;
 
-      const { error: orderShippingError } = await supabase
-        .from('orders')
-        .update(updateData)
-        .eq('id', order_id);
-
-      if (orderShippingError) {
-        throw new Error(`Failed to persist order shipping details: ${orderShippingError.message}`);
-      }
+    const { error: eventError } = await supabase
+      .from('shipment_events')
+      .insert({
+        shipment_id: shipment.id,
+        status: 'Pending',
+        message: 'Shipment created',
+        changed_by: user.id,
+      });
+    if (eventError) {
+      console.error('create-shipment: initial shipment event failed:', eventError.message);
     }
 
     return {
-      statusCode: isNew ? 201 : 200,
-      body: JSON.stringify({ 
-        success: true, 
-        shipment,
-        message: isNew ? 'Shipment created' : 'Shipment updated'
-      }),
+      statusCode: 201,
+      body: JSON.stringify({ success: true, shipment, message: 'Shipment created' }),
     };
   } catch (error) {
     console.error('Error creating/updating shipment:', error);
