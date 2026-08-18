@@ -178,6 +178,13 @@ export const handler: Handler = async (event) => {
     }
 
     if (existingShipment) {
+      if (user.role !== 'admin' && ['Delivered', 'Returned'].includes(existingShipment.status)) {
+        return {
+          statusCode: 409,
+          body: JSON.stringify({ error: 'Delivered or returned shipment details can no longer be edited by the seller.' }),
+        };
+      }
+
       const { data, error } = await supabase
         .from('shipments')
         .update({
