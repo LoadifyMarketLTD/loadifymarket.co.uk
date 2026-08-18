@@ -81,7 +81,9 @@ const Checkout = () => {
     [cartItems],
   );
 
-  // Fetch available shipping methods for the cart products
+  // Fetch shipping methods that are valid for every product in the cart.
+  // The checkout backend enforces the same intersection, so the UI must not
+  // present a method that will later be rejected by create-checkout.
   useEffect(() => {
     if (cartProductIds.length === 0) return;
     const productIds = cartProductIds;
@@ -89,8 +91,6 @@ const Checkout = () => {
     const fetchShippingOptions = async () => {
       setShippingLoading(true);
       try {
-        // Fetch product_shipping rows joined to shipping_methods and shipping_rates
-        // for all products in the cart, taking the lowest-price rate per method.
         const { data, error } = await supabase
           .from("product_shipping")
           .select(`
@@ -107,14 +107,14 @@ const Checkout = () => {
           .in("product_id", productIds);
 
         if (error || !data) {
-          // Non-fatal: fall back to seller-arranged
           setShippingOptions([]);
           setSelectedMethodId(SELLER_ARRANGED.methodId);
           return;
         }
 
-        // Build a map of methodId → ShippingOption, keeping min price across rows
         const optionMap = new Map<string, ShippingOption>();
+        const methodCoverage = new Map<string, Set<string>>();
+
         for (const row of data) {
           const method = Array.isArray(row.shipping_methods)
             ? row.shipping_methods[0]
@@ -126,10 +126,15 @@ const Checkout = () => {
             : method.shipping_rates
               ? [method.shipping_rates]
               : [];
+          const validRates = rates
+            .map((r) => Number(r.price))
+            .filter((price) => Number.isFinite(price) && price >= 0);
+          if (validRates.length === 0) continue;
 
-          const price = rates.length > 0
-            ? Math.min(...rates.map((r) => Number(r.price)))
-            : 0;
+          const price = Math.min(...validRates);
+          const coverage = methodCoverage.get(method.id) ?? new Set<string>();
+          coverage.add(row.product_id);
+          methodCoverage.set(method.id, coverage);
 
           if (!optionMap.has(method.id)) {
             optionMap.set(method.id, {
@@ -142,7 +147,9 @@ const Checkout = () => {
           }
         }
 
-        const options = Array.from(optionMap.values()).sort((a, b) => a.price - b.price);
+        const options = Array.from(optionMap.values())
+          .filter((option) => methodCoverage.get(option.methodId)?.size === productIds.length)
+          .sort((a, b) => a.price - b.price);
 
         if (options.length > 0) {
           setShippingOptions(options);
@@ -152,7 +159,6 @@ const Checkout = () => {
           setSelectedMethodId(SELLER_ARRANGED.methodId);
         }
       } catch {
-        // Non-fatal: fall back to seller-arranged
         setShippingOptions([]);
         setSelectedMethodId(SELLER_ARRANGED.methodId);
       } finally {
@@ -208,9 +214,10 @@ const Checkout = () => {
     if (shippingError) setShippingError(null);
   };
 
-  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
-  // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
-  const vat = Math.round(subtotal / 6);
+  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6.
+  // Keep penny precision in the UI; the previous whole-pound rounding could
+  // display a VAT amount inconsistent with the actual VAT-inclusive total.
+  const vat = Math.round((subtotal / 6) * 100) / 100;
   const shippingAmount = selectedOption.price;
   const total = subtotal + shippingAmount;
 
@@ -772,7 +779,7 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">VAT (20%)</span>
-                    <span className="text-foreground font-medium">£{vat.toLocaleString()}</span>
+                    <span className="text-foreground font-medium">£{vat.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="border-t border-border pt-3 flex justify-between">
                     <span className="font-display font-semibold text-foreground">Total</span>
