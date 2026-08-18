@@ -34,7 +34,9 @@ function isAllowedTransition(currentStatus: string, nextStatus: SellerStatusUpda
     case 'packed':
       return currentStatus === 'paid';
     case 'shipped':
-      return currentStatus === 'paid' || currentStatus === 'packed';
+      // Physical shipment state is authoritative and must be advanced through
+      // update-shipment-status so tracking and order state cannot diverge.
+      return listingContext === 'service' && (currentStatus === 'paid' || currentStatus === 'packed');
     case 'delivered':
       return listingContext === 'service' && (currentStatus === 'paid' || currentStatus === 'packed' || currentStatus === 'shipped');
     default:
@@ -130,7 +132,11 @@ export const handler: Handler = async (event) => {
   if (!isAllowedTransition(order.status, status, listingContext)) {
     return {
       statusCode: 409,
-      body: JSON.stringify({ error: `Order cannot move from ${order.status} to ${status}` }),
+      body: JSON.stringify({
+        error: listingContext !== 'service' && status === 'shipped'
+          ? 'Physical orders must be dispatched through the shipment workflow.'
+          : `Order cannot move from ${order.status} to ${status}`,
+      }),
     };
   }
 
