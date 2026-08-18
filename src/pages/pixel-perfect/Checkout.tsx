@@ -15,8 +15,9 @@ import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 import { openExternalUrl } from "@/lib/capacitorUtils";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
+import { calculateCheckoutPricing, poundsFromPence } from "@/lib/checkoutPricing";
 
-// ── Shipping option types ──────────────────────────────────────────────────
 interface ShippingOption {
   methodId: string;
   name: string;
@@ -25,7 +26,14 @@ interface ShippingOption {
   dispatchTime: string | null;
 }
 
-// Sentinel value for the "Seller arranged" fallback (no DB methods configured)
+interface ShippingMethodRelation {
+  id: string;
+  name: string;
+  courier?: string | null;
+  active: boolean;
+  shipping_rates?: Array<{ price: number }> | { price: number } | null;
+}
+
 const SELLER_ARRANGED: ShippingOption = {
   methodId: "seller-arranged",
   name: "Seller Arranged",
@@ -40,8 +48,15 @@ const steps = [
   { id: "review", label: "Review", icon: Check },
 ];
 
+function money(value: number): string {
+  return value.toLocaleString("en-GB", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 const Checkout = () => {
-  const { cartItems, subtotal, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
+  const { cartItems, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
   const { user, isLoading } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,37 +75,104 @@ const Checkout = () => {
   });
 
   const [shippingError, setShippingError] = useState<string | null>(null);
-  // Track whether we've already auto-filled the email so we never overwrite
-  // changes the user makes after the initial sync.
   const emailSyncedRef = useRef(false);
 
-  // ── Shipping method state ────────────────────────────────────────────────
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedMethodId, setSelectedMethodId] = useState<string>(SELLER_ARRANGED.methodId);
   const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingOptionsError, setShippingOptionsError] = useState<string | null>(null);
+  const [isServiceOnlyCart, setIsServiceOnlyCart] = useState(false);
 
-  // Derived: the currently selected shipping option
+  const [applyReverseCharge, setApplyReverseCharge] = useState(false);
+  const [taxProfileLoading, setTaxProfileLoading] = useState(false);
+
   const selectedOption: ShippingOption =
     shippingOptions.find((o) => o.methodId === selectedMethodId) ?? SELLER_ARRANGED;
-  const noDeliveryMethodAvailable = !shippingLoading && shippingOptions.length === 0;
+  const noDeliveryMethodAvailable =
+    !shippingLoading &&
+    !isServiceOnlyCart &&
+    (shippingOptions.length === 0 || Boolean(shippingOptionsError));
 
-  // Stable sorted cart product IDs — only changes when the product set changes.
-  // This drives the shipping fetch effect without re-triggering on quantity updates.
   const cartProductIds = useMemo(
-    () => cartItems.map((i) => i.product.id).sort(),
+    () => [...new Set(cartItems.map((i) => i.product.id))].sort(),
     [cartItems],
   );
 
-  // Fetch available shipping methods for the cart products
   useEffect(() => {
-    if (cartProductIds.length === 0) return;
-    const productIds = cartProductIds;
+    let cancelled = false;
+
+    if (!user?.id) {
+      setApplyReverseCharge(false);
+      setTaxProfileLoading(false);
+      return () => { cancelled = true; };
+    }
+
+    setTaxProfileLoading(true);
+    void supabase
+      .from("buyer_profiles")
+      .select("accountType, isVatVerified")
+      .eq("userId", user.id)
+      .maybeSingle<{ accountType: string | null; isVatVerified: boolean | null }>()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const isB2B = Boolean(data?.accountType) && data?.accountType !== "individual";
+        setApplyReverseCharge(isB2B && Boolean(data?.isVatVerified));
+      })
+      .catch(() => {
+        if (!cancelled) setApplyReverseCharge(false);
+      })
+      .finally(() => {
+        if (!cancelled) setTaxProfileLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (cartProductIds.length === 0) {
+      setShippingOptions([]);
+      setSelectedMethodId(SELLER_ARRANGED.methodId);
+      setShippingOptionsError(null);
+      setIsServiceOnlyCart(false);
+      setShippingLoading(false);
+      return () => { cancelled = true; };
+    }
 
     const fetchShippingOptions = async () => {
       setShippingLoading(true);
+      setShippingOptionsError(null);
+
       try {
-        // Fetch product_shipping rows joined to shipping_methods and shipping_rates
-        // for all products in the cart, taking the lowest-price rate per method.
+        const { data: products, error: productError } = await supabase
+          .from("products")
+          .select("id, listingContext")
+          .in("id", cartProductIds);
+
+        if (cancelled) return;
+        if (productError || !products || products.length !== cartProductIds.length) {
+          setIsServiceOnlyCart(false);
+          setShippingOptions([]);
+          setSelectedMethodId(SELLER_ARRANGED.methodId);
+          setShippingOptionsError("Unable to verify delivery requirements for every item. Please refresh the cart and try again.");
+          return;
+        }
+
+        const physicalProductIds = products
+          .filter((row) => row.listingContext !== "service")
+          .map((row) => row.id);
+
+        if (physicalProductIds.length === 0) {
+          setIsServiceOnlyCart(true);
+          setShippingOptions([]);
+          setSelectedMethodId(SELLER_ARRANGED.methodId);
+          setShippingOptionsError(null);
+          return;
+        }
+
+        setIsServiceOnlyCart(false);
+
         const { data, error } = await supabase
           .from("product_shipping")
           .select(`
@@ -104,72 +186,89 @@ const Checkout = () => {
               shipping_rates ( price )
             )
           `)
-          .in("product_id", productIds);
+          .in("product_id", physicalProductIds);
 
+        if (cancelled) return;
         if (error || !data) {
-          // Non-fatal: fall back to seller-arranged
           setShippingOptions([]);
           setSelectedMethodId(SELLER_ARRANGED.methodId);
+          setShippingOptionsError("Unable to load delivery methods. Please try again.");
           return;
         }
 
-        // Build a map of methodId → ShippingOption, keeping min price across rows
-        const optionMap = new Map<string, ShippingOption>();
-        for (const row of data) {
-          const method = Array.isArray(row.shipping_methods)
-            ? row.shipping_methods[0]
-            : row.shipping_methods;
+        const methodMap = new Map<string, { option: ShippingOption; productIds: Set<string> }>();
+
+        for (const rawRow of data as unknown as Array<Record<string, unknown>>) {
+          const productId = typeof rawRow.product_id === "string" ? rawRow.product_id : "";
+          if (!productId) continue;
+
+          const relation = rawRow.shipping_methods as ShippingMethodRelation | ShippingMethodRelation[] | null;
+          const method = Array.isArray(relation) ? relation[0] : relation;
           if (!method || !method.active) continue;
 
-          const rates: Array<{ price: number }> = Array.isArray(method.shipping_rates)
+          const rawRates = Array.isArray(method.shipping_rates)
             ? method.shipping_rates
             : method.shipping_rates
               ? [method.shipping_rates]
               : [];
+          const validRates = rawRates
+            .map((rate) => Number(rate.price))
+            .filter((price) => Number.isFinite(price) && price >= 0);
+          if (validRates.length === 0) continue;
 
-          const price = rates.length > 0
-            ? Math.min(...rates.map((r) => Number(r.price)))
-            : 0;
-
-          if (!optionMap.has(method.id)) {
-            optionMap.set(method.id, {
-              methodId: method.id,
-              name: method.name,
-              courier: method.courier ?? null,
-              price,
-              dispatchTime: (row as Record<string, unknown>).dispatch_time as string | null,
+          const price = Math.min(...validRates);
+          const existing = methodMap.get(method.id);
+          if (existing) {
+            existing.productIds.add(productId);
+          } else {
+            methodMap.set(method.id, {
+              option: {
+                methodId: method.id,
+                name: method.name,
+                courier: method.courier ?? null,
+                price,
+                dispatchTime: typeof rawRow.dispatch_time === "string" ? rawRow.dispatch_time : null,
+              },
+              productIds: new Set([productId]),
             });
           }
         }
 
-        const options = Array.from(optionMap.values()).sort((a, b) => a.price - b.price);
+        const options = Array.from(methodMap.values())
+          .filter(({ productIds }) => productIds.size === physicalProductIds.length)
+          .map(({ option }) => option)
+          .sort((a, b) => a.price - b.price);
 
-        if (options.length > 0) {
-          setShippingOptions(options);
-          setSelectedMethodId(options[0].methodId);
-        } else {
-          setShippingOptions([]);
-          setSelectedMethodId(SELLER_ARRANGED.methodId);
-        }
+        setShippingOptions(options);
+        setShippingOptionsError(
+          options.length === 0
+            ? "No single delivery method is currently available for every physical item in this cart."
+            : null,
+        );
+        setSelectedMethodId((current) =>
+          options.some((option) => option.methodId === current)
+            ? current
+            : options[0]?.methodId ?? SELLER_ARRANGED.methodId,
+        );
       } catch {
-        // Non-fatal: fall back to seller-arranged
+        if (cancelled) return;
+        setIsServiceOnlyCart(false);
         setShippingOptions([]);
         setSelectedMethodId(SELLER_ARRANGED.methodId);
+        setShippingOptionsError("Unable to load delivery methods. Please try again.");
       } finally {
-        setShippingLoading(false);
+        if (!cancelled) setShippingLoading(false);
       }
     };
 
     void fetchShippingOptions();
+    return () => { cancelled = true; };
   }, [cartProductIds]);
-  // ────────────────────────────────────────────────────────────────────────
 
-  // Refresh cart prices from DB on checkout load — single batch query
   useEffect(() => {
     void refreshCartPrices();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync email once auth resolves (user may be null at initial render)
   useEffect(() => {
     if (user?.email && !emailSyncedRef.current) {
       emailSyncedRef.current = true;
@@ -177,12 +276,30 @@ const Checkout = () => {
     }
   }, [user?.email]);
 
+  const shippingAmount = isServiceOnlyCart ? 0 : selectedOption.price;
+  const pricing = useMemo(
+    () => calculateCheckoutPricing(
+      cartItems.map((item) => ({ price: item.product.price, quantity: item.quantity })),
+      shippingAmount,
+      applyReverseCharge,
+    ),
+    [cartItems, shippingAmount, applyReverseCharge],
+  );
+  const catalogSubtotal = poundsFromPence(pricing.catalogSubtotalPence);
+  const chargeableSubtotal = poundsFromPence(pricing.chargeableSubtotalPence);
+  const vatIncluded = poundsFromPence(pricing.vatIncludedPence);
+  const reverseChargeAdjustment = poundsFromPence(pricing.reverseChargeAdjustmentPence);
+  const total = poundsFromPence(pricing.totalPence);
+
   const handleContinueToPayment = () => {
-    if (noDeliveryMethodAvailable) {
-      setShippingError("This seller has not configured a delivery method for the items in your cart yet. Please contact the seller or try again later.");
+    if (shippingLoading || taxProfileLoading) {
+      setShippingError("Please wait while checkout details are being verified.");
       return;
     }
-    // Validate required shipping fields before advancing
+    if (noDeliveryMethodAvailable) {
+      setShippingError(shippingOptionsError ?? "This seller has not configured a delivery method for all physical items in your cart yet.");
+      return;
+    }
     if (!shippingData.firstName.trim() || !shippingData.lastName.trim()) {
       setShippingError("Please enter your first and last name.");
       return;
@@ -191,11 +308,11 @@ const Checkout = () => {
       setShippingError("Please enter a valid email address.");
       return;
     }
-    if (!shippingData.address1.trim()) {
+    if (!isServiceOnlyCart && !shippingData.address1.trim()) {
       setShippingError("Please enter your street address.");
       return;
     }
-    if (!shippingData.city.trim() || !shippingData.postcode.trim()) {
+    if (!isServiceOnlyCart && (!shippingData.city.trim() || !shippingData.postcode.trim())) {
       setShippingError("Please enter your city and postcode.");
       return;
     }
@@ -208,99 +325,83 @@ const Checkout = () => {
     if (shippingError) setShippingError(null);
   };
 
-  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
-  // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
-  const vat = Math.round(subtotal / 6);
-  const shippingAmount = selectedOption.price;
-  const total = subtotal + shippingAmount;
-
-  // ── Submit to Stripe via Netlify function ──────────────────────────────────
   const handlePlaceOrder = async () => {
     setIsSubmitting(true);
     setCheckoutError(null);
 
-    // Block purchase of own products
+    if (shippingLoading || taxProfileLoading) {
+      setCheckoutError("Checkout details are still being verified. Please try again in a moment.");
+      setIsSubmitting(false);
+      return;
+    }
+
     if (user) {
       const ownProductInCart = cartItems.find(
-        (item) => item.product.sellerId && item.product.sellerId === user.id
+        (item) => item.product.sellerId && item.product.sellerId === user.id,
       );
       if (ownProductInCart) {
         setCheckoutError(
-          `You cannot purchase your own product "${ownProductInCart.product.title}". Please remove it from your cart.`
+          `You cannot purchase your own product "${ownProductInCart.product.title}". Please remove it from your cart.`,
         );
         setIsSubmitting(false);
         return;
       }
     }
 
-    // P3: Single-seller enforcement — multi-seller checkout is temporarily
-    // disabled. The backend enforces this too; this check gives better UX.
     const sellerIds = new Set(
-      cartItems.map((item) => item.product.sellerId).filter((id): id is string => Boolean(id))
+      cartItems.map((item) => item.product.sellerId).filter((id): id is string => Boolean(id)),
     );
     if (sellerIds.size > 1) {
       setCheckoutError(
-        "For now, please complete purchases from one seller at a time. Please split your cart and checkout each seller separately."
+        "For now, please complete purchases from one seller at a time. Please split your cart and checkout each seller separately.",
       );
       setIsSubmitting(false);
       return;
     }
 
-    if (noDeliveryMethodAvailable || selectedOption.methodId === SELLER_ARRANGED.methodId) {
-      setCheckoutError("This seller has not configured a delivery method for the items in your cart yet. Please contact the seller or try again later.");
+    if (
+      !isServiceOnlyCart &&
+      (noDeliveryMethodAvailable || selectedOption.methodId === SELLER_ARRANGED.methodId)
+    ) {
+      setCheckoutError(shippingOptionsError ?? "This seller has not configured a delivery method for all physical items in your cart yet.");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const address = {
-        line1: shippingData.address1,
-        ...(shippingData.address2 ? { line2: shippingData.address2 } : {}),
-        city: shippingData.city,
-        postal_code: shippingData.postcode,
-        country: "GB",
-      };
-
       const items = cartItems.map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,
         price: item.product.price,
         title: item.product.title,
-        // sellerId is overridden server-side from the DB price validation step
-        // in create-checkout.ts, so the client-side value is a safe placeholder.
         sellerId: "",
       }));
 
-      const body = {
+      const body: Record<string, unknown> = {
         items,
         buyerId: user?.id ?? "",
-        guestEmail: !user ? shippingData.email : undefined,
-        // shippingAmount is intentionally omitted — the server looks it up
-        // from the DB using shippingMethodId to prevent cost tampering.
-        shippingMethodId: selectedOption.methodId,
-        shippingMethod: selectedOption.methodId === SELLER_ARRANGED.methodId
-          ? "Seller arranged"
-          : selectedOption.name,
-        shippingAddress: address,
-        billingAddress: address,
       };
 
-      // Send the Supabase session token so the server can verify buyerId.
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (authSession?.access_token) {
-        headers["Authorization"] = `Bearer ${authSession.access_token}`;
+      if (!isServiceOnlyCart) {
+        const address = {
+          line1: shippingData.address1,
+          ...(shippingData.address2 ? { line2: shippingData.address2 } : {}),
+          city: shippingData.city,
+          postal_code: shippingData.postcode,
+          country: "GB",
+        };
+        body.shippingMethodId = selectedOption.methodId;
+        body.shippingMethod = selectedOption.name;
+        body.shippingAddress = address;
+        body.billingAddress = address;
       }
 
-      const res = await fetch("/.netlify/functions/create-checkout", {
+      const res = await authorizedFetch("/.netlify/functions/create-checkout", {
         method: "POST",
-        headers,
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
-
+      const data = await res.json() as { url?: string; error?: string };
       if (!res.ok) {
         throw new Error(data.error || "Checkout failed. Please try again.");
       }
@@ -316,7 +417,6 @@ const Checkout = () => {
     }
   };
 
-  // Redirect to cart if empty
   if (cartItems.length === 0) {
     return (
       <MainLayout>
@@ -337,12 +437,10 @@ const Checkout = () => {
             </Link>
           </div>
         </main>
-    </MainLayout>
+      </MainLayout>
     );
   }
 
-  // P1: Sign-in required wall — shown when cart has items but buyer is not authenticated.
-  // The isLoading check prevents a flash while auth is initialising on page load.
   if (!isLoading && !user) {
     return (
       <MainLayout>
@@ -401,7 +499,6 @@ const Checkout = () => {
             backLabel="Back to Cart"
           />
 
-          {/* Steps */}
           <div className="flex items-center justify-center gap-2 mb-10">
             {steps.map((step, i) => (
               <div key={step.id} className="flex items-center gap-2">
@@ -427,7 +524,6 @@ const Checkout = () => {
           </div>
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-            {/* Price-changed banner */}
             {priceChangedBanner && (
               <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review the totals below before proceeding.</span>
@@ -436,9 +532,8 @@ const Checkout = () => {
                 </button>
               </div>
             )}
-            {/* Main content */}
+
             <div>
-              {/* Step 1: Shipping */}
               {currentStep === 0 && (
                 <div className="bg-card rounded-xl border border-border p-6 sm:p-8 space-y-6">
                   <div className="flex items-center gap-3">
@@ -446,8 +541,14 @@ const Checkout = () => {
                       <MapPin className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h2 className="font-display text-lg font-semibold text-foreground">Shipping Details</h2>
-                      <p className="text-sm text-muted-foreground">Where should we deliver your order?</p>
+                      <h2 className="font-display text-lg font-semibold text-foreground">
+                        {isServiceOnlyCart ? "Contact Details" : "Shipping Details"}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {isServiceOnlyCart
+                          ? "Your provider can use these details to contact you about the service."
+                          : "Where should we deliver your order?"}
+                      </p>
                     </div>
                   </div>
 
@@ -487,30 +588,35 @@ const Checkout = () => {
                         <Input id="company" name="company" placeholder="Acme Ltd" className="pl-10 h-11" value={shippingData.company} onChange={handleShippingChange} />
                       </div>
                     </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="address1">Address Line 1</Label>
-                      <Input id="address1" name="address1" placeholder="123 High Street" className="h-11" value={shippingData.address1} onChange={handleShippingChange} required />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="address2">Address Line 2 (optional)</Label>
-                      <Input id="address2" name="address2" placeholder="Unit 4, Industrial Estate" className="h-11" value={shippingData.address2} onChange={handleShippingChange} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="city">City</Label>
-                      <Input id="city" name="city" placeholder="Manchester" className="h-11" value={shippingData.city} onChange={handleShippingChange} required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="county">County</Label>
-                      <Input id="county" name="county" placeholder="Greater Manchester" className="h-11" value={shippingData.county} onChange={handleShippingChange} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="postcode">Postcode</Label>
-                      <Input id="postcode" name="postcode" placeholder="M1 1AA" className="h-11" value={shippingData.postcode} onChange={handleShippingChange} required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Country</Label>
-                      <Input value="United Kingdom" disabled className="h-11 bg-muted" />
-                    </div>
+
+                    {!isServiceOnlyCart && (
+                      <>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label htmlFor="address1">Address Line 1</Label>
+                          <Input id="address1" name="address1" placeholder="123 High Street" className="h-11" value={shippingData.address1} onChange={handleShippingChange} required />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label htmlFor="address2">Address Line 2 (optional)</Label>
+                          <Input id="address2" name="address2" placeholder="Unit 4, Industrial Estate" className="h-11" value={shippingData.address2} onChange={handleShippingChange} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="city">City</Label>
+                          <Input id="city" name="city" placeholder="Manchester" className="h-11" value={shippingData.city} onChange={handleShippingChange} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="county">County</Label>
+                          <Input id="county" name="county" placeholder="Greater Manchester" className="h-11" value={shippingData.county} onChange={handleShippingChange} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="postcode">Postcode</Label>
+                          <Input id="postcode" name="postcode" placeholder="M1 1AA" className="h-11" value={shippingData.postcode} onChange={handleShippingChange} required />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Country</Label>
+                          <Input value="United Kingdom" disabled className="h-11 bg-muted" />
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {shippingError && (
@@ -519,13 +625,17 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* Shipping method selection */}
                   <div className="space-y-3">
-                    <Label>Delivery Method</Label>
+                    <Label>{isServiceOnlyCart ? "Fulfilment" : "Delivery Method"}</Label>
                     {shippingLoading ? (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading delivery options…
+                        Verifying delivery requirements…
+                      </div>
+                    ) : isServiceOnlyCart ? (
+                      <div className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/5 p-3 text-sm text-foreground">
+                        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        <span>No physical delivery is required for this service order.</span>
                       </div>
                     ) : shippingOptions.length > 0 ? (
                       <div className="space-y-2">
@@ -557,7 +667,7 @@ const Checkout = () => {
                               </div>
                             </div>
                             <span className="text-sm font-semibold text-foreground shrink-0">
-                              {option.price === 0 ? "Free" : `£${option.price.toFixed(2)}`}
+                              {option.price === 0 ? "Free" : `£${money(option.price)}`}
                             </span>
                           </label>
                         ))}
@@ -565,16 +675,14 @@ const Checkout = () => {
                     ) : (
                       <div className="flex items-start gap-2 rounded-lg border border-destructive/25 bg-destructive/5 p-3 text-sm text-destructive">
                         <Truck className="h-4 w-4 shrink-0" />
-                        <span>
-                          This seller has not configured delivery for these items yet. Checkout is unavailable until a delivery method is added.
-                        </span>
+                        <span>{shippingOptionsError ?? "This seller has not configured delivery for every physical item in this cart yet."}</span>
                       </div>
                     )}
                   </div>
 
                   <Button
                     onClick={handleContinueToPayment}
-                    disabled={shippingLoading || noDeliveryMethodAvailable}
+                    disabled={shippingLoading || taxProfileLoading || noDeliveryMethodAvailable}
                     className="w-full sm:w-auto h-11 bg-primary hover:bg-primary-hover text-black font-semibold px-8"
                   >
                     Continue to Payment <ArrowRight className="ml-2 h-4 w-4" />
@@ -582,7 +690,6 @@ const Checkout = () => {
                 </div>
               )}
 
-              {/* Step 2: Payment */}
               {currentStep === 1 && (
                 <div className="bg-card rounded-xl border border-border p-6 sm:p-8 space-y-6">
                   <div className="flex items-center gap-3">
@@ -595,17 +702,19 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* Stripe secure payment notice */}
                   <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 space-y-4">
                     <div className="flex items-center gap-2 text-sm font-medium text-primary">
                       <Lock className="h-4 w-4" />
                       Secure Payment via Stripe
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Your payment details are handled securely by Stripe — the world's leading payment
-                      processor. You'll be redirected to Stripe's secure checkout page to complete your
-                      payment. We never store your card details.
+                      Your payment details are handled securely by Stripe. You'll be redirected to Stripe's secure checkout page to complete your payment. We never store your card details.
                     </p>
+                    {applyReverseCharge && (
+                      <div className="rounded-lg border border-primary/25 bg-background/70 p-3 text-sm text-foreground">
+                        Your VAT-verified business account qualifies for reverse charge on item prices. The amount shown below matches the amount sent to Stripe.
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 pt-1">
                       <ShieldCheck className="h-5 w-5 text-primary" />
                       <span className="text-xs text-muted-foreground">256-bit SSL encrypted · PCI-DSS compliant</span>
@@ -621,6 +730,7 @@ const Checkout = () => {
                     </Button>
                     <Button
                       onClick={() => setCurrentStep(2)}
+                      disabled={taxProfileLoading}
                       className="flex-1 h-11 bg-primary hover:bg-primary-hover text-black font-semibold"
                     >
                       Review Order <ArrowRight className="ml-2 h-4 w-4" />
@@ -629,36 +739,40 @@ const Checkout = () => {
                 </div>
               )}
 
-              {/* Step 3: Review */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  {/* Shipping summary */}
                   <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                           <MapPin className="h-5 w-5 text-primary" />
                         </div>
-                        <h3 className="font-display font-semibold text-foreground">Shipping Address</h3>
+                        <h3 className="font-display font-semibold text-foreground">
+                          {isServiceOnlyCart ? "Contact Details" : "Shipping Address"}
+                        </h3>
                       </div>
                       <button onClick={() => setCurrentStep(0)} className="text-sm text-primary hover:underline">Edit</button>
                     </div>
                     <div className="text-sm text-muted-foreground leading-relaxed pl-[52px]">
                       <p className="font-medium text-foreground">
-                        {shippingData.firstName || "John"} {shippingData.lastName || "Doe"}
+                        {shippingData.firstName} {shippingData.lastName}
                       </p>
+                      <p>{shippingData.email}</p>
+                      {shippingData.phone && <p>{shippingData.phone}</p>}
                       {shippingData.company && <p>{shippingData.company}</p>}
-                      <p>{shippingData.address1 || "123 High Street"}</p>
-                      {shippingData.address2 && <p>{shippingData.address2}</p>}
-                      <p>
-                        {shippingData.city || "Manchester"}, {shippingData.county || "Greater Manchester"}{" "}
-                        {shippingData.postcode || "M1 1AA"}
-                      </p>
-                      <p>United Kingdom</p>
+                      {isServiceOnlyCart ? (
+                        <p className="mt-2">No delivery address is required for this service order.</p>
+                      ) : (
+                        <>
+                          <p>{shippingData.address1}</p>
+                          {shippingData.address2 && <p>{shippingData.address2}</p>}
+                          <p>{shippingData.city}{shippingData.county ? `, ${shippingData.county}` : ""} {shippingData.postcode}</p>
+                          <p>United Kingdom</p>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Payment summary */}
                   <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -674,7 +788,6 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* Items */}
                   <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                     <h3 className="font-display font-semibold text-foreground">Order Items</h3>
                     <div className="space-y-3">
@@ -688,7 +801,7 @@ const Checkout = () => {
                             <p className="text-xs text-muted-foreground">Qty: {item.quantity} · {item.product.seller}</p>
                           </div>
                           <span className="text-sm font-semibold text-foreground shrink-0">
-                            £{(item.product.price * item.quantity).toLocaleString()}
+                            £{money(item.product.price * item.quantity)}
                           </span>
                         </div>
                       ))}
@@ -701,10 +814,9 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* Intermediary notice */}
                   <div className="rounded-lg bg-muted/50 border border-border p-4 text-xs text-muted-foreground leading-relaxed">
                     <span className="font-semibold text-foreground">Marketplace Notice:</span>{" "}
-                    You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller.
+                    You are buying from an independent seller. Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller.
                   </div>
 
                   <div className="flex gap-3">
@@ -713,7 +825,12 @@ const Checkout = () => {
                     </Button>
                     <Button
                       onClick={handlePlaceOrder}
-                      disabled={isSubmitting || noDeliveryMethodAvailable || selectedOption.methodId === SELLER_ARRANGED.methodId}
+                      disabled={
+                        isSubmitting ||
+                        shippingLoading ||
+                        taxProfileLoading ||
+                        (!isServiceOnlyCart && (noDeliveryMethodAvailable || selectedOption.methodId === SELLER_ARRANGED.methodId))
+                      }
                       className="flex-1 h-12 bg-primary hover:bg-primary-hover text-black font-bold text-base hover:opacity-90 transition-opacity"
                     >
                       {isSubmitting ? (
@@ -724,7 +841,7 @@ const Checkout = () => {
                       ) : (
                         <>
                           <Lock className="mr-2 h-5 w-5" />
-                          Pay Securely · £{total.toLocaleString()}
+                          Pay Securely · £{money(total)}
                         </>
                       )}
                     </Button>
@@ -733,7 +850,6 @@ const Checkout = () => {
               )}
             </div>
 
-            {/* Order Summary Sidebar */}
             <div className="lg:sticky lg:top-24 h-fit space-y-4">
               <div className="bg-card rounded-xl border border-border p-6 space-y-5">
                 <h2 className="font-display text-lg font-semibold text-foreground">Order Summary</h2>
@@ -749,7 +865,7 @@ const Checkout = () => {
                         <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                       </div>
                       <span className="text-xs font-semibold text-foreground">
-                        £{(item.product.price * item.quantity).toLocaleString()}
+                        £{money(item.product.price * item.quantity)}
                       </span>
                     </div>
                   ))}
@@ -757,36 +873,53 @@ const Checkout = () => {
 
                 <div className="border-t border-border pt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="text-foreground font-medium">£{subtotal.toLocaleString()}</span>
+                    <span className="text-muted-foreground">Catalog subtotal</span>
+                    <span className="text-foreground font-medium">£{money(catalogSubtotal)}</span>
                   </div>
+                  {applyReverseCharge && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">VAT reverse charge</span>
+                      <span className="text-foreground font-medium">−£{money(reverseChargeAdjustment)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delivery</span>
                     <span className="text-foreground font-medium">
-                      {shippingOptions.length === 0
-                        ? <span className="italic text-muted-foreground">Set by seller</span>
-                        : shippingAmount === 0
-                          ? "Free"
-                          : `£${shippingAmount.toFixed(2)}`}
+                      {isServiceOnlyCart
+                        ? "Not required"
+                        : shippingOptions.length === 0
+                          ? <span className="italic text-muted-foreground">Unavailable</span>
+                          : shippingAmount === 0
+                            ? "Free"
+                            : `£${money(shippingAmount)}`}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">VAT (20%)</span>
-                    <span className="text-foreground font-medium">£{vat.toLocaleString()}</span>
+                    <span className="text-muted-foreground">
+                      {applyReverseCharge ? "VAT charged at checkout" : "VAT included (20%)"}
+                    </span>
+                    <span className="text-foreground font-medium">
+                      £{money(applyReverseCharge ? 0 : vatIncluded)}
+                    </span>
                   </div>
+                  {applyReverseCharge && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">VAT-exclusive item subtotal</span>
+                      <span className="text-foreground">£{money(chargeableSubtotal)}</span>
+                    </div>
+                  )}
                   <div className="border-t border-border pt-3 flex justify-between">
                     <span className="font-display font-semibold text-foreground">Total</span>
-                    <span className="font-display text-xl font-bold text-foreground">£{total.toLocaleString()}</span>
+                    <span className="font-display text-xl font-bold text-foreground">£{money(total)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Trust badges */}
               <div className="bg-card rounded-xl border border-border p-4 space-y-3">
                 <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-1">Marketplace Assurance</p>
                 <div className="flex items-start gap-2 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  You are purchasing from independent seller(s)
+                  You are purchasing from an independent seller
                 </div>
                 <div className="flex items-start gap-2 text-sm text-muted-foreground">
                   <Lock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -794,14 +927,13 @@ const Checkout = () => {
                 </div>
                 <div className="flex items-start gap-2 text-sm text-muted-foreground">
                   <Truck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                  Seller fulfils and delivers your order
+                  {isServiceOnlyCart ? "Seller provides the purchased service" : "Seller fulfils and delivers your order"}
                 </div>
               </div>
             </div>
           </div>
         </div>
       </main>
-
     </MainLayout>
   );
 };
