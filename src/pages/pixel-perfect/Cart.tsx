@@ -7,35 +7,44 @@ import { Button } from "@/components/ui/button";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
+import { calculateCheckoutPricing, poundsFromPence } from "@/lib/checkoutPricing";
+
+function money(value: number): string {
+  return value.toLocaleString("en-GB", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
 const Cart = () => {
-  const { cartItems, updateQuantity, removeFromCart, subtotal, priceChangedBanner, dismissPriceBanner, refreshCartPrices } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, priceChangedBanner, dismissPriceBanner, refreshCartPrices } = useCart();
   const { user } = useAuthStore();
 
-  // Refresh prices from DB on mount — single batch query, non-blocking
   useEffect(() => {
     void refreshCartPrices();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Detect any own-product items in cart (should not happen via normal UI, but guard edge cases)
   const ownProductIds = user
     ? cartItems
         .filter((item) => item.product.sellerId && item.product.sellerId === user.id)
         .map((item) => item.product.id)
     : [];
 
-  // Detect multi-seller cart — checkout is blocked until resolved
   const uniqueSellerIds = new Set(
     cartItems
       .map((item) => item.product.sellerId)
-      .filter((id): id is string => Boolean(id))
+      .filter((id): id is string => Boolean(id)),
   );
   const isMultiSellerCart = uniqueSellerIds.size > 1;
   const isCheckoutBlocked = isMultiSellerCart || ownProductIds.length > 0;
 
-  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
-  // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
-  const vat = Math.round(subtotal / 6);
+  const pricing = calculateCheckoutPricing(
+    cartItems.map((item) => ({ price: item.product.price, quantity: item.quantity })),
+    0,
+    false,
+  );
+  const subtotal = poundsFromPence(pricing.catalogSubtotalPence);
+  const vat = poundsFromPence(pricing.vatIncludedPence);
   const total = subtotal;
 
   if (cartItems.length === 0) {
@@ -65,7 +74,7 @@ const Cart = () => {
             </div>
           </div>
         </main>
-    </MainLayout>
+      </MainLayout>
     );
   }
 
@@ -87,7 +96,6 @@ const Cart = () => {
             ]}
             backTo="/catalog"
           />
-          {/* Header */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">Shopping Cart</h1>
@@ -99,7 +107,6 @@ const Cart = () => {
           </div>
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-            {/* Price-changed banner */}
             {priceChangedBanner && (
               <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review before checking out.</span>
@@ -108,19 +115,16 @@ const Cart = () => {
                 </button>
               </div>
             )}
-            {/* Own-product warning */}
             {ownProductIds.length > 0 && (
               <div className="lg:col-span-2 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <strong>Notice:</strong> You cannot purchase your own products. Please remove the highlighted items before checking out.
               </div>
             )}
-            {/* Multi-seller warning */}
             {isMultiSellerCart && (
               <div className="lg:col-span-2 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <strong>Multiple sellers detected:</strong> Your cart contains items from {uniqueSellerIds.size} different sellers. Please remove items until only one seller remains before checking out.
               </div>
             )}
-            {/* Cart Items */}
             <div className="space-y-4">
               {cartItems.map((item) => {
                 const { product } = item;
@@ -134,7 +138,6 @@ const Cart = () => {
                     key={product.id}
                     className={`bg-card rounded-xl border p-4 sm:p-5 flex gap-4 group transition-all ${isOwnProduct ? "border-primary/40 bg-primary-soft" : "border-border hover:border-primary/20 hover:shadow-card"}`}
                   >
-                    {/* Image */}
                     <Link to={`/product/${product.id}`} className="shrink-0">
                       <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden bg-muted">
                         <img
@@ -145,7 +148,6 @@ const Cart = () => {
                       </div>
                     </Link>
 
-                    {/* Details */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
                         <div className="flex items-start justify-between gap-2">
@@ -176,7 +178,6 @@ const Cart = () => {
                       </div>
 
                       <div className="flex items-end justify-between mt-3">
-                        {/* Quantity */}
                         <div className="flex items-center gap-1 bg-muted rounded-lg">
                           <button
                             onClick={() => updateQuantity(product.id, -1)}
@@ -195,14 +196,13 @@ const Cart = () => {
                           </button>
                         </div>
 
-                        {/* Price */}
                         <div className="text-right">
                           <div className="font-display text-base sm:text-lg font-bold text-foreground">
-                            £{(product.price * item.quantity).toLocaleString()}
+                            £{money(product.price * item.quantity)}
                           </div>
                           {item.quantity > 1 && (
                             <div className="text-xs text-muted-foreground">
-                              £{product.price.toLocaleString()} each
+                              £{money(product.price)} each
                             </div>
                           )}
                           {itemDiscount > 0 && (
@@ -216,7 +216,6 @@ const Cart = () => {
               })}
             </div>
 
-            {/* Order Summary */}
             <div className="order-first lg:order-none lg:sticky lg:top-24 h-fit space-y-4">
               <div className="bg-card rounded-xl border border-border p-6 space-y-5">
                 <h2 className="font-display text-lg font-semibold text-foreground">Order Summary</h2>
@@ -224,19 +223,19 @@ const Cart = () => {
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)} items)</span>
-                    <span className="font-medium text-foreground">£{subtotal.toLocaleString()}</span>
+                    <span className="font-medium text-foreground">£{money(subtotal)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Delivery</span>
-                    <span className="font-medium text-muted-foreground italic">Set by seller</span>
+                    <span className="font-medium text-muted-foreground italic">Calculated at checkout</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">VAT (20%)</span>
-                    <span className="font-medium text-foreground">£{vat.toLocaleString()}</span>
+                    <span className="text-muted-foreground">VAT included (20%)</span>
+                    <span className="font-medium text-foreground">£{money(vat)}</span>
                   </div>
                   <div className="border-t border-border pt-3 flex items-center justify-between">
-                    <span className="font-display font-semibold text-foreground">Total</span>
-                    <span className="font-display text-xl font-bold text-foreground">£{total.toLocaleString()}</span>
+                    <span className="font-display font-semibold text-foreground">Items total</span>
+                    <span className="font-display text-xl font-bold text-foreground">£{money(total)}</span>
                   </div>
                 </div>
 
@@ -257,7 +256,6 @@ const Cart = () => {
                 )}
               </div>
 
-              {/* Trust */}
               <div className="bg-card rounded-xl border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
@@ -265,7 +263,7 @@ const Cart = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="h-4 w-4 text-primary shrink-0" />
-                  <span>Delivery is set by the seller</span>
+                  <span>Delivery is confirmed at checkout</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
@@ -277,7 +275,6 @@ const Cart = () => {
         </div>
       </main>
 
-      {/* Mobile sticky checkout CTA — sits above the MobileBottomNav */}
       <div
         className="lg:hidden fixed inset-x-0 z-[9996] px-4 py-3 bg-background/95 backdrop-blur border-t border-border"
         style={{ bottom: "calc(60px + env(safe-area-inset-bottom, 0px))" }}
@@ -288,17 +285,16 @@ const Cart = () => {
             disabled
             aria-disabled="true"
           >
-            Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+            Checkout · £{money(total)} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         ) : (
           <Link to="/checkout">
             <Button className="w-full h-12 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity">
-              Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+              Checkout · £{money(total)} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
         )}
       </div>
-
     </MainLayout>
   );
 };
