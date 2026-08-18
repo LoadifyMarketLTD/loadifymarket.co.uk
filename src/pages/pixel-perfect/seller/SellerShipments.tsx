@@ -209,13 +209,9 @@ const SellerShipments = () => {
       const json = await res.json() as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to update status");
 
-      await supabase.from("notifications").insert({
-        userId: shipment.buyer_id,
-        type: "shipment",
-        title: "Shipment update",
-        message: `Your shipment ${shipment.id.slice(0, 8).toUpperCase()} status has been updated to: ${newStatus}.`,
-      });
-
+      // The backend owns buyer email/in-app notification delivery. Keeping the
+      // notification write server-side avoids duplicate events and RLS failures
+      // from a seller attempting to insert a notification for another user.
       toast({ title: "Status updated", description: `Shipment marked as ${newStatus}.` });
       setPendingStatus("");
       setSelected(null);
