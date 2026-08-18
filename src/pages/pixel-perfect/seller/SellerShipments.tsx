@@ -65,20 +65,24 @@ const SellerShipments = () => {
   const loadShipments = useCallback(async () => {
     if (!user) return;
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("shipments")
-        .select(`*, orders(orderNumber, products(title))`)
+        .select(`*, orders!shipments_order_id_fkey(orderNumber, products!orders_productId_fkey(title))`)
         .eq("seller_id", user.id)
         .order("created_at", { ascending: false });
+      if (error) throw error;
+
       const rows = (data ?? []) as ShipmentRow[];
       setShipments(rows);
 
       const uniqueBuyerIds = [...new Set(rows.map((s) => s.buyer_id).filter(Boolean))];
       if (uniqueBuyerIds.length > 0) {
-        const { data: buyers } = await supabase
+        const { data: buyers, error: buyersError } = await supabase
           .from("users")
           .select("id, firstName, lastName")
           .in("id", uniqueBuyerIds);
+        if (buyersError) throw buyersError;
+
         const names: Record<string, string> = {};
         (buyers ?? []).forEach((buyer: BuyerData) => {
           const name = [buyer.firstName, buyer.lastName].filter(Boolean).join(" ").trim();
@@ -86,6 +90,15 @@ const SellerShipments = () => {
         });
         setBuyerNames(names);
       }
+    } catch (err) {
+      console.error("Failed to load seller shipments:", err);
+      setShipments([]);
+      setBuyerNames({});
+      toast({
+        title: "Could not load shipments",
+        description: "Please refresh the page and try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
