@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { RotateCcw, Search, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { RotateCcw, Search, AlertCircle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,8 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import type { Return } from "@/types";
+import { authorizedFetch } from "@/lib/authorizedFetch";
+import { toast } from "@/hooks/use-toast";
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
   requested:  { label: "Requested",  className: "bg-primary/10 text-primary",   icon: AlertCircle },
@@ -43,7 +45,7 @@ const SellerReturns = () => {
     setLoading(false);
   }, [user]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   const filtered = returns.filter((r) => {
     const q = search.toLowerCase();
@@ -63,7 +65,6 @@ const SellerReturns = () => {
     try {
       const { error: dbError } = await supabase.from("returns").update({ status: "approved" }).eq("id", selected.id);
       if (dbError) { setError(dbError.message); return; }
-      // Notify buyer that their return was approved
       await supabase.from("notifications").insert({
         userId: selected.buyerId,
         type: "return",
@@ -84,7 +85,6 @@ const SellerReturns = () => {
     try {
       const { error: dbError } = await supabase.from("returns").update({ status: "rejected" }).eq("id", selected.id);
       if (dbError) { setError(dbError.message); return; }
-      // Notify buyer that their return was rejected
       await supabase.from("notifications").insert({
         userId: selected.buyerId,
         type: "return",
@@ -93,6 +93,37 @@ const SellerReturns = () => {
       });
       await load();
       setSelected(null);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCompleteRefund = async () => {
+    if (!selected || selected.status !== "approved") return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await authorizedFetch("/.netlify/functions/create-refund", {
+        method: "POST",
+        body: JSON.stringify({
+          orderId: selected.orderId,
+          returnId: selected.id,
+          reason: "requested_by_customer",
+        }),
+      });
+      const data = await res.json() as { error?: string; message?: string; warning?: string | null };
+      if (!res.ok) throw new Error(data.error ?? "Refund failed");
+
+      toast({
+        title: "Return completed and refund issued",
+        description: data.warning ? `${data.message ?? "Refund issued."} ${data.warning}` : data.message,
+      });
+      await load();
+      setSelected(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Refund failed";
+      setError(message);
+      toast({ title: "Refund failed", description: message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -149,7 +180,6 @@ const SellerReturns = () => {
         </p>
       </div>
 
-      {/* Compact stats grid */}
       <div className="grid grid-cols-4 gap-1.5">
         {[
           { label: "Pending", count: byStatus("requested").length, color: "text-primary" },
@@ -164,13 +194,11 @@ const SellerReturns = () => {
         ))}
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input placeholder="Search returns..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue="all">
         <TabsList className="h-8">
           <TabsTrigger value="all" className="text-xs h-7">All <Badge variant="secondary" className="ml-1 text-[10px] px-1 h-4">{filtered.length}</Badge></TabsTrigger>
@@ -184,7 +212,6 @@ const SellerReturns = () => {
         <TabsContent value="completed"><Card><CardContent className="p-0">{renderList(byStatus("completed"))}</CardContent></Card></TabsContent>
       </Tabs>
 
-      {/* Return Detail Dialog */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         {selected && (
           <DialogContent className="max-w-lg">
@@ -216,6 +243,11 @@ const SellerReturns = () => {
                   <p className="text-sm text-foreground">{selected.description}</p>
                 </div>
               )}
+              {selected.status === "approved" && (
+                <div className="rounded-lg border border-primary/25 bg-primary/5 p-3 text-xs text-muted-foreground">
+                  Complete this return only after the returned item has been received/accepted. This action issues the buyer's refund through Stripe and cannot be treated as a local status-only change.
+                </div>
+              )}
             </div>
             {selected.status === "requested" && (
               <DialogFooter className="flex gap-2">
@@ -229,6 +261,14 @@ const SellerReturns = () => {
                 </Button>
                 <Button disabled={submitting} onClick={handleApprove}>
                   <CheckCircle2 className="h-4 w-4 mr-1" /> {submitting ? "Processing…" : "Approve Return"}
+                </Button>
+              </DialogFooter>
+            )}
+            {selected.status === "approved" && (
+              <DialogFooter>
+                <Button disabled={submitting} onClick={handleCompleteRefund}>
+                  {submitting ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <RotateCcw className="h-4 w-4 mr-1.5" />}
+                  {submitting ? "Issuing refund…" : "Complete Return & Refund"}
                 </Button>
               </DialogFooter>
             )}
