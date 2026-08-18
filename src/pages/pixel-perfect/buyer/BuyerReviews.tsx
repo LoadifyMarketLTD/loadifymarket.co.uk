@@ -98,7 +98,7 @@ const BuyerReviews = () => {
     fetchReviews();
   }, [user]);
 
-  // Load reviewable (delivered/completed, not-yet-reviewed) orders.
+  // Load reviewable (delivered/completed, not-yet-reviewed) orders
   useEffect(() => {
     if (!user) return;
     const fetchReviewableOrders = async () => {
@@ -155,12 +155,14 @@ const BuyerReviews = () => {
       toast({ title: "Review submitted", description: "Thank you for your feedback!" });
       setWriteOpen(false);
       setNewReview({ orderId: "", productId: "", productTitle: "", rating: 5, title: "", comment: "" });
+      // Refresh reviews list
       const { data } = await supabase
         .from("reviews")
         .select("id, productId, rating, title, comment, sellerResponse, status, createdAt, products(title)")
         .eq("userId", user.id)
         .order("createdAt", { ascending: false });
       setReviews((data as unknown as ReviewRow[]) || []);
+      // Remove the reviewed order from reviewable list
       setReviewableOrders((prev) => prev.filter((o) => o.orderId !== newReview.orderId));
     } catch (err) {
       toast({ title: "Failed to submit review", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
@@ -247,6 +249,7 @@ const BuyerReviews = () => {
         )}
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-5">
@@ -291,6 +294,7 @@ const BuyerReviews = () => {
         </Card>
       </div>
 
+      {/* Distribution */}
       {!loading && reviews.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
@@ -313,11 +317,13 @@ const BuyerReviews = () => {
         </Card>
       )}
 
+      {/* Search */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search reviews..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
       </div>
 
+      {/* Tabs */}
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
@@ -329,6 +335,7 @@ const BuyerReviews = () => {
         <TabsContent value="pending"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("pending"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
+      {/* Review Detail Dialog */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         {selected && (
           <DialogContent className="max-w-lg">
@@ -367,6 +374,7 @@ const BuyerReviews = () => {
         )}
       </Dialog>
 
+      {/* Write a Review Dialog */}
       <Dialog open={writeOpen} onOpenChange={(open) => { if (!open) { setWriteOpen(false); setNewReview({ orderId: "", productId: "", productTitle: "", rating: 5, title: "", comment: "" }); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
