@@ -53,7 +53,7 @@ WITH CHECK (
     WHERE o.id = disputes."orderId"
       AND o."buyerId" = auth.uid()
       AND o."sellerId" = disputes."sellerId"
-      AND o.status IN ('paid', 'packed', 'shipped', 'delivered')
+      AND o.status IN ('paid', 'packed', 'shipped', 'delivered', 'completed')
   )
 );
 
