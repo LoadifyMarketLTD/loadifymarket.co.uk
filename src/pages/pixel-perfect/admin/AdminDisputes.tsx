@@ -167,9 +167,7 @@ const AdminDisputes = () => {
     }
     setActionLoading(resolveTarget.id);
 
-    const isRefundType =
-      resolveForm.resolutionType === "full_refund" ||
-      resolveForm.resolutionType === "partial_refund";
+    const isRefundType = resolveForm.resolutionType === "full_refund";
 
     try {
       // ── Step 1: If resolution involves a refund, trigger Stripe refund first ──
@@ -492,19 +490,18 @@ const AdminDisputes = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full_refund">Full Refund (triggers Stripe refund)</SelectItem>
-                    <SelectItem value="partial_refund">Partial Refund (triggers Stripe refund)</SelectItem>
                     <SelectItem value="replacement">Replacement</SelectItem>
                     <SelectItem value="rejected">Rejected (No Action)</SelectItem>
                     <SelectItem value="withdrawn">Withdrawn by Buyer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {(resolveForm.resolutionType === "full_refund" || resolveForm.resolutionType === "partial_refund") && (
+              {resolveForm.resolutionType === "full_refund" && (
                 <div className="rounded-lg bg-primary-soft border border-primary/40 px-3 py-2.5 flex gap-2 text-sm text-primary">
                   <span className="shrink-0 font-bold">⚠</span>
                   <span>
                     Clicking <strong>Confirm Resolution</strong> will immediately issue a Stripe refund for this order.
-                    Only proceed if you are certain a refund should be issued. This cannot be undone.
+                    Only proceed if you are certain a full refund should be issued. This cannot be undone.
                   </span>
                 </div>
               )}
