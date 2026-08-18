@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { PluginListenerHandle } from '@capacitor/core';
 import {
   PushNotifications,
   type ActionPerformed,
-  type PluginListenerHandle,
   type RegistrationError,
   type Token,
 } from '@capacitor/push-notifications';
