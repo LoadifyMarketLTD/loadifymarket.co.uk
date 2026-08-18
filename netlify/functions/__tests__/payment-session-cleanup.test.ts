@@ -53,7 +53,7 @@ describe('payment-session-cleanup scheduled order cleanup', () => {
 
   afterEach(() => {
     process.env = { ...originalEnv };
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it('releases stale awaiting-payment orders even when no payment sessions exist', async () => {
@@ -80,5 +80,6 @@ describe('payment-session-cleanup scheduled order cleanup', () => {
     );
     expect(mocks.from).toHaveBeenCalledWith('payment_sessions');
     expect(result).toEqual({ statusCode: 200 });
+    consoleError.mockRestore();
   });
 });
