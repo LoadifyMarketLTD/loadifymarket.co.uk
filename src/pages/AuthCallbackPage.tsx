@@ -1,16 +1,10 @@
 /**
- * AuthCallbackPage — handles the OAuth redirect from Supabase after Google login.
+ * AuthCallbackPage — handles the OAuth redirect from Supabase after social login.
  *
- * The browser is sent here by Supabase after the user completes Google sign-in.
- * Supabase sets the session tokens in the URL hash/fragment.  We call
- * getSession() so the client picks them up from the URL, then redirect to
- * /dashboard where the role-aware redirect takes over.
- *
- * For the Capacitor APK the deep-link scheme is caught by the Android intent
- * filter (see capacitor.config.ts → allowNavigation).  The @capacitor/app
- * "appUrlOpen" event fires, which triggers supabase.auth.signInWithOAuth
- * session recovery via the standard onAuthStateChange listener in App.tsx.
- * This component therefore also works correctly in the APK.
+ * Web redirects can be auto-detected by supabase-js during client startup, but
+ * Capacitor App Links resume an already-running WebView. In that case the auth
+ * callback URL is delivered to the app after the Supabase client has already
+ * initialized, so we must explicitly recover the session from the callback.
  */
 
 import { useEffect } from 'react';
@@ -22,19 +16,51 @@ export default function AuthCallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Allow Supabase to detect and apply the session from the URL hash.
-    // getSession() triggers the detectSessionInUrl logic configured in supabase.ts.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // Authenticated — the onAuthStateChange listener in App.tsx will fetch
-        // the full profile row and populate the Zustand store. Navigate to
-        // /dashboard so the role-aware redirect sends the user to the right hub.
-        navigate('/dashboard', { replace: true });
-      } else {
-        // No session detected — send to login so the user can try again.
-        navigate('/login?error=oauth_failed', { replace: true });
+    let cancelled = false;
+
+    const completeOAuth = async () => {
+      try {
+        const currentUrl = new URL(window.location.href);
+        const authCode = currentUrl.searchParams.get('code');
+        const hashParams = new URLSearchParams(currentUrl.hash.replace(/^#/, ''));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        if (authCode) {
+          const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+          if (error) throw error;
+        } else if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
+        }
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (cancelled) return;
+
+        if (session) {
+          navigate('/dashboard', { replace: true });
+        } else {
+          navigate('/login?error=oauth_failed', { replace: true });
+        }
+      } catch (error) {
+        console.error('[Auth] OAuth callback session recovery failed:', error);
+        if (!cancelled) {
+          navigate('/login?error=oauth_failed', { replace: true });
+        }
       }
-    });
+    };
+
+    void completeOAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   return (
