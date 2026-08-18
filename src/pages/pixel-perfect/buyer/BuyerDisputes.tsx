@@ -194,8 +194,8 @@ const BuyerDisputes = () => {
         <div>
           <p className="text-sm font-medium text-primary">Dispute process</p>
           <p className="text-xs text-primary mt-0.5">
-            Disputes must be raised within 30 days of delivery. Our team will review your case and
-            contact both parties within 2–3 business days. Funds remain in escrow until resolution.
+            Eligible paid or fulfilled orders can be submitted for review. Our team will review your case and
+            contact both parties within 2–3 business days. Funds remain subject to the applicable payment and dispute process until resolution.
           </p>
         </div>
       </div>
