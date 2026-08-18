@@ -20,10 +20,12 @@ vi.mock('@netlify/functions', () => ({
 }));
 
 vi.mock('stripe', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    checkout: { sessions: { retrieve: vi.fn(), expire: vi.fn() } },
-    paymentIntents: { retrieve: vi.fn(), cancel: vi.fn() },
-  })),
+  default: vi.fn().mockImplementation(function StripeMock() {
+    return {
+      checkout: { sessions: { retrieve: vi.fn(), expire: vi.fn() } },
+      paymentIntents: { retrieve: vi.fn(), cancel: vi.fn() },
+    };
+  }),
 }));
 
 vi.mock('@supabase/supabase-js', () => ({
