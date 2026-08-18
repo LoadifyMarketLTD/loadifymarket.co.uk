@@ -19,6 +19,11 @@ WITH CHECK (
       AND o."sellerId" = returns."sellerId"
       AND o.status IN ('delivered', 'completed')
   )
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.returns existing_return
+    WHERE existing_return."orderId" = returns."orderId"
+  )
 );
 
 DROP POLICY IF EXISTS "returns_update" ON public.returns;
@@ -54,6 +59,11 @@ WITH CHECK (
       AND o."buyerId" = auth.uid()
       AND o."sellerId" = disputes."sellerId"
       AND o.status IN ('paid', 'packed', 'shipped', 'delivered', 'completed')
+  )
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.disputes existing_dispute
+    WHERE existing_dispute."orderId" = disputes."orderId"
   )
 );
 
