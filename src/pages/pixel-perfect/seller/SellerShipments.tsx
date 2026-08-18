@@ -112,6 +112,7 @@ const SellerShipments = () => {
       .from("orders")
       .select("id, orderNumber, status")
       .eq("sellerId", user.id)
+      .in("status", ["paid", "packed", "shipped"])
       .order("createdAt", { ascending: false });
     setSellerOrders((data ?? []) as { id: string; orderNumber: string; status: string }[]);
     setCreateForm({ orderId: "", courierName: "", trackingNumber: "", dispatchedAt: "" });
@@ -347,9 +348,9 @@ const SellerShipments = () => {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Log Shipment</DialogTitle><DialogDescription>Record a new shipment for one of your orders.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Log Shipment</DialogTitle><DialogDescription>Record a new shipment for one of your paid/in-progress orders.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
-            <div><Label className="text-xs">Order *</Label><Select value={createForm.orderId} onValueChange={(v) => setCreateForm((f) => ({ ...f, orderId: v }))}><SelectTrigger className="mt-1"><SelectValue placeholder="Select an order…" /></SelectTrigger><SelectContent>{sellerOrders.length === 0 ? <SelectItem value="_none" disabled>No orders found</SelectItem> : sellerOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.orderNumber || o.id.slice(0, 8).toUpperCase()} — {o.status}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label className="text-xs">Order *</Label><Select value={createForm.orderId} onValueChange={(v) => setCreateForm((f) => ({ ...f, orderId: v }))}><SelectTrigger className="mt-1"><SelectValue placeholder="Select an order…" /></SelectTrigger><SelectContent>{sellerOrders.length === 0 ? <SelectItem value="_none" disabled>No eligible orders found</SelectItem> : sellerOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.orderNumber || o.id.slice(0, 8).toUpperCase()} — {o.status}</SelectItem>)}</SelectContent></Select></div>
             <div><Label className="text-xs">Carrier / Courier</Label><Input className="mt-1" placeholder="e.g. Royal Mail, DPD, UPS" value={createForm.courierName} onChange={(e) => setCreateForm((f) => ({ ...f, courierName: e.target.value }))} /></div>
             <div><Label className="text-xs">Tracking Number</Label><Input className="mt-1" placeholder="e.g. JD000123456789" value={createForm.trackingNumber} onChange={(e) => setCreateForm((f) => ({ ...f, trackingNumber: e.target.value }))} /></div>
             <div><Label className="text-xs">Dispatch Date (optional)</Label><Input type="date" className="mt-1" value={createForm.dispatchedAt} onChange={(e) => setCreateForm((f) => ({ ...f, dispatchedAt: e.target.value }))} /></div>
