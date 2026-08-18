@@ -9,7 +9,6 @@ interface ShowcaseProduct {
   price: number;
   images: string[] | null;
   category: { name: string; slug: string } | null;
-  slug: string | null;
 }
 
 /**
@@ -25,7 +24,7 @@ const FeaturedProducts = () => {
   useEffect(() => {
     supabase
       .from("products")
-      .select("id, title, price, images, slug, category:categories!categoryId(name, slug)")
+      .select("id, title, price, images, category:categories!categoryId(name, slug)")
       .eq("isActive", true)
       .eq("isApproved", true)
       .eq("listingStatus", "active")
@@ -92,9 +91,7 @@ const FeaturedProducts = () => {
                 Array.isArray(item.images) && item.images.length > 0
                   ? item.images[0]
                   : null;
-              const href = item.slug
-                ? `/product/${item.slug}`
-                : `/product/${item.id}`;
+              const href = `/product/${item.id}`;
               return (
                 <Link
                   key={item.id}
