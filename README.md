@@ -90,11 +90,9 @@ cp .env.example .env
 # Edit .env — set VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_STRIPE_PUBLISHABLE_KEY
 
 # 3. Initialise database
-# In Supabase SQL Editor, run migrations in order:
-#   supabase/00_consolidated_schema.sql   ← full baseline schema
-#   supabase/10_rls_policies.sql          ← Row-Level Security policies
-#   supabase/210_seller_auto_activation.sql ← seller lifecycle
-#   (then any higher-numbered migrations in ascending order)
+# Apply the SQL files under supabase/migrations/ in ascending version order.
+# Do not run supabase/00_consolidated_schema.sql; it is intentionally deprecated
+# and non-executable so retired schema cannot be reintroduced accidentally.
 
 # 4. Start dev server (hot reload)
 npm run dev
@@ -160,10 +158,11 @@ netlify dev          # Starts frontend + Netlify Functions at http://localhost:8
 │   ├── track-shipment.ts      # Shipment tracking lookup
 │   ├── generate-invoice.ts    # Invoice PDF generation
 │   └── send-email.ts          # SendGrid transactional email
-├── supabase/                  # SQL migrations (numbered, run in ascending order)
-│   ├── 00_consolidated_schema.sql
-│   ├── 10_rls_policies.sql
-│   └── ...
+├── supabase/
+│   ├── migrations/            # Authoritative database source, ordered by version
+│   ├── 00_consolidated_schema.sql # Deprecated non-executable tombstone
+│   ├── 06_fulfilment_rfq.sql  # Generic reference schema; changes still go in migrations/
+│   └── DEBUGGED_PARTS_README.md
 ├── docs/
 │   ├── ARCHITECTURE.md        # System architecture
 │   └── openapi.yaml           # API reference
