@@ -23,6 +23,7 @@ WITH CHECK (
     SELECT 1
     FROM public.returns existing_return
     WHERE existing_return."orderId" = returns."orderId"
+      AND existing_return.status IN ('requested', 'approved', 'completed')
   )
 );
 
@@ -64,6 +65,7 @@ WITH CHECK (
     SELECT 1
     FROM public.disputes existing_dispute
     WHERE existing_dispute."orderId" = disputes."orderId"
+      AND existing_dispute.status IN ('open', 'in_review')
   )
 );
 
