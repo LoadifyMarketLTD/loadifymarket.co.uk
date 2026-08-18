@@ -19,6 +19,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Native OAuth return from the external browser. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="loadifymarket"
+                    android:host="app"
+                    android:pathPrefix="/auth/callback" />
+            </intent-filter>
+
             <!-- Verified App Links for production web URLs. Keep the host broad;
                  React/Capacitor routes the path after appUrlOpen fires. -->
             <intent-filter android:autoVerify="true">
