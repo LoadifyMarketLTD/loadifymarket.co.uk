@@ -219,7 +219,7 @@ export const handler: Handler = async (event) => {
     await sendPushToUser(supabase, receiverId, {
       title: senderName,
       body:  preview,
-      data:  { type: 'new_message', conversationId },
+      data:  { type: 'new_message', conversationId, path: `/inbox/${conversationId}` },
     });
 
     // In-app notification in website account.
