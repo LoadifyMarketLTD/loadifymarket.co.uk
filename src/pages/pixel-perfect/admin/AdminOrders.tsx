@@ -336,7 +336,7 @@ const AdminOrders = () => {
                   <Select
                     value={selected.status}
                     onValueChange={(val) => updateOrderStatus(selected.id, val)}
-                    disabled={actionLoading === selected.id}
+                    disabled={actionLoading === selected.id || ["cancelled", "refunded"].includes(selected.status)}
                   >
                     <SelectTrigger className="flex-1">
                       <SelectValue />
@@ -346,13 +346,14 @@ const AdminOrders = () => {
                       <SelectItem value="packed">Packed</SelectItem>
                       <SelectItem value="shipped">Shipped</SelectItem>
                       <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                      <SelectItem value="refunded">Refunded</SelectItem>
                       <SelectItem value="disputed">Disputed</SelectItem>
                     </SelectContent>
                   </Select>
                   {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />}
                 </div>
+                <p className="text-[11px]" style={{ color: "rgba(148,163,184,0.72)" }}>
+                  Cancellation and refunds use the dedicated actions below so payment and listing state stay reconciled.
+                </p>
               </div>
               {!selected.hasValidPaymentEvidence && (
                 <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.3)" }}>
