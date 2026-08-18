@@ -92,7 +92,7 @@ const Login = () => {
         const { data, error: oauthErr } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: "loadifymarket://app/auth/callback",
             skipBrowserRedirect: true,
           },
         });
