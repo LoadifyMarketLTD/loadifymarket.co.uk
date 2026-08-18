@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler, HandlerEvent } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { enforcePaymentBackedTransition } from './_shared/orderTransitionGuards';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -120,10 +121,12 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Verify the order exists and user is the seller (or admin)
+    // Verify the order exists and user is the seller (or admin).
+    // Shipment creation is an order-lifecycle operation: terminal/cancelled
+    // orders must never be turned back into fulfilment work.
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('*, products(sellerId)')
+      .select('id, orderNumber, status, productId, sellerId, buyerId, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus')
       .eq('id', order_id)
       .single();
 
@@ -139,6 +142,44 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 403,
         body: JSON.stringify({ error: 'Not authorized for this order' }),
+      };
+    }
+
+    if (['cancelled', 'refunded', 'disputed', 'completed'].includes(order.status)) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({ error: `A shipment cannot be created or changed for an order in '${order.status}' status.` }),
+      };
+    }
+
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('id, listingContext')
+      .eq('id', order.productId)
+      .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
+
+    if (productError || !product) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({ error: 'The order product could not be verified for fulfilment.' }),
+      };
+    }
+
+    // A physical order must have valid completed Stripe evidence before a
+    // shipment can be created at all. This closes the create-shipment bypass
+    // around the guarded status-update endpoint.
+    const paymentGuard = await enforcePaymentBackedTransition({
+      supabase,
+      order,
+      product,
+      nextStatus: 'shipped',
+      actorRole: user.role === 'admin' ? 'admin' : 'seller',
+    });
+
+    if (!paymentGuard.ok) {
+      return {
+        statusCode: paymentGuard.statusCode,
+        body: JSON.stringify({ error: paymentGuard.error }),
       };
     }
 
