@@ -21,6 +21,11 @@ import { authorizedFetch } from "@/lib/authorizedFetch";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
+type OrderProductRelation =
+  | { listingContext?: string | null }
+  | Array<{ listingContext?: string | null }>
+  | null;
+
 interface ShipmentRow extends Shipment {
   orders?: {
     orderNumber?: string;
@@ -28,11 +33,19 @@ interface ShipmentRow extends Shipment {
   } | null;
 }
 
+interface ShipmentEligibleOrder {
+  id: string;
+  orderNumber: string;
+  status: string;
+  products: OrderProductRelation;
+}
+
 function mapStatus(status: string): string {
   const s = status.toLowerCase().replace(/ /g, "_");
   if (s === "dispatched" || s === "in_transit") return "in_transit";
   if (s === "out_for_delivery") return "out_for_delivery";
   if (s === "delivered") return "delivered";
+  if (s === "delivery_failed") return "delivery_failed";
   if (s === "pending" || s === "processing") return "label_created";
   if (s === "picked_up") return "picked_up";
   return "label_created";
@@ -44,7 +57,30 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   in_transit: { label: "In Transit", className: "bg-purple-500/10 text-purple-700" },
   out_for_delivery: { label: "Out for Delivery", className: "bg-primary/10 text-primary" },
   delivered: { label: "Delivered", className: "bg-success/10 text-success" },
+  delivery_failed: { label: "Delivery Failed", className: "bg-destructive/10 text-destructive" },
 };
+
+function relationListingContext(relation: OrderProductRelation): string | null {
+  const row = Array.isArray(relation) ? relation[0] : relation;
+  return row?.listingContext ?? null;
+}
+
+function nextShipmentStatuses(currentStatus: string): string[] {
+  switch (currentStatus) {
+    case "Pending":
+      return ["Processing", "Dispatched", "Delivery Failed"];
+    case "Processing":
+      return ["Dispatched", "Delivery Failed"];
+    case "Dispatched":
+      return ["In Transit", "Out for Delivery", "Delivered", "Delivery Failed"];
+    case "In Transit":
+      return ["Out for Delivery", "Delivered", "Delivery Failed"];
+    case "Out for Delivery":
+      return ["Delivered", "Delivery Failed"];
+    default:
+      return [];
+  }
+}
 
 const SellerShipments = () => {
   const { user } = useAuthStore();
@@ -55,7 +91,7 @@ const SellerShipments = () => {
   const [selected, setSelected] = useState<ShipmentRow | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [sellerOrders, setSellerOrders] = useState<{ id: string; orderNumber: string; status: string }[]>([]);
-  const [createForm, setCreateForm] = useState({ orderId: "", courierName: "", trackingNumber: "", dispatchedAt: "" });
+  const [createForm, setCreateForm] = useState({ orderId: "", courierName: "", trackingNumber: "" });
   const [creating, setCreating] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
@@ -95,13 +131,24 @@ const SellerShipments = () => {
 
   const handleOpenCreate = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("orders")
-      .select("id, orderNumber, status")
+      .select("id, orderNumber, status, products(listingContext)")
       .eq("sellerId", user.id)
+      .in("status", ["paid", "packed", "shipped"])
       .order("createdAt", { ascending: false });
-    setSellerOrders((data ?? []) as { id: string; orderNumber: string; status: string }[]);
-    setCreateForm({ orderId: "", courierName: "", trackingNumber: "", dispatchedAt: "" });
+
+    if (error) {
+      toast({ title: "Unable to load orders", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const physicalOrders = ((data ?? []) as unknown as ShipmentEligibleOrder[])
+      .filter((order) => relationListingContext(order.products) !== "service")
+      .map(({ id, orderNumber, status }) => ({ id, orderNumber, status }));
+
+    setSellerOrders(physicalOrders);
+    setCreateForm({ orderId: "", courierName: "", trackingNumber: "" });
     setCreateOpen(true);
   };
 
@@ -112,7 +159,6 @@ const SellerShipments = () => {
       const payload: Record<string, unknown> = { order_id: createForm.orderId };
       if (createForm.courierName.trim()) payload.courier_name = createForm.courierName.trim();
       if (createForm.trackingNumber.trim()) payload.tracking_number = createForm.trackingNumber.trim();
-      if (createForm.dispatchedAt) payload.dispatched_at = new Date(createForm.dispatchedAt).toISOString();
 
       const res = await authorizedFetch("/.netlify/functions/create-shipment", {
         method: "POST",
@@ -120,7 +166,7 @@ const SellerShipments = () => {
       });
       const json = await res.json() as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to create shipment");
-      toast({ title: "Shipment created", description: "The shipment has been logged successfully." });
+      toast({ title: "Shipment created", description: "Add or update its status when the parcel is handed to the courier." });
       setCreateOpen(false);
       await loadShipments();
     } catch (err) {
@@ -196,13 +242,6 @@ const SellerShipments = () => {
       const json = await res.json() as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to update status");
 
-      await supabase.from("notifications").insert({
-        userId: shipment.buyer_id,
-        type: "shipment",
-        title: "Shipment update",
-        message: `Your shipment ${shipment.id.slice(0, 8).toUpperCase()} status has been updated to: ${newStatus}.`,
-      });
-
       toast({ title: "Status updated", description: `Shipment marked as ${newStatus}.` });
       setPendingStatus("");
       setSelected(null);
@@ -235,7 +274,7 @@ const SellerShipments = () => {
         {data.map((s) => {
           const sc = statusConfig[mapStatus(s.status)];
           return (
-            <button key={s.id} onClick={() => setSelected(s)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left">
+            <button key={s.id} onClick={() => { setSelected(s); setPendingStatus(""); }} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left">
               <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0"><Truck className="h-4 w-4 text-muted-foreground" /></div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -286,6 +325,7 @@ const SellerShipments = () => {
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setPendingStatus(""); } }}>
         {selected && (() => {
           const sc = statusConfig[mapStatus(selected.status)];
+          const nextStatuses = nextShipmentStatuses(selected.status);
           return (
             <DialogContent className="max-w-lg">
               <DialogHeader><DialogTitle className="flex items-center gap-2"><Truck className="h-5 w-5 text-primary" /> {selected.id.slice(0, 8).toUpperCase()}</DialogTitle><DialogDescription>{selected.courier_name ?? "Carrier"} · {selected.tracking_number ?? "No tracking"}</DialogDescription></DialogHeader>
@@ -320,15 +360,19 @@ const SellerShipments = () => {
 
                 <div className="space-y-2">
                   <Label className="text-xs">Update Status</Label>
-                  <div className="flex gap-2">
-                    <Select value={pendingStatus} onValueChange={setPendingStatus}>
-                      <SelectTrigger className="flex-1"><SelectValue placeholder="Select new status…" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem><SelectItem value="Processing">Processing</SelectItem><SelectItem value="Dispatched">Dispatched</SelectItem><SelectItem value="In Transit">In Transit</SelectItem><SelectItem value="Out for Delivery">Out for Delivery</SelectItem><SelectItem value="Delivered">Delivered</SelectItem><SelectItem value="Delivery Failed">Delivery Failed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button size="sm" disabled={!pendingStatus || pendingStatus === selected.status || updatingStatus} onClick={() => void handleUpdateStatus(selected, pendingStatus)}>{updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</Button>
-                  </div>
+                  {nextStatuses.length > 0 ? (
+                    <div className="flex gap-2">
+                      <Select value={pendingStatus} onValueChange={setPendingStatus}>
+                        <SelectTrigger className="flex-1"><SelectValue placeholder="Select new status…" /></SelectTrigger>
+                        <SelectContent>
+                          {nextStatuses.map((nextStatus) => <SelectItem key={nextStatus} value={nextStatus}>{nextStatus}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" disabled={!pendingStatus || updatingStatus} onClick={() => void handleUpdateStatus(selected, pendingStatus)}>{updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No further seller status updates are available for this shipment.</p>
+                  )}
                 </div>
               </div>
             </DialogContent>
@@ -338,12 +382,11 @@ const SellerShipments = () => {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Log Shipment</DialogTitle><DialogDescription>Record a new shipment for one of your orders.</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="h-5 w-5 text-primary" /> Log Shipment</DialogTitle><DialogDescription>Record courier and tracking details for a paid physical order. Mark it Dispatched afterwards when it is handed to the courier.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
-            <div><Label className="text-xs">Order *</Label><Select value={createForm.orderId} onValueChange={(v) => setCreateForm((f) => ({ ...f, orderId: v }))}><SelectTrigger className="mt-1"><SelectValue placeholder="Select an order…" /></SelectTrigger><SelectContent>{sellerOrders.length === 0 ? <SelectItem value="_none" disabled>No orders found</SelectItem> : sellerOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.orderNumber || o.id.slice(0, 8).toUpperCase()} — {o.status}</SelectItem>)}</SelectContent></Select></div>
+            <div><Label className="text-xs">Order *</Label><Select value={createForm.orderId} onValueChange={(v) => setCreateForm((f) => ({ ...f, orderId: v }))}><SelectTrigger className="mt-1"><SelectValue placeholder="Select an order…" /></SelectTrigger><SelectContent>{sellerOrders.length === 0 ? <SelectItem value="_none" disabled>No paid physical orders available</SelectItem> : sellerOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.orderNumber || o.id.slice(0, 8).toUpperCase()} — {o.status}</SelectItem>)}</SelectContent></Select></div>
             <div><Label className="text-xs">Carrier / Courier</Label><Input className="mt-1" placeholder="e.g. Royal Mail, DPD, UPS" value={createForm.courierName} onChange={(e) => setCreateForm((f) => ({ ...f, courierName: e.target.value }))} /></div>
             <div><Label className="text-xs">Tracking Number</Label><Input className="mt-1" placeholder="e.g. JD000123456789" value={createForm.trackingNumber} onChange={(e) => setCreateForm((f) => ({ ...f, trackingNumber: e.target.value }))} /></div>
-            <div><Label className="text-xs">Dispatch Date (optional)</Label><Input type="date" className="mt-1" value={createForm.dispatchedAt} onChange={(e) => setCreateForm((f) => ({ ...f, dispatchedAt: e.target.value }))} /></div>
           </div>
           <DialogFooter className="flex gap-2"><Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Cancel</Button><Button onClick={() => void handleCreateShipment()} disabled={!createForm.orderId || creating}>{creating ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Creating…</> : "Create Shipment"}</Button></DialogFooter>
         </DialogContent>
