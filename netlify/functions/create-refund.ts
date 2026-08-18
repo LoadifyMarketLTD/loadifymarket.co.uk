@@ -51,8 +51,8 @@ export const handler: Handler = async (event) => {
     .select('role')
     .eq('id', user.id)
     .maybeSingle<{ role: string }>();
-  if (callerRow?.role !== 'admin') {
-    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Admin access required' }) };
+  if (callerRow?.role !== 'admin' && callerRow?.role !== 'seller') {
+    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Admin or seller access required' }) };
   }
 
   const refundRl = await checkRateLimit({
@@ -71,14 +71,14 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  let body: { orderId?: string; reason?: string };
+  let body: { orderId?: string; reason?: string; returnId?: string };
   try {
-    body = JSON.parse(event.body || '{}') as { orderId?: string; reason?: string };
+    body = JSON.parse(event.body || '{}') as { orderId?: string; reason?: string; returnId?: string };
   } catch {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { orderId, reason = 'requested_by_customer' } = body;
+  const { orderId, returnId, reason = 'requested_by_customer' } = body;
   if (!orderId || typeof orderId !== 'string') {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'orderId is required' }) };
   }
@@ -106,7 +106,58 @@ export const handler: Handler = async (event) => {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Order not found' }) };
   }
 
+  if (callerRow.role === 'seller' && order.sellerId !== user.id) {
+    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Seller is not authorized for this order' }) };
+  }
+
+  let approvedReturn: { id: string; status: string } | null = null;
+  if (callerRow.role === 'seller') {
+    if (!returnId || typeof returnId !== 'string') {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Seller refunds must be linked to an approved return.' }),
+      };
+    }
+
+    const { data: returnRow, error: returnError } = await supabase
+      .from('returns')
+      .select('id, status')
+      .eq('id', returnId)
+      .eq('orderId', order.id)
+      .eq('sellerId', user.id)
+      .eq('buyerId', order.buyerId)
+      .maybeSingle<{ id: string; status: string }>();
+
+    if (returnError) {
+      return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Failed to verify approved return' }) };
+    }
+    if (!returnRow || returnRow.status !== 'approved') {
+      return {
+        statusCode: 409,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Return must be approved before the seller can issue a refund.' }),
+      };
+    }
+    approvedReturn = returnRow;
+  } else if (returnId && typeof returnId === 'string') {
+    const { data: returnRow } = await supabase
+      .from('returns')
+      .select('id, status')
+      .eq('id', returnId)
+      .eq('orderId', order.id)
+      .maybeSingle<{ id: string; status: string }>();
+    approvedReturn = returnRow ?? null;
+  }
+
   if (order.status === 'refunded' || order.escrowStatus === 'refunded') {
+    if (approvedReturn?.id && approvedReturn.status !== 'completed') {
+      await supabase
+        .from('returns')
+        .update({ status: 'completed' })
+        .eq('id', approvedReturn.id)
+        .eq('orderId', order.id);
+    }
     return {
       statusCode: 200,
       headers: corsHeaders,
@@ -161,7 +212,9 @@ export const handler: Handler = async (event) => {
         metadata: {
           orderId,
           orderNumber: order.orderNumber,
-          issuedByAdminId: user.id,
+          issuedById: user.id,
+          issuedByRole: callerRow.role,
+          ...(approvedReturn?.id ? { returnId: approvedReturn.id } : {}),
         },
       },
       { idempotencyKey: `order-refund:${orderId}` },
@@ -265,6 +318,22 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  let returnReconciliationWarning: string | null = null;
+  if (approvedReturn?.id) {
+    const { error: returnUpdateError } = await supabase
+      .from('returns')
+      .update({
+        status: 'completed',
+        refundAmount: refund.amount / 100,
+      })
+      .eq('id', approvedReturn.id)
+      .eq('orderId', order.id);
+    if (returnUpdateError) {
+      returnReconciliationWarning = 'Refund succeeded, but the return record could not be marked completed automatically.';
+      console.error('create-refund:', returnReconciliationWarning, returnUpdateError.message);
+    }
+  }
+
   await supabase.from('notifications').insert({
     userId: order.buyerId,
     type: 'order_refunded',
@@ -274,15 +343,16 @@ export const handler: Handler = async (event) => {
     link: '/buyer/orders',
   }).catch((error: unknown) => console.warn('create-refund: buyer notification failed:', error));
 
-  if (transferRecoveryWarning) {
+  if (transferRecoveryWarning || returnReconciliationWarning) {
+    const warning = [transferRecoveryWarning, returnReconciliationWarning].filter(Boolean).join(' ');
     await supabase.from('notifications').insert({
       userId: user.id,
       type: 'payment',
-      title: 'Refund requires payout review',
-      message: `${order.orderNumber}: ${transferRecoveryWarning}`,
+      title: 'Refund requires review',
+      message: `${order.orderNumber}: ${warning}`,
       isRead: false,
-      link: '/admin/payouts',
-    }).catch((error: unknown) => console.warn('create-refund: admin warning notification failed:', error));
+      link: callerRow.role === 'admin' ? '/admin/payouts' : '/seller/returns',
+    }).catch((error: unknown) => console.warn('create-refund: reconciliation warning notification failed:', error));
   }
 
   return {
@@ -294,7 +364,7 @@ export const handler: Handler = async (event) => {
       amount: refund.amount / 100,
       status: refund.status,
       transferReversalId,
-      warning: transferRecoveryWarning,
+      warning: [transferRecoveryWarning, returnReconciliationWarning].filter(Boolean).join(' ') || null,
       message: `Refund of £${(refund.amount / 100).toFixed(2)} issued successfully.`,
     }),
   };
