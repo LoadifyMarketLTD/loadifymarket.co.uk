@@ -17,7 +17,7 @@ WITH CHECK (
     WHERE o.id = returns."orderId"
       AND o."buyerId" = auth.uid()
       AND o."sellerId" = returns."sellerId"
-      AND o.status = 'completed'
+      AND o.status IN ('delivered', 'completed')
   )
 );
 
