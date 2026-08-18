@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vitest run netlify/functions/__tests__/create-product-self-publish.test.ts netlify/functions/__tests__/create-product-stock-publication.test.ts netlify/functions/__tests__/delete-product.test.ts netlify/functions/__tests__/product-image-paths.test.ts && tsc -b && vite build",
+    "build": "vitest run netlify/functions/__tests__/create-product-self-publish.test.ts netlify/functions/__tests__/create-product-stock-publication.test.ts && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
