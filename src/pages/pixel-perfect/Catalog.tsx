@@ -103,12 +103,14 @@ const Catalog = () => {
       const from = page * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      // Step 1: Fetch products with category joins only
+      // Step 1: Fetch only canonical public sellable listings.
       let query = supabase
         .from("products")
         .select(PRODUCT_QUERY)
         .eq("isActive", true)
         .eq("isApproved", true)
+        .eq("listingStatus", "active")
+        .or("listingContext.eq.service,stockQuantity.gt.0")
         .not("type", "eq", "logistics");
 
       // Server-side text search
