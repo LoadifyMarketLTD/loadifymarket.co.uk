@@ -1,30 +1,27 @@
 /**
  * confirm-delivery
  *
- * Called by the buyer to confirm that a job/order has been completed.
- * Releases escrow by marking the order as completed and notifying the seller.
+ * Called by the buyer after a physical shipment or service has been marked
+ * delivered. Buyer confirmation releases the held seller funds through the
+ * exact same idempotent Stripe Transfer path used by the scheduled escrow job.
  *
  * Security:
  *   – Requires Authorization: Bearer <buyer-jwt>
  *   – Order must belong to the authenticated buyer
- *   – Order must be in a releasable status: 'shipped' or 'delivered'
- *   – Uses service-role client for the DB write so RLS cannot be bypassed
- *     from the browser
+ *   – Order must already be in 'delivered' state
+ *   – Open disputes/refunds and payout capability are re-checked by the shared
+ *     release path before any funds or order state are changed
  *
  * Method: POST
  * Body:   { orderId: string }
  */
 
+import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
-
-const RELEASABLE_STATUSES = new Set(['shipped', 'delivered']);
+import { releaseHeldOrder } from './_shared/escrowRelease';
 
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
-// Note: If VITE_APP_URL is unset we intentionally fall back to the production
-// origin (consistent with every other Netlify function in this codebase). The
-// Access-Control-Allow-Origin header is a browser hint, not a security barrier —
-// server-side JWT authentication is the actual security mechanism.
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
@@ -43,26 +40,27 @@ export const handler: Handler = async (event) => {
 
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
 
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
+  if (!supabaseUrl || !supabaseServiceRoleKey || !stripeKey || !stripeKey.startsWith('sk_')) {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
-  // ── Authenticate caller ───────────────────────────────────────────────────
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
   const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
   if (!token) {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
 
-  // ── Parse body ────────────────────────────────────────────────────────────
   let orderId: string | undefined;
   try {
     const body = JSON.parse(event.body ?? '{}') as Record<string, unknown>;
@@ -75,10 +73,9 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'orderId is required' }) };
   }
 
-  // ── Fetch order and verify ownership ─────────────────────────────────────
   const { data: order, error: orderErr } = await supabase
     .from('orders')
-    .select('id, orderNumber, status, escrowStatus, buyerId, sellerId, total')
+    .select('id, orderNumber, status, escrowStatus, buyerId')
     .eq('id', orderId)
     .maybeSingle<{
       id: string;
@@ -86,8 +83,6 @@ export const handler: Handler = async (event) => {
       status: string;
       escrowStatus: string | null;
       buyerId: string;
-      sellerId: string | null;
-      total: number;
     }>();
 
   if (orderErr) {
@@ -99,13 +94,22 @@ export const handler: Handler = async (event) => {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Order not found' }) };
   }
 
-  // Must be the buyer's own order
   if (order.buyerId !== user.id) {
     return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Forbidden' }) };
   }
 
-  // Order must be in a state that allows escrow release
-  if (!RELEASABLE_STATUSES.has(order.status)) {
+  if (order.status === 'completed' && order.escrowStatus === 'released') {
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: JSON.stringify({ success: true, alreadyReleased: true }),
+    };
+  }
+
+  // A buyer cannot release funds merely because the seller marked an order as
+  // shipped. Physical delivery must reach Delivered via the shipment lifecycle;
+  // service completion reaches the same Delivered state via seller-order-status.
+  if (order.status !== 'delivered') {
     return {
       statusCode: 422,
       headers: corsHeaders,
@@ -113,40 +117,49 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // Idempotency: already released
-  if (order.escrowStatus === 'released' || order.status === 'completed') {
-    return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, alreadyReleased: true }) };
+  if (order.escrowStatus !== 'held') {
+    return {
+      statusCode: 409,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'This order is not currently eligible for funds release.' }),
+    };
   }
 
-  // ── Release escrow ────────────────────────────────────────────────────────
-  const { error: updateErr } = await supabase
-    .from('orders')
-    .update({
-      status: 'completed',
-      escrowStatus: 'released',
-      escrowReleasedAt: new Date().toISOString(),
-    })
-    .eq('id', orderId);
-
-  if (updateErr) {
-    console.error('confirm-delivery: update error', updateErr);
-    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Failed to release escrow' }) };
-  }
-
-  // ── Notify seller ─────────────────────────────────────────────────────────
-  if (order.sellerId) {
-    await supabase.from('notifications').insert({
-      userId: order.sellerId,
-      type: 'payment',
-      title: 'Job confirmed — funds released',
-      message: `The buyer has confirmed completion of order ${order.orderNumber ?? order.id.slice(0, 8).toUpperCase()}. Escrow has been released.`,
-      link: '/seller/orders',
+  try {
+    const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
+    const result = await releaseHeldOrder({
+      supabase,
+      stripe,
+      orderId: order.id,
+      reason: 'buyer_confirmed',
     });
-  }
 
-  return {
-    statusCode: 200,
-    headers: corsHeaders,
-    body: JSON.stringify({ success: true }),
-  };
+    if (!result.released) {
+      const message = result.reason === 'open_dispute'
+        ? 'Funds cannot be released while a dispute is open.'
+        : 'Funds cannot be released yet. Please contact support if this continues.';
+      return {
+        statusCode: 409,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: message, reason: result.reason }),
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        success: true,
+        alreadyReleased: result.alreadyReleased,
+        transferId: result.transferId,
+      }),
+    };
+  } catch (error) {
+    console.error('confirm-delivery: payout release failed', error);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Delivery was not confirmed because the funds release could not be completed. Please try again.' }),
+    };
+  }
 };
