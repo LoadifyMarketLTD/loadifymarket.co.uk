@@ -1,5 +1,6 @@
-import { Handler, HandlerEvent } from '@netlify/functions';
+import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { getClientIp } from './_shared/getClientIp';
 
@@ -7,43 +8,11 @@ import { getClientIp } from './_shared/getClientIp';
  * POST /.netlify/functions/resend-verification
  *
  * Admin-only endpoint that resends a verification / magic-link sign-in email
- * to any user.  Uses the Supabase Auth Admin API so no client-side rate
+ * to any user. Uses the Supabase Auth Admin API so no client-side rate
  * limits apply.
  *
- * Required env vars:
- *   VITE_SUPABASE_URL
- *   SUPABASE_SERVICE_ROLE_KEY
- *
- * Request body (JSON):
- *   { userId: string }
- *
- * The caller must be an authenticated admin — verified via the
- * Authorization: Bearer <token> header (Supabase session token).
+ * The caller must be an authenticated, live active admin.
  */
-
-// Verify the caller's JWT and return their public.users row, or null.
-async function getAuthUser(
-  event: HandlerEvent,
-  adminClient: ReturnType<typeof createClient>,
-) {
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
-  const token = authHeader.substring(7);
-  const { data, error } = await adminClient.auth.getUser(token);
-  const user = data?.user;
-  if (error || !user) return null;
-
-  const { data: userData } = await adminClient
-    .from('users')
-    .select('id, role')
-    .eq('id', user.id)
-    .single();
-
-  return userData ?? null;
-}
-
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -64,7 +33,14 @@ export const handler: Handler = async (event) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // ── Rate limiting: 10 verification resend requests per IP per hour ────────
+    const auth = await authenticateActiveAccount(event, adminClient, ['admin']);
+    if (!auth.ok) {
+      return {
+        statusCode: auth.status,
+        body: JSON.stringify({ error: auth.status === 401 ? 'Unauthorized' : 'Forbidden – active admin role required' }),
+      };
+    }
+
     const ip = getClientIp(event);
     if (ip) {
       const rl = await checkRateLimit({
@@ -81,17 +57,6 @@ export const handler: Handler = async (event) => {
         };
       }
     }
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // ── JWT authentication ───────────────────────────────────────────────────
-    const caller = await getAuthUser(event, adminClient);
-    if (!caller) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
-    }
-    if (caller.role !== 'admin') {
-      return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden – admin role required' }) };
-    }
-    // ─────────────────────────────────────────────────────────────────────────
 
     let body: { userId?: string };
     try {
@@ -106,7 +71,6 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
     }
 
-    // Look up the target user's email and name
     const { data: targetUser, error: targetErr } = await adminClient
       .from('users')
       .select('email, "firstName", "lastName"')
@@ -120,9 +84,6 @@ export const handler: Handler = async (event) => {
     const targetFullName =
       [targetUser.firstName, targetUser.lastName].filter(Boolean).join(' ') || targetUser.email;
 
-    // Generate a magic-link via the Admin API.
-    // generateLink returns the action_link URL but does NOT send any email on
-    // its own — we deliver it via the centralised send-email function below.
     const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
     const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
       type: 'magiclink',
@@ -149,9 +110,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Deliver the magic link via the centralised send-email function.
-    // This mirrors the pattern used by register.ts and stripe-webhook.ts and
-    // ensures the email is sent through the same verified SendGrid pipeline.
     const emailRes = await fetch(`${appUrl}/.netlify/functions/send-email`, {
       method: 'POST',
       headers: {
