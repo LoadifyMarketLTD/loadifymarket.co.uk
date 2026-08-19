@@ -38,6 +38,18 @@ function activeBuyerQuery() {
   };
 }
 
+function sequencedAccountQuery(accounts: Array<{ id: string; role: string; isActive: boolean }>) {
+  let lookupIndex = 0;
+  return () => ({
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockImplementation(async () => ({
+      data: accounts[Math.min(lookupIndex++, accounts.length - 1)] ?? null,
+      error: null,
+    })),
+  });
+}
+
 describe('create-checkout handler – request validation', () => {
   const originalEnv = { ...process.env };
 
@@ -120,6 +132,10 @@ describe('create-checkout handler – request validation', () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
     process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+    const accountQuery = sequencedAccountQuery([
+      { id: 'buyer-1', role: 'buyer', isActive: true },
+      { id: 's1', role: 'seller', isActive: true },
+    ]);
     vi.doMock('stripe', () => ({
       default: vi.fn().mockImplementation(function () {
         return {};
@@ -141,7 +157,7 @@ describe('create-checkout handler – request validation', () => {
         },
         rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
         from: vi.fn((table: string) => {
-          if (table === 'users') return activeBuyerQuery();
+          if (table === 'users') return accountQuery();
           if (table === 'products') {
             return {
               select: vi.fn().mockReturnThis(),
@@ -203,5 +219,84 @@ describe('create-checkout handler – request validation', () => {
 
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.body as string).error).toMatch(/shipping method/i);
+  });
+
+  it('rejects checkout when the listing seller account is inactive even if the seller profile is still active', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
+    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+    const accountQuery = sequencedAccountQuery([
+      { id: 'buyer-1', role: 'buyer', isActive: true },
+      { id: 's1', role: 'seller', isActive: false },
+    ]);
+
+    vi.doMock('stripe', () => ({
+      default: vi.fn().mockImplementation(function () {
+        return {};
+      }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
+    }));
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'buyer-1', email: 'buyer@test.com', app_metadata: {} } },
+            error: null,
+          }),
+        },
+        rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+        from: vi.fn((table: string) => {
+          if (table === 'users') return accountQuery();
+          if (table === 'products') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              in: vi.fn().mockResolvedValue({
+                data: [{
+                  id: 'p1',
+                  price: 10,
+                  title: 'Widget',
+                  sellerId: 's1',
+                  isActive: true,
+                  isApproved: true,
+                  stockQuantity: 5,
+                  listingContext: 'product',
+                  listingStatus: 'active',
+                }],
+                error: null,
+              }),
+            };
+          }
+          if (table === 'seller_profiles') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active', isPaused: false },
+                error: null,
+              }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }),
+      })),
+    }));
+
+    const { handler } = await import('../create-checkout');
+    const res = await handler(
+      makeEvent(validBody, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body as string).error).toMatch(/seller.*not currently available/i);
   });
 });
