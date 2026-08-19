@@ -136,12 +136,6 @@ export interface ActivationResult {
   firstActivation: boolean;
 }
 
-function normalizedStoredSellerStatus(status: string): ActivationResult['sellerStatus'] {
-  return status === 'submitted' || status === 'active' || status === 'suspended'
-    ? status
-    : 'draft';
-}
-
 /**
  * Checks all activation conditions for a seller and updates
  * seller_profiles.sellerStatus if the derived status differs from the stored one.
@@ -213,8 +207,7 @@ export async function tryAutoActivateSeller(
     profile.isApproved,
   );
 
-  const storedStatus = normalizedStoredSellerStatus(profile.sellerStatus);
-  const changed = newStatus !== storedStatus;
+  const changed = newStatus !== profile.sellerStatus;
   // firstActivation: true only if this call transitions the seller to 'active'
   // for the very first time (activatedAt was null before this update).
   // This prevents duplicate admin emails when both the Stripe webhook and a
