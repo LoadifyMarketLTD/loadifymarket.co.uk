@@ -140,14 +140,33 @@ END;
 $$;
 
 -- Once a canonical order-level snapshot exists, no later service/admin/order
--- lifecycle update may rewrite it. Initial population from NULL is allowed so the
--- payment webhook can atomically materialise verified checkout evidence.
+-- lifecycle update may rewrite it. Initial population is accepted only from a
+-- service_role request or a direct trusted DB/migration context. Browser/mobile
+-- roles cannot manufacture historical identity even if an admin RLS policy would
+-- otherwise allow the surrounding order row to be updated.
 CREATE OR REPLACE FUNCTION private.protect_order_commercial_snapshot()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
 SET search_path TO ''
 AS $$
 BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW."commercialSnapshotSource" IS NOT NULL
+       AND auth.role() IN ('anon', 'authenticated')
+    THEN
+      RAISE EXCEPTION 'order commercial snapshot may only be captured by the canonical server boundary';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD."commercialSnapshotSource" IS NULL
+     AND NEW."commercialSnapshotSource" IS NOT NULL
+     AND auth.role() IN ('anon', 'authenticated')
+  THEN
+    RAISE EXCEPTION 'order commercial snapshot may only be captured by the canonical server boundary';
+  END IF;
+
   IF OLD."commercialSnapshotSource" IS NOT NULL THEN
     IF NEW."buyerNameSnapshot" IS DISTINCT FROM OLD."buyerNameSnapshot"
        OR NEW."buyerEmailSnapshot" IS DISTINCT FROM OLD."buyerEmailSnapshot"
@@ -167,19 +186,41 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION private.protect_order_commercial_snapshot()
+  FROM PUBLIC, anon, authenticated, service_role;
+
 DROP TRIGGER IF EXISTS trg_protect_order_commercial_snapshot ON public.orders;
 CREATE TRIGGER trg_protect_order_commercial_snapshot
-BEFORE UPDATE ON public.orders
+BEFORE INSERT OR UPDATE ON public.orders
 FOR EACH ROW
 EXECUTE FUNCTION private.protect_order_commercial_snapshot();
 
--- Product identity/context snapshots are likewise immutable after first capture.
+-- Product identity/context snapshots follow the same server-capture + immutable
+-- history rule. This protects listingContext as well as display identity because
+-- product/service context participates in later payment/fulfilment decisions.
 CREATE OR REPLACE FUNCTION private.protect_order_item_product_snapshot()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
 SET search_path TO ''
 AS $$
 BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW."productSnapshotSource" IS NOT NULL
+       AND auth.role() IN ('anon', 'authenticated')
+    THEN
+      RAISE EXCEPTION 'order item product snapshot may only be captured by the canonical server boundary';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD."productSnapshotSource" IS NULL
+     AND NEW."productSnapshotSource" IS NOT NULL
+     AND auth.role() IN ('anon', 'authenticated')
+  THEN
+    RAISE EXCEPTION 'order item product snapshot may only be captured by the canonical server boundary';
+  END IF;
+
   IF OLD."productSnapshotSource" IS NOT NULL THEN
     IF NEW."productTitleSnapshot" IS DISTINCT FROM OLD."productTitleSnapshot"
        OR NEW."productImageSnapshot" IS DISTINCT FROM OLD."productImageSnapshot"
@@ -195,9 +236,12 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION private.protect_order_item_product_snapshot()
+  FROM PUBLIC, anon, authenticated, service_role;
+
 DROP TRIGGER IF EXISTS trg_protect_order_item_product_snapshot ON public.order_items;
 CREATE TRIGGER trg_protect_order_item_product_snapshot
-BEFORE UPDATE ON public.order_items
+BEFORE INSERT OR UPDATE ON public.order_items
 FOR EACH ROW
 EXECUTE FUNCTION private.protect_order_item_product_snapshot();
 
