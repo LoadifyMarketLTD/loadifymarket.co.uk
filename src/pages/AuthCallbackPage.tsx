@@ -22,9 +22,18 @@ export default function AuthCallbackPage() {
       try {
         const currentUrl = new URL(window.location.href);
         const authCode = currentUrl.searchParams.get('code');
+        const isSyntheticDeepLinkProbe = currentUrl.searchParams.get('test') === '1';
         const hashParams = new URLSearchParams(currentUrl.hash.replace(/^#/, ''));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
+
+        // Device-level deep-link verification intentionally contains no OAuth
+        // credentials. It proves routing only and must not poison the real login
+        // screen with a persistent social-auth failure banner.
+        if (isSyntheticDeepLinkProbe && !authCode && !accessToken && !refreshToken) {
+          if (!cancelled) navigate('/login', { replace: true });
+          return;
+        }
 
         if (authCode) {
           const { error } = await supabase.auth.exchangeCodeForSession(authCode);
