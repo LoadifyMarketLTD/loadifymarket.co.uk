@@ -20,8 +20,23 @@ interface UpdateStatusRequest {
   message?: string;
 }
 
-// Helper to get user from Authorization header
-async function getAuthUser(event: HandlerEvent) {
+type ShipmentTransitionResult = {
+  shipment?: {
+    tracking_number?: string | null;
+    courier_name?: string | null;
+    [key: string]: unknown;
+  };
+  changed?: boolean;
+};
+
+type ShipmentActor = {
+  id: string;
+  role: string;
+  isActive: boolean;
+};
+
+// Helper to get user from Authorization header and resolve current platform state.
+async function getAuthUser(event: HandlerEvent): Promise<ShipmentActor | null> {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -34,18 +49,21 @@ async function getAuthUser(event: HandlerEvent) {
     return null;
   }
 
-  // Get user role
-  const { data: userData } = await supabase
+  const { data: userData, error: userError } = await supabase
     .from('users')
-    .select('*')
+    .select('id, role, isActive')
     .eq('id', user.id)
-    .single();
+    .single<ShipmentActor>();
 
+  if (userError || !userData) return null;
   return userData;
 }
 
-// Helper to send email notifications
-async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id: string }, shipment: { tracking_number?: string | null; courier_name?: string | null }, status: string) {
+async function sendStatusEmail(
+  order: { buyerId: string; orderNumber: string; id: string },
+  shipment: { tracking_number?: string | null; courier_name?: string | null },
+  status: string,
+) {
   const emailTemplates: Record<string, { subject: string; template: string }> = {
     'Dispatched': {
       subject: 'Your order has been dispatched',
@@ -62,12 +80,9 @@ async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id
   };
 
   const emailConfig = emailTemplates[status];
-  if (!emailConfig) {
-    return; // No email for this status
-  }
+  if (!emailConfig) return;
 
   try {
-    // Get buyer info
     const { data: buyer } = await supabase
       .from('users')
       .select('email, firstName, lastName')
@@ -102,7 +117,7 @@ async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id
     });
   } catch (error) {
     console.error('Failed to send email:', error);
-    // Don't fail the whole request if email fails
+    // Post-commit notification failure must not roll back canonical shipment state.
   }
 }
 
@@ -122,7 +137,6 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // Authenticate user
     const user = await getAuthUser(event);
     if (!user) {
       return {
@@ -131,7 +145,15 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Only sellers and admins may update shipment status.
+    // #520 is intentionally the pre-608 runtime. A stale but otherwise valid
+    // token for a suspended actor must stop here before any service-role access.
+    if (user.isActive !== true) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Account is suspended' }),
+      };
+    }
+
     if (user.role !== 'seller' && user.role !== 'admin') {
       return {
         statusCode: 403,
@@ -139,7 +161,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Rate-limit: 60 status updates per user per 60-minute window.
     const statusRl = await checkRateLimit({
       supabase,
       tableName: 'update_shipment_status_rate_limits',
@@ -154,9 +175,8 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Get shipment ID from path
     const pathParts = event.path.split('/');
-    const shipmentId = pathParts[pathParts.length - 2]; // .../shipments/:id/status
+    const shipmentId = pathParts[pathParts.length - 2];
 
     if (!shipmentId) {
       return {
@@ -183,7 +203,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Validate status
     const validStatuses = ['Pending', 'Processing', 'Dispatched', 'In Transit', 'Out for Delivery', 'Delivered', 'Returned', 'Delivery Failed'];
     if (!validStatuses.includes(status)) {
       return {
@@ -192,7 +211,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Get shipment and verify authorization
     const { data: shipment, error: shipmentError } = await supabase
       .from('shipments')
       .select('*, orders(*)')
@@ -206,7 +224,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Check authorization (seller or admin)
     if (user.role !== 'admin' && shipment.seller_id !== user.id) {
       return {
         statusCode: 403,
@@ -217,16 +234,16 @@ export const handler: Handler = async (event) => {
     let targetOrderStatus: GuardedOrderStatus | null = null;
     if (status === 'Delivered') {
       targetOrderStatus = 'delivered';
-    } else if (status === 'Dispatched' || status === 'In Transit') {
+    } else if (status === 'Dispatched' || status === 'In Transit' || status === 'Out for Delivery') {
       targetOrderStatus = 'shipped';
     }
 
     if (targetOrderStatus && shipment.orders?.id && shipment.orders?.productId) {
-        const { data: product } = await supabase
-          .from('products')
-          .select('id, listingContext')
-          .eq('id', shipment.orders.productId)
-          .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
+      const { data: product } = await supabase
+        .from('products')
+        .select('id, listingContext')
+        .eq('id', shipment.orders.productId)
+        .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
 
       const paymentGuard = await enforcePaymentBackedTransition({
         supabase,
@@ -255,72 +272,62 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // Update shipment status
-    const { data: updatedShipment, error: updateError } = await supabase
-      .from('shipments')
-      .update({
-        status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', shipmentId)
-      .select()
-      .single();
+    const { data: transition, error: transitionError } = await supabase.rpc('server_transition_shipment', {
+      p_shipment_id: shipmentId,
+      p_actor_id: user.id,
+      p_status: status,
+      p_message: typeof message === 'string' ? message : null,
+    });
 
-    if (updateError) {
-      throw updateError;
+    if (transitionError) {
+      if (transitionError.code === '42501') {
+        return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
+      }
+      if (transitionError.code === 'P0002') {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Shipment or order not found' }) };
+      }
+      if (transitionError.code === '22023') {
+        return { statusCode: 400, body: JSON.stringify({ error: transitionError.message }) };
+      }
+      if (transitionError.code === 'P0001') {
+        return { statusCode: 409, body: JSON.stringify({ error: transitionError.message }) };
+      }
+      throw new Error(`Atomic shipment transition failed: ${transitionError.message}`);
     }
 
-    // Insert shipment event
-    await supabase
-      .from('shipment_events')
-      .insert({
-        shipment_id: shipmentId,
-        status,
-        message: message || `Status updated to ${status}`,
-        changed_by: user.id,
-      });
-
-    // Update order status if applicable
-    if (status === 'Delivered') {
-      await supabase
-        .from('orders')
-        .update({ 
-          status: 'delivered',
-          deliveredAt: new Date().toISOString()
-        })
-        .eq('id', shipment.order_id);
-    } else if (status === 'Dispatched' || status === 'In Transit') {
-      await supabase
-        .from('orders')
-        .update({ status: 'shipped' })
-        .eq('id', shipment.order_id);
+    const result = transition as ShipmentTransitionResult | null;
+    if (!result?.shipment) {
+      throw new Error('Atomic shipment transition returned no shipment');
     }
+    const updatedShipment = result.shipment;
+    const changed = result.changed === true;
 
-    // Create the buyer's in-app notification server-side. The seller cannot
-    // insert a notification for another user under the notifications RLS policy,
-    // so this belongs in the authenticated service-role transition handler.
-    const { error: notificationError } = await supabase
-      .from('notifications')
-      .insert({
-        userId: shipment.buyer_id,
-        type: 'shipment',
-        title: 'Shipment update',
-        message: `Your order ${shipment.orders?.orderNumber ?? shipment.order_id} shipment status is now: ${status}.`,
-        link: '/buyer/orders',
-      });
-    if (notificationError) {
-      console.error('Failed to create shipment notification:', notificationError.message);
+    // Idempotent retries return success but must not duplicate user-facing side
+    // effects. Only a material canonical state change emits notification/email.
+    if (changed) {
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          userId: shipment.buyer_id,
+          type: 'shipment',
+          title: 'Shipment update',
+          message: `Your order ${shipment.orders?.orderNumber ?? shipment.order_id} shipment status is now: ${status}.`,
+          link: '/buyer/orders',
+        });
+      if (notificationError) {
+        console.error('Failed to create shipment notification:', notificationError.message);
+      }
+
+      await sendStatusEmail(shipment.orders, updatedShipment, status);
     }
-
-    // Send email notification for certain statuses
-    await sendStatusEmail(shipment.orders, updatedShipment, status);
 
     return {
       statusCode: 200,
       body: JSON.stringify({ 
         success: true, 
         shipment: updatedShipment,
-        message: 'Status updated successfully'
+        changed,
+        message: changed ? 'Status updated successfully' : 'Shipment already has the requested status'
       }),
     };
   } catch (error) {

@@ -20,12 +20,25 @@ interface CreateShipmentRequest {
   courier_name?: string;
   tracking_number?: string;
   dispatched_at?: string | null;
-  shipping_method?: string;
-  shipping_cost?: number;
+  // Legacy fields are accepted only so the endpoint can reject attempts to
+  // mutate paid commercial terms explicitly instead of silently ignoring them.
+  shipping_method?: unknown;
+  shipping_cost?: unknown;
 }
 
-// Helper to get user from Authorization header
-async function getAuthUser(event: HandlerEvent) {
+type ShipmentMutationResult = {
+  shipment?: Record<string, unknown>;
+  created?: boolean;
+  changed?: boolean;
+};
+
+type ShipmentActor = {
+  id: string;
+  role: string;
+  isActive: boolean;
+};
+
+async function getAuthUser(event: HandlerEvent): Promise<ShipmentActor | null> {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -38,13 +51,13 @@ async function getAuthUser(event: HandlerEvent) {
     return null;
   }
 
-  // Get user role
-  const { data: userData } = await supabase
+  const { data: userData, error: userError } = await supabase
     .from('users')
-    .select('*')
+    .select('id, role, isActive')
     .eq('id', user.id)
-    .single();
+    .single<ShipmentActor>();
 
+  if (userError || !userData) return null;
   return userData;
 }
 
@@ -64,7 +77,6 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // Authenticate user
     const user = await getAuthUser(event);
     if (!user) {
       return {
@@ -73,7 +85,16 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Only sellers and admins can create shipments
+    // This runtime is deliberately deployed before migration 608. Do not rely
+    // on later RLS/Auth helpers to close the cutover window: a valid/stale JWT
+    // for an inactive account must never reach a service-role mutation or RPC.
+    if (user.isActive !== true) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Account is suspended' }),
+      };
+    }
+
     if (user.role !== 'seller' && user.role !== 'admin') {
       return {
         statusCode: 403,
@@ -81,7 +102,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Rate-limit: 30 shipment creates/updates per user per 60-minute window.
     const shipRl = await checkRateLimit({
       supabase,
       tableName: 'create_shipment_rate_limits',
@@ -105,7 +125,7 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Invalid JSON in request body' }),
       };
     }
-    const { order_id, courier_name, tracking_number, dispatched_at, shipping_method, shipping_cost } = body;
+    const { order_id, courier_name, tracking_number, dispatched_at } = body;
 
     if (!order_id) {
       return {
@@ -114,16 +134,31 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    if (shipping_cost !== undefined && (!Number.isFinite(shipping_cost) || shipping_cost < 0)) {
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'dispatched_at') &&
+      dispatched_at !== null &&
+      (typeof dispatched_at !== 'string' || Number.isNaN(Date.parse(dispatched_at)))
+    ) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'shipping_cost must be a non-negative number' }),
+        body: JSON.stringify({ error: 'dispatched_at must be a valid timestamp or null' }),
       };
     }
 
-    // Verify the order exists and user is the seller (or admin).
-    // Shipment creation is an order-lifecycle operation: terminal/cancelled
-    // orders must never be turned back into fulfilment work.
+    // Shipping method/amount are commercial terms fixed by the verified checkout
+    // and Stripe payment evidence. Fulfilment must never rewrite them.
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'shipping_method') ||
+      Object.prototype.hasOwnProperty.call(body, 'shipping_cost')
+    ) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({
+          error: 'Shipping method and amount are fixed at checkout and cannot be changed during fulfilment.',
+        }),
+      };
+    }
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('id, orderNumber, status, productId, sellerId, buyerId, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus')
@@ -137,7 +172,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Check authorization
     if (user.role !== 'admin' && order.sellerId !== user.id) {
       return {
         statusCode: 403,
@@ -145,7 +179,9 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    if (['cancelled', 'refunded', 'disputed', 'completed'].includes(order.status)) {
+    // Delivered is terminal for shipment-detail mutation. Return/POD flows have
+    // their own canonical boundaries and must not reopen tracking/details history.
+    if (['cancelled', 'refunded', 'disputed', 'delivered', 'completed'].includes(order.status)) {
       return {
         statusCode: 409,
         body: JSON.stringify({ error: `A shipment cannot be created or changed for an order in '${order.status}' status.` }),
@@ -165,9 +201,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // A physical order must have valid completed Stripe evidence before a
-    // shipment can be created at all. This closes the create-shipment bypass
-    // around the guarded status-update endpoint.
     const paymentGuard = await enforcePaymentBackedTransition({
       supabase,
       order,
@@ -183,90 +216,49 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Check if shipment already exists for this order
-    const { data: existingShipment } = await supabase
-      .from('shipments')
-      .select('*')
-      .eq('order_id', order_id)
-      .single();
+    const { data: mutation, error: mutationError } = await supabase.rpc('server_upsert_shipment', {
+      p_order_id: order_id,
+      p_actor_id: user.id,
+      p_courier_name: typeof courier_name === 'string' ? courier_name : null,
+      p_set_courier_name: Object.prototype.hasOwnProperty.call(body, 'courier_name'),
+      p_tracking_number: typeof tracking_number === 'string' ? tracking_number : null,
+      p_set_tracking_number: Object.prototype.hasOwnProperty.call(body, 'tracking_number'),
+      p_dispatched_at: dispatched_at ?? null,
+      p_set_dispatched_at: Object.prototype.hasOwnProperty.call(body, 'dispatched_at'),
+    });
 
-    let shipment;
-    let isNew = false;
-
-    if (existingShipment) {
-      // Update existing shipment
-      const { data, error } = await supabase
-        .from('shipments')
-        .update({
-          courier_name,
-          tracking_number,
-          ...(dispatched_at !== undefined ? { dispatched_at } : {}),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingShipment.id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
+    if (mutationError) {
+      if (mutationError.code === '42501') {
+        return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
       }
-      shipment = data;
-    } else {
-      // Create new shipment
-      const { data, error } = await supabase
-        .from('shipments')
-        .insert({
-          order_id,
-          seller_id: order.sellerId,
-          buyer_id: order.buyerId,
-          courier_name,
-          tracking_number,
-          dispatched_at: dispatched_at || null,
-          status: dispatched_at ? 'Dispatched' : 'Pending',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
+      if (mutationError.code === 'P0002') {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Order not found' }) };
       }
-      shipment = data;
-      isNew = true;
-
-      // Create initial shipment event
-      await supabase
-        .from('shipment_events')
-        .insert({
-          shipment_id: shipment.id,
-          status: dispatched_at ? 'Dispatched' : 'Pending',
-          message: dispatched_at ? `Shipment dispatched on ${new Date(dispatched_at).toLocaleDateString('en-GB')}` : 'Shipment created',
-          changed_by: user.id,
-        });
+      if (mutationError.code === 'P0001') {
+        return { statusCode: 409, body: JSON.stringify({ error: mutationError.message }) };
+      }
+      throw new Error(`Atomic shipment mutation failed: ${mutationError.message}`);
     }
 
-    // The API payload keeps snake_case for backwards compatibility, but the
-    // canonical orders schema uses camelCase column names.
-    if (shipping_method || shipping_cost !== undefined) {
-      const updateData: { shippingMethod?: string; shippingAmount?: number } = {};
-      if (shipping_method) updateData.shippingMethod = shipping_method;
-      if (shipping_cost !== undefined) updateData.shippingAmount = shipping_cost;
-
-      const { error: orderShippingError } = await supabase
-        .from('orders')
-        .update(updateData)
-        .eq('id', order_id);
-
-      if (orderShippingError) {
-        throw new Error(`Failed to persist order shipping details: ${orderShippingError.message}`);
-      }
+    const result = mutation as ShipmentMutationResult | null;
+    if (!result?.shipment) {
+      throw new Error('Atomic shipment mutation returned no shipment');
     }
+
+    const isNew = result.created === true;
+    const changed = result.changed === true;
 
     return {
       statusCode: isNew ? 201 : 200,
       body: JSON.stringify({ 
         success: true, 
-        shipment,
-        message: isNew ? 'Shipment created' : 'Shipment updated'
+        shipment: result.shipment,
+        changed,
+        message: isNew
+          ? 'Shipment created'
+          : changed
+            ? 'Shipment updated'
+            : 'Shipment already matches the requested details'
       }),
     };
   } catch (error) {
