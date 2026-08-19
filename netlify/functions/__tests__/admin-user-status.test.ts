@@ -229,6 +229,33 @@ describe('admin-user-status', () => {
     expect(mocks.pushUpdate).not.toHaveBeenCalled();
   });
 
+  it('continues seller and push cleanup when the users suspension write fails', async () => {
+    const mocks = installSupabaseMock({ userUpdateError: { message: 'users unavailable' } });
+    const { handler } = await import('../admin-user-status');
+
+    const res = await handler(makeEvent({ op: 'suspend', userId: TARGET_ID }), {} as never);
+
+    expect(res.statusCode).toBe(500);
+    expect(mocks.sellerUpdate).toHaveBeenCalledWith({ sellerStatus: 'suspended' });
+    expect(mocks.pushUpdate).toHaveBeenCalledWith({ isActive: false });
+    expect(mocks.auditInsert).not.toHaveBeenCalled();
+  });
+
+  it('continues push cleanup and audit when seller-state synchronization fails', async () => {
+    const mocks = installSupabaseMock({ sellerUpdateError: { message: 'seller unavailable' } });
+    const { handler } = await import('../admin-user-status');
+
+    const res = await handler(makeEvent({ op: 'suspend', userId: TARGET_ID }), {} as never);
+
+    expect(res.statusCode).toBe(500);
+    expect(mocks.usersUpdate).toHaveBeenCalledWith({ isActive: false });
+    expect(mocks.pushUpdate).toHaveBeenCalledWith({ isActive: false });
+    expect(mocks.auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      actionType: 'user_suspend',
+      targetId: TARGET_ID,
+    }));
+  });
+
   it('reactivates a ready seller to its derived active state without resurrecting push tokens', async () => {
     const mocks = installSupabaseMock({
       target: { id: TARGET_ID, role: 'seller', isActive: false },
