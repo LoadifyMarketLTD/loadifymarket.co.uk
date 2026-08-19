@@ -67,7 +67,11 @@ export const handler: Handler = async (event) => {
         status,
         total,
         createdAt,
+        buyerEmailSnapshot,
+        sellerBusinessNameSnapshot,
+        commercialSnapshotSource,
         products (id, title, images),
+        order_items (productTitleSnapshot, productImageSnapshot, productSnapshotSource),
         users!orders_sellerId_fkey (id, firstName, lastName)
       `);
 
@@ -75,12 +79,26 @@ export const handler: Handler = async (event) => {
     const { data: order, error: orderError } = await query.maybeSingle();
     if (orderError || !order) return genericLookupFailure;
 
-    const { data: buyer } = await supabase
-      .from('users')
-      .select('email')
-      .eq('id', order.buyerId)
-      .maybeSingle<{ email: string }>();
-    if (!buyer || buyer.email.toLowerCase() !== email.toLowerCase()) return genericLookupFailure;
+    const hasCommercialSnapshot = Boolean(order.commercialSnapshotSource);
+    let expectedBuyerEmail = hasCommercialSnapshot
+      ? String(order.buyerEmailSnapshot || '').trim()
+      : '';
+
+    // Current buyer identity is consulted only for a legacy row with no
+    // authoritative order snapshot. Never let a later profile change replace
+    // checkout-time identity for a post-cutover order.
+    if (!hasCommercialSnapshot) {
+      const { data: buyer } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', order.buyerId)
+        .maybeSingle<{ email: string }>();
+      expectedBuyerEmail = buyer?.email?.trim() || '';
+    }
+
+    if (!expectedBuyerEmail || expectedBuyerEmail.toLowerCase() !== email.toLowerCase()) {
+      return genericLookupFailure;
+    }
 
     const { data: shipment } = await supabase
       .from('shipments')
@@ -100,8 +118,6 @@ export const handler: Handler = async (event) => {
 
       if (shipment.proof_of_delivery_url) {
         const proofPath = String(shipment.proof_of_delivery_url);
-        // Private proof paths are stored as <shipmentId>/<file>. If the value is
-        // not scoped to this shipment, do not expose it.
         if (proofPath.startsWith(`${shipment.id}/`) && !proofPath.includes('..')) {
           const { data: signed } = await supabase.storage
             .from(POD_BUCKET)
@@ -111,19 +127,36 @@ export const handler: Handler = async (event) => {
       }
     }
 
+    const snapshotItem = (order.order_items ?? []).find(
+      (item: { productSnapshotSource?: string | null }) => item.productSnapshotSource != null,
+    ) ?? null;
+    const product = snapshotItem
+      ? {
+          title: snapshotItem.productTitleSnapshot || 'Product',
+          // An authoritative NULL means there was no image at checkout.
+          image: snapshotItem.productImageSnapshot ?? null,
+        }
+      : order.products
+        ? {
+            title: order.products.title,
+            image: order.products.images?.[0] || null,
+          }
+        : null;
+
+    const seller = hasCommercialSnapshot
+      ? { name: String(order.sellerBusinessNameSnapshot || 'Seller') }
+      : order.users
+        ? { name: `${order.users.firstName || ''} ${order.users.lastName || ''}`.trim() || 'Seller' }
+        : null;
+
     const response = {
       order: {
         orderNumber: order.orderNumber,
         createdAt: order.createdAt,
         total: order.total,
         status: order.status,
-        product: order.products ? {
-          title: order.products.title,
-          image: order.products.images?.[0] || null,
-        } : null,
-        seller: order.users ? {
-          name: `${order.users.firstName || ''} ${order.users.lastName || ''}`.trim() || 'Seller',
-        } : null,
+        product,
+        seller,
       },
       shipment: shipment ? {
         id: shipment.id,

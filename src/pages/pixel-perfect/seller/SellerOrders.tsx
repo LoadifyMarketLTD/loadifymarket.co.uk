@@ -55,7 +55,7 @@ const SellerOrders = () => {
       setLoadError(null);
       const { data, error: fetchError } = await supabase
         .from("orders")
-        .select(`id, orderNumber, total, status, createdAt, buyerId`)
+        .select(`id, orderNumber, total, status, createdAt, buyerId, buyerNameSnapshot, commercialSnapshotSource`)
         .eq("sellerId", user.id)
         .order("createdAt", { ascending: false });
 
@@ -67,20 +67,34 @@ const SellerOrders = () => {
       }
 
       const rows = (data ?? []) as Array<{
-        id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
+        id: string;
+        orderNumber: string;
+        total: number;
+        status: string;
+        createdAt: string;
+        buyerId: string;
+        buyerNameSnapshot: string | null;
+        commercialSnapshotSource: string | null;
       }>;
 
-      // Resolve buyer names via secondary query
-      const buyerIds = [...new Set(rows.map((o) => o.buyerId).filter(Boolean))];
-      const buyerNames: Record<string, string> = {};
-      if (buyerIds.length > 0) {
+      // Snapshot identity is authoritative for post-cutover orders. Only rows
+      // without an authoritative snapshot may use today's user profile as a
+      // display-only legacy fallback; that fallback is never persisted.
+      const legacyBuyerIds = [...new Set(
+        rows
+          .filter((o) => !o.commercialSnapshotSource || !o.buyerNameSnapshot?.trim())
+          .map((o) => o.buyerId)
+          .filter(Boolean),
+      )];
+      const legacyBuyerNames: Record<string, string> = {};
+      if (legacyBuyerIds.length > 0) {
         const { data: buyers } = await supabase
           .from("users")
           .select("id, firstName, lastName")
-          .in("id", buyerIds);
+          .in("id", legacyBuyerIds);
         (buyers ?? []).forEach((b: BuyerData) => {
           const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
-          buyerNames[b.id] = name || "Customer";
+          legacyBuyerNames[b.id] = name || "Customer";
         });
       }
 
@@ -89,7 +103,9 @@ const SellerOrders = () => {
           id: o.id,
           orderNumber: o.orderNumber,
           buyerId: o.buyerId,
-          buyerName: buyerNames[o.buyerId] ?? "Customer",
+          buyerName: o.commercialSnapshotSource && o.buyerNameSnapshot?.trim()
+            ? o.buyerNameSnapshot.trim()
+            : legacyBuyerNames[o.buyerId] ?? "Customer",
           total: o.total,
           status: o.status,
           createdAt: o.createdAt,
@@ -116,9 +132,7 @@ const SellerOrders = () => {
       const json = await res.json() as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to update order status");
 
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-      );
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
       toast({ title: "Order updated", description: `Status changed to ${newStatus}.` });
     } catch (err) {
       toast({ title: "Update failed", description: (err as Error).message, variant: "destructive" });
@@ -137,9 +151,7 @@ const SellerOrders = () => {
       const json = await res.json() as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to mark order as delivered");
 
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: "delivered" } : o))
-      );
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: "delivered" } : o)));
       toast({ title: "Order marked as delivered", description: "The buyer has been notified to confirm delivery." });
     } catch (err) {
       toast({ title: "Update failed", description: (err as Error).message, variant: "destructive" });
@@ -152,12 +164,9 @@ const SellerOrders = () => {
     <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Orders</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {loading ? "Loading…" : `${orders.length} orders total`}
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">{loading ? "Loading…" : `${orders.length} orders total`}</p>
       </div>
 
-      {/* Awaiting-payment highlight banner */}
       {!loading && orders.some((o) => o.status === "awaiting_payment") && (
         <div className="flex items-start gap-3 rounded-xl bg-primary/10 border border-primary/40 p-3.5">
           <span className="text-primary text-xl leading-none mt-0.5">⚠</span>
@@ -180,18 +189,11 @@ const SellerOrders = () => {
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search orders..."
-            className="pl-9 h-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <Input placeholder="Search orders..." className="pl-9 h-10" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
-
-        {/* ── Mobile: card list ─────────────────────────────────── */}
         <div className="sm:hidden divide-y divide-border">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Loading orders…</div>
@@ -218,42 +220,18 @@ const SellerOrders = () => {
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</span>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
-                    >
-                      View
-                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}>View</Button>
                     {["paid", "packed", "shipped"].includes(o.status) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs gap-1"
-                            disabled={actionLoading === o.id}
-                          >
+                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" disabled={actionLoading === o.id}>
                             Update <ChevronDown className="h-3 w-3" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {o.status === "paid" && (
-                            <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>
-                              Mark as Packed
-                            </DropdownMenuItem>
-                          )}
-                          {(o.status === "paid" || o.status === "packed") && (
-                            <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
-                              Mark as Shipped
-                            </DropdownMenuItem>
-                          )}
-                          {o.status === "shipped" && (
-                            <DropdownMenuItem onClick={() => markDelivered(o.id)}>
-                              Mark as Delivered
-                            </DropdownMenuItem>
-                          )}
+                          {o.status === "paid" && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>Mark as Packed</DropdownMenuItem>}
+                          {(o.status === "paid" || o.status === "packed") && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark as Shipped</DropdownMenuItem>}
+                          {o.status === "shipped" && <DropdownMenuItem onClick={() => markDelivered(o.id)}>Mark as Delivered</DropdownMenuItem>}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -264,7 +242,6 @@ const SellerOrders = () => {
           )}
         </div>
 
-        {/* ── Desktop: table ────────────────────────────────────── */}
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -279,13 +256,9 @@ const SellerOrders = () => {
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">Loading orders…</td>
-                </tr>
+                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">Loading orders…</td></tr>
               ) : loadError ? (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-sm text-red-500">{loadError}</td>
-                </tr>
+                <tr><td colSpan={6} className="p-8 text-center text-sm text-red-500">{loadError}</td></tr>
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
@@ -299,50 +272,20 @@ const SellerOrders = () => {
                     <td className="p-4 text-sm font-medium text-foreground">{o.orderNumber}</td>
                     <td className="p-4 text-sm text-foreground">{o.buyerName}</td>
                     <td className="p-4 text-sm font-semibold text-foreground">£{o.total.toLocaleString()}</td>
-                    <td className="p-4">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${statusColors[o.status] ?? "bg-muted text-muted-foreground"}`}>
-                        {o.status}
-                      </span>
-                    </td>
+                    <td className="p-4"><span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${statusColors[o.status] ?? "bg-muted text-muted-foreground"}`}>{o.status}</span></td>
                     <td className="p-4 text-sm text-muted-foreground">{formatDate(o.createdAt)}</td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
-                        >
-                          View
-                        </Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}>View</Button>
                         {["paid", "packed", "shipped"].includes(o.status) && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs gap-1"
-                                disabled={actionLoading === o.id}
-                              >
-                                Update <ChevronDown className="h-3 w-3" />
-                              </Button>
+                              <Button variant="ghost" size="sm" className="text-xs gap-1" disabled={actionLoading === o.id}>Update <ChevronDown className="h-3 w-3" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {o.status === "paid" && (
-                                <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>
-                                  Mark as Packed
-                                </DropdownMenuItem>
-                              )}
-                              {(o.status === "paid" || o.status === "packed") && (
-                                <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
-                                  Mark as Shipped
-                                </DropdownMenuItem>
-                              )}
-                              {o.status === "shipped" && (
-                                <DropdownMenuItem onClick={() => markDelivered(o.id)}>
-                                  Mark as Delivered
-                                </DropdownMenuItem>
-                              )}
+                              {o.status === "paid" && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>Mark as Packed</DropdownMenuItem>}
+                              {(o.status === "paid" || o.status === "packed") && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark as Shipped</DropdownMenuItem>}
+                              {o.status === "shipped" && <DropdownMenuItem onClick={() => markDelivered(o.id)}>Mark as Delivered</DropdownMenuItem>}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
@@ -354,7 +297,6 @@ const SellerOrders = () => {
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
   );

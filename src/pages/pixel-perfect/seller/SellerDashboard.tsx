@@ -84,7 +84,7 @@ const SellerDashboard = () => {
             .eq("sellerId", user.id),
           supabase
             .from("orders")
-            .select(`id, orderNumber, total, status, createdAt, buyerId`)
+            .select(`id, orderNumber, total, status, createdAt, buyerId, buyerNameSnapshot, commercialSnapshotSource`)
             .eq("sellerId", user.id)
             .order("createdAt", { ascending: false }),
           supabase
@@ -106,13 +106,17 @@ const SellerDashboard = () => {
 
         const products = productsRes.data ?? [];
         const orders = (allOrdersRes.data ?? []) as Array<{
-          id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
+          id: string;
+          orderNumber: string;
+          total: number;
+          status: string;
+          createdAt: string;
+          buyerId: string;
+          buyerNameSnapshot: string | null;
+          commercialSnapshotSource: string | null;
         }>;
 
-        // Stats
         const activeOrders = orders.filter((o) => ["paid", "packed", "shipped"].includes(o.status)).length;
-        // Only count revenue from orders that have actually been paid — exclude
-        // awaiting_payment, cancelled and refunded so the KPI reflects real income.
         const PAID_STATUSES = ["paid", "packed", "shipped", "delivered", "completed"];
         const totalRevenue = orders
           .filter((o) => PAID_STATUSES.includes(o.status))
@@ -138,33 +142,41 @@ const SellerDashboard = () => {
           todayMessages: todayMessagesRes.count ?? null,
         });
 
-        // Resolve buyer names for recent orders
-        const buyerNames: Record<string, string> = {};
-        const recentBuyerIds = [...new Set(orders.slice(0, 5).map((o) => o.buyerId).filter(Boolean))];
-        if (recentBuyerIds.length > 0) {
+        // Snapshot identity is authoritative for post-cutover commercial history.
+        // Query current users only for recent legacy rows with no authoritative
+        // snapshot, and never persist this fallback into historical records.
+        const recentFive = orders.slice(0, 5);
+        const legacyBuyerIds = [...new Set(
+          recentFive
+            .filter((o) => !o.commercialSnapshotSource || !o.buyerNameSnapshot?.trim())
+            .map((o) => o.buyerId)
+            .filter(Boolean),
+        )];
+        const legacyBuyerNames: Record<string, string> = {};
+        if (legacyBuyerIds.length > 0) {
           const { data: buyers } = await supabase
             .from("users")
             .select("id, firstName, lastName")
-            .in("id", recentBuyerIds);
+            .in("id", legacyBuyerIds);
           (buyers ?? []).forEach((b: BuyerData) => {
             const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
-            buyerNames[b.id] = name || "Customer";
+            legacyBuyerNames[b.id] = name || "Customer";
           });
         }
 
-        // Recent orders (show last 5 only)
         setRecentOrders(
-          orders.slice(0, 5).map((o) => ({
+          recentFive.map((o) => ({
             id: o.id,
             orderNumber: o.orderNumber,
-            buyerName: buyerNames[o.buyerId] ?? "Customer",
+            buyerName: o.commercialSnapshotSource && o.buyerNameSnapshot?.trim()
+              ? o.buyerNameSnapshot.trim()
+              : legacyBuyerNames[o.buyerId] ?? "Customer",
             total: o.total,
             status: o.status,
             createdAt: o.createdAt,
           }))
         );
 
-        // Top products by views
         const sorted = [...products]
           .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
           .slice(0, 4);
@@ -252,24 +264,17 @@ const SellerDashboard = () => {
 
   return (
     <div className="px-3 pt-3 pb-4 sm:p-6 space-y-3 sm:space-y-6 max-w-[1200px]">
-      {/* Onboarding compact row — shown only to sellers who haven't completed setup */}
       <OnboardingChecklist />
 
-      {/* Quick Actions — top priority, horizontal row */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button size="sm" className="bg-primary hover:bg-primary-hover text-black h-10 text-sm font-extrabold shadow-[0_0_18px_rgba(212,175,55,0.35)] ring-1 ring-primary/40" asChild>
-          <Link to="/seller/products/new">
-            <Package className="mr-1.5 h-4 w-4" /> Add Product
-          </Link>
+          <Link to="/seller/products/new"><Package className="mr-1.5 h-4 w-4" /> Add Product</Link>
         </Button>
         <Button size="sm" variant="outline" className="h-10 text-sm font-semibold border-primary/40 hover:border-primary" asChild>
-          <Link to="/seller/shipments">
-            <Truck className="mr-1.5 h-4 w-4 text-primary" /> Log Shipment
-          </Link>
+          <Link to="/seller/shipments"><Truck className="mr-1.5 h-4 w-4 text-primary" /> Log Shipment</Link>
         </Button>
       </div>
 
-      {/* Stats Grid — compact 2×2 */}
       {loading ? (
         <div className="grid grid-cols-2 gap-2">
           {[1, 2, 3, 4].map((i) => (
@@ -297,7 +302,6 @@ const SellerDashboard = () => {
         </div>
       )}
 
-      {/* Balance row — compact */}
       {balance && (
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-card rounded-lg border border-border p-3 space-y-1.5">
@@ -305,17 +309,8 @@ const SellerDashboard = () => {
             <p className="font-bold text-base text-foreground leading-tight">
               £{balance.availableAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <Button
-              size="sm"
-              className="h-7 text-xs w-full px-2"
-              onClick={handleRequestPayout}
-              disabled={payoutLoading || balance.availableAmount <= 0}
-            >
-              {payoutLoading ? (
-                <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Requesting…</>
-              ) : (
-                <><Send className="mr-1 h-3 w-3" /> Payout</>
-              )}
+            <Button size="sm" className="h-7 text-xs w-full px-2" onClick={handleRequestPayout} disabled={payoutLoading || balance.availableAmount <= 0}>
+              {payoutLoading ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Requesting…</> : <><Send className="mr-1 h-3 w-3" /> Payout</>}
             </Button>
           </div>
           <div className="bg-card rounded-lg border border-border p-3 space-y-1">
@@ -328,7 +323,6 @@ const SellerDashboard = () => {
         </div>
       )}
 
-      {/* Today mini block */}
       <div className="bg-card rounded-lg border border-border p-3">
         <h2 className="text-sm font-semibold text-foreground mb-2">Today</h2>
         {loading || !stats ? (
@@ -343,7 +337,6 @@ const SellerDashboard = () => {
         )}
       </div>
 
-      {/* Recent Orders — mobile card list */}
       <div className="bg-card rounded-lg border border-border">
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground">Recent Orders</h2>
@@ -363,9 +356,7 @@ const SellerDashboard = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[13px] font-semibold text-foreground">{order.orderNumber}</span>
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border capitalize shrink-0 ${statusColors[order.status] ?? "bg-muted text-muted-foreground"}`}>
-                      {order.status}
-                    </span>
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border capitalize shrink-0 ${statusColors[order.status] ?? "bg-muted text-muted-foreground"}`}>{order.status}</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">{order.buyerName}</p>
                 </div>
@@ -379,7 +370,6 @@ const SellerDashboard = () => {
         </div>
       </div>
 
-      {/* Top Products — compact list */}
       <div className="bg-card rounded-lg border border-border">
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground">Top Products</h2>
@@ -396,9 +386,7 @@ const SellerDashboard = () => {
           ) : (
             topProducts.map((prod, i) => (
               <div key={prod.id} className="flex items-center gap-3 px-3 py-2.5">
-                <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">
-                  {i + 1}
-                </span>
+                <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-foreground truncate">{prod.title}</p>
                   <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground mt-0.5">
@@ -412,15 +400,12 @@ const SellerDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Stats — compact grid */}
       <div className="bg-card rounded-lg border border-border p-3">
         <h2 className="text-sm font-semibold text-foreground mb-2.5">Quick Stats</h2>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Star className="h-3.5 w-3.5 text-accent" /> Rating</span>
-            <span className="text-[12px] font-semibold text-foreground">
-              {loading ? "—" : stats?.sellerRating ? `${stats.sellerRating.toFixed(1)}` : "—"}
-            </span>
+            <span className="text-[12px] font-semibold text-foreground">{loading ? "—" : stats?.sellerRating ? `${stats.sellerRating.toFixed(1)}` : "—"}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Users className="h-3.5 w-3.5 text-primary" /> Customers</span>

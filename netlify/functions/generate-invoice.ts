@@ -2,23 +2,25 @@
  * generate-invoice
  *
  * Generates a printable HTML invoice for a given order and streams it
- * back to the buyer's browser. The buyer uses their browser's built-in
- * Print → Save as PDF to create a PDF copy.
+ * back to the buyer's browser.
  *
  * Security:
- *   – Requires a valid JWT and a live active platform account.
+ *   – Requires a valid JWT.
  *   – The authenticated user must be the order's buyer OR an admin.
- *   – Uses the service-role client to query order data but enforces live
- *     authorization before accessing commercial history.
+ *   – Service-role data access is protected by the ownership check below.
+ *
+ * Commercial-history rule:
+ *   – Post-cutover orders with commercialSnapshotSource MUST render checkout-time
+ *     buyer/seller/product identity from immutable snapshots.
+ *   – Only legacy rows with no authoritative snapshot may use today's profile /
+ *     product values as a display-only fallback. No fallback is ever persisted.
  */
 
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
-import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
 
 const corsHeaders = {
@@ -31,37 +33,41 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' };
   }
-
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
+    return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+  const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
+  if (!token) {
+    return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+  }
+
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!anonKey) {
     return {
       statusCode: 500,
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Server configuration error' }),
+      body: JSON.stringify({ error: 'Server configuration error: VITE_SUPABASE_ANON_KEY not set' }),
     };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const auth = await authenticateActiveAccount(event, supabase);
-  if (!auth.ok) {
-    return {
-      statusCode: auth.status,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: auth.status === 401 ? 'Unauthorized' : 'Account is suspended' }),
-    };
+  const anonClient = createClient(supabaseUrl, anonKey);
+  const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+  if (authError || !user) {
+    return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
 
-  const isAdmin = auth.actor.role === 'admin';
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  const { data: callerRow } = await supabase
+    .from('users')
+    .select('role, firstName, lastName')
+    .eq('id', user.id)
+    .single<{ role: string; firstName?: string; lastName?: string }>();
+  const isAdmin = callerRow?.role === 'admin';
 
   let body: { orderId?: string };
   try {
@@ -89,6 +95,14 @@ export const handler: Handler = async (event) => {
       shippingAddress,
       buyerId,
       sellerId,
+      buyerNameSnapshot,
+      buyerEmailSnapshot,
+      buyerCompanyNameSnapshot,
+      buyerVatNumberSnapshot,
+      sellerBusinessNameSnapshot,
+      isB2BSnapshot,
+      reverseChargeSnapshot,
+      commercialSnapshotSource,
       products ( title, images )
     `)
     .eq('id', orderId)
@@ -104,6 +118,14 @@ export const handler: Handler = async (event) => {
       shippingAddress: Record<string, string>;
       buyerId: string | null;
       sellerId: string;
+      buyerNameSnapshot: string | null;
+      buyerEmailSnapshot: string | null;
+      buyerCompanyNameSnapshot: string | null;
+      buyerVatNumberSnapshot: string | null;
+      sellerBusinessNameSnapshot: string | null;
+      isB2BSnapshot: boolean | null;
+      reverseChargeSnapshot: boolean | null;
+      commercialSnapshotSource: string | null;
       products: { title?: string; images?: string[] } | null;
     }>();
 
@@ -111,68 +133,103 @@ export const handler: Handler = async (event) => {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Order not found' }) };
   }
 
-  if (!isAdmin && order.buyerId !== auth.actor.id) {
+  if (!isAdmin && order.buyerId !== user.id) {
     return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Forbidden' }) };
   }
 
-  const { data: items } = await supabase
+  const { data: items, error: itemError } = await supabase
     .from('order_items')
-    .select('quantity, pricePerUnit, subtotal, products ( title )')
+    .select('quantity, pricePerUnit, subtotal, productTitleSnapshot, productSnapshotSource, products ( title )')
     .eq('orderId', orderId);
+  if (itemError) {
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Unable to load invoice items' }) };
+  }
 
-  const buyerRow = order.buyerId
-    ? (await supabase
-        .from('users')
-        .select('firstName, lastName, email')
-        .eq('id', order.buyerId)
-        .single<{ firstName?: string; lastName?: string; email?: string }>()
-      ).data
-    : null;
+  const hasCommercialSnapshot = Boolean(order.commercialSnapshotSource);
 
-  const buyerProfileRow = order.buyerId
-    ? (await supabase
-        .from('buyer_profiles')
-        .select('accountType, companyName, vatNumber, isVatVerified')
-        .eq('userId', order.buyerId)
-        .maybeSingle<{
-          accountType?: string | null;
-          companyName?: string | null;
-          vatNumber?: string | null;
-          isVatVerified?: boolean | null;
-        }>()
-      ).data
-    : null;
+  let buyerRow: { firstName?: string; lastName?: string; email?: string } | null = null;
+  let buyerProfileRow: {
+    accountType?: string | null;
+    companyName?: string | null;
+    vatNumber?: string | null;
+    isVatVerified?: boolean | null;
+  } | null = null;
+  let sellerRow: { businessName?: string } | null = null;
 
-  const isB2B =
-    Boolean(buyerProfileRow?.accountType) &&
-    buyerProfileRow?.accountType !== 'individual';
-  const isReverseCharge = isB2B && Boolean(buyerProfileRow?.isVatVerified);
+  // Never consult mutable identity for a post-cutover order. Current-state
+  // lookups are strictly a legacy display fallback for rows where the snapshot
+  // source itself is absent.
+  if (!hasCommercialSnapshot) {
+    buyerRow = order.buyerId
+      ? (await supabase
+          .from('users')
+          .select('firstName, lastName, email')
+          .eq('id', order.buyerId)
+          .single<{ firstName?: string; lastName?: string; email?: string }>()
+        ).data
+      : null;
 
-  const { data: sellerRow } = await supabase
-    .from('seller_profiles')
-    .select('businessName')
-    .eq('userId', order.sellerId)
-    .single<{ businessName?: string }>();
+    buyerProfileRow = order.buyerId
+      ? (await supabase
+          .from('buyer_profiles')
+          .select('accountType, companyName, vatNumber, isVatVerified')
+          .eq('userId', order.buyerId)
+          .maybeSingle<{
+            accountType?: string | null;
+            companyName?: string | null;
+            vatNumber?: string | null;
+            isVatVerified?: boolean | null;
+          }>()
+        ).data
+      : null;
+
+    sellerRow = (await supabase
+      .from('seller_profiles')
+      .select('businessName')
+      .eq('userId', order.sellerId)
+      .single<{ businessName?: string }>()).data;
+  }
+
+  const legacyBuyerName = [buyerRow?.firstName, buyerRow?.lastName].filter(Boolean).join(' ') || 'Customer';
+  const buyerName = hasCommercialSnapshot
+    ? order.buyerNameSnapshot || 'Customer'
+    : legacyBuyerName;
+  const buyerEmail = hasCommercialSnapshot
+    ? order.buyerEmailSnapshot || ''
+    : buyerRow?.email || '';
+  const sellerName = hasCommercialSnapshot
+    ? order.sellerBusinessNameSnapshot || 'Seller'
+    : sellerRow?.businessName || 'Seller';
+  const isB2B = hasCommercialSnapshot
+    ? order.isB2BSnapshot === true
+    : Boolean(buyerProfileRow?.accountType) && buyerProfileRow?.accountType !== 'individual';
+  const isReverseCharge = hasCommercialSnapshot
+    ? order.reverseChargeSnapshot === true
+    : isB2B && Boolean(buyerProfileRow?.isVatVerified);
+  const buyerCompanyName = hasCommercialSnapshot
+    ? order.buyerCompanyNameSnapshot
+    : buyerProfileRow?.companyName ?? null;
+  const buyerVatNumber = hasCommercialSnapshot
+    ? order.buyerVatNumberSnapshot
+    : buyerProfileRow?.vatNumber ?? null;
 
   const addr = order.shippingAddress ?? {};
-  const buyerName = [buyerRow?.firstName, buyerRow?.lastName].filter(Boolean).join(' ') || 'Customer';
-  const sellerName = sellerRow?.businessName || 'Seller';
   const orderDate = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
     : '—';
   const orderNum = order.orderNumber || order.id.slice(0, 8).toUpperCase();
 
-  const billToName = isB2B && buyerProfileRow?.companyName
-    ? buyerProfileRow.companyName
-    : buyerName;
-  const billToContact = isB2B && buyerProfileRow?.companyName ? buyerName : null;
-
+  const billToName = isB2B && buyerCompanyName ? buyerCompanyName : buyerName;
+  const billToContact = isB2B && buyerCompanyName ? buyerName : null;
   const formatGBP = (v: number) => `£${(v ?? 0).toFixed(2)}`;
 
   const itemRows = (items ?? [])
     .map((item) => {
       const productObj = Array.isArray(item.products) ? item.products[0] : item.products;
-      const title = (productObj as { title?: string } | null)?.title ?? 'Product';
+      const liveTitle = (productObj as { title?: string } | null)?.title ?? 'Product';
+      const title = item.productSnapshotSource
+        ? item.productTitleSnapshot || 'Product'
+        : liveTitle;
       return `
         <tr>
           <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${escapeHtml(title)}</td>
@@ -183,14 +240,9 @@ export const handler: Handler = async (event) => {
     })
     .join('');
 
-  const addrLine = [
-    addr.address1,
-    addr.address2,
-    addr.city,
-    addr.county,
-    addr.postcode,
-    addr.country,
-  ].filter(Boolean).join(', ');
+  const addrLine = [addr.address1, addr.address2, addr.city, addr.county, addr.postcode, addr.country]
+    .filter(Boolean)
+    .join(', ');
 
   const vatNumber = process.env.VITE_VAT_NUMBER || '';
   const companyName = process.env.VITE_COMPANY_NAME || 'Loadify Market';
@@ -226,10 +278,7 @@ export const handler: Handler = async (event) => {
     .totals .grand-total td { font-weight: 700; font-size: 15px; border-top: 2px solid #121A2B; padding-top: 10px; }
     .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.8; }
     .status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: capitalize; background: #dcfce7; color: #166534; }
-    @media print {
-      body { padding: 20px; }
-      @page { margin: 15mm; }
-    }
+    @media print { body { padding: 20px; } @page { margin: 15mm; } }
   </style>
 </head>
 <body>
@@ -257,8 +306,8 @@ export const handler: Handler = async (event) => {
       <p>
         <strong>${escapeHtml(billToName)}</strong><br />
         ${billToContact ? `${escapeHtml(billToContact)}<br />` : ''}
-        ${buyerRow?.email ? `${escapeHtml(buyerRow.email)}<br />` : ''}
-        ${isB2B && buyerProfileRow?.vatNumber ? `VAT: ${escapeHtml(buyerProfileRow.vatNumber)}<br />` : ''}
+        ${buyerEmail ? `${escapeHtml(buyerEmail)}<br />` : ''}
+        ${isB2B && buyerVatNumber ? `VAT: ${escapeHtml(buyerVatNumber)}<br />` : ''}
         ${addrLine ? escapeHtml(addrLine) : ''}
       </p>
       ${isB2B ? `<p style="margin-top:6px;font-size:11px;color:#374151;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Business Account</p>` : ''}

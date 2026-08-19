@@ -20,10 +20,6 @@ export const ZERO_COMMISSION_PROMO_END_UTC = new Date('2026-12-31T23:59:59Z').ge
 export const DEFAULT_COMMISSION_RATE = 0.07;
 const STRIPE_EVENT_LEASE_MS = 5 * 60 * 1000;
 
-function money(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
-}
-
 export function getCommissionRate(configuredRate?: number): number {
   if (Date.now() < ZERO_COMMISSION_PROMO_END_UTC) return 0;
   return typeof configuredRate === 'number' && configuredRate >= 0
@@ -220,9 +216,29 @@ interface CartItem {
   quantity: number;
   price: number;
   title: string;
+  image: string | null;
+  listingContext: 'product' | 'service';
+}
+
+interface CommercialBuyerSnapshot {
+  id: string;
+  name: string;
+  email: string;
+  companyName: string | null;
+  vatNumber: string | null;
+  isB2B: boolean;
+  reverseCharge: boolean;
+}
+
+interface CommercialSellerSnapshot {
+  id: string;
+  businessName: string;
 }
 
 interface OrderData {
+  commercialSnapshotVersion?: number;
+  buyerSnapshot?: CommercialBuyerSnapshot;
+  sellerSnapshot?: CommercialSellerSnapshot;
   items: CartItem[];
   shippingAddress: Record<string, string>;
   billingAddress: Record<string, string>;
@@ -241,24 +257,57 @@ interface OrderData {
   applyReverseCharge?: boolean;
 }
 
-function resolveOrderMoney(orderData: OrderData): { subtotal: number; vat: number; shipping: number; total: number } {
-  const totalPence = Number.isInteger(orderData.totalPence)
-    ? Number(orderData.totalPence)
-    : Math.round(Number(orderData.total) * 100);
-  const shippingPence = Number.isInteger(orderData.shippingAmountPence)
-    ? Number(orderData.shippingAmountPence)
-    : Math.round(Number(orderData.shippingAmount ?? 0) * 100);
-
-  if (!Number.isFinite(totalPence) || !Number.isFinite(shippingPence) || totalPence < 0 || shippingPence < 0 || shippingPence > totalPence) {
-    throw new Error('Payment session contains invalid monetary totals');
+function requireCommercialSnapshotEvidence(orderData: OrderData): {
+  buyer: CommercialBuyerSnapshot;
+  seller: CommercialSellerSnapshot;
+} {
+  if (orderData.commercialSnapshotVersion !== 1) {
+    throw new Error('Payment session is missing commercial snapshot evidence v1');
   }
 
-  const productPaid = (totalPence - shippingPence) / 100;
-  const isReverseCharge = Boolean(orderData.applyReverseCharge);
-  const subtotal = isReverseCharge ? money(productPaid) : money(productPaid / 1.20);
-  const vat = isReverseCharge ? 0 : money(productPaid - subtotal);
+  const buyer = orderData.buyerSnapshot;
+  const seller = orderData.sellerSnapshot;
+  if (
+    !buyer ||
+    !buyer.id?.trim() ||
+    !buyer.name?.trim() ||
+    !buyer.email?.trim() ||
+    typeof buyer.isB2B !== 'boolean' ||
+    typeof buyer.reverseCharge !== 'boolean'
+  ) {
+    throw new Error('Payment session contains incomplete buyer snapshot evidence');
+  }
+  if (buyer.id !== orderData.buyerId) {
+    throw new Error('Payment session buyer snapshot does not match buyerId');
+  }
+  if (buyer.reverseCharge && !buyer.isB2B) {
+    throw new Error('Payment session contains invalid reverse-charge snapshot evidence');
+  }
+  if (Boolean(orderData.isB2B) !== buyer.isB2B || Boolean(orderData.applyReverseCharge) !== buyer.reverseCharge) {
+    throw new Error('Payment session commercial/tax snapshot conflicts with checkout totals metadata');
+  }
+  if (!seller || !seller.id?.trim() || !seller.businessName?.trim()) {
+    throw new Error('Payment session contains incomplete seller snapshot evidence');
+  }
 
-  return { subtotal, vat, shipping: shippingPence / 100, total: totalPence / 100 };
+  for (const item of orderData.items ?? []) {
+    if (
+      !item?.productId?.trim() ||
+      !item.sellerId?.trim() ||
+      !item.title?.trim() ||
+      (item.listingContext !== 'product' && item.listingContext !== 'service') ||
+      !Object.prototype.hasOwnProperty.call(item, 'image') ||
+      (item.image !== null && typeof item.image !== 'string') ||
+      !Number.isInteger(item.quantity) ||
+      item.quantity <= 0 ||
+      !Number.isFinite(item.price) ||
+      item.price <= 0
+    ) {
+      throw new Error('Payment session contains incomplete or invalid product snapshot evidence');
+    }
+  }
+
+  return { buyer, seller };
 }
 
 function productIdsFromMetadata(metadata: Record<string, unknown> | null | undefined): string[] {
@@ -311,11 +360,20 @@ async function claimPendingPaymentSession(
   return Boolean(data);
 }
 
+interface AtomicPaidOrderResult {
+  orderId: string;
+  orderNumber: string;
+  sellerId: string;
+  sellerTotal: number;
+  firstPaidTransition: boolean;
+}
+
 async function fulfilPaidOrder(
   sb: import('@supabase/supabase-js').SupabaseClient,
+  paymentSessionId: string,
   paymentIntentId: string,
   orderData: OrderData,
-): Promise<{ orderId: string; orderNumber: string; sellerId: string; sellerTotal: number }> {
+): Promise<AtomicPaidOrderResult> {
   const items = orderData.items ?? [];
   if (!items.length) throw new Error('Payment session contains no order items');
   if (new Set(items.map((item) => item.productId)).size !== items.length) {
@@ -327,105 +385,49 @@ async function fulfilPaidOrder(
     throw new Error('Payment session violates single-seller checkout invariant');
   }
   const sellerId = sellerIds[0];
-  const VAT_RATE = 0.20;
-  const resolvedMoney = resolveOrderMoney(orderData);
-  const reservationToken = typeof orderData.reservationToken === 'string'
-    ? orderData.reservationToken
-    : null;
+  const { seller: sellerSnapshot } = requireCommercialSnapshotEvidence(orderData);
+  if (sellerSnapshot.id !== sellerId) {
+    throw new Error('Payment session seller snapshot does not match item seller');
+  }
 
   const configuredRate = await fetchConfiguredCommissionRate(sb);
   const commissionRate = getCommissionRate(configuredRate ?? undefined);
-  const sellerCommission = money(resolvedMoney.subtotal * commissionRate);
-  const primaryItem = items[0];
 
-  const { data: existingOrder, error: existingOrderError } = await sb
-    .from('orders')
-    .select('id, orderNumber, sellerId, total')
-    .eq('stripePaymentIntentId', paymentIntentId)
-    .maybeSingle<{ id: string; orderNumber: string; sellerId: string; total: number }>();
+  const { data, error } = await sb.rpc('server_materialize_paid_order_v1', {
+    p_payment_session_id: paymentSessionId,
+    p_payment_intent_id: paymentIntentId,
+    p_commission_rate: commissionRate,
+  });
+  if (error) throw error;
 
-  if (existingOrderError) throw existingOrderError;
-  let order = existingOrder;
-  let orderWasCreated = false;
-
-  if (!order) {
-    const insertResult = await sb
-      .from('orders')
-      .insert({
-        buyerId: orderData.buyerId,
-        sellerId,
-        productId: primaryItem.productId,
-        quantity: items.reduce((sum, item) => sum + item.quantity, 0),
-        subtotal: resolvedMoney.subtotal,
-        vatAmount: resolvedMoney.vat,
-        shippingAmount: resolvedMoney.shipping,
-        total: resolvedMoney.total,
-        commission: sellerCommission,
-        status: 'paid',
-        escrowStatus: 'held',
-        shippingAddress: orderData.shippingAddress ?? {},
-        billingAddress: orderData.billingAddress ?? {},
-        shippingMethod: orderData.shippingMethod || 'Standard',
-        isB2B: Boolean(orderData.isB2B),
-        stripePaymentIntentId: paymentIntentId,
-      })
-      .select('id, orderNumber, sellerId, total')
-      .single();
-
-    if (insertResult.error || !insertResult.data) {
-      if (insertResult.error?.code === '23505') {
-        const retryLookup = await sb
-          .from('orders')
-          .select('id, orderNumber, sellerId, total')
-          .eq('stripePaymentIntentId', paymentIntentId)
-          .single();
-        if (retryLookup.error || !retryLookup.data) throw insertResult.error;
-        order = retryLookup.data;
-      } else {
-        throw insertResult.error ?? new Error('Order insert failed');
-      }
-    } else {
-      order = insertResult.data;
-      orderWasCreated = true;
-    }
+  const result = data as AtomicPaidOrderResult | null;
+  if (
+    !result ||
+    typeof result.orderId !== 'string' ||
+    typeof result.orderNumber !== 'string' ||
+    typeof result.sellerId !== 'string' ||
+    typeof result.sellerTotal !== 'number' ||
+    typeof result.firstPaidTransition !== 'boolean'
+  ) {
+    throw new Error('Atomic paid-order materialization returned an invalid contract');
+  }
+  if (result.sellerId !== sellerId) {
+    throw new Error('Atomic paid-order materialization returned conflicting seller identity');
   }
 
-  const orderItems = items.map((item) => ({
-    orderId: order!.id,
-    productId: item.productId,
-    quantity: item.quantity,
-    pricePerUnit: item.price,
-    vatRate: VAT_RATE,
-    subtotal: money((item.price / (1 + VAT_RATE)) * item.quantity),
-  }));
-
-  const { error: itemError } = await sb
-    .from('order_items')
-    .upsert(orderItems, { onConflict: 'orderId,productId', ignoreDuplicates: true });
-  if (itemError) throw itemError;
-
-  for (const item of items) {
-    const { error: fulfilError } = await sb.rpc('finalize_paid_order_item', {
-      p_order_id: order!.id,
-      p_product_id: item.productId,
-      p_reservation_token: reservationToken,
-    });
-    if (fulfilError) throw fulfilError;
-  }
-
-  if (orderWasCreated) {
+  if (result.firstPaidTransition) {
     await sb.from('notifications').insert({
       userId: sellerId,
       type: 'order',
       title: 'New order received',
-      message: `Order ${order!.orderNumber} has been placed. Total: £${resolvedMoney.total.toFixed(2)}`,
+      message: `Order ${result.orderNumber} has been placed. Total: £${result.sellerTotal.toFixed(2)}`,
       link: '/seller/orders',
     }).catch((err: unknown) => console.warn('Seller notification failed:', err));
 
     sendPushToUser(sb, sellerId, {
       title: 'New order received',
-      body: `Order ${order!.orderNumber} placed. Total: £${resolvedMoney.total.toFixed(2)}`,
-      data: { type: 'new_order', orderId: order!.id },
+      body: `Order ${result.orderNumber} placed. Total: £${result.sellerTotal.toFixed(2)}`,
+      data: { type: 'new_order', orderId: result.orderId },
     }).catch((err: unknown) => console.warn('Seller push failed:', err));
 
     if (orderData.buyerId) {
@@ -440,12 +442,12 @@ async function fulfilPaidOrder(
       sendPushToUser(sb, orderData.buyerId, {
         title: 'Order confirmed ✓',
         body: `Your order has been placed. We'll notify you when it ships.`,
-        data: { type: 'order_confirmed', orderId: order!.id },
+        data: { type: 'order_confirmed', orderId: result.orderId },
       }).catch((err: unknown) => console.warn('Buyer push failed:', err));
     }
   }
 
-  return { orderId: order!.id, orderNumber: order!.orderNumber, sellerId, sellerTotal: resolvedMoney.total };
+  return result;
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
@@ -460,9 +462,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
 
   const { data: pendingSession, error } = await supabase!
     .from('payment_sessions')
-    .select('id, status, metadata')
+    .select('id, status, metadata, createdAt')
     .eq('stripeSessionId', session.id)
-    .maybeSingle<{ id: string; status: string; metadata: OrderData }>();
+    .maybeSingle<{ id: string; status: string; metadata: OrderData; createdAt: string }>();
 
   if (error || !pendingSession) {
     throw new Error(`No payment_sessions row found for Stripe session ${session.id}`);
@@ -483,14 +485,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     throw new Error(`Unexpected checkout currency for session ${session.id}`);
   }
 
-  const result = await fulfilPaidOrder(supabase!, paymentIntentId, orderData);
+  const result = await fulfilPaidOrder(supabase!, pendingSession.id, paymentIntentId, orderData);
 
-  const { error: updateError } = await supabase!
-    .from('payment_sessions')
-    .update({ orderId: result.orderId, stripePaymentIntent: paymentIntentId, amount: expectedPence / 100, status: 'completed' })
-    .eq('id', pendingSession.id)
-    .eq('status', 'pending');
-  if (updateError) throw updateError;
+  // Email is a post-commit side effect. Never duplicate it on an idempotent
+  // materialization retry that did not perform the first paid transition.
+  if (!result.firstPaidTransition) return;
 
   const { data: sellerUser } = await supabase!
     .from('users')
@@ -554,9 +553,9 @@ async function handleMobilePaymentIntentSucceeded(
 ): Promise<void> {
   const { data: pendingSession, error } = await sb
     .from('payment_sessions')
-    .select('id, status, metadata')
+    .select('id, status, metadata, createdAt')
     .eq('stripePaymentIntent', paymentIntent.id)
-    .maybeSingle<{ id: string; status: string; metadata: OrderData }>();
+    .maybeSingle<{ id: string; status: string; metadata: OrderData; createdAt: string }>();
 
   if (error) throw error;
   if (!pendingSession || pendingSession.status === 'completed') return;
@@ -574,13 +573,7 @@ async function handleMobilePaymentIntentSucceeded(
     throw new Error(`Unexpected PaymentIntent currency for ${paymentIntent.id}`);
   }
 
-  const result = await fulfilPaidOrder(sb, paymentIntent.id, orderData);
-  const { error: updateError } = await sb
-    .from('payment_sessions')
-    .update({ orderId: result.orderId, stripePaymentIntent: paymentIntent.id, amount: expectedPence / 100, status: 'completed' })
-    .eq('id', pendingSession.id)
-    .eq('status', 'pending');
-  if (updateError) throw updateError;
+  await fulfilPaidOrder(sb, pendingSession.id, paymentIntent.id, orderData);
 }
 
 interface PaymentSessionWithOrder {

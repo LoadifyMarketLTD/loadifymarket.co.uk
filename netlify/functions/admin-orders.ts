@@ -1,6 +1,5 @@
-import { Handler } from '@netlify/functions';
-import { createClient } from '@supabase/supabase-js';
-import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { Handler, HandlerEvent } from '@netlify/functions';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
   assessAdminReleaseEligibility,
   enforcePaymentBackedTransition,
@@ -10,6 +9,16 @@ import {
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
+interface AuthOk {
+  ok: true;
+  caller: { id: string; email: string; role: string };
+}
+interface AuthFail {
+  ok: false;
+  status: number;
+}
+type AuthResult = AuthOk | AuthFail;
+
 interface OrderListRow {
   id: string;
   orderNumber: string | null;
@@ -18,10 +27,16 @@ interface OrderListRow {
   createdAt: string | null;
   buyerId: string;
   productId: string;
+  buyerNameSnapshot?: string | null;
+  commercialSnapshotSource?: string | null;
   stripePaymentIntentId?: string | null;
   rfqId?: string | null;
   rfqResponseId?: string | null;
   escrowStatus?: string | null;
+  order_items?: Array<{
+    productTitleSnapshot?: string | null;
+    productSnapshotSource?: string | null;
+  }> | null;
 }
 
 interface ProductMetaRow {
@@ -36,6 +51,41 @@ interface PaymentSessionMetaRow {
   orderId: string;
   status: string;
   stripePaymentIntent: string | null;
+}
+
+async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient): Promise<AuthResult> {
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { ok: false, status: 401 };
+  }
+
+  const token = authHeader.substring(7).trim();
+  const { data, error } = await admin.auth.getUser(token);
+  if (error || !data?.user) {
+    return { ok: false, status: 401 };
+  }
+
+  const authUser = data.user;
+  const authEmail = (authUser.email || '').toLowerCase().trim();
+  if (!authEmail) {
+    return { ok: false, status: 401 };
+  }
+
+  // Service-role access bypasses RLS. Never trust a role embedded in an older
+  // JWT as sufficient authority: resolve the current platform account state and
+  // require an active admin before any read or mutation through this boundary.
+  const { data: dbUser, error: dbError } = await admin
+    .from('users')
+    .select('role, isActive')
+    .eq('id', authUser.id)
+    .maybeSingle<{ role: string | null; isActive: boolean | null }>();
+
+  if (dbError || !dbUser || dbUser.role !== 'admin' || dbUser.isActive !== true) {
+    return { ok: false, status: 403 };
+  }
+
+  return { ok: true, caller: { id: authUser.id, email: authEmail, role: 'admin' } };
 }
 
 function formatDate(iso: string | null | undefined): string {
@@ -76,7 +126,7 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const auth = await authenticateActiveAccount(event, admin, ['admin']);
+  const auth = await authenticateAdmin(event, admin);
   if (!auth.ok) {
     return {
       statusCode: auth.status,
@@ -89,7 +139,7 @@ export const handler: Handler = async (event) => {
     if (event.httpMethod === 'GET') {
       const { data: rows, error: ordersErr } = await admin
         .from('orders')
-        .select('id, orderNumber, total, status, createdAt, buyerId, productId, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus')
+        .select('id, orderNumber, total, status, createdAt, buyerId, productId, buyerNameSnapshot, commercialSnapshotSource, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus, order_items(productTitleSnapshot, productSnapshotSource)')
         .order('createdAt', { ascending: false })
         .limit(100);
 
@@ -97,21 +147,32 @@ export const handler: Handler = async (event) => {
 
       const orderRows = (rows || []) as OrderListRow[];
 
-      const buyerIds = [...new Set(orderRows.map((o: { buyerId: string | null }) => o.buyerId).filter((id): id is string => !!id))];
-      const buyerNames: Record<string, string> = {};
+      // Current buyer names are a display-only fallback for legacy rows. An
+      // authoritative post-cutover snapshot must never be replaced by today's
+      // profile value.
+      const legacyBuyerIds = [...new Set(
+        orderRows
+          .filter((o) => !o.commercialSnapshotSource || !o.buyerNameSnapshot?.trim())
+          .map((o) => o.buyerId)
+          .filter((id): id is string => !!id),
+      )];
+      const legacyBuyerNames: Record<string, string> = {};
 
-      if (buyerIds.length > 0) {
+      if (legacyBuyerIds.length > 0) {
         const { data: buyers } = await admin
           .from('users')
           .select('id, firstName, lastName')
-          .in('id', buyerIds);
+          .in('id', legacyBuyerIds);
         (buyers ?? []).forEach((b: { id: string; firstName?: string | null; lastName?: string | null }) => {
           const name = [b.firstName, b.lastName].filter((n): n is string => !!n).join(' ').trim();
-          buyerNames[b.id] = name || 'Customer';
+          legacyBuyerNames[b.id] = name || 'Customer';
         });
       }
 
-      const productIds = [...new Set(orderRows.map((o: { productId: string | null }) => o.productId).filter((id): id is string => !!id))];
+      // Product metadata remains necessary for the payment/release guard. Its
+      // title is only a legacy display fallback; post-cutover display comes from
+      // the immutable order-item snapshot.
+      const productIds = [...new Set(orderRows.map((o) => o.productId).filter((id): id is string => !!id))];
       const productTitles: Record<string, string> = {};
       const productMeta = new Map<string, ProductMetaRow>();
 
@@ -160,12 +221,17 @@ export const handler: Handler = async (event) => {
           },
           paymentEvidence,
         });
+        const snapshotItem = o.order_items?.find((item) => item.productSnapshotSource != null) ?? null;
 
         return {
           id: o.id,
           orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
-          buyer: buyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : '—'),
-          product: productTitles[o.productId] ?? '—',
+          buyer: o.commercialSnapshotSource && o.buyerNameSnapshot?.trim()
+            ? o.buyerNameSnapshot.trim()
+            : legacyBuyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : '—'),
+          product: snapshotItem
+            ? snapshotItem.productTitleSnapshot || '—'
+            : productTitles[o.productId] ?? '—',
           total: o.total ?? 0,
           status: o.status ?? 'paid',
           date: formatDate(o.createdAt),
@@ -299,7 +365,7 @@ export const handler: Handler = async (event) => {
         ) {
           await admin.from('order_events').insert({
             orderId,
-            actorId: auth.actor.id,
+            actorId: auth.caller.id,
             event: 'admin_unpaid_transition_override',
             metadata: {
               reason: overrideReason,
@@ -397,7 +463,7 @@ export const handler: Handler = async (event) => {
 
         await admin.from('order_events').insert({
           orderId,
-          actorId: auth.actor.id,
+          actorId: auth.caller.id,
           event: 'admin_unpaid_lock_release',
           metadata: {
             reason,
