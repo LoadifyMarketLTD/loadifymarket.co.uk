@@ -1,19 +1,10 @@
-/* Native Capacitor-only layout corrections.
- * Keep the regular website and mobile browser untouched.
+/* Native Capacitor-only login corrections.
+ * The selector intentionally matches the existing Login.tsx root exactly so
+ * no marketplace, dashboard, checkout, admin, or other mobile surface inherits
+ * these layout rules.
  */
 
-html.capacitor-native,
-html.capacitor-native body,
-html.capacitor-native #root {
-  min-height: 100%;
-  background: var(--background);
-}
-
-/* The login page currently reserves the global web header with inline styles.
- * In the APK that header is not part of the native login surface, so remove the
- * web offset and size the screen against the dynamic viewport instead.
- */
-html.capacitor-native #main-content {
+html.capacitor-native #main-content.flex.bg-background {
   margin-top: 0 !important;
   min-height: 100dvh !important;
   padding-top: env(safe-area-inset-top, 0px);
@@ -22,28 +13,27 @@ html.capacitor-native #main-content {
   overscroll-behavior-y: none;
 }
 
-html.capacitor-native #main-content > div:last-child {
+html.capacitor-native #main-content.flex.bg-background > div:last-child {
   min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
 }
 
-/* Do not vertically recenter the whole form when an error/notice changes its
- * height. Keep a stable top anchor and let the page scroll only when required.
+/* Login.tsx vertically centres this wrapper on the website. In the native app,
+ * an OAuth notice changes the card height and therefore shifts the whole form.
+ * Anchor only the native login form to the top instead.
  */
-html.capacitor-native #main-content > div:last-child > div {
+html.capacitor-native #main-content.flex.bg-background > div:last-child > div {
   align-items: flex-start !important;
   padding-top: 1rem !important;
   padding-bottom: 1.5rem !important;
 }
 
-html.capacitor-native #main-content > div:last-child > div > div {
+html.capacitor-native #main-content.flex.bg-background > div:last-child > div > div {
   margin-left: auto;
   margin-right: auto;
   max-width: 32rem;
 }
 
-/* Leave a small protected zone above Android gesture / three-button navigation
- * so the final account CTA never sits underneath system chrome.
- */
-html.capacitor-native #main-content > div:last-child > div > div > p:last-child {
+/* Protect the final account CTA from Android gesture / three-button navigation. */
+html.capacitor-native #main-content.flex.bg-background > div:last-child > div > div > p:last-child {
   margin-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
