@@ -4,7 +4,7 @@ import { isCapacitorNative } from './capacitorUtils';
 export const PUSH_TOKEN_STORAGE_KEY = 'loadify:push-token:last-registered';
 export const PUSH_TOKEN_USER_STORAGE_KEY = 'loadify:push-token:last-user';
 export const PUSH_TOKEN_REGISTRATION_VERSION_KEY = 'loadify:push-token:registration-version';
-export const PUSH_TOKEN_REGISTRATION_VERSION = '2';
+export const PUSH_TOKEN_REGISTRATION_VERSION = '3';
 
 export interface PushRegistrationCache {
   token: string | null;
@@ -32,11 +32,29 @@ function readLegacyLocalStorage(): PushRegistrationCache {
   };
 }
 
+function hasLegacyCache(cache: PushRegistrationCache): boolean {
+  return cache.token != null || cache.userId != null || cache.version != null;
+}
+
 function clearLegacyLocalStorage(): void {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(PUSH_TOKEN_STORAGE_KEY);
   window.localStorage.removeItem(PUSH_TOKEN_USER_STORAGE_KEY);
   window.localStorage.removeItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY);
+}
+
+async function removePreferenceCacheBestEffort(): Promise<void> {
+  try {
+    const { Preferences } = await import('@capacitor/preferences');
+    await Promise.allSettled([
+      Preferences.remove({ key: PUSH_TOKEN_STORAGE_KEY }),
+      Preferences.remove({ key: PUSH_TOKEN_USER_STORAGE_KEY }),
+      Preferences.remove({ key: PUSH_TOKEN_REGISTRATION_VERSION_KEY }),
+    ]);
+  } catch {
+    // The caller retains/falls back to legacy localStorage when Preferences is
+    // unavailable, so cleanup failure here must not destroy the recovery copy.
+  }
 }
 
 /**
@@ -77,6 +95,12 @@ export async function getPushRegistrationCache(): Promise<PushRegistrationCache>
 
     if (migrations.length > 0) {
       await Promise.all(migrations);
+    }
+
+    // Once durable Preferences are readable and any missing values were copied,
+    // remove every legacy copy. Leaving stale localStorage behind would become a
+    // dangerous fallback if Preferences were temporarily unavailable later.
+    if (hasLegacyCache(legacy)) {
       clearLegacyLocalStorage();
     }
 
@@ -101,6 +125,11 @@ export async function persistPushRegistrationCache(userId: string, token: string
   } catch (error) {
     console.warn('push-token: Preferences persistence failed, using legacy cache:', error);
     if (typeof window === 'undefined') throw error;
+
+    // A Promise.all write can fail after one key has already been persisted.
+    // Remove partial durable state before writing the complete fallback cache so
+    // a stale Preference value cannot override the fallback on the next read.
+    await removePreferenceCacheBestEffort();
     window.localStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
     window.localStorage.setItem(PUSH_TOKEN_USER_STORAGE_KEY, userId);
     window.localStorage.setItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY, PUSH_TOKEN_REGISTRATION_VERSION);
