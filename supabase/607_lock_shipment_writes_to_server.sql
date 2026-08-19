@@ -9,7 +9,8 @@
 --   * one customer order has at most one canonical shipment record in this model;
 --   * shipment/order status changes and their audit event are committed atomically;
 --   * identical retries are idempotent and do not duplicate lifecycle events;
---   * proof-of-delivery evidence is immutable once attached by this canonical path.
+--   * proof-of-delivery evidence is immutable and may first be attached only when
+--     the canonical shipment state is Delivered.
 
 ALTER TABLE public.shipments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shipment_events ENABLE ROW LEVEL SECURITY;
@@ -435,7 +436,7 @@ GRANT EXECUTE ON FUNCTION public.server_transition_shipment(uuid, uuid, text, te
 -- ---------------------------------------------------------------------------
 -- Atomic server mutation: immutable POD pointer + append-only audit event.
 -- A retry with the exact already-canonical path is idempotent; a different path
--- cannot overwrite established evidence.
+-- cannot overwrite established evidence. A first attachment requires Delivered.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.server_attach_shipment_proof(
   p_shipment_id uuid,
@@ -491,6 +492,11 @@ BEGIN
     END IF;
 
     RAISE EXCEPTION 'server_attach_shipment_proof: proof of delivery is already attached and cannot be overwritten'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  IF v_shipment.status <> 'Delivered' THEN
+    RAISE EXCEPTION 'server_attach_shipment_proof: proof of delivery can only be attached after the shipment is Delivered'
       USING ERRCODE = 'P0001';
   END IF;
 
@@ -565,4 +571,4 @@ COMMENT ON FUNCTION public.server_upsert_shipment(
 COMMENT ON FUNCTION public.server_transition_shipment(uuid, uuid, text, text) IS
   'Service-role-only idempotent shipment status transition with atomic audit event and mapped order state.';
 COMMENT ON FUNCTION public.server_attach_shipment_proof(uuid, uuid, text) IS
-  'Service-role-only immutable/idempotent proof-of-delivery attachment plus atomic audit event.';
+  'Service-role-only immutable/idempotent proof-of-delivery attachment; first attachment requires Delivered and appends an atomic audit event.';
