@@ -85,12 +85,33 @@ if (import.meta.env.DEV) {
   });
 }
 
-// Register the cleanup service worker so any previously cached responses are
-// cleared and the old SW is unregistered. The SW itself does no caching.
+// The service worker is a web/PWA concern, not part of the Capacitor runtime.
+// Native builds already ship versioned web assets inside the APK; layering the
+// PWA cache over those assets can keep stale bundles alive across app updates.
+// Unregister any service worker left by an older APK, and remove only Loadify's
+// own PWA caches. Regular web/PWA visitors continue to register /sw.js normally.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+    if (isCapacitorContext()) {
+      void navigator.serviceWorker.getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+        .then(async () => {
+          if (!('caches' in window)) return;
+          const cacheNames = await window.caches.keys();
+          await Promise.all(
+            cacheNames
+              .filter((name) => name.startsWith('loadify-'))
+              .map((name) => window.caches.delete(name)),
+          );
+        })
+        .catch(() => {
+          // Cleanup is best-effort; a failure must not block native startup.
+        });
+      return;
+    }
+
     navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Non-fatal — ignore registration errors
+      // Non-fatal — the website remains functional without offline caching.
     });
   });
 }

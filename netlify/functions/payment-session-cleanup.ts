@@ -43,6 +43,21 @@ export const handler = schedule('*/5 * * * *', async () => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // Accepted-offer flows can create an awaiting_payment order before a Stripe
+  // payment_session exists. Run the canonical stale-order cleanup on the same
+  // five-minute cadence as abandoned Stripe sessions. Migration 604 makes the
+  // RPC fail closed when either the order row or a linked completed payment
+  // session proves that payment exists.
+  const { data: releasedOrderCount, error: staleOrderError } = await supabase
+    .rpc('release_stale_unpaid_listing_locks');
+  if (staleOrderError) {
+    // Non-fatal: a stale-order reconciliation problem must not prevent Stripe
+    // session reconciliation from continuing below.
+    console.error('payment-session-cleanup: stale unpaid order cleanup failed:', staleOrderError.message);
+  } else if (typeof releasedOrderCount === 'number' && releasedOrderCount > 0) {
+    console.log(`payment-session-cleanup: released ${releasedOrderCount} stale unpaid order lock(s)`);
+  }
+
   const cutoff = new Date(Date.now() - PAYMENT_WINDOW_MINUTES * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from('payment_sessions')
