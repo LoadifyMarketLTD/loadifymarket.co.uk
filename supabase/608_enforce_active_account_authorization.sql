@@ -61,6 +61,41 @@ AS $$
   );
 $$;
 
+-- id / role / isActive are account-control columns. They must only be changed
+-- through a trusted server boundary running as service_role. Historical users
+-- RLS permits an authenticated owner to UPDATE their own row and permits active
+-- admins to UPDATE other rows; without this trigger either caller could mutate
+-- isActive directly and bypass the Auth-ban / push-cleanup contract.
+--
+-- auth.role() is the PostgREST JWT database role (authenticated/service_role),
+-- not application app_metadata. SQL migrations/direct database maintenance have
+-- no authenticated JWT role and service_role remains intentionally permitted.
+CREATE OR REPLACE FUNCTION public.enforce_user_account_control_boundary()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF auth.role() = 'authenticated'
+     AND (
+       NEW.id IS DISTINCT FROM OLD.id
+       OR NEW.role IS DISTINCT FROM OLD.role
+       OR NEW."isActive" IS DISTINCT FROM OLD."isActive"
+     ) THEN
+    RAISE EXCEPTION 'Account control columns are server-managed.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS enforce_user_account_control_boundary ON public.users;
+CREATE TRIGGER enforce_user_account_control_boundary
+BEFORE UPDATE OF id, role, "isActive" ON public.users
+FOR EACH ROW
+EXECUTE FUNCTION public.enforce_user_account_control_boundary();
+
 -- Keep the denormalised seller lifecycle state fail-closed with the canonical
 -- account state. The user row and this seller-status update execute in the same
 -- database transaction, so a server-side suspension cannot leave an inactive
@@ -157,6 +192,18 @@ BEGIN
   END LOOP;
 END
 $$;
+
+-- public.users is not an account-deletion API. Historical users_delete allows an
+-- active admin to DELETE another users row directly, which would bypass Auth
+-- deletion/anonymisation/audit and cascade dependent public data. Force every
+-- authenticated deletion through the trusted server-side account process.
+DROP POLICY IF EXISTS account_control_delete_server_only ON public.users;
+CREATE POLICY account_control_delete_server_only
+ON public.users
+AS RESTRICTIVE
+FOR DELETE
+TO authenticated
+USING (FALSE);
 
 -- Public marketplace content remains readable while signed in, even for an
 -- account that has been suspended. Only authenticated writes are restricted.
