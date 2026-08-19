@@ -1,7 +1,6 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { isMaintenanceMode } from './_shared/platformFlags';
-import { PRODUCT_IMAGES_BUCKET, extractOwnedProductImagePath } from './_shared/productImagePaths';
 
 type DeleteProductStatus = 'deleted' | 'not_found' | 'forbidden' | 'retained_history';
 
@@ -65,15 +64,13 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: '"id" is required' }) };
   }
 
-  // Snapshot seller/images for post-delete media cleanup and early UX errors.
-  // Ownership and retained-history safety are rechecked atomically by the DB RPC
-  // immediately before DELETE; this query is deliberately not the authority for
-  // the destructive decision.
+  // Early existence/ownership check for clear UX. The destructive authority is
+  // still the atomic DB RPC below, which repeats ownership under a row lock.
   const { data: product, error: productError } = await supabase
     .from('products')
-    .select('sellerId, images')
+    .select('sellerId')
     .eq('id', productId)
-    .maybeSingle<{ sellerId: string; images: string[] | null }>();
+    .maybeSingle<{ sellerId: string }>();
 
   if (productError) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify listing before deletion.' }) };
@@ -120,41 +117,10 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to delete listing. Please try again.' }) };
   }
 
-  // URLs uploaded by Loadify use unique object names, but the product form also
-  // supports Add URL, so another listing can intentionally reuse the same object.
-  // Never remove a storage object while another product still references its URL.
-  const ownedMedia = [...new Set(
-    (product.images ?? [])
-      .map((url) => ({
-        url,
-        path: extractOwnedProductImagePath(url, supabaseUrl, product.sellerId),
-      }))
-      .filter((entry): entry is { url: string; path: string } => Boolean(entry.path)),
-  )];
-
-  const imagePathsToRemove: string[] = [];
-  for (const image of ownedMedia) {
-    const { data: referenceRows, error: referenceError } = await supabase
-      .from('products')
-      .select('id')
-      .contains('images', [image.url])
-      .limit(1);
-
-    if (referenceError) {
-      console.error('delete-product: media reference check failed; keeping object:', referenceError.message);
-      continue;
-    }
-    if ((referenceRows?.length ?? 0) === 0) {
-      imagePathsToRemove.push(image.path);
-    }
-  }
-
-  if (imagePathsToRemove.length > 0) {
-    const { error: cleanupError } = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(imagePathsToRemove);
-    if (cleanupError) {
-      console.error('delete-product: image cleanup failed after listing delete:', cleanupError.message);
-    }
-  }
-
+  // Deliberately do not delete Storage objects here. Product image URLs can be
+  // reused through the Add URL flow, and PostgreSQL + Supabase Storage cannot be
+  // made one atomic transaction. Correctness therefore wins over eager cleanup:
+  // orphaned owned media may be reclaimed later by a dedicated, delayed GC that
+  // re-verifies references before deletion.
   return { statusCode: 200, body: JSON.stringify({ id: productId }) };
 };
