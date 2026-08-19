@@ -47,21 +47,41 @@ describe('create-payment-intent – shipping tamper protection', () => {
     vi.restoreAllMocks();
   });
 
-  function mockCommonSupabase(overrides?: { productShippingRows?: unknown[] }) {
+  function mockCommonSupabase(overrides?: {
+    productShippingRows?: unknown[];
+    productRows?: Array<typeof productRow>;
+    sellerAccount?: { id: string; role: string; isActive: boolean };
+  }) {
+    let userLookupIndex = 0;
+    const userRows = [
+      { id: 'buyer-1', role: 'buyer', isActive: true },
+      overrides?.sellerAccount ?? { id: 'seller-1', role: 'seller', isActive: true },
+    ];
+
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
         auth: {
           getUser: vi.fn().mockResolvedValue({
-            data: { user: { id: 'buyer-1', email: 'buyer@test.com' } },
+            data: { user: { id: 'buyer-1', email: 'buyer@test.com', app_metadata: {} } },
             error: null,
           }),
         },
         rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
         from: vi.fn((table: string) => {
+          if (table === 'users') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockImplementation(async () => ({
+                data: userRows[Math.min(userLookupIndex++, userRows.length - 1)],
+                error: null,
+              })),
+            };
+          }
           if (table === 'products') {
             return {
               select: vi.fn().mockReturnThis(),
-              in: vi.fn().mockResolvedValue({ data: [productRow], error: null }),
+              in: vi.fn().mockResolvedValue({ data: overrides?.productRows ?? [productRow], error: null }),
             };
           }
           if (table === 'seller_profiles') {
@@ -69,7 +89,7 @@ describe('create-payment-intent – shipping tamper protection', () => {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
               maybeSingle: vi.fn().mockResolvedValue({
-                data: { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active' },
+                data: { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active', isPaused: false },
                 error: null,
               }),
             };
@@ -113,7 +133,7 @@ describe('create-payment-intent – shipping tamper protection', () => {
     const { handler } = await import('../create-payment-intent');
     const res = await handler(
       makeEvent(
-        { ...baseBody, shippingAmount: 0.01 }, // client-tampered value
+        { ...baseBody, shippingAmount: 0.01 },
         'POST',
         { authorization: 'Bearer valid-token' },
       ),
@@ -147,7 +167,7 @@ describe('create-payment-intent – shipping tamper protection', () => {
       makeEvent(
         {
           ...baseBody,
-          shippingAmount: 0.01, // client-tampered value
+          shippingAmount: 0.01,
           shippingMethodId: '11111111-1111-1111-1111-111111111111',
         },
         'POST',
@@ -158,5 +178,36 @@ describe('create-payment-intent – shipping tamper protection', () => {
 
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.body as string).error).toMatch(/not available/i);
+  });
+
+  it('rejects a mobile payment when the seller live account is inactive even if the seller profile remains active', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
+    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+
+    vi.doMock('stripe', () => ({
+      default: vi.fn().mockImplementation(function () {
+        return {};
+      }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
+    }));
+    mockCommonSupabase({
+      productRows: [{ ...productRow, listingContext: 'service' }],
+      sellerAccount: { id: 'seller-1', role: 'seller', isActive: false },
+    });
+
+    const { handler } = await import('../create-payment-intent');
+    const res = await handler(
+      makeEvent(baseBody, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body as string).error).toMatch(/seller.*not currently available/i);
   });
 });
