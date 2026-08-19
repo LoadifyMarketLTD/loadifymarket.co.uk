@@ -12,6 +12,8 @@ import { isCapacitorNative } from '@/lib/capacitorUtils';
 
 const PUSH_TOKEN_STORAGE_KEY = 'loadify:push-token:last-registered';
 const PUSH_TOKEN_USER_STORAGE_KEY = 'loadify:push-token:last-user';
+const PUSH_TOKEN_REGISTRATION_VERSION_KEY = 'loadify:push-token:registration-version';
+const PUSH_TOKEN_REGISTRATION_VERSION = '2';
 
 function getPushPlatform(): 'android' | 'ios' {
   const platform = (
@@ -42,6 +44,7 @@ async function persistTokenRegistration(userId: string, token: string): Promise<
 
   window.localStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
   window.localStorage.setItem(PUSH_TOKEN_USER_STORAGE_KEY, userId);
+  window.localStorage.setItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY, PUSH_TOKEN_REGISTRATION_VERSION);
 }
 
 function routeFromPushAction(action: ActionPerformed): string {
@@ -83,6 +86,7 @@ export function usePushTokenRegistration(userId?: string): void {
 
     window.localStorage.removeItem(PUSH_TOKEN_STORAGE_KEY);
     window.localStorage.removeItem(PUSH_TOKEN_USER_STORAGE_KEY);
+    window.localStorage.removeItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY);
 
     void PushNotifications.unregister().catch((error) => {
       console.warn('push-token: native unregister on sign-out failed (non-fatal):', error);
@@ -114,7 +118,12 @@ export function usePushTokenRegistration(userId?: string): void {
 
       const previousToken = window.localStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
       const previousUserId = window.localStorage.getItem(PUSH_TOKEN_USER_STORAGE_KEY);
-      if (previousToken === token && previousUserId === userId) {
+      const registrationVersion = window.localStorage.getItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY);
+      if (
+        previousToken === token &&
+        previousUserId === userId &&
+        registrationVersion === PUSH_TOKEN_REGISTRATION_VERSION
+      ) {
         return;
       }
 
