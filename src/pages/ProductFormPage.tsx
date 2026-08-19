@@ -80,7 +80,6 @@ interface CustomSpec {
 
 type FormErrors = Partial<Record<string, string>>;
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`bg-surface border border-white/10 rounded-xl p-6 mb-6 shadow-lg shadow-black/20 ${className}`}>
@@ -90,7 +89,6 @@ function Section({ title, children, className = '' }: { title: string; children:
   );
 }
 
-// ─── Field error display ──────────────────────────────────────────────────────
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
   return (
@@ -114,13 +112,11 @@ export default function ProductFormPage() {
   const [publishedProductId, setPublishedProductId] = useState<string | null>(null);
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
-  // True when the product has active reservation/paid-order locks — critical fields are locked for sellers
   const [hasActiveOrders, setHasActiveOrders] = useState(false);
   const [listingLocks, setListingLocks] = useState<SellerListingLock[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [customSpecs, setCustomSpecs] = useState<CustomSpec[]>([]);
 
-  // 'service' = no stock/shipping; 'product' = physical listing with stock + shipping
   const [listingContext, setListingContext] = useState<'service' | 'product'>('product');
 
   const [formData, setFormData] = useState({
@@ -137,23 +133,15 @@ export default function ProductFormPage() {
     images: [] as string[],
     specifications: {} as Record<string, string>,
     weight: '',
-    dimensions: {
-      length: '',
-      width: '',
-      height: '',
-    },
-    palletInfo: {
-      palletCount: '',
-      itemsPerPallet: '',
-      palletType: '',
-    },
-    moq: '',                  // Wholesale / pallet: minimum order quantity
-    lotQuantity: '',          // Bulk/lot: number of items in the lot
+    dimensions: { length: '', width: '', height: '' },
+    palletInfo: { palletCount: '', itemsPerPallet: '', palletType: '' },
+    moq: '',
+    lotQuantity: '',
     brand: '',
     model: '',
     sku: '',
-    estimatedRetailValue: '', // Estimated RRP for bulk/pallet
-    manifestNotes: '',        // Stock manifest notes for bulk/pallet/clearance
+    estimatedRetailValue: '',
+    manifestNotes: '',
     shippingNotes: '',
     collectionAvailable: false,
     deliveryAvailable: true,
@@ -161,39 +149,25 @@ export default function ProductFormPage() {
 
   const extractUpdateError = async (res: Response) => {
     const payload = await res.json().catch(() => ({})) as { error?: string; code?: string; locks?: SellerListingLock[] };
-
     if (payload.code === 'LISTING_LOCKED' && Array.isArray(payload.locks)) {
       setListingLocks(payload.locks);
       setHasActiveOrders(payload.locks.length > 0);
     }
-
     return payload;
   };
 
   const fetchProduct = useCallback(async () => {
     if (!id) return;
-
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
-
+      const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
       if (error) throw error;
-
-      // Ownership check — only the seller who created the product (or admin/owner) may edit it.
       if (data.sellerId !== user?.id && user?.role !== 'admin') {
         toast({ title: 'Access denied', description: 'You do not have permission to edit this product.', variant: 'destructive' });
         navigate('/seller');
         return;
       }
-
       if (data) {
-        // Restore listing context from the saved product.
-        // Production physical listings use listingContext='product'.
-        // Any non-service legacy value is treated as physical product.
         setListingContext(data.listingContext === 'service' ? 'service' : 'product');
         const specs = data.specifications || {};
         setFormData({
@@ -221,11 +195,8 @@ export default function ProductFormPage() {
           manifestNotes: specs.manifestNotes || '',
           shippingNotes: specs.shippingNotes || '',
           collectionAvailable: specs.collectionAvailable === 'true',
-          // deliveryAvailable defaults to true for new products (not yet saved); explicit 'false' disables it
           deliveryAvailable: specs.deliveryAvailable !== 'false',
         });
-
-        // Restore custom key-value specs — strip out known structured keys
         const knownKeys = new Set([
           'shortDescription', 'salePrice', 'moq', 'lotQuantity', 'brand', 'model', 'sku',
           'estimatedRetailValue', 'manifestNotes', 'shippingNotes', 'collectionAvailable', 'deliveryAvailable',
@@ -233,40 +204,27 @@ export default function ProductFormPage() {
         const customEntries = Object.entries(specs)
           .filter(([k]) => !knownKeys.has(k))
           .map(([key, value]) => ({ key, value: String(value) }));
-        if (customEntries.length > 0) {
-          setCustomSpecs(customEntries);
-        }
+        if (customEntries.length > 0) setCustomSpecs(customEntries);
 
-        // Load the shipping methods already linked to this product
         const { data: psData } = await supabase
           .from('product_shipping')
           .select('method_id, dispatch_time')
           .eq('product_id', id);
         if (psData) {
           setSelectedShippingMethodIds(psData.map((r: { method_id: string }) => r.method_id));
-          // Use the first row's dispatch_time as the shared dispatch time
-          if (psData.length > 0 && psData[0].dispatch_time) {
-            setDispatchTime(psData[0].dispatch_time);
-          }
+          if (psData.length > 0 && psData[0].dispatch_time) setDispatchTime(psData[0].dispatch_time);
         }
 
-        // Check for blocking listing locks — sellers cannot edit critical fields once an order or
-        // active reservation is attached to the listing. Expired unpaid reservations are ignored.
         if (data.sellerId === user?.id) {
           const { data: orderLocks } = await supabase
             .from('orders')
             .select('id, orderNumber, status, createdAt')
             .eq('productId', id)
             .in('status', [...SELLER_LISTING_LOCK_STATUSES]);
-
           const derivedLocks = deriveSellerListingLocks({
             orders: orderLocks ?? [],
-            product: {
-              listingStatus: data.listingStatus ?? null,
-              reservedUntil: data.reservedUntil ?? null,
-            },
+            product: { listingStatus: data.listingStatus ?? null, reservedUntil: data.reservedUntil ?? null },
           });
-
           setListingLocks(derivedLocks);
           setHasActiveOrders(derivedLocks.length > 0);
         }
@@ -280,42 +238,25 @@ export default function ProductFormPage() {
   }, [id, user, navigate]);
 
   useEffect(() => {
-    if (id) {
-      fetchProduct();
-    } else {
-      // New listing — track start_listing event
-      trackStartListing();
-    }
+    if (id) fetchProduct();
+    else trackStartListing();
   }, [id, fetchProduct]);
 
-  // ─── Validate ──────────────────────────────────────────────────────────────
   const validate = (publishMode = false): FormErrors => {
     const e: FormErrors = {};
     if (!formData.title.trim()) e.title = 'Product title is required.';
     if (!formData.description.trim()) e.description = 'Description is required.';
     if (!formData.categoryId) e.categoryId = 'Please select a category.';
-    if (!formData.price || isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
-      e.price = 'Please enter a valid price greater than 0.';
-    }
-    if (formData.salePrice && (isNaN(parseFloat(formData.salePrice)) || parseFloat(formData.salePrice) <= 0)) {
-      e.salePrice = 'Sale price must be a positive number.';
-    }
-    if (formData.salePrice && formData.price && parseFloat(formData.salePrice) >= parseFloat(formData.price)) {
-      e.salePrice = 'Sale price must be less than the regular price.';
-    }
-    // Stock quantity only required for physical products
+    if (!formData.price || isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) e.price = 'Please enter a valid price greater than 0.';
+    if (formData.salePrice && (isNaN(parseFloat(formData.salePrice)) || parseFloat(formData.salePrice) <= 0)) e.salePrice = 'Sale price must be a positive number.';
+    if (formData.salePrice && formData.price && parseFloat(formData.salePrice) >= parseFloat(formData.price)) e.salePrice = 'Sale price must be less than the regular price.';
     if (listingContext === 'product') {
-      if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
-        e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
-      }
-      if (publishMode && selectedShippingMethodIds.length === 0) {
-        e.shipping = 'Select at least one shipping method before publishing this product.';
-      }
+      if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
+      if (publishMode && selectedShippingMethodIds.length === 0) e.shipping = 'Select at least one shipping method before publishing this product.';
     }
     return e;
   };
 
-  // ─── Build specs JSONB from form fields ────────────────────────────────────
   const buildSpecs = (): Record<string, string> => {
     const specs: Record<string, string> = {};
     if (formData.shortDescription) specs.shortDescription = formData.shortDescription;
@@ -324,53 +265,34 @@ export default function ProductFormPage() {
     if (formData.model) specs.model = formData.model;
     if (formData.sku) specs.sku = formData.sku;
     if (formData.shippingNotes) specs.shippingNotes = formData.shippingNotes;
-    // Shipping/logistics flags — stored as strings because the specifications field
-    // is typed as Record<string, string> (JSONB stored as text values)
     specs.collectionAvailable = formData.collectionAvailable ? 'true' : 'false';
     specs.deliveryAvailable = formData.deliveryAvailable ? 'true' : 'false';
-
-    // Bulk-type fields
-    if (formData.type === 'wholesale' || formData.type === 'pallet') {
-      if (formData.moq) specs.moq = formData.moq;
-    }
-    if (formData.type === 'lot' || formData.type === 'wholesale') {
-      if (formData.lotQuantity) specs.lotQuantity = formData.lotQuantity;
-    }
+    if (formData.type === 'wholesale' || formData.type === 'pallet') if (formData.moq) specs.moq = formData.moq;
+    if (formData.type === 'lot' || formData.type === 'wholesale') if (formData.lotQuantity) specs.lotQuantity = formData.lotQuantity;
     if (BULK_PRODUCT_TYPES.includes(formData.type)) {
       if (formData.estimatedRetailValue) specs.estimatedRetailValue = formData.estimatedRetailValue;
       if (formData.manifestNotes) specs.manifestNotes = formData.manifestNotes;
     }
-    // Custom key-value specs
-    for (const { key, value } of customSpecs) {
-      if (key.trim() && value.trim()) specs[key.trim()] = value.trim();
-    }
+    for (const { key, value } of customSpecs) if (key.trim() && value.trim()) specs[key.trim()] = value.trim();
     return specs;
   };
 
-  // ─── Core save function ────────────────────────────────────────────────────
   const saveProduct = async (publishMode: boolean) => {
     if (!user) return;
     const newErrors = validate(publishMode);
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      // Scroll to top to show errors
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     setErrors({});
-
     if (publishMode) setSaving(true); else setSavingDraft(true);
     try {
       const price = parseFloat(formData.price);
       const parsedStockQuantity = Number.parseInt(formData.stockQuantity || '0', 10);
       const safeStockQuantity = Number.isFinite(parsedStockQuantity) ? parsedStockQuantity : 0;
-
-      // When critical fields are locked (orders exist) and the user is a seller,
-      // only allow non-critical fields to be updated.
       const isAdmin = user.role === 'admin';
       const specs = buildSpecs();
-
-      // Build the product payload (isApproved is now set server-side via create-product / update-product)
       const productData = {
         title: formData.title,
         description: formData.description,
@@ -379,59 +301,37 @@ export default function ProductFormPage() {
         price,
         listingContext,
         stockQuantity: listingContext === 'service' ? 0 : safeStockQuantity,
-        stockStatus: listingContext === 'service' ? 'in_stock' :
-                    (safeStockQuantity > 10 ? 'in_stock' :
-                    safeStockQuantity > 0 ? 'low_stock' : 'out_of_stock'),
+        stockStatus: listingContext === 'service' ? 'in_stock' : (safeStockQuantity > 10 ? 'in_stock' : safeStockQuantity > 0 ? 'low_stock' : 'out_of_stock'),
         categoryId: formData.categoryId || null,
         subcategoryId: formData.subcategoryId || null,
         images: formData.images,
         specifications: specs,
         weight: formData.weight ? parseFloat(formData.weight) : null,
-        dimensions: (formData.dimensions.length && formData.dimensions.width && formData.dimensions.height)
-          ? formData.dimensions
-          : null,
-        palletInfo: (formData.type === 'pallet' && formData.palletInfo.palletCount)
-          ? formData.palletInfo
-          : null,
+        dimensions: (formData.dimensions.length && formData.dimensions.width && formData.dimensions.height) ? formData.dimensions : null,
+        palletInfo: (formData.type === 'pallet' && formData.palletInfo.palletCount) ? formData.palletInfo : null,
         isActive: publishMode,
       };
 
       if (id && hasActiveOrders && !isAdmin) {
-        // Locked product — only allow non-critical fields via update-product
         const { description, images, specifications, weight, dimensions, palletInfo } = productData;
         const res = await authorizedFetch('/.netlify/functions/update-product', {
           method: 'POST',
-          body: JSON.stringify({
-            id,
-            description,
-            images,
-            specifications,
-            weight,
-            dimensions,
-            palletInfo,
+          body: JSON.stringify({ id, description, images, specifications, weight, dimensions, palletInfo,
             shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
             dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
-            lockedFieldsOnly: true,
-          }),
+            lockedFieldsOnly: true }),
         });
         if (!res.ok) {
           const payload = await extractUpdateError(res);
           throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
         }
-        const lockReason = formatSellerListingLockReason(listingLocks);
-        setSuccessMessage(
-          `Only unlocked fields were saved. Stock quantity and other locked fields could not be changed because this listing is locked by ${lockReason}.`,
-        );
+        setSuccessMessage(`Only unlocked fields were saved. Stock quantity and other locked fields could not be changed because this listing is locked by ${formatSellerListingLockReason(listingLocks)}.`);
       } else if (id) {
-        // Full update via update-product
         const res = await authorizedFetch('/.netlify/functions/update-product', {
           method: 'POST',
-          body: JSON.stringify({
-            id,
-            ...productData,
+          body: JSON.stringify({ id, ...productData,
             shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
-          }),
+            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null }),
         });
         if (!res.ok) {
           const payload = await extractUpdateError(res);
@@ -439,90 +339,37 @@ export default function ProductFormPage() {
         }
         setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
       } else {
-        // Create new product via create-product (backend sets isApproved)
         const res = await authorizedFetch('/.netlify/functions/create-product', {
           method: 'POST',
-          body: JSON.stringify({
-            ...productData,
-            listingContext,
+          body: JSON.stringify({ ...productData, listingContext,
             shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
-          }),
+            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null }),
         });
         if (!res.ok) {
           const payload = await res.json().catch(() => ({}));
           throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
         }
         const created = await res.json() as { id: string; isApproved: boolean };
-
-        // Mark first product created for onboarding completion tracking.
-        // Non-fatal: onboarding checklist will still derive this from product count.
-        // Fetch all onboarding flags in a single query to avoid extra round trips.
-        const { data: spRow } = await supabase
-          .from('seller_profiles')
-          .select([
-            'firstProductCreated',
-            'profileCompleted',
-            'storeCreated',
-            'hasServiceCapability',
-            'sellerStatus',
-          ].join(', '))
+        const { data: spRow } = await supabase.from('seller_profiles')
+          .select(['firstProductCreated','profileCompleted','storeCreated','hasServiceCapability','sellerStatus'].join(', '))
           .eq('userId', user.id)
-          .maybeSingle<{
-            firstProductCreated: boolean | null;
-            profileCompleted: boolean | null;
-            storeCreated: boolean | null;
-            hasServiceCapability: boolean | null;
-            sellerStatus: string | null;
-          }>();
-
+          .maybeSingle<{ firstProductCreated: boolean | null; profileCompleted: boolean | null; storeCreated: boolean | null; hasServiceCapability: boolean | null; sellerStatus: string | null }>();
         if (!spRow?.firstProductCreated) {
-          await supabase
-            .from('seller_profiles')
-            .update({ firstProductCreated: true })
-            .eq('userId', user.id);
-
-          // The DB trigger (trg_sync_seller_onboarding) will auto-set
-          // onboardingCompleted when all other flags are also true.
-          // Force-check here using the flags we already fetched above.
-          // hasServiceCapability will be TRUE after the product insert fires the DB trigger,
-          // so we only gate on profileCompleted + storeCreated + sellerStatus here.
-          if (
-            spRow?.profileCompleted &&
-            spRow?.storeCreated &&
-            spRow?.sellerStatus !== 'suspended' &&
-            spRow?.sellerStatus !== 'rejected'
-          ) {
-            // onboardingStep 8 = all gate flags satisfied (5 wizard UI steps map to
-            // 8 DB sub-steps tracked in seller_profiles; value mirrors ONBOARDING_COMPLETE_STEP
-            // in src/pages/onboarding/SellerOnboarding.tsx).
-            await supabase
-              .from('users')
-              .update({ onboardingCompleted: true, onboardingStep: 8 })
-              .eq('id', user.id);
+          await supabase.from('seller_profiles').update({ firstProductCreated: true }).eq('userId', user.id);
+          if (spRow?.profileCompleted && spRow?.storeCreated && spRow?.sellerStatus !== 'suspended' && spRow?.sellerStatus !== 'rejected') {
+            await supabase.from('users').update({ onboardingCompleted: true, onboardingStep: 8 }).eq('id', user.id);
           }
         }
-
-        setSuccessMessage(
-          publishMode
-            ? (created.isApproved
-                ? 'Product created and is now live!'
-                : 'Product created! It will be visible after admin approval.')
-            : 'Draft saved. You can continue editing and publish when ready.'
-        );
+        setSuccessMessage(publishMode ? (created.isApproved ? 'Product created and is now live!' : 'Product created! It will be visible after admin approval.') : 'Draft saved. You can continue editing and publish when ready.');
         if (publishMode && created.id) {
           setPublishedProductId(created.id);
           trackPublishListing(created.id, formData.title);
         }
       }
-
-      // Brief success feedback, then navigate back
       setTimeout(() => navigate('/seller'), SUCCESS_REDIRECT_DELAY_MS);
     } catch (error) {
       console.error('Error saving product:', error);
-      const msg =
-        (error as { message?: string })?.message ||
-        'An unexpected error occurred. Please try again.';
+      const msg = (error as { message?: string })?.message || 'An unexpected error occurred. Please try again.';
       setErrors({ _form: `Failed to save product: ${msg}` });
     } finally {
       setSaving(false);
@@ -530,22 +377,19 @@ export default function ProductFormPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    saveProduct(true);
-  };
-
-  const handleSaveDraft = () => {
-    saveProduct(false);
-  };
+  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); saveProduct(true); };
+  const handleSaveDraft = () => { saveProduct(false); };
 
   const deleteProduct = async () => {
     if (!user || !id) return;
     setDeleting(true);
     try {
-      // product_shipping rows cascade-delete via FK ON DELETE CASCADE
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      const res = await authorizedFetch('/.netlify/functions/delete-product', {
+        method: 'POST',
+        body: JSON.stringify({ id }),
+      });
+      const payload = await res.json().catch(() => ({})) as { error?: string };
+      if (!res.ok) throw new Error(payload.error ?? `Server returned ${res.status}`);
       navigate('/seller/products');
     } catch (err) {
       console.error('Error deleting product:', err);
@@ -558,40 +402,18 @@ export default function ProductFormPage() {
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear field error on change using destructuring to avoid mutation
-    if (errors[field]) {
-      setErrors(prev => {
-        const { [field]: _removed, ...rest } = prev;
-        return rest;
-      });
-    }
+    if (errors[field]) setErrors(prev => { const { [field]: _removed, ...rest } = prev; return rest; });
   };
 
-  // ─── Custom spec helpers ────────────────────────────────────────────────────
   const addCustomSpec = () => setCustomSpecs(prev => [...prev, { key: '', value: '' }]);
   const removeCustomSpec = (i: number) => setCustomSpecs(prev => prev.filter((_, idx) => idx !== i));
-  const updateCustomSpec = (i: number, field: 'key' | 'value', val: string) => {
-    setCustomSpecs(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
-  };
+  const updateCustomSpec = (i: number, field: 'key' | 'value', val: string) => setCustomSpecs(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
 
   if (!user || !hasSellerAccess(user)) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="card text-center py-12">
-          <p className="text-slate-300">You must be a seller to access this page.</p>
-        </div>
-      </div>
-    );
+    return <div className="container mx-auto px-4 py-8"><div className="card text-center py-12"><p className="text-slate-300">You must be a seller to access this page.</p></div></div>;
   }
-
   if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-slate-400">Loading...</div>
-        </div>
-      </div>
-    );
+    return <div className="container mx-auto px-4 py-8"><div className="flex justify-center items-center h-64"><div className="text-slate-400">Loading...</div></div></div>;
   }
 
   const isBulkType = BULK_PRODUCT_TYPES.includes(formData.type);
@@ -600,811 +422,108 @@ export default function ProductFormPage() {
     <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 pt-4 md:pt-28 pb-8">
         <div className="max-w-3xl mx-auto">
-          {/* Header */}
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-white">{id ? 'Edit Listing' : 'Create New Listing'}</h1>
-            <p className="text-slate-400 mt-1 text-sm">
-              {id ? 'Update your product information below.' : 'Fill in the details below to list your product on the marketplace.'}
-            </p>
+            <p className="text-slate-400 mt-1 text-sm">{id ? 'Update your product information below.' : 'Fill in the details below to list your product on the marketplace.'}</p>
           </div>
 
-          {/* Success banner */}
           {successMessage && (
             <div className="mb-6 rounded-lg border overflow-hidden border-success/50 bg-success/10">
-              <div className="p-4 flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                <p className="text-success font-medium text-sm">{successMessage}</p>
-              </div>
-              {/* Post-publish share CTA — only for newly created published products */}
+              <div className="p-4 flex items-start gap-3"><CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" /><p className="text-success font-medium text-sm">{successMessage}</p></div>
               {publishedProductId && (
                 <div className="border-t px-4 py-3 space-y-2 border-success/40 bg-success/8">
-                  <p className="text-xs font-semibold text-green-200">
-                    🚀 Your product is live — share it now to get more views!
-                  </p>
+                  <p className="text-xs font-semibold text-green-200">🚀 Your product is live — share it now to get more views!</p>
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
-                        trackShareProduct('facebook', publishedProductId, formData.title);
-                        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
-                      }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#1877F2] transition-opacity hover:opacity-80"
-                    >
-                      Share on Facebook
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
-                        const text = encodeURIComponent(`Check out my product on Loadify Market: ${url}`);
-                        trackShareProduct('whatsapp', publishedProductId, formData.title);
-                        window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
-                      }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#25D366] transition-opacity hover:opacity-80"
-                    >
-                      Share on WhatsApp
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
-                        try {
-                          await copyToClipboard(url);
-                          trackCopyLink(publishedProductId);
-                          toast({ title: 'Link copied', description: 'Product link copied to clipboard.' });
-                        } catch {
-                          toast({ title: 'Could not copy', description: 'Please copy the URL manually.', variant: 'destructive' });
-                        }
-                      }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80 bg-primary"
-                    >
-                      Copy Link
-                    </button>
+                    <button type="button" onClick={() => { const url = `https://loadifymarket.co.uk/product/${publishedProductId}`; trackShareProduct('facebook', publishedProductId, formData.title); window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer'); }} className="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#1877F2] transition-opacity hover:opacity-80">Share on Facebook</button>
+                    <button type="button" onClick={() => { const url = `https://loadifymarket.co.uk/product/${publishedProductId}`; const text = encodeURIComponent(`Check out my product on Loadify Market: ${url}`); trackShareProduct('whatsapp', publishedProductId, formData.title); window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer'); }} className="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#25D366] transition-opacity hover:opacity-80">Share on WhatsApp</button>
+                    <button type="button" onClick={async () => { const url = `https://loadifymarket.co.uk/product/${publishedProductId}`; try { await copyToClipboard(url); trackCopyLink(publishedProductId); toast({ title: 'Link copied', description: 'Product link copied to clipboard.' }); } catch { toast({ title: 'Could not copy', description: 'Please copy the URL manually.', variant: 'destructive' }); } }} className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80 bg-primary">Copy Link</button>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Form-level error */}
-          {errors._form && (
-            <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-lg flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-danger flex-shrink-0" />
-              <p className="text-danger font-medium text-sm">{errors._form}</p>
+          {errors._form && <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-lg flex items-center gap-3"><AlertCircle className="h-5 w-5 text-danger flex-shrink-0" /><p className="text-danger font-medium text-sm">{errors._form}</p></div>}
+
+          {hasActiveOrders && (
+            <div className="mb-6 p-4 bg-primary-soft border border-primary/40 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-primary font-semibold text-sm">This listing is locked by order activity</p>
+                <p className="text-primary text-xs mt-0.5">Title, price, stock quantity, condition, and listing type cannot be changed while an active reservation or paid order exists. You can still edit the description, images, specifications, and shipping details.</p>
+                <ul className="mt-3 space-y-2 text-xs text-primary">{listingLocks.map((lock) => <li key={`${lock.orderId}-${lock.type}`} className="rounded-md border border-primary/25 bg-primary/5 px-3 py-2"><span className="font-semibold">{lock.orderLabel}</span><span className="mx-1.5">•</span><span className="capitalize">{lock.status.replace(/_/g, ' ')}</span><span className="mx-1.5">•</span><span>{lock.typeLabel}</span><div className="mt-1 text-[11px] text-primary/90">{lock.message}</div></li>)}</ul>
+              </div>
             </div>
           )}
 
-           {/* Listing lock banner */}
-           {hasActiveOrders && (
-             <div className="mb-6 p-4 bg-primary-soft border border-primary/40 rounded-lg flex items-start gap-3">
-               <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-               <div>
-                 <p className="text-primary font-semibold text-sm">This listing is locked by order activity</p>
-                 <p className="text-primary text-xs mt-0.5">
-                   Title, price, stock quantity, condition, and listing type cannot be changed while an active reservation or paid order exists.
-                   You can still edit the description, images, specifications, and shipping details.
-                 </p>
-                 <ul className="mt-3 space-y-2 text-xs text-primary">
-                   {listingLocks.map((lock) => (
-                     <li key={`${lock.orderId}-${lock.type}`} className="rounded-md border border-primary/25 bg-primary/5 px-3 py-2">
-                       <span className="font-semibold">{lock.orderLabel}</span>
-                       <span className="mx-1.5">•</span>
-                       <span className="capitalize">{lock.status.replace(/_/g, ' ')}</span>
-                       <span className="mx-1.5">•</span>
-                       <span>{lock.typeLabel}</span>
-                       <div className="mt-1 text-[11px] text-primary/90">{lock.message}</div>
-                     </li>
-                   ))}
-                 </ul>
-               </div>
-             </div>
-           )}
-
           <form onSubmit={handleSubmit} noValidate>
-
-            {/* ─── LISTING CONTEXT SELECTOR ─────────────────────────────── */}
             {!id && (
               <div className="bg-surface border border-white/10 rounded-xl p-6 mb-6">
                 <h2 className="text-lg font-semibold text-white mb-1">Listing Type</h2>
                 <p className="text-sm text-slate-400 mb-4">Choose whether you are listing a service or a physical product.</p>
                 <div className="flex gap-4">
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
-                    <input
-                      type="radio"
-                      name="listingContext"
-                      value="service"
-                      checked={listingContext === 'service'}
-                      onChange={() => setListingContext('service')}
-                      className="mt-0.5 accent-[#D4AF37]"
-                    />
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">Service</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
-                    </div>
-                  </label>
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'product' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
-                    <input
-                      type="radio"
-                      name="listingContext"
-                      value="product"
-                      checked={listingContext === 'product'}
-                      onChange={() => setListingContext('product')}
-                      className="mt-0.5 accent-[#D4AF37]"
-                    />
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">Physical Product</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Tangible goods — requires stock quantity and shipping setup.</p>
-                    </div>
-                  </label>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}><input type="radio" name="listingContext" value="service" checked={listingContext === 'service'} onChange={() => setListingContext('service')} className="mt-0.5 accent-[#D4AF37]" /><div><p className="font-semibold text-foreground text-sm">Service</p><p className="text-xs text-slate-400 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p></div></label>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'product' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}><input type="radio" name="listingContext" value="product" checked={listingContext === 'product'} onChange={() => setListingContext('product')} className="mt-0.5 accent-[#D4AF37]" /><div><p className="font-semibold text-foreground text-sm">Physical Product</p><p className="text-xs text-slate-400 mt-0.5">Tangible goods — requires stock quantity and shipping setup.</p></div></label>
                 </div>
               </div>
             )}
 
-            {/* ─── SECTION 1: Basic Information ─────────────────────────── */}
             <Section title="1. Basic Information">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                  Product Title {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => handleChange('title', e.target.value)}
-                  disabled={hasActiveOrders}
-                  className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.title ? 'border-red-400' : ''}`}
-                  placeholder="e.g., 100x Mixed Electronics Bundle — Various Brands"
-                />
-                <FieldError msg={errors.title} />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-300 mb-1">Short Description</label>
-                <input
-                  type="text"
-                  value={formData.shortDescription}
-                  onChange={(e) => handleChange('shortDescription', e.target.value)}
-                  maxLength={160}
-                  className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                  placeholder="One-line summary shown in search results (max 160 characters)"
-                />
-                <p className="text-xs text-slate-500 mt-1">{formData.shortDescription.length}/160</p>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Full Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => handleChange('description', e.target.value)}
-                  rows={6}
-                  className={`w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y ${errors.description ? 'border-red-400' : ''}`}
-                  placeholder="Describe your product in detail — condition, contents, brand mix, origin, etc."
-                />
-                <FieldError msg={errors.description} />
-              </div>
-
+              <div className="mb-4"><label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">Product Title {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}</label><input type="text" value={formData.title} onChange={(e) => handleChange('title', e.target.value)} disabled={hasActiveOrders} className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.title ? 'border-red-400' : ''}`} placeholder="e.g., 100x Mixed Electronics Bundle — Various Brands" /><FieldError msg={errors.title} /></div>
+              <div className="mb-4"><label className="block text-sm font-medium text-slate-300 mb-1">Short Description</label><input type="text" value={formData.shortDescription} onChange={(e) => handleChange('shortDescription', e.target.value)} maxLength={160} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="One-line summary shown in search results (max 160 characters)" /><p className="text-xs text-slate-500 mt-1">{formData.shortDescription.length}/160</p></div>
+              <div className="mb-4"><label className="block text-sm font-medium text-slate-300 mb-1">Full Description <span className="text-red-500">*</span></label><textarea value={formData.description} onChange={(e) => handleChange('description', e.target.value)} rows={6} className={`w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y ${errors.description ? 'border-red-400' : ''}`} placeholder="Describe your product in detail — condition, contents, brand mix, origin, etc." /><FieldError msg={errors.description} /></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                    Listing Type {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => handleChange('type', e.target.value)}
-                    disabled={hasActiveOrders}
-                    style={{ colorScheme: 'dark' }}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <option value="product">Single Item</option>
-                    <option value="retail">Retail Product</option>
-                    <option value="handmade">Handmade / Artisan</option>
-                    <option value="clearance">Special Offer / Discounted</option>
-                    <option value="pallet">Multi-Unit Listing</option>
-                    <option value="lot">Bundle / Mixed Lot</option>
-                    <option value="wholesale">Trade / Wholesale Price</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                    Condition {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
-                  </label>
-                  <select
-                    value={formData.condition}
-                    onChange={(e) => handleChange('condition', e.target.value)}
-                    disabled={hasActiveOrders}
-                    style={{ colorScheme: 'dark' }}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <option value="new">New</option>
-                    <option value="used">Used</option>
-                    <option value="refurbished">Refurbished</option>
-                    <option value="returns_stock">Returns Stock</option>
-                    <option value="mixed">Mixed Condition</option>
-                    <option value="other">Other</option>
-                  </select>
-                  {hasActiveOrders && (
-                    <p className="text-xs text-primary mt-1">Locked — product has active orders</p>
-                  )}
-                </div>
+                <div><label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">Listing Type {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}</label><select value={formData.type} onChange={(e) => handleChange('type', e.target.value)} disabled={hasActiveOrders} style={{ colorScheme: 'dark' }} className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}><option value="product">Single Item</option><option value="retail">Retail Product</option><option value="handmade">Handmade / Artisan</option><option value="clearance">Special Offer / Discounted</option><option value="pallet">Multi-Unit Listing</option><option value="lot">Bundle / Mixed Lot</option><option value="wholesale">Trade / Wholesale Price</option></select></div>
+                <div><label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">Condition {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}</label><select value={formData.condition} onChange={(e) => handleChange('condition', e.target.value)} disabled={hasActiveOrders} style={{ colorScheme: 'dark' }} className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}><option value="new">New</option><option value="used">Used</option><option value="refurbished">Refurbished</option><option value="returns_stock">Returns Stock</option><option value="mixed">Mixed Condition</option><option value="other">Other</option></select>{hasActiveOrders && <p className="text-xs text-primary mt-1">Locked — product has active orders</p>}</div>
               </div>
             </Section>
 
-            {/* ─── SECTION 2: Category ──────────────────────────────────── */}
-            <Section title="2. Category">
-              {errors.categoryId && (
-                <div className="mb-3 p-2 bg-red-950/30 border border-danger/30 rounded flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                  <p className="text-xs text-danger">{errors.categoryId}</p>
-                </div>
-              )}
-              <CategorySelector
-                selectedCategoryId={formData.categoryId}
-                selectedSubcategoryId={formData.subcategoryId}
-                onCategoryChange={(categoryId) => {
-                  handleChange('categoryId', categoryId);
-                }}
-                onSubcategoryChange={(subcategoryId) => handleChange('subcategoryId', subcategoryId)}
-              />
-            </Section>
+            <Section title="2. Category">{errors.categoryId && <div className="mb-3 p-2 bg-red-950/30 border border-danger/30 rounded flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" /><p className="text-xs text-danger">{errors.categoryId}</p></div>}<CategorySelector selectedCategoryId={formData.categoryId} selectedSubcategoryId={formData.subcategoryId} onCategoryChange={(categoryId) => handleChange('categoryId', categoryId)} onSubcategoryChange={(subcategoryId) => handleChange('subcategoryId', subcategoryId)} /></Section>
 
-            {/* ─── SECTION 3: Pricing ───────────────────────────────────── */}
             <Section title="3. Pricing">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                    Price (£) {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={formData.price}
-                    onChange={(e) => handleChange('price', normalizeDecimal(e.target.value))}
-                    disabled={hasActiveOrders}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.price ? 'border-red-400' : ''}`}
-                    placeholder="0.00"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Enter the VAT-inclusive price (20% VAT applied)</p>
-                  <FieldError msg={errors.price} />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Sale / Discounted Price (£)
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={formData.salePrice}
-                    onChange={(e) => handleChange('salePrice', normalizeDecimal(e.target.value))}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${errors.salePrice ? 'border-red-400' : ''}`}
-                    placeholder="Optional — leave blank if no discount"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Optional. Must be lower than the regular price.</p>
-                  <FieldError msg={errors.salePrice} />
-                </div>
+                <div><label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">Price (£) {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}</label><input type="text" inputMode="decimal" value={formData.price} onChange={(e) => handleChange('price', normalizeDecimal(e.target.value))} disabled={hasActiveOrders} className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.price ? 'border-red-400' : ''}`} placeholder="0.00" /><p className="text-xs text-slate-500 mt-1">Enter the VAT-inclusive price (20% VAT applied)</p><FieldError msg={errors.price} /></div>
+                <div><label className="block text-sm font-medium text-slate-300 mb-1">Sale / Discounted Price (£)</label><input type="text" inputMode="decimal" value={formData.salePrice} onChange={(e) => handleChange('salePrice', normalizeDecimal(e.target.value))} className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${errors.salePrice ? 'border-red-400' : ''}`} placeholder="Optional — leave blank if no discount" /><p className="text-xs text-slate-500 mt-1">Optional. Must be lower than the regular price.</p><FieldError msg={errors.salePrice} /></div>
               </div>
-
-              {formData.price && (
-                <div className="mt-3 p-3 bg-surface border border-white/10 rounded-[14px] text-sm text-slate-400">
-                  {(() => {
-                    const priceNum = parseFloat(formData.price || '0');
-                    const exVat = priceNum / 1.2;
-                    const vatAmt = priceNum - exVat;
-                    return (
-                      <>
-                        <span className="font-medium">Price ex-VAT: </span>
-                        £{exVat.toFixed(2)}
-                        {' '}<span className="text-slate-500">(20% VAT: £{vatAmt.toFixed(2)})</span>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
+              {formData.price && <div className="mt-3 p-3 bg-surface border border-white/10 rounded-[14px] text-sm text-slate-400">{(() => { const priceNum = parseFloat(formData.price || '0'); const exVat = priceNum / 1.2; const vatAmt = priceNum - exVat; return <><span className="font-medium">Price ex-VAT: </span>£{exVat.toFixed(2)}{' '}<span className="text-slate-500">(20% VAT: £{vatAmt.toFixed(2)})</span></>; })()}</div>}
             </Section>
 
-            {/* ─── SECTION 4: Inventory ─────────────────────────────────── */}
+            {listingContext === 'product' && <Section title="4. Inventory"><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">Stock Quantity {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}</label><input type="number" min="0" value={formData.stockQuantity} onChange={(e) => handleChange('stockQuantity', e.target.value)} disabled={hasActiveOrders} className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.stockQuantity ? 'border-red-400' : ''}`} placeholder="0" /><FieldError msg={errors.stockQuantity} /></div><div><label className="block text-sm font-medium text-slate-300 mb-1">Stock Status</label><div className="w-full h-12 rounded-[14px] border border-white/10 bg-surface/50 cursor-default text-sm text-slate-400 flex items-center px-3">{(() => { const qty = parseInt(formData.stockQuantity || '0', 10); if (isNaN(qty)) return '— Enter quantity above'; if (qty > 10) return '✅ In Stock'; if (qty > 0) return '⚠️ Low Stock'; return '❌ Out of Stock'; })()}</div><p className="text-xs text-slate-500 mt-1">Calculated automatically from quantity</p></div></div>{(formData.type === 'wholesale' || formData.type === 'pallet') && <div className="mt-4"><label className="block text-sm font-medium text-slate-300 mb-1">Minimum Order Quantity (MOQ)</label><input type="number" min="1" value={formData.moq} onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all max-w-xs" placeholder="e.g., 10" /><p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p></div>}</Section>}
+
+            <Section title="5. Product Images"><p className="text-sm text-slate-400 mb-4">Upload up to 10 images. The first image will be your main product photo. Use clear, well-lit photos showing the actual product.</p><ImageUpload images={formData.images} onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))} maxImages={10} /></Section>
+
             {listingContext === 'product' && (
-            <Section title="4. Inventory">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                    Stock Quantity {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.stockQuantity}
-                    onChange={(e) => handleChange('stockQuantity', e.target.value)}
-                    disabled={hasActiveOrders}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.stockQuantity ? 'border-red-400' : ''}`}
-                    placeholder="0"
-                  />
-                  <FieldError msg={errors.stockQuantity} />
+              <Section title="6. Dimensions &amp; Shipping">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  {(['length','width','height'] as const).map((dimension) => <div key={dimension}><label className="block text-sm font-medium text-slate-300 mb-1">{dimension[0].toUpperCase()+dimension.slice(1)} (cm)</label><input type="text" inputMode="decimal" value={formData.dimensions[dimension]} onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, [dimension]: normalizeDecimal(e.target.value) } }))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="0" /></div>)}
+                  <div><label className="block text-sm font-medium text-slate-300 mb-1">Weight (kg)</label><input type="text" inputMode="decimal" value={formData.weight} onChange={(e) => handleChange('weight', normalizeDecimal(e.target.value))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="0" /></div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Stock Status</label>
-                  <div className="w-full h-12 rounded-[14px] border border-white/10 bg-surface/50 cursor-default text-sm text-slate-400 flex items-center px-3">
-                    {(() => {
-                      const qty = parseInt(formData.stockQuantity || '0', 10);
-                      if (isNaN(qty)) return '— Enter quantity above';
-                      if (qty > 10) return '✅ In Stock';
-                      if (qty > 0) return '⚠️ Low Stock';
-                      return '❌ Out of Stock';
-                    })()}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">Calculated automatically from quantity</p>
-                </div>
-              </div>
-
-              {(formData.type === 'wholesale' || formData.type === 'pallet') && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Minimum Order Quantity (MOQ)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.moq}
-                    onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all max-w-xs"
-                    placeholder="e.g., 10"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p>
-                </div>
-              )}
-            </Section>
-            )} {/* end listingContext === 'product' — Inventory section */}
-
-            {/* ─── SECTION 5: Media ─────────────────────────────────────── */}
-            <Section title="5. Product Images">
-              <p className="text-sm text-slate-400 mb-4">
-                Upload up to 10 images. The first image will be your main product photo.
-                Use clear, well-lit photos showing the actual product.
-              </p>
-              <ImageUpload
-                images={formData.images}
-                onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
-                maxImages={10}
-              />
-            </Section>
-
-            {/* ─── SECTION 6: Dimensions & Shipping ────────────────────── */}
-            {listingContext === 'product' && (
-            <Section title="6. Dimensions &amp; Shipping">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Length (cm)</label>
-                  <input
-                    type="text" inputMode="decimal"
-                    value={formData.dimensions.length}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, length: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Width (cm)</label>
-                  <input
-                    type="text" inputMode="decimal"
-                    value={formData.dimensions.width}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, width: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Height (cm)</label>
-                  <input
-                    type="text" inputMode="decimal"
-                    value={formData.dimensions.height}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, height: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Weight (kg)</label>
-                  <input
-                    type="text" inputMode="decimal"
-                    value={formData.weight}
-                    onChange={(e) => handleChange('weight', normalizeDecimal(e.target.value))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-300 mb-1">Shipping / Delivery Notes</label>
-                <input
-                  type="text"
-                  value={formData.shippingNotes}
-                  onChange={(e) => handleChange('shippingNotes', e.target.value)}
-                  className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                  placeholder="e.g., Fragile — handle with care, collection preferred for large items"
-                />
-              </div>
-
-              <div className="flex gap-6 mb-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.collectionAvailable}
-                    onChange={(e) => setFormData(prev => ({ ...prev, collectionAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary/40"
-                  />
-                  <span className="text-sm text-slate-300">Collection available</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.deliveryAvailable}
-                    onChange={(e) => setFormData(prev => ({ ...prev, deliveryAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary/40"
-                  />
-                  <span className="text-sm text-slate-300">Delivery available</span>
-                </label>
-              </div>
-
-              {formData.type !== 'pallet' ? (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Shipping Methods</h3>
-                  <p className="text-xs text-slate-400 mb-3">Select the shipping options you offer for this product.</p>
-                  <ShippingMethodSelector
-                    selectedMethodIds={selectedShippingMethodIds}
-                    onChange={setSelectedShippingMethodIds}
-                  />
-                  {errors.shipping && (
-                    <p className="text-red-400 text-xs mt-2">{errors.shipping}</p>
-                  )}
-                  {selectedShippingMethodIds.length > 0 && (
-                    <div className="mt-3">
-                      <label className="block text-sm font-medium text-slate-300 mb-1">Estimated Dispatch Time</label>
-                      <input
-                        type="text"
-                        value={dispatchTime}
-                        onChange={(e) => setDispatchTime(e.target.value)}
-                        className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                        placeholder="e.g. 1–2 working days"
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="p-3 bg-blue-950/30 border border-blue-500/20 rounded-lg">
-                  <p className="text-sm text-slate-300">
-                    <strong>Pallet &amp; bulk listings</strong> — ensure your shipping details and dimensions are accurate so buyers can arrange collection or delivery.
-                  </p>
-                  <div className="mt-4">
-                    <h3 className="text-sm font-semibold text-slate-300 mb-2">Shipping Methods</h3>
-                    <p className="text-xs text-slate-400 mb-3">Select at least one delivery option before publishing this product.</p>
-                    <ShippingMethodSelector
-                      selectedMethodIds={selectedShippingMethodIds}
-                      onChange={setSelectedShippingMethodIds}
-                    />
-                    {errors.shipping && (
-                      <p className="text-red-400 text-xs mt-2">{errors.shipping}</p>
-                    )}
-                    {selectedShippingMethodIds.length > 0 && (
-                      <div className="mt-3">
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Estimated Dispatch Time</label>
-                        <input
-                          type="text"
-                          value={dispatchTime}
-                          onChange={(e) => setDispatchTime(e.target.value)}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                          placeholder="e.g. 1-2 working days"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </Section>
-            )} {/* end listingContext === 'product' — Dimensions & Shipping section */}
-
-            {/* ─── SECTION 7: Specifications ────────────────────────────── */}
-            <Section title="7. Specifications">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Brand</label>
-                  <input
-                    type="text"
-                    value={formData.brand}
-                    onChange={(e) => handleChange('brand', e.target.value)}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                    placeholder="e.g., Samsung"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Model</label>
-                  <input
-                    type="text"
-                    value={formData.model}
-                    onChange={(e) => handleChange('model', e.target.value)}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                    placeholder="e.g., Galaxy S23"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">SKU / Internal Code</label>
-                  <input
-                    type="text"
-                    value={formData.sku}
-                    onChange={(e) => handleChange('sku', e.target.value)}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                    placeholder="Your ref code"
-                  />
-                </div>
-              </div>
-
-              {/* Custom key-value specs */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-slate-300">Additional Specifications</label>
-                  <button
-                    type="button"
-                    onClick={addCustomSpec}
-                    className="text-xs text-primary hover:text-primary flex items-center gap-1 font-medium"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Spec
-                  </button>
-                </div>
-                {customSpecs.length === 0 && (
-                  <p className="text-xs text-slate-500 mb-2">
-                    Add any extra attributes relevant to your product (e.g., Colour, Material, Storage Capacity).
-                  </p>
-                )}
-                <div className="space-y-2">
-                  {customSpecs.map((spec, i) => (
-                    <div key={i} className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        value={spec.key}
-                        onChange={(e) => updateCustomSpec(i, 'key', e.target.value)}
-                        className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all flex-1"
-                        placeholder="Attribute name (e.g., Colour)"
-                      />
-                      <input
-                        type="text"
-                        value={spec.value}
-                        onChange={(e) => updateCustomSpec(i, 'value', e.target.value)}
-                        className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all flex-1"
-                        placeholder="Value (e.g., Black)"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeCustomSpec(i)}
-                        className="p-2 text-red-500 hover:text-danger flex-shrink-0"
-                        aria-label="Remove spec"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Section>
-
-            {/* ─── SECTION 8: Listing Type Details (conditional) ─────────── */}
-            {isBulkType && (
-              <Section title="8. Listing Type Details">
-                {/* Pallet-specific fields */}
-                {formData.type === 'pallet' && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-slate-300 mb-3">Pallet Details</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Number of Pallets</label>
-                        <input
-                          type="number" min="0"
-                          value={formData.palletInfo.palletCount}
-                          onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletCount: e.target.value } }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                          placeholder="1"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Items per Pallet</label>
-                        <input
-                          type="number" min="0"
-                          value={formData.palletInfo.itemsPerPallet}
-                          onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, itemsPerPallet: e.target.value } }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                          placeholder="e.g., 100"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Pallet Type</label>
-                        <input
-                          type="text"
-                          value={formData.palletInfo.palletType}
-                          onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletType: e.target.value } }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                          placeholder="e.g., Euro pallet"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Wholesale fields */}
-                {formData.type === 'wholesale' && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-slate-300 mb-3">Wholesale Details</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Minimum Order Quantity (MOQ)</label>
-                        <input
-                          type="number" min="1"
-                          value={formData.moq}
-                          onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                          placeholder="e.g., 10"
-                        />
-                        <p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Units in Lot / Batch</label>
-                        <input
-                          type="number" min="1"
-                          value={formData.lotQuantity}
-                          onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                          placeholder="e.g., 100"
-                        />
-                        <p className="text-xs text-slate-500 mt-1">Total units available in this lot</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Bulk lot fields */}
-                {formData.type === 'lot' && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-slate-300 mb-3">Bulk Lot Details</h3>
-                    <div className="max-w-xs">
-                      <label className="block text-sm font-medium text-slate-300 mb-1">Number of Items in Lot</label>
-                      <input
-                        type="number" min="1"
-                        value={formData.lotQuantity}
-                        onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
-                        className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                        placeholder="e.g., 50"
-                      />
-                      <p className="text-xs text-slate-500 mt-1">Total items sold as one lot</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Shared bulk/pallet fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/10 mt-2">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Estimated Retail Value (£)</label>
-                    <input
-                      type="number" step="0.01" min="0"
-                      value={formData.estimatedRetailValue}
-                      onChange={(e) => handleChange('estimatedRetailValue', e.target.value)}
-                      className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
-                      placeholder="Optional RRP estimate"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">Approximate total retail value of the lot</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Manifest / Stock Notes</label>
-                    <textarea
-                      value={formData.manifestNotes}
-                      onChange={(e) => handleChange('manifestNotes', e.target.value)}
-                      rows={2}
-                      className="w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y"
-                      placeholder="e.g., Mixed electronics — approx 40% Grade A, 40% Grade B, 20% parts"
-                    />
-                  </div>
+                <div className="mb-4"><label className="block text-sm font-medium text-slate-300 mb-1">Shipping / Delivery Notes</label><input type="text" value={formData.shippingNotes} onChange={(e) => handleChange('shippingNotes', e.target.value)} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="e.g., Fragile — handle with care, collection preferred for large items" /></div>
+                <div className="flex gap-6 mb-4"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={formData.collectionAvailable} onChange={(e) => setFormData(prev => ({ ...prev, collectionAvailable: e.target.checked }))} className="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary/40" /><span className="text-sm text-slate-300">Collection available</span></label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={formData.deliveryAvailable} onChange={(e) => setFormData(prev => ({ ...prev, deliveryAvailable: e.target.checked }))} className="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary/40" /><span className="text-sm text-slate-300">Delivery available</span></label></div>
+                <div className={formData.type === 'pallet' ? 'p-3 bg-blue-950/30 border border-blue-500/20 rounded-lg' : ''}>
+                  {formData.type === 'pallet' && <p className="text-sm text-slate-300 mb-4"><strong>Pallet &amp; bulk listings</strong> — ensure your shipping details and dimensions are accurate so buyers can arrange collection or delivery.</p>}
+                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Shipping Methods</h3><p className="text-xs text-slate-400 mb-3">Select at least one delivery option before publishing this product.</p><ShippingMethodSelector selectedMethodIds={selectedShippingMethodIds} onChange={setSelectedShippingMethodIds} />{errors.shipping && <p className="text-red-400 text-xs mt-2">{errors.shipping}</p>}{selectedShippingMethodIds.length > 0 && <div className="mt-3"><label className="block text-sm font-medium text-slate-300 mb-1">Estimated Dispatch Time</label><input type="text" value={dispatchTime} onChange={(e) => setDispatchTime(e.target.value)} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="e.g. 1–2 working days" /></div>}
                 </div>
               </Section>
             )}
 
-            {/* ─── SECTION 9: Publish / Save ────────────────────────────── */}
+            <Section title="7. Specifications">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">{(['brand','model','sku'] as const).map((field) => <div key={field}><label className="block text-sm font-medium text-slate-300 mb-1">{field === 'sku' ? 'SKU / Internal Code' : field[0].toUpperCase()+field.slice(1)}</label><input type="text" value={formData[field]} onChange={(e) => handleChange(field, e.target.value)} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder={field === 'brand' ? 'e.g., Samsung' : field === 'model' ? 'e.g., Galaxy S23' : 'Your ref code'} /></div>)}</div>
+              <div><div className="flex items-center justify-between mb-2"><label className="text-sm font-medium text-slate-300">Additional Specifications</label><button type="button" onClick={addCustomSpec} className="text-xs text-primary hover:text-primary flex items-center gap-1 font-medium"><Plus className="h-3.5 w-3.5" />Add Spec</button></div>{customSpecs.length === 0 && <p className="text-xs text-slate-500 mb-2">Add any extra attributes relevant to your product (e.g., Colour, Material, Storage Capacity).</p>}<div className="space-y-2">{customSpecs.map((spec, i) => <div key={i} className="flex gap-2 items-center"><input type="text" value={spec.key} onChange={(e) => updateCustomSpec(i, 'key', e.target.value)} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all flex-1" placeholder="Attribute name (e.g., Colour)" /><input type="text" value={spec.value} onChange={(e) => updateCustomSpec(i, 'value', e.target.value)} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all flex-1" placeholder="Value (e.g., Black)" /><button type="button" onClick={() => removeCustomSpec(i)} className="p-2 text-red-500 hover:text-danger flex-shrink-0" aria-label="Remove spec"><Trash2 className="h-4 w-4" /></button></div>)}</div></div>
+            </Section>
+
+            {isBulkType && <Section title="8. Listing Type Details">
+              {formData.type === 'pallet' && <div className="mb-4"><h3 className="text-sm font-semibold text-slate-300 mb-3">Pallet Details</h3><div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><div><label className="block text-sm font-medium text-slate-300 mb-1">Number of Pallets</label><input type="number" min="0" value={formData.palletInfo.palletCount} onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletCount: e.target.value } }))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="1" /></div><div><label className="block text-sm font-medium text-slate-300 mb-1">Items per Pallet</label><input type="number" min="0" value={formData.palletInfo.itemsPerPallet} onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, itemsPerPallet: e.target.value } }))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="e.g., 100" /></div><div><label className="block text-sm font-medium text-slate-300 mb-1">Pallet Type</label><input type="text" value={formData.palletInfo.palletType} onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletType: e.target.value } }))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="e.g., Euro pallet" /></div></div></div>}
+              {formData.type === 'wholesale' && <div className="mb-4"><h3 className="text-sm font-semibold text-slate-300 mb-3">Wholesale Details</h3><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-slate-300 mb-1">Minimum Order Quantity (MOQ)</label><input type="number" min="1" value={formData.moq} onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="e.g., 10" /><p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p></div><div><label className="block text-sm font-medium text-slate-300 mb-1">Units in Lot / Batch</label><input type="number" min="1" value={formData.lotQuantity} onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="e.g., 100" /><p className="text-xs text-slate-500 mt-1">Total units available in this lot</p></div></div></div>}
+              {formData.type === 'lot' && <div className="mb-4"><h3 className="text-sm font-semibold text-slate-300 mb-3">Bulk Lot Details</h3><div className="max-w-xs"><label className="block text-sm font-medium text-slate-300 mb-1">Number of Items in Lot</label><input type="number" min="1" value={formData.lotQuantity} onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="e.g., 50" /><p className="text-xs text-slate-500 mt-1">Total items sold as one lot</p></div></div>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/10 mt-2"><div><label className="block text-sm font-medium text-slate-300 mb-1">Estimated Retail Value (£)</label><input type="number" step="0.01" min="0" value={formData.estimatedRetailValue} onChange={(e) => handleChange('estimatedRetailValue', e.target.value)} className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="Optional RRP estimate" /><p className="text-xs text-slate-500 mt-1">Approximate total retail value of the lot</p></div><div><label className="block text-sm font-medium text-slate-300 mb-1">Manifest / Stock Notes</label><textarea value={formData.manifestNotes} onChange={(e) => handleChange('manifestNotes', e.target.value)} rows={2} className="w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y" placeholder="e.g., Mixed electronics — approx 40% Grade A, 40% Grade B, 20% parts" /></div></div>
+            </Section>}
+
             <div className="bg-surface border border-white/10 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">
-                {id ? '9. Save Changes' : '9. Publish Listing'}
-              </h2>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="text-sm text-slate-400">
-                  {id ? (
-                    <p>Save your changes. Published listings require admin approval before going live.</p>
-                  ) : (
-                    <>
-                      <p className="font-medium text-slate-300 mb-1">Ready to list your product?</p>
-                      <p>Use <strong>Save as Draft</strong> to continue editing later, or <strong>Publish</strong> to submit for admin approval.</p>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/seller')}
-                    className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  {!id && (
-                    <button
-                      type="button"
-                      onClick={handleSaveDraft}
-                      disabled={savingDraft || saving}
-                      className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
-                    >
-                      {savingDraft ? 'Saving...' : 'Save as Draft'}
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={saving || savingDraft}
-                    className="px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover"
-                  >
-                    {saving
-                      ? (id && hasActiveOrders ? 'Saving...' : 'Publishing...')
-                      : id ? 'Save Changes' : 'Publish Listing'}
-                  </button>
-                </div>
-              </div>
-
-              {/* ── Delete listing (existing products only) ───────────────── */}
-              {id && (
-                <div className="mt-6 pt-4 border-t border-white/10">
-                  {showDeleteConfirm ? (
-                    <div className="p-4 bg-red-950/30 border border-danger/30 rounded-lg">
-                      <p className="text-sm font-medium text-red-300 mb-3">
-                        Permanently delete this listing? This cannot be undone.
-                      </p>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={deleteProduct}
-                          disabled={deleting}
-                          className="px-4 py-2 bg-red-600 text-black text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
-                        >
-                          {deleting ? 'Deleting…' : 'Yes, delete permanently'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowDeleteConfirm(false)}
-                          className="px-4 py-2 border border-white/10 text-slate-300 text-sm font-medium rounded-lg hover:bg-white/5"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(true)}
-                        disabled={hasActiveOrders}
-                        className="flex items-center gap-2 text-sm text-danger hover:text-danger font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete this listing
-                      </button>
-                      {hasActiveOrders && (
-                        <p className="text-xs text-primary">
-                          Cannot delete — this product has active or completed orders.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+              <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">{id ? '9. Save Changes' : '9. Publish Listing'}</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"><div className="text-sm text-slate-400">{id ? <p>Save your changes. Published listings require admin approval before going live.</p> : <><p className="font-medium text-slate-300 mb-1">Ready to list your product?</p><p>Use <strong>Save as Draft</strong> to continue editing later, or <strong>Publish</strong> to submit for admin approval.</p></>}</div><div className="flex items-center gap-3 flex-shrink-0"><button type="button" onClick={() => navigate('/seller')} className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors">Cancel</button>{!id && <button type="button" onClick={handleSaveDraft} disabled={savingDraft || saving} className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50">{savingDraft ? 'Saving...' : 'Save as Draft'}</button>}<button type="submit" disabled={saving || savingDraft} className="px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover">{saving ? (id && hasActiveOrders ? 'Saving...' : 'Publishing...') : id ? 'Save Changes' : 'Publish Listing'}</button></div></div>
+              {id && <div className="mt-6 pt-4 border-t border-white/10">{showDeleteConfirm ? <div className="p-4 bg-red-950/30 border border-danger/30 rounded-lg"><p className="text-sm font-medium text-red-300 mb-3">Permanently delete this listing? This cannot be undone.</p><div className="flex gap-3"><button type="button" onClick={deleteProduct} disabled={deleting} className="px-4 py-2 bg-red-600 text-black text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50">{deleting ? 'Deleting…' : 'Yes, delete permanently'}</button><button type="button" onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 border border-white/10 text-slate-300 text-sm font-medium rounded-lg hover:bg-white/5">Cancel</button></div></div> : <div className="flex flex-col gap-1"><button type="button" onClick={() => setShowDeleteConfirm(true)} disabled={hasActiveOrders} className="flex items-center gap-2 text-sm text-danger hover:text-danger font-medium disabled:opacity-40 disabled:cursor-not-allowed"><Trash2 className="h-4 w-4" />Delete this listing</button>{hasActiveOrders && <p className="text-xs text-primary">Cannot delete — this product has active or completed orders.</p>}</div>}</div>}
             </div>
-
           </form>
         </div>
       </div>
