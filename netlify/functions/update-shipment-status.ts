@@ -26,6 +26,7 @@ type ShipmentTransitionResult = {
     courier_name?: string | null;
     [key: string]: unknown;
   };
+  changed?: boolean;
 };
 
 // Helper to get user from Authorization header
@@ -42,7 +43,6 @@ async function getAuthUser(event: HandlerEvent) {
     return null;
   }
 
-  // Get user role
   const { data: userData } = await supabase
     .from('users')
     .select('*')
@@ -52,8 +52,11 @@ async function getAuthUser(event: HandlerEvent) {
   return userData;
 }
 
-// Helper to send email notifications
-async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id: string }, shipment: { tracking_number?: string | null; courier_name?: string | null }, status: string) {
+async function sendStatusEmail(
+  order: { buyerId: string; orderNumber: string; id: string },
+  shipment: { tracking_number?: string | null; courier_name?: string | null },
+  status: string,
+) {
   const emailTemplates: Record<string, { subject: string; template: string }> = {
     'Dispatched': {
       subject: 'Your order has been dispatched',
@@ -70,12 +73,9 @@ async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id
   };
 
   const emailConfig = emailTemplates[status];
-  if (!emailConfig) {
-    return; // No email for this status
-  }
+  if (!emailConfig) return;
 
   try {
-    // Get buyer info
     const { data: buyer } = await supabase
       .from('users')
       .select('email, firstName, lastName')
@@ -110,7 +110,7 @@ async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id
     });
   } catch (error) {
     console.error('Failed to send email:', error);
-    // Don't fail the whole request if email fails
+    // Post-commit notification failure must not roll back canonical shipment state.
   }
 }
 
@@ -130,7 +130,6 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // Authenticate user
     const user = await getAuthUser(event);
     if (!user) {
       return {
@@ -139,7 +138,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Only sellers and admins may update shipment status.
     if (user.role !== 'seller' && user.role !== 'admin') {
       return {
         statusCode: 403,
@@ -147,7 +145,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Rate-limit: 60 status updates per user per 60-minute window.
     const statusRl = await checkRateLimit({
       supabase,
       tableName: 'update_shipment_status_rate_limits',
@@ -162,9 +159,8 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Get shipment ID from path
     const pathParts = event.path.split('/');
-    const shipmentId = pathParts[pathParts.length - 2]; // .../shipments/:id/status
+    const shipmentId = pathParts[pathParts.length - 2];
 
     if (!shipmentId) {
       return {
@@ -191,7 +187,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Validate status
     const validStatuses = ['Pending', 'Processing', 'Dispatched', 'In Transit', 'Out for Delivery', 'Delivered', 'Returned', 'Delivery Failed'];
     if (!validStatuses.includes(status)) {
       return {
@@ -200,7 +195,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Get shipment and verify authorization before any mutation.
     const { data: shipment, error: shipmentError } = await supabase
       .from('shipments')
       .select('*, orders(*)')
@@ -224,7 +218,7 @@ export const handler: Handler = async (event) => {
     let targetOrderStatus: GuardedOrderStatus | null = null;
     if (status === 'Delivered') {
       targetOrderStatus = 'delivered';
-    } else if (status === 'Dispatched' || status === 'In Transit') {
+    } else if (status === 'Dispatched' || status === 'In Transit' || status === 'Out for Delivery') {
       targetOrderStatus = 'shipped';
     }
 
@@ -262,7 +256,6 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // Commit shipment status, audit event and mapped order status atomically.
     const { data: transition, error: transitionError } = await supabase.rpc('server_transition_shipment', {
       p_shipment_id: shipmentId,
       p_actor_id: user.id,
@@ -291,31 +284,34 @@ export const handler: Handler = async (event) => {
       throw new Error('Atomic shipment transition returned no shipment');
     }
     const updatedShipment = result.shipment;
+    const changed = result.changed === true;
 
-    // Create the buyer's in-app notification only after the canonical DB
-    // transition has committed. Notification failure remains non-fatal.
-    const { error: notificationError } = await supabase
-      .from('notifications')
-      .insert({
-        userId: shipment.buyer_id,
-        type: 'shipment',
-        title: 'Shipment update',
-        message: `Your order ${shipment.orders?.orderNumber ?? shipment.order_id} shipment status is now: ${status}.`,
-        link: '/buyer/orders',
-      });
-    if (notificationError) {
-      console.error('Failed to create shipment notification:', notificationError.message);
+    // Idempotent retries return success but must not duplicate user-facing side
+    // effects. Only a material canonical state change emits notification/email.
+    if (changed) {
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          userId: shipment.buyer_id,
+          type: 'shipment',
+          title: 'Shipment update',
+          message: `Your order ${shipment.orders?.orderNumber ?? shipment.order_id} shipment status is now: ${status}.`,
+          link: '/buyer/orders',
+        });
+      if (notificationError) {
+        console.error('Failed to create shipment notification:', notificationError.message);
+      }
+
+      await sendStatusEmail(shipment.orders, updatedShipment, status);
     }
-
-    // Send email notification for certain statuses after canonical DB commit.
-    await sendStatusEmail(shipment.orders, updatedShipment, status);
 
     return {
       statusCode: 200,
       body: JSON.stringify({ 
         success: true, 
         shipment: updatedShipment,
-        message: 'Status updated successfully'
+        changed,
+        message: changed ? 'Status updated successfully' : 'Shipment already has the requested status'
       }),
     };
   } catch (error) {
