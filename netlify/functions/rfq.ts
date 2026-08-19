@@ -27,13 +27,11 @@
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { getFeatureFlags, isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 
 const RFQ_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// ISO 4217 currency codes accepted for RFQ submissions and responses.
-// Extend this list as the platform expands to new markets.
 const ALLOWED_RFQ_CURRENCIES = new Set(['GBP', 'USD', 'EUR']);
 
 function isValidRfqEmail(value: unknown): boolean {
@@ -52,10 +50,9 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // ── Parse body ────────────────────────────────────────────────────────────
   let body: Record<string, unknown>;
   try {
     body = JSON.parse(event.body || '{}');
@@ -68,28 +65,27 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: '"op" must be one of: create, respond, accept, withdraw' }) };
   }
 
-  // ── Auth (required for respond and accept; optional for create) ──────────
-  const authHeader = event.headers['authorization'] || '';
+  // Anonymous RFQ creation remains supported. If a caller does supply a token,
+  // however, it must resolve to a live active account; a suspended account may
+  // not downgrade itself to an anonymous actor by presenting a stale JWT.
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
   let callerId: string | null = null;
   let userRole: string | null = null;
 
   if (authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const { data: authData } = await supabase.auth.getUser(token);
-    if (authData?.user) {
-      callerId = authData.user.id;
-      const { data: userRow } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', callerId)
-        .maybeSingle<{ role: string | null }>();
-      userRole = userRow?.role ?? null;
+    const auth = await authenticateActiveAccount(event, supabase);
+    if (!auth.ok) {
+      return {
+        statusCode: auth.status,
+        body: JSON.stringify({ error: auth.status === 401 ? 'Invalid authentication token' : 'Account is suspended' }),
+      };
     }
+    callerId = auth.actor.id;
+    userRole = auth.actor.role;
   }
 
   const isAdmin = userRole === 'admin';
 
-  // ── RFQ system flag (Step 5.4) ────────────────────────────────────────────
   const flags = await getFeatureFlags(supabase);
   if (!flags.rfqSystem && !isAdmin) {
     return {
@@ -98,7 +94,6 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── Maintenance mode guard ────────────────────────────────────────────────
   const maintenance = await isMaintenanceMode(supabase);
   if (maintenance && !isAdmin) {
     return {
@@ -107,9 +102,6 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── Rate limit ────────────────────────────────────────────────────────────
-  // Use authenticated user ID when available; fall back to IP for anonymous
-  // RFQ submissions so unauthenticated spam is also caught.
   const rlIdentifier =
     callerId ??
     (event.headers['x-nf-client-connection-ip'] ??
@@ -129,9 +121,6 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── Route to operation ────────────────────────────────────────────────────
-
-  // ── create ────────────────────────────────────────────────────────────────
   if (op === 'create') {
     const {
       product_name,
@@ -222,7 +211,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ id: rfq.id }) };
   }
 
-  // ── respond ───────────────────────────────────────────────────────────────
   if (op === 'respond') {
     if (!callerId || userRole !== 'seller' && !isAdmin) {
       return { statusCode: 401, body: JSON.stringify({ error: 'Seller authentication required' }) };
@@ -258,7 +246,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Verify the RFQ exists
     const { data: rfq } = await supabase
       .from('rfq_requests')
       .select('id, status')
@@ -296,7 +283,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ id: response.id }) };
   }
 
-  // ── accept ────────────────────────────────────────────────────────────────
   if (op === 'accept') {
     if (!callerId) {
       return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
@@ -307,7 +293,6 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'rfqId and responseId are required' }) };
     }
 
-    // Fetch the RFQ (caller must be the buyer)
     const { data: rfq } = await supabase
       .from('rfq_requests')
       .select('id, buyerId, buyer_email, product_name, status')
@@ -324,7 +309,6 @@ export const handler: Handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'RFQ not found' }) };
     }
 
-    // Allow: the buyer who created the RFQ (or admin)
     const isBuyer = rfq.buyerId === callerId;
     if (!isBuyer && !isAdmin) {
       return { statusCode: 403, body: JSON.stringify({ error: 'Only the buyer who submitted this RFQ can accept a quote' }) };
@@ -334,7 +318,6 @@ export const handler: Handler = async (event) => {
       return { statusCode: 409, body: JSON.stringify({ error: 'This RFQ has already been fulfilled' }) };
     }
 
-    // Fetch the accepted response
     const { data: response } = await supabase
       .from('rfq_responses')
       .select('id, sellerId, quotedPrice, currency, status')
@@ -352,9 +335,6 @@ export const handler: Handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Quote not found' }) };
     }
 
-    // Create an order/job from the accepted quote.
-    // Status 'paid' is the service-doctrine equivalent of "accepted" per migration 448
-    // (paid → accepted in service lifecycle semantics).
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert([
@@ -363,17 +343,14 @@ export const handler: Handler = async (event) => {
           sellerId: response.sellerId,
           status: 'paid',
           escrowStatus: 'held',
-          // Financial amounts from the accepted quote
           subtotal: response.quotedPrice,
           vatAmount: 0,
           shippingAmount: 0,
           discountAmount: 0,
           total: response.quotedPrice,
           commission: 0,
-          // RFQ linkage (requires migration 452_rfq_orders_linkage.sql)
           rfqId,
           rfqResponseId: responseId,
-          // Service orders have no shipping
           shippingAddress: {},
           billingAddress: {},
           deliveryMethod: 'delivery',
@@ -387,7 +364,6 @@ export const handler: Handler = async (event) => {
       return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create job from quote. Please try again.' }) };
     }
 
-    // Mark RFQ as closed and the accepted response as accepted; reject others
     await Promise.all([
       supabase.from('rfq_requests').update({ status: 'closed' }).eq('id', rfqId),
       supabase.from('rfq_responses').update({ status: 'accepted', acceptedAt: new Date().toISOString() }).eq('id', responseId),
@@ -405,7 +381,6 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── withdraw ──────────────────────────────────────────────────────────────
   if (op === 'withdraw') {
     if (!callerId || (userRole !== 'seller' && !isAdmin)) {
       return { statusCode: 401, body: JSON.stringify({ error: 'Seller authentication required' }) };
@@ -416,7 +391,6 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'responseId is required' }) };
     }
 
-    // Fetch the response — seller can only withdraw their own quote
     const { data: existingResponse } = await supabase
       .from('rfq_responses')
       .select('id, sellerId, status')
