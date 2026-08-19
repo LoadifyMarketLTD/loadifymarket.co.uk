@@ -117,7 +117,7 @@ describe('delete-product', () => {
     expect(buyerMock.deleteCalls).toHaveLength(0);
   });
 
-  it.each(['orders', 'order_items', 'offers', 'product_offers', 'product_questions', 'reviews', 'reported_listings'])(
+  it.each(['orders', 'order_items', 'offers', 'product_offers', 'product_questions', 'reviews', 'reported_listings', 'product_analytics'])(
     'blocks hard deletion when %s retains marketplace history',
     async (retainedTable) => {
       const { deleteCalls } = mockSupabase({ retainedTable });
