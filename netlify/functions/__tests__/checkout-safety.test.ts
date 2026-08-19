@@ -64,6 +64,7 @@ type MockSellerProfile = {
   stripeAccountId: string | null;
   stripeConnectStatus: string | null;
   sellerStatus: string | null;
+  isPaused?: boolean | null;
 };
 
 /**
@@ -74,6 +75,7 @@ type MockSellerProfile = {
 function makeSupabaseMock(opts: {
   authUserId?: string;
   authError?: Error | null;
+  sellerAccount?: { id: string; role: string; isActive: boolean };
   // Products returned by from('products').select(...).in(...)
   products?: Array<{
     id: string;
@@ -100,11 +102,12 @@ function makeSupabaseMock(opts: {
   const {
     authUserId = 'buyer-1',
     authError = null,
+    sellerAccount = { id: 's1', role: 'seller', isActive: true },
     products = [
       { id: 'p1', price: 20, title: 'Widget', sellerId: 's1', isActive: true, isApproved: true, stockQuantity: 10 },
     ],
     productsError = null,
-    sellerProfile = { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active' },
+    sellerProfile = { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active', isPaused: false },
     sellerProfileError = null,
     sessionInsertError = null,
     productShippingRows = [{
@@ -122,16 +125,31 @@ function makeSupabaseMock(opts: {
     disputeInsert = { error: null },
   } = opts;
 
+  let userLookupIndex = 0;
+  const liveAccounts = [
+    { id: authUserId, role: 'buyer', isActive: true },
+    sellerAccount,
+  ];
+
   return {
     createClient: vi.fn(() => ({
       auth: {
         getUser: vi.fn().mockResolvedValue({
-          data: { user: authError ? null : { id: authUserId, email: 'buyer@test.com' } },
+          data: { user: authError ? null : { id: authUserId, email: 'buyer@test.com', app_metadata: {} } },
           error: authError ?? null,
         }),
       },
       from: vi.fn((table: string) => {
         switch (table) {
+          case 'users':
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockImplementation(async () => ({
+                data: liveAccounts[Math.min(userLookupIndex++, liveAccounts.length - 1)] ?? null,
+                error: null,
+              })),
+            };
           case 'products':
             return {
               select: vi.fn().mockReturnThis(),
