@@ -182,6 +182,10 @@ WHERE u.id = sp."userId"
 -- therefore retain controlled recovery/admin access. Wrapping the stable helper
 -- in SELECT lets PostgreSQL cache it as an initPlan per statement instead of
 -- evaluating it once per row.
+--
+-- Support recovery remains available through the validated server-side public
+-- support-ticket boundary; stale authenticated sessions do not retain direct
+-- PostgREST access to private support tickets or their message history.
 DO $$
 DECLARE
   v_table text;
@@ -201,6 +205,8 @@ BEGIN
     'notifications',
     'csp_reports',
     'error_reports',
+    'support_tickets',
+    'support_ticket_messages',
     'orders',
     'order_items',
     'order_messages',
