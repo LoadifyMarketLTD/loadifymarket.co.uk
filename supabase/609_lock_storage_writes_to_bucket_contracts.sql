@@ -13,8 +13,12 @@
 -- whose intended contract is server-managed or admin-only.
 --
 -- Canonical rule after this migration:
---   * product-images: public read; seller/admin writes only under
---     sellers/{sellerId}/...;
+--   * product-images: public read; new seller uploads only under
+--     sellers/{sellerId}/...; seller/admin UPDATE/DELETE remain explicit and
+--     bucket-scoped;
+--   * existing product-images/uploads/... rows remain UPDATE/DELETE-manageable
+--     only by their active seller owner (or admin), but no new legacy-path INSERT
+--     capability is preserved;
 --   * avatars: existing bucket-specific own-folder policies remain authoritative;
 --   * documents / proof-of-delivery: existing server/admin write policies remain
 --     authoritative;
@@ -26,9 +30,13 @@ DROP POLICY IF EXISTS authenticated_insert_own_folder ON storage.objects;
 DROP POLICY IF EXISTS authenticated_update_own_objects ON storage.objects;
 DROP POLICY IF EXISTS authenticated_delete_own_objects ON storage.objects;
 
--- Restore explicit product-image update/delete capabilities that are part of the
--- original bucket contract, but scope them to the same seller path convention as
--- the canonical product image INSERT policy.
+-- Restore explicit product-image update/delete capabilities. Canonical objects
+-- use sellers/{sellerId}/... and are authorised from the live active-account
+-- helpers installed by migration 608. Production also contains historical
+-- product-image objects under uploads/...; preserve UPDATE/DELETE for those rows
+-- only when the authenticated active seller owns the existing storage object.
+-- This is compatibility for existing rows, not a legacy INSERT path: the only
+-- product-image INSERT policy remains product_images_seller_insert.
 DROP POLICY IF EXISTS product_images_update ON storage.objects;
 DROP POLICY IF EXISTS product_images_seller_update ON storage.objects;
 CREATE POLICY product_images_seller_update
@@ -41,8 +49,16 @@ USING (
     public.is_admin()
     OR (
       public.is_seller()
-      AND (storage.foldername(name))[1] = 'sellers'
-      AND (storage.foldername(name))[2] = (SELECT auth.uid())::text
+      AND (
+        (
+          (storage.foldername(name))[1] = 'sellers'
+          AND (storage.foldername(name))[2] = (SELECT auth.uid())::text
+        )
+        OR (
+          (storage.foldername(name))[1] = 'uploads'
+          AND owner = (SELECT auth.uid())
+        )
+      )
     )
   )
 )
@@ -52,8 +68,16 @@ WITH CHECK (
     public.is_admin()
     OR (
       public.is_seller()
-      AND (storage.foldername(name))[1] = 'sellers'
-      AND (storage.foldername(name))[2] = (SELECT auth.uid())::text
+      AND (
+        (
+          (storage.foldername(name))[1] = 'sellers'
+          AND (storage.foldername(name))[2] = (SELECT auth.uid())::text
+        )
+        OR (
+          (storage.foldername(name))[1] = 'uploads'
+          AND owner = (SELECT auth.uid())
+        )
+      )
     )
   )
 );
@@ -70,8 +94,16 @@ USING (
     public.is_admin()
     OR (
       public.is_seller()
-      AND (storage.foldername(name))[1] = 'sellers'
-      AND (storage.foldername(name))[2] = (SELECT auth.uid())::text
+      AND (
+        (
+          (storage.foldername(name))[1] = 'sellers'
+          AND (storage.foldername(name))[2] = (SELECT auth.uid())::text
+        )
+        OR (
+          (storage.foldername(name))[1] = 'uploads'
+          AND owner = (SELECT auth.uid())
+        )
+      )
     )
   )
 );
