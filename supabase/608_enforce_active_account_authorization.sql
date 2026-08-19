@@ -20,7 +20,7 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.users u
-    WHERE u.id = auth.uid()
+    WHERE u.id = (SELECT auth.uid())
       AND u."isActive" = TRUE
   );
 $$;
@@ -39,7 +39,7 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.users u
-    WHERE u.id = auth.uid()
+    WHERE u.id = (SELECT auth.uid())
       AND u.role = 'admin'
       AND u."isActive" = TRUE
   );
@@ -55,7 +55,7 @@ AS $$
   SELECT EXISTS (
     SELECT 1
     FROM public.users u
-    WHERE u.id = auth.uid()
+    WHERE u.id = (SELECT auth.uid())
       AND u.role = 'seller'
       AND u."isActive" = TRUE
   );
@@ -137,7 +137,9 @@ WHERE u.id = sp."userId"
 -- Account-scoped/private tables: an inactive authenticated account may neither
 -- read nor mutate its private/commercial state through PostgREST. service_role
 -- remains outside this authenticated-role policy and canonical server handlers
--- therefore retain controlled recovery/admin access.
+-- therefore retain controlled recovery/admin access. Wrapping the stable helper
+-- in SELECT lets PostgreSQL cache it as an initPlan per statement instead of
+-- evaluating it once per row.
 DO $$
 DECLARE
   v_table text;
@@ -187,7 +189,7 @@ BEGIN
       EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', v_table);
       EXECUTE format('DROP POLICY IF EXISTS active_account_access ON public.%I', v_table);
       EXECUTE format(
-        'CREATE POLICY active_account_access ON public.%I AS RESTRICTIVE FOR ALL TO authenticated USING (public.is_active_user()) WITH CHECK (public.is_active_user())',
+        'CREATE POLICY active_account_access ON public.%I AS RESTRICTIVE FOR ALL TO authenticated USING ((SELECT public.is_active_user())) WITH CHECK ((SELECT public.is_active_user()))',
         v_table
       );
     END IF;
@@ -236,15 +238,15 @@ BEGIN
       EXECUTE format('DROP POLICY IF EXISTS active_account_delete ON public.%I', v_table);
 
       EXECUTE format(
-        'CREATE POLICY active_account_insert ON public.%I AS RESTRICTIVE FOR INSERT TO authenticated WITH CHECK (public.is_active_user())',
+        'CREATE POLICY active_account_insert ON public.%I AS RESTRICTIVE FOR INSERT TO authenticated WITH CHECK ((SELECT public.is_active_user()))',
         v_table
       );
       EXECUTE format(
-        'CREATE POLICY active_account_update ON public.%I AS RESTRICTIVE FOR UPDATE TO authenticated USING (public.is_active_user()) WITH CHECK (public.is_active_user())',
+        'CREATE POLICY active_account_update ON public.%I AS RESTRICTIVE FOR UPDATE TO authenticated USING ((SELECT public.is_active_user())) WITH CHECK ((SELECT public.is_active_user()))',
         v_table
       );
       EXECUTE format(
-        'CREATE POLICY active_account_delete ON public.%I AS RESTRICTIVE FOR DELETE TO authenticated USING (public.is_active_user())',
+        'CREATE POLICY active_account_delete ON public.%I AS RESTRICTIVE FOR DELETE TO authenticated USING ((SELECT public.is_active_user()))',
         v_table
       );
     END IF;
