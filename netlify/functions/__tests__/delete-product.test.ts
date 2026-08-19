@@ -39,13 +39,8 @@ describe('delete-product', () => {
     maintenance?: boolean;
     rpcStatus?: DeleteStatus | string | null;
     rpcError?: string;
-    cleanupError?: string;
-    images?: string[];
-    reusedImageUrls?: string[];
-    referenceCheckError?: string;
   }) {
     const rpcCalls: Array<{ name: string; params: Record<string, unknown> }> = [];
-    const storageRemovals: string[][] = [];
     const callerId = args?.callerId ?? 'seller-1';
     const sellerId = args?.sellerId ?? 'seller-1';
 
@@ -61,12 +56,7 @@ describe('delete-product', () => {
         };
       }),
       storage: {
-        from: vi.fn(() => ({
-          remove: vi.fn().mockImplementation(async (paths: string[]) => {
-            storageRemovals.push(paths);
-            return { error: args?.cleanupError ? { message: args.cleanupError } : null };
-          }),
-        })),
+        from: vi.fn(() => ({ remove: vi.fn() })),
       },
       from: vi.fn((table: string) => {
         if (table === 'users') {
@@ -81,16 +71,7 @@ describe('delete-product', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({
-              data: { sellerId, images: args?.images ?? [] },
-              error: null,
-            }),
-            contains: vi.fn((_column: string, values: string[]) => ({
-              limit: vi.fn().mockResolvedValue({
-                data: args?.reusedImageUrls?.includes(values[0]) ? [{ id: 'other-product' }] : [],
-                error: args?.referenceCheckError ? { message: args.referenceCheckError } : null,
-              }),
-            })),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { sellerId }, error: null }),
           };
         }
 
@@ -103,7 +84,13 @@ describe('delete-product', () => {
       isMaintenanceMode: vi.fn().mockResolvedValue(args?.maintenance ?? false),
     }));
 
-    return { rpcCalls, storageRemovals };
+    return { rpcCalls, storageRemove: supabase.storage.from().remove };
+  }
+
+  async function importWithMock(args: Parameters<typeof mockSupabase>[0]) {
+    const state = mockSupabase(args);
+    const mod = await import('../delete-product');
+    return { ...state, ...mod };
   }
 
   it('requires authentication and seller/admin role before the atomic RPC', async () => {
@@ -178,46 +165,11 @@ describe('delete-product', () => {
     expect(res.statusCode).toBe(500);
   });
 
-  it('deletes a history-free listing and cleans only unreferenced owned Loadify media', async () => {
-    const ownedA = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo-a.jpg';
-    const ownedReused = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo-shared.jpg';
-    const otherSeller = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-2/photo-b.jpg';
-    const external = 'https://example.com/external.jpg';
-
-    const { handler, storageRemovals } = await importWithMock({
-      images: [ownedA, ownedReused, otherSeller, external],
-      reusedImageUrls: [ownedReused],
-    });
-    const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
+  it('does not delete storage objects as part of the product transaction', async () => {
+    const loaded = await importWithMock({ rpcStatus: 'deleted' });
+    const res = await loaded.handler(makeEvent({ id: 'product-1' }), {} as never);
 
     expect(res.statusCode).toBe(200);
-    expect(storageRemovals).toEqual([['sellers/seller-1/photo-a.jpg']]);
+    expect(loaded.storageRemove).not.toHaveBeenCalled();
   });
-
-  it('keeps media when the post-delete reference check cannot be verified', async () => {
-    const { handler, storageRemovals } = await importWithMock({
-      images: ['https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo.jpg'],
-      referenceCheckError: 'reference query unavailable',
-    });
-    const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
-
-    expect(res.statusCode).toBe(200);
-    expect(storageRemovals).toHaveLength(0);
-  });
-
-  it('returns success when post-delete media cleanup fails', async () => {
-    const { handler } = await importWithMock({
-      images: ['https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo.jpg'],
-      cleanupError: 'storage unavailable',
-    });
-    const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
-
-    expect(res.statusCode).toBe(200);
-  });
-
-  async function importWithMock(args: Parameters<typeof mockSupabase>[0]) {
-    const state = mockSupabase(args);
-    const mod = await import('../delete-product');
-    return { ...state, ...mod };
-  }
 });
