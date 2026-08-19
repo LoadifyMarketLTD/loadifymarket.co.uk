@@ -133,7 +133,34 @@ describe('deactivate-account', () => {
     expect(mocks.pushUpdate).not.toHaveBeenCalled();
   });
 
-  it('reports committed deactivation if seller listing cleanup needs support intervention', async () => {
+  it('continues seller and push cleanup when the database account-state write fails', async () => {
+    const mocks = installMocks({ role: 'seller', userUpdateError: { message: 'users unavailable' } });
+    const { handler } = await import('../deactivate-account');
+
+    const res = await handler(makeEvent(), {} as never);
+    const body = JSON.parse(res.body);
+
+    expect(res.statusCode).toBe(500);
+    expect(body.deactivated).toBe(false);
+    expect(mocks.sellerUpdate).toHaveBeenCalledWith({ sellerStatus: 'suspended', isPaused: true });
+    expect(mocks.productsUpdate).toHaveBeenCalledWith({ isActive: false });
+    expect(mocks.pushUpdate).toHaveBeenCalledWith({ isActive: false });
+  });
+
+  it('continues listing and push cleanup when seller-state synchronization fails', async () => {
+    const mocks = installMocks({ role: 'seller', sellerUpdateError: { message: 'seller unavailable' } });
+    const { handler } = await import('../deactivate-account');
+
+    const res = await handler(makeEvent(), {} as never);
+    const body = JSON.parse(res.body);
+
+    expect(res.statusCode).toBe(500);
+    expect(body.deactivated).toBe(true);
+    expect(mocks.productsUpdate).toHaveBeenCalledWith({ isActive: false });
+    expect(mocks.pushUpdate).toHaveBeenCalledWith({ isActive: false });
+  });
+
+  it('reports committed deactivation and still disables push if listing cleanup needs support intervention', async () => {
     const mocks = installMocks({ role: 'seller', productsUpdateError: { message: 'products unavailable' } });
     const { handler } = await import('../deactivate-account');
 
@@ -144,7 +171,7 @@ describe('deactivate-account', () => {
     expect(body.deactivated).toBe(true);
     expect(mocks.usersUpdate).toHaveBeenCalledWith({ isActive: false });
     expect(mocks.sellerUpdate).toHaveBeenCalledWith({ sellerStatus: 'suspended', isPaused: true });
-    expect(mocks.pushUpdate).not.toHaveBeenCalled();
+    expect(mocks.pushUpdate).toHaveBeenCalledWith({ isActive: false });
   });
 
   it('reports partial secure deactivation when notification cleanup fails', async () => {
