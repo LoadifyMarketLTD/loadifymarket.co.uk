@@ -1,14 +1,15 @@
 /**
  * save-admin-settings
  *
- * Persists platform_settings rows on behalf of an authenticated admin user.
- * Uses the Supabase service-role key to bypass RLS, so the admin JWT only
- * needs to be valid — no INSERT/UPDATE RLS policy is evaluated.
+ * Persists platform_settings rows on behalf of an authenticated active admin.
+ * Uses the Supabase service-role key to bypass RLS, so the server boundary must
+ * re-read live account state before any write.
  *
  * Security:
  *   – Requires Authorization: Bearer <admin-jwt>
  *   – JWT is validated via admin.auth.getUser()
- *   – Caller must have app_metadata.role === 'admin' OR users.role === 'admin'
+ *   – public.users must still exist with role=admin and isActive=true
+ *   – stale app_metadata claims are never sufficient
  *   – Only the three canonical keys are accepted: feature_flags,
  *     maintenance_mode, platform_config (unknown keys are rejected)
  *
@@ -17,44 +18,14 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import type { Handler, HandlerEvent } from '@netlify/functions';
-import { getBearerToken, jsonResponse, optionsResponse } from './_shared/http';
+import type { Handler } from '@netlify/functions';
+import { jsonResponse, optionsResponse } from './_shared/http';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 const METHODS = 'POST, OPTIONS';
 
 // Only these keys may be upserted via this endpoint.
 const ALLOWED_KEYS = new Set(['feature_flags', 'maintenance_mode', 'platform_config']);
-
-async function authenticateAdmin(event: HandlerEvent) {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) return null;
-
-  const token = getBearerToken(event);
-  if (!token) return null;
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-
-  const { data, error } = await admin.auth.getUser(token);
-  if (error || !data?.user) return null;
-
-  const authUser = data.user;
-
-  // JWT fast-path: app_metadata.role (set by migration 340 sync trigger)
-  const jwtRole = (authUser.app_metadata as Record<string, unknown> | undefined)?.role;
-  if (jwtRole === 'admin') return { admin, userId: authUser.id };
-
-  // DB fallback: query by user ID (not email) to handle edge-cases
-  const { data: dbUser } = await admin
-    .from('users')
-    .select('role')
-    .eq('id', authUser.id)
-    .maybeSingle();
-
-  if (dbUser?.role === 'admin') return { admin, userId: authUser.id };
-  return null;
-}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -70,9 +41,13 @@ export const handler: Handler = async (event) => {
     return jsonResponse(500, { error: 'Server configuration error' }, METHODS);
   }
 
-  const auth = await authenticateAdmin(event);
-  if (!auth) {
-    return jsonResponse(401, { error: 'Unauthorized' }, METHODS);
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const auth = await authenticateActiveAccount(event, admin, ['admin']);
+  if (!auth.ok) {
+    return jsonResponse(auth.status, { error: 'Unauthorized' }, METHODS);
   }
 
   let body: { settings?: Array<{ key: string; value: unknown }> } = {};
@@ -87,20 +62,16 @@ export const handler: Handler = async (event) => {
     return jsonResponse(400, { error: 'settings must be a non-empty array' }, METHODS);
   }
 
-  // Validate all keys before writing anything
+  // Validate all keys before writing anything.
   for (const row of settings) {
     if (!ALLOWED_KEYS.has(row.key)) {
       return jsonResponse(400, { error: `Unknown settings key: ${row.key}` }, METHODS);
     }
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-
   const errors: string[] = [];
   for (const row of settings) {
-    const { error } = await supabase
+    const { error } = await admin
       .from('platform_settings')
       .upsert({ key: row.key, value: row.value }, { onConflict: 'key' });
     if (error) errors.push(`${row.key}: ${error.message}`);
