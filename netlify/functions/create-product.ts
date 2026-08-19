@@ -11,6 +11,7 @@
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode, getFeatureFlags } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 
@@ -74,19 +75,22 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const authHeader = event.headers['authorization'] || '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
+  const auth = await authenticateActiveAccount(event, supabase, ['seller', 'admin']);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({
+        error: auth.status === 401 ? 'Authentication required' : 'Only active sellers can create listings',
+      }),
+    };
   }
-  const token = authHeader.substring(7);
-  const { data: authData, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !authData?.user) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
-  }
-  const callerId = authData.user.id;
+
+  const callerId = auth.actor.id;
+  const role = auth.actor.role;
+  const isAdmin = role === 'admin';
 
   const rl = await checkRateLimit({
     supabase,
@@ -99,19 +103,6 @@ export const handler: Handler = async (event) => {
   if (rl.exceeded) {
     return { statusCode: 429, body: JSON.stringify({ error: 'Too many listings created. Please try again later.' }) };
   }
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', callerId)
-    .maybeSingle<{ role: string | null }>();
-  const role = userRow?.role ?? null;
-
-  if (role !== 'seller' && role !== 'admin') {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Only sellers can create listings' }) };
-  }
-
-  const isAdmin = role === 'admin';
 
   const maintenance = await isMaintenanceMode(supabase);
   if (maintenance && !isAdmin) {
