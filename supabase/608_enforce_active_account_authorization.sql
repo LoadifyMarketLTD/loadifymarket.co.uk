@@ -61,6 +61,42 @@ AS $$
   );
 $$;
 
+-- Keep the denormalised seller lifecycle state fail-closed with the canonical
+-- account state. The user row and this seller-status update execute in the same
+-- database transaction, so a server-side suspension cannot leave an inactive
+-- seller looking commercially active because a later application write failed.
+CREATE OR REPLACE FUNCTION public.sync_seller_suspension_from_user_activity()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.role = 'seller' AND NEW."isActive" IS NOT TRUE THEN
+    UPDATE public.seller_profiles
+    SET "sellerStatus" = 'suspended'
+    WHERE "userId" = NEW.id
+      AND "sellerStatus" IS DISTINCT FROM 'suspended';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS sync_seller_suspension_from_user_activity ON public.users;
+CREATE TRIGGER sync_seller_suspension_from_user_activity
+AFTER INSERT OR UPDATE OF role, "isActive" ON public.users
+FOR EACH ROW
+EXECUTE FUNCTION public.sync_seller_suspension_from_user_activity();
+
+-- Reconcile any inactive seller rows that pre-date the trigger.
+UPDATE public.seller_profiles sp
+SET "sellerStatus" = 'suspended'
+FROM public.users u
+WHERE u.id = sp."userId"
+  AND u.role = 'seller'
+  AND u."isActive" IS NOT TRUE
+  AND sp."sellerStatus" IS DISTINCT FROM 'suspended';
+
 -- Account-scoped/private tables: an inactive authenticated account may neither
 -- read nor mutate its private/commercial state through PostgREST. service_role
 -- remains outside this authenticated-role policy and canonical server handlers
