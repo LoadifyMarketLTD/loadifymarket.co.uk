@@ -26,6 +26,11 @@ interface CreateShipmentRequest {
   shipping_cost?: unknown;
 }
 
+type ShipmentMutationResult = {
+  shipment?: Record<string, unknown>;
+  created?: boolean;
+};
+
 // Helper to get user from Authorization header
 async function getAuthUser(event: HandlerEvent) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
@@ -116,6 +121,17 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'dispatched_at') &&
+      dispatched_at !== null &&
+      (typeof dispatched_at !== 'string' || Number.isNaN(Date.parse(dispatched_at)))
+    ) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'dispatched_at must be a valid timestamp or null' }),
+      };
+    }
+
     // Shipping method/amount are commercial terms fixed by the verified checkout
     // and Stripe payment evidence. Fulfilment must never rewrite them. Reject
     // legacy/forged attempts explicitly so no caller can mistake the request for
@@ -194,72 +210,35 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Check if shipment already exists for this order
-    const { data: existingShipment } = await supabase
-      .from('shipments')
-      .select('*')
-      .eq('order_id', order_id)
-      .single();
+    // The database owns the atomic shipment + audit-event write. It rechecks
+    // actor ownership and derives buyer/seller IDs from the canonical order row.
+    const { data: mutation, error: mutationError } = await supabase.rpc('server_upsert_shipment', {
+      p_order_id: order_id,
+      p_actor_id: user.id,
+      p_courier_name: typeof courier_name === 'string' ? courier_name : null,
+      p_set_courier_name: Object.prototype.hasOwnProperty.call(body, 'courier_name'),
+      p_tracking_number: typeof tracking_number === 'string' ? tracking_number : null,
+      p_set_tracking_number: Object.prototype.hasOwnProperty.call(body, 'tracking_number'),
+      p_dispatched_at: dispatched_at ?? null,
+      p_set_dispatched_at: Object.prototype.hasOwnProperty.call(body, 'dispatched_at'),
+    });
 
-    let shipment;
-    let isNew = false;
-
-    if (existingShipment) {
-      // Update existing shipment
-      const { data, error } = await supabase
-        .from('shipments')
-        .update({
-          courier_name,
-          tracking_number,
-          ...(dispatched_at !== undefined ? { dispatched_at } : {}),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingShipment.id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-      shipment = data;
-    } else {
-      // Create new shipment
-      const { data, error } = await supabase
-        .from('shipments')
-        .insert({
-          order_id,
-          seller_id: order.sellerId,
-          buyer_id: order.buyerId,
-          courier_name,
-          tracking_number,
-          dispatched_at: dispatched_at || null,
-          status: dispatched_at ? 'Dispatched' : 'Pending',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-      shipment = data;
-      isNew = true;
-
-      // Create initial shipment event
-      await supabase
-        .from('shipment_events')
-        .insert({
-          shipment_id: shipment.id,
-          status: dispatched_at ? 'Dispatched' : 'Pending',
-          message: dispatched_at ? `Shipment dispatched on ${new Date(dispatched_at).toLocaleDateString('en-GB')}` : 'Shipment created',
-          changed_by: user.id,
-        });
+    if (mutationError) {
+      throw new Error(`Atomic shipment mutation failed: ${mutationError.message}`);
     }
+
+    const result = mutation as ShipmentMutationResult | null;
+    if (!result?.shipment) {
+      throw new Error('Atomic shipment mutation returned no shipment');
+    }
+
+    const isNew = result.created === true;
 
     return {
       statusCode: isNew ? 201 : 200,
       body: JSON.stringify({ 
         success: true, 
-        shipment,
+        shipment: result.shipment,
         message: isNew ? 'Shipment created' : 'Shipment updated'
       }),
     };
