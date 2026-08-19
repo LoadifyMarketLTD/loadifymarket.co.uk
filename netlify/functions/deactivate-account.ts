@@ -100,22 +100,19 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // The database flag is the stale-JWT backstop used by migration 608. It must
-  // be written before any best-effort cleanup is considered successful.
+  // Once Auth is blocked, every independent cleanup step is attempted even if a
+  // sibling write fails. A seller-state/listing failure must never prevent push
+  // token deactivation, and a push failure must not undo the account boundary.
+  const cleanupErrors: string[] = [];
+
   const { error: userError } = await supabase
     .from('users')
     .update({ isActive: false })
     .eq('id', auth.actor.id);
+  const databaseInactive = !userError;
   if (userError) {
     console.error('deactivate-account: users.isActive update failed:', userError.message);
-    return {
-      statusCode: 500,
-      headers: corsHeaders,
-      body: JSON.stringify({
-        deactivated: false,
-        error: 'Authentication is blocked but account deactivation requires support intervention',
-      }),
-    };
+    cleanupErrors.push('database account state');
   }
 
   if (auth.actor.role === 'seller') {
@@ -125,14 +122,7 @@ export const handler: Handler = async (event) => {
       .eq('userId', auth.actor.id);
     if (sellerError) {
       console.error('deactivate-account: seller suspension sync failed:', sellerError.message);
-      return {
-        statusCode: 500,
-        headers: corsHeaders,
-        body: JSON.stringify({
-          deactivated: true,
-          error: 'Account is deactivated but seller-state synchronization requires support intervention',
-        }),
-      };
+      cleanupErrors.push('seller state');
     }
 
     // Self-deactivation promises that the storefront stops advertising the
@@ -146,14 +136,7 @@ export const handler: Handler = async (event) => {
       .eq('isActive', true);
     if (productsError) {
       console.error('deactivate-account: seller listing hide failed:', productsError.message);
-      return {
-        statusCode: 500,
-        headers: corsHeaders,
-        body: JSON.stringify({
-          deactivated: true,
-          error: 'Account is deactivated but listing visibility cleanup requires support intervention',
-        }),
-      };
+      cleanupErrors.push('listing visibility');
     }
   }
 
@@ -164,12 +147,27 @@ export const handler: Handler = async (event) => {
     .eq('isActive', true);
   if (pushError) {
     console.error('deactivate-account: push token cleanup failed:', pushError.message);
+    cleanupErrors.push('notification cleanup');
+  }
+
+  if (!databaseInactive) {
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        deactivated: false,
+        error: 'Authentication is blocked but database deactivation requires support intervention',
+      }),
+    };
+  }
+
+  if (cleanupErrors.length > 0) {
     return {
       statusCode: 500,
       headers: corsHeaders,
       body: JSON.stringify({
         deactivated: true,
-        error: 'Account is deactivated but notification cleanup requires support intervention',
+        error: 'Account is deactivated but follow-up cleanup requires support intervention',
       }),
     };
   }
