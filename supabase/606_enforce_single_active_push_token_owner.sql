@@ -11,6 +11,10 @@
 -- Existing duplicate active ownership is reconciled deterministically before
 -- the unique index is created. The most recently updated row wins; createdAt
 -- and id provide stable tie-breakers. Historical rows are retained inactive.
+-- Hold a short write-conflicting lock while reconciling and installing the
+-- invariant so no registration can slip between those two operations.
+
+LOCK TABLE public.push_tokens IN SHARE ROW EXCLUSIVE MODE;
 
 WITH ranked_active AS (
   SELECT
