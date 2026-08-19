@@ -70,7 +70,8 @@ COMMENT ON INDEX public.shipments_one_per_order IS
 -- Atomic + idempotent server mutation: create/update shipment details, keep the
 -- order shipping state coherent, and append an audit event only when something
 -- materially changed. Auth/payment/rate-limit checks remain at Netlify; this RPC
--- independently rechecks actor role/ownership and derives seller/buyer from order.
+-- independently rechecks active actor role/ownership and derives seller/buyer
+-- from the canonical order.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.server_upsert_shipment(
   p_order_id uuid,
@@ -89,6 +90,7 @@ SET search_path TO ''
 AS $$
 DECLARE
   v_actor_role text;
+  v_actor_active boolean;
   v_order_seller uuid;
   v_order_buyer uuid;
   v_order_status text;
@@ -98,13 +100,16 @@ DECLARE
   v_target_status text;
   v_event_message text;
 BEGIN
-  SELECT u.role
-    INTO v_actor_role
+  SELECT u.role, u."isActive"
+    INTO v_actor_role, v_actor_active
     FROM public.users u
    WHERE u.id = p_actor_id;
 
-  IF v_actor_role IS NULL OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin'])) THEN
-    RAISE EXCEPTION 'server_upsert_shipment: seller or admin actor required'
+  IF v_actor_active IS DISTINCT FROM true
+     OR v_actor_role IS NULL
+     OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin']))
+  THEN
+    RAISE EXCEPTION 'server_upsert_shipment: active seller or admin actor required'
       USING ERRCODE = '42501';
   END IF;
 
@@ -271,6 +276,7 @@ SET search_path TO ''
 AS $$
 DECLARE
   v_actor_role text;
+  v_actor_active boolean;
   v_order_id uuid;
   v_order_status text;
   v_shipment public.shipments%ROWTYPE;
@@ -329,13 +335,16 @@ BEGIN
       USING ERRCODE = '40001';
   END IF;
 
-  SELECT u.role
-    INTO v_actor_role
+  SELECT u.role, u."isActive"
+    INTO v_actor_role, v_actor_active
     FROM public.users u
    WHERE u.id = p_actor_id;
 
-  IF v_actor_role IS NULL OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin'])) THEN
-    RAISE EXCEPTION 'server_transition_shipment: seller or admin actor required'
+  IF v_actor_active IS DISTINCT FROM true
+     OR v_actor_role IS NULL
+     OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin']))
+  THEN
+    RAISE EXCEPTION 'server_transition_shipment: active seller or admin actor required'
       USING ERRCODE = '42501';
   END IF;
 
@@ -450,6 +459,7 @@ SET search_path TO ''
 AS $$
 DECLARE
   v_actor_role text;
+  v_actor_active boolean;
   v_shipment public.shipments%ROWTYPE;
 BEGIN
   IF p_file_path IS NULL OR BTRIM(p_file_path) = '' THEN
@@ -468,13 +478,16 @@ BEGIN
       USING ERRCODE = 'P0002';
   END IF;
 
-  SELECT u.role
-    INTO v_actor_role
+  SELECT u.role, u."isActive"
+    INTO v_actor_role, v_actor_active
     FROM public.users u
    WHERE u.id = p_actor_id;
 
-  IF v_actor_role IS NULL OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin'])) THEN
-    RAISE EXCEPTION 'server_attach_shipment_proof: seller or admin actor required'
+  IF v_actor_active IS DISTINCT FROM true
+     OR v_actor_role IS NULL
+     OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin']))
+  THEN
+    RAISE EXCEPTION 'server_attach_shipment_proof: active seller or admin actor required'
       USING ERRCODE = '42501';
   END IF;
 
@@ -567,8 +580,8 @@ COMMENT ON TABLE public.shipment_events IS
 COMMENT ON FUNCTION public.server_upsert_shipment(
   uuid, uuid, text, boolean, text, boolean, timestamptz, boolean
 ) IS
-  'Service-role-only idempotent shipment upsert; derives ownership from order, keeps dispatched order state coherent, and appends history only on change.';
+  'Service-role-only idempotent shipment upsert; requires an active actor, derives ownership from order, keeps dispatched order state coherent, and appends history only on change.';
 COMMENT ON FUNCTION public.server_transition_shipment(uuid, uuid, text, text) IS
-  'Service-role-only idempotent shipment status transition with atomic audit event and mapped order state.';
+  'Service-role-only idempotent shipment status transition; requires an active actor and writes atomic audit/mapped order state.';
 COMMENT ON FUNCTION public.server_attach_shipment_proof(uuid, uuid, text) IS
-  'Service-role-only immutable/idempotent proof-of-delivery attachment; first attachment requires Delivered and appends an atomic audit event.';
+  'Service-role-only immutable/idempotent proof-of-delivery attachment; requires an active actor, first attachment requires Delivered, and audit is atomic.';
