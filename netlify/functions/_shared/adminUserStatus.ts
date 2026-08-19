@@ -339,10 +339,34 @@ export async function applyAdminUserStatus(
   );
   if (auditError) {
     console.error('admin-user-status: reactivate audit failed:', auditError);
+
+    // Audit is part of the privileged state transition, not a best-effort side
+    // effect. Revoke Auth first, then restore the DB suspension state so a failed
+    // audit cannot leave a successfully reactivated but unaudited account.
+    await rebanBestEffort();
+
+    const { error: restoreUserError } = await supabase
+      .from('users')
+      .update({ isActive: false })
+      .eq('id', userId);
+    if (restoreUserError) {
+      console.error('admin-user-status: audit-failure users compensation failed:', restoreUserError.message);
+    }
+
+    if (target.role === 'seller') {
+      const { error: restoreSellerError } = await supabase
+        .from('seller_profiles')
+        .update({ sellerStatus: 'suspended' })
+        .eq('userId', userId);
+      if (restoreSellerError) {
+        console.error('admin-user-status: audit-failure seller compensation failed:', restoreSellerError.message);
+      }
+    }
+
     return {
       ok: false,
       status: 500,
-      body: { error: 'Account is active but audit persistence requires retry' },
+      body: { error: 'Account reactivation failed safely and remains blocked because audit persistence failed' },
     };
   }
 
