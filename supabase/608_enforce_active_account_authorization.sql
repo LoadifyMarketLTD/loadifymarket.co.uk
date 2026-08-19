@@ -61,6 +61,163 @@ AS $$
   );
 $$;
 
+-- SECURITY DEFINER helpers used directly and/or from RLS must not become a
+-- stale-session side channel around the restrictive policies installed below.
+-- Read-eligibility helpers therefore return false for inactive accounts even
+-- though their underlying historical tables remain accessible to the function
+-- owner. Public seller checkout readiness remains anonymous-readable, but it
+-- independently joins the live users row so suspended sellers cannot remain
+-- commercially discoverable because of stale denormalised profile state.
+CREATE OR REPLACE FUNCTION public.can_open_dispute(
+  p_order_id uuid,
+  p_seller_id uuid
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT (SELECT public.is_active_user())
+    AND EXISTS (
+      SELECT 1
+      FROM public.orders o
+      WHERE o.id = p_order_id
+        AND o."buyerId" = (SELECT auth.uid())
+        AND o."sellerId" = p_seller_id
+        AND o.status IN ('paid', 'packed', 'shipped', 'delivered', 'completed')
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.can_open_return(
+  p_order_id uuid,
+  p_seller_id uuid
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT (SELECT public.is_active_user())
+    AND EXISTS (
+      SELECT 1
+      FROM public.orders o
+      WHERE o.id = p_order_id
+        AND o."buyerId" = (SELECT auth.uid())
+        AND o."sellerId" = p_seller_id
+        AND o.status = 'completed'
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_valid_review_purchase(
+  p_order_id uuid,
+  p_product_id uuid
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT (SELECT public.is_active_user())
+    AND EXISTS (
+      SELECT 1
+      FROM public.orders o
+      WHERE o.id = p_order_id
+        AND o."buyerId" = (SELECT auth.uid())
+        AND o.status IN ('delivered', 'completed')
+        AND (
+          o."productId" = p_product_id
+          OR EXISTS (
+            SELECT 1
+            FROM public.order_items oi
+            WHERE oi."orderId" = o.id
+              AND oi."productId" = p_product_id
+          )
+        )
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.owns_product(p_product_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT (SELECT public.is_active_user())
+    AND EXISTS (
+      SELECT 1
+      FROM public.products p
+      WHERE p.id = p_product_id
+        AND p."sellerId" = (SELECT auth.uid())
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_seller_checkout_ready(p_seller_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.seller_profiles sp
+    JOIN public.users u ON u.id = sp."userId"
+    WHERE sp."userId" = p_seller_id
+      AND u.role = 'seller'
+      AND u."isActive" = TRUE
+      AND sp."sellerStatus" = 'active'
+      AND sp."stripeConnectStatus" = 'active'
+      AND COALESCE(sp."isPaused", false) = false
+  );
+$$;
+
+-- Product-view analytics are an intentional public browse side effect. A
+-- suspended authenticated session may still browse public content, but it must
+-- not keep writing account-scoped recently_viewed history. Treat such a session
+-- like an anonymous visitor for the account-scoped branch of this function.
+CREATE OR REPLACE FUNCTION public.track_product_view(
+  p_product_id uuid,
+  p_user_id uuid DEFAULT NULL,
+  p_session_id text DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id uuid := CASE
+    WHEN (SELECT public.is_active_user()) THEN (SELECT auth.uid())
+    ELSE NULL
+  END;
+BEGIN
+  UPDATE public.products
+  SET views = COALESCE(views, 0) + 1,
+      "lastViewedAt" = NOW()
+  WHERE id = p_product_id;
+
+  IF v_user_id IS NOT NULL THEN
+    INSERT INTO public.recently_viewed ("userId", "productId", "viewedAt")
+    VALUES (v_user_id, p_product_id, NOW())
+    ON CONFLICT ("userId", "productId") DO UPDATE SET "viewedAt" = NOW();
+  ELSIF p_session_id IS NOT NULL AND length(p_session_id) BETWEEN 1 AND 200 THEN
+    INSERT INTO public.recently_viewed ("sessionId", "productId", "viewedAt")
+    VALUES (p_session_id, p_product_id, NOW())
+    ON CONFLICT ("sessionId", "productId") DO UPDATE SET "viewedAt" = NOW();
+  END IF;
+
+  INSERT INTO public.product_analytics ("productId", date, views, "uniqueVisitors")
+  VALUES (p_product_id, CURRENT_DATE, 1, 1)
+  ON CONFLICT ("productId", date) DO UPDATE SET
+    views = public.product_analytics.views + 1,
+    "uniqueVisitors" = public.product_analytics."uniqueVisitors" + 1;
+END;
+$$;
+
 -- Fresh rebuilds must preserve the live-safe signup rule. Supabase user_metadata
 -- is caller-controlled during sign-up, so it may select the ordinary marketplace
 -- roles buyer/seller but can never mint an admin account. Admin is accepted only
