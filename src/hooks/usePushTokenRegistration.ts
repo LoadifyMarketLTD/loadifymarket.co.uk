@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PluginListenerHandle } from '@capacitor/core';
 import {
@@ -66,6 +66,28 @@ function routeFromPushAction(action: ActionPerformed): string {
 
 export function usePushTokenRegistration(userId?: string): void {
   const navigate = useNavigate();
+  const previousUserIdRef = useRef<string | undefined>(userId);
+
+  // A native FCM token must stop receiving account-scoped notifications as soon
+  // as that account signs out. The backend cannot safely unregister after the
+  // Supabase session has already been destroyed, so invalidate the native token
+  // at the device boundary. A later sign-in calls register() again and receives
+  // a fresh/valid token which is associated with that user by the backend.
+  useEffect(() => {
+    const previousUserId = previousUserIdRef.current;
+    previousUserIdRef.current = userId;
+
+    if (!previousUserId || userId || !isCapacitorNative() || typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.removeItem(PUSH_TOKEN_STORAGE_KEY);
+    window.localStorage.removeItem(PUSH_TOKEN_USER_STORAGE_KEY);
+
+    void PushNotifications.unregister().catch((error) => {
+      console.warn('push-token: native unregister on sign-out failed (non-fatal):', error);
+    });
+  }, [userId]);
 
   useEffect(() => {
     if (!userId || !isCapacitorNative() || typeof window === 'undefined') {
