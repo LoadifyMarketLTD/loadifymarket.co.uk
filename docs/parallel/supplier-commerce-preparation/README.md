@@ -20,6 +20,21 @@ Until Checkpoint A PASS → Foundation Baseline Freeze → Gate B PASS:
 - no merge into active Checkpoint A branches;
 - no modification of agent PRs #513/#514/#515/#517 from this lane.
 
+## Autonomous execution rule
+
+This lane may continue autonomously without owner approval for technical preparation that remains inside the hard boundary above.
+
+The assistant/engineer may independently:
+- audit current/future integration seams;
+- refine architecture;
+- write responsibility contracts;
+- prepare E2E/failure/recovery criteria;
+- identify risks/conflicts;
+- self-review and correct preparation artifacts;
+- keep PR #518 current.
+
+Owner confirmation is required only when a genuine business/legal/commercial choice cannot be derived safely from the canonical contract/current authoritative sources, or when execution would cross an existing gate into runtime/schema/production implementation.
+
 ## What this lane IS allowed to prepare
 
 1. Gate B business-decision pack.
@@ -36,6 +51,10 @@ Until Checkpoint A PASS → Foundation Baseline Freeze → Gate B PASS:
 12. Reconciliation protocol for rebasing onto the post-Checkpoint-A baseline.
 13. Deep factual audit of the current seller-centric runtime and live schema seams.
 14. Provider/source capability contracts that prevent external brands from becoming core architecture types.
+15. Data ownership / source-of-truth boundaries.
+16. Financial truth event/responsibility model.
+17. Supplier fulfilment orchestration responsibilities.
+18. Observability / incident / retry / replay / reconciliation contracts.
 
 ## Current product intent
 
@@ -66,6 +85,11 @@ TikTok, Amazon, Alibaba, AliExpress, wholesalers and manufacturers are examples 
 6. `06_DEEP_BASELINE_AUDIT.md`
 7. `07_E2E_SCENARIO_CATALOGUE.md`
 8. `08_SOURCE_AND_PROVIDER_CAPABILITY_CONTRACT.md`
+9. `09_DATA_OWNERSHIP_AND_BOUNDARY_MATRIX.md`
+10. `10_OPERATOR_IMPORT_CONTRACT.md`
+11. `11_FINANCIAL_TRUTH_EVENT_MODEL.md`
+12. `12_SUPPLIER_FULFILMENT_ORCHESTRATION_CONTRACT.md`
+13. `13_OBSERVABILITY_INCIDENT_AND_RECOVERY_CONTRACT.md`
 
 ## Current verified baseline observations
 
@@ -79,6 +103,8 @@ The preparation audit currently confirms that the marketplace foundation is stro
 - no obvious live public Supplier Commerce supplier/catalog/ledger/fulfilment/inventory table family exists yet;
 - commercial-history shipping mutation found in current foundation is owned by Checkpoint A, not this lane.
 
-Every one of these observations must be revalidated against the Foundation Baseline Freeze before implementation.
+The active Checkpoint A PR #513 has since prepared a canonical repair for the shipment/commercial-history seam, but this preparation lane deliberately does not adopt that branch as foundation until Checkpoint A is complete and Foundation Baseline Freeze is captured.
+
+Every baseline observation must be revalidated against the Foundation Baseline Freeze before implementation.
 
 This lane may become implementation work only after the canonical sequence authorises it.
