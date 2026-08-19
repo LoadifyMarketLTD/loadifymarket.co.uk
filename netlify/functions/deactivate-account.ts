@@ -87,7 +87,7 @@ export const handler: Handler = async (event) => {
   }
 
   // Revoke authentication first. If a later write fails, the account remains
-  // blocked from creating/refeshing sessions rather than being silently open.
+  // blocked from creating/refreshing sessions rather than being silently open.
   const { error: banError } = await supabase.auth.admin.updateUserById(auth.actor.id, {
     ban_duration: LONG_BAN_DURATION,
   });
@@ -121,7 +121,7 @@ export const handler: Handler = async (event) => {
   if (auth.actor.role === 'seller') {
     const { error: sellerError } = await supabase
       .from('seller_profiles')
-      .update({ sellerStatus: 'suspended' })
+      .update({ sellerStatus: 'suspended', isPaused: true })
       .eq('userId', auth.actor.id);
     if (sellerError) {
       console.error('deactivate-account: seller suspension sync failed:', sellerError.message);
@@ -131,6 +131,27 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({
           deactivated: true,
           error: 'Account is deactivated but seller-state synchronization requires support intervention',
+        }),
+      };
+    }
+
+    // Self-deactivation promises that the storefront stops advertising the
+    // seller's inventory. Keep listings inactive after a later account restore;
+    // the seller can explicitly Resume when ready, rather than silently
+    // republishing everything during admin reactivation.
+    const { error: productsError } = await supabase
+      .from('products')
+      .update({ isActive: false })
+      .eq('sellerId', auth.actor.id)
+      .eq('isActive', true);
+    if (productsError) {
+      console.error('deactivate-account: seller listing hide failed:', productsError.message);
+      return {
+        statusCode: 500,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          deactivated: true,
+          error: 'Account is deactivated but listing visibility cleanup requires support intervention',
         }),
       };
     }
