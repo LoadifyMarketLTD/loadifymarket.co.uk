@@ -2,6 +2,11 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      app_url:
+        description: 'Checkpoint A E2E Netlify base URL'
+        required: true
+        type: string
   push:
     branches:
       - main
@@ -47,7 +52,7 @@ jobs:
       # /.netlify/functions/* URLs to absolute URLs in the APK WebView.
       # Must be the production Netlify site URL with no trailing slash,
       # e.g. https://loadifymarket.co.uk
-      VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
+      VITE_APP_URL: ${{ github.event.inputs.app_url || secrets.VITE_APP_URL }}
       # TEMPORARY: Build identity vars baked into the APK bundle so the login
       # page shows a visible build stamp for APK diagnostics.  Remove these
       # (and the corresponding UI code) once the fetch root cause is confirmed.
