@@ -1,6 +1,8 @@
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { applyAdminUserStatus } from './_shared/adminUserStatus';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
 
@@ -230,22 +232,64 @@ export const handler: Handler = async (event) => {
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
       }
 
-      if (op === 'suspend') {
+      if (op === 'suspend' || op === 'reactivate') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
-        const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'suspended' }).eq('userId', userId);
-        if (error) throw error;
-        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sellerStatus: 'suspended' }) };
-      }
 
-      if (op === 'reactivate') {
-        if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
-        const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'submitted' }).eq('userId', userId);
-        if (error) throw error;
-        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sellerStatus: 'submitted' }) };
+        // Legacy seller-management callers must use the exact same canonical
+        // account-status transition as Admin Users. This prevents a second
+        // sellerStatus-only suspension path from bypassing Auth/users/push state.
+        const rateLimit = await checkRateLimit({
+          supabase: admin,
+          tableName: 'admin_sellers_rate_limits',
+          identifier: auth.actor.id,
+          windowMinutes: 1,
+          maxAttempts: 30,
+          policy: 'fail-closed',
+        });
+        if (rateLimit.exceeded) {
+          return {
+            statusCode: 429,
+            headers: JSON_HEADERS,
+            body: JSON.stringify({ error: 'Too many admin actions. Please try again shortly.' }),
+          };
+        }
+
+        const result = await applyAdminUserStatus(
+          admin,
+          auth.actor.id,
+          op,
+          userId,
+          { requiredTargetRole: 'seller' },
+        );
+        return {
+          statusCode: result.status,
+          headers: JSON_HEADERS,
+          body: JSON.stringify(result.body),
+        };
       }
 
       if (op === 'force_activate') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
+
+        // Never allow sellerStatus to contradict an account-level suspension.
+        // Account reactivation must happen through the canonical boundary first.
+        const { data: target, error: targetError } = await admin
+          .from('users')
+          .select('role, isActive')
+          .eq('id', userId)
+          .maybeSingle<{ role: string | null; isActive: boolean | null }>();
+        if (targetError) throw targetError;
+        if (!target || target.role !== 'seller') {
+          return { statusCode: 404, headers: JSON_HEADERS, body: JSON.stringify({ error: 'Seller not found' }) };
+        }
+        if (target.isActive !== true) {
+          return {
+            statusCode: 409,
+            headers: JSON_HEADERS,
+            body: JSON.stringify({ error: 'Reactivate the account before force-activating the seller profile' }),
+          };
+        }
+
         const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'active', isApproved: true }).eq('userId', userId);
         if (error) throw error;
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
@@ -277,6 +321,7 @@ export const handler: Handler = async (event) => {
           .from('users')
           .select('id, email, firstName, lastName')
           .eq('role', 'seller')
+          .eq('isActive', true)
           .or('onboardingCompleted.eq.false,onboardingCompleted.is.null')
           .lte('createdAt', cutoff);
         if (qErr) throw qErr;
