@@ -3,21 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { PRODUCT_IMAGES_BUCKET, extractOwnedProductImagePath } from './_shared/productImagePaths';
 
-const RETAINED_HISTORY_CHECKS = [
-  { table: 'orders', column: 'productId' },
-  { table: 'order_items', column: 'productId' },
-  { table: 'offers', column: 'listingId' },
-  { table: 'product_offers', column: 'productId' },
-  { table: 'product_questions', column: 'productId' },
-  { table: 'reviews', column: 'productId' },
-  { table: 'reported_listings', column: 'productId' },
-  { table: 'product_analytics', column: 'productId' },
-  { table: 'promoted_listings', column: 'productId' },
-  { table: 'featured_listings', column: 'productId' },
-  { table: 'conversations', column: 'productId' },
-  { table: 'messages', column: 'productId' },
-  { table: 'support_tickets', column: 'productId' },
-] as const;
+type DeleteProductStatus = 'deleted' | 'not_found' | 'forbidden' | 'retained_history';
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -79,6 +65,10 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: '"id" is required' }) };
   }
 
+  // Snapshot seller/images for post-delete media cleanup and early UX errors.
+  // Ownership and retained-history safety are rechecked atomically by the DB RPC
+  // immediately before DELETE; this query is deliberately not the authority for
+  // the destructive decision.
   const { data: product, error: productError } = await supabase
     .from('products')
     .select('sellerId, images')
@@ -95,22 +85,28 @@ export const handler: Handler = async (event) => {
     return { statusCode: 403, body: JSON.stringify({ error: 'You do not have permission to delete this listing' }) };
   }
 
-  const retainedChecks = await Promise.all(
-    RETAINED_HISTORY_CHECKS.map(({ table, column }) =>
-      supabase.from(table).select('id').eq(column, productId).limit(1),
-    ),
+  const { data: deleteStatusData, error: deleteError } = await supabase.rpc(
+    'delete_product_if_history_free',
+    {
+      p_product_id: productId,
+      p_caller_id: callerId,
+      p_is_admin: isAdmin,
+    },
   );
 
-  const precheckError = retainedChecks.find((result) => result.error)?.error;
-  if (precheckError) {
-    console.error('delete-product: retained marketplace history precheck failed:', precheckError.message);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Unable to verify retained marketplace history. Listing was not deleted.' }),
-    };
+  if (deleteError) {
+    console.error('delete-product: atomic delete RPC failed:', deleteError.message);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to delete listing. Please try again.' }) };
   }
 
-  if (retainedChecks.some((result) => (result.data?.length ?? 0) > 0)) {
+  const deleteStatus = deleteStatusData as DeleteProductStatus | null;
+  if (deleteStatus === 'not_found') {
+    return { statusCode: 404, body: JSON.stringify({ error: 'Product not found' }) };
+  }
+  if (deleteStatus === 'forbidden') {
+    return { statusCode: 403, body: JSON.stringify({ error: 'You do not have permission to delete this listing' }) };
+  }
+  if (deleteStatus === 'retained_history') {
     return {
       statusCode: 409,
       body: JSON.stringify({
@@ -119,30 +115,42 @@ export const handler: Handler = async (event) => {
       }),
     };
   }
-
-  const { error: deleteError } = await supabase.from('products').delete().eq('id', productId);
-  if (deleteError) {
-    if (deleteError.code === '23503') {
-      return {
-        statusCode: 409,
-        body: JSON.stringify({
-          error: 'This listing is linked to retained marketplace records and cannot be deleted. Keep it unpublished instead.',
-          code: 'LISTING_HAS_RETAINED_RECORDS',
-        }),
-      };
-    }
-    console.error('delete-product: product delete failed:', deleteError.message);
+  if (deleteStatus !== 'deleted') {
+    console.error('delete-product: unexpected atomic delete status:', deleteStatus);
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to delete listing. Please try again.' }) };
   }
 
-  const imagePaths = [...new Set(
+  // URLs uploaded by Loadify use unique object names, but the product form also
+  // supports Add URL, so another listing can intentionally reuse the same object.
+  // Never remove a storage object while another product still references its URL.
+  const ownedMedia = [...new Set(
     (product.images ?? [])
-      .map((url) => extractOwnedProductImagePath(url, supabaseUrl, product.sellerId))
-      .filter((path): path is string => Boolean(path)),
+      .map((url) => ({
+        url,
+        path: extractOwnedProductImagePath(url, supabaseUrl, product.sellerId),
+      }))
+      .filter((entry): entry is { url: string; path: string } => Boolean(entry.path)),
   )];
 
-  if (imagePaths.length > 0) {
-    const { error: cleanupError } = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(imagePaths);
+  const imagePathsToRemove: string[] = [];
+  for (const image of ownedMedia) {
+    const { data: referenceRows, error: referenceError } = await supabase
+      .from('products')
+      .select('id')
+      .contains('images', [image.url])
+      .limit(1);
+
+    if (referenceError) {
+      console.error('delete-product: media reference check failed; keeping object:', referenceError.message);
+      continue;
+    }
+    if ((referenceRows?.length ?? 0) === 0) {
+      imagePathsToRemove.push(image.path);
+    }
+  }
+
+  if (imagePathsToRemove.length > 0) {
+    const { error: cleanupError } = await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(imagePathsToRemove);
     if (cleanupError) {
       console.error('delete-product: image cleanup failed after listing delete:', cleanupError.message);
     }
