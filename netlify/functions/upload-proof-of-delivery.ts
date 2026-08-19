@@ -31,6 +31,7 @@ const EXT_TO_MIME: Record<string, string> = {
 
 type AttachProofResult = {
   shipment?: Record<string, unknown>;
+  attached?: boolean;
 };
 
 function escapeRegex(value: string): string {
@@ -149,8 +150,9 @@ export const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod === 'POST') {
-    // POD is commercial evidence. Once attached, do not even mint another signed
-    // upload URL. The DB RPC repeats this check under row lock for race safety.
+    // POD is commercial evidence. Once attached, do not mint another signed
+    // upload URL. PUT confirmation remains retry-safe for the already-canonical
+    // path, but POST cannot create replacement evidence.
     if (shipment.proof_of_delivery_url) {
       return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery is already attached and cannot be replaced.' }) };
     }
@@ -187,10 +189,6 @@ export const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod === 'PUT') {
-    if (shipment.proof_of_delivery_url) {
-      return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery is already attached and cannot be replaced.' }) };
-    }
-
     let body: { filePath?: string };
     try {
       body = JSON.parse(event.body || '{}') as { filePath?: string };
@@ -201,6 +199,27 @@ export const handler: Handler = async (event) => {
     const filePath = body.filePath ?? '';
     if (!isSafeProofPath(shipmentId, filePath)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid upload path' }) };
+    }
+
+    // Confirmation retries for the exact canonical object are safe and should
+    // return success without another DB event or storage mutation. A different
+    // object can never replace established evidence; remove that uncommitted
+    // object and reject the attempted overwrite.
+    if (shipment.proof_of_delivery_url) {
+      if (shipment.proof_of_delivery_url === filePath) {
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            success: true,
+            shipment,
+            attached: false,
+            message: 'Proof of delivery is already attached',
+          }),
+        };
+      }
+
+      await removeUncommittedProof(filePath);
+      return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery is already attached and cannot be replaced.' }) };
     }
 
     const fileName = filePath.split('/').pop() ?? '';
@@ -245,8 +264,8 @@ export const handler: Handler = async (event) => {
     }
 
     // Attach the validated object path and append its audit event in one DB
-    // transaction. If that commit fails, remove the newly-uploaded unreferenced
-    // object as compensation; commercial history in DB remains unchanged.
+    // transaction. If a different concurrent proof won the race, remove this
+    // newly-uploaded unreferenced object as compensation.
     const { data: attachResult, error: attachError } = await supabase.rpc('server_attach_shipment_proof', {
       p_shipment_id: shipmentId,
       p_actor_id: user.id,
@@ -282,7 +301,10 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({
         success: true,
         shipment: result.shipment,
-        message: 'Proof of delivery uploaded successfully',
+        attached: result.attached === true,
+        message: result.attached === true
+          ? 'Proof of delivery uploaded successfully'
+          : 'Proof of delivery is already attached',
       }),
     };
   }
