@@ -34,6 +34,12 @@ type AttachProofResult = {
   attached?: boolean;
 };
 
+type ShipmentActor = {
+  id: string;
+  role: string;
+  isActive: boolean;
+};
+
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -56,18 +62,20 @@ async function removeUncommittedProof(filePath: string): Promise<void> {
   }
 }
 
-async function getAuthUser(event: HandlerEvent) {
+async function getAuthUser(event: HandlerEvent): Promise<ShipmentActor | null> {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader?.startsWith('Bearer ')) return null;
 
   const { data: { user }, error } = await supabase.auth.getUser(authHeader.substring(7));
   if (error || !user) return null;
 
-  const { data: userData } = await supabase
+  const { data: userData, error: userError } = await supabase
     .from('users')
-    .select('id, role')
+    .select('id, role, isActive')
     .eq('id', user.id)
-    .maybeSingle<{ id: string; role: string }>();
+    .maybeSingle<ShipmentActor>();
+
+  if (userError || !userData) return null;
   return userData;
 }
 
@@ -80,6 +88,14 @@ export const handler: Handler = async (event) => {
   if (!user) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
+
+  // This boundary uses service_role for private Storage and shipment evidence.
+  // It therefore must enforce the live account state itself during the pre-608
+  // cutover; a stale valid JWT for a suspended account is never sufficient.
+  if (user.isActive !== true) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Account is suspended' }) };
+  }
+
   if (user.role !== 'seller' && user.role !== 'admin' && user.role !== 'buyer') {
     return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden' }) };
   }
