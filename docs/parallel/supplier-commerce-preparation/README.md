@@ -18,7 +18,7 @@ Until Checkpoint A PASS → Foundation Baseline Freeze → Gate B PASS:
 - no final table names assumed;
 - no provider-specific commerce-core code;
 - no merge into active Checkpoint A branches;
-- no modification of agent PRs #513/#514/#515/#517 from this lane.
+- no modification of agent Checkpoint A implementation from this lane.
 
 ## Autonomous execution rule
 
@@ -31,6 +31,7 @@ The assistant/engineer may independently:
 - prepare E2E/failure/recovery criteria;
 - identify risks/conflicts;
 - self-review and correct preparation artifacts;
+- maintain a read-only reconciliation watch on Checkpoint A;
 - keep PR #518 current.
 
 Owner confirmation is required only when a genuine business/legal/commercial choice cannot be derived safely from the canonical contract/current authoritative sources, or when execution would cross an existing gate into runtime/schema/production implementation.
@@ -69,6 +70,11 @@ Owner confirmation is required only when a genuine business/legal/commercial cho
 30. Web/mobile parity and consumer contract.
 31. Concurrency / idempotency / retry contract.
 32. Backup / recovery / data-compatibility contract.
+33. Checkpoint A reconciliation watch.
+34. Post-Freeze rebase and validation runbook.
+35. Gate B resolution playbook.
+36. Implementation readiness matrix.
+37. Vertical-slice acceptance/evidence matrix.
 
 ## Current product intent
 
@@ -118,6 +124,11 @@ TikTok, Amazon, Alibaba, AliExpress, wholesalers and manufacturers are examples 
 25. `25_WEB_MOBILE_PARITY_AND_CONSUMER_CONTRACT.md`
 26. `26_CONCURRENCY_IDEMPOTENCY_AND_RETRY_CONTRACT.md`
 27. `27_BACKUP_RECOVERY_AND_DATA_COMPATIBILITY_CONTRACT.md`
+28. `28_CHECKPOINT_A_RECONCILIATION_WATCH.md`
+29. `29_POST_FREEZE_REBASE_AND_VALIDATION_RUNBOOK.md`
+30. `30_GATE_B_RESOLUTION_PLAYBOOK.md`
+31. `31_IMPLEMENTATION_READINESS_MATRIX.md`
+32. `32_VERTICAL_SLICE_ACCEPTANCE_EVIDENCE_MATRIX.md`
 
 ## Current verified baseline observations
 
@@ -129,9 +140,11 @@ The preparation audit currently confirms that the marketplace foundation is stro
 - current product reservation is a marketplace listing reservation, not Supplier Commerce sellable-stock architecture;
 - current customer order/payment/shipment/return/admin surfaces are valuable integration seams and must be extended rather than duplicated;
 - no obvious live public Supplier Commerce supplier/catalog/ledger/fulfilment/inventory table family exists yet;
-- commercial-history shipping mutation found in current foundation is owned by Checkpoint A, not this lane.
+- commercial-history shipping mutation found in the current foundation belongs to Checkpoint A, not this lane.
 
-The active Checkpoint A PR #513 has since prepared a canonical repair for the shipment/commercial-history seam, but this preparation lane deliberately does not adopt that branch as foundation until Checkpoint A is complete and Foundation Baseline Freeze is captured.
+Latest observed Checkpoint A work has split the shipment repair into DB-first and server-consumer layers, identified storage-policy drift, and prepared immutable commercial-history snapshots. Those drafts are deliberately NOT adopted as this lane's foundation until Checkpoint A is complete and Foundation Baseline Freeze is captured.
+
+A Guardian correction has also identified rollout/integration conditions that must be reconciled before those draft layers can be treated as final: unique migration ordering, safe DB-to-consumer cutover and safe commercial-snapshot producer/materialization cutover.
 
 Every baseline observation must be revalidated against the Foundation Baseline Freeze before implementation.
 
@@ -145,6 +158,8 @@ This lane is not considered `done` merely because the document set is large. Pre
 - E2E, failure, recovery, security, financial and compliance expectations are documented;
 - external provider assumptions remain behind current-source verification;
 - API/versioning/privacy/tax/recovery/mobile/adapter boundaries are explicit;
+- post-freeze reconciliation and implementation-readiness rules are explicit;
+- acceptance evidence prevents fake PASS at each vertical slice;
 - Branch Guard confirms docs-only isolation;
 - all preparation assumptions are marked for revalidation against Foundation Baseline Freeze.
 
