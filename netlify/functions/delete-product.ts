@@ -12,6 +12,11 @@ const RETAINED_HISTORY_CHECKS = [
   { table: 'reviews', column: 'productId' },
   { table: 'reported_listings', column: 'productId' },
   { table: 'product_analytics', column: 'productId' },
+  { table: 'promoted_listings', column: 'productId' },
+  { table: 'featured_listings', column: 'productId' },
+  { table: 'conversations', column: 'productId' },
+  { table: 'messages', column: 'productId' },
+  { table: 'support_tickets', column: 'productId' },
 ] as const;
 
 export const handler: Handler = async (event) => {
