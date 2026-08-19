@@ -29,7 +29,7 @@ export type AdminUserStatusResult =
     }
   | {
       ok: false;
-      status: 400 | 403 | 404 | 500 | 502;
+      status: 400 | 403 | 404 | 500 | 502 | 503;
       body: { error: string };
     };
 
@@ -53,6 +53,23 @@ async function writeAdminAudit(
     metadata: { targetRole },
   });
   return error?.message ?? null;
+}
+
+async function requireActiveAccountDbGate(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any>,
+): Promise<boolean> {
+  // Runtime can safely ship before migration 608 because suspension is Auth-first.
+  // Reactivation is different: unbanning Auth is safe only after migration 608
+  // makes public.users.isActive the restrictive DB authorization backstop. The
+  // service-role call returns false (no auth.uid()) when installed; existence and
+  // successful execution of the function are the cutover precondition we need.
+  const { error } = await supabase.rpc('is_active_user');
+  if (error) {
+    console.error('admin-user-status: active-account DB gate is not ready:', error.message);
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -199,6 +216,19 @@ export async function applyAdminUserStatus(
         isActive: false,
         ...(target.role === 'seller' ? { sellerStatus: 'suspended' as const } : {}),
       },
+    };
+  }
+
+  // A runtime-first rollout is required to close service-role bypasses before
+  // migration 608. During that interval suspension may operate safely because it
+  // is Auth-first, but reactivation MUST remain unavailable: unbanning an
+  // inactive account before the restrictive DB gate exists would reopen stale
+  // JWT/PostgREST authority. Fail closed until 608 is installed.
+  if (!(await requireActiveAccountDbGate(supabase))) {
+    return {
+      ok: false,
+      status: 503,
+      body: { error: 'Account reactivation is temporarily unavailable until the active-account database gate is installed' },
     };
   }
 
