@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { SupportedStorage } from '@supabase/supabase-js';
 import { isCapacitorNative } from './capacitorUtils';
+import { protectCurrentDevicePushBeforeSignOut } from './secureSignOut';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
@@ -150,7 +151,7 @@ const authStorage: SupportedStorage | undefined = (() => {
   return undefined;
 })();
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -166,3 +167,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     fetch: mobileSafeFetch,
   },
 });
+
+// Canonical sign-out boundary. Every current logout surface already converges
+// on supabase.auth.signOut(), so protect native push privacy here rather than
+// duplicating cleanup logic across Header, Buyer/Seller/Admin shells and mobile
+// profile/settings. `scope: others` does not end the current device session and
+// therefore must not unregister this device's push token.
+const baseSignOut = supabaseClient.auth.signOut.bind(supabaseClient.auth);
+supabaseClient.auth.signOut = async (options) => {
+  if (options?.scope !== 'others') {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    await protectCurrentDevicePushBeforeSignOut(session?.access_token);
+  }
+  return baseSignOut(options);
+};
+
+export const supabase = supabaseClient;
