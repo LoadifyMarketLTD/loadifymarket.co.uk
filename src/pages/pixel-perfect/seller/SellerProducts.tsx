@@ -208,17 +208,25 @@ const SellerProducts = () => {
     if (!deleteTarget || !user) return;
     setDeleteLoading(true);
     try {
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", deleteTarget.id)
-        .eq("sellerId", user.id); // RLS: only owner can delete
-      if (error) throw error;
+      const res = await authorizedFetch("/.netlify/functions/delete-product", {
+        method: "POST",
+        body: JSON.stringify({ id: deleteTarget.id }),
+      });
+      const payload = await res.json().catch(() => ({})) as { error?: string; code?: string };
+      if (!res.ok) {
+        const retainedHistory = payload.code === "LISTING_HAS_RETAINED_HISTORY" || payload.code === "LISTING_HAS_RETAINED_RECORDS";
+        toast({
+          title: retainedHistory ? "Listing cannot be deleted" : "Delete failed",
+          description: payload.error ?? `Server returned ${res.status}`,
+          variant: "destructive",
+        });
+        return;
+      }
       setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
-      toast({ title: "Listing deleted", description: `"${deleteTarget.title}" has been removed.` });
+      toast({ title: "Listing deleted", description: `"${deleteTarget.title}" has been permanently removed.` });
     } catch (err) {
       console.error("Delete failed:", err);
-      toast({ title: "Delete failed", description: "Could not delete this listing. Please try again.", variant: "destructive" });
+      toast({ title: "Delete failed", description: "Could not delete this listing. Please check your connection and try again.", variant: "destructive" });
     } finally {
       setDeleteLoading(false);
       setDeleteTarget(null);
