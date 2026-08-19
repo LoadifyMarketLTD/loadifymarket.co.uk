@@ -313,6 +313,24 @@ describe('admin-user-status', () => {
     expect(mocks.usersUpdate).not.toHaveBeenCalled();
   });
 
+  it('restores seller suspension and re-bans Auth when the users reactivation write fails', async () => {
+    const mocks = installSupabaseMock({
+      target: { id: TARGET_ID, role: 'seller', isActive: false },
+      userUpdateError: { message: 'users write failed' },
+    });
+    const { handler } = await import('../admin-user-status');
+
+    const res = await handler(makeEvent({ op: 'reactivate', userId: TARGET_ID }), {} as never);
+
+    expect(res.statusCode).toBe(500);
+    expect(mocks.sellerUpdate).toHaveBeenNthCalledWith(1, { sellerStatus: 'active' });
+    expect(mocks.usersUpdate).toHaveBeenCalledWith({ isActive: true });
+    expect(mocks.sellerUpdate).toHaveBeenNthCalledWith(2, { sellerStatus: 'suspended' });
+    expect(mocks.updateUserById).toHaveBeenNthCalledWith(1, TARGET_ID, { ban_duration: 'none' });
+    expect(mocks.updateUserById).toHaveBeenNthCalledWith(2, TARGET_ID, { ban_duration: '876000h' });
+    expect(mocks.auditInsert).not.toHaveBeenCalled();
+  });
+
   it('refuses to manage admin targets through the standard user-status endpoint', async () => {
     const mocks = installSupabaseMock({
       target: { id: TARGET_ID, role: 'admin', isActive: true },
