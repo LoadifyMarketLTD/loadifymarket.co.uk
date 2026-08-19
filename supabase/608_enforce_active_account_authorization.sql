@@ -61,11 +61,14 @@ AS $$
   );
 $$;
 
--- id / role / isActive are account-control columns. They must only be changed
--- through a trusted server boundary running as service_role. Historical users
--- RLS permits an authenticated owner to UPDATE their own row and permits active
--- admins to UPDATE other rows; without this trigger either caller could mutate
--- isActive directly and bypass the Auth-ban / push-cleanup contract.
+-- id / isActive are account-suspension control columns. They must only be
+-- changed through a trusted server boundary running as service_role. Historical
+-- users RLS permits an authenticated owner to UPDATE their own row and permits
+-- active admins to UPDATE other rows; without this trigger either caller could
+-- mutate isActive directly and bypass the Auth-ban / push-cleanup contract.
+-- Role changes remain governed by the dedicated users_update role-escalation
+-- policy introduced by migration 410 so existing Admin Users role management is
+-- not broken by this account-suspension migration.
 --
 -- current_user is the effective PostgreSQL API role (authenticated/service_role),
 -- not application JWT metadata. Direct SQL maintenance normally runs as postgres
@@ -79,10 +82,9 @@ BEGIN
   IF current_user = 'authenticated'
      AND (
        NEW.id IS DISTINCT FROM OLD.id
-       OR NEW.role IS DISTINCT FROM OLD.role
        OR NEW."isActive" IS DISTINCT FROM OLD."isActive"
      ) THEN
-    RAISE EXCEPTION 'Account control columns are server-managed.'
+    RAISE EXCEPTION 'Account suspension control columns are server-managed.'
       USING ERRCODE = '42501';
   END IF;
 
@@ -92,7 +94,7 @@ $$;
 
 DROP TRIGGER IF EXISTS enforce_user_account_control_boundary ON public.users;
 CREATE TRIGGER enforce_user_account_control_boundary
-BEFORE UPDATE OF id, role, "isActive" ON public.users
+BEFORE UPDATE OF id, "isActive" ON public.users
 FOR EACH ROW
 EXECUTE FUNCTION public.enforce_user_account_control_boundary();
 
