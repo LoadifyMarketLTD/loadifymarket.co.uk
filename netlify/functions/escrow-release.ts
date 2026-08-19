@@ -144,25 +144,36 @@ export const handler = schedule('0 2 * * *', async () => {
         continue;
       }
 
-      const { data: sellerProfile, error: sellerError } = await supabase
-        .from('seller_profiles')
-        .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
-        .eq('userId', order.sellerId)
-        .maybeSingle<{
-          stripeAccountId: string | null;
-          stripeConnectStatus: string | null;
-          sellerStatus: string | null;
-          isPaused: boolean | null;
-        }>();
+      const [{ data: sellerAccount, error: sellerAccountError }, { data: sellerProfile, error: sellerError }] = await Promise.all([
+        supabase
+          .from('users')
+          .select('role, isActive')
+          .eq('id', order.sellerId)
+          .maybeSingle<{ role: string | null; isActive: boolean | null }>(),
+        supabase
+          .from('seller_profiles')
+          .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
+          .eq('userId', order.sellerId)
+          .maybeSingle<{
+            stripeAccountId: string | null;
+            stripeConnectStatus: string | null;
+            sellerStatus: string | null;
+            isPaused: boolean | null;
+          }>(),
+      ]);
 
+      if (sellerAccountError) throw sellerAccountError;
       if (sellerError) throw sellerError;
       if (
+        !sellerAccount ||
+        sellerAccount.role !== 'seller' ||
+        sellerAccount.isActive !== true ||
         !sellerProfile?.stripeAccountId ||
         sellerProfile.stripeConnectStatus !== 'active' ||
         sellerProfile.sellerStatus !== 'active' ||
         sellerProfile.isPaused === true
       ) {
-        console.warn(`escrow-release: ${order.orderNumber} retained because seller payout capability is not active`);
+        console.warn(`escrow-release: ${order.orderNumber} retained because seller account/payout capability is not active`);
         continue;
       }
 
