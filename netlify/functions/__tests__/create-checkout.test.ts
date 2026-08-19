@@ -1,8 +1,5 @@
 /**
  * Unit tests for the create-checkout Netlify function.
- *
- * Tests focus on the request-validation and early-return paths that can be
- * exercised without a real Stripe account or Supabase instance.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { HandlerEvent } from '@netlify/functions';
@@ -29,6 +26,17 @@ const validBody = {
   billingAddress: { line1: '1 High St', city: 'London', postal_code: 'E1 1AA', country: 'GB' },
   shippingMethodId: '11111111-1111-1111-1111-111111111111',
 };
+
+function activeBuyerQuery() {
+  return {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({
+      data: { id: 'buyer-1', role: 'buyer', isActive: true },
+      error: null,
+    }),
+  };
+}
 
 describe('create-checkout handler – request validation', () => {
   const originalEnv = { ...process.env };
@@ -76,29 +84,33 @@ describe('create-checkout handler – request validation', () => {
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
         auth: {
-          // P1 gate: return a valid user so the auth check passes and the
-          // test can reach the product-availability check.
           getUser: vi.fn().mockResolvedValue({
-            data: { user: { id: 'buyer-1', email: 'buyer@test.com' } },
+            data: { user: { id: 'buyer-1', email: 'buyer@test.com', app_metadata: {} } },
             error: null,
           }),
         },
-        from: vi.fn(() => ({
-          select: vi.fn().mockReturnThis(),
-          in: vi.fn().mockResolvedValue({
-            data: [{ id: 'p1', price: 10, title: 'Widget', sellerId: 's1', isActive: false, isApproved: true, stockQuantity: 5 }],
-            error: null,
-          }),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-          insert: vi.fn().mockResolvedValue({ error: null }),
-          update: vi.fn().mockReturnThis(),
-        })),
+        from: vi.fn((table: string) => {
+          if (table === 'users') return activeBuyerQuery();
+          if (table === 'products') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              in: vi.fn().mockResolvedValue({
+                data: [{ id: 'p1', price: 10, title: 'Widget', sellerId: 's1', isActive: false, isApproved: true, stockQuantity: 5 }],
+                error: null,
+              }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+            update: vi.fn().mockReturnThis(),
+          };
+        }),
       })),
     }));
     const { handler } = await import('../create-checkout');
-    // Pass a lowercase 'authorization' header so the P1 auth gate is satisfied.
-    // Netlify normalises headers to lowercase at the edge; unit test mocks do not.
     const res = await handler(makeEvent(validBody, 'POST', { authorization: 'Bearer valid-token' }), {} as never);
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.body as string).error).toMatch(/no longer available/i);
@@ -113,21 +125,23 @@ describe('create-checkout handler – request validation', () => {
         return {};
       }),
     }));
-    vi.doMock('./_shared/platformFlags', () => ({
+    vi.doMock('../_shared/platformFlags', () => ({
       isMaintenanceMode: vi.fn().mockResolvedValue(false),
     }));
-    vi.doMock('./_shared/rateLimiter', () => ({
+    vi.doMock('../_shared/rateLimiter', () => ({
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
         auth: {
           getUser: vi.fn().mockResolvedValue({
-            data: { user: { id: 'buyer-1', email: 'buyer@test.com' } },
+            data: { user: { id: 'buyer-1', email: 'buyer@test.com', app_metadata: {} } },
             error: null,
           }),
         },
+        rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
         from: vi.fn((table: string) => {
+          if (table === 'users') return activeBuyerQuery();
           if (table === 'products') {
             return {
               select: vi.fn().mockReturnThis(),
@@ -152,9 +166,16 @@ describe('create-checkout handler – request validation', () => {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
               maybeSingle: vi.fn().mockResolvedValue({
-                data: { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active' },
+                data: { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active', isPaused: false },
                 error: null,
               }),
+            };
+          }
+          if (table === 'buyer_profiles') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({ data: { accountType: 'individual', isVatVerified: false }, error: null }),
             };
           }
           return {
