@@ -55,6 +55,12 @@ Owner confirmation is required only when a genuine business/legal/commercial cho
 16. Financial truth event/responsibility model.
 17. Supplier fulfilment orchestration responsibilities.
 18. Observability / incident / retry / replay / reconciliation contracts.
+19. Compliance / provenance / rights responsibility contract.
+20. Sellability / stock / price / margin responsibility contract.
+21. AI Facts Lock / merchandising governance.
+22. Server-enforced rollout / feature flag / kill-switch contract.
+23. Supplier qualification / SLA / risk governance.
+24. Controlled pilot / scale / Definition of Done evidence contract.
 
 ## Current product intent
 
@@ -90,6 +96,12 @@ TikTok, Amazon, Alibaba, AliExpress, wholesalers and manufacturers are examples 
 11. `11_FINANCIAL_TRUTH_EVENT_MODEL.md`
 12. `12_SUPPLIER_FULFILMENT_ORCHESTRATION_CONTRACT.md`
 13. `13_OBSERVABILITY_INCIDENT_AND_RECOVERY_CONTRACT.md`
+14. `14_COMPLIANCE_PROVENANCE_AND_RIGHTS_CONTRACT.md`
+15. `15_SELLABILITY_STOCK_AND_PRICE_CONTRACT.md`
+16. `16_AI_FACTS_LOCK_AND_MERCHANDISING_CONTRACT.md`
+17. `17_FEATURE_FLAGS_ROLLOUT_AND_KILL_SWITCH_CONTRACT.md`
+18. `18_SUPPLIER_QUALIFICATION_SLA_AND_RISK_CONTRACT.md`
+19. `19_PILOT_SCALE_AND_DEFINITION_OF_DONE_CONTRACT.md`
 
 ## Current verified baseline observations
 
@@ -106,5 +118,17 @@ The preparation audit currently confirms that the marketplace foundation is stro
 The active Checkpoint A PR #513 has since prepared a canonical repair for the shipment/commercial-history seam, but this preparation lane deliberately does not adopt that branch as foundation until Checkpoint A is complete and Foundation Baseline Freeze is captured.
 
 Every baseline observation must be revalidated against the Foundation Baseline Freeze before implementation.
+
+## Preparation completion condition
+
+This lane is not considered `done` merely because the document set is large. Preparation is mature only when:
+
+- the responsibility model covers every canonical phase C→Q;
+- known current-runtime seams are mapped without taking ownership away from Checkpoint A;
+- Gate B decisions are explicit enough to be resolved later without schema-first guessing;
+- E2E, failure, recovery, security, financial and compliance expectations are documented;
+- external provider assumptions remain behind current-source verification;
+- Branch Guard confirms docs-only isolation;
+- all preparation assumptions are marked for revalidation against Foundation Baseline Freeze.
 
 This lane may become implementation work only after the canonical sequence authorises it.
