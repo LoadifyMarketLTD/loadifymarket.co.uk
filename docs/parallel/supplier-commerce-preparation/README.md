@@ -61,6 +61,14 @@ Owner confirmation is required only when a genuine business/legal/commercial cho
 22. Server-enforced rollout / feature flag / kill-switch contract.
 23. Supplier qualification / SLA / risk governance.
 24. Controlled pilot / scale / Definition of Done evidence contract.
+25. API versioning / adapter interface compatibility contract.
+26. Privacy / retention / minimisation contract.
+27. Tax / VAT / customs rule-versioning contract.
+28. Supplier simulator / replay contract.
+29. Supplier Control Centre governance contract.
+30. Web/mobile parity and consumer contract.
+31. Concurrency / idempotency / retry contract.
+32. Backup / recovery / data-compatibility contract.
 
 ## Current product intent
 
@@ -102,6 +110,14 @@ TikTok, Amazon, Alibaba, AliExpress, wholesalers and manufacturers are examples 
 17. `17_FEATURE_FLAGS_ROLLOUT_AND_KILL_SWITCH_CONTRACT.md`
 18. `18_SUPPLIER_QUALIFICATION_SLA_AND_RISK_CONTRACT.md`
 19. `19_PILOT_SCALE_AND_DEFINITION_OF_DONE_CONTRACT.md`
+20. `20_API_VERSIONING_AND_ADAPTER_INTERFACE_CONTRACT.md`
+21. `21_PRIVACY_RETENTION_AND_DATA_MINIMISATION_CONTRACT.md`
+22. `22_TAX_VAT_CUSTOMS_RULE_VERSIONING_CONTRACT.md`
+23. `23_SUPPLIER_SIMULATOR_AND_REPLAY_CONTRACT.md`
+24. `24_SUPPLIER_CONTROL_CENTRE_GOVERNANCE_CONTRACT.md`
+25. `25_WEB_MOBILE_PARITY_AND_CONSUMER_CONTRACT.md`
+26. `26_CONCURRENCY_IDEMPOTENCY_AND_RETRY_CONTRACT.md`
+27. `27_BACKUP_RECOVERY_AND_DATA_COMPATIBILITY_CONTRACT.md`
 
 ## Current verified baseline observations
 
@@ -128,6 +144,7 @@ This lane is not considered `done` merely because the document set is large. Pre
 - Gate B decisions are explicit enough to be resolved later without schema-first guessing;
 - E2E, failure, recovery, security, financial and compliance expectations are documented;
 - external provider assumptions remain behind current-source verification;
+- API/versioning/privacy/tax/recovery/mobile/adapter boundaries are explicit;
 - Branch Guard confirms docs-only isolation;
 - all preparation assumptions are marked for revalidation against Foundation Baseline Freeze.
 
