@@ -4,6 +4,7 @@
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import {
@@ -60,17 +61,23 @@ export const handler: Handler = async (event) => {
     return { statusCode: 503, body: JSON.stringify({ error: 'Server misconfiguration' }) };
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-  const authHeader = event.headers['authorization'] || '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const auth = await authenticateActiveAccount(event, supabase, ['seller', 'admin']);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({
+        error: auth.status === 401 ? 'Authentication required' : 'Only active sellers can update listings',
+      }),
+    };
   }
 
-  const { data: authData, error: authError } = await supabase.auth.getUser(authHeader.substring(7));
-  if (authError || !authData?.user) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
-  }
-  const callerId = authData.user.id;
+  const callerId = auth.actor.id;
+  const role = auth.actor.role;
+  const isAdmin = role === 'admin';
 
   const rl = await checkRateLimit({
     supabase,
@@ -83,17 +90,6 @@ export const handler: Handler = async (event) => {
   if (rl.exceeded) {
     return { statusCode: 429, body: JSON.stringify({ error: 'Too many listing updates. Please try again later.' }) };
   }
-
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', callerId)
-    .maybeSingle<{ role: string | null }>();
-  const role = userRow?.role ?? null;
-  if (role !== 'seller' && role !== 'admin') {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Only sellers can update listings' }) };
-  }
-  const isAdmin = role === 'admin';
 
   if (await isMaintenanceMode(supabase) && !isAdmin) {
     return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance. Listings cannot be modified right now.' }) };
