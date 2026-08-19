@@ -67,16 +67,16 @@ $$;
 -- admins to UPDATE other rows; without this trigger either caller could mutate
 -- isActive directly and bypass the Auth-ban / push-cleanup contract.
 --
--- auth.role() is the PostgREST JWT database role (authenticated/service_role),
--- not application app_metadata. SQL migrations/direct database maintenance have
--- no authenticated JWT role and service_role remains intentionally permitted.
+-- current_user is the effective PostgreSQL API role (authenticated/service_role),
+-- not application JWT metadata. Direct SQL maintenance normally runs as postgres
+-- and the service_role used by canonical server handlers remains permitted.
 CREATE OR REPLACE FUNCTION public.enforce_user_account_control_boundary()
 RETURNS trigger
 LANGUAGE plpgsql
 SET search_path = ''
 AS $$
 BEGIN
-  IF auth.role() = 'authenticated'
+  IF current_user = 'authenticated'
      AND (
        NEW.id IS DISTINCT FROM OLD.id
        OR NEW.role IS DISTINCT FROM OLD.role
