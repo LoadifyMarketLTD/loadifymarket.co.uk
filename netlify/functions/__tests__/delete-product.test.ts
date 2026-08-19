@@ -16,6 +16,8 @@ function makeEvent(body: unknown, authorization = 'Bearer valid-token'): Handler
   };
 }
 
+type DeleteStatus = 'deleted' | 'not_found' | 'forbidden' | 'retained_history';
+
 describe('delete-product', () => {
   const originalEnv = { ...process.env };
 
@@ -35,13 +37,14 @@ describe('delete-product', () => {
     callerId?: string;
     sellerId?: string;
     maintenance?: boolean;
-    retainedTable?: string;
-    historyErrorTable?: string;
-    deleteError?: { code?: string; message: string } | null;
+    rpcStatus?: DeleteStatus | string | null;
+    rpcError?: string;
     cleanupError?: string;
     images?: string[];
+    reusedImageUrls?: string[];
+    referenceCheckError?: string;
   }) {
-    const deleteCalls: string[] = [];
+    const rpcCalls: Array<{ name: string; params: Record<string, unknown> }> = [];
     const storageRemovals: string[][] = [];
     const callerId = args?.callerId ?? 'seller-1';
     const sellerId = args?.sellerId ?? 'seller-1';
@@ -50,6 +53,13 @@ describe('delete-product', () => {
       auth: {
         getUser: vi.fn().mockResolvedValue({ data: { user: { id: callerId } }, error: null }),
       },
+      rpc: vi.fn().mockImplementation(async (name: string, params: Record<string, unknown>) => {
+        rpcCalls.push({ name, params });
+        return {
+          data: args?.rpcStatus ?? 'deleted',
+          error: args?.rpcError ? { message: args.rpcError } : null,
+        };
+      }),
       storage: {
         from: vi.fn(() => ({
           remove: vi.fn().mockImplementation(async (paths: string[]) => {
@@ -75,23 +85,16 @@ describe('delete-product', () => {
               data: { sellerId, images: args?.images ?? [] },
               error: null,
             }),
-            delete: vi.fn(() => ({
-              eq: vi.fn().mockImplementation(async (_column: string, value: string) => {
-                deleteCalls.push(value);
-                return { error: args?.deleteError ?? null };
+            contains: vi.fn((_column: string, values: string[]) => ({
+              limit: vi.fn().mockResolvedValue({
+                data: args?.reusedImageUrls?.includes(values[0]) ? [{ id: 'other-product' }] : [],
+                error: args?.referenceCheckError ? { message: args.referenceCheckError } : null,
               }),
             })),
           };
         }
 
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockResolvedValue({
-            data: args?.retainedTable === table ? [{ id: `${table}-1` }] : [],
-            error: args?.historyErrorTable === table ? { message: 'history unavailable' } : null,
-          }),
-        };
+        throw new Error(`Unexpected table: ${table}`);
       }),
     };
 
@@ -100,93 +103,121 @@ describe('delete-product', () => {
       isMaintenanceMode: vi.fn().mockResolvedValue(args?.maintenance ?? false),
     }));
 
-    return { deleteCalls, storageRemovals };
+    return { rpcCalls, storageRemovals };
   }
 
-  it('requires authentication and seller/admin role', async () => {
-    mockSupabase();
+  it('requires authentication and seller/admin role before the atomic RPC', async () => {
+    const noAuthMock = mockSupabase();
     let mod = await import('../delete-product');
     let res = await mod.handler(makeEvent({ id: 'product-1' }, ''), {} as never);
     expect(res.statusCode).toBe(401);
+    expect(noAuthMock.rpcCalls).toHaveLength(0);
 
     vi.resetModules();
     const buyerMock = mockSupabase({ role: 'buyer' });
     mod = await import('../delete-product');
     res = await mod.handler(makeEvent({ id: 'product-1' }), {} as never);
     expect(res.statusCode).toBe(403);
-    expect(buyerMock.deleteCalls).toHaveLength(0);
+    expect(buyerMock.rpcCalls).toHaveLength(0);
   });
 
-  it.each([
-    'orders',
-    'order_items',
-    'offers',
-    'product_offers',
-    'product_questions',
-    'reviews',
-    'reported_listings',
-    'product_analytics',
-    'promoted_listings',
-    'featured_listings',
-    'conversations',
-    'messages',
-    'support_tickets',
-  ])(
-    'blocks hard deletion when %s retains marketplace history',
-    async (retainedTable) => {
-      const { deleteCalls } = mockSupabase({ retainedTable });
-      const { handler } = await import('../delete-product');
-      const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
-
-      expect(res.statusCode).toBe(409);
-      expect(JSON.parse(res.body).code).toBe('LISTING_HAS_RETAINED_HISTORY');
-      expect(deleteCalls).toHaveLength(0);
-    },
-  );
-
-  it('fails closed when retained history cannot be verified', async () => {
-    const { deleteCalls } = mockSupabase({ historyErrorTable: 'offers' });
-    const { handler } = await import('../delete-product');
-    const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
-
-    expect(res.statusCode).toBe(500);
-    expect(deleteCalls).toHaveLength(0);
-  });
-
-  it('rejects deletion of another seller listing', async () => {
-    const { deleteCalls } = mockSupabase({ sellerId: 'seller-2' });
+  it('rejects another seller listing before the atomic RPC', async () => {
+    const { rpcCalls } = mockSupabase({ sellerId: 'seller-2' });
     const { handler } = await import('../delete-product');
     const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
 
     expect(res.statusCode).toBe(403);
-    expect(deleteCalls).toHaveLength(0);
+    expect(rpcCalls).toHaveLength(0);
   });
 
-  it('deletes a history-free listing and cleans only owned Loadify media', async () => {
-    const { deleteCalls, storageRemovals } = mockSupabase({
-      images: [
-        'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo-a.jpg',
-        'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-2/photo-b.jpg',
-        'https://example.com/external.jpg',
-      ],
-    });
+  it('passes caller identity and admin authority to the atomic DB boundary', async () => {
+    const { rpcCalls } = mockSupabase({ role: 'admin', callerId: 'admin-1', sellerId: 'seller-2' });
     const { handler } = await import('../delete-product');
     const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
 
     expect(res.statusCode).toBe(200);
-    expect(deleteCalls).toEqual(['product-1']);
+    expect(rpcCalls).toEqual([
+      {
+        name: 'delete_product_if_history_free',
+        params: {
+          p_product_id: 'product-1',
+          p_caller_id: 'admin-1',
+          p_is_admin: true,
+        },
+      },
+    ]);
+  });
+
+  it('blocks deletion when the DB boundary reports retained history', async () => {
+    const { handler } = await importWithMock({ rpcStatus: 'retained_history' });
+    const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
+
+    expect(res.statusCode).toBe(409);
+    expect(JSON.parse(res.body).code).toBe('LISTING_HAS_RETAINED_HISTORY');
+  });
+
+  it('maps atomic not-found and forbidden results safely', async () => {
+    let loaded = await importWithMock({ rpcStatus: 'not_found' });
+    let res = await loaded.handler(makeEvent({ id: 'product-1' }), {} as never);
+    expect(res.statusCode).toBe(404);
+
+    vi.resetModules();
+    loaded = await importWithMock({ rpcStatus: 'forbidden' });
+    res = await loaded.handler(makeEvent({ id: 'product-1' }), {} as never);
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('fails closed when the atomic DB boundary errors or returns an unknown state', async () => {
+    let loaded = await importWithMock({ rpcError: 'rpc unavailable' });
+    let res = await loaded.handler(makeEvent({ id: 'product-1' }), {} as never);
+    expect(res.statusCode).toBe(500);
+
+    vi.resetModules();
+    loaded = await importWithMock({ rpcStatus: 'unexpected-state' });
+    res = await loaded.handler(makeEvent({ id: 'product-1' }), {} as never);
+    expect(res.statusCode).toBe(500);
+  });
+
+  it('deletes a history-free listing and cleans only unreferenced owned Loadify media', async () => {
+    const ownedA = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo-a.jpg';
+    const ownedReused = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo-shared.jpg';
+    const otherSeller = 'https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-2/photo-b.jpg';
+    const external = 'https://example.com/external.jpg';
+
+    const { handler, storageRemovals } = await importWithMock({
+      images: [ownedA, ownedReused, otherSeller, external],
+      reusedImageUrls: [ownedReused],
+    });
+    const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
+
+    expect(res.statusCode).toBe(200);
     expect(storageRemovals).toEqual([['sellers/seller-1/photo-a.jpg']]);
   });
 
-  it('returns success when post-delete media cleanup fails', async () => {
-    const { deleteCalls } = mockSupabase({
+  it('keeps media when the post-delete reference check cannot be verified', async () => {
+    const { handler, storageRemovals } = await importWithMock({
       images: ['https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo.jpg'],
-      cleanupError: 'storage unavailable',
+      referenceCheckError: 'reference query unavailable',
     });
-    const { handler } = await import('../delete-product');
     const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
 
     expect(res.statusCode).toBe(200);
-    expect(deleteCalls).toEqual(['product-1']);
+    expect(storageRemovals).toHaveLength(0);
   });
+
+  it('returns success when post-delete media cleanup fails', async () => {
+    const { handler } = await importWithMock({
+      images: ['https://test.supabase.co/storage/v1/object/public/product-images/sellers/seller-1/photo.jpg'],
+      cleanupError: 'storage unavailable',
+    });
+    const res = await handler(makeEvent({ id: 'product-1' }), {} as never);
+
+    expect(res.statusCode).toBe(200);
+  });
+
+  async function importWithMock(args: Parameters<typeof mockSupabase>[0]) {
+    const state = mockSupabase(args);
+    const mod = await import('../delete-product');
+    return { ...state, ...mod };
+  }
 });
