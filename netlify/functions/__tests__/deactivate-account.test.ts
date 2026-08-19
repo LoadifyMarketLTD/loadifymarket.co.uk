@@ -23,6 +23,7 @@ interface SetupOptions {
   banError?: { message: string } | null;
   userUpdateError?: { message: string } | null;
   sellerUpdateError?: { message: string } | null;
+  productsUpdateError?: { message: string } | null;
   pushUpdateError?: { message: string } | null;
 }
 
@@ -40,6 +41,10 @@ function installMocks(options: SetupOptions = {}) {
   const sellerEq = vi.fn().mockResolvedValue({ error: options.sellerUpdateError ?? null });
   const sellerUpdate = vi.fn(() => ({ eq: sellerEq }));
 
+  const productsSecondEq = vi.fn().mockResolvedValue({ error: options.productsUpdateError ?? null });
+  const productsFirstEq = vi.fn(() => ({ eq: productsSecondEq }));
+  const productsUpdate = vi.fn(() => ({ eq: productsFirstEq }));
+
   const pushSecondEq = vi.fn().mockResolvedValue({ error: options.pushUpdateError ?? null });
   const pushFirstEq = vi.fn(() => ({ eq: pushSecondEq }));
   const pushUpdate = vi.fn(() => ({ eq: pushFirstEq }));
@@ -47,6 +52,7 @@ function installMocks(options: SetupOptions = {}) {
   const from = vi.fn((table: string) => {
     if (table === 'users') return { update: usersUpdate };
     if (table === 'seller_profiles') return { update: sellerUpdate };
+    if (table === 'products') return { update: productsUpdate };
     if (table === 'push_tokens') return { update: pushUpdate };
     throw new Error(`Unexpected table in test: ${table}`);
   });
@@ -69,7 +75,7 @@ function installMocks(options: SetupOptions = {}) {
     checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
   }));
 
-  return { updateUserById, usersUpdate, sellerUpdate, pushUpdate };
+  return { updateUserById, usersUpdate, sellerUpdate, productsUpdate, pushUpdate };
 }
 
 describe('deactivate-account', () => {
@@ -96,19 +102,21 @@ describe('deactivate-account', () => {
     expect(mocks.updateUserById).toHaveBeenCalledWith(USER_ID, { ban_duration: '876000h' });
     expect(mocks.usersUpdate).toHaveBeenCalledWith({ isActive: false });
     expect(mocks.sellerUpdate).not.toHaveBeenCalled();
+    expect(mocks.productsUpdate).not.toHaveBeenCalled();
     expect(mocks.pushUpdate).toHaveBeenCalledWith({ isActive: false });
     expect(mocks.updateUserById.mock.invocationCallOrder[0])
       .toBeLessThan(mocks.usersUpdate.mock.invocationCallOrder[0]);
   });
 
-  it('also suspends seller lifecycle state before completing deactivation', async () => {
+  it('suspends and pauses a seller and hides active listings before completing deactivation', async () => {
     const mocks = installMocks({ role: 'seller' });
     const { handler } = await import('../deactivate-account');
 
     const res = await handler(makeEvent(), {} as never);
 
     expect(res.statusCode).toBe(200);
-    expect(mocks.sellerUpdate).toHaveBeenCalledWith({ sellerStatus: 'suspended' });
+    expect(mocks.sellerUpdate).toHaveBeenCalledWith({ sellerStatus: 'suspended', isPaused: true });
+    expect(mocks.productsUpdate).toHaveBeenCalledWith({ isActive: false });
     expect(mocks.pushUpdate).toHaveBeenCalledWith({ isActive: false });
   });
 
@@ -121,6 +129,21 @@ describe('deactivate-account', () => {
     expect(res.statusCode).toBe(502);
     expect(mocks.usersUpdate).not.toHaveBeenCalled();
     expect(mocks.sellerUpdate).not.toHaveBeenCalled();
+    expect(mocks.productsUpdate).not.toHaveBeenCalled();
+    expect(mocks.pushUpdate).not.toHaveBeenCalled();
+  });
+
+  it('reports committed deactivation if seller listing cleanup needs support intervention', async () => {
+    const mocks = installMocks({ role: 'seller', productsUpdateError: { message: 'products unavailable' } });
+    const { handler } = await import('../deactivate-account');
+
+    const res = await handler(makeEvent(), {} as never);
+    const body = JSON.parse(res.body);
+
+    expect(res.statusCode).toBe(500);
+    expect(body.deactivated).toBe(true);
+    expect(mocks.usersUpdate).toHaveBeenCalledWith({ isActive: false });
+    expect(mocks.sellerUpdate).toHaveBeenCalledWith({ sellerStatus: 'suspended', isPaused: true });
     expect(mocks.pushUpdate).not.toHaveBeenCalled();
   });
 
