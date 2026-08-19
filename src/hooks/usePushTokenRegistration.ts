@@ -11,10 +11,9 @@ import { authorizedFetch } from '@/lib/authorizedFetch';
 import { isCapacitorNative } from '@/lib/capacitorUtils';
 import {
   PUSH_TOKEN_REGISTRATION_VERSION,
-  PUSH_TOKEN_REGISTRATION_VERSION_KEY,
-  PUSH_TOKEN_STORAGE_KEY,
-  PUSH_TOKEN_USER_STORAGE_KEY,
   clearPushRegistrationCache,
+  getPushRegistrationCache,
+  persistPushRegistrationCache,
 } from '@/lib/secureSignOut';
 
 function getPushPlatform(): 'android' | 'ios' {
@@ -44,9 +43,7 @@ async function persistTokenRegistration(userId: string, token: string): Promise<
     throw new Error(errorBody.error ?? `HTTP ${response.status}`);
   }
 
-  window.localStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
-  window.localStorage.setItem(PUSH_TOKEN_USER_STORAGE_KEY, userId);
-  window.localStorage.setItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY, PUSH_TOKEN_REGISTRATION_VERSION);
+  await persistPushRegistrationCache(userId, token);
 }
 
 function routeFromPushAction(action: ActionPerformed): string {
@@ -75,8 +72,9 @@ export function usePushTokenRegistration(userId?: string): void {
 
   // Fallback for session loss that did not pass through secureSignOut (for
   // example an expired/revoked session). User-initiated logout uses the stronger
-  // server + native boundary while the JWT is still valid; this fallback still
-  // invalidates the native token after an external/session-driven sign-out.
+  // server + native boundary while the JWT is still valid. If native unregister
+  // fails here, retain the durable cache so the next authenticated registration
+  // can still reconcile device ownership instead of erasing recovery evidence.
   useEffect(() => {
     const previousUserId = previousUserIdRef.current;
     previousUserIdRef.current = userId;
@@ -85,11 +83,14 @@ export function usePushTokenRegistration(userId?: string): void {
       return;
     }
 
-    clearPushRegistrationCache();
-
-    void PushNotifications.unregister().catch((error) => {
-      console.warn('push-token: native unregister after session loss failed:', error);
-    });
+    void (async () => {
+      try {
+        await PushNotifications.unregister();
+        await clearPushRegistrationCache();
+      } catch (error) {
+        console.warn('push-token: native unregister after session loss failed:', error);
+      }
+    })();
   }, [userId]);
 
   useEffect(() => {
@@ -115,13 +116,13 @@ export function usePushTokenRegistration(userId?: string): void {
       const token = tokenValue?.trim();
       if (!active || !token) return;
 
-      const previousToken = window.localStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
-      const previousUserId = window.localStorage.getItem(PUSH_TOKEN_USER_STORAGE_KEY);
-      const registrationVersion = window.localStorage.getItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY);
+      const previousRegistration = await getPushRegistrationCache();
+      if (!active) return;
+
       if (
-        previousToken === token &&
-        previousUserId === userId &&
-        registrationVersion === PUSH_TOKEN_REGISTRATION_VERSION
+        previousRegistration.token === token &&
+        previousRegistration.userId === userId &&
+        previousRegistration.version === PUSH_TOKEN_REGISTRATION_VERSION
       ) {
         return;
       }
