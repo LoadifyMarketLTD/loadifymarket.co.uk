@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PluginListenerHandle } from '@capacitor/core';
 import {
@@ -9,9 +9,13 @@ import {
 } from '@capacitor/push-notifications';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { isCapacitorNative } from '@/lib/capacitorUtils';
-
-const PUSH_TOKEN_STORAGE_KEY = 'loadify:push-token:last-registered';
-const PUSH_TOKEN_USER_STORAGE_KEY = 'loadify:push-token:last-user';
+import {
+  PUSH_TOKEN_REGISTRATION_VERSION,
+  PUSH_TOKEN_REGISTRATION_VERSION_KEY,
+  PUSH_TOKEN_STORAGE_KEY,
+  PUSH_TOKEN_USER_STORAGE_KEY,
+  clearPushRegistrationCache,
+} from '@/lib/secureSignOut';
 
 function getPushPlatform(): 'android' | 'ios' {
   const platform = (
@@ -42,6 +46,7 @@ async function persistTokenRegistration(userId: string, token: string): Promise<
 
   window.localStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
   window.localStorage.setItem(PUSH_TOKEN_USER_STORAGE_KEY, userId);
+  window.localStorage.setItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY, PUSH_TOKEN_REGISTRATION_VERSION);
 }
 
 function routeFromPushAction(action: ActionPerformed): string {
@@ -66,6 +71,26 @@ function routeFromPushAction(action: ActionPerformed): string {
 
 export function usePushTokenRegistration(userId?: string): void {
   const navigate = useNavigate();
+  const previousUserIdRef = useRef<string | undefined>(userId);
+
+  // Fallback for session loss that did not pass through secureSignOut (for
+  // example an expired/revoked session). User-initiated logout uses the stronger
+  // server + native boundary while the JWT is still valid; this fallback still
+  // invalidates the native token after an external/session-driven sign-out.
+  useEffect(() => {
+    const previousUserId = previousUserIdRef.current;
+    previousUserIdRef.current = userId;
+
+    if (!previousUserId || userId || !isCapacitorNative() || typeof window === 'undefined') {
+      return;
+    }
+
+    clearPushRegistrationCache();
+
+    void PushNotifications.unregister().catch((error) => {
+      console.warn('push-token: native unregister after session loss failed:', error);
+    });
+  }, [userId]);
 
   useEffect(() => {
     if (!userId || !isCapacitorNative() || typeof window === 'undefined') {
@@ -92,7 +117,12 @@ export function usePushTokenRegistration(userId?: string): void {
 
       const previousToken = window.localStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
       const previousUserId = window.localStorage.getItem(PUSH_TOKEN_USER_STORAGE_KEY);
-      if (previousToken === token && previousUserId === userId) {
+      const registrationVersion = window.localStorage.getItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY);
+      if (
+        previousToken === token &&
+        previousUserId === userId &&
+        registrationVersion === PUSH_TOKEN_REGISTRATION_VERSION
+      ) {
         return;
       }
 
