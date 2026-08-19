@@ -7,22 +7,11 @@
  * Using a Netlify function (rather than a direct Supabase client insert) allows
  * the server to deliver a "new_message" push notification without requiring a
  * database trigger or a background job.
- *
- * Authentication: Bearer <supabase access token> (required)
- *
- * Body:
- *   { conversationId: string, receiverId: string, message: string }
- *
- * Returns the inserted message row:
- *   { id, senderId, message, isRead, createdAt }
- *
- * Notes:
- *   - Structured system messages are not pushed from here.
- *   - This function is for plain-text messages sent by humans from the chat UI.
  */
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { checkRateLimit } from './_shared/rateLimiter';
 
@@ -90,7 +79,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  // ── Environment guards ──────────────────────────────────────────────────────
   const supabaseUrl = process.env.VITE_SUPABASE_URL ?? '';
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
   if (!supabaseUrl || !serviceRoleKey) {
@@ -98,23 +86,20 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // ── Auth ────────────────────────────────────────────────────────────────────
-  const authHeader = event.headers['authorization'] ?? '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
+  const auth = await authenticateActiveAccount(event, supabase);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({ error: auth.status === 401 ? 'Authentication required' : 'Account is suspended' }),
+    };
   }
-  const token = authHeader.substring(7);
-  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !authUser) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
-  }
-  const callerId = authUser.id;
+
+  const callerId = auth.actor.id;
   const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
 
-  // ── Rate limiting — 60 messages per minute per user ────────────────────────
   const rl = await checkRateLimit({
     supabase,
     tableName:     'send_message_rate_limits',
@@ -126,7 +111,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 429, body: JSON.stringify({ error: 'Too many messages. Please slow down.' }) };
   }
 
-  // ── Parse body ──────────────────────────────────────────────────────────────
   let body: RequestBody;
   try {
     body = JSON.parse(event.body ?? '{}') as RequestBody;
@@ -149,13 +133,10 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Message is too long (max 4000 characters)' }) };
   }
 
-  // Reject messages containing HTML tags to prevent stored XSS.
-  // Structured system messages use a JSON envelope; plain-text human messages must never contain markup.
   if (/<[a-z!/?][^>]{0,2000}>/i.test(message)) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Message must not contain HTML markup' }) };
   }
 
-  // ── Verify caller is a conversation participant ─────────────────────────────
   const { data: conv, error: convError } = await supabase
     .from('conversations')
     .select('id, user1Id, user2Id, subject')
@@ -174,14 +155,13 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Receiver is not a participant of this conversation' }) };
   }
 
-  // ── Insert the message ──────────────────────────────────────────────────────
   const { data: inserted, error: insertError } = await supabase
     .from('messages')
     .insert({
       conversationId,
-      senderId:   callerId,
+      senderId: callerId,
       receiverId,
-      message:    message.trim(),
+      message: message.trim(),
     })
     .select('id, senderId, message, isRead, createdAt')
     .single<MessageRow>();
@@ -191,11 +171,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to send message' }) };
   }
 
-  // ── Push notification to receiver ───────────────────────────────────────────
-  // Only for human plain-text messages. Structured system events are ignored here.
   const isStructuredJson = message.trim().startsWith('{');
   if (!isStructuredJson) {
-    // Fetch sender name for the notification title.
     const { data: sender } = await supabase
       .from('users')
       .select('id, firstName, lastName, email, role')
@@ -222,7 +199,6 @@ export const handler: Handler = async (event) => {
       data:  { type: 'new_message', conversationId, path: `/inbox/${conversationId}` },
     });
 
-    // In-app notification in website account.
     await supabase
       .from('notifications')
       .insert({
@@ -236,7 +212,6 @@ export const handler: Handler = async (event) => {
         if (error) console.warn('send-message: notifications insert failed (non-fatal):', error.message);
       });
 
-    // Transactional email for sellers (opt-in gate via notification_settings.orderConfirmation).
     if (receiver?.role === 'seller' && receiver.email) {
       let allowEmail = true;
       const { data: settings } = await supabase
