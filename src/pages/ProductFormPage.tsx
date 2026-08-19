@@ -543,9 +543,21 @@ export default function ProductFormPage() {
     if (!user || !id) return;
     setDeleting(true);
     try {
-      // product_shipping rows cascade-delete via FK ON DELETE CASCADE
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      const res = await authorizedFetch('/.netlify/functions/delete-product', {
+        method: 'POST',
+        body: JSON.stringify({ id }),
+      });
+      const payload = await res.json().catch(() => ({})) as { error?: string; code?: string };
+      if (!res.ok) {
+        const retainedHistory = payload.code === 'LISTING_HAS_RETAINED_HISTORY' || payload.code === 'LISTING_HAS_RETAINED_RECORDS';
+        setErrors({
+          _form: retainedHistory
+            ? (payload.error ?? 'This listing has marketplace history that must be retained and cannot be deleted.')
+            : `Failed to delete product: ${payload.error ?? `Server returned ${res.status}`}`,
+        });
+        setShowDeleteConfirm(false);
+        return;
+      }
       navigate('/seller/products');
     } catch (err) {
       console.error('Error deleting product:', err);
