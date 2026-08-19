@@ -20,6 +20,14 @@ interface UpdateStatusRequest {
   message?: string;
 }
 
+type ShipmentTransitionResult = {
+  shipment?: {
+    tracking_number?: string | null;
+    courier_name?: string | null;
+    [key: string]: unknown;
+  };
+};
+
 // Helper to get user from Authorization header
 async function getAuthUser(event: HandlerEvent) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
@@ -192,7 +200,7 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Get shipment and verify authorization
+    // Get shipment and verify authorization before any mutation.
     const { data: shipment, error: shipmentError } = await supabase
       .from('shipments')
       .select('*, orders(*)')
@@ -206,7 +214,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Check authorization (seller or admin)
     if (user.role !== 'admin' && shipment.seller_id !== user.id) {
       return {
         statusCode: 403,
@@ -222,11 +229,11 @@ export const handler: Handler = async (event) => {
     }
 
     if (targetOrderStatus && shipment.orders?.id && shipment.orders?.productId) {
-        const { data: product } = await supabase
-          .from('products')
-          .select('id, listingContext')
-          .eq('id', shipment.orders.productId)
-          .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
+      const { data: product } = await supabase
+        .from('products')
+        .select('id, listingContext')
+        .eq('id', shipment.orders.productId)
+        .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
 
       const paymentGuard = await enforcePaymentBackedTransition({
         supabase,
@@ -255,50 +262,38 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // Update shipment status
-    const { data: updatedShipment, error: updateError } = await supabase
-      .from('shipments')
-      .update({
-        status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', shipmentId)
-      .select()
-      .single();
+    // Commit shipment status, audit event and mapped order status atomically.
+    const { data: transition, error: transitionError } = await supabase.rpc('server_transition_shipment', {
+      p_shipment_id: shipmentId,
+      p_actor_id: user.id,
+      p_status: status,
+      p_message: typeof message === 'string' ? message : null,
+    });
 
-    if (updateError) {
-      throw updateError;
+    if (transitionError) {
+      if (transitionError.code === '42501') {
+        return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
+      }
+      if (transitionError.code === 'P0002') {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Shipment or order not found' }) };
+      }
+      if (transitionError.code === '22023') {
+        return { statusCode: 400, body: JSON.stringify({ error: transitionError.message }) };
+      }
+      if (transitionError.code === 'P0001') {
+        return { statusCode: 409, body: JSON.stringify({ error: transitionError.message }) };
+      }
+      throw new Error(`Atomic shipment transition failed: ${transitionError.message}`);
     }
 
-    // Insert shipment event
-    await supabase
-      .from('shipment_events')
-      .insert({
-        shipment_id: shipmentId,
-        status,
-        message: message || `Status updated to ${status}`,
-        changed_by: user.id,
-      });
-
-    // Update order status if applicable
-    if (status === 'Delivered') {
-      await supabase
-        .from('orders')
-        .update({ 
-          status: 'delivered',
-          deliveredAt: new Date().toISOString()
-        })
-        .eq('id', shipment.order_id);
-    } else if (status === 'Dispatched' || status === 'In Transit') {
-      await supabase
-        .from('orders')
-        .update({ status: 'shipped' })
-        .eq('id', shipment.order_id);
+    const result = transition as ShipmentTransitionResult | null;
+    if (!result?.shipment) {
+      throw new Error('Atomic shipment transition returned no shipment');
     }
+    const updatedShipment = result.shipment;
 
-    // Create the buyer's in-app notification server-side. The seller cannot
-    // insert a notification for another user under the notifications RLS policy,
-    // so this belongs in the authenticated service-role transition handler.
+    // Create the buyer's in-app notification only after the canonical DB
+    // transition has committed. Notification failure remains non-fatal.
     const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
@@ -312,7 +307,7 @@ export const handler: Handler = async (event) => {
       console.error('Failed to create shipment notification:', notificationError.message);
     }
 
-    // Send email notification for certain statuses
+    // Send email notification for certain statuses after canonical DB commit.
     await sendStatusEmail(shipment.orders, updatedShipment, status);
 
     return {
