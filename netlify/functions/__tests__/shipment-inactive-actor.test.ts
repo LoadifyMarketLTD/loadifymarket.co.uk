@@ -21,6 +21,10 @@ function makeEvent(method: string, path: string, body: unknown = {}): HandlerEve
 function installInactiveActorMock() {
   const rpc = vi.fn();
   const storageFrom = vi.fn();
+  const inactiveActorResult = {
+    data: { id: ACTOR_ID, role: 'seller', isActive: false },
+    error: null,
+  };
   const from = vi.fn((table: string) => {
     if (table !== 'users') {
       throw new Error(`Inactive actor reached protected service-role table: ${table}`);
@@ -28,10 +32,8 @@ function installInactiveActorMock() {
     return {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({
-        data: { id: ACTOR_ID, role: 'seller', isActive: false },
-        error: null,
-      }),
+      single: vi.fn().mockResolvedValue(inactiveActorResult),
+      maybeSingle: vi.fn().mockResolvedValue(inactiveActorResult),
     };
   });
 
