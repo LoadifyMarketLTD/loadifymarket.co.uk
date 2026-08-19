@@ -50,6 +50,7 @@ interface SetupOptions {
   sellerUpdateError?: { message: string } | null;
   pushUpdateError?: { message: string } | null;
   auditError?: { message: string } | null;
+  activeGateError?: { message: string } | null;
 }
 
 function installSupabaseMock(options: SetupOptions = {}) {
@@ -85,6 +86,11 @@ function installSupabaseMock(options: SetupOptions = {}) {
       return { data: null, error: options.banError };
     }
     return { data: { user: { id: _userId } }, error: null };
+  });
+
+  const activeGateRpc = vi.fn().mockResolvedValue({
+    data: false,
+    error: options.activeGateError ?? null,
   });
 
   let lookupIndex = 0;
@@ -143,12 +149,14 @@ function installSupabaseMock(options: SetupOptions = {}) {
         }),
         admin: { updateUserById },
       },
+      rpc: activeGateRpc,
       from,
     })),
   }));
 
   return {
     updateUserById,
+    activeGateRpc,
     usersUpdate,
     sellerSelect,
     sellerUpdate,
@@ -204,6 +212,7 @@ describe('admin-user-status', () => {
 
     expect(res.statusCode).toBe(200);
     expect(mocks.updateUserById).toHaveBeenCalledWith(TARGET_ID, { ban_duration: '876000h' });
+    expect(mocks.activeGateRpc).not.toHaveBeenCalled();
     expect(mocks.usersUpdate).toHaveBeenCalledWith({ isActive: false });
     expect(mocks.sellerUpdate).toHaveBeenCalledWith({ sellerStatus: 'suspended' });
     expect(mocks.pushUpdate).toHaveBeenCalledWith({ isActive: false });
@@ -256,6 +265,24 @@ describe('admin-user-status', () => {
     }));
   });
 
+  it('keeps reactivation closed until migration 608 active-account DB gate is installed', async () => {
+    const mocks = installSupabaseMock({
+      target: { id: TARGET_ID, role: 'seller', isActive: false },
+      activeGateError: { message: 'function public.is_active_user() does not exist' },
+    });
+    const { handler } = await import('../admin-user-status');
+
+    const res = await handler(makeEvent({ op: 'reactivate', userId: TARGET_ID }), {} as never);
+
+    expect(res.statusCode).toBe(503);
+    expect(mocks.activeGateRpc).toHaveBeenCalledWith('is_active_user');
+    expect(mocks.updateUserById).not.toHaveBeenCalled();
+    expect(mocks.sellerSelect).not.toHaveBeenCalled();
+    expect(mocks.sellerUpdate).not.toHaveBeenCalled();
+    expect(mocks.usersUpdate).not.toHaveBeenCalled();
+    expect(mocks.auditInsert).not.toHaveBeenCalled();
+  });
+
   it('reactivates a ready seller to its derived active state without resurrecting push tokens', async () => {
     const mocks = installSupabaseMock({
       target: { id: TARGET_ID, role: 'seller', isActive: false },
@@ -265,6 +292,7 @@ describe('admin-user-status', () => {
     const res = await handler(makeEvent({ op: 'reactivate', userId: TARGET_ID }), {} as never);
 
     expect(res.statusCode).toBe(200);
+    expect(mocks.activeGateRpc).toHaveBeenCalledWith('is_active_user');
     expect(JSON.parse(res.body)).toMatchObject({
       ok: true,
       userId: TARGET_ID,
