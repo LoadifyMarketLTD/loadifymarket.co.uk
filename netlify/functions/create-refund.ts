@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { checkRateLimit } from './_shared/rateLimiter';
 import {
   findOrderTransfer,
@@ -32,33 +33,28 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-  if (!token) {
-    return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
-
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };
+
+  // Refunds mutate Stripe and financial history through service_role. A stale
+  // admin JWT is never sufficient; the caller must still be an active admin in
+  // the live platform account table before rate limiting or any financial read.
+  const auth = await authenticateActiveAccount(event, supabase, ['admin']);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: auth.status === 401 ? 'Unauthorized' : 'Admin access required' }),
+    };
   }
 
-  const { data: callerRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle<{ role: string }>();
-  if (callerRow?.role !== 'admin') {
-    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Admin access required' }) };
-  }
+  const adminId = auth.actor.id;
 
   const refundRl = await checkRateLimit({
     supabase,
     tableName: 'create_refund_rate_limits',
-    identifier: user.id,
+    identifier: adminId,
     windowMinutes: 60,
     maxAttempts: 10,
     policy: 'fail-closed',
@@ -161,7 +157,7 @@ export const handler: Handler = async (event) => {
         metadata: {
           orderId,
           orderNumber: order.orderNumber,
-          issuedByAdminId: user.id,
+          issuedByAdminId: adminId,
         },
       },
       { idempotencyKey: `order-refund:${orderId}` },
@@ -276,7 +272,7 @@ export const handler: Handler = async (event) => {
 
   if (transferRecoveryWarning) {
     await supabase.from('notifications').insert({
-      userId: user.id,
+      userId: adminId,
       type: 'payment',
       title: 'Refund requires payout review',
       message: `${order.orderNumber}: ${transferRecoveryWarning}`,
