@@ -29,8 +29,14 @@ type ShipmentTransitionResult = {
   changed?: boolean;
 };
 
-// Helper to get user from Authorization header
-async function getAuthUser(event: HandlerEvent) {
+type ShipmentActor = {
+  id: string;
+  role: string;
+  isActive: boolean;
+};
+
+// Helper to get user from Authorization header and resolve current platform state.
+async function getAuthUser(event: HandlerEvent): Promise<ShipmentActor | null> {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -43,12 +49,13 @@ async function getAuthUser(event: HandlerEvent) {
     return null;
   }
 
-  const { data: userData } = await supabase
+  const { data: userData, error: userError } = await supabase
     .from('users')
-    .select('*')
+    .select('id, role, isActive')
     .eq('id', user.id)
-    .single();
+    .maybeSingle<ShipmentActor>();
 
+  if (userError || !userData) return null;
   return userData;
 }
 
@@ -135,6 +142,15 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),
+      };
+    }
+
+    // #520 is intentionally the pre-608 runtime. A stale but otherwise valid
+    // token for a suspended actor must stop here before any service-role access.
+    if (user.isActive !== true) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Account is suspended' }),
       };
     }
 
