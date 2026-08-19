@@ -30,6 +30,12 @@ interface OrderRow {
   createdAt: string;
   sellerId: string | null;
   products: { title: string } | null;
+  order_items: Array<{ productTitleSnapshot: string | null }> | null;
+}
+
+function orderProductTitle(order: OrderRow): string {
+  const snapshot = order.order_items?.find((item) => item.productTitleSnapshot?.trim())?.productTitleSnapshot?.trim();
+  return snapshot || order.products?.title || "—";
 }
 
 const statusColor: Record<string, string> = {
@@ -68,20 +74,17 @@ const BuyerOrders = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  // Return request dialog state
   const [returnOrder, setReturnOrder] = useState<OrderRow | null>(null);
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnLoading, setReturnLoading] = useState(false);
 
-  // Dispute dialog state
   const [disputeOrder, setDisputeOrder] = useState<OrderRow | null>(null);
   const [disputeSubject, setDisputeSubject] = useState("");
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeLoading, setDisputeLoading] = useState(false);
 
-  // Confirm delivery dialog state
   const [confirmDeliveryOrder, setConfirmDeliveryOrder] = useState<OrderRow | null>(null);
   const [confirmDeliveryLoading, setConfirmDeliveryLoading] = useState(false);
 
@@ -89,10 +92,6 @@ const BuyerOrders = () => {
     if (!confirmDeliveryOrder || !user) return;
     setConfirmDeliveryLoading(true);
     try {
-      // Route escrow release through the server-side function so it can enforce
-      // pre-conditions (order must belong to this buyer, status must be
-      // shipped/delivered, no double-release) and handle seller notification
-      // safely server-side rather than writing escrow fields from the browser.
       const res = await authorizedFetch("/.netlify/functions/confirm-delivery", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -105,7 +104,6 @@ const BuyerOrders = () => {
           const errBody = await res.json() as { error?: string };
           serverMessage = errBody.error;
         } catch {
-          // Response body was not valid JSON — use status text instead
           serverMessage = res.statusText || undefined;
         }
         throw new Error(serverMessage ?? `Server error ${res.status}`);
@@ -135,14 +133,11 @@ const BuyerOrders = () => {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { error?: string }).error || 'Failed to generate invoice');
       }
-      // The function returns an HTML page — open it in a new tab so the user
-      // can print or save as PDF using their browser's built-in print dialog.
       const html = await res.text();
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const win = window.open(url, '_blank', 'noopener,noreferrer');
       if (!win) {
-        // Popup was blocked — inform the user and fall back to direct download
         toast({
           title: 'Pop-up blocked',
           description:
@@ -155,7 +150,6 @@ const BuyerOrders = () => {
         a.download = `invoice-${orderNumber || orderId.slice(0, 8)}.html`;
         a.click();
       }
-      // Revoke after a short delay to allow the new tab to fully load
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (err) {
       toast({ title: 'Invoice generation failed', description: (err as Error).message, variant: 'destructive' });
@@ -169,7 +163,7 @@ const BuyerOrders = () => {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("id, orderNumber, total, status, createdAt, sellerId, products(title)")
+          .select("id, orderNumber, total, status, createdAt, sellerId, products(title), order_items(productTitleSnapshot)")
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
@@ -187,7 +181,7 @@ const BuyerOrders = () => {
   const filtered = orders.filter(
     (o) =>
       (o.orderNumber || o.id).toLowerCase().includes(search.toLowerCase()) ||
-      (o.products?.title ?? "").toLowerCase().includes(search.toLowerCase())
+      orderProductTitle(o).toLowerCase().includes(search.toLowerCase())
   );
 
   const byStatus = (status: string) => filtered.filter((o) => o.status === status);
@@ -200,7 +194,6 @@ const BuyerOrders = () => {
     }
     setReturnLoading(true);
     try {
-      // Prevent duplicate open returns for the same order
       const { data: existing } = await supabase
         .from("returns")
         .select("id")
@@ -296,7 +289,7 @@ const BuyerOrders = () => {
                 {o.orderNumber || o.id.slice(0, 8).toUpperCase()}
               </TableCell>
               <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[200px] truncate">
-                {o.products?.title ?? "—"}
+                {orderProductTitle(o)}
               </TableCell>
               <TableCell className="text-xs text-muted-foreground">
                 {new Date(o.createdAt).toLocaleDateString("en-GB")}
@@ -409,7 +402,6 @@ const BuyerOrders = () => {
         <TabsContent value="completed"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("completed"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
-      {/* Return Request Dialog */}
       <Dialog open={!!returnOrder} onOpenChange={(open) => { if (!open) setReturnOrder(null); }}>
         <DialogContent>
           <DialogHeader>
@@ -457,7 +449,6 @@ const BuyerOrders = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dispute Dialog */}
       <Dialog open={!!disputeOrder} onOpenChange={(open) => { if (!open) setDisputeOrder(null); }}>
         <DialogContent>
           <DialogHeader>
@@ -515,7 +506,6 @@ const BuyerOrders = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm Delivery Dialog */}
       <Dialog open={!!confirmDeliveryOrder} onOpenChange={(open) => { if (!open) setConfirmDeliveryOrder(null); }}>
         <DialogContent>
           <DialogHeader>

@@ -2,7 +2,6 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
-import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 
@@ -36,6 +35,7 @@ interface DBProduct {
   stockQuantity: number;
   listingContext: string;
   listingStatus: string;
+  images: string[];
 }
 
 const STRIPE_CHECKOUT_WINDOW_MINUTES = 30;
@@ -89,30 +89,7 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  // Checkout uses service_role for reservations and payment-session materialisation.
-  // A stale but valid access token from a suspended account must stop before any
-  // reservation, rate-limit write, Stripe creation, or payment-session write.
-  const auth = await authenticateActiveAccount(event, supabase);
-  if (!auth.ok) {
-    return {
-      statusCode: auth.status,
-      body: JSON.stringify({
-        error: auth.status === 401
-          ? 'Authentication required. Please sign in to complete your purchase.'
-          : 'This account is not active and cannot place orders.',
-      }),
-    };
-  }
-
-  const verifiedBuyerId = auth.actor.id;
-  if (buyerId && buyerId !== verifiedBuyerId) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
-  }
-
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
   const reservationToken = randomUUID();
   let reservedProductIds: string[] = [];
   const releaseReservedProducts = async () => {
@@ -128,6 +105,27 @@ export const handler: Handler = async (event) => {
       });
     reservedProductIds = [];
   };
+
+  let verifiedBuyerId = '';
+  const authHeader = event.headers['authorization'];
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authUser) {
+      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
+    }
+    if (buyerId && buyerId !== authUser.id) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
+    }
+    verifiedBuyerId = authUser.id;
+  }
+
+  if (!verifiedBuyerId) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ error: 'Authentication required. Please sign in to complete your purchase.' }),
+    };
+  }
 
   const checkoutRl = await checkRateLimit({
     supabase,
@@ -145,8 +143,15 @@ export const handler: Handler = async (event) => {
   }
 
   const maintenance = await isMaintenanceMode(supabase);
-  if (maintenance && auth.actor.role !== 'admin') {
-    return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
+  if (maintenance) {
+    const { data: callerRow } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', verifiedBuyerId)
+      .maybeSingle<{ role: string | null }>();
+    if (callerRow?.role !== 'admin') {
+      return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
+    }
   }
 
   const maybeRpc = (supabase as typeof supabase & { rpc?: (fn: string) => Promise<unknown> }).rpc;
@@ -162,7 +167,7 @@ export const handler: Handler = async (event) => {
   const productIds = submittedProductIds;
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus')
+    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images')
     .in('id', productIds);
 
   if (dbError) {
@@ -214,6 +219,8 @@ export const handler: Handler = async (event) => {
       quantity: item.quantity,
       price: dbProduct.price,
       title: dbProduct.title,
+      image: Array.isArray(dbProduct.images) && dbProduct.images.length > 0 ? dbProduct.images[0] : null,
+      listingContext: dbProduct.listingContext === 'service' ? 'service' as const : 'product' as const,
     };
   });
 
@@ -226,44 +233,36 @@ export const handler: Handler = async (event) => {
   }
 
   const checkoutSellerId = uniqueSellerIds[0];
-  const [sellerAccountResult, sellerProfileResult] = await Promise.all([
-    supabase
-      .from('users')
-      .select('role, isActive')
-      .eq('id', checkoutSellerId)
-      .maybeSingle<{ role: string | null; isActive: boolean | null }>(),
-    supabase
-      .from('seller_profiles')
-      .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
-      .eq('userId', checkoutSellerId)
-      .maybeSingle<{
-        stripeAccountId: string | null;
-        stripeConnectStatus: string | null;
-        sellerStatus: string | null;
-        isPaused: boolean | null;
-      }>(),
-  ]);
+  const { data: sellerProfile, error: sellerProfileError } = await supabase
+    .from('seller_profiles')
+    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName')
+    .eq('userId', checkoutSellerId)
+    .maybeSingle<{
+      stripeAccountId: string | null;
+      stripeConnectStatus: string | null;
+      sellerStatus: string | null;
+      isPaused: boolean | null;
+      businessName: string | null;
+      fullName: string | null;
+    }>();
 
-  if (sellerAccountResult.error || sellerProfileResult.error) {
-    console.error(
-      'create-checkout: seller eligibility query failed:',
-      sellerAccountResult.error?.message ?? sellerProfileResult.error?.message,
-    );
+  if (sellerProfileError) {
+    console.error('create-checkout: seller profile query failed:', sellerProfileError.message);
     return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller status. Please try again.' }) };
   }
 
-  const sellerAccount = sellerAccountResult.data;
-  const sellerProfile = sellerProfileResult.data;
   if (
-    !sellerAccount ||
-    sellerAccount.role !== 'seller' ||
-    sellerAccount.isActive !== true ||
     !sellerProfile?.stripeAccountId ||
     sellerProfile.stripeConnectStatus !== 'active' ||
     sellerProfile.sellerStatus !== 'active' ||
     sellerProfile.isPaused === true
   ) {
     return { statusCode: 400, body: JSON.stringify({ error: 'This seller is not currently available to accept payments.' }) };
+  }
+
+  const sellerBusinessName = sellerProfile.businessName?.trim() || sellerProfile.fullName?.trim() || '';
+  if (!sellerBusinessName) {
+    return { statusCode: 409, body: JSON.stringify({ error: 'Seller commercial identity is incomplete. Please try again later.' }) };
   }
 
   let shippingAmount = 0;
@@ -325,14 +324,58 @@ export const handler: Handler = async (event) => {
   }
 
   const VAT_RATE = 0.20;
-  const { data: buyerProfile } = await supabase
+  const { data: buyerProfile, error: buyerProfileError } = await supabase
     .from('buyer_profiles')
-    .select('accountType, isVatVerified')
+    .select('accountType, isVatVerified, companyName, vatNumber')
     .eq('userId', verifiedBuyerId)
-    .maybeSingle<{ accountType: string | null; isVatVerified: boolean | null }>();
+    .maybeSingle<{
+      accountType: string | null;
+      isVatVerified: boolean | null;
+      companyName: string | null;
+      vatNumber: string | null;
+    }>();
+
+  if (buyerProfileError) {
+    console.error('create-checkout: buyer profile query failed:', buyerProfileError.message);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify buyer identity. Please try again.' }) };
+  }
+
+  const { data: buyerUser, error: buyerUserError } = await supabase
+    .from('users')
+    .select('email, firstName, lastName')
+    .eq('id', verifiedBuyerId)
+    .maybeSingle<{ email: string; firstName: string | null; lastName: string | null }>();
+
+  if (buyerUserError || !buyerUser) {
+    console.error('create-checkout: buyer user query failed:', buyerUserError?.message ?? 'buyer row missing');
+    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify buyer identity. Please try again.' }) };
+  }
+
+  const buyerEmail = buyerUser.email?.trim() || '';
+  if (!buyerEmail) {
+    return { statusCode: 409, body: JSON.stringify({ error: 'Buyer email identity is incomplete. Please update your account details.' }) };
+  }
+  const buyerName = [buyerUser.firstName, buyerUser.lastName]
+    .map((part) => part?.trim() || '')
+    .filter(Boolean)
+    .join(' ')
+    .trim() || buyerEmail;
 
   const isB2BBuyer = Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
   const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
+  const buyerSnapshot = {
+    id: verifiedBuyerId,
+    name: buyerName,
+    email: buyerEmail,
+    companyName: buyerProfile?.companyName?.trim() || null,
+    vatNumber: buyerProfile?.vatNumber?.trim() || null,
+    isB2B: isB2BBuyer,
+    reverseCharge: applyReverseCharge,
+  };
+  const sellerSnapshot = {
+    id: checkoutSellerId,
+    businessName: sellerBusinessName,
+  };
 
   const catalogSubtotalPence = enrichedItems.reduce(
     (sum, item) => sum + Math.round(item.price * 100) * item.quantity,
@@ -434,6 +477,9 @@ export const handler: Handler = async (event) => {
         amount: chargeableTotal,
         currency: 'GBP',
         metadata: {
+          commercialSnapshotVersion: 1,
+          buyerSnapshot,
+          sellerSnapshot,
           items: enrichedItems,
           shippingAddress: effectiveShippingAddress,
           billingAddress,

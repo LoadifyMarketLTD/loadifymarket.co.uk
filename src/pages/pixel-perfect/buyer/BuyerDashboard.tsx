@@ -14,6 +14,12 @@ interface OrderRow {
   status: string;
   createdAt: string;
   products: { title: string } | null;
+  order_items: Array<{ productTitleSnapshot: string | null; productSnapshotSource: string | null }> | null;
+}
+
+function orderProductTitle(order: OrderRow): string | null {
+  const snapshotItem = order.order_items?.find((item) => item.productSnapshotSource != null) ?? null;
+  return snapshotItem ? snapshotItem.productTitleSnapshot : order.products?.title ?? null;
 }
 
 interface WishlistProduct {
@@ -51,7 +57,7 @@ const BuyerDashboard = () => {
         const [ordersRes, wishlistRes] = await Promise.all([
           supabase
             .from("orders")
-            .select("id, orderNumber, total, status, createdAt, products(title)")
+            .select("id, orderNumber, total, status, createdAt, products(title), order_items(productTitleSnapshot, productSnapshotSource)")
             .eq("buyerId", user.id)
             .order("createdAt", { ascending: false }),
           supabase
@@ -64,8 +70,6 @@ const BuyerDashboard = () => {
         const allOrders = (ordersRes.data as unknown as OrderRow[]) || [];
         setRecentOrders(allOrders.slice(0, 5));
         setTotalOrders(allOrders.length);
-        // Only count orders that have actually been paid/fulfilled — exclude
-        // cancelled and refunded orders so the "Total Spent" stat is accurate.
         const completedStatuses = ["paid", "packed", "shipped", "delivered", "completed"];
         setTotalSpent(
           allOrders
@@ -73,8 +77,7 @@ const BuyerDashboard = () => {
             .reduce((sum, o) => sum + (o.total || 0), 0)
         );
 
-        const productIds: string[] =
-          wishlistRes.data?.productIds || [];
+        const productIds: string[] = wishlistRes.data?.productIds || [];
         setWishlistCount(productIds.length);
 
         if (productIds.length > 0) {
@@ -111,12 +114,9 @@ const BuyerDashboard = () => {
     <div className="p-4 sm:p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Welcome back, {firstName} 👋</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Here's a summary of your account activity.
-        </p>
+        <p className="text-muted-foreground text-sm mt-1">Here's a summary of your account activity.</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((s) => (
           <Link key={s.label} to={s.to} aria-label={`View ${s.label.toLowerCase()}`} className="block hover:scale-[1.02] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
@@ -139,7 +139,6 @@ const BuyerDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Orders */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
@@ -147,9 +146,7 @@ const BuyerDashboard = () => {
               <CardDescription>Your latest purchases</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="text-xs" asChild>
-              <Link to="/buyer/orders">
-                View All <ArrowUpRight className="h-3 w-3 ml-1" />
-              </Link>
+              <Link to="/buyer/orders">View All <ArrowUpRight className="h-3 w-3 ml-1" /></Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -158,33 +155,35 @@ const BuyerDashboard = () => {
             ) : recentOrders.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No orders yet.</p>
             ) : (
-              recentOrders.map((o) => (
-                <div key={o.id} className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                      <Package className="h-5 w-5 text-muted-foreground" />
+              recentOrders.map((o) => {
+                const historicalTitle = orderProductTitle(o);
+                return (
+                  <div key={o.id} className="flex items-center justify-between rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                        <Package className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{o.orderNumber || o.id.slice(0, 8).toUpperCase()}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(o.createdAt).toLocaleDateString("en-GB")}
+                          {historicalTitle ? ` · ${historicalTitle}` : ""}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{o.orderNumber || o.id.slice(0, 8).toUpperCase()}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(o.createdAt).toLocaleDateString("en-GB")}
-                        {o.products?.title ? ` · ${o.products.title}` : ""}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-foreground">
+                        £{(o.total ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <Badge variant="outline" className={statusColor[o.status] ?? ""}>{o.status}</Badge>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-foreground">
-                      £{(o.total ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                    <Badge variant="outline" className={statusColor[o.status] ?? ""}>{o.status}</Badge>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </CardContent>
         </Card>
 
-        {/* Wishlist Preview */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
@@ -192,9 +191,7 @@ const BuyerDashboard = () => {
               <CardDescription>Saved for later</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="text-xs" asChild>
-              <Link to="/buyer/wishlist">
-                View All <ArrowUpRight className="h-3 w-3 ml-1" />
-              </Link>
+              <Link to="/buyer/wishlist">View All <ArrowUpRight className="h-3 w-3 ml-1" /></Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
