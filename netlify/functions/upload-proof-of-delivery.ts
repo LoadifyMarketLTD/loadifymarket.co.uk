@@ -29,6 +29,11 @@ const EXT_TO_MIME: Record<string, string> = {
   pdf: 'application/pdf',
 };
 
+type AttachProofResult = {
+  shipment?: Record<string, unknown>;
+  attached?: boolean;
+};
+
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -42,6 +47,13 @@ function isSafeProofPath(shipmentId: string, filePath: string): boolean {
 function expectedMime(filePath: string): string | null {
   const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
   return EXT_TO_MIME[ext] ?? null;
+}
+
+async function removeUncommittedProof(filePath: string): Promise<void> {
+  const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
+  if (error) {
+    console.error('upload-proof-of-delivery: failed to remove uncommitted proof object:', error.message);
+  }
 }
 
 async function getAuthUser(event: HandlerEvent) {
@@ -138,6 +150,20 @@ export const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod === 'POST') {
+    // POD is commercial evidence. Once attached, do not mint another signed
+    // upload URL. PUT confirmation remains retry-safe for the already-canonical
+    // path, but POST cannot create replacement evidence.
+    if (shipment.proof_of_delivery_url) {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery is already attached and cannot be replaced.' }) };
+    }
+
+    // A proof-of-delivery object may only be created for an actual Delivered
+    // shipment. This prevents evidence from existing before the lifecycle event
+    // it is intended to prove.
+    if (shipment.status !== 'Delivered') {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery can only be uploaded after the shipment is Delivered.' }) };
+    }
+
     let requestBody: { contentType?: string; fileSize?: number };
     try {
       requestBody = JSON.parse(event.body || '{}') as { contentType?: string; fileSize?: number };
@@ -182,6 +208,34 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid upload path' }) };
     }
 
+    // Confirmation retries for the exact canonical object are safe even if the
+    // shipment later entered a return/recovery state. A different object can
+    // never replace established evidence.
+    if (shipment.proof_of_delivery_url) {
+      if (shipment.proof_of_delivery_url === filePath) {
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            success: true,
+            shipment,
+            attached: false,
+            message: 'Proof of delivery is already attached',
+          }),
+        };
+      }
+
+      await removeUncommittedProof(filePath);
+      return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery is already attached and cannot be replaced.' }) };
+    }
+
+    if (shipment.status !== 'Delivered') {
+      // A signed URL may have been minted while the shipment was Delivered and
+      // the state may have changed before confirmation. The object is not part of
+      // commercial history until DB attachment succeeds, so remove it.
+      await removeUncommittedProof(filePath);
+      return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery can only be attached while the shipment is Delivered.' }) };
+    }
+
     const fileName = filePath.split('/').pop() ?? '';
     const { data: listedObjects, error: listError } = await supabase.storage
       .from(BUCKET_NAME)
@@ -219,31 +273,53 @@ export const handler: Handler = async (event) => {
       !requiredMime ||
       normalizedActualMime !== requiredMime
     ) {
-      await supabase.storage.from(BUCKET_NAME).remove([filePath]).catch(() => undefined);
+      await removeUncommittedProof(filePath);
       return { statusCode: 400, body: JSON.stringify({ error: 'Uploaded proof file failed server validation' }) };
     }
 
-    const { data: updatedShipment, error: updateError } = await supabase
-      .from('shipments')
-      .update({
-        proof_of_delivery_url: filePath,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', shipmentId)
-      .select()
-      .single();
-    if (updateError) throw updateError;
-
-    await supabase.from('shipment_events').insert({
-      shipment_id: shipmentId,
-      status: shipment.status,
-      message: 'Proof of delivery uploaded',
-      changed_by: user.id,
+    // Attach the validated object path and append its audit event in one DB
+    // transaction. If a different concurrent proof won the race, remove this
+    // newly-uploaded unreferenced object as compensation.
+    const { data: attachResult, error: attachError } = await supabase.rpc('server_attach_shipment_proof', {
+      p_shipment_id: shipmentId,
+      p_actor_id: user.id,
+      p_file_path: filePath,
     });
+
+    if (attachError) {
+      await removeUncommittedProof(filePath);
+      if (attachError.code === '42501') {
+        return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
+      }
+      if (attachError.code === 'P0002') {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Shipment not found' }) };
+      }
+      if (attachError.code === '22023') {
+        return { statusCode: 400, body: JSON.stringify({ error: attachError.message }) };
+      }
+      if (attachError.code === 'P0001') {
+        return { statusCode: 409, body: JSON.stringify({ error: attachError.message }) };
+      }
+      throw new Error(`Atomic proof attachment failed: ${attachError.message}`);
+    }
+
+    const result = attachResult as AttachProofResult | null;
+    if (!result?.shipment) {
+      // DB commit succeeded but the contract response is invalid. Do NOT delete
+      // the object now because it may already be the canonical referenced proof.
+      throw new Error('Atomic proof attachment returned no shipment');
+    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, shipment: updatedShipment, message: 'Proof of delivery uploaded successfully' }),
+      body: JSON.stringify({
+        success: true,
+        shipment: result.shipment,
+        attached: result.attached === true,
+        message: result.attached === true
+          ? 'Proof of delivery uploaded successfully'
+          : 'Proof of delivery is already attached',
+      }),
     };
   }
 
