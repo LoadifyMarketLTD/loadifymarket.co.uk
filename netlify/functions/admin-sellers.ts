@@ -1,6 +1,6 @@
-import { Handler, HandlerEvent } from '@netlify/functions';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { getBearerToken } from './_shared/http';
+import { Handler } from '@netlify/functions';
+import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
 
@@ -12,18 +12,6 @@ const corsHeaders = {
 
 const JSON_HEADERS = { ...corsHeaders, 'Content-Type': 'application/json' };
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface AuthOk {
-  ok: true;
-  caller: { id: string; email: string; role: string };
-}
-interface AuthFail {
-  ok: false;
-  status: number;
-}
-type AuthResult = AuthOk | AuthFail;
-
 interface SellerRow {
   userId: string;
   name: string;
@@ -33,63 +21,6 @@ interface SellerRow {
   sellerStatus: 'draft' | 'submitted' | 'active' | 'suspended';
   stripeConnectStatus: string | null;
 }
-
-// ── Auth helper ────────────────────────────────────────────────────────────────
-
-async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient): Promise<AuthResult> {
-  const token = getBearerToken(event);
-  if (!token) {
-    return { ok: false, status: 401 };
-  }
-
-  const { data, error } = await admin.auth.getUser(token);
-
-  if (error || !data?.user) {
-    return { ok: false, status: 401 };
-  }
-
-  const authUser = data.user;
-  const authEmail = (authUser.email || '').toLowerCase().trim();
-
-  if (!authEmail) {
-    return { ok: false, status: 401 };
-  }
-
-  // Fast-path: check app_metadata.role from the JWT claim (set by migration 340
-  // and kept in sync by the auth trigger).  This avoids an extra DB round-trip
-  // and works correctly even when the public.users row has a case mismatch on
-  // the email column.
-  const jwtRole = (authUser.app_metadata as Record<string, unknown> | undefined)?.role;
-  if (jwtRole === 'admin') {
-    return {
-      ok: true,
-      caller: { id: authUser.id, email: authEmail, role: 'admin' },
-    };
-  }
-
-  // Fallback: look up by user ID (not email) for robustness against email
-  // casing differences between auth.users and public.users.
-  const { data: dbUser, error: dbError } = await admin
-    .from('users')
-    .select('role')
-    .eq('id', authUser.id)
-    .maybeSingle();
-
-  if (dbError || !dbUser || dbUser.role !== 'admin') {
-    return { ok: false, status: 403 };
-  }
-
-  return {
-    ok: true,
-    caller: {
-      id: authUser.id,
-      email: authEmail,
-      role: dbUser.role,
-    },
-  };
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
@@ -127,7 +58,6 @@ function sellerDisplayName(user: { firstName?: string | null; lastName?: string 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
 
 export const handler: Handler = async (event) => {
-  // Handle CORS preflight (OPTIONS) before any auth or business logic.
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' };
   }
@@ -147,8 +77,7 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const auth = await authenticateAdmin(event, admin);
-
+  const auth = await authenticateActiveAccount(event, admin, ['admin']);
   if (!auth.ok) {
     return {
       statusCode: auth.status,
@@ -160,7 +89,6 @@ export const handler: Handler = async (event) => {
   const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
 
   try {
-    // ── GET — list all sellers ────────────────────────────────────────────────
     if (event.httpMethod === 'GET') {
       const { data: rows, error } = await admin
         .from('users')
@@ -211,7 +139,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // ── POST — operations ─────────────────────────────────────────────────────
     if (event.httpMethod === 'POST') {
       let body: Record<string, unknown> = {};
       try {
@@ -227,7 +154,6 @@ export const handler: Handler = async (event) => {
       const op = body.op as string | undefined;
       const userId = body.userId as string | undefined;
 
-      // ── get_seller_detail ──────────────────────────────────────────────────
       if (op === 'get_seller_detail') {
         if (!userId) {
           return {
@@ -246,7 +172,6 @@ export const handler: Handler = async (event) => {
 
         if (userRes.error) throw userRes.error;
 
-        // Count reports on the seller's products
         const productIds = (listingsCountRes.data || []).map((p: { id: string }) => p.id);
         let reportsCount = 0;
         if (productIds.length > 0) {
@@ -283,15 +208,10 @@ export const handler: Handler = async (event) => {
         };
       }
 
-      // ── approve ────────────────────────────────────────────────────────────
       if (op === 'approve') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
-        // Set isApproved so the activation pipeline can promote the seller.
         const { error } = await admin.from('seller_profiles').update({ isApproved: true }).eq('userId', userId);
         if (error) throw error;
-        // Re-run the activation pipeline so the seller becomes 'active'
-        // immediately if Stripe and profile requirements are also met, rather
-        // than waiting for the next Stripe webhook or connect-status poll.
         let sellerStatus = 'submitted';
         try {
           const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
@@ -303,7 +223,6 @@ export const handler: Handler = async (event) => {
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true, sellerStatus }) };
       }
 
-      // ── reject ─────────────────────────────────────────────────────────────
       if (op === 'reject') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
         const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'suspended' }).eq('userId', userId);
@@ -311,7 +230,6 @@ export const handler: Handler = async (event) => {
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
       }
 
-      // ── suspend ────────────────────────────────────────────────────────────
       if (op === 'suspend') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
         const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'suspended' }).eq('userId', userId);
@@ -319,7 +237,6 @@ export const handler: Handler = async (event) => {
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sellerStatus: 'suspended' }) };
       }
 
-      // ── reactivate ─────────────────────────────────────────────────────────
       if (op === 'reactivate') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
         const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'submitted' }).eq('userId', userId);
@@ -327,7 +244,6 @@ export const handler: Handler = async (event) => {
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sellerStatus: 'submitted' }) };
       }
 
-      // ── force_activate ─────────────────────────────────────────────────────
       if (op === 'force_activate') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
         const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'active', isApproved: true }).eq('userId', userId);
@@ -335,7 +251,6 @@ export const handler: Handler = async (event) => {
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
       }
 
-      // ── warn ───────────────────────────────────────────────────────────────
       if (op === 'warn') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
         const { data: u, error: userError } = await admin
@@ -356,7 +271,6 @@ export const handler: Handler = async (event) => {
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
       }
 
-      // ── onboarding_reminder ────────────────────────────────────────────────
       if (op === 'onboarding_reminder') {
         const cutoff = new Date(Date.now() - FORTY_EIGHT_HOURS_MS).toISOString();
         const { data: incomplete, error: qErr } = await admin
