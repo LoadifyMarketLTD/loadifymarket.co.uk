@@ -20,8 +20,10 @@ interface CreateShipmentRequest {
   courier_name?: string;
   tracking_number?: string;
   dispatched_at?: string | null;
-  shipping_method?: string;
-  shipping_cost?: number;
+  // Legacy fields are accepted only so the endpoint can reject attempts to
+  // mutate paid commercial terms explicitly instead of silently ignoring them.
+  shipping_method?: unknown;
+  shipping_cost?: unknown;
 }
 
 // Helper to get user from Authorization header
@@ -105,7 +107,7 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Invalid JSON in request body' }),
       };
     }
-    const { order_id, courier_name, tracking_number, dispatched_at, shipping_method, shipping_cost } = body;
+    const { order_id, courier_name, tracking_number, dispatched_at } = body;
 
     if (!order_id) {
       return {
@@ -114,10 +116,19 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    if (shipping_cost !== undefined && (!Number.isFinite(shipping_cost) || shipping_cost < 0)) {
+    // Shipping method/amount are commercial terms fixed by the verified checkout
+    // and Stripe payment evidence. Fulfilment must never rewrite them. Reject
+    // legacy/forged attempts explicitly so no caller can mistake the request for
+    // a successful commercial-term update.
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'shipping_method') ||
+      Object.prototype.hasOwnProperty.call(body, 'shipping_cost')
+    ) {
       return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'shipping_cost must be a non-negative number' }),
+        statusCode: 409,
+        body: JSON.stringify({
+          error: 'Shipping method and amount are fixed at checkout and cannot be changed during fulfilment.',
+        }),
       };
     }
 
@@ -242,23 +253,6 @@ export const handler: Handler = async (event) => {
           message: dispatched_at ? `Shipment dispatched on ${new Date(dispatched_at).toLocaleDateString('en-GB')}` : 'Shipment created',
           changed_by: user.id,
         });
-    }
-
-    // The API payload keeps snake_case for backwards compatibility, but the
-    // canonical orders schema uses camelCase column names.
-    if (shipping_method || shipping_cost !== undefined) {
-      const updateData: { shippingMethod?: string; shippingAmount?: number } = {};
-      if (shipping_method) updateData.shippingMethod = shipping_method;
-      if (shipping_cost !== undefined) updateData.shippingAmount = shipping_cost;
-
-      const { error: orderShippingError } = await supabase
-        .from('orders')
-        .update(updateData)
-        .eq('id', order_id);
-
-      if (orderShippingError) {
-        throw new Error(`Failed to persist order shipping details: ${orderShippingError.message}`);
-      }
     }
 
     return {
