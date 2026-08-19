@@ -1,7 +1,7 @@
 /**
  * push-token
  *
- * Registers or unregisters an Expo push token for the authenticated user.
+ * Registers or unregisters a push token for the authenticated user.
  *
  * POST body:
  *   { op: 'register',   token: string, platform: 'ios' | 'android' | 'web' }
@@ -9,7 +9,8 @@
  *
  * Authentication: Bearer <supabase access token> (required)
  *
- * On register  → upserts push_tokens (userId, token, platform, isActive=true)
+ * On register  → reassigns the physical device token to the authenticated user
+ *                and upserts push_tokens (userId, token, platform, isActive=true)
  * On unregister → sets isActive=false for the matching (userId, token) row
  */
 
@@ -83,6 +84,22 @@ export const handler: Handler = async (event) => {
     const platform = body.platform;
     if (!['ios', 'android', 'web'].includes(platform)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'platform must be ios, android, or web' }) };
+    }
+
+    // A native push token identifies one physical app installation. It must not
+    // remain active for a previous account after another user signs in on the
+    // same device, otherwise notifications can leak across accounts. Deactivate
+    // historical ownership first, then activate the row for the current user.
+    const { error: deactivateError } = await supabase
+      .from('push_tokens')
+      .update({ isActive: false })
+      .eq('token', body.token)
+      .neq('userId', user.id)
+      .eq('isActive', true);
+
+    if (deactivateError) {
+      console.error('push-token register: failed to deactivate prior token owner:', deactivateError.message);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to register push token' }) };
     }
 
     // Upsert: create or reactivate token row for this user+token combination.
