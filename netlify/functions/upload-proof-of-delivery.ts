@@ -157,6 +157,13 @@ export const handler: Handler = async (event) => {
       return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery is already attached and cannot be replaced.' }) };
     }
 
+    // A proof-of-delivery object may only be created for an actual Delivered
+    // shipment. This prevents evidence from existing before the lifecycle event
+    // it is intended to prove.
+    if (shipment.status !== 'Delivered') {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery can only be uploaded after the shipment is Delivered.' }) };
+    }
+
     let requestBody: { contentType?: string; fileSize?: number };
     try {
       requestBody = JSON.parse(event.body || '{}') as { contentType?: string; fileSize?: number };
@@ -201,10 +208,9 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid upload path' }) };
     }
 
-    // Confirmation retries for the exact canonical object are safe and should
-    // return success without another DB event or storage mutation. A different
-    // object can never replace established evidence; remove that uncommitted
-    // object and reject the attempted overwrite.
+    // Confirmation retries for the exact canonical object are safe even if the
+    // shipment later entered a return/recovery state. A different object can
+    // never replace established evidence.
     if (shipment.proof_of_delivery_url) {
       if (shipment.proof_of_delivery_url === filePath) {
         return {
@@ -220,6 +226,14 @@ export const handler: Handler = async (event) => {
 
       await removeUncommittedProof(filePath);
       return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery is already attached and cannot be replaced.' }) };
+    }
+
+    if (shipment.status !== 'Delivered') {
+      // A signed URL may have been minted while the shipment was Delivered and
+      // the state may have changed before confirmation. The object is not part of
+      // commercial history until DB attachment succeeds, so remove it.
+      await removeUncommittedProof(filePath);
+      return { statusCode: 409, body: JSON.stringify({ error: 'Proof of delivery can only be attached while the shipment is Delivered.' }) };
     }
 
     const fileName = filePath.split('/').pop() ?? '';
