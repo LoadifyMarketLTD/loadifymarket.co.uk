@@ -9,11 +9,13 @@ import {
 } from '@capacitor/push-notifications';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { isCapacitorNative } from '@/lib/capacitorUtils';
-
-const PUSH_TOKEN_STORAGE_KEY = 'loadify:push-token:last-registered';
-const PUSH_TOKEN_USER_STORAGE_KEY = 'loadify:push-token:last-user';
-const PUSH_TOKEN_REGISTRATION_VERSION_KEY = 'loadify:push-token:registration-version';
-const PUSH_TOKEN_REGISTRATION_VERSION = '2';
+import {
+  PUSH_TOKEN_REGISTRATION_VERSION,
+  PUSH_TOKEN_REGISTRATION_VERSION_KEY,
+  PUSH_TOKEN_STORAGE_KEY,
+  PUSH_TOKEN_USER_STORAGE_KEY,
+  clearPushRegistrationCache,
+} from '@/lib/secureSignOut';
 
 function getPushPlatform(): 'android' | 'ios' {
   const platform = (
@@ -71,11 +73,10 @@ export function usePushTokenRegistration(userId?: string): void {
   const navigate = useNavigate();
   const previousUserIdRef = useRef<string | undefined>(userId);
 
-  // A native FCM token must stop receiving account-scoped notifications as soon
-  // as that account signs out. The backend cannot safely unregister after the
-  // Supabase session has already been destroyed, so invalidate the native token
-  // at the device boundary. A later sign-in calls register() again and receives
-  // a fresh/valid token which is associated with that user by the backend.
+  // Fallback for session loss that did not pass through secureSignOut (for
+  // example an expired/revoked session). User-initiated logout uses the stronger
+  // server + native boundary while the JWT is still valid; this fallback still
+  // invalidates the native token after an external/session-driven sign-out.
   useEffect(() => {
     const previousUserId = previousUserIdRef.current;
     previousUserIdRef.current = userId;
@@ -84,12 +85,10 @@ export function usePushTokenRegistration(userId?: string): void {
       return;
     }
 
-    window.localStorage.removeItem(PUSH_TOKEN_STORAGE_KEY);
-    window.localStorage.removeItem(PUSH_TOKEN_USER_STORAGE_KEY);
-    window.localStorage.removeItem(PUSH_TOKEN_REGISTRATION_VERSION_KEY);
+    clearPushRegistrationCache();
 
     void PushNotifications.unregister().catch((error) => {
-      console.warn('push-token: native unregister on sign-out failed (non-fatal):', error);
+      console.warn('push-token: native unregister after session loss failed:', error);
     });
   }, [userId]);
 
