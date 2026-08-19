@@ -8,24 +8,68 @@
 --     rate limits, notifications or append-safe shipment events;
 --   * one customer order has at most one canonical shipment record in this model;
 --   * shipment/order status changes and their audit event are committed atomically;
+--   * identical retries are idempotent and do not duplicate lifecycle events;
 --   * proof-of-delivery evidence is immutable once attached by this canonical path.
 
 ALTER TABLE public.shipments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shipment_events ENABLE ROW LEVEL SECURITY;
 
--- The application has always treated order_id as singular (.single()). Enforce
--- that assumption in the database so concurrent requests cannot create two
--- shipment truths for one customer order.
+-- The application treats order_id as singular. Do not auto-reconcile duplicate
+-- shipment records: if an environment already contains duplicates, index creation
+-- must fail so the commercial history can be investigated rather than discarded.
 CREATE UNIQUE INDEX IF NOT EXISTS shipments_one_per_order
   ON public.shipments (order_id);
+
+DO $$
+DECLARE
+  v_is_unique boolean;
+  v_is_valid boolean;
+  v_key_definition text;
+BEGIN
+  SELECT
+    i.indisunique,
+    i.indisvalid,
+    pg_get_indexdef(i.indexrelid, 1, true)
+  INTO
+    v_is_unique,
+    v_is_valid,
+    v_key_definition
+  FROM pg_index i
+  JOIN pg_class idx ON idx.oid = i.indexrelid
+  JOIN pg_class tbl ON tbl.oid = i.indrelid
+  JOIN pg_namespace ns ON ns.oid = tbl.relnamespace
+  WHERE ns.nspname = 'public'
+    AND tbl.relname = 'shipments'
+    AND idx.relname = 'shipments_one_per_order'
+    AND i.indnkeyatts = 1;
+
+  IF NOT FOUND
+     OR NOT COALESCE(v_is_unique, false)
+     OR NOT COALESCE(v_is_valid, false)
+     OR v_key_definition IS DISTINCT FROM 'order_id'
+  THEN
+    RAISE EXCEPTION 'shipments_one_per_order is missing or has an unexpected definition';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+      FROM public.shipments
+     GROUP BY order_id
+    HAVING count(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'duplicate shipment rows remain for one or more orders';
+  END IF;
+END;
+$$;
 
 COMMENT ON INDEX public.shipments_one_per_order IS
   'Canonical shipment invariant: one shipment row per customer order.';
 
 -- ---------------------------------------------------------------------------
--- Atomic server mutation: create/update shipment details + append audit event.
--- Auth/payment/rate-limit checks remain at the Netlify boundary; this function
--- independently rechecks actor ownership and derives seller/buyer from orders.
+-- Atomic + idempotent server mutation: create/update shipment details, keep the
+-- order shipping state coherent, and append an audit event only when something
+-- materially changed. Auth/payment/rate-limit checks remain at Netlify; this RPC
+-- independently rechecks actor role/ownership and derives seller/buyer from order.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.server_upsert_shipment(
   p_order_id uuid,
@@ -49,12 +93,19 @@ DECLARE
   v_order_status text;
   v_shipment public.shipments%ROWTYPE;
   v_created boolean := false;
+  v_changed boolean := false;
+  v_target_status text;
   v_event_message text;
 BEGIN
   SELECT u.role
     INTO v_actor_role
     FROM public.users u
    WHERE u.id = p_actor_id;
+
+  IF v_actor_role IS NULL OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin'])) THEN
+    RAISE EXCEPTION 'server_upsert_shipment: seller or admin actor required'
+      USING ERRCODE = '42501';
+  END IF;
 
   SELECT o."sellerId", o."buyerId", o.status
     INTO v_order_seller, v_order_buyer, v_order_status
@@ -67,13 +118,12 @@ BEGIN
       USING ERRCODE = 'P0002';
   END IF;
 
-  IF v_actor_role IS DISTINCT FROM 'admin'
-     AND v_order_seller IS DISTINCT FROM p_actor_id THEN
+  IF v_actor_role <> 'admin' AND v_order_seller IS DISTINCT FROM p_actor_id THEN
     RAISE EXCEPTION 'server_upsert_shipment: actor is not authorized for this order'
       USING ERRCODE = '42501';
   END IF;
 
-  IF v_order_status = ANY (ARRAY['cancelled', 'refunded', 'disputed', 'completed']) THEN
+  IF v_order_status = ANY (ARRAY['cancelled', 'refunded', 'disputed', 'delivered', 'completed']) THEN
     RAISE EXCEPTION 'server_upsert_shipment: terminal order cannot be mutated'
       USING ERRCODE = 'P0001';
   END IF;
@@ -85,24 +135,44 @@ BEGIN
    FOR UPDATE;
 
   IF FOUND THEN
-    UPDATE public.shipments s
-       SET courier_name = CASE
-             WHEN p_set_courier_name THEN p_courier_name
-             ELSE s.courier_name
-           END,
-           tracking_number = CASE
-             WHEN p_set_tracking_number THEN p_tracking_number
-             ELSE s.tracking_number
-           END,
-           dispatched_at = CASE
-             WHEN p_set_dispatched_at THEN p_dispatched_at
-             ELSE s.dispatched_at
-           END,
-           updated_at = now()
-     WHERE s.id = v_shipment.id
-     RETURNING s.* INTO v_shipment;
+    v_target_status := v_shipment.status;
+    IF p_set_dispatched_at
+       AND p_dispatched_at IS NOT NULL
+       AND v_shipment.status = ANY (ARRAY['Pending', 'Processing'])
+    THEN
+      v_target_status := 'Dispatched';
+    END IF;
 
-    v_event_message := 'Shipment details updated';
+    v_changed :=
+      (p_set_courier_name AND v_shipment.courier_name IS DISTINCT FROM p_courier_name)
+      OR (p_set_tracking_number AND v_shipment.tracking_number IS DISTINCT FROM p_tracking_number)
+      OR (p_set_dispatched_at AND v_shipment.dispatched_at IS DISTINCT FROM p_dispatched_at)
+      OR v_shipment.status IS DISTINCT FROM v_target_status;
+
+    IF v_changed THEN
+      UPDATE public.shipments s
+         SET courier_name = CASE
+               WHEN p_set_courier_name THEN p_courier_name
+               ELSE s.courier_name
+             END,
+             tracking_number = CASE
+               WHEN p_set_tracking_number THEN p_tracking_number
+               ELSE s.tracking_number
+             END,
+             dispatched_at = CASE
+               WHEN p_set_dispatched_at THEN p_dispatched_at
+               ELSE s.dispatched_at
+             END,
+             status = v_target_status,
+             updated_at = now()
+       WHERE s.id = v_shipment.id
+       RETURNING s.* INTO v_shipment;
+
+      v_event_message := CASE
+        WHEN v_shipment.status = 'Dispatched' THEN 'Shipment details updated and dispatched'
+        ELSE 'Shipment details updated'
+      END;
+    END IF;
   ELSE
     INSERT INTO public.shipments (
       order_id,
@@ -127,29 +197,50 @@ BEGIN
     RETURNING * INTO v_shipment;
 
     v_created := true;
+    v_changed := true;
     v_event_message := CASE
       WHEN v_shipment.status = 'Dispatched' THEN 'Shipment created and dispatched'
       ELSE 'Shipment created'
     END;
   END IF;
 
-  INSERT INTO public.shipment_events (
-    shipment_id,
-    status,
-    message,
-    changed_by,
-    source
-  ) VALUES (
-    v_shipment.id,
-    v_shipment.status,
-    v_event_message,
-    p_actor_id,
-    'system'
-  );
+  -- A dispatched/in-transit/out-for-delivery shipment implies the customer order
+  -- is shipped. Repairing an otherwise stale mapped order state is itself a
+  -- material change and receives one audit event.
+  IF v_shipment.status = ANY (ARRAY['Dispatched', 'In Transit', 'Out for Delivery'])
+     AND v_order_status IS DISTINCT FROM 'shipped'
+  THEN
+    UPDATE public.orders o
+       SET status = 'shipped',
+           "updatedAt" = now()
+     WHERE o.id = p_order_id;
+
+    IF NOT v_changed THEN
+      v_changed := true;
+      v_event_message := 'Shipment/order state reconciled';
+    END IF;
+  END IF;
+
+  IF v_changed THEN
+    INSERT INTO public.shipment_events (
+      shipment_id,
+      status,
+      message,
+      changed_by,
+      source
+    ) VALUES (
+      v_shipment.id,
+      v_shipment.status,
+      v_event_message,
+      p_actor_id,
+      'system'
+    );
+  END IF;
 
   RETURN jsonb_build_object(
     'shipment', to_jsonb(v_shipment),
-    'created', v_created
+    'created', v_created,
+    'changed', v_changed
   );
 END;
 $$;
@@ -162,9 +253,9 @@ GRANT EXECUTE ON FUNCTION public.server_upsert_shipment(
 ) TO service_role;
 
 -- ---------------------------------------------------------------------------
--- Atomic server mutation: shipment status + audit event + mapped order status.
--- External side effects (notifications/email) happen only after this transaction
--- succeeds, so they cannot make partial database state look successful.
+-- Atomic + idempotent server mutation: shipment status + audit event + mapped
+-- order status. Identical retries return success without duplicate history or
+-- duplicate notification side effects (the caller receives changed=false).
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.server_transition_shipment(
   p_shipment_id uuid,
@@ -182,6 +273,10 @@ DECLARE
   v_order_id uuid;
   v_order_status text;
   v_shipment public.shipments%ROWTYPE;
+  v_shipment_changed boolean := false;
+  v_order_changed boolean := false;
+  v_changed boolean := false;
+  v_event_message text;
 BEGIN
   IF p_status IS NULL OR NOT (
     p_status = ANY (ARRAY[
@@ -209,8 +304,7 @@ BEGIN
       USING ERRCODE = 'P0002';
   END IF;
 
-  -- Lock the order first so every canonical shipment mutation uses the same
-  -- lock order and concurrent create/update/transition requests serialize.
+  -- All canonical shipment/order mutations lock order before shipment.
   SELECT o.status
     INTO v_order_status
     FROM public.orders o
@@ -239,8 +333,12 @@ BEGIN
     FROM public.users u
    WHERE u.id = p_actor_id;
 
-  IF v_actor_role IS DISTINCT FROM 'admin'
-     AND v_shipment.seller_id IS DISTINCT FROM p_actor_id THEN
+  IF v_actor_role IS NULL OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin'])) THEN
+    RAISE EXCEPTION 'server_transition_shipment: seller or admin actor required'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF v_actor_role <> 'admin' AND v_shipment.seller_id IS DISTINCT FROM p_actor_id THEN
     RAISE EXCEPTION 'server_transition_shipment: actor is not authorized'
       USING ERRCODE = '42501';
   END IF;
@@ -263,11 +361,50 @@ BEGIN
       USING ERRCODE = 'P0001';
   END IF;
 
-  UPDATE public.shipments s
-     SET status = p_status,
-         updated_at = now()
-   WHERE s.id = p_shipment_id
-   RETURNING s.* INTO v_shipment;
+  v_shipment_changed := v_shipment.status IS DISTINCT FROM p_status;
+  v_order_changed :=
+    (p_status = 'Delivered' AND v_order_status IS DISTINCT FROM 'delivered')
+    OR (
+      p_status = ANY (ARRAY['Dispatched', 'In Transit', 'Out for Delivery'])
+      AND v_order_status IS DISTINCT FROM 'shipped'
+    );
+  v_changed := v_shipment_changed OR v_order_changed;
+
+  IF NOT v_changed THEN
+    RETURN jsonb_build_object(
+      'shipment', to_jsonb(v_shipment),
+      'changed', false
+    );
+  END IF;
+
+  IF v_shipment_changed THEN
+    UPDATE public.shipments s
+       SET status = p_status,
+           updated_at = now()
+     WHERE s.id = p_shipment_id
+     RETURNING s.* INTO v_shipment;
+  END IF;
+
+  IF p_status = 'Delivered' AND v_order_status IS DISTINCT FROM 'delivered' THEN
+    UPDATE public.orders o
+       SET status = 'delivered',
+           "deliveredAt" = COALESCE(o."deliveredAt", now()),
+           "updatedAt" = now()
+     WHERE o.id = v_order_id;
+  ELSIF p_status = ANY (ARRAY['Dispatched', 'In Transit', 'Out for Delivery'])
+        AND v_order_status IS DISTINCT FROM 'shipped'
+  THEN
+    UPDATE public.orders o
+       SET status = 'shipped',
+           "updatedAt" = now()
+     WHERE o.id = v_order_id;
+  END IF;
+
+  v_event_message := CASE
+    WHEN v_shipment_changed
+      THEN COALESCE(NULLIF(BTRIM(p_message), ''), 'Status updated to ' || p_status)
+    ELSE 'Shipment/order state reconciled'
+  END;
 
   INSERT INTO public.shipment_events (
     shipment_id,
@@ -278,25 +415,15 @@ BEGIN
   ) VALUES (
     p_shipment_id,
     p_status,
-    COALESCE(NULLIF(BTRIM(p_message), ''), 'Status updated to ' || p_status),
+    v_event_message,
     p_actor_id,
     'system'
   );
 
-  IF p_status = 'Delivered' THEN
-    UPDATE public.orders o
-       SET status = 'delivered',
-           "deliveredAt" = COALESCE(o."deliveredAt", now()),
-           "updatedAt" = now()
-     WHERE o.id = v_order_id;
-  ELSIF p_status = ANY (ARRAY['Dispatched', 'In Transit']) THEN
-    UPDATE public.orders o
-       SET status = 'shipped',
-           "updatedAt" = now()
-     WHERE o.id = v_order_id;
-  END IF;
-
-  RETURN jsonb_build_object('shipment', to_jsonb(v_shipment));
+  RETURN jsonb_build_object(
+    'shipment', to_jsonb(v_shipment),
+    'changed', true
+  );
 END;
 $$;
 
@@ -307,7 +434,8 @@ GRANT EXECUTE ON FUNCTION public.server_transition_shipment(uuid, uuid, text, te
 
 -- ---------------------------------------------------------------------------
 -- Atomic server mutation: immutable POD pointer + append-only audit event.
--- Storage-object validation happens in Netlify before this RPC is invoked.
+-- A retry with the exact already-canonical path is idempotent; a different path
+-- cannot overwrite established evidence.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.server_attach_shipment_proof(
   p_shipment_id uuid,
@@ -344,13 +472,24 @@ BEGIN
     FROM public.users u
    WHERE u.id = p_actor_id;
 
-  IF v_actor_role IS DISTINCT FROM 'admin'
-     AND v_shipment.seller_id IS DISTINCT FROM p_actor_id THEN
+  IF v_actor_role IS NULL OR NOT (v_actor_role = ANY (ARRAY['seller', 'admin'])) THEN
+    RAISE EXCEPTION 'server_attach_shipment_proof: seller or admin actor required'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF v_actor_role <> 'admin' AND v_shipment.seller_id IS DISTINCT FROM p_actor_id THEN
     RAISE EXCEPTION 'server_attach_shipment_proof: actor is not authorized'
       USING ERRCODE = '42501';
   END IF;
 
   IF v_shipment.proof_of_delivery_url IS NOT NULL THEN
+    IF v_shipment.proof_of_delivery_url = p_file_path THEN
+      RETURN jsonb_build_object(
+        'shipment', to_jsonb(v_shipment),
+        'attached', false
+      );
+    END IF;
+
     RAISE EXCEPTION 'server_attach_shipment_proof: proof of delivery is already attached and cannot be overwritten'
       USING ERRCODE = 'P0001';
   END IF;
@@ -375,7 +514,10 @@ BEGIN
     'system'
   );
 
-  RETURN jsonb_build_object('shipment', to_jsonb(v_shipment));
+  RETURN jsonb_build_object(
+    'shipment', to_jsonb(v_shipment),
+    'attached', true
+  );
 END;
 $$;
 
@@ -419,8 +561,8 @@ COMMENT ON TABLE public.shipment_events IS
 COMMENT ON FUNCTION public.server_upsert_shipment(
   uuid, uuid, text, boolean, text, boolean, timestamptz, boolean
 ) IS
-  'Service-role-only atomic create/update of one shipment per order plus audit event; seller/buyer ownership is derived from the order.';
+  'Service-role-only idempotent shipment upsert; derives ownership from order, keeps dispatched order state coherent, and appends history only on change.';
 COMMENT ON FUNCTION public.server_transition_shipment(uuid, uuid, text, text) IS
-  'Service-role-only atomic shipment status transition, audit event and mapped order status update.';
+  'Service-role-only idempotent shipment status transition with atomic audit event and mapped order state.';
 COMMENT ON FUNCTION public.server_attach_shipment_proof(uuid, uuid, text) IS
-  'Service-role-only immutable proof-of-delivery attachment plus audit event.';
+  'Service-role-only immutable/idempotent proof-of-delivery attachment plus atomic audit event.';
