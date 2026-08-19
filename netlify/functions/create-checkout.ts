@@ -226,23 +226,38 @@ export const handler: Handler = async (event) => {
   }
 
   const checkoutSellerId = uniqueSellerIds[0];
-  const { data: sellerProfile, error: sellerProfileError } = await supabase
-    .from('seller_profiles')
-    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
-    .eq('userId', checkoutSellerId)
-    .maybeSingle<{
-      stripeAccountId: string | null;
-      stripeConnectStatus: string | null;
-      sellerStatus: string | null;
-      isPaused: boolean | null;
-    }>();
+  const [sellerAccountResult, sellerProfileResult] = await Promise.all([
+    supabase
+      .from('users')
+      .select('role, isActive')
+      .eq('id', checkoutSellerId)
+      .maybeSingle<{ role: string | null; isActive: boolean | null }>(),
+    supabase
+      .from('seller_profiles')
+      .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
+      .eq('userId', checkoutSellerId)
+      .maybeSingle<{
+        stripeAccountId: string | null;
+        stripeConnectStatus: string | null;
+        sellerStatus: string | null;
+        isPaused: boolean | null;
+      }>(),
+  ]);
 
-  if (sellerProfileError) {
-    console.error('create-checkout: seller profile query failed:', sellerProfileError.message);
+  if (sellerAccountResult.error || sellerProfileResult.error) {
+    console.error(
+      'create-checkout: seller eligibility query failed:',
+      sellerAccountResult.error?.message ?? sellerProfileResult.error?.message,
+    );
     return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller status. Please try again.' }) };
   }
 
+  const sellerAccount = sellerAccountResult.data;
+  const sellerProfile = sellerProfileResult.data;
   if (
+    !sellerAccount ||
+    sellerAccount.role !== 'seller' ||
+    sellerAccount.isActive !== true ||
     !sellerProfile?.stripeAccountId ||
     sellerProfile.stripeConnectStatus !== 'active' ||
     sellerProfile.sellerStatus !== 'active' ||
