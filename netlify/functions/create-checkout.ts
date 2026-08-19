@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 
@@ -88,7 +89,30 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  // Checkout uses service_role for reservations and payment-session materialisation.
+  // A stale but valid access token from a suspended account must stop before any
+  // reservation, rate-limit write, Stripe creation, or payment-session write.
+  const auth = await authenticateActiveAccount(event, supabase);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({
+        error: auth.status === 401
+          ? 'Authentication required. Please sign in to complete your purchase.'
+          : 'This account is not active and cannot place orders.',
+      }),
+    };
+  }
+
+  const verifiedBuyerId = auth.actor.id;
+  if (buyerId && buyerId !== verifiedBuyerId) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
+  }
+
   const reservationToken = randomUUID();
   let reservedProductIds: string[] = [];
   const releaseReservedProducts = async () => {
@@ -104,27 +128,6 @@ export const handler: Handler = async (event) => {
       });
     reservedProductIds = [];
   };
-
-  let verifiedBuyerId = '';
-  const authHeader = event.headers['authorization'];
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authUser) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
-    }
-    if (buyerId && buyerId !== authUser.id) {
-      return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
-    }
-    verifiedBuyerId = authUser.id;
-  }
-
-  if (!verifiedBuyerId) {
-    return {
-      statusCode: 401,
-      body: JSON.stringify({ error: 'Authentication required. Please sign in to complete your purchase.' }),
-    };
-  }
 
   const checkoutRl = await checkRateLimit({
     supabase,
@@ -142,15 +145,8 @@ export const handler: Handler = async (event) => {
   }
 
   const maintenance = await isMaintenanceMode(supabase);
-  if (maintenance) {
-    const { data: callerRow } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', verifiedBuyerId)
-      .maybeSingle<{ role: string | null }>();
-    if (callerRow?.role !== 'admin') {
-      return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
-    }
+  if (maintenance && auth.actor.role !== 'admin') {
+    return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
   }
 
   const maybeRpc = (supabase as typeof supabase & { rpc?: (fn: string) => Promise<unknown> }).rpc;
@@ -230,23 +226,38 @@ export const handler: Handler = async (event) => {
   }
 
   const checkoutSellerId = uniqueSellerIds[0];
-  const { data: sellerProfile, error: sellerProfileError } = await supabase
-    .from('seller_profiles')
-    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
-    .eq('userId', checkoutSellerId)
-    .maybeSingle<{
-      stripeAccountId: string | null;
-      stripeConnectStatus: string | null;
-      sellerStatus: string | null;
-      isPaused: boolean | null;
-    }>();
+  const [sellerAccountResult, sellerProfileResult] = await Promise.all([
+    supabase
+      .from('users')
+      .select('role, isActive')
+      .eq('id', checkoutSellerId)
+      .maybeSingle<{ role: string | null; isActive: boolean | null }>(),
+    supabase
+      .from('seller_profiles')
+      .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused')
+      .eq('userId', checkoutSellerId)
+      .maybeSingle<{
+        stripeAccountId: string | null;
+        stripeConnectStatus: string | null;
+        sellerStatus: string | null;
+        isPaused: boolean | null;
+      }>(),
+  ]);
 
-  if (sellerProfileError) {
-    console.error('create-checkout: seller profile query failed:', sellerProfileError.message);
+  if (sellerAccountResult.error || sellerProfileResult.error) {
+    console.error(
+      'create-checkout: seller eligibility query failed:',
+      sellerAccountResult.error?.message ?? sellerProfileResult.error?.message,
+    );
     return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller status. Please try again.' }) };
   }
 
+  const sellerAccount = sellerAccountResult.data;
+  const sellerProfile = sellerProfileResult.data;
   if (
+    !sellerAccount ||
+    sellerAccount.role !== 'seller' ||
+    sellerAccount.isActive !== true ||
     !sellerProfile?.stripeAccountId ||
     sellerProfile.stripeConnectStatus !== 'active' ||
     sellerProfile.sellerStatus !== 'active' ||

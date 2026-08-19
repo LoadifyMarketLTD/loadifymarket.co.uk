@@ -10,6 +10,7 @@
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 interface RequestBody {
   productId?: string;
@@ -39,19 +40,17 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const authHeader = event.headers.authorization ?? '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
+  const auth = await authenticateActiveAccount(event, supabase);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({ error: auth.status === 401 ? 'Authentication required' : 'Account is suspended' }),
+    };
   }
-
-  const token = authHeader.slice(7);
-  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !authUser) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
-  }
+  const callerId = auth.actor.id;
 
   let body: RequestBody;
   try {
@@ -67,7 +66,7 @@ export const handler: Handler = async (event) => {
   if (!sellerId || typeof sellerId !== 'string') {
     return { statusCode: 400, body: JSON.stringify({ error: 'sellerId is required' }) };
   }
-  if (authUser.id === sellerId) {
+  if (callerId === sellerId) {
     return { statusCode: 400, body: JSON.stringify({ error: 'You cannot message your own listing' }) };
   }
 
@@ -92,8 +91,8 @@ export const handler: Handler = async (event) => {
     .select('id')
     .eq('productId', productId)
     .or(
-      `and(user1Id.eq.${authUser.id},user2Id.eq.${sellerId}),` +
-      `and(user1Id.eq.${sellerId},user2Id.eq.${authUser.id})`
+      `and(user1Id.eq.${callerId},user2Id.eq.${sellerId}),` +
+      `and(user1Id.eq.${sellerId},user2Id.eq.${callerId})`
     )
     .maybeSingle<ConversationRow>();
 
@@ -107,7 +106,7 @@ export const handler: Handler = async (event) => {
   const { data: created, error: createError } = await supabase
     .from('conversations')
     .insert({
-      user1Id: authUser.id,
+      user1Id: callerId,
       user2Id: sellerId,
       productId,
       subject: product.title ? `Re: ${product.title}` : null,
@@ -122,8 +121,8 @@ export const handler: Handler = async (event) => {
         .select('id')
         .eq('productId', productId)
         .or(
-          `and(user1Id.eq.${authUser.id},user2Id.eq.${sellerId}),` +
-          `and(user1Id.eq.${sellerId},user2Id.eq.${authUser.id})`
+          `and(user1Id.eq.${callerId},user2Id.eq.${sellerId}),` +
+          `and(user1Id.eq.${sellerId},user2Id.eq.${callerId})`
         )
         .maybeSingle<ConversationRow>();
 
@@ -144,4 +143,3 @@ export const handler: Handler = async (event) => {
     body: JSON.stringify({ conversationId: created.id, created: true }),
   };
 };
-

@@ -1,5 +1,6 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 
 type DeleteProductStatus = 'deleted' | 'not_found' | 'forbidden' | 'retained_history';
@@ -19,30 +20,18 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const authHeader = event.headers.authorization || '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
+  const auth = await authenticateActiveAccount(event, supabase, ['seller', 'admin']);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({
+        error: auth.status === 401 ? 'Authentication required' : 'Only active sellers can delete listings',
+      }),
+    };
   }
 
-  const { data: authData, error: authError } = await supabase.auth.getUser(authHeader.substring(7));
-  if (authError || !authData?.user) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
-  }
-  const callerId = authData.user.id;
-
-  const { data: userRow, error: userError } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', callerId)
-    .maybeSingle<{ role: string | null }>();
-  if (userError) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify account role.' }) };
-  }
-
-  const role = userRow?.role ?? null;
-  if (role !== 'seller' && role !== 'admin') {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Only sellers can delete listings' }) };
-  }
+  const callerId = auth.actor.id;
+  const role = auth.actor.role;
   const isAdmin = role === 'admin';
 
   if (await isMaintenanceMode(supabase) && !isAdmin) {

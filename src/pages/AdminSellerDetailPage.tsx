@@ -107,16 +107,24 @@ export default function AdminSellerDetailPage() {
     fetchSeller();
   }, [fetchSeller]);
 
+  const changeAccountStatus = async (op: 'suspend' | 'reactivate') => {
+    if (!id) return;
+    const response = await authorizedFetch('/.netlify/functions/admin-user-status', {
+      method: 'POST',
+      body: JSON.stringify({ op, userId: id }),
+    });
+    const payload = await response.json() as { error?: string };
+    if (!response.ok) {
+      throw new Error(payload.error ?? `HTTP ${response.status}`);
+    }
+    await fetchSeller();
+  };
+
   const suspendSeller = async () => {
     if (!id || !confirm('Suspend this seller? They will not be able to use seller features.')) return;
     setActionLoading(true);
     try {
-      const { error } = await supabase
-        .from('seller_profiles')
-        .update({ sellerStatus: 'suspended' })
-        .eq('userId', id);
-      if (error) throw error;
-      await fetchSeller();
+      await changeAccountStatus('suspend');
     } catch (err) {
       console.error('Error suspending seller:', err);
     } finally {
@@ -128,14 +136,7 @@ export default function AdminSellerDetailPage() {
     if (!id) return;
     setActionLoading(true);
     try {
-      // Set back to 'submitted' — the auto-activation logic will promote to
-      // 'active' automatically if all conditions are already met.
-      const { error } = await supabase
-        .from('seller_profiles')
-        .update({ sellerStatus: 'submitted' })
-        .eq('userId', id);
-      if (error) throw error;
-      await fetchSeller();
+      await changeAccountStatus('reactivate');
     } catch (err) {
       console.error('Error reactivating seller:', err);
     } finally {
@@ -147,12 +148,7 @@ export default function AdminSellerDetailPage() {
     if (!id || !confirm('Block this user? They will not be able to log in.')) return;
     setActionLoading(true);
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ isActive: false })
-        .eq('id', id);
-      if (error) throw error;
-      await fetchSeller();
+      await changeAccountStatus('suspend');
     } catch (err) {
       console.error('Error blocking user:', err);
     } finally {
@@ -164,12 +160,7 @@ export default function AdminSellerDetailPage() {
     if (!id) return;
     setActionLoading(true);
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ isActive: true })
-        .eq('id', id);
-      if (error) throw error;
-      await fetchSeller();
+      await changeAccountStatus('reactivate');
     } catch (err) {
       console.error('Error unblocking user:', err);
     } finally {

@@ -71,17 +71,21 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
+  // Self-deletion remains available to an authenticated account even if it has
+  // been suspended. Cross-account deletion is privileged and therefore requires
+  // the caller to be a live active admin in public.users, not merely to hold a
+  // still-valid JWT/admin claim.
   const { data: callerRow } = await supabase
     .from('users')
-    .select('role')
+    .select('role, isActive')
     .eq('id', callerAuth.id)
-    .maybeSingle<{ role: string | null }>();
+    .maybeSingle<{ role: string | null; isActive: boolean | null }>();
 
-  const isAdmin = callerRow?.role === 'admin';
-  const targetUserId = body.targetUserId && isAdmin ? body.targetUserId : callerAuth.id;
+  const isActiveAdmin = callerRow?.role === 'admin' && callerRow.isActive === true;
+  const targetUserId = body.targetUserId && isActiveAdmin ? body.targetUserId : callerAuth.id;
 
-  if (body.targetUserId && body.targetUserId !== callerAuth.id && !isAdmin) {
-    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'You can only delete your own account' }) };
+  if (body.targetUserId && body.targetUserId !== callerAuth.id && !isActiveAdmin) {
+    return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Only an active admin can delete another account' }) };
   }
 
   const { data: targetUser, error: targetLookupError } = await supabase

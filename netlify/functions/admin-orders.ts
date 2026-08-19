@@ -1,5 +1,6 @@
-import { Handler, HandlerEvent } from '@netlify/functions';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Handler } from '@netlify/functions';
+import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import {
   assessAdminReleaseEligibility,
   enforcePaymentBackedTransition,
@@ -8,18 +9,6 @@ import {
 } from './_shared/orderTransitionGuards';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface AuthOk {
-  ok: true;
-  caller: { id: string; email: string; role: string };
-}
-interface AuthFail {
-  ok: false;
-  status: number;
-}
-type AuthResult = AuthOk | AuthFail;
 
 interface OrderListRow {
   id: string;
@@ -49,49 +38,6 @@ interface PaymentSessionMetaRow {
   stripePaymentIntent: string | null;
 }
 
-// ── Auth helper ────────────────────────────────────────────────────────────────
-
-async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient): Promise<AuthResult> {
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { ok: false, status: 401 };
-  }
-
-  const token = authHeader.substring(7).trim();
-  const { data, error } = await admin.auth.getUser(token);
-
-  if (error || !data?.user) {
-    return { ok: false, status: 401 };
-  }
-
-  const authUser = data.user;
-  const authEmail = (authUser.email || '').toLowerCase().trim();
-
-  if (!authEmail) {
-    return { ok: false, status: 401 };
-  }
-
-  const jwtRole = (authUser.app_metadata as Record<string, unknown> | undefined)?.role;
-  if (jwtRole === 'admin') {
-    return { ok: true, caller: { id: authUser.id, email: authEmail, role: 'admin' } };
-  }
-
-  const { data: dbUser, error: dbError } = await admin
-    .from('users')
-    .select('role')
-    .eq('id', authUser.id)
-    .maybeSingle();
-
-  if (dbError || !dbUser || dbUser.role !== 'admin') {
-    return { ok: false, status: 403 };
-  }
-
-  return { ok: true, caller: { id: authUser.id, email: authEmail, role: dbUser.role } };
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-GB', {
@@ -101,10 +47,6 @@ function formatDate(iso: string | null | undefined): string {
   });
 }
 
-// ── Valid order statuses ──────────────────────────────────────────────────────
-// Must match the status values used throughout the platform. Any value not
-// in this set is rejected before hitting the database so that admin tooling
-// cannot silently set arbitrary, platform-breaking status strings.
 const VALID_ORDER_STATUSES = new Set([
   'pending',
   'paid',
@@ -118,11 +60,7 @@ const VALID_ORDER_STATUSES = new Set([
 ]);
 const BLOCKING_LISTING_STATUSES = ['awaiting_payment', 'paid', 'packed', 'shipped', 'delivered', 'completed'];
 
-// ── Handler ───────────────────────────────────────────────────────────────────
-
 export const handler: Handler = async (event) => {
-  // Support both SUPABASE_URL (Netlify dashboard convention) and the VITE_
-  // prefixed variant that build tooling also exports to the environment.
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -138,8 +76,7 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const auth = await authenticateAdmin(event, admin);
-
+  const auth = await authenticateActiveAccount(event, admin, ['admin']);
   if (!auth.ok) {
     return {
       statusCode: auth.status,
@@ -149,7 +86,6 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // ── GET — list all orders ─────────────────────────────────────────────────
     if (event.httpMethod === 'GET') {
       const { data: rows, error: ordersErr } = await admin
         .from('orders')
@@ -161,7 +97,6 @@ export const handler: Handler = async (event) => {
 
       const orderRows = (rows || []) as OrderListRow[];
 
-      // Resolve buyer names from users table
       const buyerIds = [...new Set(orderRows.map((o: { buyerId: string | null }) => o.buyerId).filter((id): id is string => !!id))];
       const buyerNames: Record<string, string> = {};
 
@@ -176,7 +111,6 @@ export const handler: Handler = async (event) => {
         });
       }
 
-      // Resolve product titles in a separate query (avoids FK hint issues with camelCase columns)
       const productIds = [...new Set(orderRows.map((o: { productId: string | null }) => o.productId).filter((id): id is string => !!id))];
       const productTitles: Record<string, string> = {};
       const productMeta = new Map<string, ProductMetaRow>();
@@ -251,7 +185,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // ── POST — update order status ────────────────────────────────────────────
     if (event.httpMethod === 'POST') {
       let body: Record<string, unknown> = {};
       try {
@@ -304,10 +237,6 @@ export const handler: Handler = async (event) => {
           };
         }
 
-        // Cancellation and refund are financial lifecycle operations, not
-        // cosmetic status changes. Keep them on their dedicated, audited paths:
-        // - unpaid/test orders -> release_unpaid_lock
-        // - paid orders -> create-refund (Stripe + transfer reconciliation)
         if (status === 'cancelled') {
           return {
             statusCode: 409,
@@ -370,7 +299,7 @@ export const handler: Handler = async (event) => {
         ) {
           await admin.from('order_events').insert({
             orderId,
-            actorId: auth.caller.id,
+            actorId: auth.actor.id,
             event: 'admin_unpaid_transition_override',
             metadata: {
               reason: overrideReason,
@@ -468,7 +397,7 @@ export const handler: Handler = async (event) => {
 
         await admin.from('order_events').insert({
           orderId,
-          actorId: auth.caller.id,
+          actorId: auth.actor.id,
           event: 'admin_unpaid_lock_release',
           metadata: {
             reason,

@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { toast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store";
 
@@ -206,33 +207,39 @@ const AdminUsers = () => {
       toast({ title: "Not allowed", description: "You cannot suspend your own account.", variant: "destructive" });
       return;
     }
-    // Safety guard — direct DB access is required to re-enable a suspended admin.
-    if (targetRole === 'admin' && !currentlyActive) {
-      toast({ title: "Use DB console", description: "Reactivating an admin account requires direct database access.", variant: "destructive" });
+    // Admin recovery is deliberately outside standard User Management.
+    if (targetRole === 'admin') {
+      toast({ title: "Protected Account", description: "Admin account status uses the protected recovery process.", variant: "destructive" });
       return;
     }
+
     setActionLoading(userId);
     setError(null);
     try {
-      const { error } = await supabase
-        .from("users")
-        .update({ isActive: !currentlyActive })
-        .eq("id", userId);
-      if (error) throw error;
-
-      // For seller accounts, keep seller_profiles.sellerStatus in sync so that
-      // catalog queries filtering on sellerStatus reflect the suspension immediately.
-      if (targetRole === 'seller') {
-        const nextSellerStatus = currentlyActive ? 'suspended' : 'submitted';
-        await supabase
-          .from("seller_profiles")
-          .update({ sellerStatus: nextSellerStatus })
-          .eq("userId", userId);
+      const response = await authorizedFetch('/.netlify/functions/admin-user-status', {
+        method: 'POST',
+        body: JSON.stringify({
+          op: currentlyActive ? 'suspend' : 'reactivate',
+          userId,
+        }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? `HTTP ${response.status}`);
       }
 
-      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, isActive: !currentlyActive } : u));
-      if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: !currentlyActive } : s);
-      if (detail?.id === userId) setDetail((d) => d ? { ...d, isActive: !currentlyActive } : d);
+      const nextActive = !currentlyActive;
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, isActive: nextActive } : u));
+      if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: nextActive } : s);
+      if (detail?.id === userId) {
+        setDetail((d) => d ? {
+          ...d,
+          isActive: nextActive,
+          ...(targetRole === 'seller'
+            ? { sellerStatus: currentlyActive ? 'suspended' : 'submitted' }
+            : {}),
+        } : d);
+      }
       toast({ title: currentlyActive ? "User suspended" : "User reactivated" });
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to update user");
@@ -619,4 +626,3 @@ function StatCard({ icon, label, value, colorClass, bgClass }: { icon: React.Rea
 }
 
 export default AdminUsers;
-

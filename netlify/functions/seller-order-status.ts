@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { enforcePaymentBackedTransition } from './_shared/orderTransitionGuards';
 
@@ -53,35 +54,24 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfiguration' }) };
   }
 
-  const authHeader = event.headers.authorization || event.headers.Authorization || '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
-  }
-
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const token = authHeader.substring(7);
-  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !authUser) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
+  const auth = await authenticateActiveAccount(event, supabase, ['seller', 'admin']);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({ error: auth.status === 401 ? 'Authentication required' : 'Seller account required' }),
+    };
   }
 
-  const { data: caller } = await supabase
-    .from('users')
-    .select('id, role')
-    .eq('id', authUser.id)
-    .maybeSingle<{ id: string; role: string | null }>();
-
-  if (!caller || (caller.role !== 'seller' && caller.role !== 'admin')) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Seller account required' }) };
-  }
+  const caller = auth.actor;
 
   const rl = await checkRateLimit({
     supabase,
     tableName: 'seller_order_status_rate_limits',
-    identifier: authUser.id,
+    identifier: caller.id,
     windowMinutes: 60,
     maxAttempts: 60,
   });
@@ -116,7 +106,7 @@ export const handler: Handler = async (event) => {
   if (!order) {
     return { statusCode: 404, body: JSON.stringify({ error: 'Order not found' }) };
   }
-  if (caller.role !== 'admin' && order.sellerId !== authUser.id) {
+  if (caller.role !== 'admin' && order.sellerId !== caller.id) {
     return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized for this order' }) };
   }
 

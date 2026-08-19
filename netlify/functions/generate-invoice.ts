@@ -2,24 +2,19 @@
  * generate-invoice
  *
  * Generates a printable HTML invoice for a given order and streams it
- * back to the buyer's browser.  The buyer uses their browser's built-in
+ * back to the buyer's browser. The buyer uses their browser's built-in
  * Print → Save as PDF to create a PDF copy.
  *
- * This approach avoids bundling a large PDF library into the serverless
- * function and works reliably in all browsers.
- *
  * Security:
- *   – Requires a valid JWT (Authorization: Bearer <token>).
+ *   – Requires a valid JWT and a live active platform account.
  *   – The authenticated user must be the order's buyer OR an admin.
- *   – Uses the service-role client to query order data (bypasses RLS for
- *     admin use) but enforces ownership check in application code.
- *
- * Method: POST
- * Body:   { orderId: string }
+ *   – Uses the service-role client to query order data but enforces live
+ *     authorization before accessing commercial history.
  */
 
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -53,42 +48,21 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // ── Authenticate caller ───────────────────────────────────────────────────
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-  if (!token) {
-    return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  if (!anonKey) {
+  const auth = await authenticateActiveAccount(event, supabase);
+  if (!auth.ok) {
     return {
-      statusCode: 500,
+      statusCode: auth.status,
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Server configuration error: VITE_SUPABASE_ANON_KEY not set' }),
+      body: JSON.stringify({ error: auth.status === 401 ? 'Unauthorized' : 'Account is suspended' }),
     };
   }
 
-  // Use anon client to verify token (getUser validates with Supabase auth server)
-  const anonClient = createClient(supabaseUrl, anonKey);
-  const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
-  if (authError || !user) {
-    return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };
-  }
+  const isAdmin = auth.actor.role === 'admin';
 
-  // Service-role client for data access
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-  // Check caller role
-  const { data: callerRow } = await supabase
-    .from('users')
-    .select('role, firstName, lastName')
-    .eq('id', user.id)
-    .single<{ role: string; firstName?: string; lastName?: string }>();
-
-  const isAdmin = callerRow?.role === 'admin';
-
-  // ── Parse body ────────────────────────────────────────────────────────────
   let body: { orderId?: string };
   try {
     body = JSON.parse(event.body || '{}') as { orderId?: string };
@@ -101,7 +75,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'orderId is required' }) };
   }
 
-  // ── Fetch order ───────────────────────────────────────────────────────────
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select(`
@@ -138,18 +111,15 @@ export const handler: Handler = async (event) => {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Order not found' }) };
   }
 
-  // ── Ownership check ───────────────────────────────────────────────────────
-  if (!isAdmin && order.buyerId !== user.id) {
+  if (!isAdmin && order.buyerId !== auth.actor.id) {
     return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Forbidden' }) };
   }
 
-  // ── Fetch order items ─────────────────────────────────────────────────────
   const { data: items } = await supabase
     .from('order_items')
     .select('quantity, pricePerUnit, subtotal, products ( title )')
     .eq('orderId', orderId);
 
-  // ── Fetch buyer name & B2B profile ────────────────────────────────────────
   const buyerRow = order.buyerId
     ? (await supabase
         .from('users')
@@ -178,14 +148,12 @@ export const handler: Handler = async (event) => {
     buyerProfileRow?.accountType !== 'individual';
   const isReverseCharge = isB2B && Boolean(buyerProfileRow?.isVatVerified);
 
-  // ── Fetch seller name ─────────────────────────────────────────────────────
   const { data: sellerRow } = await supabase
     .from('seller_profiles')
     .select('businessName')
     .eq('userId', order.sellerId)
     .single<{ businessName?: string }>();
 
-  // ── Build HTML invoice ────────────────────────────────────────────────────
   const addr = order.shippingAddress ?? {};
   const buyerName = [buyerRow?.firstName, buyerRow?.lastName].filter(Boolean).join(' ') || 'Customer';
   const sellerName = sellerRow?.businessName || 'Seller';
@@ -194,8 +162,6 @@ export const handler: Handler = async (event) => {
     : '—';
   const orderNum = order.orderNumber || order.id.slice(0, 8).toUpperCase();
 
-  // For B2B invoices the primary display name is the company, with the
-  // contact person listed underneath. For B2C it's the buyer's full name.
   const billToName = isB2B && buyerProfileRow?.companyName
     ? buyerProfileRow.companyName
     : buyerName;
@@ -359,7 +325,6 @@ export const handler: Handler = async (event) => {
   };
 };
 
-/** Escape HTML special characters to prevent XSS in the generated document. */
 function escapeHtml(str: unknown): string {
   if (str === null || str === undefined) return '';
   return String(str)

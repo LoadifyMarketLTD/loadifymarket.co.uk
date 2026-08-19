@@ -1,24 +1,12 @@
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 /**
  * POST /.netlify/functions/recheck-activation
  *
  * Re-evaluates a seller's activation status using only data already persisted
- * in the database — no live Stripe API call is made. This makes it suitable
- * as a fast, reliable trigger after a profile save (where stripeConnectStatus
- * is already known) or as a fallback when connect-status cannot reach Stripe.
- *
- * Use-cases:
- *   - Called by SellerProfile after every profile save (replaces the previous
- *     fire-and-forget connect-status call).
- *   - Called by SellerSetupPage when the DB already shows stripeConnectStatus
- *     = 'active' — avoids a redundant Stripe API round-trip.
- *
- * Returns:
- *   { sellerStatus, profileComplete }
- *
- * Requires: Authorization: Bearer <supabase-jwt>
+ * in the database — no live Stripe API call is made.
  */
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -31,30 +19,19 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Database not configured' }) };
   }
 
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  const token = authHeader?.replace('Bearer ', '').trim();
-  if (!token) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const auth = await authenticateActiveAccount(event, supabase, ['seller', 'admin']);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({ error: auth.status === 401 ? 'Authentication required' : 'Active seller account required' }),
+    };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
-  }
-
-  // Resolve the caller's role from the users table.
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single<{ role: string }>();
-
-  // Admin accounts bypass the entire seller activation pipeline.
-  // They are never blocked by seller setup requirements and always appear
-  // as "active" from the perspective of RequireSeller.
-  if (userRow?.role === 'admin') {
+  if (auth.actor.role === 'admin') {
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -69,19 +46,11 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  // Non-seller, non-admin accounts have no seller profile to evaluate.
-  if (userRow?.role !== 'seller') {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Seller account required' }) };
-  }
+  const sellerId = auth.actor.id;
 
   try {
     const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
-    // No liveStripeConnectStatus passed — uses the persisted DB value.
-    // This is intentional: stripeConnectStatus was already set by either the
-    // Stripe webhook (account.updated) or a prior connect-status call. We are
-    // only re-evaluating whether all conditions are simultaneously met NOW
-    // (e.g., profile was just completed while Stripe was already active).
-    const result = await tryAutoActivateSeller(supabase, user.id);
+    const result = await tryAutoActivateSeller(supabase, sellerId);
     if (!result) {
       return {
         statusCode: 404,
@@ -90,7 +59,6 @@ export const handler: Handler = async (event) => {
     }
 
     if (result.firstActivation) {
-      // Send notifications fire-and-forget — same as connect-status/stripe-webhook.
       const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
       const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
       const activatedAt = new Date().toLocaleString('en-GB');
@@ -114,12 +82,12 @@ export const handler: Handler = async (event) => {
         );
       }
 
-      if (user.email) {
+      if (auth.actor.email) {
         fetch(`${appUrl}/.netlify/functions/send-email`, {
           method: 'POST',
           headers: internalHeaders,
           body: JSON.stringify({
-            to: user.email,
+            to: auth.actor.email,
             subject: 'Your Loadify Market store is now live!',
             template: 'seller_account_active',
             data: { activatedAt },
@@ -137,8 +105,6 @@ export const handler: Handler = async (event) => {
         sellerStatus: result.sellerStatus,
         profileComplete: result.profileComplete,
         stripeConnected: result.stripeConnected,
-        // chargesEnabled / payoutsEnabled are both true when stripeActive is true,
-        // since stripeActive === (charges_enabled && payouts_enabled) per connect-status.
         chargesEnabled: result.stripeActive,
         payoutsEnabled: result.stripeActive,
         changed: result.changed,
@@ -152,4 +118,5 @@ export const handler: Handler = async (event) => {
         error: error instanceof Error ? error.message : 'Activation check failed',
       }),
     };
-  }};
+  }
+};

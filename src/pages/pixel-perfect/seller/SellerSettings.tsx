@@ -113,7 +113,7 @@ const SellerSettings = () => {
           userId: user.id,
           orderConfirmation: notifications.orderAlerts,
           shippingUpdates: notifications.returnAlerts,
-          deliveryConfirmation: notifications.orderAlerts,  // mirrors orderAlerts
+          deliveryConfirmation: notifications.orderAlerts,
           promotionalEmails: notifications.marketingEmails,
         },
         { onConflict: "userId" }
@@ -300,12 +300,22 @@ const SellerSettings = () => {
     }
     setDeleteSellerLoading(true);
     try {
-      // Soft-delete: set user as inactive and sign out.
-      await supabase.from("users").update({ isActive: false }).eq("id", user.id);
+      const response = await authorizedFetch("/.netlify/functions/deactivate-account", {
+        method: "POST",
+      });
+      let payload: { error?: string; deactivated?: boolean } = {};
+      try { payload = await response.json(); } catch { /* non-JSON response */ }
+
+      // The server owns Auth + users + seller-state + push cleanup. Once the
+      // account is committed inactive, clear the local session immediately.
+      if (!response.ok && payload.deactivated !== true) {
+        throw new Error(payload.error || "Unable to deactivate your seller account.");
+      }
+
       await supabase.auth.signOut();
       toast({ title: "Account deactivated", description: "Your seller account has been deactivated. Contact support to restore it." });
-    } catch {
-      toast({ title: "Deletion failed", description: "Unable to delete your account. Please contact support.", variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Deletion failed", description: err instanceof Error ? err.message : "Unable to delete your account. Please contact support.", variant: "destructive" });
     } finally {
       setDeleteSellerLoading(false);
     }

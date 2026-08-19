@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { useAuthStore } from "@/store";
 
 interface BuyerPrefs {
@@ -197,14 +198,22 @@ const BuyerSettings = () => {
     }
     setDeletingAccount(true);
     try {
-      // Soft-delete: mark user as inactive and sign out.
-      // Hard deletion requires a server-side admin call; soft-delete
-      // immediately disables the account and clears the session.
-      await supabase.from("users").update({ isActive: false }).eq("id", user.id);
+      const response = await authorizedFetch("/.netlify/functions/deactivate-account", {
+        method: "POST",
+      });
+      let payload: { error?: string; deactivated?: boolean } = {};
+      try { payload = await response.json(); } catch { /* non-JSON response */ }
+
+      // Once the server has committed deactivation, clear the local session even
+      // if a secondary cleanup step reported that support intervention is needed.
+      if (!response.ok && payload.deactivated !== true) {
+        throw new Error(payload.error || "Unable to deactivate your account.");
+      }
+
       await supabase.auth.signOut();
       toast({ title: "Account deactivated", description: "Your account has been deactivated. Contact support to restore it." });
-    } catch {
-      toast({ title: "Deletion failed", description: "Unable to delete your account. Please contact support.", variant: "destructive" });
+    } catch (err) {
+      toast({ title: "Deletion failed", description: err instanceof Error ? err.message : "Unable to delete your account. Please contact support.", variant: "destructive" });
     } finally {
       setDeletingAccount(false);
     }

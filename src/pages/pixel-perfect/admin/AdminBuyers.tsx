@@ -16,6 +16,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { toast } from "@/hooks/use-toast";
 
 interface Buyer {
@@ -146,14 +147,22 @@ const AdminBuyers = () => {
     setActionLoading(userId);
     setError(null);
     try {
-      const { error } = await supabase
-        .from("users")
-        .update({ isActive: !currentlyActive })
-        .eq("id", userId);
-      if (error) throw error;
-      setBuyers((prev) => prev.map((b) => b.id === userId ? { ...b, isActive: !currentlyActive } : b));
-      if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: !currentlyActive } : s);
-      if (detail?.id === userId) setDetail((d) => d ? { ...d, isActive: !currentlyActive } : d);
+      const response = await authorizedFetch('/.netlify/functions/admin-user-status', {
+        method: 'POST',
+        body: JSON.stringify({
+          op: currentlyActive ? 'suspend' : 'reactivate',
+          userId,
+        }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? `HTTP ${response.status}`);
+      }
+
+      const nextActive = !currentlyActive;
+      setBuyers((prev) => prev.map((b) => b.id === userId ? { ...b, isActive: nextActive } : b));
+      if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: nextActive } : s);
+      if (detail?.id === userId) setDetail((d) => d ? { ...d, isActive: nextActive } : d);
       toast({ title: currentlyActive ? "Buyer suspended" : "Buyer reactivated" });
     } catch (err: unknown) {
       const msg = (err as Error).message || "Failed to update buyer";

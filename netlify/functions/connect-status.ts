@@ -1,19 +1,13 @@
 import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 /**
  * POST /.netlify/functions/connect-status
  *
- * Fetches the live Stripe Connect account status for the authenticated seller
- * and persists the result in seller_profiles.stripeConnectStatus. Called by
- * the seller dashboard when the seller returns from Stripe onboarding
- * (?connect=success | ?connect=refresh) or when they open the payouts tab.
- *
- * Returns:
- *   { stripeConnectStatus, chargesEnabled, payoutsEnabled, detailsSubmitted }
- *
- * Requires: Authorization: Bearer <supabase-jwt>
+ * Fetches the live Stripe Connect account status for the authenticated active
+ * seller and persists the result in seller_profiles.stripeConnectStatus.
  */
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -31,44 +25,34 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Database not configured' }) };
   }
 
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  const token = authHeader?.replace('Bearer ', '').trim();
-  if (!token) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
+  const auth = await authenticateActiveAccount(event, supabase, ['seller']);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      body: JSON.stringify({ error: auth.status === 401 ? 'Authentication required' : 'Active seller account required' }),
+    };
   }
 
-  // Only sellers may poll their own Connect status.
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single<{ role: string }>();
-  if (userRow?.role !== 'seller') {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Seller account required' }) };
-  }
+  const sellerId = auth.actor.id;
 
   try {
     const { data: profile } = await supabase
       .from('seller_profiles')
       .select('stripeAccountId')
-      .eq('userId', user.id)
+      .eq('userId', sellerId)
       .single<{ stripeAccountId: string | null }>();
 
     if (!profile?.stripeAccountId) {
-      // No Stripe account yet — check profile completeness and return current status.
       let sellerStatus: string | null = null;
       let profileComplete = false;
       try {
         const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
-        const result = await tryAutoActivateSeller(supabase, user.id);
+        const result = await tryAutoActivateSeller(supabase, sellerId);
         if (result) {
           sellerStatus = result.sellerStatus;
           profileComplete = result.profileComplete;
@@ -86,20 +70,16 @@ export const handler: Handler = async (event) => {
     try {
       account = await stripe.accounts.retrieve(profile.stripeAccountId);
     } catch (retrieveError) {
-      // If the account doesn't exist on THIS platform (e.g. after a platform
-      // migration to a new Stripe account), clear the stale record so the
-      // seller can re-onboard from scratch.
       if (
         retrieveError instanceof Stripe.errors.StripeInvalidRequestError &&
         /no such account/i.test(retrieveError.message)
       ) {
-        console.warn(
-          `connect-status: stripeAccountId ${profile.stripeAccountId} not found on current platform — clearing stale record for user ${user.id}`
-        );
-        await supabase
+        console.warn(`connect-status: stored Stripe account is not on current platform; clearing stale record for user ${sellerId}`);
+        const { error: clearError } = await supabase
           .from('seller_profiles')
           .update({ stripeAccountId: null, stripeConnectStatus: null })
-          .eq('userId', user.id);
+          .eq('userId', sellerId);
+        if (clearError) throw clearError;
         return {
           statusCode: 200,
           body: JSON.stringify({ stripeConnectStatus: null }),
@@ -117,54 +97,33 @@ export const handler: Handler = async (event) => {
       stripeConnectStatus = 'pending';
     }
 
-    // Persist the refreshed status and granular Stripe flags so the dashboard
-    // doesn't need to poll Stripe and onboarding completion can be computed.
     const stripeUpdate: Record<string, unknown> = {
       stripeConnectStatus,
       stripeChargesEnabled: account.charges_enabled,
       stripePayoutsEnabled: account.payouts_enabled,
       stripeDetailsSubmitted: account.details_submitted,
     };
-    // storeCreated: when Stripe is active the seller has completed KYC and
-    // confirmed their identity. We treat this as store-created because the
-    // /onboarding wizard sends sellers through Stripe before store setup.
-    // Sellers who complete Stripe without filling store details will have
-    // the flag set to true but can still continue filling in store details
-    // via /seller/profile — the checklist shows the remaining items.
     if (stripeConnectStatus === 'active') {
       stripeUpdate.storeCreated = true;
     }
     const { error: stripeStatusUpdateError } = await supabase
       .from('seller_profiles')
       .update(stripeUpdate)
-      .eq('userId', user.id);
+      .eq('userId', sellerId);
 
     if (stripeStatusUpdateError) {
-      // Non-fatal: log and continue. tryAutoActivateSeller will use the live
-      // stripeConnectStatus value passed below, so activation still proceeds.
-      console.warn(
-        'connect-status: failed to persist stripeConnectStatus for',
-        user.id,
-        stripeStatusUpdateError.message,
-      );
+      console.warn('connect-status: failed to persist stripeConnectStatus for', sellerId, stripeStatusUpdateError.message);
     }
 
-    // ── Auto-activation check ──────────────────────────────────────────────
-    // After updating stripeConnectStatus, re-evaluate whether the seller now
-    // meets all activation conditions.  tryAutoActivateSeller only writes to
-    // the DB when the derived status differs from the stored one.
-    // Pass the live stripeConnectStatus so activation doesn't depend on the DB
-    // having persisted the preceding update (guards against silent failures).
     let sellerStatus: string | null = null;
     let profileComplete = false;
     try {
       const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
-      const result = await tryAutoActivateSeller(supabase, user.id, stripeConnectStatus);
+      const result = await tryAutoActivateSeller(supabase, sellerId, stripeConnectStatus);
       if (result) {
         sellerStatus = result.sellerStatus;
         profileComplete = result.profileComplete;
 
-        // Send notifications if seller just became active for the first time
         if (result.firstActivation) {
           const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
           const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
@@ -174,7 +133,6 @@ export const handler: Handler = async (event) => {
             ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
           };
 
-          // Notify admin
           if (adminEmail) {
             fetch(`${appUrl}/.netlify/functions/send-email`, {
               method: 'POST',
@@ -190,13 +148,12 @@ export const handler: Handler = async (event) => {
             );
           }
 
-          // Notify the seller themselves
-          if (user.email) {
+          if (auth.actor.email) {
             fetch(`${appUrl}/.netlify/functions/send-email`, {
               method: 'POST',
               headers: internalHeaders,
               body: JSON.stringify({
-                to: user.email,
+                to: auth.actor.email,
                 subject: 'Your Loadify Market store is now live!',
                 template: 'seller_account_active',
                 data: { activatedAt },
@@ -208,10 +165,8 @@ export const handler: Handler = async (event) => {
         }
       }
     } catch (activationError) {
-      // Non-fatal: Stripe status was already updated above.
       console.warn('connect-status: auto-activation check failed (non-fatal):', activationError);
     }
-    // ──────────────────────────────────────────────────────────────────────
 
     return {
       statusCode: 200,
@@ -227,7 +182,6 @@ export const handler: Handler = async (event) => {
   } catch (error) {
     console.error('connect-status error:', error);
 
-    // Detect when the platform Stripe account has not enrolled in Connect.
     if (
       error instanceof Stripe.errors.StripeInvalidRequestError &&
       (/signed up for connect/i.test(error.message) ||
@@ -237,8 +191,7 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 503,
         body: JSON.stringify({
-          error:
-            'Stripe Connect is not yet enabled on this platform.',
+          error: 'Stripe Connect is not yet enabled on this platform.',
           platformNotConfigured: true,
         }),
       };

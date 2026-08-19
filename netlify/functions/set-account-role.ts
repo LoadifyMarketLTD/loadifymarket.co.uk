@@ -1,6 +1,7 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-import { getBearerToken, jsonResponse, optionsResponse } from './_shared/http';
+import { jsonResponse, optionsResponse } from './_shared/http';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 const METHODS = 'POST, OPTIONS';
 const SELLER_INITIAL_STEP = 1;
@@ -20,20 +21,21 @@ export const handler: Handler = async (event) => {
     return jsonResponse(500, { error: 'Server configuration error' }, METHODS);
   }
 
-  const token = getBearerToken(event);
-  if (!token) {
-    return jsonResponse(401, { error: 'Authentication required' }, METHODS);
-  }
-
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
+    auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const { data: authData, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !authData?.user) {
-    return jsonResponse(401, { error: 'Invalid or expired token' }, METHODS);
+  // This endpoint writes through service_role. A still-valid access token from a
+  // suspended account must never be sufficient to change role/onboarding state.
+  const auth = await authenticateActiveAccount(event, supabase);
+  if (!auth.ok) {
+    return jsonResponse(auth.status, { error: 'Authentication required' }, METHODS);
   }
-  const userId = authData.user.id;
+
+  const userId = auth.actor.id;
+  if (auth.actor.role === 'admin') {
+    return jsonResponse(403, { error: 'Admin role cannot be changed through self-service onboarding' }, METHODS);
+  }
 
   let parsedBody: { role?: unknown } = {};
   try {
@@ -48,8 +50,8 @@ export const handler: Handler = async (event) => {
   }
 
   // public.users remains the canonical database source of truth for role and
-  // onboarding state. The authenticated user can only update their own account
-  // through this service-role endpoint, never an attacker-supplied user id.
+  // onboarding state. The authenticated active user can only update their own
+  // account through this service-role endpoint, never an attacker-supplied id.
   const { error: userUpdateError } = await supabase
     .from('users')
     .update({
@@ -105,12 +107,11 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  // Mirror the server-validated role into app_metadata so an auth-session
-  // fallback never has to trust user-editable user_metadata for authorization.
-  // Preserve provider/custom metadata already maintained by Supabase.
+  // Mirror the server-validated role into app_metadata so session consumers can
+  // observe the current role. Authorization still re-checks the live DB account.
   const { error: appMetadataError } = await supabase.auth.admin.updateUserById(userId, {
     app_metadata: {
-      ...(authData.user.app_metadata ?? {}),
+      ...auth.actor.appMetadata,
       role,
     },
   });

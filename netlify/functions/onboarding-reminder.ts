@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 /**
  * onboarding-reminder — scheduled Netlify function
  *
- * Fires daily and sends reminder emails to sellers who have not
+ * Fires daily and sends reminder emails to active sellers who have not
  * completed onboarding after 1 day, 3 days, and 7 days.
  *
  * Schedule: every day at 09:00 UTC
@@ -72,7 +72,7 @@ export const handler = schedule('0 9 * * *', async () => {
     const windowStart = new Date(now.getTime() - (window.days * 24 + 1) * 60 * 60 * 1000).toISOString();
     const windowEnd   = new Date(now.getTime() - window.days * 24 * 60 * 60 * 1000).toISOString();
 
-    // Find sellers registered in this window who have NOT completed onboarding.
+    // Find active sellers registered in this window who have NOT completed onboarding.
     // Include rows where onboardingCompleted is false OR NULL (pre-migration rows).
     // NOTE: column names inside .or() filter strings use PostgREST quoting ("col"),
     // but supabase-js .gte()/.lte() take the raw column name without extra quotes.
@@ -80,6 +80,7 @@ export const handler = schedule('0 9 * * *', async () => {
       .from('users')
       .select('id, email, "firstName", "lastName", "createdAt"')
       .eq('role', 'seller')
+      .eq('isActive', true)
       .or('"onboardingCompleted".eq.false,"onboardingCompleted".is.null')
       .gte('createdAt', windowStart)
       .lte('createdAt', windowEnd);
@@ -132,8 +133,8 @@ export const handler = schedule('0 9 * * *', async () => {
   }
 
   // ── Stripe Connect-specific reminders ─────────────────────────────────────
-  // These fire for sellers who have been registered for 2, 5, or 10 days but
-  // still have no Stripe account connected (stripeConnectStatus IS NULL or
+  // These fire for active sellers who have been registered for 2, 5, or 10 days
+  // but still have no Stripe account connected (stripeConnectStatus IS NULL or
   // 'pending'). They are sent regardless of whether general onboarding is done
   // because a seller may have completed their profile but stalled on Stripe.
 
@@ -141,12 +142,13 @@ export const handler = schedule('0 9 * * *', async () => {
     const windowStart = new Date(now.getTime() - (window.days * 24 + 1) * 60 * 60 * 1000).toISOString();
     const windowEnd   = new Date(now.getTime() - window.days * 24 * 60 * 60 * 1000).toISOString();
 
-    // Fetch sellers registered in this window who have NOT completed Stripe Connect.
+    // Fetch active sellers registered in this window who have NOT completed Stripe Connect.
     // Join seller_profiles to check stripeConnectStatus.
     const { data: sellerRows, error: stripeErr } = await supabase
       .from('users')
       .select('id, email, "firstName", "lastName", "createdAt", seller_profiles!userId(stripeConnectStatus)')
       .eq('role', 'seller')
+      .eq('isActive', true)
       .gte('createdAt', windowStart)
       .lte('createdAt', windowEnd);
 

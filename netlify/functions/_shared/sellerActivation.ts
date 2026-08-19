@@ -2,7 +2,7 @@
  * Shared seller auto-activation helper.
  *
  * A seller's account becomes ACTIVE only when ALL of the following are true:
- *   1. Their role is 'seller'
+ *   1. Their live public.users row has role = 'seller' and isActive = true
  *   2. Profile is complete: business/store name + phone + address postcode
  *      (companies also require companyRegistrationNumber + vatNumber)
  *   3. Stripe Connect account exists (stripeAccountId present)
@@ -143,6 +143,10 @@ export interface ActivationResult {
  * Safe to call multiple times — only writes to the DB when the status changes.
  * Returns null if the seller profile cannot be found.
  *
+ * public.users is the account-authorization source of truth. An absent,
+ * non-seller, inactive, or unreadable live account fails closed and can never be
+ * auto-promoted by a Stripe webhook or background/server-side activation path.
+ *
  * @param liveStripeConnectStatus - When provided, this live value is used instead
  *   of the DB-stored stripeConnectStatus. Pass this from connect-status.ts so the
  *   activation decision always reflects the freshly-fetched Stripe state, even if
@@ -172,11 +176,29 @@ export async function tryAutoActivateSeller(
   }
 
   const profileComplete = isProfileComplete(profile, profile.sellerType);
-  // Use the caller-supplied live value when available so we don't depend on a
-  // DB read that might reflect a stale stripeConnectStatus (e.g., when the
-  // preceding update hasn't committed yet, or failed silently).
   const effectiveStripeConnectStatus = liveStripeConnectStatus ?? profile.stripeConnectStatus;
   const stripeActive = effectiveStripeConnectStatus === 'active';
+
+  const { data: account, error: accountError } = await supabase
+    .from('users')
+    .select('role, isActive')
+    .eq('id', sellerId)
+    .maybeSingle<{ role: string | null; isActive: boolean | null }>();
+
+  if (accountError || !account || account.role !== 'seller' || account.isActive !== true) {
+    if (accountError) {
+      console.warn('tryAutoActivateSeller: live account lookup failed for', sellerId, accountError.message);
+    }
+    return {
+      sellerStatus: 'suspended',
+      profileComplete,
+      stripeConnected: !!profile.stripeAccountId,
+      stripeActive,
+      changed: false,
+      firstActivation: false,
+    };
+  }
+
   const newStatus = deriveSellerStatus(
     profile.sellerStatus,
     profileComplete,

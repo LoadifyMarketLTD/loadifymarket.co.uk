@@ -6,6 +6,7 @@
  *
  * Security:
  *   – Requires Authorization: Bearer <buyer-jwt>
+ *   – Caller must still be an active platform account
  *   – Order must belong to the authenticated buyer
  *   – Order must be in a releasable status: 'shipped' or 'delivered'
  *   – Uses service-role client for the DB write so RLS cannot be bypassed
@@ -17,6 +18,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 
 const RELEASABLE_STATUSES = new Set(['shipped', 'delivered']);
 
@@ -48,19 +50,20 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
-  // ── Authenticate caller ───────────────────────────────────────────────────
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-  if (!token) {
-    return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
+  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const auth = await authenticateActiveAccount(event, supabase);
+  if (!auth.ok) {
+    return {
+      statusCode: auth.status,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: auth.status === 401 ? 'Unauthorized' : 'Account is suspended' }),
+    };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };
-  }
+  const buyerId = auth.actor.id;
 
   // ── Parse body ────────────────────────────────────────────────────────────
   let orderId: string | undefined;
@@ -100,7 +103,7 @@ export const handler: Handler = async (event) => {
   }
 
   // Must be the buyer's own order
-  if (order.buyerId !== user.id) {
+  if (order.buyerId !== buyerId) {
     return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Forbidden' }) };
   }
 
