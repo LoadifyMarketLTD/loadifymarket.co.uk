@@ -53,7 +53,7 @@ async function getAuthUser(event: HandlerEvent): Promise<ShipmentActor | null> {
     .from('users')
     .select('id, role, isActive')
     .eq('id', user.id)
-    .maybeSingle<ShipmentActor>();
+    .single<ShipmentActor>();
 
   if (userError || !userData) return null;
   return userData;
