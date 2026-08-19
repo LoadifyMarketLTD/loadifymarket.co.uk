@@ -6,6 +6,7 @@ export interface ActiveAccountActor {
   id: string;
   role: string;
   email: string | null;
+  appMetadata: Record<string, unknown>;
 }
 
 export type ActiveAccountAuthResult =
@@ -60,6 +61,7 @@ export async function authenticateActiveAccount(
       id: account.id,
       role: account.role,
       email,
+      appMetadata: (authData.user.app_metadata as Record<string, unknown> | undefined) ?? {},
     },
   };
 }
