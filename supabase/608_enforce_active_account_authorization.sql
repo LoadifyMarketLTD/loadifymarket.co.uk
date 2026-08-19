@@ -192,6 +192,7 @@ DECLARE
 BEGIN
   FOREACH v_table IN ARRAY ARRAY[
     'users',
+    'user_display_names_data',
     'buyer_profiles',
     'seller_profiles',
     'carts',
