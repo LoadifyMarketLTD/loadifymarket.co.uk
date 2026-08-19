@@ -124,17 +124,19 @@ export async function applyAdminUserStatus(
       };
     }
 
+    // After Auth is blocked, every independent cleanup step is attempted. A
+    // seller-state failure must never leave push delivery active, and a push
+    // cleanup failure must not prevent audit persistence for a committed DB ban.
+    const suspensionErrors: string[] = [];
+
     const { error: userError } = await supabase
       .from('users')
       .update({ isActive: false })
       .eq('id', userId);
+    const databaseInactive = !userError;
     if (userError) {
       console.error('admin-user-status: users suspension write failed:', userError.message);
-      return {
-        ok: false,
-        status: 500,
-        body: { error: 'Account is blocked in authentication but database suspension requires retry' },
-      };
+      suspensionErrors.push('database account state');
     }
 
     if (target.role === 'seller') {
@@ -144,11 +146,7 @@ export async function applyAdminUserStatus(
         .eq('userId', userId);
       if (sellerError) {
         console.error('admin-user-status: seller suspension sync failed:', sellerError.message);
-        return {
-          ok: false,
-          status: 500,
-          body: { error: 'Account is suspended but seller status synchronization requires retry' },
-        };
+        suspensionErrors.push('seller state');
       }
     }
 
@@ -159,26 +157,36 @@ export async function applyAdminUserStatus(
       .eq('isActive', true);
     if (pushError) {
       console.error('admin-user-status: push token deactivation failed:', pushError.message);
+      suspensionErrors.push('notification cleanup');
+    }
+
+    if (databaseInactive) {
+      const auditError = await writeAdminAudit(
+        supabase,
+        callerId,
+        'user_suspend',
+        userId,
+        target.role,
+      );
+      if (auditError) {
+        console.error('admin-user-status: suspend audit failed:', auditError);
+        suspensionErrors.push('audit persistence');
+      }
+    }
+
+    if (!databaseInactive) {
       return {
         ok: false,
         status: 500,
-        body: { error: 'Account is suspended but notification cleanup requires retry' },
+        body: { error: 'Account is blocked in authentication but database suspension requires retry' },
       };
     }
 
-    const auditError = await writeAdminAudit(
-      supabase,
-      callerId,
-      'user_suspend',
-      userId,
-      target.role,
-    );
-    if (auditError) {
-      console.error('admin-user-status: suspend audit failed:', auditError);
+    if (suspensionErrors.length > 0) {
       return {
         ok: false,
         status: 500,
-        body: { error: 'Account is suspended but audit persistence requires retry' },
+        body: { error: 'Account is suspended but follow-up cleanup requires retry' },
       };
     }
 
