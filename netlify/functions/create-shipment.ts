@@ -29,9 +29,9 @@ interface CreateShipmentRequest {
 type ShipmentMutationResult = {
   shipment?: Record<string, unknown>;
   created?: boolean;
+  changed?: boolean;
 };
 
-// Helper to get user from Authorization header
 async function getAuthUser(event: HandlerEvent) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -45,7 +45,6 @@ async function getAuthUser(event: HandlerEvent) {
     return null;
   }
 
-  // Get user role
   const { data: userData } = await supabase
     .from('users')
     .select('*')
@@ -71,7 +70,6 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // Authenticate user
     const user = await getAuthUser(event);
     if (!user) {
       return {
@@ -80,7 +78,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Only sellers and admins can create shipments
     if (user.role !== 'seller' && user.role !== 'admin') {
       return {
         statusCode: 403,
@@ -88,7 +85,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Rate-limit: 30 shipment creates/updates per user per 60-minute window.
     const shipRl = await checkRateLimit({
       supabase,
       tableName: 'create_shipment_rate_limits',
@@ -133,9 +129,7 @@ export const handler: Handler = async (event) => {
     }
 
     // Shipping method/amount are commercial terms fixed by the verified checkout
-    // and Stripe payment evidence. Fulfilment must never rewrite them. Reject
-    // legacy/forged attempts explicitly so no caller can mistake the request for
-    // a successful commercial-term update.
+    // and Stripe payment evidence. Fulfilment must never rewrite them.
     if (
       Object.prototype.hasOwnProperty.call(body, 'shipping_method') ||
       Object.prototype.hasOwnProperty.call(body, 'shipping_cost')
@@ -148,9 +142,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Verify the order exists and user is the seller (or admin).
-    // Shipment creation is an order-lifecycle operation: terminal/cancelled
-    // orders must never be turned back into fulfilment work.
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('id, orderNumber, status, productId, sellerId, buyerId, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus')
@@ -164,7 +155,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Check authorization
     if (user.role !== 'admin' && order.sellerId !== user.id) {
       return {
         statusCode: 403,
@@ -172,7 +162,9 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    if (['cancelled', 'refunded', 'disputed', 'completed'].includes(order.status)) {
+    // Delivered is terminal for shipment-detail mutation. Return/POD flows have
+    // their own canonical boundaries and must not reopen tracking/details history.
+    if (['cancelled', 'refunded', 'disputed', 'delivered', 'completed'].includes(order.status)) {
       return {
         statusCode: 409,
         body: JSON.stringify({ error: `A shipment cannot be created or changed for an order in '${order.status}' status.` }),
@@ -192,9 +184,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // A physical order must have valid completed Stripe evidence before a
-    // shipment can be created at all. This closes the create-shipment bypass
-    // around the guarded status-update endpoint.
     const paymentGuard = await enforcePaymentBackedTransition({
       supabase,
       order,
@@ -210,8 +199,6 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // The database owns the atomic shipment + audit-event write. It rechecks
-    // actor ownership and derives buyer/seller IDs from the canonical order row.
     const { data: mutation, error: mutationError } = await supabase.rpc('server_upsert_shipment', {
       p_order_id: order_id,
       p_actor_id: user.id,
@@ -224,6 +211,15 @@ export const handler: Handler = async (event) => {
     });
 
     if (mutationError) {
+      if (mutationError.code === '42501') {
+        return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
+      }
+      if (mutationError.code === 'P0002') {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Order not found' }) };
+      }
+      if (mutationError.code === 'P0001') {
+        return { statusCode: 409, body: JSON.stringify({ error: mutationError.message }) };
+      }
       throw new Error(`Atomic shipment mutation failed: ${mutationError.message}`);
     }
 
@@ -233,13 +229,19 @@ export const handler: Handler = async (event) => {
     }
 
     const isNew = result.created === true;
+    const changed = result.changed === true;
 
     return {
       statusCode: isNew ? 201 : 200,
       body: JSON.stringify({ 
         success: true, 
         shipment: result.shipment,
-        message: isNew ? 'Shipment created' : 'Shipment updated'
+        changed,
+        message: isNew
+          ? 'Shipment created'
+          : changed
+            ? 'Shipment updated'
+            : 'Shipment already matches the requested details'
       }),
     };
   } catch (error) {
