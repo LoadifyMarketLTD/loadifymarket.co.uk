@@ -34,6 +34,8 @@ Until Checkpoint A PASS → Foundation Baseline Freeze → Gate B PASS:
 10. Vertical-slice implementation backlog for Phases C→Q.
 11. E2E scenario catalogue and failure paths.
 12. Reconciliation protocol for rebasing onto the post-Checkpoint-A baseline.
+13. Deep factual audit of the current seller-centric runtime and live schema seams.
+14. Provider/source capability contracts that prevent external brands from becoming core architecture types.
 
 ## Current product intent
 
@@ -61,5 +63,22 @@ TikTok, Amazon, Alibaba, AliExpress, wholesalers and manufacturers are examples 
 3. `03_CURRENT_RUNTIME_INTEGRATION_MAP.md`
 4. `04_VERTICAL_SLICE_BACKLOG.md`
 5. `05_RECONCILIATION_PROTOCOL.md`
+6. `06_DEEP_BASELINE_AUDIT.md`
+7. `07_E2E_SCENARIO_CATALOGUE.md`
+8. `08_SOURCE_AND_PROVIDER_CAPABILITY_CONTRACT.md`
+
+## Current verified baseline observations
+
+The preparation audit currently confirms that the marketplace foundation is strongly seller-centric:
+
+- current `products` and `orders` require seller ownership;
+- web/mobile checkout currently enforce one seller per transaction;
+- marketplace checkout requires seller Stripe Connect readiness;
+- current product reservation is a marketplace listing reservation, not Supplier Commerce sellable-stock architecture;
+- current customer order/payment/shipment/return/admin surfaces are valuable integration seams and must be extended rather than duplicated;
+- no obvious live public Supplier Commerce supplier/catalog/ledger/fulfilment/inventory table family exists yet;
+- commercial-history shipping mutation found in current foundation is owned by Checkpoint A, not this lane.
+
+Every one of these observations must be revalidated against the Foundation Baseline Freeze before implementation.
 
 This lane may become implementation work only after the canonical sequence authorises it.
