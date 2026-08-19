@@ -6,11 +6,19 @@ import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import { initErrorTracking } from "./lib/errorTracking.ts";
 import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
+import { isCapacitorContext } from "./lib/capacitorUtils.ts";
 import "./index.css";
+import "./native.css";
 
 // Initialise global error tracking (unhandled errors + unhandled rejections).
 // Must be called before the React tree mounts so no early errors are missed.
 initErrorTracking();
+
+// Mark the native WebView once at bootstrap so native-only layout fixes can be
+// scoped without changing the regular website or mobile browser experience.
+if (isCapacitorContext()) {
+  document.documentElement.classList.add('capacitor-native');
+}
 
 // On Capacitor APK, relative /.netlify/functions/ URLs resolve to
 // https://localhost (the local WebView file server) instead of the Netlify
