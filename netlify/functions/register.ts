@@ -16,6 +16,10 @@ import { getFeatureFlags } from './_shared/platformFlags';
  * role authorization.
  */
 
+type SellerType = 'individual' | 'sole_trader' | 'company';
+type SellerCommercialCapacity = 'private' | 'trader';
+type SellerVatStatus = 'not_registered' | 'registered';
+
 interface RegisterRequest {
   email: string;
   password: string;
@@ -23,7 +27,10 @@ interface RegisterRequest {
   lastName: string;
   role: 'buyer' | 'seller';
   storeName?: string;
-  sellerType?: 'individual' | 'sole_trader' | 'company';
+  sellerType?: SellerType;
+  sellerCommercialCapacity?: SellerCommercialCapacity;
+  sellerVatStatus?: SellerVatStatus;
+  sellerComplianceConfirmed?: boolean;
   companyName?: string;
   vatNumber?: string;
   customerType?: string;
@@ -74,6 +81,9 @@ export const handler: Handler = async (event) => {
     newsletter,
     requestAssistance,
     sellerType,
+    sellerCommercialCapacity,
+    sellerVatStatus,
+    sellerComplianceConfirmed,
   } = body;
 
   if (!email || !password || !firstName || !lastName || !role) {
@@ -86,6 +96,43 @@ export const handler: Handler = async (event) => {
 
   if (password.length < 8) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Password must be at least 8 characters' }) };
+  }
+
+  let safeSellerType: SellerType | null = null;
+  let safeSellerCommercialCapacity: SellerCommercialCapacity | null = null;
+  let safeSellerVatStatus: SellerVatStatus | null = null;
+  const normalizedVatNumber = vatNumber?.trim() || '';
+
+  if (role === 'seller') {
+    const validSellerTypes = new Set<SellerType>(['individual', 'sole_trader', 'company']);
+    const validCommercialCapacities = new Set<SellerCommercialCapacity>(['private', 'trader']);
+    const validVatStatuses = new Set<SellerVatStatus>(['not_registered', 'registered']);
+
+    if (!sellerType || !validSellerTypes.has(sellerType)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Please select a valid seller legal form.' }) };
+    }
+    if (!sellerCommercialCapacity || !validCommercialCapacities.has(sellerCommercialCapacity)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Please confirm whether you are selling privately or as a trader.' }) };
+    }
+    if (sellerCommercialCapacity === 'private' && sellerType !== 'individual') {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Private seller status is available only to individual sellers.' }) };
+    }
+    if (!sellerVatStatus || !validVatStatuses.has(sellerVatStatus)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Please confirm your VAT registration status.' }) };
+    }
+    if (sellerVatStatus === 'registered' && !normalizedVatNumber) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'VAT-registered sellers must provide a VAT number.' }) };
+    }
+    if (sellerVatStatus === 'not_registered' && normalizedVatNumber) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Remove the VAT number or confirm that you are VAT registered.' }) };
+    }
+    if (!sellerComplianceConfirmed) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Seller compliance confirmation is required.' }) };
+    }
+
+    safeSellerType = sellerType;
+    safeSellerCommercialCapacity = sellerCommercialCapacity;
+    safeSellerVatStatus = sellerVatStatus;
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -138,7 +185,6 @@ export const handler: Handler = async (event) => {
       last_name: lastName,
       ...(middleName        ? { middle_name:        middleName }        : {}),
       ...(phone             ? { phone }                                  : {}),
-      ...(vatNumber         ? { vat_number:         vatNumber }         : {}),
       ...(customerType      ? { customer_type:      customerType }      : {}),
       ...(newsletter        ? { newsletter:         true }              : {}),
       ...(requestAssistance ? { request_assistance: true }              : {}),
@@ -257,10 +303,8 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  if (role === 'seller') {
+  if (role === 'seller' && safeSellerType && safeSellerCommercialCapacity && safeSellerVatStatus) {
     const effectiveStoreName = storeName?.trim() || `${firstName}'s Store`;
-    const validSellerTypes = new Set(['individual', 'sole_trader', 'company']);
-    const safeSellerType = sellerType && validSellerTypes.has(sellerType) ? sellerType : null;
 
     let requiresAdminApproval = false;
     if (safeSellerType === 'company') {
@@ -276,11 +320,15 @@ export const handler: Handler = async (event) => {
       userId,
       fullName: `${firstName} ${lastName}`,
       storeName: effectiveStoreName,
-      ...(safeSellerType ? { sellerType: safeSellerType } : {}),
+      sellerType: safeSellerType,
+      sellerCommercialCapacity: safeSellerCommercialCapacity,
+      vatRegistrationStatus: safeSellerVatStatus,
+      vatStatusDeclaredAt: new Date().toISOString(),
+      isVatRegistered: safeSellerVatStatus === 'registered',
+      vatNumber: safeSellerVatStatus === 'registered' ? normalizedVatNumber : null,
       requiresAdminApproval,
     };
     if (phone?.trim()) sellerProfileUpdate.contactPhone = phone.trim();
-    if (vatNumber?.trim()) sellerProfileUpdate.vatNumber = vatNumber.trim();
     if (businessAddress && Object.keys(businessAddress).length > 0) {
       sellerProfileUpdate.businessAddress = businessAddress;
     }
