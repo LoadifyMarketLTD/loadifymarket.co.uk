@@ -56,7 +56,7 @@
 
 **Merged:** 20 August 2026  
 **Merge commit:** `25dee644fcf8e5fb2aa0b2a2961d139f384715fa`  
-**Head tested before merge:** `8b357821f47ab35d08f55a8c7c548b449cae2`
+**Head tested before merge:** `8b357821f47ab19435d08f55a8c7c548b449cae2`
 
 Verified PowerShell Branch Guard evidence before merge:
 
