@@ -39,6 +39,7 @@ interface DBProduct {
   listingContext: string;
   listingStatus: string;
   images: string[];
+  vatRate: number;
 }
 
 const DB_RESERVATION_FAILSAFE_MINUTES = 60;
@@ -137,7 +138,7 @@ export const handler: Handler = async (event) => {
   const productIds = submittedProductIds;
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images')
+    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images, vatRate')
     .in('id', productIds);
 
   if (dbError) {
@@ -152,6 +153,12 @@ export const handler: Handler = async (event) => {
     }
     if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
       return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" has an invalid price.` }) };
+    }
+    if (Number(dbProduct.vatRate) !== 0) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({ error: `Item "${dbProduct.title}" is awaiting verified marketplace tax treatment.` }),
+      };
     }
     if (dbProduct.listingContext !== 'service') {
       if (typeof dbProduct.stockQuantity !== 'number' || dbProduct.stockQuantity <= 0) {
@@ -236,6 +243,9 @@ export const handler: Handler = async (event) => {
       title: dbProduct.title,
       image: Array.isArray(dbProduct.images) && dbProduct.images.length > 0 ? dbProduct.images[0] : null,
       listingContext: dbProduct.listingContext === 'service' ? 'service' as const : 'product' as const,
+      vatRate: 0,
+      priceExVat: dbProduct.price,
+      taxTreatment: 'seller_not_vat_registered' as const,
     };
   });
 
@@ -247,7 +257,7 @@ export const handler: Handler = async (event) => {
   const checkoutSellerId = uniqueSellerIds[0];
   const { data: sellerProfile, error: sellerProfileError } = await supabase
     .from('seller_profiles')
-    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName')
+    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, businessAddress, isVatRegistered, vatNumber')
     .eq('userId', checkoutSellerId)
     .maybeSingle<{
       stripeAccountId: string | null;
@@ -256,6 +266,9 @@ export const handler: Handler = async (event) => {
       isPaused: boolean | null;
       businessName: string | null;
       fullName: string | null;
+      businessAddress: Record<string, unknown> | null;
+      isVatRegistered: boolean | null;
+      vatNumber: string | null;
     }>();
 
   if (sellerProfileError) {
@@ -275,8 +288,28 @@ export const handler: Handler = async (event) => {
   if (!sellerBusinessName) {
     return { statusCode: 409, body: JSON.stringify({ error: 'Seller commercial identity is incomplete. Please try again later.' }) };
   }
+  if (sellerProfile.isVatRegistered === true) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({ error: 'This VAT-registered seller requires explicit verified tax treatment before checkout.' }),
+    };
+  }
 
-  const VAT_RATE = 0.20;
+  const sellerBusinessAddress = sellerProfile.businessAddress && typeof sellerProfile.businessAddress === 'object'
+    ? sellerProfile.businessAddress
+    : null;
+  const sellerStreet = sellerBusinessAddress
+    ? String(sellerBusinessAddress.address ?? sellerBusinessAddress.streetAddress ?? '').trim()
+    : '';
+  const sellerCity = sellerBusinessAddress ? String(sellerBusinessAddress.city ?? '').trim() : '';
+  const sellerPostcode = sellerBusinessAddress ? String(sellerBusinessAddress.postcode ?? '').trim() : '';
+  if (!sellerBusinessAddress || !sellerStreet || !sellerCity || !sellerPostcode) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({ error: 'Seller business address is incomplete. Checkout is unavailable until seller invoice identity is complete.' }),
+    };
+  }
+
   const { data: buyerProfile, error: buyerProfileError } = await supabase
     .from('buyer_profiles')
     .select('accountType, isVatVerified, companyName, vatNumber')
@@ -315,7 +348,8 @@ export const handler: Handler = async (event) => {
     .trim() || buyerEmail;
 
   const isB2BBuyer = Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
-  const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
+  // Buyer VAT verification alone does not establish a reverse-charge route.
+  const applyReverseCharge = false;
   const buyerSnapshot = {
     id: verifiedBuyerId,
     name: buyerName,
@@ -323,21 +357,22 @@ export const handler: Handler = async (event) => {
     companyName: buyerProfile?.companyName?.trim() || null,
     vatNumber: buyerProfile?.vatNumber?.trim() || null,
     isB2B: isB2BBuyer,
-    reverseCharge: applyReverseCharge,
+    reverseCharge: false,
   };
   const sellerSnapshot = {
     id: checkoutSellerId,
     businessName: sellerBusinessName,
+    businessAddress: sellerBusinessAddress,
+    isVatRegistered: false,
+    vatNumber: null,
+    taxTreatment: 'seller_not_vat_registered',
   };
 
   const catalogSubtotalPence = enrichedItems.reduce(
     (sum, item) => sum + Math.round(item.price * 100) * item.quantity,
     0,
   );
-  const chargeableSubtotalPence = enrichedItems.reduce((sum, item) => {
-    const unitPrice = applyReverseCharge ? item.price / (1 + VAT_RATE) : item.price;
-    return sum + Math.round(unitPrice * 100) * item.quantity;
-  }, 0);
+  const chargeableSubtotalPence = catalogSubtotalPence;
   const shippingAmountPence = Math.round(shippingAmount * 100);
   shippingAmount = shippingAmountPence / 100;
   const totalPence = chargeableSubtotalPence + shippingAmountPence;
@@ -404,6 +439,8 @@ export const handler: Handler = async (event) => {
         currency: 'GBP',
         metadata: {
           commercialSnapshotVersion: 1,
+          taxSnapshotVersion: 1,
+          taxTreatment: 'seller_not_vat_registered',
           buyerSnapshot,
           sellerSnapshot,
           items: enrichedItems,
