@@ -1,5 +1,9 @@
 /**
  * update-product — authenticated seller/admin listing updates.
+ *
+ * Marketplace tax treatment is seller/supply evidence, not a universal 20%
+ * assumption. Price updates preserve the seller-entered customer price and the
+ * DB contract remains the final fail-closed authority.
  */
 
 import type { Handler } from '@netlify/functions';
@@ -135,19 +139,25 @@ export const handler: Handler = async (event) => {
     return { statusCode: 403, body: JSON.stringify({ error: 'You do not have permission to edit this listing' }) };
   }
 
+  const { data: ownerProfile, error: ownerProfileError } = await supabase
+    .from('seller_profiles')
+    .select('sellerStatus, stripeConnectStatus, isPaused, isVatRegistered')
+    .eq('userId', existingProduct.sellerId)
+    .maybeSingle<{
+      sellerStatus: string | null;
+      stripeConnectStatus: string | null;
+      isPaused: boolean | null;
+      isVatRegistered: boolean | null;
+    }>();
+
   let sellerCanPublish = isAdmin;
   if (!isAdmin) {
-    const { data: profile, error: profileError } = await supabase
-      .from('seller_profiles')
-      .select('sellerStatus, stripeConnectStatus, isPaused')
-      .eq('userId', callerId)
-      .maybeSingle<{ sellerStatus: string | null; stripeConnectStatus: string | null; isPaused: boolean | null }>();
-    if (profileError || !profile) {
+    if (ownerProfileError || !ownerProfile) {
       return { statusCode: 409, body: JSON.stringify({ error: 'Complete your seller setup before updating listings.' }) };
     }
-    sellerCanPublish = profile.sellerStatus === 'active'
-      && profile.stripeConnectStatus === 'active'
-      && profile.isPaused !== true;
+    sellerCanPublish = ownerProfile.sellerStatus === 'active'
+      && ownerProfile.stripeConnectStatus === 'active'
+      && ownerProfile.isPaused !== true;
   }
 
   const updateData = pickAllowedFields(updateFields);
@@ -156,8 +166,10 @@ export const handler: Handler = async (event) => {
     if (typeof nextPrice !== 'number' || !Number.isFinite(nextPrice) || nextPrice <= 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'price must be a positive number' }) };
     }
-    updateData.priceExVat = nextPrice / 1.20;
-    updateData.vatRate = 0.20;
+    // Current supported Marketplace Seller tax route is explicit non-VAT
+    // seller. Never divide by 1.20 or manufacture VAT from the price.
+    updateData.priceExVat = nextPrice;
+    updateData.vatRate = 0;
   }
 
   const nextContext = normaliseListingContext(
@@ -189,6 +201,17 @@ export const handler: Handler = async (event) => {
   const wantsPublished = updateData.isActive === true || (!hasOwn(updateData, 'isActive') && existingProduct.isActive);
   if (wantsPublished && !sellerCanPublish) {
     return { statusCode: 409, body: JSON.stringify({ error: 'Complete seller setup and activate Stripe payments before publishing.' }) };
+  }
+  if (wantsPublished && (ownerProfileError || !ownerProfile)) {
+    return { statusCode: 409, body: JSON.stringify({ error: 'Seller tax identity is incomplete. This listing cannot be published.' }) };
+  }
+  if (wantsPublished && ownerProfile?.isVatRegistered === true) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: 'VAT-registered marketplace seller listings require explicit verified tax treatment before publication.',
+      }),
+    };
   }
 
   if (wantsPublished && nextContext === 'product') {
