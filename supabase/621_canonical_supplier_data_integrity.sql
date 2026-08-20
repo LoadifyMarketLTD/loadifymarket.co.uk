@@ -7,6 +7,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS catalog_dedup_one_same_product_unique
   ON private.catalog_dedup_candidates(supplier_catalog_item_id)
   WHERE decision = 'same_product';
 
+-- Final portable definition: PostgreSQL exposes jsonb_array_length but not a
+-- jsonb_object_length helper. Empty-object comparison keeps this guard native.
+CREATE OR REPLACE FUNCTION private.guard_catalog_dedup_resolution_v1()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO ''
+AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' AND OLD.decision IN ('same_product','different_product') AND (
+    NEW.decision IS DISTINCT FROM OLD.decision
+    OR NEW.supplier_catalog_item_id IS DISTINCT FROM OLD.supplier_catalog_item_id
+    OR NEW.candidate_canonical_product_id IS DISTINCT FROM OLD.candidate_canonical_product_id
+  ) THEN
+    RAISE EXCEPTION 'terminal catalog dedup resolution is immutable';
+  END IF;
+
+  IF NEW.decision IN ('same_product','different_product')
+     AND NEW.evidence = '{}'::jsonb THEN
+    RAISE EXCEPTION 'terminal catalog dedup resolution requires evidence';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION private.guard_supplier_offer_dedup_conflict_v1()
 RETURNS trigger
 LANGUAGE plpgsql
