@@ -87,7 +87,9 @@ function moneyEqual(a: number, b: number): boolean {
 }
 
 export function hasExplicitSellerNonVatDeclaration(seller: MarketplaceTaxSellerEvidence): boolean {
-  return seller.taxDeclarationConfirmed === true
+  return normaliseMarketplaceCountry(seller.country) === 'GB'
+    && !isNorthernIrelandPostcode(addressPostcode(seller.businessAddress))
+    && seller.taxDeclarationConfirmed === true
     && seller.taxDeclarationVersion === MARKETPLACE_TAX_DECLARATION_VERSION
     && seller.taxDeclarationSource === 'seller_self_declaration_v1'
     && Boolean(seller.taxDeclarationCapturedAt)
