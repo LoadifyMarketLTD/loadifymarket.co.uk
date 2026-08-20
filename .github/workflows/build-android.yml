@@ -6,6 +6,9 @@ on:
     branches:
       - main
       - develop
+      # Checkpoint A: build the exact Firebase release-guard branch so the native
+      # configuration can be proven before it is allowed into main.
+      - 'checkpoint-a/android-release-firebase-guard'
       # Build APK automatically on the active diagnostics branch so every push
       # produces an artifact that can be installed and tested immediately.
       - 'copilot/build-signed-release-apk-another-one'
@@ -16,6 +19,7 @@ on:
     paths:
       - 'src/**'
       - 'public/**'
+      - 'android/**'
       - 'index.html'
       - 'capacitor.config.ts'
       - 'package*.json'
@@ -104,17 +108,9 @@ jobs:
             exit 1
           fi
           echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL_TRIMMED" >> "$GITHUB_ENV"
-          # Print RAW key length BEFORE any cleaning so CI logs show exactly
-          # what length the secret injected into the runner environment.
           echo "RAW KEY LENGTH: ${#VITE_SUPABASE_ANON_KEY}"
-          # Extract only the JWT token from the secret value.
-          # If the secret was incorrectly set (e.g. copied from a Netlify env-vars
-          # table that includes row labels, Deploy Preview text, a Stripe pk_live
-          # key, etc.) the raw value contains embedded whitespace, pipes, and
-          # non-JWT content.  A plain whitespace-strip is insufficient in that
-          # case.  Instead we split the raw value on whitespace and pipes, then
-          # take the first token whose entire value matches the JWT pattern
-          # (starts with eyJ, contains only base64url chars and dots, no spaces).
+          # Extract only the JWT token from the secret value without ever printing
+          # any token fragment to the Actions log.
           # shellcheck disable=SC2016
           VITE_SUPABASE_ANON_KEY_CLEAN="$(
             printf '%s' "$VITE_SUPABASE_ANON_KEY" \
@@ -123,26 +119,20 @@ jobs:
           )"
           if [ -z "$VITE_SUPABASE_ANON_KEY_CLEAN" ]; then
             echo "ERROR: VITE_SUPABASE_ANON_KEY does not contain a valid JWT."
-            echo "  Expected a token starting with eyJ (e.g. eyJhbGciOi...)."
+            echo "  Expected a token starting with eyJ."
             echo "  Current raw length: ${#VITE_SUPABASE_ANON_KEY}"
-            echo "  Please update the secret to contain ONLY the Supabase anon JWT:"
-            echo "    GitHub repo → Settings → Secrets and variables → Actions → VITE_SUPABASE_ANON_KEY"
+            echo "  Please update the secret to contain ONLY the Supabase anon JWT."
             exit 1
           fi
           echo "CLEAN KEY LENGTH: ${#VITE_SUPABASE_ANON_KEY_CLEAN}"
           if [ "${#VITE_SUPABASE_ANON_KEY_CLEAN}" -gt 600 ]; then
-            echo "WARNING: Extracted JWT is ${#VITE_SUPABASE_ANON_KEY_CLEAN} chars — real Supabase JWTs are ~200–400 chars."
-            echo "  The secret may still contain extra content.  Please verify it holds ONLY the JWT."
+            echo "WARNING: Extracted JWT length is unexpectedly large. Verify the repository secret."
           fi
-          # A difference > 10 chars means real extra content was stripped (not just a
-          # lone trailing newline from copy-paste), so warn the operator to fix the secret.
           if [ "${#VITE_SUPABASE_ANON_KEY}" -gt $(( ${#VITE_SUPABASE_ANON_KEY_CLEAN} + 10 )) ]; then
-            echo "WARNING: Raw secret (${#VITE_SUPABASE_ANON_KEY} chars) is longer than the extracted JWT (${#VITE_SUPABASE_ANON_KEY_CLEAN} chars)."
-            echo "  Extra content was stripped.  Please update the GitHub secret to contain ONLY the Supabase anon JWT:"
-            echo "    GitHub repo → Settings → Secrets and variables → Actions → VITE_SUPABASE_ANON_KEY"
+            echo "WARNING: Raw secret contains extra content; only the JWT was retained. Update the repository secret."
           fi
           echo "VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY_CLEAN" >> "$GITHUB_ENV"
-          echo "All required secrets are present and valid."
+          echo "All required Supabase build secrets are present and structurally valid."
 
       # ── Debug: confirm VITE_* env vars are present before build ───────────────
       - name: Debug VITE env vars
@@ -154,23 +144,18 @@ jobs:
           echo "SUPABASE ANON KEY set:      $([ -n "$VITE_SUPABASE_ANON_KEY" ] && echo YES || echo NO)"
           KEY="$VITE_SUPABASE_ANON_KEY"
           echo "SUPABASE ANON KEY length:   ${#KEY}"
-          echo "SUPABASE ANON KEY first10:  ${KEY:0:10}"
-          echo "SUPABASE ANON KEY last10:   ${KEY: -10}"
-          # Check for internal whitespace (spaces, tabs) — separate from newlines.
           if printf '%s' "$KEY" | grep -qP '[ \t]'; then
             echo "SUPABASE ANON KEY internal spaces/tabs: YES  ← WARNING"
           else
             echo "SUPABASE ANON KEY internal spaces/tabs: NO"
           fi
-          # Check for embedded newlines (\n or \r) — separate from spaces.
           if printf '%s' "$KEY" | grep -qP '[\r\n]'; then
             echo "SUPABASE ANON KEY embedded newlines: YES  ← WARNING"
           else
             echo "SUPABASE ANON KEY embedded newlines: NO"
           fi
-          # Combined whitespace check (covers all \s categories).
           if printf '%s' "$KEY" | grep -qP '\s'; then
-            echo "SUPABASE ANON KEY any-whitespace: YES  ← will cause 'Invalid value' Headers error"
+            echo "SUPABASE ANON KEY any-whitespace: YES  ← will cause invalid HTTP headers"
           else
             echo "SUPABASE ANON KEY any-whitespace: NO"
           fi
@@ -206,19 +191,12 @@ jobs:
           echo "$JS_FILES" | while read -r f; do echo "  $f ($(du -sh "$f" | cut -f1))"; done
           echo ""
 
-          # ── mobileSafeFetch (unminified / dev builds) ────────────────────────
-          # In production Vite builds the function name is minified away; the
-          # minification-robust checks below (global:{fetch + "keepalive"in) are
-          # the authoritative proof.
           if grep -qr "mobileSafeFetch" dist/assets/*.js 2>/dev/null; then
             echo "PASS: mobileSafeFetch found verbatim (unminified or dev build)"
           else
             echo "INFO: mobileSafeFetch not found verbatim (expected in production/minified builds — see global:{fetch check below)"
           fi
 
-          # ── global:{fetch: wrapper (minification-robust) ─────────────────────
-          # This string IS preserved even after minification: createClient is called
-          # with `global:{fetch:(e,t)=>{ ... keepalive ... }}`.
           if grep -qrP 'global:\{fetch:' dist/assets/*.js 2>/dev/null || \
              grep -qrP 'global\s*:\s*\{\s*fetch\s*:' dist/assets/*.js 2>/dev/null; then
             echo "PASS: global:{fetch: wrapper found in dist/assets — Supabase using custom fetch"
@@ -227,9 +205,6 @@ jobs:
             PASS=false
           fi
 
-          # ── keepalive-stripping logic (minification-robust) ──────────────────
-          # The string `"keepalive"in` survives minification because it is a
-          # property lookup on an object, not a variable name.
           if grep -qr '"keepalive"in' dist/assets/*.js 2>/dev/null; then
             echo "PASS: keepalive-stripping logic (\"keepalive\"in) found in dist/assets — fix confirmed"
           else
@@ -237,7 +212,6 @@ jobs:
             PASS=false
           fi
 
-          # ── createClient ─────────────────────────────────────────────────────
           if grep -qr "createClient" dist/assets/*.js 2>/dev/null; then
             echo "PASS: createClient found in dist/assets"
           else
@@ -245,10 +219,6 @@ jobs:
             PASS=false
           fi
 
-          # ── keepalive:true (the bad pattern) ─────────────────────────────────
-          # After the PR #361 fix, keepalive:true must NOT appear anywhere.
-          # The only allowed keepalive usage is inside the detection/stripping
-          # block: `"keepalive"in t`.
           echo ""
           echo "--- keepalive:true occurrences (must be zero) ---"
           BAD=$(grep -rn 'keepalive\s*:\s*true\|keepalive:true' dist/assets/*.js 2>/dev/null || true)
@@ -260,7 +230,6 @@ jobs:
             echo "PASS: No keepalive:true found in dist/assets"
           fi
 
-          # ── keepalive occurrences (informational) ────────────────────────────
           echo ""
           echo "--- All keepalive occurrences (informational) ---"
           KA=$(grep -rn "keepalive" dist/assets/*.js 2>/dev/null || true)
@@ -271,13 +240,6 @@ jobs:
             echo "No keepalive found at all"
           fi
 
-          # ── window.fetch.bind as Supabase global option (the bad old pattern) ──
-          # window.fetch.bind MAY legitimately appear inside our apkDiagnostics.ts
-          # diagnostic wrapper (which uses it to capture the original fetch before
-          # patching).  The only dangerous pattern is when it is used as the VALUE
-          # of the Supabase createClient global:{fetch: option, i.e.:
-          #   global:{fetch:window.fetch.bind(...)
-          # That was the broken PR#345 pattern — not a bare occurrence of the string.
           if grep -qrP 'global:\{fetch:\s*window\.fetch\.bind' dist/assets/*.js 2>/dev/null; then
             echo "FAIL: Supabase global:{fetch: is set to window.fetch.bind — old broken pattern"
             grep -rn 'global:{fetch:.*window\.fetch\.bind' dist/assets/*.js | head -5
@@ -286,7 +248,6 @@ jobs:
             echo "PASS: Supabase global:{fetch: does NOT use window.fetch.bind (OK: apkDiagnostics may use it internally)"
           fi
 
-          # ── Failed to execute ────────────────────────────────────────────────
           if grep -qr "Failed to execute" dist/assets/*.js 2>/dev/null; then
             echo "INFO: 'Failed to execute' found in dist/assets (used in error-detection logic)"
             grep -rn "Failed to execute" dist/assets/*.js | head -5
@@ -294,14 +255,10 @@ jobs:
             echo "INFO: 'Failed to execute' not found in dist/assets"
           fi
 
-          # ── errorTracking fetch fallback must not have keepalive ──────────────
-          # The errorTracking.ts sendBeacon fallback used to have keepalive:true.
-          # After the fix, it must not appear near sendBeacon/error-report patterns.
           echo ""
           echo "--- errorTracking keepalive check ---"
           if grep -qr "error-report\|sendBeacon\|\.netlify\/functions" dist/assets/*.js 2>/dev/null; then
             echo "INFO: errorTracking/sendBeacon code found in dist/assets"
-            # The keepalive:true check above already covers this; no separate check needed.
           else
             echo "INFO: errorTracking not identifiable as separate symbol in minified bundle (expected)"
           fi
@@ -321,12 +278,6 @@ jobs:
           echo "=================================================================="
 
       # ── Scaffold Android project ───────────────────────────────────────────────
-      # `npx cap add android` generates the full Android Gradle project from the
-      # installed @capacitor/android template.  When the android/ directory is
-      # already committed to the repository (as it is in this repo) the command
-      # would fail with "android platform already exists".  We skip it in that
-      # case and let `cap sync` (below) copy the fresh web bundle into the
-      # existing native project.
       - name: Scaffold Android platform
         run: |
           if [ -d android ]; then
@@ -336,8 +287,6 @@ jobs:
           fi
 
       # ── Ensure cordova.variables.gradle stub exists ────────────────────────────
-      # When no Cordova plugins are installed, cap sync does not create this file,
-      # but capacitor.build.gradle unconditionally applies it.
       - name: Ensure cordova.variables.gradle stub
         run: |
           mkdir -p android/capacitor-cordova-android-plugins
@@ -350,12 +299,52 @@ jobs:
       - name: Sync Capacitor → Android
         run: npx cap sync android
 
+      # ── Inject Firebase app config securely ────────────────────────────────────
+      # google-services.json is intentionally not committed. A release build must
+      # receive the exact Firebase Android app configuration from a repository
+      # secret and validate the applicationId before Gradle is invoked.
+      - name: Inject and validate Firebase google-services.json
+        env:
+          ANDROID_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "ERROR: ANDROID_GOOGLE_SERVICES_JSON_BASE64 is not configured."
+            echo "Release builds fail closed until the Firebase Android app config is stored as a GitHub Actions secret."
+            exit 1
+          fi
+          if ! printf '%s' "$ANDROID_GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json; then
+            echo "ERROR: Firebase configuration secret is not valid base64."
+            rm -f android/app/google-services.json
+            exit 1
+          fi
+          if [ ! -s android/app/google-services.json ]; then
+            echo "ERROR: Decoded google-services.json is empty."
+            rm -f android/app/google-services.json
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json, sys
+          path = 'android/app/google-services.json'
+          expected = 'co.uk.loadifymarket.app'
+          try:
+              with open(path, encoding='utf-8') as fh:
+                  data = json.load(fh)
+          except Exception as exc:
+              print(f'ERROR: google-services.json is invalid JSON: {type(exc).__name__}')
+              sys.exit(1)
+          packages = {
+              client.get('client_info', {}).get('android_client_info', {}).get('package_name')
+              for client in data.get('client', [])
+              if isinstance(client, dict)
+          }
+          if expected not in packages:
+              print(f'ERROR: Firebase config does not contain required Android package {expected}.')
+              sys.exit(1)
+          print('Firebase Android package validation PASS.')
+          PY
+          chmod 600 android/app/google-services.json
+
       # ── Forensic check: CapacitorHttp enabled in generated config ─────────────
-      # Verifies that the CapacitorHttp plugin (which routes all window.fetch calls
-      # through the native Android HTTP client) is present and enabled in the
-      # capacitor.config.json file synced into the Android assets.  Without this
-      # the APK uses the WebView fetch stack which fails with "Network error" due
-      # to CORS from https://localhost and other WebView HTTP limitations.
       - name: '[Forensic] Verify CapacitorHttp enabled in Android config'
         run: |
           CONFIG_FILE="android/app/src/main/assets/capacitor.config.json"
@@ -481,11 +470,6 @@ jobs:
           java-version: '21'
 
       # ── Android SDK ───────────────────────────────────────────────────────────
-      # ubuntu-latest runners ship with the Android SDK pre-installed at
-      # $ANDROID_SDK_ROOT (/usr/local/lib/android/sdk).  We only need to accept
-      # all SDK licenses.  We deliberately avoid `android-actions/setup-android`
-      # because its `sdkmanager tools` download step hangs on cold runners and
-      # gets cancelled, aborting the entire workflow.
       - name: Accept Android SDK licenses
         run: |
           SDKMANAGER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
@@ -544,8 +528,6 @@ jobs:
           echo "Keystore valid. Alias '${ANDROID_KEY_ALIAS}' confirmed."
 
       # ── Build release APK ──────────────────────────────────────────────────────
-      # Pass signing configuration via Gradle properties so the generated
-      # build.gradle does not need to be modified.
       - name: Build release APK
         working-directory: android
         env:
@@ -561,9 +543,6 @@ jobs:
             -Pandroid.injected.signing.key.password="$KEYSTORE_KEY_PASSWORD"
 
       # ── Build release AAB (Android App Bundle for Play Store) ─────────────────
-      # Google Play requires AAB format for new app submissions (mandatory since
-      # August 2021).  The APK above is for direct/sideload distribution; the AAB
-      # is what must be uploaded to the Play Console internal/production track.
       - name: Build release AAB
         working-directory: android
         env:
@@ -618,8 +597,6 @@ jobs:
           echo "APK signature verification PASSED ✓"
 
       # ── Forensic check 3: APK contents ────────────────────────────────────────
-      # Unzip the APK and grep its bundled JS assets.  This is the definitive
-      # proof of what shipped in the release artifact.
       - name: '[Forensic 3] Inspect APK contents (post-assembleRelease)'
         run: |
           echo "=================================================================="
@@ -650,16 +627,12 @@ jobs:
 
           PASS=true
 
-          # ── mobileSafeFetch (informational for unminified builds) ─────────────
           if grep -qr "mobileSafeFetch" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "PASS: mobileSafeFetch found verbatim in APK (unminified/dev build)"
           else
             echo "INFO: mobileSafeFetch not found verbatim (expected in minified builds — see global:{fetch check)"
           fi
 
-          # ── global:{fetch: wrapper (minification-robust primary check) ────────
-          # This string survives minification. It proves Supabase createClient
-          # is configured with the keepalive-stripping custom fetch function.
           if grep -qrP 'global:\{fetch:' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null || \
              grep -qrP 'global\s*:\s*\{\s*fetch\s*:' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "PASS: global:{fetch: wrapper found in APK bundle — Supabase using custom fetch"
@@ -668,10 +641,6 @@ jobs:
             PASS=false
           fi
 
-          # ── keepalive-stripping logic (minification-robust primary check) ─────
-          # `"keepalive"in` survives minification because it is a string property
-          # lookup.  Its presence proves the mobileSafeFetch stripping logic is
-          # compiled into the bundle.
           if grep -qr '"keepalive"in' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "PASS: keepalive-stripping logic (\"keepalive\"in) found in APK bundle — PR #361 fix IS present"
           else
@@ -679,7 +648,6 @@ jobs:
             PASS=false
           fi
 
-          # ── createClient ─────────────────────────────────────────────────────
           if grep -qr "createClient" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "PASS: createClient found in APK bundle"
           else
@@ -687,7 +655,6 @@ jobs:
             PASS=false
           fi
 
-          # ── keepalive:true (the bad pattern — must be absent) ─────────────────
           echo ""
           echo "--- keepalive:true occurrences in APK (must be zero) ---"
           BAD_KEEPALIVE=$(grep -rn 'keepalive\s*:\s*true\|keepalive:true' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null || true)
@@ -699,7 +666,6 @@ jobs:
             echo "PASS: No keepalive:true found in APK bundle"
           fi
 
-          # ── All keepalive occurrences (informational) ─────────────────────────
           echo ""
           echo "--- All keepalive occurrences in APK (informational) ---"
           ALL_KA=$(grep -rn "keepalive" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null || true)
@@ -710,10 +676,6 @@ jobs:
             echo "No keepalive found at all"
           fi
 
-          # ── window.fetch.bind as Supabase global option (the bad old pattern) ──
-          # window.fetch.bind MAY appear inside apkDiagnostics.ts (which captures
-          # the original fetch before patching).  The only dangerous pattern is it
-          # being passed directly as the Supabase global:{fetch: value.
           if grep -qrP 'global:\{fetch:\s*window\.fetch\.bind' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "FAIL: Supabase global:{fetch: is set to window.fetch.bind — old broken pattern"
             grep -rn 'global:{fetch:.*window\.fetch\.bind' "$EXTRACT_DIR/assets/public/assets/"*.js | head -5
@@ -722,7 +684,6 @@ jobs:
             echo "PASS: Supabase global:{fetch: does NOT use window.fetch.bind (OK: apkDiagnostics may use it internally)"
           fi
 
-          # ── Failed to execute ─────────────────────────────────────────────────
           if grep -qr "Failed to execute" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "INFO: 'Failed to execute' found in APK bundle (used in error-detection logic)"
             grep -rn "Failed to execute" "$EXTRACT_DIR/assets/public/assets/"*.js | head -5
@@ -730,14 +691,10 @@ jobs:
             echo "INFO: 'Failed to execute' not in APK bundle"
           fi
 
-          # ── errorTracking fetch fallback must not have keepalive ──────────────
-          # The keepalive:true check above already covers this globally; no further
-          # check needed.  Just log presence of error-reporting code.
           if grep -qr "error-report\|sendBeacon\|\.netlify\/functions" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "INFO: errorTracking / sendBeacon code found in APK bundle (keepalive:true already checked above)"
           fi
 
-          # ── Summary ───────────────────────────────────────────────────────────
           echo ""
           echo "=================================================================="
           if [ "$PASS" = true ]; then
@@ -754,14 +711,6 @@ jobs:
           echo "=================================================================="
 
       # ── Publish GitHub Release ────────────────────────────────────────────────
-      # Creates a versioned GitHub Release and uploads the APK as
-      # "loadify-market.apk" so the stable download URL resolves:
-      #   https://github.com/LoadifyMarketLTD/loadifymarket.co.uk/releases/latest/download/loadify-market.apk
-      # Only runs on main-branch builds (push and workflow_dispatch from main)
-      # to avoid cluttering releases with branch builds.
-      # The commit SHA suffix ensures the tag is unique across runs.
-      # The run_attempt suffix (.r2, .r3, …) makes it unique on re-runs,
-      # since re-runs share the same GITHUB_RUN_NUMBER and commit SHA.
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
         env:
@@ -792,7 +741,9 @@ jobs:
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
-      # ── Remove keystore from disk ──────────────────────────────────────────────
-      - name: Remove keystore
+      # ── Remove injected secrets from runner disk ──────────────────────────────
+      - name: Remove release secrets from disk
         if: always()
-        run: rm -f android/app/$RELEASE_KEYSTORE_FILENAME
+        run: |
+          rm -f android/app/$RELEASE_KEYSTORE_FILENAME
+          rm -f android/app/google-services.json

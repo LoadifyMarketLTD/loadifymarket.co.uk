@@ -74,11 +74,19 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+def servicesJSON = file('google-services.json')
+def googleServicesConfigured = servicesJSON.exists() && servicesJSON.length() > 0
+def releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.toLowerCase().contains('release')
+}
+
+if (googleServicesConfigured) {
+    apply plugin: 'com.google.gms.google-services'
+} else if (releaseTaskRequested) {
+    throw new GradleException(
+        'google-services.json is required for Loadify Android release builds. ' +
+        'Inject android/app/google-services.json from CI/local secure configuration before assembleRelease or bundleRelease.'
+    )
+} else {
+    logger.info("google-services.json not found, google-services plugin not applied for non-release task")
 }
