@@ -17,6 +17,7 @@
 - [x] CHECKPOINT A — atomic PASS recorded in `05_FOUNDATION_BASELINE_FREEZE_2026-08-20.md`.
 - [x] FOUNDATION BASELINE FREEZE — recorded and merged.
 - [x] Post-freeze P1 tax/payment evidence repair — PR #531 merged to `main` on 20 August 2026.
+- [x] P1 tax/payment production DB deployment — applied and verified on 20 August 2026; see `09_P1_PRODUCTION_DEPLOYMENT_2026-08-20.md`.
 - [x] GATE B BUSINESS CONTRACT — PR #533 merged to `main` on 20 August 2026.
 - [x] GATE B PASS — contract-level PASS recorded by `08_GATE_B_BUSINESS_CONTRACT_2026-08-20.md`.
 - [ ] PHASE C — **CURRENT NEXT PHASE**.
@@ -73,7 +74,26 @@ P1 scope closed by #531:
 - invoice generation no longer attributes generic Loadify VAT/20% VAT to seller transactions without evidence;
 - existing atomic paid-order materialization remains the canonical order boundary.
 
-**Important:** merging #531 to `main` does not itself claim that migrations 611_zz/612/613/614/615 have been applied to production. Production deployment/migration evidence must be recorded separately when actually executed.
+## P1 production deployment record
+
+On 20 August 2026 the production Supabase project was checked before cutover and had:
+
+- pending `payment_sessions`: `0`;
+- `awaiting_payment` orders: `0`;
+- financially active orders in the checked paid/processing/shipped/out-for-delivery set: `0`.
+
+The P1 migration chain was then applied successfully in canonical order and recorded in production migration history as:
+
+- `20260820215217 / marketplace_tax_cutover_preflight`;
+- `20260820215309 / marketplace_tax_evidence_boundary`;
+- `20260820215323 / seller_tax_declaration_evidence`;
+- `20260820215337 / strengthen_marketplace_tax_snapshot_declaration`;
+- `20260820215356 / authoritative_seller_tax_location_evidence`.
+
+Post-deployment verification confirmed the seller declaration/tax-location columns, product tax evidence, order tax snapshot, marketplace tax validator, canonical paid-order materializer and seller tax-location guard are all live.
+
+**P1 production DB deployment: PASS.**  
+See `09_P1_PRODUCTION_DEPLOYMENT_2026-08-20.md` for the deployment evidence record.
 
 ## PR #533 — Gate B closeout record
 
@@ -103,9 +123,9 @@ Gate B used current official HMRC, CMA, OPSS/GOV.UK and Stripe documentation as 
 
 ## Current handoff
 
-The repository is now past Gate B:
+The repository is now past Gate B and the P1 production database cutover:
 
-`P1 CLOSED IN MAIN → GATE B PASS IN MAIN → PHASE C → PHASE D → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS IN MAIN → PHASE C → PHASE D → ... → PHASE Q`
 
 **CURRENT NEXT PHASE: PHASE C.**
 
@@ -119,7 +139,7 @@ After every implementation or contract PR is merged to `main`:
 
 1. verify the actual merge commit on `main`;
 2. update this ledger in a **separate documentation-only PR**;
-3. mark the relevant contract item `[x]` only when its acceptance gate is truly satisfied;
+3. mark the relevant contract item `[x]` only when its actual acceptance gate is truly satisfied;
 4. record PR number, merge SHA, evidence status and any production/deployment distinction;
 5. state the exact next uncompleted gate for the next agent;
 6. never rewrite historical contract language merely to make progress look complete.
