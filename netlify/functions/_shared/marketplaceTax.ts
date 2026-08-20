@@ -82,13 +82,23 @@ export function isNorthernIrelandPostcode(value: unknown): boolean {
   return /^BT\d/i.test(value.trim().replace(/\s+/g, ''));
 }
 
+/**
+ * P1 is intentionally limited to Great Britain (England, Scotland and Wales),
+ * not every address that might be labelled UK/GB by a client. Exclude NI and
+ * other postcode families that are outside this narrow GB tax boundary.
+ */
+export function isOutsideP1GreatBritainPostcode(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  return /^(BT|GY|JE|IM|GX|BF)/i.test(value.trim().replace(/\s+/g, ''));
+}
+
 function moneyEqual(a: number, b: number): boolean {
   return Math.abs(Math.round(a * 100) - Math.round(b * 100)) === 0;
 }
 
 export function hasExplicitSellerNonVatDeclaration(seller: MarketplaceTaxSellerEvidence): boolean {
   return normaliseMarketplaceCountry(seller.country) === 'GB'
-    && !isNorthernIrelandPostcode(addressPostcode(seller.businessAddress))
+    && !isOutsideP1GreatBritainPostcode(addressPostcode(seller.businessAddress))
     && seller.taxDeclarationConfirmed === true
     && seller.taxDeclarationVersion === MARKETPLACE_TAX_DECLARATION_VERSION
     && seller.taxDeclarationSource === 'seller_self_declaration_v1'
@@ -117,9 +127,9 @@ export function buildSellerNonVatProductEvidence(price: number) {
  * VAT registered, physical products carrying matching versioned non-VAT
  * evidence, and Great Britain destinations. Northern Ireland is deliberately
  * excluded from this P1 because goods there remain subject to distinct Windsor
- * Framework VAT rules. VAT-registered, service, international, missing or
- * contradictory cases fail closed until the broader Gate B tax contract
- * authorises them.
+ * Framework VAT rules. Crown Dependencies, Gibraltar/BFPO-style non-GB tax
+ * locations, VAT-registered, service, international, missing or contradictory
+ * cases fail closed until the broader Gate B tax contract authorises them.
  */
 export function resolveMarketplaceTaxV1(input: {
   seller: MarketplaceTaxSellerEvidence;
@@ -135,17 +145,17 @@ export function resolveMarketplaceTaxV1(input: {
     };
   }
 
-  if (isNorthernIrelandPostcode(addressPostcode(input.seller.businessAddress))) {
+  if (isOutsideP1GreatBritainPostcode(addressPostcode(input.seller.businessAddress))) {
     return {
       ok: false,
       code: 'TAX_SELLER_REGION_UNSUPPORTED',
-      message: 'Northern Ireland seller tax treatment is not yet enabled in this checkout boundary.',
+      message: 'This seller tax region is not yet enabled in the current Great Britain checkout boundary.',
     };
   }
 
   const destinationAddress = input.shippingAddress ?? input.billingAddress;
   const destination = addressCountry(input.shippingAddress) ?? addressCountry(input.billingAddress);
-  if (destination !== 'GB' || isNorthernIrelandPostcode(addressPostcode(destinationAddress))) {
+  if (destination !== 'GB' || isOutsideP1GreatBritainPostcode(addressPostcode(destinationAddress))) {
     return {
       ok: false,
       code: 'TAX_DESTINATION_UNSUPPORTED',
