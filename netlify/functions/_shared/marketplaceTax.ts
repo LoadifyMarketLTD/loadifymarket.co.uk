@@ -1,5 +1,6 @@
 export const MARKETPLACE_TAX_SNAPSHOT_VERSION = 1 as const;
 export const MARKETPLACE_TAX_EVIDENCE_VERSION = 1 as const;
+export const MARKETPLACE_TAX_DECLARATION_VERSION = 1 as const;
 export const MARKETPLACE_NON_VAT_TREATMENT = 'seller_non_vat_declared' as const;
 
 export interface MarketplaceTaxProductEvidence {
@@ -19,6 +20,10 @@ export interface MarketplaceTaxSellerEvidence {
   isVatRegistered: boolean | null;
   vatNumber: string | null;
   businessAddress: Record<string, unknown> | null;
+  taxDeclarationConfirmed: boolean | null;
+  taxDeclarationVersion: number | null;
+  taxDeclarationSource: string | null;
+  taxDeclarationCapturedAt: string | null;
 }
 
 export interface MarketplaceTaxDecisionSnapshot {
@@ -28,6 +33,9 @@ export interface MarketplaceTaxDecisionSnapshot {
   treatment: typeof MARKETPLACE_NON_VAT_TREATMENT;
   sellerVatRegistered: false;
   sellerVatNumber: null;
+  sellerDeclarationVersion: 1;
+  sellerDeclarationSource: 'seller_self_declaration_v1';
+  sellerDeclarationCapturedAt: string;
   reverseCharge: false;
   vatAmountPence: 0;
   evidenceSource: 'seller_profile_and_product_tax_evidence_v1';
@@ -41,6 +49,7 @@ export type MarketplaceTaxDecision =
       code:
         | 'TAX_SELLER_COUNTRY_UNSUPPORTED'
         | 'TAX_DESTINATION_UNSUPPORTED'
+        | 'TAX_SELLER_DECLARATION_REQUIRED'
         | 'TAX_SELLER_VAT_STATUS_UNSUPPORTED'
         | 'TAX_SELLER_VAT_CONFLICT'
         | 'TAX_SERVICE_UNSUPPORTED'
@@ -65,8 +74,13 @@ function moneyEqual(a: number, b: number): boolean {
   return Math.abs(Math.round(a * 100) - Math.round(b * 100)) === 0;
 }
 
-export function hasExplicitSellerNonVatDeclaration(seller: Pick<MarketplaceTaxSellerEvidence, 'isVatRegistered' | 'vatNumber'>): boolean {
-  return seller.isVatRegistered === false && !seller.vatNumber?.trim();
+export function hasExplicitSellerNonVatDeclaration(seller: MarketplaceTaxSellerEvidence): boolean {
+  return seller.taxDeclarationConfirmed === true
+    && seller.taxDeclarationVersion === MARKETPLACE_TAX_DECLARATION_VERSION
+    && seller.taxDeclarationSource === 'seller_self_declaration_v1'
+    && Boolean(seller.taxDeclarationCapturedAt)
+    && seller.isVatRegistered === false
+    && !seller.vatNumber?.trim();
 }
 
 export function buildSellerNonVatProductEvidence(price: number) {
@@ -81,11 +95,14 @@ export function buildSellerNonVatProductEvidence(price: number) {
 }
 
 /**
- * Narrow P1 tax boundary. The existing isVatRegistered profile field is the
- * seller self-declaration contract already exposed by Loadify. P1 supports only
- * GB sellers who declare they are not VAT registered, physical products with a
- * versioned matching product tax snapshot, and GB destinations. Other cases
- * fail closed until Gate B authorises the versioned tax engine.
+ * Narrow P1 tax boundary.
+ *
+ * A historical default false in isVatRegistered is never treated as tax proof.
+ * The seller must have an explicit, server-stamped self-declaration v1. P1 then
+ * supports only GB-established non-VAT sellers, physical products carrying
+ * matching versioned non-VAT evidence, and GB destinations. VAT-registered,
+ * service, international, missing or contradictory cases fail closed until the
+ * broader Gate B tax contract authorises them.
  */
 export function resolveMarketplaceTaxV1(input: {
   seller: MarketplaceTaxSellerEvidence;
@@ -94,25 +111,67 @@ export function resolveMarketplaceTaxV1(input: {
   billingAddress?: Record<string, string>;
 }): MarketplaceTaxDecision {
   if (normaliseMarketplaceCountry(input.seller.country) !== 'GB') {
-    return { ok: false, code: 'TAX_SELLER_COUNTRY_UNSUPPORTED', message: 'This seller’s tax location is not yet supported for checkout. Please try another listing or contact support.' };
+    return {
+      ok: false,
+      code: 'TAX_SELLER_COUNTRY_UNSUPPORTED',
+      message: 'This seller’s tax location is not yet supported for checkout. Please try another listing or contact support.',
+    };
   }
+
   const destination = addressCountry(input.shippingAddress) ?? addressCountry(input.billingAddress);
   if (destination !== 'GB') {
-    return { ok: false, code: 'TAX_DESTINATION_UNSUPPORTED', message: 'This checkout currently supports UK delivery/billing destinations only while tax rules are being verified.' };
+    return {
+      ok: false,
+      code: 'TAX_DESTINATION_UNSUPPORTED',
+      message: 'This checkout currently supports UK delivery/billing destinations only while tax rules are being verified.',
+    };
   }
+
+  const declarationIsComplete = input.seller.taxDeclarationConfirmed === true
+    && input.seller.taxDeclarationVersion === MARKETPLACE_TAX_DECLARATION_VERSION
+    && input.seller.taxDeclarationSource === 'seller_self_declaration_v1'
+    && Boolean(input.seller.taxDeclarationCapturedAt);
+  if (!declarationIsComplete) {
+    return {
+      ok: false,
+      code: 'TAX_SELLER_DECLARATION_REQUIRED',
+      message: 'This seller must confirm their current tax registration status before payment can be accepted.',
+    };
+  }
+
   if (input.seller.isVatRegistered !== false) {
-    return { ok: false, code: 'TAX_SELLER_VAT_STATUS_UNSUPPORTED', message: 'This seller’s VAT treatment requires verification before payment can be accepted.' };
+    return {
+      ok: false,
+      code: 'TAX_SELLER_VAT_STATUS_UNSUPPORTED',
+      message: 'This seller’s VAT treatment requires verification before payment can be accepted.',
+    };
   }
+
   if (input.seller.vatNumber?.trim()) {
-    return { ok: false, code: 'TAX_SELLER_VAT_CONFLICT', message: 'This seller’s VAT profile contains conflicting information and checkout is temporarily unavailable.' };
+    return {
+      ok: false,
+      code: 'TAX_SELLER_VAT_CONFLICT',
+      message: 'This seller’s VAT profile contains conflicting information and checkout is temporarily unavailable.',
+    };
   }
+
   if (!input.products.length) {
-    return { ok: false, code: 'TAX_PRODUCT_EVIDENCE_INCOMPLETE', message: 'Product tax evidence is missing. Checkout is temporarily unavailable.' };
+    return {
+      ok: false,
+      code: 'TAX_PRODUCT_EVIDENCE_INCOMPLETE',
+      message: 'Product tax evidence is missing. Checkout is temporarily unavailable.',
+    };
   }
+
   for (const product of input.products) {
     if (product.listingContext !== 'product') {
-      return { ok: false, code: 'TAX_SERVICE_UNSUPPORTED', message: 'Service tax treatment is not yet enabled for checkout.' };
+      return {
+        ok: false,
+        code: 'TAX_SERVICE_UNSUPPORTED',
+        message: 'Service tax treatment is not yet enabled for checkout.',
+      };
     }
+
     const complete = product.taxTreatmentStatus === MARKETPLACE_NON_VAT_TREATMENT
       && product.taxTreatmentSource === 'seller_profile_non_vat_declaration_v1'
       && product.taxEvidenceVersion === MARKETPLACE_TAX_EVIDENCE_VERSION
@@ -121,10 +180,16 @@ export function resolveMarketplaceTaxV1(input: {
       && typeof product.priceExVat === 'number'
       && Number.isFinite(product.priceExVat)
       && moneyEqual(product.priceExVat, product.price);
+
     if (!complete) {
-      return { ok: false, code: 'TAX_PRODUCT_EVIDENCE_INCOMPLETE', message: 'This listing’s tax treatment has not been verified for checkout yet.' };
+      return {
+        ok: false,
+        code: 'TAX_PRODUCT_EVIDENCE_INCOMPLETE',
+        message: 'This listing’s tax treatment has not been verified for checkout yet.',
+      };
     }
   }
+
   return {
     ok: true,
     applyReverseCharge: false,
@@ -136,6 +201,9 @@ export function resolveMarketplaceTaxV1(input: {
       treatment: MARKETPLACE_NON_VAT_TREATMENT,
       sellerVatRegistered: false,
       sellerVatNumber: null,
+      sellerDeclarationVersion: MARKETPLACE_TAX_DECLARATION_VERSION,
+      sellerDeclarationSource: 'seller_self_declaration_v1',
+      sellerDeclarationCapturedAt: input.seller.taxDeclarationCapturedAt as string,
       reverseCharge: false,
       vatAmountPence: 0,
       evidenceSource: 'seller_profile_and_product_tax_evidence_v1',
