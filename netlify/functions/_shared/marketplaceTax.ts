@@ -65,6 +65,10 @@ function moneyEqual(a: number, b: number): boolean {
   return Math.abs(Math.round(a * 100) - Math.round(b * 100)) === 0;
 }
 
+export function hasExplicitSellerNonVatDeclaration(seller: Pick<MarketplaceTaxSellerEvidence, 'isVatRegistered' | 'vatNumber'>): boolean {
+  return seller.isVatRegistered === false && !seller.vatNumber?.trim();
+}
+
 export function buildSellerNonVatProductEvidence(price: number) {
   return {
     priceExVat: price,
