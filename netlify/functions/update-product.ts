@@ -8,6 +8,10 @@ import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import {
+  buildSellerNonVatProductEvidence,
+  normaliseMarketplaceCountry,
+} from './_shared/marketplaceTax';
+import {
   deriveSellerListingLocks,
   formatSellerListingLockReason,
   SELLER_LISTING_LOCK_STATUSES,
@@ -113,7 +117,7 @@ export const handler: Handler = async (event) => {
 
   const { data: existingProduct, error: fetchError } = await supabase
     .from('products')
-    .select('sellerId, title, type, condition, price, listingContext, stockQuantity, stockStatus, listingStatus, reservedUntil, isActive')
+    .select('sellerId, title, type, condition, price, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, listingContext, stockQuantity, stockStatus, listingStatus, reservedUntil, isActive')
     .eq('id', productId)
     .maybeSingle<{
       sellerId: string;
@@ -121,6 +125,12 @@ export const handler: Handler = async (event) => {
       type: string | null;
       condition: string | null;
       price: number | null;
+      priceExVat: number | null;
+      vatRate: number | null;
+      taxTreatmentStatus: string | null;
+      taxTreatmentSource: string | null;
+      taxEvidenceVersion: number | null;
+      taxEvidenceCapturedAt: string | null;
       listingContext: string | null;
       stockQuantity: number | null;
       stockStatus: string | null;
@@ -151,23 +161,58 @@ export const handler: Handler = async (event) => {
   }
 
   const updateData = pickAllowedFields(updateFields);
-  if (hasOwn(updateData, 'price')) {
-    const nextPrice = updateData.price;
-    if (typeof nextPrice !== 'number' || !Number.isFinite(nextPrice) || nextPrice <= 0) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'price must be a positive number' }) };
-    }
-    updateData.priceExVat = nextPrice / 1.20;
-    updateData.vatRate = 0.20;
-  }
-
   const nextContext = normaliseListingContext(
     hasOwn(updateData, 'listingContext') ? updateData.listingContext : existingProduct.listingContext ?? 'product',
   );
   if (!nextContext) {
     return { statusCode: 400, body: JSON.stringify({ error: 'listingContext must be either "product" or "service"' }) };
   }
-  // Never persist the legacy "goods" alias into a DB constrained to product/service.
   if (hasOwn(updateData, 'listingContext')) updateData.listingContext = nextContext;
+
+  let nextPrice = existingProduct.price;
+  if (hasOwn(updateData, 'price')) {
+    const rawPrice = updateData.price;
+    if (typeof rawPrice !== 'number' || !Number.isFinite(rawPrice) || rawPrice <= 0) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'price must be a positive number' }) };
+    }
+    nextPrice = rawPrice;
+  }
+  if (typeof nextPrice !== 'number' || !Number.isFinite(nextPrice) || nextPrice <= 0) {
+    return { statusCode: 409, body: JSON.stringify({ error: 'The listing has an invalid price and cannot be updated.' }) };
+  }
+
+  const sellerIdForTax = existingProduct.sellerId;
+  const { data: taxProfile, error: taxProfileError } = await supabase
+    .from('seller_profiles')
+    .select('country, isVatRegistered, vatNumber')
+    .eq('userId', sellerIdForTax)
+    .maybeSingle<{
+      country: string | null;
+      isVatRegistered: boolean | null;
+      vatNumber: string | null;
+    }>();
+
+  if (taxProfileError) {
+    console.error('update-product: seller tax profile query failed:', taxProfileError.message);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller tax profile. Please try again.' }) };
+  }
+
+  const canUseCurrentNonVatEvidence =
+    nextContext === 'product' &&
+    normaliseMarketplaceCountry(taxProfile?.country) === 'GB' &&
+    taxProfile?.isVatRegistered === false &&
+    !taxProfile?.vatNumber?.trim();
+
+  const taxEvidence = canUseCurrentNonVatEvidence
+    ? buildSellerNonVatProductEvidence(nextPrice)
+    : null;
+
+  updateData.priceExVat = taxEvidence?.priceExVat ?? null;
+  updateData.vatRate = taxEvidence?.vatRate ?? null;
+  updateData.taxTreatmentStatus = taxEvidence?.taxTreatmentStatus ?? null;
+  updateData.taxTreatmentSource = taxEvidence?.taxTreatmentSource ?? null;
+  updateData.taxEvidenceVersion = taxEvidence?.taxEvidenceVersion ?? null;
+  updateData.taxEvidenceCapturedAt = taxEvidence?.taxEvidenceCapturedAt ?? null;
 
   const stockQuantityWasProvided = hasOwn(updateData, 'stockQuantity');
   let normalizedStockQuantity = existingProduct.stockQuantity ?? 0;
@@ -189,6 +234,15 @@ export const handler: Handler = async (event) => {
   const wantsPublished = updateData.isActive === true || (!hasOwn(updateData, 'isActive') && existingProduct.isActive);
   if (wantsPublished && !sellerCanPublish) {
     return { statusCode: 409, body: JSON.stringify({ error: 'Complete seller setup and activate Stripe payments before publishing.' }) };
+  }
+  if (wantsPublished && nextContext === 'product' && !taxEvidence) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: 'This listing cannot be published until the seller tax profile is complete and its VAT treatment is supported.',
+        code: 'TAX_EVIDENCE_REQUIRED',
+      }),
+    };
   }
 
   if (wantsPublished && nextContext === 'product') {
@@ -259,7 +313,6 @@ export const handler: Handler = async (event) => {
     });
   }
 
-  // Save shipping first. If that fails, the listing itself remains unchanged.
   if (Array.isArray(shippingMethodIds)) {
     const { data: previousShipping, error: previousError } = await supabase
       .from('product_shipping')
