@@ -9,7 +9,8 @@ export type SupplierImportAdminAction =
   | 'review_normalized_fact'
   | 'record_asset_rights'
   | 'record_compliance_review'
-  | 'set_import_item_status';
+  | 'set_import_item_status'
+  | 'checkpoint_import_batch';
 
 export interface SupplierImportDecision {
   eligible: boolean;
@@ -54,7 +55,34 @@ export async function mutateSupplierImport(
   payload: Record<string, unknown>,
 ): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   if (!UUID_RE.test(actorId)) return { ok: false, error: 'active admin authority is required' };
+
   try {
+    if (action === 'record_normalized_fact') {
+      const { data, error } = await client.rpc('server_record_supplier_import_fact_v1', {
+        p_actor_id: actorId,
+        p_payload: payload,
+      });
+      if (error) return { ok: false, error: error.message || 'supplier import fact mutation failed' };
+      return { ok: true, data };
+    }
+
+    if (action === 'checkpoint_import_batch') {
+      const batchId = typeof payload.batchId === 'string' ? payload.batchId : '';
+      const checkpoint = typeof payload.checkpoint === 'string' ? payload.checkpoint : '';
+      const resumeToken = typeof payload.resumeToken === 'string' ? payload.resumeToken : null;
+      if (!UUID_RE.test(batchId) || !checkpoint.trim()) {
+        return { ok: false, error: 'valid batchId and checkpoint are required' };
+      }
+      const { data, error } = await client.rpc('server_checkpoint_supplier_import_v1', {
+        p_actor_id: actorId,
+        p_batch_id: batchId,
+        p_checkpoint: checkpoint,
+        p_resume_token: resumeToken,
+      });
+      if (error) return { ok: false, error: error.message || 'supplier import checkpoint failed' };
+      return { ok: true, data };
+    }
+
     const { data, error } = await client.rpc('server_mutate_supplier_import_v1', {
       p_actor_id: actorId,
       p_action: action,
