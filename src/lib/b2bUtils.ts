@@ -1,10 +1,12 @@
 /**
  * B2B Buyer Utilities
  *
- * Provides the canonical rule for B2B buyer determination:
- *   A buyer is B2B if accountType !== 'individual'
+ * B2B account classification is an account/customer fact. It is NOT, by
+ * itself, sufficient evidence for a VAT reverse-charge decision.
  *
- * Used in checkout, invoice generation, and price display.
+ * Marketplace tax treatment depends on the seller/supply route and other
+ * transaction facts. Until that route is explicitly verified and versioned,
+ * price helpers must preserve the seller-entered customer price unchanged.
  */
 
 export interface BuyerB2BProfile {
@@ -13,9 +15,6 @@ export interface BuyerB2BProfile {
   vatNumber?: string | null;
   isVatVerified?: boolean | null;
 }
-
-const VAT_RATE = 0.2;
-const VAT_MULTIPLIER = 1 + VAT_RATE; // 1.20
 
 /**
  * Returns true if the buyer should be treated as a B2B account.
@@ -26,44 +25,40 @@ export function isB2BBuyer(profile: BuyerB2BProfile): boolean {
 }
 
 /**
- * Returns true if VAT reverse charge applies.
- * Requires: isB2B AND isVatVerified.
- * When true → invoice shows 0% VAT and Stripe is charged the ex-VAT amount.
+ * Generic buyer-only VAT reverse charge is deliberately disabled.
+ *
+ * A verified buyer VAT number is evidence about the buyer, not proof that the
+ * current seller/supply route qualifies for reverse charge. The canonical
+ * checkout/database boundary must decide tax treatment from the complete
+ * transaction contract.
  */
-export function applyVatReverseCharge(profile: BuyerB2BProfile): boolean {
-  return isB2BBuyer(profile) && Boolean(profile?.isVatVerified);
+export function applyVatReverseCharge(_profile: BuyerB2BProfile): boolean {
+  return false;
 }
 
 /**
- * Returns the effective price a buyer is charged given a VAT-inclusive price.
- *   B2B with verified VAT → ex-VAT price (price / (1 + 20% VAT))
- *   All others            → original VAT-inclusive price
+ * Preserve the seller-entered customer price. Tax must never be removed from a
+ * price solely because the buyer account is B2B/VAT-verified.
  */
 export function effectivePriceForBuyer(
-  vatInclusivePrice: number,
-  profile: BuyerB2BProfile,
+  customerPrice: number,
+  _profile: BuyerB2BProfile,
 ): number {
-  if (applyVatReverseCharge(profile)) {
-    return vatInclusivePrice / VAT_MULTIPLIER;
-  }
-  return vatInclusivePrice;
+  return customerPrice;
 }
 
 /**
- * Returns a formatted price label for display.
- *   B2B with verified VAT → "£X.XX ex VAT"
- *   Others                → "£X.XX inc VAT"
+ * Buyer-facing generic price label. Do not assert 'inc VAT' or 'ex VAT' without
+ * a verified transaction tax treatment.
  */
 export function priceLabelForBuyer(
-  vatInclusivePrice: number,
-  profile: BuyerB2BProfile,
+  customerPrice: number,
+  _profile: BuyerB2BProfile,
 ): string {
-  const effective = effectivePriceForBuyer(vatInclusivePrice, profile);
-  const formatted = effective.toLocaleString('en-GB', {
+  return customerPrice.toLocaleString('en-GB', {
     style: 'currency',
     currency: 'GBP',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  return applyVatReverseCharge(profile) ? `${formatted} ex VAT` : `${formatted} inc VAT`;
 }
