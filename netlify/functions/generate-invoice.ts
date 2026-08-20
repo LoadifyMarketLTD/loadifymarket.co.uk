@@ -1,8 +1,8 @@
 /**
  * generate-invoice
  *
- * Generates a printable HTML invoice for a given order and streams it
- * back to the buyer's browser.
+ * Generates a printable order receipt for a given order and streams it back to
+ * the buyer's browser. The endpoint name is retained for backwards compatibility.
  *
  * Security:
  *   – Requires a valid JWT.
@@ -12,8 +12,10 @@
  * Commercial-history rule:
  *   – Post-cutover orders with commercialSnapshotSource MUST render checkout-time
  *     buyer/seller/product identity from immutable snapshots.
- *   – Only legacy rows with no authoritative snapshot may use today's profile /
- *     product values as a display-only fallback. No fallback is ever persisted.
+ *   – Post-P1 orders with taxTreatmentSnapshot MUST render immutable tax evidence.
+ *   – Legacy rows are displayed as historical recorded values only. The receipt
+ *     never invents a current VAT identity and never attaches Loadify's VAT number
+ *     to an independent seller's supply.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -103,6 +105,12 @@ export const handler: Handler = async (event) => {
       isB2BSnapshot,
       reverseChargeSnapshot,
       commercialSnapshotSource,
+      sellerVatRegisteredSnapshot,
+      sellerVatNumberSnapshot,
+      sellerTaxCountrySnapshot,
+      taxTreatmentSnapshot,
+      taxSnapshotSource,
+      taxSnapshotCapturedAt,
       products ( title, images )
     `)
     .eq('id', orderId)
@@ -126,6 +134,12 @@ export const handler: Handler = async (event) => {
       isB2BSnapshot: boolean | null;
       reverseChargeSnapshot: boolean | null;
       commercialSnapshotSource: string | null;
+      sellerVatRegisteredSnapshot: boolean | null;
+      sellerVatNumberSnapshot: string | null;
+      sellerTaxCountrySnapshot: string | null;
+      taxTreatmentSnapshot: string | null;
+      taxSnapshotSource: string | null;
+      taxSnapshotCapturedAt: string | null;
       products: { title?: string; images?: string[] } | null;
     }>();
 
@@ -139,13 +153,14 @@ export const handler: Handler = async (event) => {
 
   const { data: items, error: itemError } = await supabase
     .from('order_items')
-    .select('quantity, pricePerUnit, subtotal, productTitleSnapshot, productSnapshotSource, products ( title )')
+    .select('quantity, pricePerUnit, vatRate, subtotal, productTitleSnapshot, productSnapshotSource, products ( title )')
     .eq('orderId', orderId);
   if (itemError) {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Unable to load invoice items' }) };
   }
 
   const hasCommercialSnapshot = Boolean(order.commercialSnapshotSource);
+  const hasTaxSnapshot = Boolean(order.taxTreatmentSnapshot && order.taxSnapshotSource && order.taxSnapshotCapturedAt);
 
   let buyerRow: { firstName?: string; lastName?: string; email?: string } | null = null;
   let buyerProfileRow: {
@@ -203,9 +218,11 @@ export const handler: Handler = async (event) => {
   const isB2B = hasCommercialSnapshot
     ? order.isB2BSnapshot === true
     : Boolean(buyerProfileRow?.accountType) && buyerProfileRow?.accountType !== 'individual';
-  const isReverseCharge = hasCommercialSnapshot
+  const isReverseCharge = hasTaxSnapshot
     ? order.reverseChargeSnapshot === true
-    : isB2B && Boolean(buyerProfileRow?.isVatVerified);
+    : hasCommercialSnapshot
+      ? order.reverseChargeSnapshot === true
+      : isB2B && Boolean(buyerProfileRow?.isVatVerified);
   const buyerCompanyName = hasCommercialSnapshot
     ? order.buyerCompanyNameSnapshot
     : buyerProfileRow?.companyName ?? null;
@@ -244,17 +261,36 @@ export const handler: Handler = async (event) => {
     .filter(Boolean)
     .join(', ');
 
-  const vatNumber = process.env.VITE_VAT_NUMBER || '';
   const companyName = process.env.VITE_COMPANY_NAME || 'Loadify Market';
   const companyAddress = process.env.VITE_COMPANY_ADDRESS || 'United Kingdom';
   const supportEmail = process.env.VITE_SUPPORT_EMAIL || 'contact@loadifymarket.co.uk';
+  const isP1NonVatReceipt = hasTaxSnapshot
+    && order.taxTreatmentSnapshot === 'seller_non_vat_declared'
+    && order.sellerVatRegisteredSnapshot === false
+    && order.vatAmount === 0;
+
+  const taxRows = isP1NonVatReceipt
+    ? `<tr><td>VAT</td><td>${formatGBP(0)}</td></tr>`
+    : isReverseCharge
+      ? `<tr><td>Tax recorded at checkout — reverse charge</td><td>${formatGBP(0)}</td></tr>`
+      : order.vatAmount > 0
+        ? `<tr><td>Tax recorded at checkout</td><td>${formatGBP(order.vatAmount)}</td></tr>`
+        : `<tr><td>Tax recorded at checkout</td><td>${formatGBP(0)}</td></tr>`;
+
+  const taxNote = isP1NonVatReceipt
+    ? `<div style="margin:12px 0;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155;">
+        <strong>VAT not charged:</strong> the seller was recorded at checkout as not VAT registered. This is an order receipt, not a VAT invoice.
+      </div>`
+    : `<div style="margin:12px 0;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155;">
+        Historical tax values are shown exactly as recorded for this order. This receipt does not infer or replace the supplier's VAT evidence.
+      </div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Invoice ${escapeHtml(orderNum)} — Loadify Market</title>
+  <title>Receipt ${escapeHtml(orderNum)} — Loadify Market</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; color: #121A2B; background: #fff; padding: 40px; max-width: 800px; margin: 0 auto; font-size: 14px; }
@@ -271,7 +307,7 @@ export const handler: Handler = async (event) => {
     table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
     thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
     thead th:not(:first-child) { text-align: right; }
-    .totals { margin-left: auto; width: 280px; }
+    .totals { margin-left: auto; width: 300px; }
     .totals table { margin-bottom: 0; }
     .totals td { padding: 6px 12px; font-size: 13px; }
     .totals td:last-child { text-align: right; }
@@ -287,10 +323,10 @@ export const handler: Handler = async (event) => {
       <h1>Loadify Market</h1>
       <span>${escapeHtml(companyName)}</span>
       <span>${escapeHtml(companyAddress)}</span>
-      ${vatNumber ? `<span>VAT: ${escapeHtml(vatNumber)}</span>` : ''}
+      <span>Marketplace receipt service</span>
     </div>
     <div class="invoice-meta">
-      <h2>INVOICE</h2>
+      <h2>ORDER RECEIPT</h2>
       <p>
         Order: <strong>${escapeHtml(orderNum)}</strong><br />
         Date: ${escapeHtml(orderDate)}<br />
@@ -307,7 +343,7 @@ export const handler: Handler = async (event) => {
         <strong>${escapeHtml(billToName)}</strong><br />
         ${billToContact ? `${escapeHtml(billToContact)}<br />` : ''}
         ${buyerEmail ? `${escapeHtml(buyerEmail)}<br />` : ''}
-        ${isB2B && buyerVatNumber ? `VAT: ${escapeHtml(buyerVatNumber)}<br />` : ''}
+        ${isB2B && buyerVatNumber ? `Buyer VAT: ${escapeHtml(buyerVatNumber)}<br />` : ''}
         ${addrLine ? escapeHtml(addrLine) : ''}
       </p>
       ${isB2B ? `<p style="margin-top:6px;font-size:11px;color:#374151;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Business Account</p>` : ''}
@@ -317,6 +353,8 @@ export const handler: Handler = async (event) => {
       <p>
         <strong>${escapeHtml(sellerName)}</strong><br />
         via Loadify Market<br />
+        ${order.sellerTaxCountrySnapshot ? `Tax country recorded: ${escapeHtml(order.sellerTaxCountrySnapshot)}<br />` : ''}
+        ${order.sellerVatNumberSnapshot ? `Seller VAT: ${escapeHtml(order.sellerVatNumberSnapshot)}<br />` : ''}
         ${escapeHtml(supportEmail)}
       </p>
     </div>
@@ -328,7 +366,7 @@ export const handler: Handler = async (event) => {
         <th>Item</th>
         <th style="text-align:right;">Qty</th>
         <th style="text-align:right;">Unit Price</th>
-        <th style="text-align:right;">Subtotal</th>
+        <th style="text-align:right;">Line Amount</th>
       </tr>
     </thead>
     <tbody>
@@ -338,25 +376,18 @@ export const handler: Handler = async (event) => {
 
   <div class="totals">
     <table>
-      <tr><td>Subtotal (ex VAT)</td><td>${formatGBP(order.subtotal)}</td></tr>
-      ${isReverseCharge
-        ? `<tr><td>VAT — Reverse Charge (Customer Accounts for VAT)</td><td>${formatGBP(0)}</td></tr>`
-        : `<tr><td>VAT (20%)</td><td>${formatGBP(order.vatAmount)}</td></tr>`
-      }
+      <tr><td>Items</td><td>${formatGBP(order.subtotal)}</td></tr>
+      ${taxRows}
       <tr><td>Shipping</td><td>${formatGBP(order.shippingAmount)}</td></tr>
-      <tr class="grand-total"><td>Total</td><td>${formatGBP(order.total)}</td></tr>
+      <tr class="grand-total"><td>Total paid</td><td>${formatGBP(order.total)}</td></tr>
     </table>
   </div>
 
-  ${isReverseCharge ? `
-  <div style="margin:12px 0;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#713f12;">
-    <strong>VAT Reverse Charge:</strong> As a VAT-registered business customer, you are liable to account for VAT on this supply under the reverse charge mechanism. The seller has not charged VAT.
-  </div>` : ''}
+  ${taxNote}
 
   <div class="footer">
-    <p>This invoice was generated by Loadify Market · ${escapeHtml(supportEmail)}</p>
+    <p>This receipt was generated by Loadify Market for the order shown above · ${escapeHtml(supportEmail)}</p>
     <p>For queries about this order, please contact us quoting order number <strong>${escapeHtml(orderNum)}</strong>.</p>
-    ${vatNumber ? `<p>VAT Registration Number: ${escapeHtml(vatNumber)}</p>` : ''}
     <p style="margin-top:12px;"><button onclick="window.print()" style="background:#0A1930;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button></p>
   </div>
 </body>
@@ -367,7 +398,7 @@ export const handler: Handler = async (event) => {
     headers: {
       ...corsHeaders,
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Disposition': `inline; filename="invoice-${orderNum}.html"`,
+      'Content-Disposition': `inline; filename="receipt-${orderNum}.html"`,
       'Cache-Control': 'no-store',
     },
     body: html,
