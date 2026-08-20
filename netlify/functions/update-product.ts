@@ -9,6 +9,7 @@ import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import {
   buildSellerNonVatProductEvidence,
+  hasExplicitSellerNonVatDeclaration,
   normaliseMarketplaceCountry,
 } from './_shared/marketplaceTax';
 import {
@@ -184,12 +185,17 @@ export const handler: Handler = async (event) => {
 
   const { data: taxProfile, error: taxProfileError } = await supabase
     .from('seller_profiles')
-    .select('country, isVatRegistered, vatNumber')
+    .select('country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
     .eq('userId', existingProduct.sellerId)
     .maybeSingle<{
       country: string | null;
       isVatRegistered: boolean | null;
       vatNumber: string | null;
+      businessAddress: Record<string, unknown> | null;
+      taxDeclarationConfirmed: boolean | null;
+      taxDeclarationVersion: number | null;
+      taxDeclarationSource: string | null;
+      taxDeclarationCapturedAt: string | null;
     }>();
   if (taxProfileError || !taxProfile) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller tax profile. Please try again.' }) };
@@ -198,8 +204,7 @@ export const handler: Handler = async (event) => {
   const taxEvidence =
     nextContext === 'product' &&
     normaliseMarketplaceCountry(taxProfile.country) === 'GB' &&
-    taxProfile.isVatRegistered === false &&
-    !taxProfile.vatNumber?.trim()
+    hasExplicitSellerNonVatDeclaration(taxProfile)
       ? buildSellerNonVatProductEvidence(nextPrice)
       : null;
 
@@ -235,7 +240,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 409,
       body: JSON.stringify({
-        error: 'This listing cannot be published until the seller tax profile is complete and its VAT treatment is supported.',
+        error: 'This listing cannot be published until the seller has explicitly confirmed a supported tax status and UK tax location.',
         code: 'TAX_EVIDENCE_REQUIRED',
       }),
     };
