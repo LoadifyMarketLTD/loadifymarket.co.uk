@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS private.supplier_offers (
     OR (
       approved_by IS NOT NULL
       AND approved_at IS NOT NULL
-      AND jsonb_object_length(identity_evidence) > 0
+      AND identity_evidence <> '{}'::jsonb
     )
   )
 );
