@@ -33,9 +33,9 @@ const Cart = () => {
   const isMultiSellerCart = uniqueSellerIds.size > 1;
   const isCheckoutBlocked = isMultiSellerCart || ownProductIds.length > 0;
 
-  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
-  // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
-  const vat = Math.round(subtotal / 6);
+  // Marketplace product.price is the seller-entered customer price. VAT/tax must
+  // not be reconstructed from the cart subtotal without verified seller/supply
+  // evidence. The canonical checkout/database boundary owns tax treatment.
   const total = subtotal;
 
   if (cartItems.length === 0) {
@@ -230,9 +230,9 @@ const Cart = () => {
                     <span className="text-muted-foreground">Delivery</span>
                     <span className="font-medium text-muted-foreground italic">Set by seller</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">VAT (20%)</span>
-                    <span className="font-medium text-foreground">£{vat.toLocaleString()}</span>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">VAT / tax</span>
+                    <span className="font-medium text-muted-foreground italic text-right">Confirmed from seller tax treatment at checkout</span>
                   </div>
                   <div className="border-t border-border pt-3 flex items-center justify-between">
                     <span className="font-display font-semibold text-foreground">Total</span>
