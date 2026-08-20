@@ -17,9 +17,9 @@
 - [x] CHECKPOINT A — atomic PASS recorded in `05_FOUNDATION_BASELINE_FREEZE_2026-08-20.md`.
 - [x] FOUNDATION BASELINE FREEZE — recorded and merged.
 - [x] Post-freeze P1 tax/payment evidence repair — PR #531 merged to `main` on 20 August 2026.
-- [ ] GATE B BUSINESS CONTRACT — **CURRENT NEXT GATE**.
-- [ ] GATE B PASS.
-- [ ] PHASE C.
+- [x] GATE B BUSINESS CONTRACT — PR #533 merged to `main` on 20 August 2026.
+- [x] GATE B PASS — contract-level PASS recorded by `08_GATE_B_BUSINESS_CONTRACT_2026-08-20.md`.
+- [ ] PHASE C — **CURRENT NEXT PHASE**.
 - [ ] PHASE D.
 - [ ] PHASE E.
 - [ ] PHASE F.
@@ -45,6 +45,7 @@
 | [x] | #516 | merged | canonical Supplier Commerce contract / Foundation Baseline Freeze documentation |
 | [x] | #530 | merged | mandatory repository agent entrypoint so future agents read the controlling contract and Branch Guard rules |
 | [x] | #531 | merge commit `25dee644fcf8e5fb2aa0b2a2961d139f384715fa` | P1 evidence-driven marketplace tax/payment boundary; Branch Guard PASS before merge |
+| [x] | #533 | merge commit `3ea7d1d22adf851561684463fda0186da7aed30b` | Gate B canonical business contract; contract-level PASS after current official-source verification |
 
 ## PR #531 — P1 closeout record
 
@@ -74,17 +75,47 @@ P1 scope closed by #531:
 
 **Important:** merging #531 to `main` does not itself claim that migrations 611_zz/612/613/614/615 have been applied to production. Production deployment/migration evidence must be recorded separately when actually executed.
 
+## PR #533 — Gate B closeout record
+
+**Merged:** 20 August 2026  
+**Merge commit:** `3ea7d1d22adf851561684463fda0186da7aed30b`  
+**Gate B contract:** `08_GATE_B_BUSINESS_CONTRACT_2026-08-20.md`
+
+Gate B fixed the following canonical business responsibilities before schema design:
+
+- Marketplace Seller: third-party seller is legal seller and merchant of record; Loadify is platform/agent and earns commission;
+- Loadify Supplier-Fulfilled: Loadify/XDrive Logistics Ltd is legal seller and merchant of record; supplier is procurement/fulfilment party and Loadify earns retail margin;
+- Loadify Direct: optional Loadify-sale mode distinguished by inventory/title ownership, not by warehouse location;
+- one canonical order/payment/financial truth across all modes;
+- customer refund and supplier recovery are separate;
+- payment success and supplier-order success are separate;
+- canonical product and supplier offer remain separate truths;
+- supplier raw stock is not Loadify sellable stock;
+- tax/VAT/customs are evidence-, consignment-, territory- and rule-version-aware;
+- UK digital-platform reporting derives from canonical transaction/financial truth;
+- review/media rights provenance and product-safety/recall governance are mandatory;
+- provider capabilities require current official-source verification and versioning;
+- no unrelated visual redesign is authorised by Supplier Commerce.
+
+Gate B used current official HMRC, CMA, OPSS/GOV.UK and Stripe documentation as recorded in the Gate B contract.
+
+**Important:** Gate B PASS is a business-contract PASS. It does not claim that Supplier Commerce schema/runtime exists, that current marketplace Stripe charge configuration already conforms to every target-mode responsibility, or that provider/NI rules are permanently verified. Those matters must be reconciled in the applicable downstream phase before activation.
+
 ## Current handoff
 
-The repository is now past the post-freeze P1 blocker and returns to the canonical sequence:
+The repository is now past Gate B:
 
-`P1 CLOSED IN MAIN → GATE B BUSINESS CONTRACT → GATE B PASS → PHASE C → Q`
+`P1 CLOSED IN MAIN → GATE B PASS IN MAIN → PHASE C → PHASE D → ... → PHASE Q`
 
-No Supplier Commerce runtime/schema/provider implementation is authorised before Gate B PASS, except a newly demonstrated P0/P1 foundation repair that must be handled through Branch Guard.
+**CURRENT NEXT PHASE: PHASE C.**
+
+Phase C must consume the Gate B contract as fixed business input. It may design/evolve canonical schema, data ownership and governance according to the original contract, but it must not invent a parallel order/payment/financial truth or silently change the Gate B responsibilities.
+
+Any newly demonstrated P0/P1 foundation defect still stops the sequence and returns to Branch Guard repair before downstream continuation.
 
 ## Permanent update rule after each future PR
 
-After every implementation PR is merged to `main`:
+After every implementation or contract PR is merged to `main`:
 
 1. verify the actual merge commit on `main`;
 2. update this ledger in a **separate documentation-only PR**;
