@@ -33,6 +33,42 @@ No Supplier Commerce migration before Gate B PASS.
 
 Product Discovery may start only after canonical supplier data exists, as already defined by the original contract, and must not block commerce infrastructure.
 
+## Prepared implementation plan
+
+The detailed implementation preparation is maintained in branch:
+
+`parallel/supplier-commerce-preparation`
+
+under:
+
+`docs/parallel/supplier-commerce-preparation/`
+
+That preparation lane contains the Gate B decision pack, target architecture, runtime integration map, vertical-slice implementation backlog, provider/source contracts, operator import contract, financial/fulfilment/compliance/stock/AI/tax/control-centre contracts, implementation-readiness matrix and vertical-slice acceptance/evidence matrix.
+
+The preparation lane is NOT a parallel architecture and is NOT independently authoritative over this canonical contract.
+
+Before using the implementation preparation, read its current `README.md` and then `33_PRODUCT_DIRECTION_RECONCILIATION_2026-08-20.md`. The 20 August reconciliation aligns the prepared implementation plan with the current canonical direction, including:
+
+- no-Loadify-warehouse Supplier-Fulfilled commerce;
+- governed operator product sourcing/import;
+- Discovery/Catalog/Supplier/Fulfilment/Carrier/Sales-Channel role separation;
+- one canonical product with multiple governed supplier offers;
+- supplier fallback that cannot silently violate the customer promise;
+- sellable-stock truth distinct from supplier raw stock;
+- AI Product Builder under AI Facts Lock;
+- commercial content/image/video/UGC rights;
+- truthful review/rating provenance;
+- price transparency;
+- consignment-aware VAT/customs evidence;
+- digital-platform reporting/due-diligence readiness where applicable;
+- product-safety incident/recall governance;
+- provider/legal capability register;
+- explicit guard against unrelated visual redesign of Loadify Market.
+
+If any preparation artifact conflicts with this canonical contract or a later controlling canonical clarification, the canonical contract wins.
+
+The preparation lane does not authorise runtime/schema/provider implementation before Gate B PASS.
+
 ## Important repository rule
 
 Do not modify implementation PR scope merely to store or revise the controlling contract. Canonical documentation changes must remain isolated so implementation PRs preserve exact diffs and Branch Guard evidence.
