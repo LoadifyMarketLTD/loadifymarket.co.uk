@@ -3,7 +3,7 @@ import PaymentCard from '@/components/ui/PaymentCard';
 
 const HeroSection = () => (
   <section
-    aria-label="Loadify Market UK Online Marketplace"
+    aria-label="Loadify Market UK online marketplace"
     className="relative w-full min-h-[75vh] bg-background"
   >
     <picture>
@@ -20,51 +20,51 @@ const HeroSection = () => (
 
     <div
       className="absolute inset-0 pointer-events-none"
-      style={{ background: 'linear-gradient(90deg, rgba(10,14,26,0.86) 0%, rgba(10,14,26,0.58) 42%, rgba(10,14,26,0.12) 100%)' }}
+      style={{ background: 'linear-gradient(90deg, rgba(10,14,26,0.88) 0%, rgba(10,14,26,0.64) 45%, rgba(10,14,26,0.16) 100%)' }}
       aria-hidden="true"
     />
 
     <div className="absolute inset-0 flex items-center">
       <div className="w-full px-4 sm:px-6 lg:pl-8 xl:pl-10 pt-[122px] pb-8 lg:pt-36 lg:pb-12">
-        <div className="flex flex-col text-center sm:text-left items-center sm:items-start max-w-[540px]">
-          <div className="inline-flex items-center bg-primary text-black text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase mb-5">
-            0% Seller Commission Until 31 December 2026
+        <div className="flex flex-col text-center sm:text-left items-center sm:items-start max-w-[620px]">
+          <div className="inline-flex items-center border border-white/15 bg-black/25 text-white text-xs sm:text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase mb-5 backdrop-blur-sm">
+            UK marketplace for buying and selling
           </div>
 
-          <h1 className="text-[2.7rem] sm:text-5xl font-extrabold leading-[1.2] text-foreground mb-5">
-            Sell in the UK with<br />
-            <span className="text-primary">0% Commission</span>
+          <h1 className="text-[2.7rem] sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.08] text-foreground mb-5 tracking-tight">
+            Shop. Sell. Grow.<br />
+            <span className="text-primary">All in one marketplace.</span>
           </h1>
 
-          <p className="text-lg text-muted-foreground mb-7">
-            List products for free, sell at fixed prices, and get paid securely through Stripe. Buyers can shop trusted UK sellers with confidence.
+          <p className="text-base sm:text-lg text-white/75 mb-7 max-w-[580px] leading-relaxed">
+            Discover products across categories, buy with secure Stripe checkout and track your orders. Ready to sell? Open a seller account and reach UK buyers with 0% seller commission until 31 December 2026.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2.5">
-            <Link
-              to="/register?type=seller"
-              data-magnetic
-              className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
-            >
-              Create Free Seller Account
-            </Link>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-1">
             <Link
               to="/catalog"
               data-magnetic
+              className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
+            >
+              Shop the Marketplace
+            </Link>
+            <Link
+              to="/register?type=seller"
+              data-magnetic
               className="w-full sm:w-auto border border-white/40 text-white hover:bg-white/10 font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
             >
-              Browse Products
+              Start Selling
             </Link>
           </div>
 
           <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-4 text-[11px] font-bold uppercase tracking-wide text-white/80">
-            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1">Free listings</span>
-            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1">Fixed prices</span>
-            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1">Stripe payouts</span>
+            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1">Secure checkout</span>
+            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1">Order tracking</span>
+            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1">UK operated</span>
           </div>
 
-          <div className="flex flex-col items-center sm:items-start gap-2.5 mt-4">
-            <span className="text-[11px] font-bold tracking-[0.10em] uppercase text-muted-foreground">
+          <div className="flex flex-col items-center sm:items-start gap-2.5 mt-5">
+            <span className="text-[11px] font-bold tracking-[0.10em] uppercase text-white/55">
               Secure Payments Powered By
             </span>
             <div className="flex items-center gap-3 flex-wrap">
