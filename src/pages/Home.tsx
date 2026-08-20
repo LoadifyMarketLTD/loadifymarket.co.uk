@@ -177,26 +177,28 @@ export default function Home() {
         <div className="hidden md:block">
           <HeroSection />
 
-          <section className="bg-background py-6 px-8" aria-label="Loadify Market overview">
-            <TrustStrip />
+          <section className="bg-background py-8" aria-label="Loadify Market overview">
+            <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
+              <TrustStrip />
+            </div>
 
-            <div className="mt-8">
+            <div className="mt-5">
               <ShopByCategory />
             </div>
 
-            <div className="mt-2">
+            <div className="mt-1">
               <FeaturedProducts />
             </div>
 
-            <div className="mt-8">
+            <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 mt-8">
               <FeaturesGrid />
             </div>
 
             <LazySection rootMargin="300px">
-              <div className="mt-8">
+              <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 mt-8">
                 <HowItWorksSection />
               </div>
-              <div className="mt-8">
+              <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 mt-8">
                 <SecurityTrust />
               </div>
             </LazySection>
