@@ -38,78 +38,38 @@ const features: Feature[] = [
 
 export default function FeaturesGrid() {
   return (
-    <div className="sm:flex-1 sm:rounded-2xl sm:border sm:border-white/5 sm:bg-elevated sm:p-6 lg:p-8 sm:flex sm:flex-col">
-      <div className="mb-3 sm:mb-1">
+    <section className="w-full max-w-[1280px] mx-auto rounded-2xl border border-white/5 bg-elevated p-6 lg:p-8" aria-label="Marketplace benefits">
+      <div className="mb-4">
         <p className="text-[10px] font-black text-primary uppercase tracking-[0.18em] mb-1.5">
           One marketplace experience
         </p>
-        <h2 className="text-[17px] sm:text-xl font-semibold text-white">
+        <h2 className="text-xl sm:text-2xl font-semibold text-white">
           Built for confident buying and{' '}
           <span className="text-primary">serious selling</span>
         </h2>
       </div>
 
-      <div className="flex flex-col sm:hidden" style={{ gap: '12px', marginTop: '12px' }}>
-        {features.map((feature) => {
-          const Icon = feature.icon;
-          return (
-            <div
-              key={feature.title}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                minHeight: '72px',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px',
-                padding: '16px',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '12px',
-                  background: 'rgba(212,175,55,0.1)',
-                  border: '1px solid rgba(212,175,55,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Icon style={{ width: '18px', height: '18px' }} className="text-primary" aria-hidden="true" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1.2 }} className="text-white">
-                  {feature.title}
-                </p>
-                <p style={{ fontSize: '12px', lineHeight: 1.4, marginTop: '3px' }} className="text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-              <ChevronRight style={{ width: '16px', height: '16px', flexShrink: 0 }} className="text-muted-foreground" aria-hidden="true" />
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="hidden sm:grid grid-cols-2 gap-6 flex-1 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (
             <div
               key={feature.title}
               data-parallax
-              className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-elevated p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] hover:border-primary/40"
+              className="group flex items-center sm:items-start gap-4 sm:flex-col rounded-2xl border border-white/[0.07] bg-surface p-5 lg:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] hover:border-primary/40"
             >
-              <Icon className="w-7 h-7 text-primary shrink-0 icon-pulse" aria-hidden="true" />
-              <p className="text-base font-semibold text-white leading-tight">{feature.title}</p>
-              <p className="text-sm text-slate-400 leading-relaxed">{feature.description}</p>
+              <div className="h-11 w-11 rounded-xl border border-primary/20 bg-primary/[0.08] flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-primary icon-pulse" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm sm:text-base font-semibold text-white leading-tight">{feature.title}</p>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-1.5">{feature.description}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-white/50 sm:hidden shrink-0" aria-hidden="true" />
             </div>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
