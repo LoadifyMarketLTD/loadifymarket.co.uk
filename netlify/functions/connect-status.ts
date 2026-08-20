@@ -8,6 +8,11 @@ import { authenticateActiveAccount } from './_shared/activeAccountAuth';
  *
  * Fetches the live Stripe Connect account status for the authenticated active
  * seller and persists the result in seller_profiles.stripeConnectStatus.
+ *
+ * P1 tax evidence rule:
+ * Stripe Account.country is also persisted as server-captured tax-country
+ * evidence. User-entered address/postcode data is never promoted to tax-country
+ * evidence by this endpoint.
  */
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -77,7 +82,13 @@ export const handler: Handler = async (event) => {
         console.warn(`connect-status: stored Stripe account is not on current platform; clearing stale record for user ${sellerId}`);
         const { error: clearError } = await supabase
           .from('seller_profiles')
-          .update({ stripeAccountId: null, stripeConnectStatus: null })
+          .update({
+            stripeAccountId: null,
+            stripeConnectStatus: null,
+            taxCountry: null,
+            taxCountrySource: null,
+            taxCountryCapturedAt: null,
+          })
           .eq('userId', sellerId);
         if (clearError) throw clearError;
         return {
@@ -103,6 +114,11 @@ export const handler: Handler = async (event) => {
       stripePayoutsEnabled: account.payouts_enabled,
       stripeDetailsSubmitted: account.details_submitted,
     };
+    if (account.country?.trim()) {
+      stripeUpdate.taxCountry = account.country.trim().toUpperCase();
+      stripeUpdate.taxCountrySource = 'stripe_connect_account_v1';
+      stripeUpdate.taxCountryCapturedAt = new Date().toISOString();
+    }
     if (stripeConnectStatus === 'active') {
       stripeUpdate.storeCreated = true;
     }
