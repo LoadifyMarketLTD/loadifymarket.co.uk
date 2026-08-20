@@ -12,7 +12,7 @@ interface ShowcaseProduct {
 }
 
 /**
- * Latest Products — clean B2B product grid.
+ * Explore the Marketplace — live product grid.
  * Fetches up to 10 currently sellable, approved products from Supabase.
  * Shows a professional empty state when no live listings exist yet.
  * Never renders fake or hardcoded product data.
@@ -63,20 +63,22 @@ const FeaturedProducts = () => {
   return (
     <section className="relative" aria-label="Marketplace products">
       <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
-
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-end justify-between gap-4 mb-4">
           <div>
-              <h2 className="text-[13px] font-black text-white uppercase tracking-widest">
-                Marketplace Products
-              </h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Listed by verified UK trade suppliers
-              </p>
+            <p className="text-[10px] font-black text-primary uppercase tracking-[0.18em] mb-1">
+              Shop Loadify
+            </p>
+            <h2 className="text-lg sm:text-xl font-semibold text-white">
+              Explore the marketplace
+            </h2>
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
+              Live products available to browse and buy now.
+            </p>
           </div>
           {products.length > 0 && (
             <Link
               to="/catalog"
-              className="text-[11px] font-bold text-primary uppercase tracking-wide hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-primary uppercase tracking-wide hover:underline flex items-center gap-1 shrink-0"
             >
               Browse All <ArrowRight className="h-3 w-3" />
             </Link>
@@ -84,13 +86,9 @@ const FeaturedProducts = () => {
         </div>
 
         {products.length > 0 ? (
-          /* Product grid — gap-px hairline borders */
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
             {products.map((item) => {
-              const img =
-                Array.isArray(item.images) && item.images.length > 0
-                  ? item.images[0]
-                  : null;
+              const img = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
               const href = `/product/${item.id}`;
               return (
                 <Link
@@ -98,7 +96,6 @@ const FeaturedProducts = () => {
                   to={href}
                   className="group flex flex-col bg-surface hover:bg-elevated hover:shadow-md hover:scale-[1.02] transition-all duration-200"
                 >
-                  {/* Square thumbnail */}
                   <div className="aspect-square bg-surface overflow-hidden">
                     {img ? (
                       <img
@@ -120,7 +117,6 @@ const FeaturedProducts = () => {
                     )}
                   </div>
 
-                  {/* Product info */}
                   <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1 border-t border-white/5">
                     {item.category && (
                       <span className="text-[10px] font-bold text-secondary uppercase tracking-wide line-clamp-1">
@@ -142,24 +138,19 @@ const FeaturedProducts = () => {
             })}
           </div>
         ) : (
-          /* Professional empty state — no fake listings */
           <div className="border border-white/10 bg-surface px-6 py-10">
-            <p className="text-sm font-semibold text-white">
-              No listings available yet.
-            </p>
+            <p className="text-sm font-semibold text-white">The marketplace is growing.</p>
             <p className="text-xs text-slate-400 mt-1.5 mb-6 max-w-md leading-relaxed">
-              We are currently onboarding verified UK trade suppliers.
-              Be among the first to list products on Loadify Market.
+              New products are added as approved listings become available. Sellers can join Loadify and start building their catalogue today.
             </p>
             <Link
               to="/register?type=seller"
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-black text-xs font-bold uppercase tracking-wide hover:bg-primary-hover transition-colors"
             >
-              Register as Supplier <ArrowRight className="h-3.5 w-3.5" />
+              Start Selling <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         )}
-
       </div>
     </section>
   );
