@@ -20,7 +20,7 @@ const HeroSection = () => (
 
     <div
       className="absolute inset-0 pointer-events-none"
-      style={{ background: 'linear-gradient(90deg, rgba(10,14,26,0.88) 0%, rgba(10,14,26,0.64) 45%, rgba(10,14,26,0.16) 100%)' }}
+      style={{ background: 'linear-gradient(90deg, rgba(10,14,26,0.90) 0%, rgba(10,14,26,0.66) 46%, rgba(10,14,26,0.16) 100%)' }}
       aria-hidden="true"
     />
 
@@ -36,8 +36,8 @@ const HeroSection = () => (
             <span className="text-primary">All in one marketplace.</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-white/75 mb-7 max-w-[580px] leading-relaxed">
-            Discover products across categories, buy with secure Stripe checkout and track your orders. Ready to sell? Open a seller account and reach UK buyers with 0% seller commission until 31 December 2026.
+          <p className="text-base sm:text-lg text-white/75 mb-7 max-w-[565px] leading-relaxed">
+            Discover products across categories, checkout securely through Stripe and follow your orders from purchase to delivery — all through Loadify Market.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-1">
@@ -56,6 +56,10 @@ const HeroSection = () => (
               Start Selling
             </Link>
           </div>
+
+          <p className="mt-3 text-xs text-white/55">
+            Selling on Loadify? 0% seller commission until 31 December 2026.
+          </p>
 
           <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-4 text-[11px] font-bold uppercase tracking-wide text-white/80">
             <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1">Secure checkout</span>
