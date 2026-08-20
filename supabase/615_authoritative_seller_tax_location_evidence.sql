@@ -97,6 +97,23 @@ BEFORE INSERT OR UPDATE ON public.seller_profiles
 FOR EACH ROW
 EXECUTE FUNCTION private.protect_seller_tax_location_evidence_v1();
 
+-- If an earlier partial application ever stamped a declaration before this
+-- authoritative-location guard existed, invalidate it rather than laundering
+-- mutable profile data into P1 tax evidence.
+UPDATE public.seller_profiles
+   SET "taxDeclarationConfirmed" = false,
+       "taxDeclarationVersion" = NULL,
+       "taxDeclarationSource" = NULL,
+       "taxDeclarationCapturedAt" = NULL
+ WHERE "taxDeclarationConfirmed" = true
+   AND (
+     upper(BTRIM(COALESCE("taxCountry", ''))) <> 'GB'
+     OR "taxCountrySource" IS DISTINCT FROM 'stripe_connect_account_v1'
+     OR "taxCountryCapturedAt" IS NULL
+     OR NULLIF(BTRIM(COALESCE("taxPostcode", '')), '') IS NULL
+     OR upper(regexp_replace(COALESCE("taxPostcode", ''), '\s+', '', 'g')) ~ '^(BT|GY|JE|IM|GX|BF)'
+   );
+
 CREATE OR REPLACE FUNCTION private.capture_seller_tax_declaration_v1()
 RETURNS trigger
 LANGUAGE plpgsql
