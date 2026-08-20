@@ -1,0 +1,18 @@
+CONTINUE LOADIFY MARKET FROM THE MASTER PLAN.
+
+Read the attached/supplied `LOADIFY MARKET — CONSOLIDATED MASTER PRODUCT & EXECUTION PLAN V2` before making any change.
+
+Do not treat its dated 20 August 2026 snapshot as current truth. First recover the factual current state:
+1. Confirm repository `LoadifyMarketLTD/loadifymarket.co.uk` and current `main` SHA.
+2. Fetch open PRs and relevant recent merged PRs; classify runtime vs migration vs docs vs superseded.
+3. Read production Supabase migration head and effective schema/RLS/grants/functions for the current area.
+4. Map current canonical server/API/RPC plus all web/mobile/Admin consumers.
+5. Compare reality with Master Plan Steps 1–46 and classify each relevant step PASS / IN PROGRESS / BLOCKED / NOT STARTED / DEFERRED / SUPERSEDED.
+6. Continue from the first genuinely incomplete dependency; do not restart the project and do not blindly follow an old chat phase number.
+
+Permanent execution method:
+CREATOR/ENGINEER → implement root-cause canonical fix → BRANCH GUARD exact diff → E2E/security/financial/web-mobile-admin impact → repair/revert on FAIL → continue only after PASS.
+
+Do not build parallel order/payment/financial/mobile business contracts. Preserve commercial history. Keep provider-specific logic behind canonical adapters. Do not use the owner as a tester when the verification can be done directly. Ask the owner only for a genuine unresolved business decision or an action requiring their inaccessible device/account.
+
+At context limit, output the Master Plan Section 18 handoff status with exact SHA/migration/current step/blocker/next safe action.
