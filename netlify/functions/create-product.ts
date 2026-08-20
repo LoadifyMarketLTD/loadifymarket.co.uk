@@ -14,6 +14,10 @@ import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode, getFeatureFlags } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
+import {
+  buildSellerNonVatProductEvidence,
+  normaliseMarketplaceCountry,
+} from './_shared/marketplaceTax';
 
 const CREATE_ALLOWED_FIELDS = [
   'description',
@@ -200,6 +204,41 @@ export const handler: Handler = async (event) => {
     }
   }
 
+  const { data: taxProfile, error: taxProfileError } = await supabase
+    .from('seller_profiles')
+    .select('country, isVatRegistered, vatNumber')
+    .eq('userId', callerId)
+    .maybeSingle<{
+      country: string | null;
+      isVatRegistered: boolean | null;
+      vatNumber: string | null;
+    }>();
+
+  if (taxProfileError) {
+    console.error('create-product: seller tax profile query failed:', taxProfileError.message);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller tax profile. Please try again.' }) };
+  }
+
+  const canUseCurrentNonVatEvidence =
+    normalizedListingContext === 'product' &&
+    normaliseMarketplaceCountry(taxProfile?.country) === 'GB' &&
+    taxProfile?.isVatRegistered === false &&
+    !taxProfile?.vatNumber?.trim();
+
+  const taxEvidence = canUseCurrentNonVatEvidence
+    ? buildSellerNonVatProductEvidence(price)
+    : null;
+
+  if (Boolean(isActive) && normalizedListingContext === 'product' && !taxEvidence) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: 'This listing cannot be published until the seller tax profile is complete and its VAT treatment is supported.',
+        code: 'TAX_EVIDENCE_REQUIRED',
+      }),
+    };
+  }
+
   const flags = await getFeatureFlags(supabase);
   const isApproved: boolean = isAdmin
     ? true
@@ -222,8 +261,6 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const vatRate = 0.20;
-  const priceExVat = price / (1 + vatRate);
   const allowedFields = pickAllowedFields(rest);
   const parsedStockQuantity = parseStockQuantity(allowedFields.stockQuantity);
   if (parsedStockQuantity === null) {
@@ -235,8 +272,12 @@ export const handler: Handler = async (event) => {
     ...allowedFields,
     title,
     price,
-    priceExVat,
-    vatRate,
+    priceExVat: taxEvidence?.priceExVat ?? null,
+    vatRate: taxEvidence?.vatRate ?? null,
+    taxTreatmentStatus: taxEvidence?.taxTreatmentStatus ?? null,
+    taxTreatmentSource: taxEvidence?.taxTreatmentSource ?? null,
+    taxEvidenceVersion: taxEvidence?.taxEvidenceVersion ?? null,
+    taxEvidenceCapturedAt: taxEvidence?.taxEvidenceCapturedAt ?? null,
     isActive: Boolean(isActive) && sellerCanPublish,
     isApproved,
     sellerId: callerId,
