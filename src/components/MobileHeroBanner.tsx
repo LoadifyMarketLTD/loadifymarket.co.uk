@@ -37,7 +37,7 @@ export default function MobileHeroBanner() {
       <div
         className="bg-white/[0.04]"
         style={{
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid rgba(255,255,255,0.10)',
           borderRadius: 18,
           padding: 'clamp(18px, 5vw, 24px)',
         }}
@@ -72,14 +72,14 @@ export default function MobileHeroBanner() {
         </h1>
 
         <p
-          className="text-foreground/60"
+          className="text-foreground/75"
           style={{
             fontSize: 'clamp(13px, 3.5vw, 15px)',
             margin: '10px 0 0',
             lineHeight: 1.5,
           }}
         >
-          Discover products across categories, checkout securely through Stripe and track your orders from Loadify.
+          Browse products, checkout securely through Stripe and track your orders from Loadify.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
@@ -103,8 +103,8 @@ export default function MobileHeroBanner() {
             style={{
               height: 44,
               borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.16)',
-              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.22)',
+              background: 'rgba(255,255,255,0.05)',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 750,
@@ -114,15 +114,15 @@ export default function MobileHeroBanner() {
           </button>
         </div>
 
-        <p className="text-foreground/45" style={{ fontSize: 11, lineHeight: 1.4, marginTop: 10 }}>
-          Sellers: 0% commission until 31 December 2026.
+        <p className="text-foreground/65" style={{ fontSize: 11, lineHeight: 1.45, marginTop: 12 }}>
+          Sellers can join with 0% commission until 31 December 2026.
         </p>
 
-        <div className="text-foreground/45" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 11, fontSize: 11, fontWeight: 700 }}>
+        <div className="text-foreground/65" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, fontSize: 11, fontWeight: 700 }}>
           <span>Secure checkout</span>
-          <span>•</span>
+          <span aria-hidden="true">•</span>
           <span>Order tracking</span>
-          <span>•</span>
+          <span aria-hidden="true">•</span>
           <span>UK operated</span>
         </div>
       </div>
