@@ -64,25 +64,24 @@ const Header = () => {
     priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 6);
 
   const navLinks = [
-    { to: "/", label: "HOME", strong: true, catSlug: null as string | null },
-    { to: "/catalog", label: "SHOP ALL", strong: true, catSlug: null as string | null },
+    { to: "/", label: "HOME", catSlug: null as string | null },
+    { to: "/catalog", label: "SHOP ALL", catSlug: null as string | null },
     ...displayCategories.map((cat) => ({
       to: `/catalog?category=${encodeURIComponent(cat.name)}`,
       label: cat.name,
-      strong: false,
       catSlug: cat.slug,
     })),
-    { to: "/catalog", label: "MORE →", strong: true, catSlug: null as string | null },
+    { to: "/catalog", label: "MORE →", catSlug: null as string | null },
   ];
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 bg-surface border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)] hidden md:block"
+      className="fixed top-0 left-0 right-0 z-40 bg-surface border-b border-white/[0.08] shadow-[0_8px_25px_rgba(0,0,0,0.35)] hidden md:block"
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 h-[60px] md:h-[72px] flex items-center gap-4">
         <button
-          className="p-2.5 text-muted-foreground bg-white/[0.10] hover:text-primary hover:bg-white/[0.18] active:bg-white/[0.22] rounded-xl transition-all shrink-0 ring-1 ring-white/20"
+          className="p-2.5 text-white/75 bg-white/[0.10] hover:text-primary hover:bg-white/[0.18] active:bg-white/[0.22] rounded-xl transition-all shrink-0 ring-1 ring-white/20"
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={mobileOpen}
@@ -99,16 +98,16 @@ const Header = () => {
           </span>
         </Link>
 
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl mx-auto min-w-0">
+        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl mx-auto min-w-0" role="search">
           <div className="relative flex items-center w-full">
-            <Search className="absolute left-3.5 h-4 w-4 sm:left-4 sm:h-[18px] sm:w-[18px] text-white/35 pointer-events-none" aria-hidden="true" />
+            <Search className="absolute left-3.5 h-4 w-4 sm:left-4 sm:h-[18px] sm:w-[18px] text-white/60 pointer-events-none" aria-hidden="true" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products and categories..."
-              aria-label="Search marketplace"
-              className="w-full h-11 sm:h-[46px] pl-9 sm:pl-11 pr-10 sm:pr-28 bg-[rgba(15,23,42,0.85)] border border-white/[0.08] rounded-2xl text-xs sm:text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all duration-200"
+              aria-label="Search products and categories"
+              className="w-full h-11 sm:h-[46px] pl-9 sm:pl-11 pr-10 sm:pr-28 bg-[rgba(15,23,42,0.85)] border border-white/[0.12] rounded-2xl text-xs sm:text-sm text-white placeholder:text-white/55 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/15 transition-all duration-200"
             />
             <button
               type="submit"
@@ -123,12 +122,12 @@ const Header = () => {
 
         <Link
           to="/cart"
-          className="lg:hidden relative p-2.5 text-muted-foreground hover:text-primary hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(212,175,55,0.35)] hover:bg-white/10 rounded-xl transition-all shrink-0"
-          aria-label="Shopping cart"
+          className="lg:hidden relative p-2.5 text-white/75 hover:text-primary hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(212,175,55,0.35)] hover:bg-white/10 rounded-xl transition-all shrink-0"
+          aria-label={`Shopping cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
         >
-          <ShoppingCart className="h-5 w-5" />
+          <ShoppingCart className="h-5 w-5" aria-hidden="true" />
           {cartCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-black text-[10px] font-bold flex items-center justify-center px-0.5" aria-hidden="true">
               {cartCount}
             </span>
           )}
@@ -147,12 +146,12 @@ const Header = () => {
 
           <Link
             to="/cart"
-            className="relative p-2.5 text-muted-foreground hover:text-primary hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(212,175,55,0.35)] hover:bg-white/10 rounded-xl transition-all"
-            aria-label="Shopping cart"
+            className="relative p-2.5 text-white/75 hover:text-primary hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(212,175,55,0.35)] hover:bg-white/10 rounded-xl transition-all"
+            aria-label={`Shopping cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
           >
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-5 w-5" aria-hidden="true" />
             {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-black text-[10px] font-bold flex items-center justify-center px-0.5">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-black text-[10px] font-bold flex items-center justify-center px-0.5" aria-hidden="true">
                 {cartCount}
               </span>
             )}
@@ -207,7 +206,7 @@ const Header = () => {
                     <Link
                       to={link.to}
                       className={[
-                        "nav-cat-link text-[13px] font-semibold text-foreground/80 hover:text-primary hover:-translate-y-px hover:[text-shadow:0_0_8px_rgba(212,175,55,0.25)] hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap text-center w-full",
+                        "nav-cat-link text-[13px] font-semibold text-foreground/85 hover:text-primary hover:-translate-y-px hover:[text-shadow:0_0_8px_rgba(212,175,55,0.25)] hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap text-center w-full",
                         isHovered ? "bg-white/[0.08] text-primary" : "",
                       ].join(" ")}
                     >
@@ -224,12 +223,12 @@ const Header = () => {
                           <Link
                             key={child.id}
                             to={`/category/${child.slug}`}
-                            className="flex items-center justify-between px-4 py-2.5 text-[13px] font-medium text-white/75 hover:text-white hover:bg-white/[0.08] transition-colors"
+                            className="flex items-center justify-between px-4 py-2.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/[0.08] transition-colors"
                             onClick={() => setHoveredCat(null)}
                           >
                             {child.name}
                             {child.children?.length > 0 && (
-                              <ChevronRight className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                              <ChevronRight className="h-3.5 w-3.5 text-white/60 shrink-0" aria-hidden="true" />
                             )}
                           </Link>
                         ))}
