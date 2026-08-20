@@ -248,7 +248,7 @@ export const handler: Handler = async (event) => {
   const checkoutSellerId = uniqueSellerIds[0];
   const { data: sellerProfile, error: sellerProfileError } = await supabase
     .from('seller_profiles')
-    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, country, isVatRegistered, vatNumber, businessAddress')
+    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
     .eq('userId', checkoutSellerId)
     .maybeSingle<{
       stripeAccountId: string | null;
@@ -261,6 +261,10 @@ export const handler: Handler = async (event) => {
       isVatRegistered: boolean | null;
       vatNumber: string | null;
       businessAddress: Record<string, unknown> | null;
+      taxDeclarationConfirmed: boolean | null;
+      taxDeclarationVersion: number | null;
+      taxDeclarationSource: string | null;
+      taxDeclarationCapturedAt: string | null;
     }>();
 
   if (sellerProfileError) {
@@ -346,6 +350,10 @@ export const handler: Handler = async (event) => {
       isVatRegistered: sellerProfile.isVatRegistered,
       vatNumber: sellerProfile.vatNumber,
       businessAddress: sellerProfile.businessAddress,
+      taxDeclarationConfirmed: sellerProfile.taxDeclarationConfirmed,
+      taxDeclarationVersion: sellerProfile.taxDeclarationVersion,
+      taxDeclarationSource: sellerProfile.taxDeclarationSource,
+      taxDeclarationCapturedAt: sellerProfile.taxDeclarationCapturedAt,
     },
     products: enrichedItems.map((item) => ({
       id: item.productId,
