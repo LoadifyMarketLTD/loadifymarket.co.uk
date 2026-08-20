@@ -33,13 +33,35 @@ const productRow = {
   stockQuantity: 5,
   listingContext: 'product',
   listingStatus: 'active',
+  images: [],
+  vatRate: 0,
 };
 
-describe('create-payment-intent – shipping tamper protection', () => {
+const sellerProfile = {
+  stripeAccountId: 'acct_123',
+  stripeConnectStatus: 'active',
+  sellerStatus: 'active',
+  isPaused: false,
+  businessName: 'Seller Ltd',
+  fullName: 'Seller Owner',
+  businessAddress: {
+    streetAddress: '10 Seller Street',
+    city: 'Manchester',
+    postcode: 'M1 1AA',
+    country: 'United Kingdom',
+  },
+  isVatRegistered: false,
+  vatNumber: null,
+};
+
+describe('create-payment-intent – shipping and marketplace tax contract', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
     vi.resetModules();
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
+    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
   });
 
   afterEach(() => {
@@ -47,16 +69,35 @@ describe('create-payment-intent – shipping tamper protection', () => {
     vi.restoreAllMocks();
   });
 
-  function mockCommonSupabase(overrides?: {
-    productShippingRows?: unknown[];
+  function mockRuntime(options?: {
     productRows?: Array<typeof productRow>;
-    sellerAccount?: { id: string; role: string; isActive: boolean };
+    productShippingRows?: unknown[];
+    seller?: typeof sellerProfile;
+    buyerProfile?: Record<string, unknown>;
   }) {
-    let userLookupIndex = 0;
-    const userRows = [
-      { id: 'buyer-1', role: 'buyer', isActive: true },
-      overrides?.sellerAccount ?? { id: 'seller-1', role: 'seller', isActive: true },
-    ];
+    const paymentIntentCreate = vi.fn().mockResolvedValue({
+      id: 'pi_123',
+      client_secret: 'pi_123_secret',
+    });
+    const paymentIntentCancel = vi.fn().mockResolvedValue({ id: 'pi_123' });
+    const paymentSessionInsert = vi.fn().mockResolvedValue({ error: null });
+
+    vi.doMock('stripe', () => ({
+      default: vi.fn().mockImplementation(function () {
+        return {
+          paymentIntents: {
+            create: paymentIntentCreate,
+            cancel: paymentIntentCancel,
+          },
+        };
+      }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
+    }));
 
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
@@ -68,20 +109,31 @@ describe('create-payment-intent – shipping tamper protection', () => {
         },
         rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
         from: vi.fn((table: string) => {
-          if (table === 'users') {
+          if (table === 'products') {
+            let updateMode = false;
+            const chain: Record<string, unknown> = {};
+            chain.select = vi.fn(() => updateMode
+              ? Promise.resolve({ count: 1, data: [{ id: 'p1' }], error: null })
+              : chain);
+            chain.in = vi.fn().mockResolvedValue({
+              data: options?.productRows ?? [productRow],
+              error: null,
+            });
+            chain.update = vi.fn(() => {
+              updateMode = true;
+              return chain;
+            });
+            chain.eq = vi.fn(() => chain);
+            return chain;
+          }
+          if (table === 'product_shipping') {
             return {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
-              maybeSingle: vi.fn().mockImplementation(async () => ({
-                data: userRows[Math.min(userLookupIndex++, userRows.length - 1)],
+              in: vi.fn().mockResolvedValue({
+                data: options?.productShippingRows ?? [],
                 error: null,
-              })),
-            };
-          }
-          if (table === 'products') {
-            return {
-              select: vi.fn().mockReturnThis(),
-              in: vi.fn().mockResolvedValue({ data: overrides?.productRows ?? [productRow], error: null }),
+              }),
             };
           }
           if (table === 'seller_profiles') {
@@ -89,17 +141,33 @@ describe('create-payment-intent – shipping tamper protection', () => {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
               maybeSingle: vi.fn().mockResolvedValue({
-                data: { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active', isPaused: false },
+                data: options?.seller ?? sellerProfile,
                 error: null,
               }),
             };
           }
-          if (table === 'product_shipping') {
+          if (table === 'buyer_profiles') {
             return {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
-              in: vi.fn().mockResolvedValue({ data: overrides?.productShippingRows ?? [], error: null }),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: options?.buyerProfile ?? { accountType: 'individual', isVatVerified: false },
+                error: null,
+              }),
             };
+          }
+          if (table === 'users') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { email: 'buyer@test.com', firstName: 'Buyer', lastName: 'One' },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'payment_sessions') {
+            return { insert: paymentSessionInsert };
           }
           return {
             select: vi.fn().mockReturnThis(),
@@ -110,25 +178,12 @@ describe('create-payment-intent – shipping tamper protection', () => {
         }),
       })),
     }));
+
+    return { paymentIntentCreate, paymentSessionInsert };
   }
 
   it('returns 400 when goods cart is missing shippingMethodId', async () => {
-    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
-    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
-
-    vi.doMock('stripe', () => ({
-      default: vi.fn().mockImplementation(function () {
-        return {};
-      }),
-    }));
-    vi.doMock('../_shared/platformFlags', () => ({
-      isMaintenanceMode: vi.fn().mockResolvedValue(false),
-    }));
-    vi.doMock('../_shared/rateLimiter', () => ({
-      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
-    }));
-    mockCommonSupabase();
+    mockRuntime();
 
     const { handler } = await import('../create-payment-intent');
     const res = await handler(
@@ -145,22 +200,7 @@ describe('create-payment-intent – shipping tamper protection', () => {
   });
 
   it('returns 400 when shippingMethodId is not mapped to the product in cart', async () => {
-    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
-    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
-
-    vi.doMock('stripe', () => ({
-      default: vi.fn().mockImplementation(function () {
-        return {};
-      }),
-    }));
-    vi.doMock('../_shared/platformFlags', () => ({
-      isMaintenanceMode: vi.fn().mockResolvedValue(false),
-    }));
-    vi.doMock('../_shared/rateLimiter', () => ({
-      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
-    }));
-    mockCommonSupabase({ productShippingRows: [] });
+    mockRuntime({ productShippingRows: [] });
 
     const { handler } = await import('../create-payment-intent');
     const res = await handler(
@@ -180,25 +220,10 @@ describe('create-payment-intent – shipping tamper protection', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/not available/i);
   });
 
-  it('rejects a mobile payment when the seller live account is inactive even if the seller profile remains active', async () => {
-    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
-    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
-
-    vi.doMock('stripe', () => ({
-      default: vi.fn().mockImplementation(function () {
-        return {};
-      }),
-    }));
-    vi.doMock('../_shared/platformFlags', () => ({
-      isMaintenanceMode: vi.fn().mockResolvedValue(false),
-    }));
-    vi.doMock('../_shared/rateLimiter', () => ({
-      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
-    }));
-    mockCommonSupabase({
+  it('fails closed before Stripe when the marketplace seller is VAT registered', async () => {
+    const runtime = mockRuntime({
       productRows: [{ ...productRow, listingContext: 'service' }],
-      sellerAccount: { id: 'seller-1', role: 'seller', isActive: false },
+      seller: { ...sellerProfile, isVatRegistered: true, vatNumber: 'GB123456789' },
     });
 
     const { handler } = await import('../create-payment-intent');
@@ -207,7 +232,38 @@ describe('create-payment-intent – shipping tamper protection', () => {
       {} as never,
     );
 
-    expect(res.statusCode).toBe(400);
-    expect(JSON.parse(res.body as string).error).toMatch(/seller.*not currently available/i);
+    expect(res.statusCode).toBe(409);
+    expect(JSON.parse(res.body as string).error).toMatch(/explicit verified tax treatment/i);
+    expect(runtime.paymentIntentCreate).not.toHaveBeenCalled();
+  });
+
+  it('charges the full seller price for a VAT-verified B2B buyer and records reverseCharge=false', async () => {
+    const runtime = mockRuntime({
+      productRows: [{ ...productRow, listingContext: 'service' }],
+      buyerProfile: {
+        accountType: 'company',
+        isVatVerified: true,
+        companyName: 'Buyer Ltd',
+        vatNumber: 'GB987654321',
+      },
+    });
+
+    const { handler } = await import('../create-payment-intent');
+    const res = await handler(
+      makeEvent(baseBody, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(runtime.paymentIntentCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 1000 }));
+
+    const insertPayload = runtime.paymentSessionInsert.mock.calls[0]?.[0] as Record<string, unknown>;
+    const metadata = insertPayload.metadata as Record<string, unknown>;
+    const buyerSnapshot = metadata.buyerSnapshot as Record<string, unknown>;
+    expect(metadata.applyReverseCharge).toBe(false);
+    expect(metadata.taxSnapshotVersion).toBe(1);
+    expect(metadata.taxTreatment).toBe('seller_not_vat_registered');
+    expect(buyerSnapshot.reverseCharge).toBe(false);
+    expect(insertPayload.amount).toBe(10);
   });
 });
