@@ -48,6 +48,7 @@ export type MarketplaceTaxDecision =
       ok: false;
       code:
         | 'TAX_SELLER_COUNTRY_UNSUPPORTED'
+        | 'TAX_SELLER_REGION_UNSUPPORTED'
         | 'TAX_DESTINATION_UNSUPPORTED'
         | 'TAX_SELLER_DECLARATION_REQUIRED'
         | 'TAX_SELLER_VAT_STATUS_UNSUPPORTED'
@@ -68,6 +69,17 @@ export function normaliseMarketplaceCountry(value: unknown): string | null {
 function addressCountry(address: Record<string, string> | undefined): string | null {
   if (!address) return null;
   return normaliseMarketplaceCountry(address.countryCode ?? address.country ?? address.country_code);
+}
+
+function addressPostcode(address: Record<string, unknown> | undefined | null): string | null {
+  if (!address) return null;
+  const raw = address.postcode ?? address.postalCode ?? address.postal_code;
+  return typeof raw === 'string' && raw.trim() ? raw.trim().toUpperCase() : null;
+}
+
+export function isNorthernIrelandPostcode(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  return /^BT\d/i.test(value.trim().replace(/\s+/g, ''));
 }
 
 function moneyEqual(a: number, b: number): boolean {
@@ -99,10 +111,13 @@ export function buildSellerNonVatProductEvidence(price: number) {
  *
  * A historical default false in isVatRegistered is never treated as tax proof.
  * The seller must have an explicit, server-stamped self-declaration v1. P1 then
- * supports only GB-established non-VAT sellers, physical products carrying
- * matching versioned non-VAT evidence, and GB destinations. VAT-registered,
- * service, international, missing or contradictory cases fail closed until the
- * broader Gate B tax contract authorises them.
+ * supports only Great Britain (England, Scotland and Wales) sellers who are not
+ * VAT registered, physical products carrying matching versioned non-VAT
+ * evidence, and Great Britain destinations. Northern Ireland is deliberately
+ * excluded from this P1 because goods there remain subject to distinct Windsor
+ * Framework VAT rules. VAT-registered, service, international, missing or
+ * contradictory cases fail closed until the broader Gate B tax contract
+ * authorises them.
  */
 export function resolveMarketplaceTaxV1(input: {
   seller: MarketplaceTaxSellerEvidence;
@@ -118,12 +133,21 @@ export function resolveMarketplaceTaxV1(input: {
     };
   }
 
+  if (isNorthernIrelandPostcode(addressPostcode(input.seller.businessAddress))) {
+    return {
+      ok: false,
+      code: 'TAX_SELLER_REGION_UNSUPPORTED',
+      message: 'Northern Ireland seller tax treatment is not yet enabled in this checkout boundary.',
+    };
+  }
+
+  const destinationAddress = input.shippingAddress ?? input.billingAddress;
   const destination = addressCountry(input.shippingAddress) ?? addressCountry(input.billingAddress);
-  if (destination !== 'GB') {
+  if (destination !== 'GB' || isNorthernIrelandPostcode(addressPostcode(destinationAddress))) {
     return {
       ok: false,
       code: 'TAX_DESTINATION_UNSUPPORTED',
-      message: 'This checkout currently supports UK delivery/billing destinations only while tax rules are being verified.',
+      message: 'This checkout currently supports delivery or billing destinations in England, Scotland and Wales only while tax rules are being verified.',
     };
   }
 
