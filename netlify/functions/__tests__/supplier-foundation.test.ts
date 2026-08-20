@@ -15,6 +15,7 @@ import {
 
 const repo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 const migration = repo('supabase/617_supplier_foundation.sql');
+const guards = repo('supabase/618_supplier_foundation_guards.sql');
 const adminApi = repo('netlify/functions/admin-supplier-foundation.ts');
 const adapterSource = repo('netlify/functions/_shared/supplierAdapter.ts');
 
@@ -46,6 +47,7 @@ describe('Phase D Supplier Foundation', () => {
     expect(migration).toContain('acknowledgement_minutes');
     expect(migration).toContain('stock_accuracy_target_pct');
     expect(migration).toContain('kill_switch_threshold');
+    expect(guards).toContain('guard_supplier_sla_supersession_v1');
   });
 
   it('models GREEN/AMBER/RED compliance with red never directly approved', () => {
@@ -77,6 +79,15 @@ describe('Phase D Supplier Foundation', () => {
       expect(adapterSource).toContain(`'${capability}'`);
       expect(migration).toContain(`'${capability}'`);
     }
+  });
+
+  it('binds active adapters to current official-source-backed provider evidence', () => {
+    expect(guards).toContain('private.supplier_commerce_provider_capabilities');
+    expect(guards).toContain("pc.status = 'verified'");
+    expect(guards).toContain('pc.reverify_due_at > now()');
+    expect(guards).toContain('jsonb_array_length(pc.official_source_refs) > 0');
+    expect(guards).toContain('adapter capabilities must be unique');
+    expect(guards).toContain('current verified provider capability evidence is required');
   });
 
   it('validates Supplier Adapter V1 identity and capability uniqueness', () => {
@@ -145,7 +156,7 @@ describe('Phase D Supplier Foundation', () => {
   it('requires live active-admin authority and rejects secret-bearing API payloads', () => {
     expect(migration).toContain("u.role = 'admin' AND u.\"isActive\" = true");
     expect(adminApi).toContain("authenticateActiveAccount(event, admin, ['admin'])");
-    expect(adminApi).toMatch(/password\|secret\|access\[_-\]\?token/);
+    expect(adminApi).toContain('password|secret|access[_-]?token');
     expect(adminApi).toContain('Secrets or payment credentials are not accepted');
   });
 
@@ -153,5 +164,6 @@ describe('Phase D Supplier Foundation', () => {
     expect(migration).toContain('does not enable Supplier Commerce');
     expect(migration).toContain('Phase C controls still govern runtime operations');
     expect(migration).not.toContain("UPDATE private.supplier_commerce_controls SET enabled = true");
+    expect(guards).not.toContain("UPDATE private.supplier_commerce_controls SET enabled = true");
   });
 });
