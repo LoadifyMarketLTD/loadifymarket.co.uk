@@ -10,18 +10,6 @@ import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
 import { supabase } from "@/lib/supabase";
 
-/**
- * Marketplace-style desktop header — always renders with the opaque dark-navy background.
- * Fixed at top-0 on every public-marketplace page.
- * Row 1 (h-16): Hamburger (LEFT, all sizes) | Logo | Search | Cart + auth actions
- * Row 2 (h-12): Category quick-links
- *
- * On mobile viewports (< 768 px) this header is always hidden via `hidden md:block`.
- * Each mobile page provides its own mobile-specific header (MobileAppHeader, back-button
- * bar, etc.).  The MobileAppLayout shell (used automatically by MainLayout on mobile)
- * provides MobileBottomNav for in-app navigation.
- */
-
 const Header = () => {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -77,14 +65,14 @@ const Header = () => {
 
   const navLinks = [
     { to: "/", label: "HOME", strong: true, catSlug: null as string | null },
-    { to: "/catalog", label: "All Categories", strong: true, catSlug: null as string | null },
+    { to: "/catalog", label: "SHOP ALL", strong: true, catSlug: null as string | null },
     ...displayCategories.map((cat) => ({
       to: `/catalog?category=${encodeURIComponent(cat.name)}`,
       label: cat.name,
       strong: false,
       catSlug: cat.slug,
     })),
-    { to: "/catalog", label: "More →", strong: true, catSlug: null as string | null },
+    { to: "/catalog", label: "MORE →", strong: true, catSlug: null as string | null },
   ];
 
   return (
@@ -118,7 +106,7 @@ const Header = () => {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search products, categories, sellers..."
+              placeholder="Search products and categories..."
               aria-label="Search marketplace"
               className="w-full h-11 sm:h-[46px] pl-9 sm:pl-11 pr-10 sm:pr-28 bg-[rgba(15,23,42,0.85)] border border-white/[0.08] rounded-2xl text-xs sm:text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all duration-200"
             />
@@ -148,11 +136,15 @@ const Header = () => {
 
         <div className="hidden lg:flex items-center gap-1.5 shrink-0">
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
-            <Link to="/register?type=seller">Sell Stock</Link>
+            <Link to="/catalog">Shop</Link>
           </Button>
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
-            <Link to="/shipping-policy">Shipping Policy</Link>
+            <Link to="/register?type=seller">Sell on Loadify</Link>
           </Button>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
+            <Link to="/help">Help</Link>
+          </Button>
+
           <Link
             to="/cart"
             className="relative p-2.5 text-muted-foreground hover:text-primary hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(212,175,55,0.35)] hover:bg-white/10 rounded-xl transition-all"
@@ -181,15 +173,6 @@ const Header = () => {
           ) : (
             <>
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
-                <Link to="/#how-it-works-buyers">For Buyers</Link>
-              </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
-                <Link to="/#how-it-works-sellers">For Sellers</Link>
-              </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
-                <Link to="/help">Help</Link>
-              </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
                 <Link to="/login">Sign In</Link>
               </Button>
               <Button
@@ -197,7 +180,7 @@ const Header = () => {
                 className="h-9 bg-primary hover:bg-primary-hover border border-[rgba(212,175,55,0.35)] text-black font-bold px-5 rounded-xl shadow-[0_6px_16px_rgba(212,175,55,0.25)] hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(212,175,55,0.28),0_10px_24px_rgba(0,0,0,0.40)] transition-all duration-250 ml-1"
                 asChild
               >
-                <Link to="/register">Register</Link>
+                <Link to="/register">Join Loadify</Link>
               </Button>
             </>
           )}
