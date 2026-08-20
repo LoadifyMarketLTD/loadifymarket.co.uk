@@ -13,6 +13,7 @@ const ACTIONS = new Set<SupplierImportAdminAction>([
   'record_asset_rights',
   'record_compliance_review',
   'set_import_item_status',
+  'checkpoint_import_batch',
 ]);
 
 interface Body {
