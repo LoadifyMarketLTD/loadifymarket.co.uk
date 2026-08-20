@@ -14,6 +14,11 @@ import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode, getFeatureFlags } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
+import {
+  buildSellerNonVatProductEvidence,
+  hasExplicitSellerNonVatDeclaration,
+  normaliseMarketplaceCountry,
+} from './_shared/marketplaceTax';
 
 const CREATE_ALLOWED_FIELDS = [
   'description',
@@ -165,25 +170,33 @@ export const handler: Handler = async (event) => {
   let sellerCanPublish = isAdmin;
   let sellerListingLimit: number | null = null;
 
+  const { data: sellerProfile, error: profileError } = await supabase
+    .from('seller_profiles')
+    .select('sellerStatus, stripeConnectStatus, isPaused, listingLimit, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
+    .eq('userId', callerId)
+    .maybeSingle<{
+      sellerStatus: string | null;
+      stripeConnectStatus: string | null;
+      isPaused: boolean | null;
+      listingLimit: number | null;
+      country: string | null;
+      isVatRegistered: boolean | null;
+      vatNumber: string | null;
+      businessAddress: Record<string, unknown> | null;
+      taxDeclarationConfirmed: boolean | null;
+      taxDeclarationVersion: number | null;
+      taxDeclarationSource: string | null;
+      taxDeclarationCapturedAt: string | null;
+    }>();
+
+  if (profileError || !sellerProfile) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({ error: 'Complete your seller setup before creating listings.' }),
+    };
+  }
+
   if (!isAdmin) {
-    const { data: sellerProfile, error: profileError } = await supabase
-      .from('seller_profiles')
-      .select('sellerStatus, stripeConnectStatus, isPaused, listingLimit')
-      .eq('userId', callerId)
-      .maybeSingle<{
-        sellerStatus: string | null;
-        stripeConnectStatus: string | null;
-        isPaused: boolean | null;
-        listingLimit: number | null;
-      }>();
-
-    if (profileError || !sellerProfile) {
-      return {
-        statusCode: 409,
-        body: JSON.stringify({ error: 'Complete your seller setup before creating listings.' }),
-      };
-    }
-
     sellerListingLimit = sellerProfile.listingLimit ?? null;
     sellerCanPublish =
       sellerProfile.sellerStatus === 'active' &&
@@ -198,6 +211,23 @@ export const handler: Handler = async (event) => {
         }),
       };
     }
+  }
+
+  const taxEvidence =
+    normalizedListingContext === 'product' &&
+    normaliseMarketplaceCountry(sellerProfile.country) === 'GB' &&
+    hasExplicitSellerNonVatDeclaration(sellerProfile)
+      ? buildSellerNonVatProductEvidence(price)
+      : null;
+
+  if (Boolean(isActive) && normalizedListingContext === 'product' && !taxEvidence) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: 'This listing cannot be published until the seller has explicitly confirmed a supported tax status and UK tax location.',
+        code: 'TAX_EVIDENCE_REQUIRED',
+      }),
+    };
   }
 
   const flags = await getFeatureFlags(supabase);
@@ -222,8 +252,6 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const vatRate = 0.20;
-  const priceExVat = price / (1 + vatRate);
   const allowedFields = pickAllowedFields(rest);
   const parsedStockQuantity = parseStockQuantity(allowedFields.stockQuantity);
   if (parsedStockQuantity === null) {
@@ -235,8 +263,12 @@ export const handler: Handler = async (event) => {
     ...allowedFields,
     title,
     price,
-    priceExVat,
-    vatRate,
+    priceExVat: taxEvidence?.priceExVat ?? null,
+    vatRate: taxEvidence?.vatRate ?? null,
+    taxTreatmentStatus: taxEvidence?.taxTreatmentStatus ?? null,
+    taxTreatmentSource: taxEvidence?.taxTreatmentSource ?? null,
+    taxEvidenceVersion: taxEvidence?.taxEvidenceVersion ?? null,
+    taxEvidenceCapturedAt: taxEvidence?.taxEvidenceCapturedAt ?? null,
     isActive: Boolean(isActive) && sellerCanPublish,
     isApproved,
     sellerId: callerId,
