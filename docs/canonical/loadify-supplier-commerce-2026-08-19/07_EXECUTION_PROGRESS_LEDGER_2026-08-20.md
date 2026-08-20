@@ -21,8 +21,8 @@
 - [x] GATE B BUSINESS CONTRACT — PR #533 merged to `main` on 20 August 2026.
 - [x] GATE B PASS — contract-level PASS recorded by `08_GATE_B_BUSINESS_CONTRACT_2026-08-20.md`.
 - [x] PHASE C — Platform Control Foundations merged through PR #536; Branch Guard PASS recorded below.
-- [ ] PHASE D — **CURRENT NEXT PHASE**.
-- [ ] PHASE E.
+- [x] PHASE D — Supplier Foundation merged through PR #538; Branch Guard PASS recorded below.
+- [ ] PHASE E — **CURRENT NEXT PHASE**.
 - [ ] PHASE F.
 - [ ] PHASE G.
 - [ ] PHASE H.
@@ -47,7 +47,8 @@
 | [x] | #530 | merged | mandatory repository agent entrypoint so future agents read the controlling contract and Branch Guard rules |
 | [x] | #531 | merge commit `25dee644fcf8e5fb2aa0b2a2961d139f384715fa` | P1 evidence-driven marketplace tax/payment boundary; Branch Guard PASS before merge |
 | [x] | #533 | merge commit `3ea7d1d22adf851561684463fda0186da7aed30b` | Gate B canonical business contract; contract-level PASS after current official-source verification |
-| [x] | #536 | merge commit `62b92d3987a84692f8319e922719ae6c99ec6d09` | Phase C1 / Phase C Platform Control Foundations; server-enforced fail-closed controls, operational evidence, incidents/recovery, provider capability evidence and retention framework |
+| [x] | #536 | merge commit `62b92d3987a84692f8319e922719ae6c99ec6d09` | Phase C Platform Control Foundations; Branch Guard PASS before merge |
+| [x] | #538 | merge commit `88969ee759b48e68bf133507f2b347e36f564800` | Phase D Supplier Foundation; provider-neutral adapter, qualification, SLA, compliance and provenance foundations; Branch Guard PASS before merge |
 
 ## PR #531 — P1 closeout record
 
@@ -150,15 +151,46 @@ Phase C scope closed by #536:
 
 **Deployment distinction:** migration `supabase/616_supplier_commerce_platform_control_foundations.sql` is merged to `main`, but this ledger entry does not claim that migration 616 has been applied to production unless a separate verified deployment record is later added.
 
+## PR #538 — Phase D Supplier Foundation closeout record
+
+**Merged:** 20 August 2026  
+**Merge commit:** `88969ee759b48e68bf133507f2b347e36f564800`  
+**Head tested before merge:** `8f9a214e540c3f71ce798732e07263f9d4289874`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- focused Phase D supplier-foundation tests: 14/14 PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- full suite retained the same 27 known baseline failures and added no new failing test family;
+- validation ran in an isolated clean worktree.
+
+Phase D scope closed by #538:
+
+- provider-neutral, explicitly versioned `SupplierAdapterV1` contract and capability envelope;
+- canonical supplier lifecycle: candidate → verification → approved → restricted → suspended → banned;
+- evidence-driven supplier qualification separate from product approval;
+- versioned, effective-dated and auditable supplier SLA foundation;
+- GREEN/AMBER/RED compliance model with fail-closed readiness decisions;
+- source/content provenance and rights evidence foundation;
+- active-admin-only mutation boundary and server-side readiness decision;
+- guard constraints strengthening lifecycle, evidence, SLA, compliance and adapter registration invariants;
+- no provider-specific commerce core and no Supplier Commerce runtime activation.
+
+**Deployment distinction:** migrations `supabase/617_supplier_foundation.sql` and `supabase/618_supplier_foundation_guards.sql` are merged to `main`, but this ledger entry does not claim they have been applied to production. Production deployment requires a separate verified deployment record.
+
 ## Current handoff
 
-The repository is now past Gate B, P1 production deployment and Phase C implementation merge:
+The repository is now past Gate B, P1 production deployment, Phase C and Phase D implementation merges:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS IN MAIN → PHASE D → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS IN MAIN → PHASE E → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE D.**
+**CURRENT NEXT PHASE: PHASE E — CANONICAL SUPPLIER DATA.**
 
-Phase D must consume the Gate B contract and Phase C server-control foundations. Supplier/provider runtime activation remains fail-closed until the applicable control, qualification, evidence and downstream acceptance gates are satisfied.
+Phase E must build canonical product, supplier offers, catalog identity and deduplication on top of the fixed Gate B business contract and the Phase C/D control and supplier foundations. It must preserve the invariant `ONE CANONICAL PRODUCT → MULTIPLE SUPPLIER OFFERS` when factual identity is established and must not deduplicate by AI title or create provider-specific commerce truth.
+
+Supplier Commerce runtime activation remains fail-closed until the applicable downstream gates are satisfied.
 
 Any newly demonstrated P0/P1 foundation defect still stops the sequence and returns to Branch Guard repair before downstream continuation.
 
