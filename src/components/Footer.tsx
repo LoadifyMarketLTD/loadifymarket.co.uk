@@ -28,11 +28,11 @@ const Footer = () => {
         style={{ padding: '20px 16px' }}
       >
         <div className="flex items-center gap-5 flex-wrap justify-center">
-          <Link to="/terms" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Terms</Link>
-          <Link to="/privacy" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Privacy</Link>
-          <Link to="/contact" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Support</Link>
+          <Link to="/terms" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Terms</Link>
+          <Link to="/privacy" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Privacy</Link>
+          <Link to="/contact" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Support</Link>
         </div>
-        <p style={{ fontSize: '12px', textAlign: 'center' }} className="text-white/45">
+        <p style={{ fontSize: '12px', textAlign: 'center' }} className="text-white/65">
           &copy; {new Date().getFullYear()} Loadify Market
         </p>
       </div>
@@ -73,21 +73,21 @@ const Footer = () => {
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <p className="text-lg font-bold text-foreground mb-3">Loadify Market</p>
             <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">
-              Loadify Market is operated by <strong className="text-muted-foreground">XDrive Logistics Ltd</strong>.
-              We are building a UK marketplace where buyers can discover products and sellers can reach customers through one governed commerce experience.
-              The applicable product, seller, fulfilment, delivery and return information is presented through the relevant marketplace and order flows.
+              Loadify Market is a UK-operated online marketplace run by <strong className="text-muted-foreground">XDrive Logistics Ltd</strong>.
+              Buyers can discover and purchase products through Loadify, while approved sellers can build their catalogue and manage marketplace orders.
+              Seller, fulfilment, delivery and return information is shown through the relevant product and order experience.
             </p>
-            <ul className="space-y-1 text-[12px] text-muted-foreground/75">
+            <ul className="space-y-1 text-[12px] text-muted-foreground/85">
               <li>Company No. 13171804</li>
               <li>VAT GB375949535</li>
               <li>101 Cornelian Street, Blackburn BB1 9QL, UK</li>
               <li>
-                <a href="mailto:contact@loadifymarket.co.uk" className="hover:text-white/70 transition-colors">
+                <a href="mailto:contact@loadifymarket.co.uk" className="hover:text-white/80 transition-colors">
                   contact@loadifymarket.co.uk
                 </a>
               </li>
               <li>
-                <a href="tel:+447423272138" className="hover:text-white/70 transition-colors">
+                <a href="tel:+447423272138" className="hover:text-white/80 transition-colors">
                   +44 7423 272138
                 </a>
               </li>
@@ -159,11 +159,11 @@ const Footer = () => {
 
       <div className="hidden sm:block border-t border-white/[0.07]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-          <p className="text-[12px] text-muted-foreground/65">
+          <p className="text-[12px] text-muted-foreground/80">
             &copy; 2021 XDrive Logistics Ltd (Company No. 13171804). All rights reserved.
             Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.
           </p>
-          <p className="text-[12px] text-muted-foreground/65 lg:text-right">
+          <p className="text-[12px] text-muted-foreground/80 lg:text-right">
             Stripe-powered payments · Marketplace order tracking · Transaction-specific seller, fulfilment and return terms apply.
           </p>
         </div>
@@ -185,7 +185,7 @@ const Footer = () => {
               <Link
                 key={l.to}
                 to={l.to}
-                className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground/85 transition-colors"
+                className="text-[11px] text-muted-foreground/75 hover:text-muted-foreground transition-colors"
               >
                 {l.label}
               </Link>
