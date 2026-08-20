@@ -21,6 +21,7 @@ export type SupplierCatalogAdminAction =
   | 'set_canonical_status'
   | 'attach_identifier'
   | 'upsert_supplier_catalog_item'
+  | 'attach_supplier_identifier'
   | 'link_supplier_offer'
   | 'record_dedup_candidate'
   | 'resolve_dedup_candidate';
