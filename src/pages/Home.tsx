@@ -12,6 +12,7 @@ import { useMobileGrid } from "@/hooks/useMobileGrid";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
+import ShopByCategory from "@/components/ShopByCategory";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
@@ -22,14 +23,7 @@ import { trackViewHome } from "@/lib/analytics";
 
 function SkeletonGridCard() {
   return (
-    <div
-      className="animate-pulse"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-      }}
-    >
+    <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div className="rounded-xl animate-pulse flex flex-col gap-2 w-full aspect-square bg-white/[0.06]" />
       <div className="h-3 rounded-md bg-white/[0.06] w-[80%]" />
       <div className="h-3.5 rounded-md bg-white/[0.06] w-[50%]" />
@@ -55,17 +49,29 @@ function MobileHome() {
   return (
     <div className="md:hidden min-h-screen bg-background">
       <MobileAppHeader />
-      <MobileCategoryShortcuts />
       <MobileHeroBanner />
+      <MobileCategoryShortcuts />
 
       <section
-        aria-label="Products"
+        aria-label="Marketplace products"
         style={{
           paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 12,
+          paddingTop: 16,
           paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 20px)',
         }}
       >
+        <div style={{ marginBottom: 12 }}>
+          <p className="text-primary" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>
+            Shop Loadify
+          </p>
+          <h2 className="text-foreground" style={{ fontSize: 18, fontWeight: 750, lineHeight: 1.2 }}>
+            Explore the marketplace
+          </h2>
+          <p className="text-foreground/45" style={{ fontSize: 12, marginTop: 3 }}>
+            Live products available to browse and buy now.
+          </p>
+        </div>
+
         <div
           style={{
             display: 'grid',
@@ -114,8 +120,8 @@ export default function Home() {
         />
       </Helmet>
       <SEO
-        title="Sell in the UK with 0% Commission | Loadify Market"
-        description="List products for free, sell at fixed prices, and get paid through Stripe. Buyers can shop trusted UK marketplace sellers with secure checkout."
+        title="UK Online Marketplace for Buyers & Sellers | Loadify Market"
+        description="Discover products across categories, shop securely with Stripe-powered checkout, track orders, or start selling to UK buyers on Loadify Market."
         canonical="/"
       />
 
@@ -125,13 +131,14 @@ export default function Home() {
         <div className="hidden md:block">
           <HeroSection />
 
-          <section
-            className="bg-background py-6 px-8"
-            aria-label="Platform overview"
-          >
+          <section className="bg-background py-6 px-8" aria-label="Loadify Market overview">
             <TrustStrip />
 
             <div className="mt-8">
+              <ShopByCategory />
+            </div>
+
+            <div className="mt-2">
               <FeaturedProducts />
             </div>
 
