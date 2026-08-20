@@ -139,8 +139,9 @@ describe('marketplace tax evidence P1', () => {
     expect(locationEvidenceMigration).toContain('stripe_connect_account_v1');
     expect(locationEvidenceMigration).toContain('private.protect_seller_tax_location_evidence_v1()');
     expect(locationEvidenceMigration).toContain("auth.role() IS DISTINCT FROM 'service_role'");
-    expect(locationEvidenceMigration).toContain('seller tax declaration requires verified Stripe Connect Great Britain tax-location evidence');
-    expect(locationEvidenceMigration).toContain("v_tax_postcode ~ '^(BT|GY|JE|IM|GX|BF)'");
+    expect(locationEvidenceMigration).toContain('v_location_supported');
+    expect(locationEvidenceMigration).toContain('NEW."taxDeclarationConfirmed" := false');
+    expect(locationEvidenceMigration).toContain("v_tax_postcode !~ '^(BT|GY|JE|IM|GX|BF)'");
     expect(connectOnboard).toContain("country: 'GB'");
     expect(connectOnboard).toContain("taxCountrySource: 'stripe_connect_account_v1'");
     expect(connectStatus).toContain("stripeUpdate.taxCountrySource = 'stripe_connect_account_v1'");
