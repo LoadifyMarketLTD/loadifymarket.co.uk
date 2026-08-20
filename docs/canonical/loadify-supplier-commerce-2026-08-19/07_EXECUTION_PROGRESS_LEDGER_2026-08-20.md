@@ -20,8 +20,8 @@
 - [x] P1 tax/payment production DB deployment — applied and verified on 20 August 2026; see `09_P1_PRODUCTION_DEPLOYMENT_2026-08-20.md`.
 - [x] GATE B BUSINESS CONTRACT — PR #533 merged to `main` on 20 August 2026.
 - [x] GATE B PASS — contract-level PASS recorded by `08_GATE_B_BUSINESS_CONTRACT_2026-08-20.md`.
-- [ ] PHASE C — **CURRENT NEXT PHASE**.
-- [ ] PHASE D.
+- [x] PHASE C — Platform Control Foundations merged through PR #536; Branch Guard PASS recorded below.
+- [ ] PHASE D — **CURRENT NEXT PHASE**.
 - [ ] PHASE E.
 - [ ] PHASE F.
 - [ ] PHASE G.
@@ -47,6 +47,7 @@
 | [x] | #530 | merged | mandatory repository agent entrypoint so future agents read the controlling contract and Branch Guard rules |
 | [x] | #531 | merge commit `25dee644fcf8e5fb2aa0b2a2961d139f384715fa` | P1 evidence-driven marketplace tax/payment boundary; Branch Guard PASS before merge |
 | [x] | #533 | merge commit `3ea7d1d22adf851561684463fda0186da7aed30b` | Gate B canonical business contract; contract-level PASS after current official-source verification |
+| [x] | #536 | merge commit `62b92d3987a84692f8319e922719ae6c99ec6d09` | Phase C1 / Phase C Platform Control Foundations; server-enforced fail-closed controls, operational evidence, incidents/recovery, provider capability evidence and retention framework |
 
 ## PR #531 — P1 closeout record
 
@@ -121,15 +122,43 @@ Gate B used current official HMRC, CMA, OPSS/GOV.UK and Stripe documentation as 
 
 **Important:** Gate B PASS is a business-contract PASS. It does not claim that Supplier Commerce schema/runtime exists, that current marketplace Stripe charge configuration already conforms to every target-mode responsibility, or that provider/NI rules are permanently verified. Those matters must be reconciled in the applicable downstream phase before activation.
 
+## PR #536 — Phase C Platform Control Foundations closeout record
+
+**Merged:** 20 August 2026  
+**Merge commit:** `62b92d3987a84692f8319e922719ae6c99ec6d09`  
+**Head tested before merge:** `8cf08f22cbeb10a3ca6d6a79794fd4566d7e52f1`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- focused Phase C1 control-foundation tests: 10/10 PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- full suite retained the same 27 known baseline test failures and added no new failing test family;
+- validation ran in an isolated clean worktree, preserving unrelated local Android changes.
+
+Phase C scope closed by #536:
+
+- Supplier Commerce server-enforced control plane and kill switches;
+- fail-closed global and operation defaults;
+- versioned control-decision and admin mutation boundaries;
+- structured operational/correlation evidence;
+- incident and durable recovery framework;
+- provider/legal capability evidence and re-verification framework;
+- privacy/retention registry framework;
+- no provider-specific core model and no unrelated UI redesign.
+
+**Deployment distinction:** migration `supabase/616_supplier_commerce_platform_control_foundations.sql` is merged to `main`, but this ledger entry does not claim that migration 616 has been applied to production unless a separate verified deployment record is later added.
+
 ## Current handoff
 
-The repository is now past Gate B and the P1 production database cutover:
+The repository is now past Gate B, P1 production deployment and Phase C implementation merge:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS IN MAIN → PHASE C → PHASE D → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS IN MAIN → PHASE D → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE C.**
+**CURRENT NEXT PHASE: PHASE D.**
 
-Phase C must consume the Gate B contract as fixed business input. It may design/evolve canonical schema, data ownership and governance according to the original contract, but it must not invent a parallel order/payment/financial truth or silently change the Gate B responsibilities.
+Phase D must consume the Gate B contract and Phase C server-control foundations. Supplier/provider runtime activation remains fail-closed until the applicable control, qualification, evidence and downstream acceptance gates are satisfied.
 
 Any newly demonstrated P0/P1 foundation defect still stops the sequence and returns to Branch Guard repair before downstream continuation.
 
