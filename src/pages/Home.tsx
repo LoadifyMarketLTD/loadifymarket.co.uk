@@ -90,14 +90,14 @@ function MobileHome() {
           paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 20px)',
         }}
       >
-        <div style={{ marginBottom: 12 }}>
-          <p className="text-primary" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 3 }}>
+        <div style={{ marginBottom: 14 }}>
+          <p className="text-primary" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
             Shop Loadify
           </p>
-          <h2 className="text-foreground" style={{ fontSize: 18, fontWeight: 750, lineHeight: 1.2 }}>
+          <h2 className="text-foreground" style={{ fontSize: 19, fontWeight: 780, lineHeight: 1.2 }}>
             Explore the marketplace
           </h2>
-          <p className="text-foreground/45" style={{ fontSize: 12, marginTop: 3 }}>
+          <p className="text-foreground/65" style={{ fontSize: 12, marginTop: 4, lineHeight: 1.45 }}>
             Live products available to browse and buy now.
           </p>
         </div>
@@ -117,7 +117,7 @@ function MobileHome() {
             <MobileProductGrid products={leadProducts} />
 
             {products.length > 0 && (
-              <div style={{ marginInline: 'calc(var(--mob-side, 16px) * -1)', marginTop: 8, marginBottom: 8 }}>
+              <div style={{ marginInline: 'calc(var(--mob-side, 16px) * -1)', marginTop: 10, marginBottom: 10 }}>
                 <SellerCTA />
               </div>
             )}
