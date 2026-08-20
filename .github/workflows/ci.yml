@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, fix/p1-tax-payment-evidence-20260820]
   pull_request:
     branches: [main, develop]
 
@@ -107,10 +107,6 @@ jobs:
           if not nums:
               raise SystemExit('No numeric migration prefixes found.')
 
-          # Sort numerically and check the list is non-decreasing.
-          # The repository intentionally mixes 2-digit legacy prefixes (10, 20, …)
-          # with 3-digit modern prefixes (100, 110, …), which is valid because the
-          # application applies them in ascending numeric order at deploy time.
           nums_sorted = sorted(nums)
           for i in range(1, len(nums_sorted)):
               if nums_sorted[i] < nums_sorted[i - 1]:
@@ -119,8 +115,6 @@ jobs:
                       f'{nums_sorted[i]} follows {nums_sorted[i-1]}'
                   )
 
-          # Flag unexpected new duplicate prefixes (> 2 occurrences of any single
-          # number suggests a merge conflict or a misnamed file).
           counts = Counter(nums_sorted)
           bad_dupes = [n for n, c in counts.items() if c > 2]
           if bad_dupes:
@@ -167,9 +161,6 @@ jobs:
     permissions:
       contents: read
     env:
-      # Provide stub env vars so Vite doesn't fail with missing-variable errors.
-      # Real secrets are injected by Netlify at deploy time; we only need the
-      # build to succeed here.
       VITE_SUPABASE_URL: https://placeholder.supabase.co
       VITE_SUPABASE_ANON_KEY: placeholder-anon-key
       VITE_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
