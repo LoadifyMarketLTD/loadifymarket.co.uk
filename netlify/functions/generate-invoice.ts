@@ -1,8 +1,7 @@
 /**
  * generate-invoice
  *
- * Generates a printable HTML invoice for a given order and streams it
- * back to the buyer's browser.
+ * Generates a printable marketplace invoice/order document for a given order.
  *
  * Security:
  *   – Requires a valid JWT.
@@ -11,9 +10,10 @@
  *
  * Commercial-history rule:
  *   – Post-cutover orders with commercialSnapshotSource MUST render checkout-time
- *     buyer/seller/product identity from immutable snapshots.
+ *     buyer/seller/product/tax identity from immutable snapshots.
  *   – Only legacy rows with no authoritative snapshot may use today's profile /
  *     product values as a display-only fallback. No fallback is ever persisted.
+ *   – Legacy rows never manufacture a VAT treatment from today's mutable state.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -28,6 +28,21 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
+
+function formatAddress(address: Record<string, unknown> | null | undefined): string {
+  if (!address) return '';
+  return [
+    address.address ?? address.streetAddress ?? address.address1,
+    address.address2,
+    address.city,
+    address.county,
+    address.postcode ?? address.postal_code,
+    address.country,
+  ]
+    .map((part) => (part == null ? '' : String(part).trim()))
+    .filter(Boolean)
+    .join(', ');
+}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -100,6 +115,11 @@ export const handler: Handler = async (event) => {
       buyerCompanyNameSnapshot,
       buyerVatNumberSnapshot,
       sellerBusinessNameSnapshot,
+      sellerBusinessAddressSnapshot,
+      sellerVatRegisteredSnapshot,
+      sellerVatNumberSnapshot,
+      taxSnapshotVersion,
+      taxTreatmentSnapshot,
       isB2BSnapshot,
       reverseChargeSnapshot,
       commercialSnapshotSource,
@@ -123,6 +143,11 @@ export const handler: Handler = async (event) => {
       buyerCompanyNameSnapshot: string | null;
       buyerVatNumberSnapshot: string | null;
       sellerBusinessNameSnapshot: string | null;
+      sellerBusinessAddressSnapshot: Record<string, unknown> | null;
+      sellerVatRegisteredSnapshot: boolean | null;
+      sellerVatNumberSnapshot: string | null;
+      taxSnapshotVersion: number | null;
+      taxTreatmentSnapshot: string | null;
       isB2BSnapshot: boolean | null;
       reverseChargeSnapshot: boolean | null;
       commercialSnapshotSource: string | null;
@@ -139,22 +164,52 @@ export const handler: Handler = async (event) => {
 
   const { data: items, error: itemError } = await supabase
     .from('order_items')
-    .select('quantity, pricePerUnit, subtotal, productTitleSnapshot, productSnapshotSource, products ( title )')
+    .select('quantity, pricePerUnit, vatRate, subtotal, taxTreatmentSnapshot, productTitleSnapshot, productSnapshotSource, products ( title )')
     .eq('orderId', orderId);
   if (itemError) {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Unable to load invoice items' }) };
   }
 
   const hasCommercialSnapshot = Boolean(order.commercialSnapshotSource);
+  const hasMarketplaceTaxSnapshot =
+    hasCommercialSnapshot &&
+    order.taxSnapshotVersion === 1 &&
+    order.taxTreatmentSnapshot === 'seller_not_vat_registered' &&
+    order.sellerVatRegisteredSnapshot === false &&
+    !order.sellerVatNumberSnapshot &&
+    order.reverseChargeSnapshot === false;
+
+  if (hasCommercialSnapshot && !hasMarketplaceTaxSnapshot) {
+    return {
+      statusCode: 409,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Order tax evidence is incomplete or uses an unsupported tax treatment.' }),
+    };
+  }
+
+  if (hasMarketplaceTaxSnapshot) {
+    const itemTaxConflict = (items ?? []).some((item) =>
+      Number(item.vatRate) !== 0 || item.taxTreatmentSnapshot !== 'seller_not_vat_registered',
+    );
+    if (itemTaxConflict) {
+      return {
+        statusCode: 409,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: 'Order item tax evidence conflicts with the immutable order tax snapshot.' }),
+      };
+    }
+  }
 
   let buyerRow: { firstName?: string; lastName?: string; email?: string } | null = null;
   let buyerProfileRow: {
     accountType?: string | null;
     companyName?: string | null;
     vatNumber?: string | null;
-    isVatVerified?: boolean | null;
   } | null = null;
-  let sellerRow: { businessName?: string } | null = null;
+  let sellerRow: {
+    businessName?: string | null;
+    businessAddress?: Record<string, unknown> | null;
+  } | null = null;
 
   // Never consult mutable identity for a post-cutover order. Current-state
   // lookups are strictly a legacy display fallback for rows where the snapshot
@@ -172,22 +227,24 @@ export const handler: Handler = async (event) => {
     buyerProfileRow = order.buyerId
       ? (await supabase
           .from('buyer_profiles')
-          .select('accountType, companyName, vatNumber, isVatVerified')
+          .select('accountType, companyName, vatNumber')
           .eq('userId', order.buyerId)
           .maybeSingle<{
             accountType?: string | null;
             companyName?: string | null;
             vatNumber?: string | null;
-            isVatVerified?: boolean | null;
           }>()
         ).data
       : null;
 
     sellerRow = (await supabase
       .from('seller_profiles')
-      .select('businessName')
+      .select('businessName, businessAddress')
       .eq('userId', order.sellerId)
-      .single<{ businessName?: string }>()).data;
+      .single<{
+        businessName?: string | null;
+        businessAddress?: Record<string, unknown> | null;
+      }>()).data;
   }
 
   const legacyBuyerName = [buyerRow?.firstName, buyerRow?.lastName].filter(Boolean).join(' ') || 'Customer';
@@ -200,12 +257,12 @@ export const handler: Handler = async (event) => {
   const sellerName = hasCommercialSnapshot
     ? order.sellerBusinessNameSnapshot || 'Seller'
     : sellerRow?.businessName || 'Seller';
+  const sellerAddress = hasCommercialSnapshot
+    ? formatAddress(order.sellerBusinessAddressSnapshot)
+    : formatAddress(sellerRow?.businessAddress);
   const isB2B = hasCommercialSnapshot
     ? order.isB2BSnapshot === true
     : Boolean(buyerProfileRow?.accountType) && buyerProfileRow?.accountType !== 'individual';
-  const isReverseCharge = hasCommercialSnapshot
-    ? order.reverseChargeSnapshot === true
-    : isB2B && Boolean(buyerProfileRow?.isVatVerified);
   const buyerCompanyName = hasCommercialSnapshot
     ? order.buyerCompanyNameSnapshot
     : buyerProfileRow?.companyName ?? null;
@@ -244,10 +301,20 @@ export const handler: Handler = async (event) => {
     .filter(Boolean)
     .join(', ');
 
-  const vatNumber = process.env.VITE_VAT_NUMBER || '';
   const companyName = process.env.VITE_COMPANY_NAME || 'Loadify Market';
   const companyAddress = process.env.VITE_COMPANY_ADDRESS || 'United Kingdom';
   const supportEmail = process.env.VITE_SUPPORT_EMAIL || 'contact@loadifymarket.co.uk';
+
+  const taxRows = hasMarketplaceTaxSnapshot
+    ? `<tr><td>VAT charged by seller</td><td>${formatGBP(0)}</td></tr>`
+    : `<tr><td>VAT / tax</td><td>Legacy treatment not reconstructed</td></tr>`;
+  const taxNotice = hasMarketplaceTaxSnapshot
+    ? `<div style="margin:12px 0;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155;">
+        <strong>Seller tax status:</strong> VAT has not been charged on this order because the independent seller was recorded as not VAT registered at checkout.
+      </div>`
+    : `<div style="margin:12px 0;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155;">
+        <strong>Legacy order:</strong> This order predates the immutable marketplace tax snapshot. Loadify does not reconstruct historical VAT treatment from the seller's current profile.
+      </div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -271,7 +338,7 @@ export const handler: Handler = async (event) => {
     table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
     thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
     thead th:not(:first-child) { text-align: right; }
-    .totals { margin-left: auto; width: 280px; }
+    .totals { margin-left: auto; width: 320px; }
     .totals table { margin-bottom: 0; }
     .totals td { padding: 6px 12px; font-size: 13px; }
     .totals td:last-child { text-align: right; }
@@ -287,7 +354,7 @@ export const handler: Handler = async (event) => {
       <h1>Loadify Market</h1>
       <span>${escapeHtml(companyName)}</span>
       <span>${escapeHtml(companyAddress)}</span>
-      ${vatNumber ? `<span>VAT: ${escapeHtml(vatNumber)}</span>` : ''}
+      <span>Marketplace platform operator</span>
     </div>
     <div class="invoice-meta">
       <h2>INVOICE</h2>
@@ -307,7 +374,7 @@ export const handler: Handler = async (event) => {
         <strong>${escapeHtml(billToName)}</strong><br />
         ${billToContact ? `${escapeHtml(billToContact)}<br />` : ''}
         ${buyerEmail ? `${escapeHtml(buyerEmail)}<br />` : ''}
-        ${isB2B && buyerVatNumber ? `VAT: ${escapeHtml(buyerVatNumber)}<br />` : ''}
+        ${isB2B && buyerVatNumber ? `Buyer VAT: ${escapeHtml(buyerVatNumber)}<br />` : ''}
         ${addrLine ? escapeHtml(addrLine) : ''}
       </p>
       ${isB2B ? `<p style="margin-top:6px;font-size:11px;color:#374151;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Business Account</p>` : ''}
@@ -316,6 +383,7 @@ export const handler: Handler = async (event) => {
       <h3>Sold By</h3>
       <p>
         <strong>${escapeHtml(sellerName)}</strong><br />
+        ${sellerAddress ? `${escapeHtml(sellerAddress)}<br />` : ''}
         via Loadify Market<br />
         ${escapeHtml(supportEmail)}
       </p>
@@ -338,25 +406,18 @@ export const handler: Handler = async (event) => {
 
   <div class="totals">
     <table>
-      <tr><td>Subtotal (ex VAT)</td><td>${formatGBP(order.subtotal)}</td></tr>
-      ${isReverseCharge
-        ? `<tr><td>VAT — Reverse Charge (Customer Accounts for VAT)</td><td>${formatGBP(0)}</td></tr>`
-        : `<tr><td>VAT (20%)</td><td>${formatGBP(order.vatAmount)}</td></tr>`
-      }
+      <tr><td>Items subtotal</td><td>${formatGBP(order.subtotal)}</td></tr>
+      ${taxRows}
       <tr><td>Shipping</td><td>${formatGBP(order.shippingAmount)}</td></tr>
       <tr class="grand-total"><td>Total</td><td>${formatGBP(order.total)}</td></tr>
     </table>
   </div>
 
-  ${isReverseCharge ? `
-  <div style="margin:12px 0;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#713f12;">
-    <strong>VAT Reverse Charge:</strong> As a VAT-registered business customer, you are liable to account for VAT on this supply under the reverse charge mechanism. The seller has not charged VAT.
-  </div>` : ''}
+  ${taxNotice}
 
   <div class="footer">
-    <p>This invoice was generated by Loadify Market · ${escapeHtml(supportEmail)}</p>
-    <p>For queries about this order, please contact us quoting order number <strong>${escapeHtml(orderNum)}</strong>.</p>
-    ${vatNumber ? `<p>VAT Registration Number: ${escapeHtml(vatNumber)}</p>` : ''}
+    <p>This document was generated by Loadify Market on behalf of the independent seller · ${escapeHtml(supportEmail)}</p>
+    <p>The sales contract is between the buyer and the seller. Quote order number <strong>${escapeHtml(orderNum)}</strong> for support.</p>
     <p style="margin-top:12px;"><button onclick="window.print()" style="background:#0A1930;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button></p>
   </div>
 </body>
