@@ -10,10 +10,14 @@ const webCheckout = read('../create-checkout.ts');
 const mobileCheckout = read('../create-payment-intent.ts');
 const createProduct = read('../create-product.ts');
 const updateProduct = read('../update-product.ts');
+const connectOnboard = read('../connect-onboard.ts');
+const connectStatus = read('../connect-status.ts');
 const invoice = read('../generate-invoice.ts');
+const cutoverPreflight = read('../../../supabase/611_zz_marketplace_tax_cutover_preflight.sql');
 const taxMigration = read('../../../supabase/612_marketplace_tax_evidence_boundary.sql');
 const declarationMigration = read('../../../supabase/613_seller_tax_declaration_evidence.sql');
 const declarationSnapshotMigration = read('../../../supabase/614_strengthen_marketplace_tax_snapshot_declaration.sql');
+const locationEvidenceMigration = read('../../../supabase/615_authoritative_seller_tax_location_evidence.sql');
 const sellerProfile = read('../../../src/pages/pixel-perfect/seller/SellerProfile.tsx');
 
 const product = {
@@ -127,6 +131,27 @@ describe('marketplace tax evidence P1', () => {
     expect(sellerProfile).toContain('taxDeclarationConfirmed');
     expect(sellerProfile).toContain('I confirm that the VAT registration status shown above is accurate');
     expect(sellerProfile).toContain('setSellerCountry("GB")');
+  });
+
+  it('binds seller declaration to server-only Stripe Connect tax-location evidence', () => {
+    expect(locationEvidenceMigration).toContain('"taxCountry" text');
+    expect(locationEvidenceMigration).toContain('"taxPostcode" text');
+    expect(locationEvidenceMigration).toContain('stripe_connect_account_v1');
+    expect(locationEvidenceMigration).toContain('private.protect_seller_tax_location_evidence_v1()');
+    expect(locationEvidenceMigration).toContain("auth.role() IS DISTINCT FROM 'service_role'");
+    expect(locationEvidenceMigration).toContain('seller tax declaration requires verified Stripe Connect Great Britain tax-location evidence');
+    expect(locationEvidenceMigration).toContain("v_tax_postcode ~ '^(BT|GY|JE|IM|GX|BF)'");
+    expect(connectOnboard).toContain("country: 'GB'");
+    expect(connectOnboard).toContain("taxCountrySource: 'stripe_connect_account_v1'");
+    expect(connectStatus).toContain("stripeUpdate.taxCountrySource = 'stripe_connect_account_v1'");
+    expect(connectStatus).toContain('stripeUpdate.taxPostcode = stripeTaxPostcode');
+  });
+
+  it('blocks tax materializer cutover while pre-P1 payments are in flight', () => {
+    expect(cutoverPreflight).toContain("WHERE ps.status = 'pending'");
+    expect(cutoverPreflight).toContain("WHERE o.status = 'awaiting_payment'");
+    expect(cutoverPreflight).toContain('P1 tax cutover blocked: pending payment_sessions exist');
+    expect(cutoverPreflight).toContain('P1 tax cutover blocked: awaiting_payment orders exist');
   });
 
   it('database materialization remains one atomic boundary and is tax-evidence gated', () => {
