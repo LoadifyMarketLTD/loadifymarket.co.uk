@@ -18,6 +18,27 @@
 
 BEGIN;
 
+-- Atomic cutover guard. Never replace the materializer underneath a payment that
+-- was created with the pre-P1 snapshot shape. Deployment must be retried only
+-- after the existing payment reaches a terminal state.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.payment_sessions ps
+     WHERE ps.status = 'pending'
+  ) THEN
+    RAISE EXCEPTION '612 tax cutover blocked: pending payment_sessions exist';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.orders o
+     WHERE o.status = 'awaiting_payment'
+  ) THEN
+    RAISE EXCEPTION '612 tax cutover blocked: awaiting_payment orders exist';
+  END IF;
+END;
+$$;
+
 ALTER TABLE public.seller_profiles
   ADD COLUMN IF NOT EXISTS "taxCountry" text,
   ADD COLUMN IF NOT EXISTS "taxCountrySource" text,
