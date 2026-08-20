@@ -1,6 +1,5 @@
 /**
- * MobileHeroBanner — simple single sell CTA hero (no carousel).
- * Shows a short message + "Sell Now" button + optional "Learn how" link.
+ * MobileHeroBanner — buyer-first marketplace hero with a secondary seller path.
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -39,90 +38,88 @@ export default function MobileHeroBanner() {
         className="bg-white/[0.04]"
         style={{
           border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 16,
-          padding: 'clamp(16px, 5vw, 24px)',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 16,
+          borderRadius: 18,
+          padding: 'clamp(18px, 5vw, 24px)',
         }}
       >
-        {/* Text */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p
-            className="text-primary"
+        <p
+          className="text-primary"
+          style={{
+            fontSize: 'clamp(10px, 2.8vw, 12px)',
+            fontWeight: 800,
+            letterSpacing: '0.09em',
+            textTransform: 'uppercase',
+            margin: 0,
+            lineHeight: 1,
+            marginBottom: 8,
+          }}
+        >
+          UK marketplace for buying and selling
+        </p>
+
+        <h1
+          className="text-foreground"
+          style={{
+            fontSize: 'clamp(24px, 7vw, 32px)',
+            fontWeight: 850,
+            margin: 0,
+            lineHeight: 1.08,
+            letterSpacing: '-0.03em',
+          }}
+        >
+          Shop. Sell. Grow.
+          <span className="text-primary" style={{ display: 'block' }}>All in one marketplace.</span>
+        </h1>
+
+        <p
+          className="text-foreground/60"
+          style={{
+            fontSize: 'clamp(13px, 3.5vw, 15px)',
+            margin: '10px 0 0',
+            lineHeight: 1.5,
+          }}
+        >
+          Browse products, checkout securely and track orders from Loadify. Sellers can join with 0% commission until 31 December 2026.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
+          <button
+            onClick={() => navigate('/catalog')}
+            className="bg-primary text-black"
             style={{
-              fontSize: 'clamp(11px, 3vw, 13px)',
-              fontWeight: 600,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              margin: 0,
-              lineHeight: 1,
-              marginBottom: 6,
+              height: 44,
+              borderRadius: 12,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 800,
             }}
           >
-            0% commission until 31 December 2026
-          </p>
-          <h2
+            Shop now
+          </button>
+          <button
+            onClick={handleSell}
             className="text-foreground"
             style={{
-              fontSize: 'clamp(18px, 5.2vw, 24px)',
-              fontWeight: 800,
-              margin: 0,
-              lineHeight: 1.2,
-              letterSpacing: '-0.02em',
+              height: 44,
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.16)',
+              background: 'rgba(255,255,255,0.04)',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 750,
             }}
           >
-            Sell on Loadify Market
-          </h2>
-          <p
-            className="text-foreground/55"
-            style={{
-              fontSize: 'clamp(12px, 3.4vw, 14px)',
-              margin: '6px 0 0',
-              lineHeight: 1.4,
-            }}
-          >
-            Free listings. Fixed prices. Stripe payouts.
-          </p>
+            Start selling
+          </button>
+        </div>
 
-          {/* CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16 }}>
-            <button
-              onClick={handleSell}
-              style={{
-                height: 40,
-                paddingLeft: 20,
-                paddingRight: 20,
-                borderRadius: 9999,
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 'clamp(13px, 3.6vw, 14px)',
-                fontWeight: 700,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Start selling
-            </button>
-            <button
-              onClick={() => navigate('/help')}
-              className="text-foreground/50"
-              style={{
-                height: 40,
-                paddingLeft: 0,
-                paddingRight: 0,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 'clamp(12px, 3.2vw, 13px)',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Learn how it works
-            </button>
-          </div>
+        <div className="text-foreground/45" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 13, fontSize: 11, fontWeight: 700 }}>
+          <span>Secure checkout</span>
+          <span>•</span>
+          <span>Order tracking</span>
+          <span>•</span>
+          <span>UK operated</span>
         </div>
       </div>
     </div>
