@@ -23,8 +23,8 @@
 - [x] PHASE C — Platform Control Foundations merged through PR #536; Branch Guard PASS recorded below.
 - [x] PHASE D — Supplier Foundation merged through PR #538; Branch Guard PASS recorded below.
 - [x] PHASE E — Canonical Supplier Data merged through PR #540; Branch Guard PASS recorded below.
-- [ ] PHASE F — **CURRENT NEXT PHASE**.
-- [ ] PHASE G.
+- [x] PHASE F — Import / Normalisation merged through PR #542; Branch Guard PASS recorded below.
+- [ ] PHASE G — **CURRENT NEXT PHASE**.
 - [ ] PHASE H.
 - [ ] PHASE I.
 - [ ] PHASE J.
@@ -50,6 +50,7 @@
 | [x] | #536 | merge commit `62b92d3987a84692f8319e922719ae6c99ec6d09` | Phase C Platform Control Foundations; Branch Guard PASS before merge |
 | [x] | #538 | merge commit `88969ee759b48e68bf133507f2b347e36f564800` | Phase D Supplier Foundation; provider-neutral adapter, qualification, SLA, compliance and provenance foundations; Branch Guard PASS before merge |
 | [x] | #540 | merge commit `bf4cd7113fef82581639ca9a4425e9a0770b5053` | Phase E Canonical Supplier Data; canonical product identity, supplier offers, catalog identity and evidence-backed deduplication; Branch Guard PASS before merge |
+| [x] | #542 | merge commit `004bc59e5e6c882c5f15ad64d7ec801224973af3` | Phase F Import / Normalisation; auditable, resumable and idempotent import with AI Facts Lock, rights/compliance review and Phase C kill-switch enforcement; Branch Guard PASS before merge |
 
 ## PR #531 — P1 closeout record
 
@@ -213,15 +214,47 @@ Phase E scope closed by #540:
 
 **Deployment distinction:** migrations `supabase/619_canonical_supplier_data.sql`, `supabase/620_canonical_supplier_data_guards.sql` and `supabase/621_canonical_supplier_data_integrity.sql` are merged to `main`, but this ledger entry does not claim they have been applied to production. Production deployment requires a separate verified deployment record.
 
+## PR #542 — Phase F Import / Normalisation closeout record
+
+**Merged:** 20 August 2026  
+**Merge commit:** `004bc59e5e6c882c5f15ad64d7ec801224973af3`  
+**Head tested before merge:** `220d126c0d67157c360e31c96b790aa29375c425`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- Phase F `supplier-import` tests: 13/13 PASS;
+- Phase F `supplier-import-runtime` tests: 6/6 PASS;
+- upstream Phase C/D/E control and supplier-data gate command: PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- full suite retained exactly the same 27 known baseline failures and added no new Phase F failing test family;
+- validation ran in an isolated clean worktree.
+
+Phase F scope closed by #542:
+
+- supplier import batches and items are auditable, resumable and idempotent;
+- import mapping consumes Phase E canonical product and supplier-catalog identity instead of creating parallel product truth;
+- AI Facts Lock prevents AI-proposed facts from becoming verified product facts;
+- verified facts require non-AI evidence and become immutable against unsafe factual rewrites;
+- asset/content rights are evidence-backed and unresolved/restricted/prohibited rights block approval;
+- complete current GB compliance review classes are required before import approval;
+- mutation is active-admin-only and secret-bearing import payloads are rejected;
+- Phase C server-side `import` kill switch controls runtime mutations;
+- fact-level idempotency prevents retry-driven duplicate facts;
+- no direct URL-to-publish bypass and no Phase G commercial economics were activated.
+
+**Deployment distinction:** migrations `supabase/622_supplier_import_normalisation.sql`, `supabase/623_supplier_import_normalisation_guards.sql`, `supabase/624_supplier_import_runtime_guards.sql` and `supabase/625_supplier_import_fact_idempotency_closure.sql` are merged to `main`, but this ledger entry does not claim they have been applied to production. Production deployment requires a separate verified deployment record.
+
 ## Current handoff
 
-The repository is now past Gate B, P1 production deployment, Phase C, Phase D and Phase E implementation merges:
+The repository is now past Gate B, P1 production deployment, Phase C, Phase D, Phase E and Phase F implementation merges:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS IN MAIN → PHASE F → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS IN MAIN → PHASE G → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE F — IMPORT / NORMALISATION.**
+**CURRENT NEXT PHASE: PHASE G — COMMERCIAL ECONOMICS.**
 
-Phase F must consume the canonical supplier-data model from Phase E and implement import/normalisation without allowing AI to invent product facts. It must preserve rights/provenance evidence, compliance review and human-governed activation boundaries. Supplier raw data remains distinct from canonical product truth.
+Phase G must implement True Landed Cost, versioned Tax/VAT/Customs rules, pricing controls and the canonical commerce financial ledger on top of the fixed Gate B legal/business model. It must preserve one canonical financial truth and keep customer money, supplier payable/cost, tax, processor fees, refunds, recoveries and adjustments evidence-linked rather than reconstructed independently by UI consumers.
 
 Supplier Commerce runtime activation remains fail-closed until the applicable downstream gates are satisfied.
 
