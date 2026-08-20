@@ -126,22 +126,28 @@ DECLARE
   v_profile_country text;
   v_tax_country text;
   v_tax_postcode text;
+  v_location_supported boolean;
 BEGIN
   IF v_actor_role = 'authenticated' AND NOT public.is_admin() THEN
     v_profile_country := upper(BTRIM(COALESCE(NEW.country, '')));
     v_tax_country := upper(BTRIM(COALESCE(NEW."taxCountry", '')));
     v_tax_postcode := upper(regexp_replace(COALESCE(NEW."taxPostcode", ''), '\s+', '', 'g'));
+    v_location_supported :=
+      v_tax_country = 'GB'
+      AND NEW."taxCountrySource" = 'stripe_connect_account_v1'
+      AND NEW."taxCountryCapturedAt" IS NOT NULL
+      AND NULLIF(v_tax_postcode, '') IS NOT NULL
+      AND v_tax_postcode !~ '^(BT|GY|JE|IM|GX|BF)'
+      AND v_profile_country IN ('GB', 'GBR', 'UK', 'UNITED KINGDOM', 'GREAT BRITAIN');
 
-    IF NEW."taxDeclarationConfirmed" = true THEN
-      IF v_tax_country IS DISTINCT FROM 'GB'
-         OR NEW."taxCountrySource" IS DISTINCT FROM 'stripe_connect_account_v1'
-         OR NEW."taxCountryCapturedAt" IS NULL
-         OR NULLIF(v_tax_postcode, '') IS NULL
-         OR v_tax_postcode ~ '^(BT|GY|JE|IM|GX|BF)'
-         OR v_profile_country NOT IN ('GB', 'GBR', 'UK', 'UNITED KINGDOM', 'GREAT BRITAIN')
-      THEN
-        RAISE EXCEPTION 'seller tax declaration requires verified Stripe Connect Great Britain tax-location evidence';
-      END IF;
+    -- Do not fail the entire seller-profile save just because Stripe location
+    -- verification is not complete yet. Fail closed by refusing to stamp the
+    -- declaration until authoritative location evidence exists.
+    IF NEW."taxDeclarationConfirmed" = true AND NOT v_location_supported THEN
+      NEW."taxDeclarationConfirmed" := false;
+      NEW."taxDeclarationVersion" := NULL;
+      NEW."taxDeclarationSource" := NULL;
+      NEW."taxDeclarationCapturedAt" := NULL;
     END IF;
 
     IF TG_OP = 'INSERT' THEN
