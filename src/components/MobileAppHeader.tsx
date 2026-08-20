@@ -81,11 +81,8 @@ export default function MobileAppHeader() {
       }}
       className="bg-background"
     >
-      {/* ── Row 1: logo + brand name (left) | bell (right) ─── */}
       <div className="flex items-center justify-between">
-        {/* Left: logo + brand */}
         <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-          {/* Logo */}
           <img
             src={logo}
             alt=""
@@ -95,7 +92,6 @@ export default function MobileAppHeader() {
             style={{ width: 38, height: 38, flexShrink: 0 }}
           />
 
-          {/* Brand text */}
           <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>
             <span
               className="text-foreground"
@@ -126,16 +122,12 @@ export default function MobileAppHeader() {
           </div>
         </div>
 
-        {/* Right: bell */}
         <button
           onClick={() => navigate('/profile/notifications')}
           aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
           className="relative h-11 w-11 shrink-0 cursor-pointer border-0 bg-transparent p-0 flex items-center justify-center"
         >
-          <Bell
-            style={{ width: 22, height: 22 }} className="text-white"
-            aria-hidden="true"
-          />
+          <Bell style={{ width: 22, height: 22 }} className="text-white" aria-hidden="true" />
           {unread > 0 && (
             <span
               aria-hidden="true"
@@ -162,18 +154,13 @@ export default function MobileAppHeader() {
         </button>
       </div>
 
-      {/* ── Row 2: search bar + filter button ─── */}
       <div className="flex items-center gap-2" style={{ marginTop: 10 }}>
-        {/* Search bar — taps open full-screen overlay */}
         <button
           onClick={() => setSearchOpen(true)}
-          aria-label="Search for items or members"
+          aria-label="Search products and categories"
           className="h-11 flex-1 rounded-xl border border-white/10 bg-white/[0.07] px-3.5 text-left flex items-center gap-2.5 cursor-pointer"
         >
-          <Search
-            style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
-            aria-hidden="true"
-          />
+          <Search style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45" aria-hidden="true" />
           <span
             className="text-foreground/55"
             style={{
@@ -184,30 +171,21 @@ export default function MobileAppHeader() {
               flex: 1,
             }}
           >
-            Search for items or members
+            Search products and categories
           </span>
-          <Camera
-            style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
-            aria-hidden="true"
-          />
+          <Camera style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45" aria-hidden="true" />
         </button>
 
-        {/* Filter button */}
         <button
-          aria-label="Filter"
+          aria-label="Browse filters"
           onClick={() => navigate('/catalog')}
           className="h-11 w-11 shrink-0 rounded-xl border border-[#f2b84b66] bg-[#1c1400] flex items-center justify-center cursor-pointer"
         >
-          <Filter
-            style={{ width: 18, height: 18 }}
-            className="text-primary"
-            aria-hidden="true"
-          />
+          <Filter style={{ width: 18, height: 18 }} className="text-primary" aria-hidden="true" />
         </button>
       </div>
     </header>
 
-    {/* Full-screen search overlay — rendered outside the header flow */}
     {searchOpen && <MobileSearchOverlay onClose={() => setSearchOpen(false)} />}
   </>
   );
