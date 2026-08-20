@@ -16,6 +16,7 @@ import { isMaintenanceMode, getFeatureFlags } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import {
   buildSellerNonVatProductEvidence,
+  hasExplicitSellerNonVatDeclaration,
   normaliseMarketplaceCountry,
 } from './_shared/marketplaceTax';
 
@@ -171,7 +172,7 @@ export const handler: Handler = async (event) => {
 
   const { data: sellerProfile, error: profileError } = await supabase
     .from('seller_profiles')
-    .select('sellerStatus, stripeConnectStatus, isPaused, listingLimit, country, isVatRegistered, vatNumber')
+    .select('sellerStatus, stripeConnectStatus, isPaused, listingLimit, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
     .eq('userId', callerId)
     .maybeSingle<{
       sellerStatus: string | null;
@@ -181,6 +182,11 @@ export const handler: Handler = async (event) => {
       country: string | null;
       isVatRegistered: boolean | null;
       vatNumber: string | null;
+      businessAddress: Record<string, unknown> | null;
+      taxDeclarationConfirmed: boolean | null;
+      taxDeclarationVersion: number | null;
+      taxDeclarationSource: string | null;
+      taxDeclarationCapturedAt: string | null;
     }>();
 
   if (profileError || !sellerProfile) {
@@ -210,8 +216,7 @@ export const handler: Handler = async (event) => {
   const taxEvidence =
     normalizedListingContext === 'product' &&
     normaliseMarketplaceCountry(sellerProfile.country) === 'GB' &&
-    sellerProfile.isVatRegistered === false &&
-    !sellerProfile.vatNumber?.trim()
+    hasExplicitSellerNonVatDeclaration(sellerProfile)
       ? buildSellerNonVatProductEvidence(price)
       : null;
 
@@ -219,7 +224,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 409,
       body: JSON.stringify({
-        error: 'This listing cannot be published until the seller tax profile is complete and its VAT treatment is supported.',
+        error: 'This listing cannot be published until the seller has explicitly confirmed a supported tax status and UK tax location.',
         code: 'TAX_EVIDENCE_REQUIRED',
       }),
     };
