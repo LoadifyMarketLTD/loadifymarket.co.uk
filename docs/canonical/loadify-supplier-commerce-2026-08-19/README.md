@@ -2,7 +2,7 @@
 
 ## Controlling repository copy — 19–20 August 2026
 
-This folder is the controlling GitHub copy of the complete Loadify Supplier Commerce execution brief plus the controlling product-direction clarifications agreed on 19 and 20 August 2026 and the post-Checkpoint-A Foundation Baseline Freeze.
+This folder is the controlling GitHub copy of the complete Loadify Supplier Commerce execution brief plus the controlling product-direction clarifications agreed on 19 and 20 August 2026, the post-Checkpoint-A Foundation Baseline Freeze, and the canonical execution progress ledger.
 
 Read in this exact order before continuing Supplier Commerce work:
 
@@ -13,8 +13,9 @@ Read in this exact order before continuing Supplier Commerce work:
 5. `03_CANONICAL_EXECUTION_CONTRACT_LINES_1251_1750.md`
 6. `04_CANONICAL_EXECUTION_CONTRACT_LINES_1751_2210.md`
 7. `05_FOUNDATION_BASELINE_FREEZE_2026-08-20.md`
+8. `07_EXECUTION_PROGRESS_LEDGER_2026-08-20.md`
 
-Files 00, 06 and the original 2210-line contract preserved across parts 01–04 together form ONE canonical execution contract. Files 00 and 06 are controlling business/product clarifications; they do not create parallel plans and do not change the execution sequence. File 05 is the mandatory factual Foundation Baseline Freeze recorded after atomic Checkpoint A PASS and before Gate B.
+Files 00, 06 and the original 2210-line contract preserved across parts 01–04 together form ONE canonical execution contract. Files 00 and 06 are controlling business/product clarifications; they do not create parallel plans and do not change the execution sequence. File 05 is the mandatory factual Foundation Baseline Freeze recorded after atomic Checkpoint A PASS and before Gate B. File 07 is the append-only execution status pointer showing which PR-backed steps have actually reached `main` and what the next uncompleted gate is; it does not rewrite or relax the original contract.
 
 ## Current execution sequence remains mandatory
 
@@ -27,11 +28,17 @@ CRITICAL FOUNDATION
 → GATE B PASS
 → PHASE C → Q.
 
-Checkpoint A and the Foundation Baseline Freeze are now recorded historical gates. The current next execution gate is **GATE B BUSINESS CONTRACT**.
+Checkpoint A and the Foundation Baseline Freeze are recorded historical gates. The post-freeze P1 tax/payment evidence repair was merged through PR #531. The current next execution gate remains **GATE B BUSINESS CONTRACT**.
 
 No Supplier Commerce migration before Gate B PASS.
 
 Product Discovery may start only after canonical supplier data exists, as already defined by the original contract, and must not block commerce infrastructure.
+
+## Execution continuity rule
+
+After every implementation PR that is merged to `main`, update `07_EXECUTION_PROGRESS_LEDGER_2026-08-20.md` in a separate documentation-only PR. Mark a contract item `[x]` only when its actual acceptance gate is satisfied, record the merge SHA/evidence state, distinguish merge from production deployment, and state the exact next uncompleted gate for the next agent.
+
+Do not rewrite historical contract language merely to make progress look complete.
 
 ## Prepared implementation plan
 
