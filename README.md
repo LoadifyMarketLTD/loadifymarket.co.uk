@@ -1,126 +1,105 @@
 # Loadify Market
 
-**UK multi-category physical goods marketplace**, operated by XDrive Logistics Ltd (Co. No: 13171804, VAT: GB375949535).
+> ## ⚠️ MANDATORY AGENT ENTRYPOINT
+> Every coding agent, reviewer, designer, auditor or implementation worker must read [`AGENTS.md`](./AGENTS.md) **before making changes**.
+>
+> For Supplier Commerce / product-model work, also read [`docs/canonical/loadify-supplier-commerce-2026-08-19/README.md`](./docs/canonical/loadify-supplier-commerce-2026-08-19/README.md) and follow its exact controlling read order.
+>
+> **Historical README text, old PR descriptions and stale branches do not override the canonical contract or current repository truth.**
 
-Independent and company UK sellers list and sell physical products across all consumer goods categories. The platform does not own inventory, hold or store products, or operate a depot — sellers manage their own inventory and fulfil orders directly. Buyers browse, purchase via Stripe, and receive orders from sellers with full shipment tracking.
+Loadify Market is a UK-operated commerce platform under XDrive Logistics Ltd (Co. No. 13171804, VAT GB375949535).
+
+The controlling product direction is not a simple seller-only marketplace and not a generic dropshipping site:
+
+**LOADIFY MARKET = MARKETPLACE + LOADIFY-OPERATED PRODUCT SOURCING / IMPORT + SUPPLIER-FULFILLED COMMERCE + PRODUCT DISCOVERY / OPPORTUNITY INTELLIGENCE + AI PRODUCT BUILDER + CANONICAL COMMERCE CONTROL.**
+
+The intended customer-facing experience remains Loadify-centric:
+
+**discover → product → cart → checkout → payment → order → tracking → support → returns/refunds**
+
+while marketplace sellers, approved suppliers, fulfilment providers and carriers may perform distinct underlying roles according to the controlling business contract.
+
+Loadify does not require its own warehouse for Supplier-Fulfilled Commerce. No warehouse does not mean no governance or no responsibility.
 
 ---
 
-## 📚 Documentation
+## Current controlling execution boundary
+
+The canonical sequence is:
+
+**CRITICAL FOUNDATION → CHECKPOINT A → ATOMIC CHECKPOINT A PASS → FOUNDATION BASELINE FREEZE → HARD STOP OLD EXTENSIVE HARDENING → GATE B BUSINESS CONTRACT → GATE B PASS → PHASE C → Q.**
+
+Checkpoint A and Foundation Baseline Freeze are recorded historical gates. The next controlling business gate is **Gate B**, unless a newer canonical clarification explicitly supersedes this.
+
+**No Supplier Commerce migration/runtime implementation is authorised before Gate B PASS.**
+
+Prepared implementation planning exists on branch `parallel/supplier-commerce-preparation` under `docs/parallel/supplier-commerce-preparation/`. Read that branch's `README.md` and then `33_PRODUCT_DIRECTION_RECONCILIATION_2026-08-20.md`. Canonical always wins over preparation artifacts.
+
+---
+
+## Core architecture invariants
+
+- one canonical product may have multiple governed supplier offers;
+- canonical product ≠ supplier offer;
+- supplier raw stock ≠ Loadify sellable stock;
+- payment success ≠ supplier order success;
+- customer refund ≠ supplier recovery;
+- order completed ≠ financially reconciled;
+- one customer order truth;
+- one canonical financial truth;
+- no provider-specific commerce core;
+- no direct operator publish bypass;
+- no AI-invented product facts;
+- no fake/laundered reviews;
+- no unverified assumption of commercial rights to third-party media/UGC;
+- no drip-price architecture;
+- no silent supplier substitution that changes the customer promise.
+
+External roles are distinct:
+
+**Discovery Source ≠ Catalog Source ≠ Supplier ≠ Fulfilment Provider ≠ Carrier ≠ Sales/Channel Connector.**
+
+---
+
+## Documentation
 
 | Doc | Purpose |
 |---|---|
-| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System architecture, domain model, data flow |
-| [docs/openapi.yaml](./docs/openapi.yaml) | API reference (OpenAPI 3.0) |
-| [docs/SHIPPING.md](./docs/SHIPPING.md) | Shipment and tracking system |
-| [docs/audit/MASTER_FRAMEWORK.md](./docs/audit/MASTER_FRAMEWORK.md) | Audit operating model: surfaces, levels, evidence, and definition of done |
-| [docs/audit/COVERAGE_MATRIX.md](./docs/audit/COVERAGE_MATRIX.md) | Current critical-flow coverage and control gaps |
+| [`AGENTS.md`](./AGENTS.md) | Mandatory agent operating contract, responsibilities, product direction and Branch Guard rules |
+| [`docs/canonical/loadify-supplier-commerce-2026-08-19/README.md`](./docs/canonical/loadify-supplier-commerce-2026-08-19/README.md) | Controlling Supplier Commerce contract read order and execution boundary |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Existing system architecture and domain model |
+| [`docs/openapi.yaml`](./docs/openapi.yaml) | API reference |
+| [`docs/SHIPPING.md`](./docs/SHIPPING.md) | Shipment and tracking system |
+| [`docs/audit/MASTER_FRAMEWORK.md`](./docs/audit/MASTER_FRAMEWORK.md) | Audit operating model and evidence standards |
+| [`docs/audit/COVERAGE_MATRIX.md`](./docs/audit/COVERAGE_MATRIX.md) | Critical-flow coverage and control gaps |
 
 ---
 
-## ✨ Features
+## Existing platform surfaces
 
 ### Buyers
-- Browse and search physical product listings by category, condition, and price range
-- Purchase directly via Stripe Checkout (GBP)
-- Request a bulk quote (RFQ) — submit product name, quantity, destination, and budget; seller replies by email
-- Direct messaging with sellers, linked to products or orders
-- Order tracking via courier name and tracking number (shipment event log)
-- Post-delivery reviews (verified purchase — requires a delivered order)
-- Wishlist, saved searches, and recently viewed products
-- File returns and raise disputes on delivered orders
+
+Current repository capabilities include product browsing/search, checkout/payment flows, buyer accounts, order history/tracking, messaging/RFQ-related functionality, reviews, wishlist/saved-search style features, and return/dispute surfaces. Treat current implementation as repository state to verify, not as permission to invent unsupported future claims.
 
 ### Sellers
-- List physical products across all supported categories, with optional listing attributes including condition (new, used, refurbished), stock quantity, weight, dimensions, and pallet or lot-specific fields
-- Seller account lifecycle: `draft` → `submitted` → `active` → `suspended` (admin-approved)
-- Order management dashboard — status progression: `paid` → `packed` → `shipped` → `delivered`
-- Shipment creation with courier name, tracking number, and dispatch date
-- Respond to buyer RFQ requests via the quote inbox
-- Stripe Connect Express onboarding for weekly GBP payouts
-- Manage returns and respond to disputes
-- Pause account (deactivates all listings) or delete seller account
+
+Current repository capabilities include seller onboarding/account lifecycle, product listing/stock management, order handling, shipment/tracking flows, Stripe Connect payout integration, marketplace communication and return/dispute-related functionality.
 
 ### Admin
-- Seller approval and suspension workflow
-- Product listing moderation (approve, deactivate, review flagged listings)
-- Platform-wide order and user management
-- Dispute resolution with refund amount control
-- Support ticket inbox
-- Platform analytics overview
+
+Current repository capabilities include seller and product governance, platform order/user management, dispute/support surfaces and platform analytics. **Do not redesign Workspace or Super Admin merely as collateral to another implementation.**
 
 ---
 
-## 💰 Business Model
+## Commerce / tax warning
 
-The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect. The platform acts solely as an intermediary — it does not own products, hold inventory, or operate a fulfilment depot. Sellers are responsible for their own inventory management and order fulfilment.
+Do not rely on legacy README statements as a tax, VAT, commission, Merchant-of-Record, invoice or fulfilment contract.
 
-> **Launch promotion:** 0% commission on all transactions until **31 December 2026 23:59:59 UTC**. The standard 7% rate resumes automatically after that date.
-
-All prices are in **GBP**. VAT is calculated and displayed separately (flat-rate scheme, `GB375949535`). Sellers receive weekly payouts via Stripe Connect Express.
+Those matters must follow the controlling Gate B/canonical evidence and current verified implementation. In particular, do not assume universal 20% VAT, automatic reverse charge, a universal seller-only fulfilment model, or any other historical shortcut without current evidence.
 
 ---
 
-## 📦 Product Categories
-
-The marketplace covers 15 top-level consumer goods categories, each with subcategories:
-
-Clothing · Shoes · Jewellery · Media & Electronics · Accessories · Toys · Health & Beauty · Pets · Memorabilia · Adult · Food & Drink · Office Supplies · Home & Garden · Sports & Outdoors · Mixed Job Lots
-
----
-
-## 📋 Prerequisites
-
-- **Node.js 20+** and npm
-- **Supabase account** (free tier works for development)
-- **Stripe account** (test mode available — no real payments needed in development)
-- **SendGrid account** (optional — transactional email for shipment notifications)
-
----
-
-## 🛠️ Quick Start
-
-```bash
-# 1. Clone and install
-git clone https://github.com/LoadifyMarketLTD/loadifymarket.co.uk.git
-cd loadifymarket.co.uk
-npm install
-
-# 2. Configure environment
-cp .env.example .env
-# Edit .env — set VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_STRIPE_PUBLISHABLE_KEY
-
-# 3. Initialise database
-# Apply the SQL files under supabase/migrations/ in ascending version order.
-# Do not run supabase/00_consolidated_schema.sql; it is intentionally deprecated
-# and non-executable so retired schema cannot be reintroduced accidentally.
-
-# 4. Start dev server (hot reload)
-npm run dev
-```
-
-Visit [http://localhost:5173](http://localhost:5173)
-
----
-
-## 🧑‍💻 Development Commands
-
-```bash
-npm run dev          # Start Vite dev server with HMR
-npm run build        # TypeScript check + Vite production build
-npm run lint         # ESLint
-npm test             # Vitest unit tests (single run)
-npm run test:watch   # Vitest in watch mode
-```
-
-Local Netlify Functions (Stripe, register, email):
-```bash
-npm install -g netlify-cli
-netlify dev          # Starts frontend + Netlify Functions at http://localhost:8888
-```
-
----
-
-## 🏗️ Tech Stack
+## Tech stack
 
 | Layer | Technology |
 |---|---|
@@ -131,109 +110,115 @@ netlify dev          # Starts frontend + Netlify Functions at http://localhost:8
 | API | Supabase PostgREST + Netlify Functions |
 | Payments | Stripe Checkout + Stripe Connect Express |
 | Email | SendGrid |
-| Hosting | Netlify (CDN + serverless functions) |
+| Hosting | Netlify |
 | CI | GitHub Actions (`.github/workflows/ci.yml`) |
 
 ---
 
-## 📂 Key Project Structure
+## Quick start
 
+```bash
+git clone https://github.com/LoadifyMarketLTD/loadifymarket.co.uk.git
+cd loadifymarket.co.uk
+npm install
+cp .env.example .env
+npm run dev
 ```
+
+Set the required development environment variables in `.env`.
+
+For database changes, `supabase/migrations/` is the authoritative ordered migration source. Do not run `supabase/00_consolidated_schema.sql`; it is a deprecated non-executable tombstone.
+
+---
+
+## Development commands
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm test
+npm run test:watch
+```
+
+Local Netlify Functions:
+
+```bash
+npm install -g netlify-cli
+netlify dev
+```
+
+---
+
+## Key project structure
+
+```text
+├── AGENTS.md                       # Mandatory agent entrypoint
 ├── src/
-│   ├── pages/pixel-perfect/   # Full-page React components
-│   │   ├── seller/            # Seller dashboard pages — served at both /seller/* (shadcn sidebar layout)
-│   │   │                      #   and /pp/seller/* (pixel-perfect standalone shell)
-│   │   ├── buyer/             # Buyer dashboard pages — served at both /dashboard/* and /pp/buyer/*
-│   │   └── admin/             # Admin panel pages — served at both /admin/* and /pp/admin/*
-│   ├── components/            # Shared UI components
+│   ├── pages/pixel-perfect/        # Strong existing UI benchmark surfaces
+│   │   ├── seller/
+│   │   ├── buyer/
+│   │   └── admin/
+│   ├── components/
 │   └── lib/
-│       ├── supabase.ts        # Supabase client
-│       └── safeStorage.ts     # Safe localStorage wrapper (mobile private mode safe)
-├── netlify/functions/         # Serverless API handlers
-│   ├── register.ts            # User registration
-│   ├── create-checkout.ts     # Stripe Checkout session creation
-│   ├── stripe-webhook.ts      # Stripe event handler (orders + Connect)
-│   ├── connect-onboard.ts     # Stripe Connect Express onboarding
-│   ├── create-shipment.ts     # Shipment creation and update
-│   ├── track-shipment.ts      # Shipment tracking lookup
-│   ├── generate-invoice.ts    # Invoice PDF generation
-│   └── send-email.ts          # SendGrid transactional email
-├── supabase/
-│   ├── migrations/            # Authoritative database source, ordered by version
-│   ├── 00_consolidated_schema.sql # Deprecated non-executable tombstone
-│   ├── 06_fulfilment_rfq.sql  # Generic reference schema; changes still go in migrations/
-│   └── DEBUGGED_PARTS_README.md
+├── netlify/functions/              # Serverless API handlers
+├── supabase/migrations/            # Authoritative ordered DB migrations
 ├── docs/
-│   ├── ARCHITECTURE.md        # System architecture
-│   └── openapi.yaml           # API reference
+│   ├── canonical/                  # Controlling product/execution contracts
+│   ├── audit/
+│   ├── ARCHITECTURE.md
+│   └── openapi.yaml
 └── public/
-    ├── sitemap.xml
-    └── robots.txt
 ```
 
 ---
 
-## 🚀 Deployment
+## Branch / release discipline
 
-The project deploys to Netlify automatically via the configuration in `netlify.toml`.
+Before writes, inspect current `main`, relevant branch HEAD, open PRs, relevant concurrent branches and migration head when applicable.
 
-1. Connect the GitHub repository to Netlify.
-2. Leave the **Build command** field **empty** in the Netlify UI (it reads from `netlify.toml`).
-3. Set the following environment variables in the Netlify dashboard:
+Before merge, inspect exact diff, branch staleness, unrelated changes, integration risk and real evidence.
 
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_SUPABASE_URL` | ✅ | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key (functions only) |
-| `STRIPE_SECRET_KEY` | ✅ | Stripe secret key |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | ✅ | Stripe publishable key |
-| `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe standard webhook signing secret |
-| `STRIPE_CONNECT_WEBHOOK_SECRET` | ✅ | Stripe Connect webhook signing secret |
-| `SENDGRID_API_KEY` | Optional | SendGrid API key for shipment emails |
-| `VITE_SUPPORT_EMAIL` | Optional | Support email address |
+No Fake PASS. A documented claim is not a test. A preview is not visual approval. CI that did not execute steps is not evidence of a software failure or PASS.
 
-For detailed instructions see the [Netlify documentation](https://docs.netlify.com/configure-builds/environment-variables/).
+The default loop is:
+
+**READ REAL STATE → UNDERSTAND PRODUCT INTENT → IDENTIFY ROOT CAUSE → DESIGN CORRECT SOLUTION → IMPLEMENT → VERIFY TECHNICALLY → VERIFY VISUALLY IF UI → VERIFY INTEGRATION → BRANCH GUARD → FIX REGRESSIONS → DOCUMENT REAL EVIDENCE → ONLY THEN DECLARE COMPLETE.**
 
 ---
 
-## 🔐 Security
+## Deployment
 
-- Row-Level Security (RLS) enforced on every PostgreSQL table.
-- All payments processed by Stripe (PCI-DSS Level 1) — card details are never stored on our servers.
-- Stripe webhook signature verification on every inbound event.
-- Both the standard account webhook and the Stripe Connect webhook share a single endpoint, each verified with its own signing secret.
-- Supabase JWT with short-lived access tokens and refresh tokens.
-- Rate limiting on registration, Stripe Connect onboarding, email, and error-reporting endpoints.
-- Content-Security-Policy with violation reporting.
+The project deploys to Netlify according to `netlify.toml`. Production environment variables include Supabase, Stripe and other server-side credentials. Never expose server secrets to client code.
 
 ---
 
-## 🧪 Test Accounts & Stripe Cards
+## Security
 
-After running the seed scripts:
+Security work must verify, as applicable:
 
-| Role | Email | Password |
-|---|---|---|
-| Buyer | buyer@test.com | test1234 |
-| Seller (active) | seller@test.com | test1234 |
-| Admin | admin@loadifymarket.co.uk | test1234 |
+- RLS and multi-tenant isolation;
+- auth/session boundaries;
+- inactive/suspended accounts;
+- service-role access;
+- storage permissions;
+- webhook verification;
+- idempotency/replay protection;
+- fail-closed behaviour for security and money-related paths.
 
-**Stripe test cards:**
-- ✅ Success: `4242 4242 4242 4242` (any future expiry, any CVV)
-- ❌ Decline: `4000 0000 0000 0002`
-
----
-
-## 📧 Contact
-
-**Company**: XDrive Logistics Ltd  
-**Support**: contact@loadifymarket.co.uk  
-**Phone**: +44 7423 272138  
-**Address**: 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom
+Repository claims are not a substitute for current runtime evidence.
 
 ---
 
-## 📄 License
+## Company
 
-Copyright © 2025 XDrive Logistics Ltd. All rights reserved.
+**XDrive Logistics Ltd**  
+Company No. 13171804  
+VAT GB375949535  
+101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom
+
+---
+
+## License
+
+Copyright © XDrive Logistics Ltd. All rights reserved.
