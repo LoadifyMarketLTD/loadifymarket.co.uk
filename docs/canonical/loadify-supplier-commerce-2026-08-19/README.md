@@ -2,7 +2,7 @@
 
 ## Controlling repository copy — 19–20 August 2026
 
-This folder is the controlling GitHub copy of the complete Loadify Supplier Commerce execution brief plus the controlling product-direction clarifications agreed on 19 and 20 August 2026, the post-Checkpoint-A Foundation Baseline Freeze, the canonical execution progress ledger, and the resolved Gate B Business Contract.
+This folder is the controlling GitHub copy of the complete Loadify Supplier Commerce execution brief plus the controlling product-direction clarifications agreed on 19 and 20 August 2026, the post-Checkpoint-A Foundation Baseline Freeze, the canonical execution progress ledger, the resolved Gate B Business Contract, and the P1 production deployment record.
 
 Read in this exact order before continuing Supplier Commerce work:
 
@@ -15,8 +15,9 @@ Read in this exact order before continuing Supplier Commerce work:
 7. `05_FOUNDATION_BASELINE_FREEZE_2026-08-20.md`
 8. `07_EXECUTION_PROGRESS_LEDGER_2026-08-20.md`
 9. `08_GATE_B_BUSINESS_CONTRACT_2026-08-20.md`
+10. `09_P1_PRODUCTION_DEPLOYMENT_2026-08-20.md`
 
-Files 00, 06 and the original 2210-line contract preserved across parts 01–04 together form ONE canonical execution contract. Files 00 and 06 are controlling business/product clarifications; they do not create parallel plans and do not change the execution sequence. File 05 is the mandatory factual Foundation Baseline Freeze recorded after atomic Checkpoint A PASS and before Gate B. File 07 is the append-only execution status pointer showing which PR-backed steps have actually reached `main` and what the next uncompleted gate is; it does not rewrite or relax the original contract. File 08 is the resolved Gate B responsibility contract that fixes the business/legal/commercial inputs Phase C must consume.
+Files 00, 06 and the original 2210-line contract preserved across parts 01–04 together form ONE canonical execution contract. Files 00 and 06 are controlling business/product clarifications; they do not create parallel plans and do not change the execution sequence. File 05 is the mandatory factual Foundation Baseline Freeze recorded after atomic Checkpoint A PASS and before Gate B. File 07 is the append-only execution status pointer showing which PR-backed steps have actually reached `main` and what the next uncompleted gate is; it does not rewrite or relax the original contract. File 08 is the resolved Gate B responsibility contract that fixes the business/legal/commercial inputs Phase C must consume. File 09 records the verified production deployment of the P1 tax/payment DB boundary and must not be confused with broader Supplier Commerce tax implementation.
 
 ## Current execution sequence remains mandatory
 
@@ -29,9 +30,9 @@ CRITICAL FOUNDATION
 → GATE B PASS
 → PHASE C → Q.
 
-Checkpoint A and the Foundation Baseline Freeze are recorded historical gates. The post-freeze P1 tax/payment evidence repair was merged through PR #531. Gate B is resolved on the dedicated Gate B contract branch and becomes historical only after its PR is merged to `main` and the progress ledger records that merge. Until then, the execution pointer remains the ledger on `main`.
+Checkpoint A and the Foundation Baseline Freeze are historical gates. The post-freeze P1 tax/payment evidence repair is merged and its production DB migration chain is applied and verified. Gate B Business Contract and Gate B PASS are merged and recorded. The current canonical execution phase is **PHASE C — PLATFORM CONTROL FOUNDATIONS**.
 
-No Supplier Commerce migration before Gate B PASS is present in `main`.
+Supplier Commerce runtime/schema work is now authorised only in the canonical Phase C→Q sequence and must consume the Gate B contract rather than inventing business rules during implementation.
 
 Product Discovery may start only after canonical supplier data exists, as already defined by the original contract, and must not block commerce infrastructure.
 
@@ -75,7 +76,7 @@ Before using the implementation preparation, read its current `README.md` and th
 
 If any preparation artifact conflicts with this canonical contract or a later controlling canonical clarification, the canonical contract wins.
 
-The preparation lane does not authorise runtime/schema/provider implementation before Gate B PASS.
+The preparation lane may guide implementation only within the currently authorised canonical phase and subject to Branch Guard.
 
 ## Important repository rule
 
