@@ -43,6 +43,8 @@ docs/lighthouse/latest.report.json
 android/.gradle/
 android/app/build/
 android/build/
+# Firebase Android app config is injected at build time and must never be committed
+android/app/google-services.json
 # .keystore files must never be committed
 *.keystore
 *.jks
