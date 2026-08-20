@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -7,11 +8,11 @@ import {
   recordSupplierCommerceOperation,
 } from '../_shared/supplierCommerceControl';
 
-const migration = readFileSync(
-  new URL('../../../supabase/616_supplier_commerce_platform_control_foundations.sql', import.meta.url),
-  'utf8',
-);
-const adminApi = readFileSync(new URL('../admin-supplier-commerce-controls.ts', import.meta.url), 'utf8');
+const readRepoFile = (relativePath: string) =>
+  readFileSync(resolve(process.cwd(), relativePath), 'utf8');
+
+const migration = readRepoFile('supabase/616_supplier_commerce_platform_control_foundations.sql');
+const adminApi = readRepoFile('netlify/functions/admin-supplier-commerce-controls.ts');
 
 type RpcResult = { data: unknown; error: null | { message: string; code?: string } };
 
