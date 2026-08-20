@@ -22,8 +22,8 @@
 - [x] GATE B PASS — contract-level PASS recorded by `08_GATE_B_BUSINESS_CONTRACT_2026-08-20.md`.
 - [x] PHASE C — Platform Control Foundations merged through PR #536; Branch Guard PASS recorded below.
 - [x] PHASE D — Supplier Foundation merged through PR #538; Branch Guard PASS recorded below.
-- [ ] PHASE E — **CURRENT NEXT PHASE**.
-- [ ] PHASE F.
+- [x] PHASE E — Canonical Supplier Data merged through PR #540; Branch Guard PASS recorded below.
+- [ ] PHASE F — **CURRENT NEXT PHASE**.
 - [ ] PHASE G.
 - [ ] PHASE H.
 - [ ] PHASE I.
@@ -49,6 +49,7 @@
 | [x] | #533 | merge commit `3ea7d1d22adf851561684463fda0186da7aed30b` | Gate B canonical business contract; contract-level PASS after current official-source verification |
 | [x] | #536 | merge commit `62b92d3987a84692f8319e922719ae6c99ec6d09` | Phase C Platform Control Foundations; Branch Guard PASS before merge |
 | [x] | #538 | merge commit `88969ee759b48e68bf133507f2b347e36f564800` | Phase D Supplier Foundation; provider-neutral adapter, qualification, SLA, compliance and provenance foundations; Branch Guard PASS before merge |
+| [x] | #540 | merge commit `bf4cd7113fef82581639ca9a4425e9a0770b5053` | Phase E Canonical Supplier Data; canonical product identity, supplier offers, catalog identity and evidence-backed deduplication; Branch Guard PASS before merge |
 
 ## PR #531 — P1 closeout record
 
@@ -180,15 +181,47 @@ Phase D scope closed by #538:
 
 **Deployment distinction:** migrations `supabase/617_supplier_foundation.sql` and `supabase/618_supplier_foundation_guards.sql` are merged to `main`, but this ledger entry does not claim they have been applied to production. Production deployment requires a separate verified deployment record.
 
+## PR #540 — Phase E Canonical Supplier Data closeout record
+
+**Merged:** 20 August 2026  
+**Merge commit:** `bf4cd7113fef82581639ca9a4425e9a0770b5053`  
+**Head tested before merge:** `0419d2a88544822df764ba2b6754d79921a8f6c7`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- focused Phase E canonical-supplier-data tests: 13/13 PASS;
+- Phase C/D upstream control tests: 24/24 PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- full suite retained the same 27 known baseline failures and added no new failing test family;
+- validation ran in an isolated clean worktree.
+
+Phase E scope closed by #540:
+
+- canonical product identity separated from supplier catalog identity and supplier offers;
+- deterministic, namespace-aware catalog identifiers and verification evidence;
+- supplier catalog items bound to the Phase D supplier foundation instead of a parallel supplier model;
+- one canonical product can be linked to multiple governed supplier offers;
+- evidence-backed deduplication candidates with explicit same-product/different-product/manual-review decisions;
+- no implicit AI/title-based merge and terminal dedup decisions are guarded;
+- approved offer identity, verified identifiers and external supplier identity are protected against unsafe rewrites;
+- unresolved or conflicting dedup evidence blocks offer approval;
+- service-role-only readiness decisions and active-admin mutation boundary;
+- Phase F import/normalisation explicitly remains deferred;
+- no Supplier Commerce runtime activation.
+
+**Deployment distinction:** migrations `supabase/619_canonical_supplier_data.sql`, `supabase/620_canonical_supplier_data_guards.sql` and `supabase/621_canonical_supplier_data_integrity.sql` are merged to `main`, but this ledger entry does not claim they have been applied to production. Production deployment requires a separate verified deployment record.
+
 ## Current handoff
 
-The repository is now past Gate B, P1 production deployment, Phase C and Phase D implementation merges:
+The repository is now past Gate B, P1 production deployment, Phase C, Phase D and Phase E implementation merges:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS IN MAIN → PHASE E → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS IN MAIN → PHASE F → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE E — CANONICAL SUPPLIER DATA.**
+**CURRENT NEXT PHASE: PHASE F — IMPORT / NORMALISATION.**
 
-Phase E must build canonical product, supplier offers, catalog identity and deduplication on top of the fixed Gate B business contract and the Phase C/D control and supplier foundations. It must preserve the invariant `ONE CANONICAL PRODUCT → MULTIPLE SUPPLIER OFFERS` when factual identity is established and must not deduplicate by AI title or create provider-specific commerce truth.
+Phase F must consume the canonical supplier-data model from Phase E and implement import/normalisation without allowing AI to invent product facts. It must preserve rights/provenance evidence, compliance review and human-governed activation boundaries. Supplier raw data remains distinct from canonical product truth.
 
 Supplier Commerce runtime activation remains fail-closed until the applicable downstream gates are satisfied.
 
