@@ -7,6 +7,7 @@
  *  - maintenanceMode  → 503 for non-admin sellers
  *  - autoApproveProducts → backend sets isApproved (client cannot override)
  *  - seller activation → only fully active sellers may publish public listings
+ *  - tax treatment → never infer a universal 20% VAT rate
  */
 
 import type { Handler } from '@netlify/functions';
@@ -164,17 +165,19 @@ export const handler: Handler = async (event) => {
 
   let sellerCanPublish = isAdmin;
   let sellerListingLimit: number | null = null;
+  let sellerVatRegistered: boolean | null = null;
 
   if (!isAdmin) {
     const { data: sellerProfile, error: profileError } = await supabase
       .from('seller_profiles')
-      .select('sellerStatus, stripeConnectStatus, isPaused, listingLimit')
+      .select('sellerStatus, stripeConnectStatus, isPaused, listingLimit, isVatRegistered')
       .eq('userId', callerId)
       .maybeSingle<{
         sellerStatus: string | null;
         stripeConnectStatus: string | null;
         isPaused: boolean | null;
         listingLimit: number | null;
+        isVatRegistered: boolean | null;
       }>();
 
     if (profileError || !sellerProfile) {
@@ -185,6 +188,7 @@ export const handler: Handler = async (event) => {
     }
 
     sellerListingLimit = sellerProfile.listingLimit ?? null;
+    sellerVatRegistered = sellerProfile.isVatRegistered ?? null;
     sellerCanPublish =
       sellerProfile.sellerStatus === 'active' &&
       sellerProfile.stripeConnectStatus === 'active' &&
@@ -195,6 +199,15 @@ export const handler: Handler = async (event) => {
         statusCode: 409,
         body: JSON.stringify({
           error: 'Complete seller setup and activate Stripe payments before publishing. You can still save the listing as a draft.',
+        }),
+      };
+    }
+
+    if (Boolean(isActive) && sellerVatRegistered === true) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({
+          error: 'VAT-registered marketplace seller listings require explicit verified tax treatment before publication.',
         }),
       };
     }
@@ -222,8 +235,11 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const vatRate = 0.20;
-  const priceExVat = price / (1 + vatRate);
+  // Current supported Marketplace Seller tax route is explicit non-VAT seller.
+  // The DB migration enforces the same rule and fails closed for unsupported
+  // VAT-registered publication. Never manufacture a 20% tax split here.
+  const vatRate = 0;
+  const priceExVat = price;
   const allowedFields = pickAllowedFields(rest);
   const parsedStockQuantity = parseStockQuantity(allowedFields.stockQuantity);
   if (parsedStockQuantity === null) {
