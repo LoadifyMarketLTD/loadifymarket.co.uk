@@ -11,7 +11,10 @@ const mobileCheckout = read('../create-payment-intent.ts');
 const createProduct = read('../create-product.ts');
 const updateProduct = read('../update-product.ts');
 const invoice = read('../generate-invoice.ts');
-const migration = read('../../../supabase/612_marketplace_tax_evidence_boundary.sql');
+const taxMigration = read('../../../supabase/612_marketplace_tax_evidence_boundary.sql');
+const declarationMigration = read('../../../supabase/613_seller_tax_declaration_evidence.sql');
+const declarationSnapshotMigration = read('../../../supabase/614_strengthen_marketplace_tax_snapshot_declaration.sql');
+const sellerProfile = read('../../../src/pages/pixel-perfect/seller/SellerProfile.tsx');
 
 const product = {
   id: 'p1',
@@ -24,13 +27,17 @@ const seller = {
   country: 'GB',
   isVatRegistered: false,
   vatNumber: null,
-  businessAddress: { postcode: 'BB1 1AA' },
+  businessAddress: { postcode: 'BB1 1AA', countryCode: 'GB' },
+  taxDeclarationConfirmed: true,
+  taxDeclarationVersion: 1,
+  taxDeclarationSource: 'seller_self_declaration_v1',
+  taxDeclarationCapturedAt: '2026-08-20T19:00:00.000Z',
 };
 
 const gbAddress = { country: 'United Kingdom', postcode: 'BB1 1AA' };
 
 describe('marketplace tax evidence P1', () => {
-  it('allows only the narrow GB non-VAT physical-product transaction class', () => {
+  it('allows only the narrow GB explicitly-declared non-VAT physical-product transaction class', () => {
     const result = resolveMarketplaceTaxV1({
       seller,
       products: [product],
@@ -48,6 +55,9 @@ describe('marketplace tax evidence P1', () => {
       destinationCountry: 'GB',
       treatment: 'seller_non_vat_declared',
       sellerVatRegistered: false,
+      sellerDeclarationVersion: 1,
+      sellerDeclarationSource: 'seller_self_declaration_v1',
+      sellerDeclarationCapturedAt: seller.taxDeclarationCapturedAt,
       reverseCharge: false,
       vatAmountPence: 0,
       evidenceVersion: 1,
@@ -56,6 +66,10 @@ describe('marketplace tax evidence P1', () => {
 
   it.each([
     ['seller country missing', { seller: { ...seller, country: null } }],
+    ['seller declaration not confirmed', { seller: { ...seller, taxDeclarationConfirmed: false } }],
+    ['seller declaration version missing', { seller: { ...seller, taxDeclarationVersion: null } }],
+    ['seller declaration source missing', { seller: { ...seller, taxDeclarationSource: null } }],
+    ['seller declaration timestamp missing', { seller: { ...seller, taxDeclarationCapturedAt: null } }],
     ['seller VAT registered', { seller: { ...seller, isVatRegistered: true } }],
     ['seller VAT conflict', { seller: { ...seller, vatNumber: 'GB123456789' } }],
     ['international destination', { shippingAddress: { country: 'France' } }],
@@ -78,34 +92,52 @@ describe('marketplace tax evidence P1', () => {
       expect(source).toContain('resolveMarketplaceTaxV1');
       expect(source).toContain('taxSnapshot: taxDecision.snapshot');
       expect(source).toContain('applyReverseCharge = taxDecision.applyReverseCharge');
+      expect(source).toContain('taxDeclarationConfirmed');
+      expect(source).toContain('taxDeclarationCapturedAt');
       expect(source).not.toContain('isVatVerified');
       expect(source).not.toContain('VAT_RATE');
       expect(source).not.toContain('/ 1.20');
     }
   });
 
-  it('product write paths no longer invent a blanket 20 percent VAT treatment', () => {
+  it('product write paths require declaration evidence and never invent blanket 20 percent VAT', () => {
     for (const source of [createProduct, updateProduct]) {
       expect(source).toContain('buildSellerNonVatProductEvidence');
+      expect(source).toContain('hasExplicitSellerNonVatDeclaration');
       expect(source).toContain('taxTreatmentStatus');
       expect(source).toContain('taxEvidenceVersion');
+      expect(source).toContain('taxDeclarationCapturedAt');
       expect(source).not.toContain('vatRate = 0.20');
       expect(source).not.toContain('price / 1.20');
       expect(source).not.toContain('nextPrice / 1.20');
     }
   });
 
+  it('captures seller declaration evidence without backfilling historical default false values', () => {
+    expect(declarationMigration).toContain('"taxDeclarationConfirmed" boolean NOT NULL DEFAULT false');
+    expect(declarationMigration).toContain('seller_self_declaration_v1');
+    expect(declarationMigration).toContain('capture_seller_tax_declaration_v1');
+    expect(declarationMigration).not.toContain('UPDATE public.seller_profiles');
+    expect(sellerProfile).toContain('taxDeclarationConfirmed');
+    expect(sellerProfile).toContain('I confirm that the VAT registration status shown above is accurate');
+    expect(sellerProfile).toContain('setSellerCountry("GB")');
+  });
+
   it('database materialization remains one atomic boundary and is tax-evidence gated', () => {
-    expect(migration).toContain('CREATE OR REPLACE FUNCTION private.payment_session_has_marketplace_tax_snapshot_v1');
-    expect(migration).toContain('CREATE OR REPLACE FUNCTION public.server_materialize_paid_order_v1');
-    expect(migration).toContain('payment_session_has_commercial_snapshot_v1');
-    expect(migration).toContain('payment_session_has_marketplace_tax_snapshot_v1');
-    expect(migration).toContain('v_vat := 0;');
-    expect(migration).toContain('"taxDecisionSnapshot"');
-    expect(migration).toContain('"taxTreatmentSnapshot"');
-    expect(migration).toContain("'checkout_verified_tax_v1'");
-    expect(migration).not.toContain('v_product_paid / 1.20');
-    expect(migration).not.toContain('v_item_price / 1.20');
+    expect(taxMigration).toContain('CREATE OR REPLACE FUNCTION private.payment_session_has_marketplace_tax_snapshot_v1');
+    expect(taxMigration).toContain('CREATE OR REPLACE FUNCTION public.server_materialize_paid_order_v1');
+    expect(taxMigration).toContain('payment_session_has_commercial_snapshot_v1');
+    expect(taxMigration).toContain('payment_session_has_marketplace_tax_snapshot_v1');
+    expect(taxMigration).toContain('v_vat := 0;');
+    expect(taxMigration).toContain('"taxDecisionSnapshot"');
+    expect(taxMigration).toContain('"taxTreatmentSnapshot"');
+    expect(taxMigration).toContain("'checkout_verified_tax_v1'");
+    expect(taxMigration).not.toContain('v_product_paid / 1.20');
+    expect(taxMigration).not.toContain('v_item_price / 1.20');
+
+    expect(declarationSnapshotMigration).toContain("sellerDeclarationSource' = 'seller_self_declaration_v1");
+    expect(declarationSnapshotMigration).toContain('sellerDeclarationCapturedAt');
+    expect(declarationSnapshotMigration).toContain('payment_session_has_marketplace_tax_snapshot_v1');
   });
 
   it('invoice renders immutable tax evidence and does not infer reverse charge from mutable buyer state', () => {
