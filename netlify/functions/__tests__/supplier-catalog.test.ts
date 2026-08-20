@@ -12,6 +12,7 @@ import {
 const repo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 const migration = repo('supabase/619_canonical_supplier_data.sql');
 const guards = repo('supabase/620_canonical_supplier_data_guards.sql');
+const integrity = repo('supabase/621_canonical_supplier_data_integrity.sql');
 const adminApi = repo('netlify/functions/admin-supplier-catalog.ts');
 
 const PRODUCT_ID = '11111111-1111-4111-8111-111111111111';
@@ -36,6 +37,7 @@ describe('Phase E Canonical Supplier Data', () => {
     expect(migration).toContain("identifier_type IN ('gtin','ean','upc','isbn','mpn','brand_mpn','internal')");
     expect(migration).toContain('canonical_verified_identifier_global_unique');
     expect(migration).toContain("identifier_type IN ('mpn','brand_mpn','internal') AND identifier_namespace <> 'global'");
+    expect(integrity).toContain('supplier catalog identifier namespace is required');
   });
 
   it('models deduplication as evidence and explicit resolution, never an implicit merge', () => {
@@ -44,13 +46,16 @@ describe('Phase E Canonical Supplier Data', () => {
     expect(migration).toContain('resolution_version integer NOT NULL DEFAULT 1');
     expect(guards).toContain('terminal catalog dedup resolution is immutable');
     expect(guards).toContain('terminal catalog dedup resolution requires evidence');
+    expect(integrity).toContain('catalog_dedup_one_same_product_unique');
     expect(guards).not.toMatch(/DELETE\s+FROM\s+private\.canonical_products/i);
   });
 
-  it('blocks approved offers while catalog identity is unresolved', () => {
+  it('blocks approved offers while catalog identity is unresolved or explicitly different', () => {
     expect(guards).toContain("d.decision IN ('pending','manual_review')");
     expect(guards).toContain('unresolved catalog deduplication blocks offer approval');
     expect(migration).toContain('catalog_identity_unresolved');
+    expect(integrity).toContain("d.decision = 'different_product'");
+    expect(integrity).toContain('different-product dedup resolution blocks supplier offer approval');
   });
 
   it('requires strong identity evidence for verified-identifier and dedup-resolution links', () => {
@@ -89,6 +94,7 @@ describe('Phase E Canonical Supplier Data', () => {
     expect(migration).toContain('Supplier Commerce remains fail-closed under the Phase C control plane');
     expect(migration).not.toContain('SET enabled = true');
     expect(guards).not.toContain('SET enabled = true');
+    expect(integrity).not.toContain('SET enabled = true');
   });
 
   it('requires active-admin authority and rejects secret-bearing payloads', () => {
