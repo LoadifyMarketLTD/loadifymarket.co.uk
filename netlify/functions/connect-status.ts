@@ -8,7 +8,7 @@ import { authenticateActiveAccount } from './_shared/activeAccountAuth';
  *
  * Fetches the live Stripe Connect account status for the authenticated active
  * seller and persists the result in seller_profiles.stripeConnectStatus.
- * Stripe Account.country is also persisted as server-only tax-country evidence.
+ * Stripe Account location is also persisted as server-only tax evidence.
  */
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -111,9 +111,18 @@ export const handler: Handler = async (event) => {
       stripePayoutsEnabled: account.payouts_enabled,
       stripeDetailsSubmitted: account.details_submitted,
     };
-    if (account.country?.trim()) {
-      stripeUpdate.taxCountry = account.country.trim().toUpperCase();
-      stripeUpdate.taxPostcode = null;
+
+    const stripeTaxCountry = account.country?.trim().toUpperCase() || null;
+    const stripeTaxPostcode = (
+      account.company?.address?.postal_code
+      ?? account.individual?.address?.postal_code
+      ?? account.business_profile?.support_address?.postal_code
+      ?? null
+    )?.trim().toUpperCase() || null;
+
+    if (stripeTaxCountry) {
+      stripeUpdate.taxCountry = stripeTaxCountry;
+      stripeUpdate.taxPostcode = stripeTaxPostcode;
       stripeUpdate.taxCountrySource = 'stripe_connect_account_v1';
       stripeUpdate.taxCountryCapturedAt = new Date().toISOString();
     }
