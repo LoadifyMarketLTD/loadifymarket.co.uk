@@ -16,21 +16,13 @@ const ITEMS: TrustItem[] = [
 
 const TrustStrip = () => (
   <div
-    className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6"
+    className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5"
     aria-label="Platform trust features"
   >
     {ITEMS.map(({ icon: Icon, label, sub }) => (
       <div
         key={label}
-        className={[
-          "flex items-center gap-2.5 sm:gap-3",
-          "rounded-2xl",
-          "bg-surface sm:bg-elevated",
-          "border border-white/[0.07] sm:border-white/5",
-          "p-[14px] sm:px-5 sm:py-4",
-          "transition-all duration-300",
-          "sm:hover:-translate-y-1 sm:hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] sm:hover:border-primary/40",
-        ].join(" ")}
+        className="flex items-center gap-2.5 sm:gap-3 rounded-2xl bg-surface sm:bg-elevated border border-white/[0.09] p-[14px] sm:px-5 sm:py-4 transition-all duration-300 sm:hover:-translate-y-1 sm:hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] sm:hover:border-primary/40"
       >
         <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 overflow-hidden">
           <Icon
@@ -41,7 +33,7 @@ const TrustStrip = () => (
         </span>
         <div className="min-w-0">
           <p className="text-[13px] sm:text-sm font-semibold text-white leading-tight">{label}</p>
-          <p className="text-[11px] sm:text-xs text-muted-foreground sm:text-slate-400 leading-tight mt-0.5">{sub}</p>
+          <p className="text-[11px] sm:text-xs text-white/65 leading-tight mt-0.5">{sub}</p>
         </div>
       </div>
     ))}
