@@ -9,6 +9,10 @@ import { checkRateLimit } from './_shared/rateLimiter';
  *
  * Creates (or resumes) a Stripe Connect Express onboarding session for the
  * authenticated active seller. Returns { url }.
+ *
+ * P1 tax evidence rule:
+ * every account created here is explicitly GB and that Stripe-derived country is
+ * persisted as server-only tax-country evidence together with the account id.
  */
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -87,7 +91,13 @@ export const handler: Handler = async (event) => {
           stripeAccountId = null;
           const { error: clearError } = await supabase
             .from('seller_profiles')
-            .update({ stripeAccountId: null, stripeConnectStatus: null })
+            .update({
+              stripeAccountId: null,
+              stripeConnectStatus: null,
+              taxCountry: null,
+              taxCountrySource: null,
+              taxCountryCapturedAt: null,
+            })
             .eq('userId', sellerId);
           if (clearError) throw clearError;
         } else {
@@ -118,9 +128,16 @@ export const handler: Handler = async (event) => {
 
       stripeAccountId = account.id;
 
+      const taxCountry = account.country?.trim().toUpperCase() || 'GB';
       const { error: persistError } = await supabase
         .from('seller_profiles')
-        .update({ stripeAccountId, stripeConnectStatus: 'pending' })
+        .update({
+          stripeAccountId,
+          stripeConnectStatus: 'pending',
+          taxCountry,
+          taxCountrySource: 'stripe_connect_account_v1',
+          taxCountryCapturedAt: new Date().toISOString(),
+        })
         .eq('userId', sellerId);
       if (persistError) {
         throw new Error(`Failed to persist Stripe onboarding account: ${persistError.message}`);
