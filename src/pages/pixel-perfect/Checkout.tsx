@@ -214,10 +214,9 @@ const Checkout = () => {
     if (shippingError) setShippingError(null);
   };
 
-  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6.
-  // Keep penny precision in the UI; the previous whole-pound rounding could
-  // display a VAT amount inconsistent with the actual VAT-inclusive total.
-  const vat = Math.round((subtotal / 6) * 100) / 100;
+  // Marketplace product.price is the seller-entered customer price. VAT/tax
+  // must not be reconstructed in the browser without verified seller/supply
+  // evidence; the canonical checkout/database boundary owns that decision.
   const shippingAmount = selectedOption.price;
   const total = subtotal + shippingAmount;
 
@@ -777,9 +776,11 @@ const Checkout = () => {
                           : `£${shippingAmount.toFixed(2)}`}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">VAT (20%)</span>
-                    <span className="text-foreground font-medium">£{vat.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">VAT / tax</span>
+                    <span className="text-muted-foreground font-medium italic text-right">
+                      Confirmed from seller tax treatment at payment
+                    </span>
                   </div>
                   <div className="border-t border-border pt-3 flex justify-between">
                     <span className="font-display font-semibold text-foreground">Total</span>
