@@ -59,8 +59,48 @@ ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS "taxSnapshotCapturedAt" timestamptz;
 
 -- ---------------------------------------------------------------------------
+-- Stripe-derived tax-country evidence is server-only. seller_profiles is edited
+-- from authenticated browser flows elsewhere in the product, so these three
+-- evidence columns must not be forgeable by a seller/admin browser JWT.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION private.protect_seller_tax_country_evidence_v1()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+BEGIN
+  IF auth.role() IS DISTINCT FROM 'service_role' THEN
+    IF TG_OP = 'INSERT' THEN
+      NEW."taxCountry" := NULL;
+      NEW."taxCountrySource" := NULL;
+      NEW."taxCountryCapturedAt" := NULL;
+    ELSE
+      NEW."taxCountry" := OLD."taxCountry";
+      NEW."taxCountrySource" := OLD."taxCountrySource";
+      NEW."taxCountryCapturedAt" := OLD."taxCountryCapturedAt";
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION private.protect_seller_tax_country_evidence_v1()
+  FROM PUBLIC, anon, authenticated, service_role;
+
+DROP TRIGGER IF EXISTS trg_protect_seller_tax_country_evidence_v1
+  ON public.seller_profiles;
+CREATE TRIGGER trg_protect_seller_tax_country_evidence_v1
+BEFORE INSERT OR UPDATE ON public.seller_profiles
+FOR EACH ROW
+EXECUTE FUNCTION private.protect_seller_tax_country_evidence_v1();
+
+-- ---------------------------------------------------------------------------
 -- Product tax evidence is server-derived from the seller profile. Seller-facing
 -- create/update payloads can never force a VAT rate/treatment through this guard.
+-- The trigger runs on every product write so direct client updates cannot mutate
+-- only vatRate/taxTreatment fields while avoiding re-derivation.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION private.apply_marketplace_product_tax_evidence_v1()
 RETURNS trigger
@@ -105,8 +145,7 @@ REVOKE ALL ON FUNCTION private.apply_marketplace_product_tax_evidence_v1()
 
 DROP TRIGGER IF EXISTS trg_apply_marketplace_product_tax_evidence_v1 ON public.products;
 CREATE TRIGGER trg_apply_marketplace_product_tax_evidence_v1
-BEFORE INSERT OR UPDATE OF "sellerId", price, "listingContext"
-ON public.products
+BEFORE INSERT OR UPDATE ON public.products
 FOR EACH ROW
 EXECUTE FUNCTION private.apply_marketplace_product_tax_evidence_v1();
 
@@ -707,11 +746,22 @@ COMMENT ON COLUMN public.orders."taxSnapshotCapturedAt" IS
 
 DO $$
 BEGIN
+  IF to_regprocedure('private.protect_seller_tax_country_evidence_v1()') IS NULL THEN
+    RAISE EXCEPTION 'seller tax-country evidence protection function is missing';
+  END IF;
   IF to_regprocedure('private.enrich_marketplace_payment_tax_snapshot_v1()') IS NULL THEN
     RAISE EXCEPTION 'marketplace tax enrichment trigger function is missing';
   END IF;
   IF to_regprocedure('private.require_marketplace_payment_tax_snapshot_v1()') IS NULL THEN
     RAISE EXCEPTION 'marketplace tax snapshot validator is missing';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgrelid = 'public.seller_profiles'::regclass
+       AND tgname = 'trg_protect_seller_tax_country_evidence_v1'
+       AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'seller tax-country evidence protection trigger is missing';
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM pg_trigger
