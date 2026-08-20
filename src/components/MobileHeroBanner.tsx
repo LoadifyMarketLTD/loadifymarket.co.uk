@@ -79,7 +79,7 @@ export default function MobileHeroBanner() {
             lineHeight: 1.5,
           }}
         >
-          Browse products, checkout securely and track orders from Loadify. Sellers can join with 0% commission until 31 December 2026.
+          Discover products across categories, checkout securely through Stripe and track your orders from Loadify.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
@@ -114,7 +114,11 @@ export default function MobileHeroBanner() {
           </button>
         </div>
 
-        <div className="text-foreground/45" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 13, fontSize: 11, fontWeight: 700 }}>
+        <p className="text-foreground/45" style={{ fontSize: 11, lineHeight: 1.4, marginTop: 10 }}>
+          Sellers: 0% commission until 31 December 2026.
+        </p>
+
+        <div className="text-foreground/45" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 11, fontSize: 11, fontWeight: 700 }}>
           <span>Secure checkout</span>
           <span>•</span>
           <span>Order tracking</span>
