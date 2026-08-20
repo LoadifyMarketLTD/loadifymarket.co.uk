@@ -24,8 +24,8 @@
 - [x] PHASE D — Supplier Foundation merged through PR #538; Branch Guard PASS recorded below.
 - [x] PHASE E — Canonical Supplier Data merged through PR #540; Branch Guard PASS recorded below.
 - [x] PHASE F — Import / Normalisation merged through PR #542; Branch Guard PASS recorded below.
-- [ ] PHASE G — **CURRENT NEXT PHASE**.
-- [ ] PHASE H.
+- [x] PHASE G — Commercial Economics merged through PR #544; Branch Guard PASS and production DB deployment PASS recorded below.
+- [ ] PHASE H — **CURRENT NEXT PHASE**.
 - [ ] PHASE I.
 - [ ] PHASE J.
 - [ ] PHASE K.
@@ -51,6 +51,7 @@
 | [x] | #538 | merge commit `88969ee759b48e68bf133507f2b347e36f564800` | Phase D Supplier Foundation; provider-neutral adapter, qualification, SLA, compliance and provenance foundations; Branch Guard PASS before merge |
 | [x] | #540 | merge commit `bf4cd7113fef82581639ca9a4425e9a0770b5053` | Phase E Canonical Supplier Data; canonical product identity, supplier offers, catalog identity and evidence-backed deduplication; Branch Guard PASS before merge |
 | [x] | #542 | merge commit `004bc59e5e6c882c5f15ad64d7ec801224973af3` | Phase F Import / Normalisation; auditable, resumable and idempotent import with AI Facts Lock, rights/compliance review and Phase C kill-switch enforcement; Branch Guard PASS before merge |
+| [x] | #544 | merge commit `5e5e519a2467a9f1eb2d8b3fbfba7635ac08d0e0` | Phase G Commercial Economics; landed cost, versioned tax rules, transparent pricing/margin controls and append-only canonical financial ledger; Branch Guard PASS before merge |
 
 ## PR #531 — P1 closeout record
 
@@ -246,17 +247,66 @@ Phase F scope closed by #542:
 
 **Deployment distinction:** migrations `supabase/622_supplier_import_normalisation.sql`, `supabase/623_supplier_import_normalisation_guards.sql`, `supabase/624_supplier_import_runtime_guards.sql` and `supabase/625_supplier_import_fact_idempotency_closure.sql` are merged to `main`, but this ledger entry does not claim they have been applied to production. Production deployment requires a separate verified deployment record.
 
+## PR #544 — Phase G Commercial Economics closeout record
+
+**Merged:** 21 August 2026  
+**Merge commit:** `5e5e519a2467a9f1eb2d8b3fbfba7635ac08d0e0`  
+**Head tested before merge:** `f41cc7fb5ea1ea5b1d286407cb881b2d0e200358`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- focused Phase G Commercial Economics tests: 12/12 PASS;
+- upstream Phase C/D/E/F validation command: 50/50 PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- full suite retained the same 27 known baseline failures and added no Phase G failing test family;
+- validation ran in an isolated clean worktree.
+
+Phase G scope closed by #544:
+
+- True Landed Cost is represented as explicit evidence-linked components rather than hidden inside retail price;
+- Tax/VAT/Customs rules are versioned, effective-dated, evidence-backed and GB-only for the current supported rule set; NI remains fail-closed;
+- canonical pricing keeps merchandise, mandatory fees, customer shipping and tax separately represented and enforces the gross-total equation;
+- margin/contribution guard blocks approved pricing below the configured minimum contribution;
+- pricing, landed-cost and tax evidence become historical versioned truth rather than mutable current-state reconstruction;
+- canonical financial ledger is append-only and represents customer payment, processor fee, commission/margin, supplier costs/payables, tax/customs/FX, payout, refund, supplier recovery, chargeback, loss, adjustment and reversal events;
+- financial corrections are explicit adjustment/reversal events rather than historical rewrites;
+- commercial readiness consumes Phase D/E/F supplier/catalog/import evidence and fails closed when upstream truth is incomplete;
+- active-admin-only mutation and service-role-only server boundaries preserve least privilege;
+- no Phase C Supplier Commerce control was enabled by Phase G.
+
+### Production deployment reconciliation — Phases C through G
+
+The earlier Phase C/D/E/F closeout sections intentionally stated that merge-to-`main` did not itself prove production deployment. After those records were written, production deployment was performed and verified. The production migration history now contains the canonical chain:
+
+- `20260820232836 / supplier_commerce_platform_control_foundations`;
+- `20260820233008 / supplier_foundation`;
+- `20260820233026 / supplier_foundation_guards`;
+- `20260820233122 / canonical_supplier_data`;
+- `20260820233229 / canonical_supplier_data_guards`;
+- `20260820233301 / canonical_supplier_data_integrity`;
+- `20260820233327 / supplier_import_normalisation`;
+- `20260820233408 / supplier_import_normalisation_guards`;
+- `20260820233429 / supplier_import_runtime_guards`;
+- `20260820233446 / supplier_import_fact_idempotency_closure`;
+- `20260820234948 / supplier_commercial_economics`;
+- `20260820235020 / supplier_commercial_economics_guards`.
+
+Post-deployment verification confirmed the Phase G tax-rule, landed-cost, pricing and financial-ledger tables and the commercial/admin/ledger RPC boundaries are live. Phase C global controls for `*`, `checkout`, `import`, `publish`, `reservation`, `return_recovery`, `supplier_order` and `tracking_ingest` remained `enabled = false` after deployment.
+
+**PHASE C–G production DB foundation deployment: PASS.**  
+See `10_PHASE_G_PRODUCTION_DEPLOYMENT_2026-08-21.md` for the Phase G production deployment evidence record.
+
 ## Current handoff
 
-The repository is now past Gate B, P1 production deployment, Phase C, Phase D, Phase E and Phase F implementation merges:
+The repository and production database are now past Gate B and through Phase G foundations:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS IN MAIN → PHASE G → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE G — COMMERCIAL ECONOMICS.**
+**CURRENT NEXT PHASE: PHASE H — STOCK + PRICE SYNC.**
 
-Phase G must implement True Landed Cost, versioned Tax/VAT/Customs rules, pricing controls and the canonical commerce financial ledger on top of the fixed Gate B legal/business model. It must preserve one canonical financial truth and keep customer money, supplier payable/cost, tax, processor fees, refunds, recoveries and adjustments evidence-linked rather than reconstructed independently by UI consumers.
-
-Supplier Commerce runtime activation remains fail-closed until the applicable downstream gates are satisfied.
+Phase H must implement the canonical stock-and-price synchronization vertical slice on top of the Phase D–G supplier/offer/economics truth. It must preserve the invariant **SUPPLIER RAW STOCK ≠ LOADIFY SELLABLE STOCK**, implement freshness/stale detection and safe price-change/tolerance handling, and keep downstream buyer/checkout truth fail-closed when stock or price evidence is stale, unavailable or outside accepted tolerance. Phase C controls remain authoritative and Supplier Commerce runtime remains disabled until the applicable downstream gates are satisfied.
 
 Any newly demonstrated P0/P1 foundation defect still stops the sequence and returns to Branch Guard repair before downstream continuation.
 
