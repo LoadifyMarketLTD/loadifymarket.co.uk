@@ -25,8 +25,16 @@ describe('P1 marketplace tax evidence contract', () => {
     expect(migration).toContain('seller tax country is not verified from Stripe Connect');
   });
 
-  it('derives current listing tax evidence on the server and normalises non-VAT sellers to zero VAT', () => {
+  it('prevents browser roles from forging Stripe-derived seller tax-country evidence', () => {
+    expect(migration).toContain('private.protect_seller_tax_country_evidence_v1()');
+    expect(migration).toContain("auth.role() IS DISTINCT FROM 'service_role'");
+    expect(migration).toContain('NEW.\"taxCountry\" := OLD.\"taxCountry\"');
+    expect(migration).toContain('trg_protect_seller_tax_country_evidence_v1');
+  });
+
+  it('derives current listing tax evidence on every product write and normalises non-VAT sellers to zero VAT', () => {
     expect(migration).toContain('private.apply_marketplace_product_tax_evidence_v1()');
+    expect(migration).toContain('BEFORE INSERT OR UPDATE ON public.products');
     expect(migration).toContain("NEW.\"taxTreatmentStatus\" := 'seller_non_vat_declared'");
     expect(migration).toContain('NEW.\"vatRate\" := 0');
     expect(migration).toContain('NEW.\"priceExVat\" := NEW.price');
@@ -47,7 +55,7 @@ describe('P1 marketplace tax evidence contract', () => {
     expect(migration).toContain("v_metadata := jsonb_set(v_metadata, '{taxSnapshotVersion}', '1'::jsonb, true)");
     expect(migration).toContain("'treatment', 'seller_non_vat_declared'");
     expect(migration).toContain("'vatAmountPence', 0");
-    expect(migration).toContain("v_subtotal := round(v_product_paid, 2)");
+    expect(migration).toContain('v_subtotal := round(v_product_paid, 2)');
     expect(migration).toContain('v_vat := 0');
     expect(migration).toContain('v_existing_item.\"vatRate\" IS DISTINCT FROM 0');
     expect(migration).toContain('v_existing_item.subtotal IS DISTINCT FROM round(v_item_price * v_item_quantity, 2)');
