@@ -31,9 +31,35 @@ function SkeletonGridCard() {
   );
 }
 
+function MobileProductGrid({ products, startIndex = 0 }: { products: ReturnType<typeof useMobileGrid>["products"]; startIndex?: number }) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 'clamp(10px, 3vw, 14px)',
+      }}
+    >
+      {products.map((p, i) => (
+        <MobileGridCard
+          key={p.id}
+          id={p.id}
+          title={p.title}
+          price={p.price}
+          image={p.image}
+          location={p.location}
+          priority={startIndex + i < 4}
+        />
+      ))}
+    </div>
+  );
+}
+
 function MobileHome() {
   const { products, loading, loadingMore, hasMore, loadMore } = useMobileGrid();
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const leadProducts = products.slice(0, 6);
+  const remainingProducts = products.slice(6);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -52,11 +78,15 @@ function MobileHome() {
       <MobileHeroBanner />
       <MobileCategoryShortcuts />
 
+      <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: 14 }}>
+        <TrustStrip />
+      </div>
+
       <section
         aria-label="Marketplace products"
         style={{
           paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 16,
+          paddingTop: 20,
           paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 20px)',
         }}
       >
@@ -72,28 +102,44 @@ function MobileHome() {
           </p>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 'clamp(10px, 3vw, 14px)',
-          }}
-        >
-          {loading
-            ? Array.from({ length: 12 }).map((_, i) => <SkeletonGridCard key={i} />)
-            : products.map((p, i) => (
-                <MobileGridCard
-                  key={p.id}
-                  id={p.id}
-                  title={p.title}
-                  price={p.price}
-                  image={p.image}
-                  location={p.location}
-                  priority={i < 4}
-                />
-              ))}
-          {loadingMore && Array.from({ length: 4 }).map((_, i) => <SkeletonGridCard key={`more-${i}`} />)}
-        </div>
+        {loading ? (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 'clamp(10px, 3vw, 14px)',
+            }}
+          >
+            {Array.from({ length: 12 }).map((_, i) => <SkeletonGridCard key={i} />)}
+          </div>
+        ) : (
+          <>
+            <MobileProductGrid products={leadProducts} />
+
+            {products.length > 0 && (
+              <div style={{ marginInline: 'calc(var(--mob-side, 16px) * -1)', marginTop: 8, marginBottom: 8 }}>
+                <SellerCTA />
+              </div>
+            )}
+
+            {remainingProducts.length > 0 && (
+              <MobileProductGrid products={remainingProducts} startIndex={6} />
+            )}
+          </>
+        )}
+
+        {loadingMore && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 'clamp(10px, 3vw, 14px)',
+              marginTop: 12,
+            }}
+          >
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonGridCard key={`more-${i}`} />)}
+          </div>
+        )}
 
         {!loading && hasMore && (
           <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
