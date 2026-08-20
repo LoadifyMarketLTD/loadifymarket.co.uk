@@ -10,36 +10,36 @@ interface Step {
 const buyerSteps: Step[] = [
   {
     icon: Search,
-    title: "Browse & Discover",
-    description: "Find products from verified UK sellers across all categories.",
+    title: "Discover Products",
+    description: "Browse categories, search the marketplace and choose the product that fits your needs.",
   },
   {
     icon: ShieldCheck,
-    title: "Secure Checkout",
-    description: "Pay safely via Stripe Checkout with full encryption and buyer protection.",
+    title: "Checkout Securely",
+    description: "Complete your purchase through Loadify with Stripe-powered payment processing.",
   },
   {
     icon: Truck,
-    title: "Delivered to You",
-    description: "Track your order from your buyer dashboard until it arrives.",
+    title: "Track Your Order",
+    description: "Follow order progress from your buyer account through dispatch and delivery.",
   },
 ];
 
 const sellerSteps: Step[] = [
   {
     icon: UserPlus,
-    title: "Create Your Account",
-    description: "Register in minutes — no fees, no card required, no monthly charges.",
+    title: "Create Your Seller Account",
+    description: "Register and complete the required seller setup before trading on the marketplace.",
   },
   {
     icon: Tag,
-    title: "List Products or Services",
-    description: "Upload photos, set pricing, manage stock, and publish listings instantly.",
+    title: "Build Your Catalogue",
+    description: "Add products, pricing and stock, then manage your marketplace listings from one place.",
   },
   {
     icon: CreditCard,
-    title: "Get Paid via Stripe",
-    description: "Receive fast payouts directly to your bank through Stripe Connect Express.",
+    title: "Sell & Get Paid",
+    description: "Manage orders and receive eligible seller payouts through Stripe Connect.",
   },
 ];
 
@@ -50,19 +50,17 @@ function StepCard({ step }: { step: Step }) {
       data-parallax
       className="rounded-2xl border border-white/5 bg-elevated p-6 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] hover:border-primary/40"
     >
-      <Icon
-        className="w-7 h-7 text-primary shrink-0 icon-pulse"
-        aria-hidden="true"
-      />
+      <Icon className="w-7 h-7 text-primary shrink-0 icon-pulse" aria-hidden="true" />
       <p className="text-base font-semibold text-white leading-tight">{step.title}</p>
       <p className="text-sm text-slate-400 leading-relaxed">{step.description}</p>
     </div>
   );
 }
 
-function StepsPanel({ id, title, steps }: { id: string; title: string; steps: Step[] }) {
+function StepsPanel({ id, eyebrow, title, steps }: { id: string; eyebrow: string; title: string; steps: Step[] }) {
   return (
     <div id={id} className="w-full rounded-2xl border border-white/5 bg-elevated p-6 lg:p-8">
+      <p className="text-[10px] font-black text-primary uppercase tracking-[0.18em] mb-1.5">{eyebrow}</p>
       <h2 className="text-xl font-semibold text-white mb-4">{title}</h2>
       <div className="grid grid-cols-3 gap-6">
         {steps.map((step) => (
@@ -74,9 +72,9 @@ function StepsPanel({ id, title, steps }: { id: string; title: string; steps: St
 }
 
 const HowItWorksSection = () => (
-  <div className="grid grid-cols-2 gap-8" aria-label="How it works">
-    <StepsPanel id="how-it-works-buyers" title="How It Works for Buyers" steps={buyerSteps} />
-    <StepsPanel id="how-it-works-sellers" title="How It Works for Sellers" steps={sellerSteps} />
+  <div className="grid grid-cols-2 gap-8" aria-label="How Loadify Market works">
+    <StepsPanel id="how-it-works-buyers" eyebrow="For buyers" title="From discovery to delivery" steps={buyerSteps} />
+    <StepsPanel id="how-it-works-sellers" eyebrow="For sellers" title="From listing to payout" steps={sellerSteps} />
   </div>
 );
 
