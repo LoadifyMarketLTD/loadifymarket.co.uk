@@ -26,9 +26,9 @@
 - [x] PHASE F — Import / Normalisation merged through PR #542; Branch Guard PASS recorded below.
 - [x] PHASE G — Commercial Economics merged through PR #544; Branch Guard PASS and production DB deployment PASS recorded below.
 - [x] PHASE H — Stock + Price Sync merged through PR #546; Branch Guard PASS and production DB deployment PASS recorded below.
-- [ ] PHASE I — **CURRENT NEXT PHASE**.
-- [ ] PHASE J.
-- [ ] PHASE K.
+- [x] PHASE I — Order Orchestrator + Commerce Risk + Reservation merged through PR #548; Branch Guard PASS and production DB deployment PASS recorded below.
+- [x] PHASE J — Payment → Supplier Handshake + Acknowledgement + Idempotency + Reconciliation merged through PR #550; Branch Guard PASS and production DB deployment PASS recorded below.
+- [ ] PHASE K — **CURRENT NEXT PHASE: TRACKING + EXCEPTIONS**.
 - [ ] PHASE L.
 - [ ] PHASE M.
 - [ ] PHASE N.
@@ -53,6 +53,8 @@
 | [x] | #542 | merge commit `004bc59e5e6c882c5f15ad64d7ec801224973af3` | Phase F Import / Normalisation; auditable, resumable and idempotent import with AI Facts Lock, rights/compliance review and Phase C kill-switch enforcement; Branch Guard PASS before merge |
 | [x] | #544 | merge commit `5e5e519a2467a9f1eb2d8b3fbfba7635ac08d0e0` | Phase G Commercial Economics; landed cost, versioned tax rules, transparent pricing/margin controls and append-only canonical financial ledger; Branch Guard PASS before merge |
 | [x] | #546 | merge commit `eb2d1c5ae505d059455af8e04d48f9d6ff6f9242` | Phase H Stock + Price Sync; provider-neutral sync, freshness/safety-stock guards, price-drift closure, checkout guard, admin governance and variant binding; Branch Guard PASS before merge |
+| [x] | #548 | merge commit `82e2e34a5567693eea6e2e0c23c5d1fe8cdae822` | Phase I Order Orchestrator + Commerce Risk + Reservation; one public order truth, internal fulfilment legs, risk policy and evidence-backed reservations; Branch Guard PASS before merge |
+| [x] | #550 | merge commit `49bf5b6c8e3fcdb78ff11d8fff1785914cf090c8` | Phase J payment-to-supplier handshake, acknowledgement, idempotency, lost-response recovery and supplier-order reconciliation; Branch Guard PASS before merge |
 
 ## PR #531 — P1 closeout record
 
@@ -342,15 +344,78 @@ Post-deployment verification confirmed the Phase H sync-policy, stock-observatio
 
 **PHASE H production DB deployment: PASS.**
 
+## PR #548 — Phase I Order Orchestrator + Commerce Risk + Reservation closeout record
+
+**Merged:** 21 August 2026  
+**Merge commit:** `82e2e34a5567693eea6e2e0c23c5d1fe8cdae822`  
+**Head tested before merge:** `5796fbaa4ade9cf249c7e1d011da3dbc0ee7da1d`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- Phase I dedicated tests: 28/28 PASS;
+- upstream Phase C–H Supplier Commerce tests: PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- validation ran in an isolated worktree and finished with `PHASE I FINAL VALIDATION: PASS`.
+
+Phase I production migration history records migrations 634–639 in canonical order. See `11_PHASE_I_PRODUCTION_DEPLOYMENT_2026-08-21.md` for the detailed deployment evidence record.
+
+Phase I closed one-public-order/internal-fulfilment-leg orchestration, policy-driven Commerce Risk, evidence-backed reservations, route-integrity, idempotency and append-only orchestration audit while preserving payment success ≠ supplier-order success.
+
+**PHASE I production DB deployment: PASS.**
+
+## PR #550 — Phase J Payment → Supplier Handshake closeout record
+
+**Merged:** 21 August 2026  
+**Merge commit:** `49bf5b6c8e3fcdb78ff11d8fff1785914cf090c8`  
+**Head tested before merge:** `a69bbcd1ea05b14e6be26ee18e2a86625a0de5a3`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- Phase J dedicated tests: 27/27 PASS;
+- upstream Phase C–I Supplier Commerce tests: 113/113 PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- full suite retained exactly the same 27 known baseline failures: 27 failed / 339 passed (366 total); no Phase J regression family remained after the contract-test repair.
+
+Phase J scope closed by #550:
+
+- canonical completed-payment evidence is required before any supplier submission can be prepared;
+- customer payment success remains distinct from supplier-order success;
+- supplier submission is provider-neutral and bound to canonical supplier/offer/fulfilment-leg/reservation identity;
+- the same idempotency key is preserved across submission and recovery;
+- unknown/pending outcomes require provider lookup before retry and cannot be blindly resubmitted;
+- acknowledgement evidence is persisted separately from customer payment evidence;
+- terminal accepted/rejected/reconciled provider truth cannot regress under duplicate or late acknowledgements;
+- reservations are consumed only after confirmed supplier acceptance and released on rejection;
+- supplier-order reconciliation explicitly verifies payment and reservation evidence;
+- full financial reconciliation remains deferred to Phase L;
+- no Supplier Commerce runtime control was enabled by Phase J.
+
+### Phase J production deployment
+
+Production Supabase migration history records the Phase J chain in order:
+
+- `20260821094304 / supplier_payment_handshake_foundation`;
+- `20260821094352 / supplier_payment_handshake_runtime_guards`;
+- `20260821094432 / supplier_payment_handshake_reconciliation`;
+- `20260821094509 / supplier_payment_handshake_terminal_closure`.
+
+Post-deployment verification confirmed the payment-evidence, supplier-order-handshake and handshake-event tables plus prepare, acknowledgement, reconciliation and terminal-state guard boundaries are live. Global controls `*`, `checkout`, `reservation`, `supplier_order`, `stock_sync` and `price_sync` all remain `enabled = false`, preserving fail-closed runtime state.
+
+**PHASE J production DB deployment: PASS.**
+
 ## Current handoff
 
-The repository and production database are now past Gate B and through Phase H:
+The repository and production database are now past Gate B and through Phase J:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H PASS + DEPLOYED → PHASE I → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H PASS + DEPLOYED → PHASE I PASS + DEPLOYED → PHASE J PASS + DEPLOYED → PHASE K → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE I — ORDER ORCHESTRATOR + COMMERCE RISK + RESERVATION.**
+**CURRENT NEXT PHASE: PHASE K — TRACKING + EXCEPTIONS.**
 
-Phase I must implement the canonical order-orchestration, commerce-risk and reservation vertical slice on top of the Phase D–H supplier/offer/economics/stock-price truth. Payment success must remain distinct from supplier-order success, and reservation/order state must remain fail-closed under the Phase C control plane and Phase H stock/price readiness evidence.
+Phase K must implement tracking and exception handling as the next canonical vertical slice, consuming confirmed supplier-order truth from Phase J without creating parallel order or shipment truth and remaining fail-closed under the Phase C control plane.
 
 Any newly demonstrated P0/P1 foundation defect still stops the sequence and returns to Branch Guard repair before downstream continuation.
 
