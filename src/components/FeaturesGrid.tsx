@@ -1,124 +1,97 @@
-import {
-  FileText,
-  MessageSquare,
-  Truck,
-  Banknote,
-  ChevronRight,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { ArrowRight, Boxes, ClipboardList, CreditCard, Search, ShieldCheck, Truck } from "lucide-react";
+import { Link } from "react-router-dom";
 
-interface Feature {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-}
-
-const features: Feature[] = [
+const sellerCapabilities = [
   {
-    icon: FileText,
-    title: "Request for Quote",
-    description: "Get custom pricing for bulk orders.",
+    number: "01",
+    icon: Boxes,
+    title: "Bring your catalogue",
+    description: "Create and manage product listings from your seller environment and put them in front of marketplace shoppers.",
   },
   {
-    icon: MessageSquare,
-    title: "Buyer/Seller Messaging",
-    description: "Communicate directly with buyers before purchase.",
+    number: "02",
+    icon: ClipboardList,
+    title: "Run marketplace orders",
+    description: "Keep day-to-day order activity visible from the same seller workflow instead of piecing commerce together manually.",
   },
   {
-    icon: Truck,
-    title: "Order Tracking",
-    description: "Track your order from dispatch to delivery.",
-  },
-  {
-    icon: Banknote,
-    title: "Stripe Payouts",
-    description: "Get paid fast and secure via Stripe Connect Express.",
+    number: "03",
+    icon: CreditCard,
+    title: "Follow a structured payout path",
+    description: "Where eligible, seller payouts follow the platform’s Stripe Connect flow.",
   },
 ];
 
 export default function FeaturesGrid() {
   return (
-    <div className="sm:flex-1 sm:rounded-2xl sm:border sm:border-white/5 sm:bg-elevated sm:p-6 lg:p-8 sm:flex sm:flex-col">
+    <section className="relative w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] text-white shadow-[0_22px_60px_rgba(10,35,79,0.17)]" aria-label="Why sell on Loadify Market">
+      <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]" aria-hidden="true" />
+      <div className="relative grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="relative overflow-hidden px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+          <div className="absolute inset-0 opacity-16" aria-hidden="true" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '42px 42px' }} />
+          <div className="relative">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Built for serious sellers</p>
+            <h2 className="mt-3 max-w-[500px] text-3xl font-black leading-[1.02] tracking-[-0.035em] sm:text-4xl">
+              Your products deserve more than a listing.
+            </h2>
+            <p className="mt-5 max-w-[480px] text-sm font-medium leading-6 text-white/80 sm:text-base sm:leading-7">
+              Bring your catalogue to Loadify and keep listings, marketplace orders and eligible payouts connected to the same place buyers shop.
+            </p>
 
-      {/* Section heading */}
-      <h2
-        className="text-[17px] sm:text-xl font-semibold text-white mb-3 sm:mb-1"
-      >
-        Everything you need to{' '}
-        <span className="text-primary sm:text-primary">buy and sell</span>
-      </h2>
-
-      {/* ── Mobile: spec-exact card list ────────────────────────────── */}
-      <div className="flex flex-col sm:hidden" style={{ gap: '12px', marginTop: '12px' }}>
-        {features.map((feature) => {
-          const Icon = feature.icon;
-          return (
-            <div
-              key={feature.title}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                minHeight: '72px',
-                
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px',
-                padding: '16px',
-              }}
-            >
-              {/* Icon box */}
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '12px',
-                  background: 'rgba(212,175,55,0.1)',
-                  border: '1px solid rgba(212,175,55,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Icon style={{ width: '18px', height: '18px' }} className="text-primary" aria-hidden="true" />
-              </div>
-              {/* Text */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1.2 }} className="text-white">
-                  {feature.title}
-                </p>
-                <p style={{ fontSize: '12px', lineHeight: 1.4, marginTop: '3px' }} className="text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-              {/* Chevron */}
-              <ChevronRight style={{ width: '16px', height: '16px', flexShrink: 0 }} className="text-muted-foreground" aria-hidden="true" />
+            <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-[#F5A300]/30 bg-[#F5A300]/10 px-3 py-2 text-[11px] font-extrabold text-[#FFD77A]">
+              0% seller commission until 31 December 2026
             </div>
-          );
-        })}
-      </div>
 
-      {/* ── Desktop: 2×2 grid ─────────────────────────────────────────── */}
-      <div className="hidden sm:grid grid-cols-2 gap-6 flex-1 mt-4">
-        {features.map((feature) => {
-          const Icon = feature.icon;
-          return (
-            <div
-              key={feature.title}
-              data-parallax
-              className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-elevated p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] hover:border-primary/40"
-            >
-              <Icon
-                className="w-7 h-7 text-primary shrink-0 icon-pulse"
-                aria-hidden="true"
-              />
-              <p className="text-base font-semibold text-white leading-tight">{feature.title}</p>
-              <p className="text-sm text-slate-400 leading-relaxed">{feature.description}</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+              <Link to="/register?type=seller" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F] transition-all hover:-translate-y-0.5 hover:bg-[#E69500]">
+                Start selling
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link to="/catalog" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 bg-white/[0.04] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-white/10">
+                See what is live now
+              </Link>
             </div>
-          );
-        })}
-      </div>
 
-    </div>
+            <div className="mt-10 grid grid-cols-3 gap-3 border-t border-white/12 pt-6">
+              {[
+                { icon: Search, label: "Discovery" },
+                { icon: ShieldCheck, label: "Checkout" },
+                { icon: Truck, label: "Tracking" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="border-l border-white/15 pl-3 first:border-l-0 first:pl-0">
+                  <Icon className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />
+                  <p className="mt-2 text-[10px] font-bold text-white/80">{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 bg-white/[0.045] px-6 py-8 sm:px-8 sm:py-10 lg:border-l lg:border-t-0 lg:px-10 lg:py-12">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">From product to payout</p>
+          <h3 className="mt-2 max-w-[620px] text-2xl font-black tracking-[-0.025em] text-white sm:text-3xl">
+            Bring the products. Keep the operation together.
+          </h3>
+
+          <div className="mt-7 divide-y divide-white/10 border-y border-white/10">
+            {sellerCapabilities.map(({ number, icon: Icon, title, description }) => (
+              <div key={number} className="grid grid-cols-[44px_1fr] gap-4 py-5 sm:grid-cols-[56px_1fr] sm:gap-5 sm:py-6">
+                <div>
+                  <p className="text-[10px] font-black tracking-[0.16em] text-white/45">{number}</p>
+                  <div className="mt-2 flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.07] text-[#F5A300] sm:h-10 sm:w-10">
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-base font-extrabold leading-5 text-white sm:text-lg">{title}</p>
+                  <p className="mt-2 text-sm leading-6 text-white/68">{description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

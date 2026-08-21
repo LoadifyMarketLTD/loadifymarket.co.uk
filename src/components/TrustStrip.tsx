@@ -1,74 +1,43 @@
-import { ShieldCheck, BadgeCheck, Percent } from "lucide-react";
+import { Building2, Percent, ShieldCheck, Truck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-/* UK flag SVG inline — no external dep */
-const UKFlag = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" className="h-[18px] sm:h-5 w-auto" aria-label="UK flag">
-    <clipPath id="a"><path d="M0 0v30h60V0z"/></clipPath>
-    <clipPath id="b"><path d="M30 15h30v15zv15H0zH0V0zV0h30z"/></clipPath>
-    <g clipPath="url(#a)">
-      <path d="M0 0v30h60V0z" fill="#012169"/>
-      <path d="M0 0l60 30m0-30L0 30" stroke="#fff" strokeWidth="6"/>
-      <path d="M0 0l60 30m0-30L0 30" clipPath="url(#b)" stroke="#C8102E" strokeWidth="4"/>
-      <path d="M30 0v30M0 15h60" stroke="#fff" strokeWidth="10"/>
-      <path d="M30 0v30M0 15h60" stroke="#C8102E" strokeWidth="6"/>
-    </g>
-  </svg>
-);
-
 interface TrustItem {
-  icon?: LucideIcon;
-  flag?: boolean;
+  icon: LucideIcon;
   label: string;
   sub: string;
 }
 
 const ITEMS: TrustItem[] = [
-  { icon: ShieldCheck, label: "Secure Checkout", sub: "Powered by Stripe" },
-  { icon: BadgeCheck,  label: "Seller Accounts", sub: "Profile checks" },
-  { flag: true,        label: "UK Marketplace",  sub: "Built for UK trade" },
-  { icon: Percent,     label: "0% Seller Fee",   sub: "Until 31 Dec 2026" },
+  { icon: ShieldCheck, label: "Secure checkout", sub: "Payments powered by Stripe" },
+  { icon: Truck, label: "Order visibility", sub: "Track progress through delivery" },
+  { icon: Building2, label: "UK operated", sub: "Run by XDrive Logistics Ltd" },
+  { icon: Percent, label: "0% seller commission", sub: "Until 31 Dec 2026" },
 ];
 
 const TrustStrip = () => (
   <div
-    className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6"
+    className="relative grid grid-cols-2 overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] text-white shadow-[0_18px_55px_rgba(10,35,79,0.16)] sm:grid-cols-4"
     aria-label="Platform trust features"
   >
-    {ITEMS.map(({ icon: Icon, flag, label, sub }) => (
+    <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
+    {ITEMS.map(({ icon: Icon, label, sub }, index) => (
       <div
         key={label}
         className={[
-          /* layout */
-          "flex items-center gap-2.5 sm:gap-3",
-          /* shape — mobile: 16px radius; desktop: 2xl */
-          "rounded-2xl",
-          /* background — mobile: #12121A solid; desktop: gradient */
-          "bg-surface sm:bg-elevated",
-          /* border — mobile: faint white; desktop: same then hover changes it */
-          "border border-white/[0.07] sm:border-white/5",
-          /* padding — mobile: 14px; desktop: px-5 py-4 */
-          "p-[14px] sm:px-5 sm:py-4",
-          /* desktop hover */
-          "transition-all duration-300",
-          "sm:hover:-translate-y-1 sm:hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] sm:hover:border-primary/40",
+          "group relative flex min-h-[92px] items-center gap-3 px-4 py-4 transition-colors duration-200 sm:min-h-[104px] sm:px-5",
+          "hover:bg-white/[0.055]",
+          index % 2 === 0 ? "border-r border-white/10" : "",
+          index < 2 ? "border-b border-white/10 sm:border-b-0" : "",
+          index > 0 ? "sm:border-l sm:border-white/10" : "",
+          index === 2 ? "sm:border-l" : "",
         ].join(" ")}
       >
-        <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 overflow-hidden">
-          {flag
-            ? <UKFlag />
-            : Icon && (
-                <Icon
-                  className="h-[18px] w-[18px] sm:h-6 sm:w-6 text-primary sm:text-primary"
-                  style={{ filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.4))' }}
-                  aria-hidden="true"
-                />
-              )
-          }
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.07] text-[#F5A300] sm:h-10 sm:w-10">
+          <Icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <p className="text-[13px] sm:text-sm font-semibold text-white leading-tight">{label}</p>
-          <p className="text-[11px] sm:text-xs text-muted-foreground sm:text-slate-400 leading-tight mt-0.5">{sub}</p>
+          <p className="text-[12px] font-extrabold leading-tight text-white sm:text-sm">{label}</p>
+          <p className="mt-1 text-[10px] font-medium leading-[1.35] text-white/65 sm:text-[11px]">{sub}</p>
         </div>
       </div>
     ))}
