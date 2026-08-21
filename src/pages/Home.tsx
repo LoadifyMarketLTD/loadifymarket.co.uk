@@ -4,7 +4,6 @@ import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 
 import MobileAppHeader from "@/components/MobileAppHeader";
-import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
 import MobileGridCard from "@/components/MobileGridCard";
 import { useMobileGrid } from "@/hooks/useMobileGrid";
@@ -12,7 +11,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
-import ShopByCategory from "@/components/ShopByCategory";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
@@ -81,12 +79,10 @@ function MobileHome() {
         <TrustStrip />
       </div>
 
-      <div className="bg-[#071B3A] pb-7 pt-3">
-        <MobileCategoryShortcuts />
-
+      <div className="bg-[#071B3A] pb-7 pt-5">
         <section
           aria-label="Marketplace products"
-          style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: 18 }}
+          style={{ paddingInline: 'var(--mob-side, 16px)' }}
         >
           <div style={{ marginBottom: 14 }}>
             <p className="text-[#F5A300]" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
@@ -95,8 +91,8 @@ function MobileHome() {
             <h2 className="text-white" style={{ fontSize: 20, fontWeight: 820, lineHeight: 1.2 }}>
               Products you can explore now
             </h2>
-            <p className="text-white/60" style={{ fontSize: 12, marginTop: 4, lineHeight: 1.45 }}>
-              Browse current marketplace listings and discover what’s available.
+            <p className="text-white/70" style={{ fontSize: 12, marginTop: 4, lineHeight: 1.45 }}>
+              Current approved marketplace listings — no placeholder catalogue.
             </p>
           </div>
 
@@ -181,11 +177,8 @@ function DesktopHome() {
         </div>
       </section>
 
-      <section className="bg-[#071B3A] py-8" aria-label="Shop Loadify Market">
-        <ShopByCategory />
-        <div className="mt-1">
-          <FeaturedProducts />
-        </div>
+      <section className="bg-[#071B3A] py-8" aria-label="Live products on Loadify Market">
+        <FeaturedProducts />
       </section>
 
       <section className="bg-[#F7F9FC] py-12" aria-label="Why Loadify is different">
@@ -216,8 +209,8 @@ export default function Home() {
   return (
     <MainLayout>
       <SEO
-        title="UK Marketplace Built for Buyers & Serious Sellers | Loadify Market"
-        description="Shop across categories or start selling on Loadify Market. Stripe-powered checkout, order tracking and seller tools in one UK-operated marketplace."
+        title="UK Marketplace for Buyers & Serious Sellers | Loadify Market"
+        description="Shop live products or start selling on Loadify Market. Stripe-powered checkout, order tracking and seller tools in one UK-operated marketplace."
         canonical="/"
       />
 
