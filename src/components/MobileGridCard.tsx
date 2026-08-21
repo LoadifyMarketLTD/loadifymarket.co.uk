@@ -15,7 +15,6 @@ interface MobileGridCardProps {
   price: number;
   image?: string;
   location?: string;
-  /** Set to true for above-the-fold cards to avoid lazy-loading the LCP image. */
   priority?: boolean;
 }
 
@@ -38,12 +37,12 @@ export default function MobileGridCard({ id, title, price, image, location, prio
   return (
     <Link
       to={`/product/${id}`}
-      style={{ display: 'block', textDecoration: 'none' }}
+      className="block rounded-2xl border border-white/10 bg-[#0B2F6B] p-2.5 shadow-[0_12px_28px_rgba(10,35,79,0.18)]"
+      style={{ textDecoration: 'none' }}
       aria-label={title}
     >
-      {/* Image */}
       <div
-        className="bg-white/[0.05]"
+        className="bg-white/[0.07]"
         style={{
           width: '100%',
           aspectRatio: '1 / 1',
@@ -63,10 +62,9 @@ export default function MobileGridCard({ id, title, price, image, location, prio
         />
       </div>
 
-      {/* Info */}
       <div style={{ paddingTop: 8, paddingBottom: 4 }}>
         <p
-          className="text-foreground/90"
+          className="text-white/90"
           style={{
             fontSize: 'clamp(12px, 3.2vw, 13px)',
             fontWeight: 500,
@@ -81,7 +79,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           {title}
         </p>
         <p
-          className="text-foreground"
+          className="text-[#F5A300]"
           style={{
             fontSize: 'clamp(13px, 3.8vw, 15px)',
             fontWeight: 700,
@@ -92,7 +90,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
         </p>
         {location && (
           <p
-            className="text-foreground/50"
+            className="text-white/52"
             style={{
               fontSize: 11,
               margin: '3px 0 0',
