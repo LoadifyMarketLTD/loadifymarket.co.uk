@@ -2,6 +2,7 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { jsonResponse, optionsResponse } from './_shared/http';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { getFeatureFlags } from './_shared/platformFlags';
 
 const METHODS = 'POST, OPTIONS';
 const BUYER_ONBOARDING_STEP = 0;
@@ -62,6 +63,16 @@ export const handler: Handler = async (event) => {
   }
 
   if (role === 'seller') {
+    // Legacy callers must obey the same server-side registration control as
+    // the canonical start-seller-activation endpoint. Otherwise an old/direct
+    // caller could bypass an operator-disabled Seller registration gate.
+    const flags = await getFeatureFlags(supabase);
+    if (flags.sellerRegistration === false) {
+      return jsonResponse(403, {
+        error: 'Seller registration is temporarily disabled. Please try again later.',
+      }, METHODS);
+    }
+
     const { data, error } = await supabase.rpc('server_start_seller_activation_v1', {
       p_user_id: userId,
     });
