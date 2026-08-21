@@ -83,10 +83,18 @@ export default function MobileHeroBanner() {
             onClick={() => navigate('/catalog?category=Electronics')}
             className="group relative h-[188px] overflow-hidden rounded-[20px] text-left shadow-[0_16px_38px_rgba(10,35,79,0.14)]"
           >
-            <img src="/images/categories/electronics.jpeg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+            <img
+              src="/images/categories/electronics.jpeg"
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+            />
             <span className="absolute inset-0 bg-gradient-to-t from-[#071B3A]/85 via-transparent to-transparent" aria-hidden="true" />
             <span className="absolute inset-x-0 bottom-0 p-4">
-              <span className="block text-[9px] font-black uppercase tracking-[0.13em] text-white/60">Explore</span>
+              <span className="block text-[9px] font-black uppercase tracking-[0.13em] text-white/75">Explore</span>
               <span className="mt-1 block text-[17px] font-extrabold text-white">Electronics</span>
             </span>
           </button>
@@ -97,7 +105,15 @@ export default function MobileHeroBanner() {
               onClick={() => navigate('/catalog?category=Clothing%20%26%20Fashion')}
               className="relative h-[89px] overflow-hidden rounded-[18px] text-left"
             >
-              <img src="/images/categories/fashion.jpeg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+              <img
+                src="/images/categories/fashion.jpeg"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                fetchPriority="low"
+                decoding="async"
+              />
               <span className="absolute inset-0 bg-gradient-to-t from-[#071B3A]/80 via-transparent to-transparent" aria-hidden="true" />
               <span className="absolute bottom-2.5 left-3 text-[12px] font-extrabold text-white">Fashion</span>
             </button>
@@ -106,7 +122,15 @@ export default function MobileHeroBanner() {
               onClick={() => navigate('/catalog?category=Home%20%26%20Garden')}
               className="relative h-[89px] overflow-hidden rounded-[18px] text-left"
             >
-              <img src="/images/categories/home-kitchen.jpeg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+              <img
+                src="/images/categories/home-kitchen.jpeg"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                fetchPriority="low"
+                decoding="async"
+              />
               <span className="absolute inset-0 bg-gradient-to-t from-[#071B3A]/80 via-transparent to-transparent" aria-hidden="true" />
               <span className="absolute bottom-2.5 left-3 text-[12px] font-extrabold text-white">Home & Garden</span>
             </button>
