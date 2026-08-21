@@ -2,32 +2,27 @@ import { Link } from "react-router-dom";
 
 export default function SellerCTA() {
   return (
-    <section
-      className="sm:bg-surface sm:border-y sm:border-primary/40 bg-surface"
-    >
-      {/* ── Mobile: card with margin/radius ───────────────────────── */}
+    <section className="sm:bg-[#0A234F] sm:border-y sm:border-[#F5A300]/40 bg-[#0A234F]">
       <div className="sm:hidden" style={{ padding: '24px 16px' }}>
         <div
           style={{
-            background: 'rgba(12,10,0,1)',
-            border: '1px solid rgba(212,175,55,0.2)',
+            background: '#0B2F6B',
+            border: '1px solid rgba(245,163,0,0.24)',
             borderRadius: '20px',
             padding: '20px',
             textAlign: 'center',
+            boxShadow: '0 18px 42px rgba(10,35,79,0.22)',
           }}
         >
-          {/* Heading */}
           <p style={{ fontWeight: 800, fontSize: '24px', lineHeight: 1.2, marginBottom: '10px' }} className="text-white">
             Start Selling for{' '}
-            <span className="text-primary" style={{}}>FREE</span>
+            <span className="text-[#F5A300]">FREE</span>
           </p>
 
-          {/* Subtext */}
-          <p style={{ fontSize: '14px', lineHeight: 1.55, marginBottom: '22px' }} className="text-muted-foreground">
+          <p style={{ fontSize: '14px', lineHeight: 1.55, marginBottom: '22px' }} className="text-white/68">
             List products free, sell at fixed prices, and keep more from every order.
           </p>
 
-          {/* Gold CTA button */}
           <Link
             to="/register?type=seller"
             style={{
@@ -35,8 +30,8 @@ export default function SellerCTA() {
               alignItems: 'center',
               justifyContent: 'center',
               height: '52px',
-              background: 'rgba(212,175,55,1)',
-              color: 'rgba(18,26,43,1)',
+              background: '#F5A300',
+              color: '#0A234F',
               fontWeight: 700,
               fontSize: '16px',
               borderRadius: '14px',
@@ -47,33 +42,31 @@ export default function SellerCTA() {
             Open Your Seller Account
           </Link>
 
-          <p style={{ fontSize: '12px' }} className="text-muted-foreground">
+          <p style={{ fontSize: '12px' }} className="text-white/62">
             0% seller commission until 31 December 2026.
           </p>
         </div>
       </div>
 
-      {/* ── Desktop layout — unchanged ────────────────────────────── */}
       <div className="hidden sm:block px-8 py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-foreground font-medium text-base text-center sm:text-left">
+          <p className="text-white font-medium text-base text-center sm:text-left">
             List products free, sell at fixed prices, and keep more from every order with 0% seller commission until 31 December 2026.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
             <Link
               to="/register?type=seller"
               data-magnetic
-              className="bg-primary hover:shadow-[0_0_22px_rgba(212,175,55,0.25)] hover:-translate-y-0.5 text-background font-bold px-6 py-2.5 rounded-xl transition-all duration-300 text-sm whitespace-nowrap"
+              className="bg-[#F5A300] hover:bg-[#E69500] hover:shadow-[0_0_22px_rgba(245,163,0,0.25)] hover:-translate-y-0.5 text-[#0A234F] font-bold px-6 py-2.5 rounded-xl transition-all duration-300 text-sm whitespace-nowrap"
             >
               Open Your Free Seller Account
             </Link>
-            <p className="text-muted-foreground/80 text-sm whitespace-nowrap">
+            <p className="text-white/65 text-sm whitespace-nowrap">
               Stripe payments. Fixed prices. No monthly fee.
             </p>
           </div>
         </div>
       </div>
-
     </section>
   );
 }
