@@ -70,8 +70,11 @@ const Footer = () => (
             <a href="tel:+447423272138" className="hover:text-white">+44 7423 272138</a>
           </div>
 
-          <div className="mt-7 grid grid-cols-3 gap-x-4 border-t border-white/10 pt-6">
-            <div>
+          <div
+            className="mt-7 grid gap-x-3 border-t border-white/10 pt-6"
+            style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}
+          >
+            <div className="min-w-0">
               <ColHeading>Shop</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/catalog">Browse Marketplace</FooterLink>
@@ -82,7 +85,7 @@ const Footer = () => (
               </ul>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <ColHeading>Sell</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/register?type=seller">Start Selling</FooterLink>
@@ -93,7 +96,7 @@ const Footer = () => (
               </ul>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <ColHeading>Loadify</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/about">About Us</FooterLink>
