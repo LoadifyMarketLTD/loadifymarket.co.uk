@@ -30,6 +30,8 @@ interface MobileDrawerProps {
   user: User | null;
   dashboardPath: string;
   onLogout: () => void;
+  liveCategoryIds: string[];
+  liveRootCategoryIds: string[];
 }
 
 interface MainScreenProps {
@@ -39,6 +41,8 @@ interface MainScreenProps {
   onClose: () => void;
   closeBtnRef: React.RefObject<HTMLButtonElement | null>;
   categories: CategoryNode[];
+  liveCategoryIds: string[];
+  liveRootCategoryIds: string[];
   expandedSlug: string | null;
   onCategoryExpand: (slug: string | null) => void;
 }
@@ -59,19 +63,24 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 const DEFAULT_ICON = Briefcase;
-const FEATURED_SLUGS = ["handmade", "toys-games", "toys", "health-beauty", "electronics", "clothing-fashion", "home-garden", "sports-fitness", "automotive"];
 
-function chooseDrawerCategories(categories: CategoryNode[]) {
-  const preferred = FEATURED_SLUGS
-    .map((slug) => categories.find((category) => category.slug === slug))
-    .filter((category): category is CategoryNode => Boolean(category));
-  const used = new Set(preferred.map((category) => category.id));
-  const fallback = categories.filter((category) => !used.has(category.id));
-  return [...preferred, ...fallback].slice(0, 8);
-}
-
-const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categories, expandedSlug, onCategoryExpand }: MainScreenProps) => {
-  const visibleCategories = chooseDrawerCategories(categories);
+const MainScreen = ({
+  user,
+  dashboardPath,
+  onLogout,
+  onClose,
+  closeBtnRef,
+  categories,
+  liveCategoryIds,
+  liveRootCategoryIds,
+  expandedSlug,
+  onCategoryExpand,
+}: MainScreenProps) => {
+  const liveCategoryIdSet = new Set(liveCategoryIds);
+  const liveRootCategoryIdSet = new Set(liveRootCategoryIds);
+  const visibleCategories = categories
+    .filter((category) => liveRootCategoryIdSet.has(category.id))
+    .slice(0, 8);
 
   return (
     <div className="flex flex-col h-full">
@@ -104,12 +113,13 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
           </Link>
         </div>
 
-        <nav aria-label="Featured product categories">
+        <nav aria-label="Live product categories">
           {visibleCategories.map((cat) => {
             const Icon = ICON_MAP[cat.slug] ?? DEFAULT_ICON;
             const isOpen = expandedSlug === cat.slug;
             const categoryUrl = `/catalog?category=${encodeURIComponent(cat.name)}`;
-            const hasChildren = cat.children.length > 0;
+            const liveChildren = cat.children.filter((child) => liveCategoryIdSet.has(child.id));
+            const hasChildren = liveChildren.length > 0;
 
             return (
               <div key={cat.slug}>
@@ -133,7 +143,7 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
 
                 {isOpen && hasChildren && (
                   <div className="bg-white/[0.045] border-b border-white/[0.07]">
-                    {cat.children.slice(0, 6).map((sub) => (
+                    {liveChildren.slice(0, 6).map((sub) => (
                       <Link
                         key={sub.slug}
                         to={`/catalog?category=${encodeURIComponent(cat.name)}&q=${encodeURIComponent(sub.name)}`}
@@ -143,7 +153,7 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
                         <span className="text-[14px] font-medium text-white/75">{sub.name}</span>
                       </Link>
                     ))}
-                    {cat.children.length > 6 && (
+                    {liveChildren.length > 6 && (
                       <Link to={categoryUrl} onClick={onClose} className="flex h-[42px] items-center px-8 text-[13px] font-bold text-[#F5A300] hover:bg-white/[0.07]">
                         View all {cat.name}
                       </Link>
@@ -174,7 +184,15 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
   );
 };
 
-const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDrawerProps) => {
+const MobileDrawer = ({
+  open,
+  onClose,
+  user,
+  dashboardPath,
+  onLogout,
+  liveCategoryIds,
+  liveRootCategoryIds,
+}: MobileDrawerProps) => {
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -249,6 +267,8 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
           onClose={onClose}
           closeBtnRef={closeBtnRef}
           categories={categories}
+          liveCategoryIds={liveCategoryIds}
+          liveRootCategoryIds={liveRootCategoryIds}
           expandedSlug={expandedSlug}
           onCategoryExpand={setExpandedSlug}
         />
