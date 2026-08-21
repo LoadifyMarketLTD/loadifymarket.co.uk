@@ -21,7 +21,6 @@ import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/loadify-logo.svg";
 import type { User } from "@/types";
 import { useCategories } from "@/hooks/useCategories";
-
 import type { CategoryNode } from "@/hooks/useCategories";
 
 interface MobileDrawerProps {
@@ -44,20 +43,20 @@ interface MainScreenProps {
 }
 
 const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
-  "electronics":       { icon: Smartphone,    iconColor: "text-cyan-400"   },
-  "home-garden":       { icon: Home,          iconColor: "text-success"  },
-  "clothing-fashion":  { icon: Shirt,         iconColor: "text-blue-400"   },
-  "toys-games":        { icon: Gamepad2,      iconColor: "text-purple-400" },
-  "sports-fitness":    { icon: Dumbbell,      iconColor: "text-primary" },
-  "automotive":        { icon: Car,           iconColor: "text-slate-300"  },
-  "health-beauty":     { icon: HeartPulse,    iconColor: "text-rose-400"   },
-  "pets":              { icon: PawPrint,      iconColor: "text-orange-400" },
-  "pet-supplies":      { icon: PawPrint,      iconColor: "text-primary"  },
-  "food-drink":        { icon: UtensilsCrossed, iconColor: "text-danger"  },
-  "office-business":   { icon: Briefcase,     iconColor: "text-sky-400"    },
+  "electronics":       { icon: Smartphone,      iconColor: "text-[#F5A300]" },
+  "home-garden":       { icon: Home,            iconColor: "text-[#F5A300]" },
+  "clothing-fashion":  { icon: Shirt,           iconColor: "text-[#F5A300]" },
+  "toys-games":        { icon: Gamepad2,        iconColor: "text-[#F5A300]" },
+  "sports-fitness":    { icon: Dumbbell,        iconColor: "text-[#F5A300]" },
+  "automotive":        { icon: Car,             iconColor: "text-[#F5A300]" },
+  "health-beauty":     { icon: HeartPulse,      iconColor: "text-[#F5A300]" },
+  "pets":              { icon: PawPrint,        iconColor: "text-[#F5A300]" },
+  "pet-supplies":      { icon: PawPrint,        iconColor: "text-[#F5A300]" },
+  "food-drink":        { icon: UtensilsCrossed, iconColor: "text-[#F5A300]" },
+  "office-business":   { icon: Briefcase,       iconColor: "text-[#F5A300]" },
 };
 
-const DEFAULT_ICON = { icon: Briefcase, iconColor: "text-white/75" };
+const DEFAULT_ICON = { icon: Briefcase, iconColor: "text-[#F5A300]" };
 
 const MainScreen = ({
   user,
@@ -69,25 +68,25 @@ const MainScreen = ({
   expandedSlug,
   onCategoryExpand,
 }: MainScreenProps) => (
-  <div className="flex flex-col h-full">
-    <div className="h-14 px-4 flex items-center justify-between border-b border-white/[0.12] shrink-0">
+  <div className="flex flex-col h-full bg-[#0A234F]">
+    <div className="h-14 px-4 flex items-center justify-between border-b border-white/10 shrink-0 bg-[#0A234F]">
       <Link to="/" onClick={onClose} className="flex items-center gap-2" aria-label="Loadify Market — Home">
         <img src={logo} alt="" aria-hidden="true" className="h-7 w-7" />
         <span className="font-display text-base font-bold text-white leading-none">
-          Loadify <span className="text-primary">Market</span>
+          Loadify <span className="text-[#F5A300]">Market</span>
         </span>
       </Link>
       <button
         ref={closeBtnRef}
         onClick={onClose}
-        className="p-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+        className="p-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-[#1D57D8]/20"
         aria-label="Close menu"
       >
         <X className="h-5 w-5" />
       </button>
     </div>
 
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto bg-[#0A234F]">
       <DrawerAccountBlock
         user={user}
         dashboardPath={dashboardPath}
@@ -98,7 +97,7 @@ const MainScreen = ({
       <div className="h-px bg-white/10 mx-4" />
 
       <div className="pt-4">
-        <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
+        <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/45">
           Quick Actions
         </p>
         <DrawerCTACards onClose={onClose} />
@@ -106,7 +105,7 @@ const MainScreen = ({
 
       <div className="h-px bg-white/10 mx-4" />
 
-      <p className="px-4 pt-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
+      <p className="px-4 pt-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/45">
         Browse Categories
       </p>
       <nav aria-label="Product categories">
@@ -122,10 +121,10 @@ const MainScreen = ({
                 onMouseEnter={() => onCategoryExpand(cat.slug)}
                 aria-expanded={isOpen}
                 className={[
-                  "w-full flex items-center gap-3 px-4 h-[52px] transition-colors border-b border-white/[0.05]",
+                  "w-full flex items-center gap-3 px-4 h-[52px] transition-colors border-b border-white/[0.07]",
                   isOpen
-                    ? "bg-white/[0.09] hover:bg-white/[0.11]"
-                    : "hover:bg-white/[0.07] active:bg-white/10",
+                    ? "bg-[#1D57D8]/20 hover:bg-[#1D57D8]/25"
+                    : "hover:bg-[#1D57D8]/15 active:bg-[#1D57D8]/20",
                 ].join(" ")}
               >
                 <Icon className={`h-[18px] w-[18px] shrink-0 ${iconColor}`} aria-hidden="true" />
@@ -134,7 +133,7 @@ const MainScreen = ({
                 </span>
                 <ChevronDown
                   className={[
-                    "h-4 w-4 text-white/30 shrink-0 transition-transform duration-200",
+                    "h-4 w-4 text-white/40 shrink-0 transition-transform duration-200",
                     isOpen ? "rotate-180" : "",
                   ].join(" ")}
                   aria-hidden="true"
@@ -142,13 +141,13 @@ const MainScreen = ({
               </button>
 
               {isOpen && (
-                <div className="bg-white/[0.04] border-b border-white/[0.07]">
+                <div className="bg-[#0B2F6B] border-b border-white/10">
                   <Link
                     to={categoryUrl}
                     onClick={onClose}
-                    className="flex items-center px-6 h-[46px] border-b border-white/[0.06] hover:bg-white/[0.07] active:bg-white/10 transition-colors"
+                    className="flex items-center px-6 h-[46px] border-b border-white/[0.08] hover:bg-[#1D57D8]/18 active:bg-[#1D57D8]/22 transition-colors"
                   >
-                    <span className="text-[14px] font-semibold text-primary">
+                    <span className="text-[14px] font-semibold text-[#F5A300]">
                       View All {cat.name}
                     </span>
                   </Link>
@@ -158,7 +157,7 @@ const MainScreen = ({
                       key={sub.slug}
                       to={`/catalog?category=${encodeURIComponent(cat.name)}&q=${encodeURIComponent(sub.name)}`}
                       onClick={onClose}
-                      className="flex items-center px-8 h-[44px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.04] last:border-b-0"
+                      className="flex items-center px-8 h-[44px] hover:bg-[#1D57D8]/15 active:bg-[#1D57D8]/20 transition-colors border-b border-white/[0.05] last:border-b-0"
                     >
                       <span className="text-[14px] font-medium text-white/75">
                         {sub.name}
@@ -175,41 +174,11 @@ const MainScreen = ({
       <div className="h-px bg-white/10 mx-4 mt-2" />
 
       <nav aria-label="Support links" className="flex flex-col py-2">
-        <Link
-          to="/register?type=seller"
-          onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
-        >
-          Sell Stock
-        </Link>
-        <Link
-          to="/shipping-policy"
-          onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
-        >
-          Shipping Policy
-        </Link>
-        <Link
-          to="/wholesale-info"
-          onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
-        >
-          Marketplace Information
-        </Link>
-        <Link
-          to="/blog"
-          onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
-        >
-          Blog
-        </Link>
-        <Link
-          to="/about"
-          onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
-        >
-          About Us
-        </Link>
+        <Link to="/register?type=seller" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/65 hover:text-[#F5A300] hover:bg-[#1D57D8]/15 transition-colors">Sell Stock</Link>
+        <Link to="/shipping-policy" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/65 hover:text-[#F5A300] hover:bg-[#1D57D8]/15 transition-colors">Shipping Policy</Link>
+        <Link to="/wholesale-info" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/65 hover:text-[#F5A300] hover:bg-[#1D57D8]/15 transition-colors">Marketplace Information</Link>
+        <Link to="/blog" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/65 hover:text-[#F5A300] hover:bg-[#1D57D8]/15 transition-colors">Blog</Link>
+        <Link to="/about" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/65 hover:text-[#F5A300] hover:bg-[#1D57D8]/15 transition-colors">About Us</Link>
       </nav>
 
       <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
@@ -290,7 +259,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         ref={panelRef}
         className={[
           "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[380px]",
-          "bg-background border-r border-white/[0.12] shadow-2xl flex flex-col",
+          "bg-[#0A234F] border-r border-white/12 shadow-2xl flex flex-col",
           "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
