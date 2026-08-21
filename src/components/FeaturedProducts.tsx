@@ -41,16 +41,16 @@ const FeaturedProducts = () => {
     return (
       <section className="relative" aria-label="Marketplace products">
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
-          <div className="h-4 w-44 bg-gray-100 rounded mb-1 animate-pulse" />
-          <div className="h-3 w-56 bg-gray-100 rounded mb-4 animate-pulse" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
+          <div className="h-4 w-44 bg-white/10 rounded mb-1 animate-pulse" />
+          <div className="h-3 w-56 bg-white/10 rounded mb-4 animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/10">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="bg-surface">
-                <div className="aspect-square bg-gray-100 animate-pulse" />
+              <div key={i} className="bg-[#0B2F6B]">
+                <div className="aspect-square bg-white/10 animate-pulse" />
                 <div className="px-2.5 py-2.5 space-y-1.5">
-                  <div className="h-2.5 w-16 bg-gray-100 rounded animate-pulse" />
-                  <div className="h-2.5 w-full bg-gray-100 rounded animate-pulse" />
-                  <div className="h-3.5 w-12 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-2.5 w-16 bg-white/10 rounded animate-pulse" />
+                  <div className="h-2.5 w-full bg-white/10 rounded animate-pulse" />
+                  <div className="h-3.5 w-12 bg-white/10 rounded animate-pulse" />
                 </div>
               </div>
             ))}
@@ -63,20 +63,19 @@ const FeaturedProducts = () => {
   return (
     <section className="relative" aria-label="Marketplace products">
       <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
-
         <div className="flex items-center justify-between mb-4">
           <div>
-              <h2 className="text-[13px] font-black text-white uppercase tracking-widest">
-                Marketplace Products
-              </h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Listed by verified UK trade suppliers
-              </p>
+            <h2 className="text-[13px] font-black text-white uppercase tracking-widest">
+              Marketplace Products
+            </h2>
+            <p className="text-[11px] text-white/60 mt-0.5">
+              Listed by verified UK trade suppliers
+            </p>
           </div>
           {products.length > 0 && (
             <Link
               to="/catalog"
-              className="text-[11px] font-bold text-primary uppercase tracking-wide hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-[#F5A300] uppercase tracking-wide hover:text-white flex items-center gap-1"
             >
               Browse All <ArrowRight className="h-3 w-3" />
             </Link>
@@ -84,8 +83,7 @@ const FeaturedProducts = () => {
         </div>
 
         {products.length > 0 ? (
-          /* Product grid — gap-px hairline borders */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/10">
             {products.map((item) => {
               const img =
                 Array.isArray(item.images) && item.images.length > 0
@@ -96,10 +94,9 @@ const FeaturedProducts = () => {
                 <Link
                   key={item.id}
                   to={href}
-                  className="group flex flex-col bg-surface hover:bg-elevated hover:shadow-md hover:scale-[1.02] transition-all duration-200"
+                  className="group flex flex-col bg-[#0B2F6B] hover:bg-[#123F82] hover:shadow-md hover:scale-[1.02] transition-all duration-200"
                 >
-                  {/* Square thumbnail */}
-                  <div className="aspect-square bg-surface overflow-hidden">
+                  <div className="aspect-square bg-[#0B2F6B] overflow-hidden">
                     {img ? (
                       <img
                         src={img}
@@ -114,23 +111,22 @@ const FeaturedProducts = () => {
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full bg-elevated flex items-center justify-center">
-                        <span className="text-slate-400 text-xs">No image</span>
+                      <div className="w-full h-full bg-[#123F82] flex items-center justify-center">
+                        <span className="text-white/55 text-xs">No image</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Product info */}
-                  <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1 border-t border-white/5">
+                  <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1 border-t border-white/10">
                     {item.category && (
-                      <span className="text-[10px] font-bold text-secondary uppercase tracking-wide line-clamp-1">
+                      <span className="text-[10px] font-bold text-[#F5A300] uppercase tracking-wide line-clamp-1">
                         {item.category.name}
                       </span>
                     )}
                     <p className="text-xs font-semibold text-white leading-snug line-clamp-2 flex-1">
                       {item.title}
                     </p>
-                    <p className="text-sm font-black text-secondary mt-1">
+                    <p className="text-sm font-black text-white mt-1">
                       £{item.price.toLocaleString("en-GB", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -142,24 +138,22 @@ const FeaturedProducts = () => {
             })}
           </div>
         ) : (
-          /* Professional empty state — no fake listings */
-          <div className="border border-white/10 bg-surface px-6 py-10">
+          <div className="border border-white/10 bg-[#0B2F6B] px-6 py-10">
             <p className="text-sm font-semibold text-white">
               No listings available yet.
             </p>
-            <p className="text-xs text-slate-400 mt-1.5 mb-6 max-w-md leading-relaxed">
+            <p className="text-xs text-white/60 mt-1.5 mb-6 max-w-md leading-relaxed">
               We are currently onboarding verified UK trade suppliers.
               Be among the first to list products on Loadify Market.
             </p>
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-black text-xs font-bold uppercase tracking-wide hover:bg-primary-hover transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#F5A300] text-[#0A234F] text-xs font-bold uppercase tracking-wide hover:bg-[#E69500] transition-colors"
             >
               Register as Supplier <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         )}
-
       </div>
     </section>
   );
