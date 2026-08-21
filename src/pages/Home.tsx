@@ -30,9 +30,9 @@ function SkeletonGridCard() {
         gap: 8,
       }}
     >
-      <div className="rounded-xl animate-pulse flex flex-col gap-2 w-full aspect-square bg-white/[0.10]" />
-      <div className="h-3 rounded-md bg-white/[0.10] w-[80%]" />
-      <div className="h-3.5 rounded-md bg-white/[0.10] w-[50%]" />
+      <div className="rounded-xl animate-pulse flex flex-col gap-2 w-full aspect-square bg-[#0A234F]/10" />
+      <div className="h-3 rounded-md bg-[#0A234F]/10 w-[80%]" />
+      <div className="h-3.5 rounded-md bg-[#0A234F]/10 w-[50%]" />
     </div>
   );
 }
@@ -53,7 +53,7 @@ function MobileHome() {
   }, [loadMore]);
 
   return (
-    <div className="md:hidden min-h-screen bg-[#0A234F]">
+    <div className="md:hidden min-h-screen bg-[#F7F9FC]">
       <MobileAppHeader />
       <MobileCategoryShortcuts />
       <MobileHeroBanner />
@@ -122,11 +122,11 @@ export default function Home() {
       <main id="main-content">
         <MobileHome />
 
-        <div className="hidden md:block bg-[#0A234F]">
+        <div className="hidden md:block bg-[#F7F9FC]">
           <HeroSection />
 
           <section
-            className="bg-[#0A234F] py-6 px-8"
+            className="bg-[#F7F9FC] py-6 px-8"
             aria-label="Platform overview"
           >
             <TrustStrip />
