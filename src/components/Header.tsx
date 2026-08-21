@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store";
 import MobileDrawer from "@/components/MobileDrawer";
 import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
+import { useLiveCategoryAvailability } from "@/hooks/useLiveCategoryAvailability";
 import { supabase } from "@/lib/supabase";
 
 const Header = () => {
@@ -19,6 +20,10 @@ const Header = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const { categories } = useCategories();
+  const { liveCategoryIds, liveRootCategoryIds } = useLiveCategoryAvailability();
+
+  const liveCategoryIdSet = new Set(liveCategoryIds);
+  const liveRootCategoryIdSet = new Set(liveRootCategoryIds);
 
   const scheduleClose = useCallback(() => {
     closeTimerRef.current = setTimeout(() => setHoveredCat(null), 80);
@@ -47,21 +52,12 @@ const Header = () => {
     navigate("/login", { replace: true });
   };
 
-  const PRIORITY_SLUGS = [
-    "electronics",
-    "clothing-fashion",
-    "home-garden",
-    "health-beauty",
-    "sports-fitness",
-    "automotive",
-  ];
-
-  const priorityCategories = PRIORITY_SLUGS
-    .map((slug) => categories.find((c) => c.slug === slug))
-    .filter((c): c is NonNullable<typeof c> => c !== undefined);
-
-  const displayCategories =
-    priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 6);
+  // Public nav only promotes root categories that currently contain sellable,
+  // approved marketplace inventory. The full taxonomy remains available via
+  // Shop All / More so the header never advertises empty categories as featured.
+  const displayCategories = categories
+    .filter((category) => liveRootCategoryIdSet.has(category.id))
+    .slice(0, 6);
 
   const navLinks = [
     { to: "/", label: "HOME", catSlug: null as string | null },
@@ -196,7 +192,8 @@ const Header = () => {
                 const catNode: CategoryNode | undefined = link.catSlug
                   ? categories.find((c) => c.slug === link.catSlug)
                   : undefined;
-                const hasChildren = !!catNode && catNode.children.length > 0;
+                const liveChildren = catNode?.children.filter((child) => liveCategoryIdSet.has(child.id)) ?? [];
+                const hasChildren = liveChildren.length > 0;
                 const isHovered = hoveredCat === link.to;
                 return (
                   <div
@@ -221,7 +218,7 @@ const Header = () => {
                         onMouseEnter={cancelClose}
                         onMouseLeave={scheduleClose}
                       >
-                        {catNode.children.map((child) => (
+                        {liveChildren.map((child) => (
                           <Link
                             key={child.id}
                             to={`/category/${child.slug}`}
@@ -250,6 +247,8 @@ const Header = () => {
         user={user}
         dashboardPath={dashboardPath}
         onLogout={handleLogout}
+        liveCategoryIds={liveCategoryIds}
+        liveRootCategoryIds={liveRootCategoryIds}
       />
     </header>
   );
