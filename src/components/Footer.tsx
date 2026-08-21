@@ -22,9 +22,12 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
 
 const Footer = () => {
   return (
-    <footer className="bg-[#0A234F] text-white/68 border-t border-white/10">
+    <footer
+      className="bg-[#0A234F] text-white/68 border-t border-white/10"
+      style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(29,87,216,0.26), transparent 42%)' }}
+    >
       <div
-        className="sm:hidden flex flex-col items-center gap-3 bg-[#0A234F]"
+        className="sm:hidden flex flex-col items-center gap-3 bg-transparent"
         style={{ padding: '20px 16px' }}
       >
         <div className="flex items-center gap-5 flex-wrap justify-center">
@@ -37,7 +40,7 @@ const Footer = () => {
         </p>
       </div>
 
-      <div className="hidden sm:block border-b border-white/10 bg-[#0B2F6B]/45">
+      <div className="hidden sm:block border-b border-white/10 bg-white/[0.045]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6">
             <div className="flex items-center gap-2 text-sm font-medium text-white/68">
@@ -160,7 +163,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="hidden sm:block border-t border-white/10 bg-[#0B2F6B]/35">
+      <div className="hidden sm:block border-t border-white/10 bg-white/[0.045]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <p className="text-[12px] text-white/55">
             &copy; 2021 XDrive Logistics Ltd (Company No. 13171804). All rights reserved.
