@@ -199,6 +199,91 @@ WHERE u.role = 'seller'
 ON CONFLICT (user_id, capability) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
+-- Trusted, atomic Buyer -> Marketplace Seller activation start
+-- ---------------------------------------------------------------------------
+-- This function is intentionally callable only by service_role. The Netlify
+-- boundary authenticates the user and passes only the authenticated actor id.
+-- The DB function then re-checks the live account and performs capability +
+-- relationship initialization in one transaction. Existing Seller lifecycle
+-- state is never reset or demoted.
+
+CREATE OR REPLACE FUNCTION public.server_start_seller_activation_v1(p_user_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_account public.users%ROWTYPE;
+  v_existing_status text;
+  v_created_profile boolean := false;
+BEGIN
+  SELECT *
+  INTO v_account
+  FROM public.users
+  WHERE id = p_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND OR v_account."isActive" IS DISTINCT FROM TRUE THEN
+    RAISE EXCEPTION 'Active account required' USING ERRCODE = '42501';
+  END IF;
+
+  IF v_account.role = 'admin' THEN
+    RAISE EXCEPTION 'Admin cannot enter Seller activation through self-service' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT sp."sellerStatus"
+  INTO v_existing_status
+  FROM public.seller_profiles sp
+  WHERE sp."userId" = p_user_id;
+
+  INSERT INTO public.account_capabilities (
+    user_id, capability, grant_source, granted_at, revoked_at
+  ) VALUES
+    (p_user_id, 'buyer', 'seller_activation', now(), NULL),
+    (p_user_id, 'seller', 'seller_activation', now(), NULL)
+  ON CONFLICT (user_id, capability) DO UPDATE
+    SET revoked_at = NULL;
+
+  IF v_existing_status IS NULL THEN
+    INSERT INTO public.seller_profiles ("userId", "sellerStatus", "isApproved")
+    VALUES (p_user_id, 'draft', false)
+    ON CONFLICT ("userId") DO NOTHING;
+    v_created_profile := true;
+    v_existing_status := 'draft';
+  END IF;
+
+  INSERT INTO public.seller_stores ("userId", "isActive")
+  VALUES (p_user_id, false)
+  ON CONFLICT ("userId") DO NOTHING;
+
+  -- Seller remains the compatibility/default context while legacy route/RLS
+  -- consumers are migrated. Buyer capability is preserved independently.
+  IF v_account.role <> 'seller' THEN
+    UPDATE public.users
+    SET role = 'seller',
+        "onboardingCompleted" = false,
+        "onboardingStep" = 1
+    WHERE id = p_user_id;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'previousRole', v_account.role,
+    'role', 'seller',
+    'sellerStatus', COALESCE(v_existing_status, 'draft'),
+    'createdSellerProfile', v_created_profile
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.server_start_seller_activation_v1(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.server_start_seller_activation_v1(uuid) TO service_role;
+
+COMMENT ON FUNCTION public.server_start_seller_activation_v1(uuid) IS
+  'Trusted idempotent Buyer-to-Seller activation start. Preserves Buyer capability and existing Seller lifecycle; never callable directly by authenticated clients.';
+
+-- ---------------------------------------------------------------------------
 -- Verification assertions — fail migration if a core invariant is broken.
 -- ---------------------------------------------------------------------------
 
