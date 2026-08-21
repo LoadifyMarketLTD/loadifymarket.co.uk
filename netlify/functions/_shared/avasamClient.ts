@@ -31,14 +31,20 @@ function required(value: string | undefined, name: string): string {
   return value.trim();
 }
 
-function optionalPath(value: string | undefined): string | undefined {
-  const path = value?.trim();
-  if (!path) return undefined;
-  return path.startsWith('/') ? path : `/${path}`;
+function requiredRelativePath(value: string | undefined, name: string): string {
+  const path = required(value, name);
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('://')) {
+    throw new AvasamClientConfigurationError(`${name} must be a relative API path`);
+  }
+  return path;
 }
 
 function buildUrl(baseUrl: string, path: string): string {
-  return new URL(path, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
+  const base = new URL(baseUrl);
+  if (base.protocol !== 'https:') {
+    throw new AvasamClientConfigurationError('AVASAM_API_BASE_URL must use HTTPS');
+  }
+  return new URL(path, base).toString();
 }
 
 export class AvasamClient {
@@ -63,8 +69,8 @@ export class AvasamClient {
   async request<T>(context: AvasamRequestContext, path: string | undefined, init: RequestInit = {}): Promise<SupplierAdapterResult<T>> {
     try {
       const baseUrl = required(this.config.baseUrl, 'AVASAM_API_BASE_URL');
-      const resolvedPath = required(path, 'Avasam endpoint path configuration');
-      const response = await fetch(buildUrl(baseUrl, optionalPath(resolvedPath) || resolvedPath), {
+      const resolvedPath = requiredRelativePath(path, 'Avasam endpoint path configuration');
+      const response = await fetch(buildUrl(baseUrl, resolvedPath), {
         ...init,
         headers: { ...this.headers(context), ...(init.headers || {}) },
       });
