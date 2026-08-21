@@ -46,7 +46,7 @@ export default function SecurityTrust() {
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-[#F5A300]">
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </div>
-                <p className="text-sm font-extrabold text-white/88">{label}</p>
+                <p className="text-sm font-extrabold text-white/90">{label}</p>
               </div>
             ))}
           </div>
@@ -54,8 +54,8 @@ export default function SecurityTrust() {
           <div className="mt-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3">
             <LockKeyhole className="h-5 w-5 shrink-0 text-[#F5A300]" aria-hidden="true" />
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.13em] text-white/40">Design principle</p>
-              <p className="mt-1 text-xs font-bold text-white/82">Evidence and policy before automated action.</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.13em] text-white/60">Design principle</p>
+              <p className="mt-1 text-xs font-bold text-white/85">Evidence and policy before automated action.</p>
             </div>
           </div>
         </div>
