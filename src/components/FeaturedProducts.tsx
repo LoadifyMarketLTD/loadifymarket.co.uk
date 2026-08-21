@@ -11,12 +11,6 @@ interface ShowcaseProduct {
   category: { name: string; slug: string } | null;
 }
 
-/**
- * Explore the Marketplace — live product grid.
- * Fetches up to 10 currently sellable, approved products from Supabase.
- * Shows a professional empty state when no live listings exist yet.
- * Never renders fake or hardcoded product data.
- */
 const FeaturedProducts = () => {
   const [products, setProducts] = useState<ShowcaseProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,66 +31,49 @@ const FeaturedProducts = () => {
       });
   }, []);
 
-  if (loading) {
-    return (
-      <section className="relative" aria-label="Marketplace products">
-        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
-          <div className="h-4 w-44 bg-gray-100 rounded mb-1 animate-pulse" />
-          <div className="h-3 w-56 bg-gray-100 rounded mb-4 animate-pulse" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="bg-surface">
-                <div className="aspect-square bg-gray-100 animate-pulse" />
-                <div className="px-2.5 py-2.5 space-y-1.5">
-                  <div className="h-2.5 w-16 bg-gray-100 rounded animate-pulse" />
-                  <div className="h-2.5 w-full bg-gray-100 rounded animate-pulse" />
-                  <div className="h-3.5 w-12 bg-gray-100 rounded animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="relative" aria-label="Marketplace products">
-      <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
-        <div className="flex items-end justify-between gap-4 mb-4">
+      <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 pb-10 pt-7">
+        <div className="mb-5 flex items-end justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black text-primary uppercase tracking-[0.18em] mb-1">
-              Shop Loadify
-            </p>
-            <h2 className="text-lg sm:text-xl font-semibold text-white">
-              Explore the marketplace
-            </h2>
-            <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
-              Live products available to browse and buy now.
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Live on Loadify</p>
+            <h2 className="mt-1 text-2xl font-black tracking-[-0.025em] text-white sm:text-3xl">Products you can explore now.</h2>
+            <p className="mt-2 text-sm text-white/58">Real approved listings from the current marketplace.</p>
           </div>
           {products.length > 0 && (
             <Link
               to="/catalog"
-              className="text-[11px] font-bold text-primary uppercase tracking-wide hover:underline flex items-center gap-1 shrink-0"
+              className="hidden items-center gap-2 text-xs font-extrabold text-[#F5A300] transition-colors hover:text-white sm:inline-flex"
             >
-              Browse All <ArrowRight className="h-3 w-3" />
+              Browse all <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           )}
         </div>
 
-        {products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
+        {loading ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-[18px] bg-white/90">
+                <div className="aspect-square animate-pulse bg-slate-200" />
+                <div className="space-y-2 p-3">
+                  <div className="h-2.5 w-16 animate-pulse rounded bg-slate-200" />
+                  <div className="h-3 w-full animate-pulse rounded bg-slate-200" />
+                  <div className="h-4 w-16 animate-pulse rounded bg-slate-200" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {products.map((item) => {
               const img = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
-              const href = `/product/${item.id}`;
               return (
                 <Link
                   key={item.id}
-                  to={href}
-                  className="group flex flex-col bg-surface hover:bg-elevated hover:shadow-md hover:scale-[1.02] transition-all duration-200"
+                  to={`/product/${item.id}`}
+                  className="group flex min-w-0 flex-col overflow-hidden rounded-[18px] bg-white shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(0,0,0,0.22)]"
                 >
-                  <div className="aspect-square bg-surface overflow-hidden">
+                  <div className="aspect-square overflow-hidden bg-[#F2F4F7]">
                     {img ? (
                       <img
                         src={img}
@@ -105,51 +82,52 @@ const FeaturedProducts = () => {
                         height={400}
                         loading="lazy"
                         decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full bg-elevated flex items-center justify-center">
-                        <span className="text-slate-400 text-xs">No image</span>
-                      </div>
+                      <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-[#64748B]">Product image unavailable</div>
                     )}
                   </div>
 
-                  <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1 border-t border-white/5">
+                  <div className="flex flex-1 flex-col p-3 sm:p-3.5">
                     {item.category && (
-                      <span className="text-[10px] font-bold text-secondary uppercase tracking-wide line-clamp-1">
+                      <span className="line-clamp-1 text-[9px] font-black uppercase tracking-[0.13em] text-[#0E3FA9]">
                         {item.category.name}
                       </span>
                     )}
-                    <p className="text-xs font-semibold text-white leading-snug line-clamp-2 flex-1">
+                    <p className="mt-1.5 line-clamp-2 flex-1 text-xs font-extrabold leading-5 text-[#0A234F] sm:text-sm">
                       {item.title}
                     </p>
-                    <p className="text-sm font-black text-secondary mt-1">
-                      £{item.price.toLocaleString("en-GB", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
+                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#0A234F]/8 pt-3">
+                      <p className="text-sm font-black text-[#0A234F] sm:text-base">
+                        £{item.price.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      <ArrowRight className="h-4 w-4 shrink-0 text-[#F5A300] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                    </div>
                   </div>
                 </Link>
               );
             })}
           </div>
         ) : (
-          <div className="border border-white/10 bg-surface px-6 py-10">
-            <p className="text-sm font-semibold text-white">The marketplace is growing.</p>
-            <p className="text-xs text-slate-400 mt-1.5 mb-6 max-w-md leading-relaxed">
-              New products are added as approved listings become available. Sellers can join Loadify and start building their catalogue today.
+          <div className="rounded-[22px] bg-white px-6 py-8 text-[#0A234F]">
+            <p className="text-base font-extrabold">The marketplace is growing.</p>
+            <p className="mt-2 max-w-lg text-sm leading-6 text-[#64748B]">
+              New products appear as approved listings become available. Sellers can join Loadify and start building their catalogue today.
             </p>
-            <Link
-              to="/register?type=seller"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-black text-xs font-bold uppercase tracking-wide hover:bg-primary-hover transition-colors"
-            >
-              Start Selling <ArrowRight className="h-3.5 w-3.5" />
+            <Link to="/register?type=seller" className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold text-[#0E3FA9]">
+              Start selling <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
+        )}
+
+        {products.length > 0 && (
+          <Link to="/catalog" className="mt-5 inline-flex items-center gap-2 text-xs font-extrabold text-[#F5A300] sm:hidden">
+            Browse all products <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         )}
       </div>
     </section>
