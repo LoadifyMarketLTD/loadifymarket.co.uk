@@ -39,6 +39,24 @@ describe('AvasamClient security boundary', () => {
     fetchMock.mockRestore();
   });
 
+  it('prevents provider callers from overriding trusted authentication or correlation headers', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+    const client = new AvasamClient({ baseUrl: 'https://example.invalid', apiToken: 'trusted-token' });
+    await client.request(
+      { correlationId: 'trusted-correlation', idempotencyKey: 'trusted-idempotency' },
+      '/health',
+      { headers: { Authorization: 'Bearer attacker-token', 'X-Correlation-Id': 'attacker-correlation', 'Idempotency-Key': 'attacker-idempotency' } },
+    );
+    const [, init] = fetchMock.mock.calls[0];
+    const headers = new Headers(init?.headers);
+    expect(headers.get('Authorization')).toBe('Bearer trusted-token');
+    expect(headers.get('X-Correlation-Id')).toBe('trusted-correlation');
+    expect(headers.get('Idempotency-Key')).toBe('trusted-idempotency');
+    fetchMock.mockRestore();
+  });
+
   it('requires a correlation id before any provider request', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch');
     const client = new AvasamClient({ baseUrl: 'https://example.invalid' });
