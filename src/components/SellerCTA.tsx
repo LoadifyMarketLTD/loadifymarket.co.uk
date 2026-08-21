@@ -22,7 +22,7 @@ export default function SellerCTA() {
 
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
               {sellerProof.map((item) => (
-                <div key={item} className="flex items-start gap-2 text-xs font-semibold leading-5 text-white/78">
+                <div key={item} className="flex items-start gap-2 text-xs font-semibold leading-5 text-white/80">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#F5A300]" aria-hidden="true" />
                   <span>{item}</span>
                 </div>
@@ -31,9 +31,9 @@ export default function SellerCTA() {
           </div>
 
           <div className="min-w-[240px] rounded-2xl border border-white/12 bg-white/[0.06] p-4 sm:p-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/45">Seller launch offer</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/65">Seller launch offer</p>
             <p className="mt-2 text-2xl font-black text-[#F5A300]">0% commission</p>
-            <p className="mt-1 text-xs font-semibold text-white/65">Until 31 December 2026</p>
+            <p className="mt-1 text-xs font-semibold text-white/70">Until 31 December 2026</p>
             <Link
               to="/register?type=seller"
               data-magnetic
@@ -44,7 +44,7 @@ export default function SellerCTA() {
             </Link>
             <Link
               to="/catalog"
-              className="mt-3 inline-flex w-full items-center justify-center text-xs font-bold text-white/65 transition-colors hover:text-white"
+              className="mt-3 inline-flex w-full items-center justify-center text-xs font-bold text-white/70 transition-colors hover:text-white"
             >
               Explore the marketplace
             </Link>
