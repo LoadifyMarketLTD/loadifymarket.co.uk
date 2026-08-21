@@ -117,3 +117,96 @@ Before any Stage 1 write:
 3. re-audit current auth role sources, route guards, seller status/approval state, role-transition endpoint(s), RLS/ownership and Supplier Commerce supplier identity entities;
 4. create `03_IDENTITY_ROLE_RELATIONSHIP_CONTRACT.md`;
 5. do not modify registration/onboarding UI until the Stage 1 contract reaches PASS.
+
+---
+
+## 2026-08-21 — PR #529 VISUAL BASELINE / MAIN SYNCHRONISATION CHECKPOINT
+
+**Repository synchronisation status:** PASS  
+**Deploy-preview validation:** PENDING at time of this ledger entry  
+**Merge to `main`:** NOT AUTHORISED / NOT PERFORMED
+
+### Purpose
+
+Synchronise the saved #529 public-homepage visual workstream with the current `main` foundation before any later stabilisation or final-polish work, while preserving the accepted visual baseline exactly.
+
+### Baselines before synchronisation
+
+- `main`: `50302455a6c8afcd52da45150f7de6f0ce91d942`
+- PR #529 previous HEAD: `d1dfa6ad7de2df7927d802393b2f04f2c40ee57c`
+- saved immutable-direction checkpoint branch: `checkpoint/pr529-visual-baseline-20260821-1608`
+- divergence before sync: #529 ahead 67 / behind 223
+
+### Conflict analysis
+
+Compared the common ancestor `e3e336dd1e0167eca9ac07fb514077d39a3bb644` to current `main` and compared the same ancestor to #529.
+
+Result:
+
+- current `main` advanced by 223 commits;
+- none of those 223 commits modified any of the 13 files changed by #529;
+- therefore the homepage surface had no overlapping file conflict with the accumulated `main` work;
+- the 223 commits were primarily Supplier Commerce/backend/migration/test/documentation work plus unrelated seller-profile work, not 223 missing homepage revisions.
+
+### Synchronisation implementation
+
+Created a merge tree from current `main` and overlaid the exact 13 #529 visual/public-surface blobs without altering their contents.
+
+Merge commit:
+
+`98679ca49983541544ceea977894f3183f0d2cff`
+
+Parents:
+
+1. previous #529 HEAD `d1dfa6ad7de2df7927d802393b2f04f2c40ee57c`
+2. current `main` `50302455a6c8afcd52da45150f7de6f0ce91d942`
+
+Branch updated by fast-forward only; no force update.
+
+### Post-sync Branch Guard
+
+Compared current `main` to new #529 HEAD:
+
+- branch status: ahead only;
+- ahead by: 68 commits;
+- behind by: **0**;
+- merge base: current `main@50302455a6c8afcd52da45150f7de6f0ce91d942`;
+- changed files: **exactly 13**;
+- additions/deletions remain `903 / 1181`;
+- no Supplier Commerce/backend/migration/Admin/Workspace file appears in the PR diff.
+
+Exact #529 diff remains:
+
+- `src/components/FeaturedProducts.tsx`
+- `src/components/FeaturesGrid.tsx`
+- `src/components/Footer.tsx`
+- `src/components/Header.tsx`
+- `src/components/HeroSection.tsx`
+- `src/components/HowItWorksSection.tsx`
+- `src/components/MobileAppHeader.tsx`
+- `src/components/MobileDrawer.tsx`
+- `src/components/MobileHeroBanner.tsx`
+- `src/components/SecurityTrust.tsx`
+- `src/components/SellerCTA.tsx`
+- `src/components/TrustStrip.tsx`
+- `src/pages/Home.tsx`
+
+### No-change assertions
+
+- no visual polish was performed;
+- no homepage semantic/copy change was performed during sync;
+- no Workspace/Admin/Super Admin visual change;
+- no DB/migration write;
+- no Supplier Commerce control change;
+- PR #529 remains DRAFT and unmerged;
+- saved visual checkpoint remains untouched.
+
+### Validation still required before checkpoint closeout
+
+- Netlify deploy preview for `98679ca49983541544ceea977894f3183f0d2cff` must finish successfully;
+- review resulting homepage preview for any build/runtime regression caused by consuming current-main backend/runtime foundations;
+- record final preview/CI evidence before calling the entire visual-baseline synchronisation checkpoint fully closed.
+
+### Exact resume point
+
+Wait for / inspect the #529 deploy preview for HEAD `98679ca49983541544ceea977894f3183f0d2cff`. If healthy and visually unchanged, close the synchronisation checkpoint and return execution priority to **STAGE 1 — IDENTITY / ROLE / RELATIONSHIP CONTRACT**. Final visual polish remains deferred until platform functional completion/release-candidate stability.
