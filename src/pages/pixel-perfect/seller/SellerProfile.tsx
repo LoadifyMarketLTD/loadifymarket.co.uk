@@ -26,6 +26,11 @@ function isValidUKPostcode(postcode: string): boolean {
   return /^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$/i.test(postcode.trim());
 }
 
+function isStoredGbCountry(country: unknown): boolean {
+  if (typeof country !== "string") return false;
+  return ["GB", "GBR", "UK", "UNITED KINGDOM", "GREAT BRITAIN"].includes(country.trim().toUpperCase());
+}
+
 /**
  * Returns a warning string if the business name looks suspicious or uses a
  * non-UK company structure, otherwise returns null.
@@ -89,6 +94,8 @@ const SellerProfile = () => {
   const [sellerStatus, setSellerStatus] = useState<string>("draft");
   const [sellerType, setSellerType] = useState<string | null>(null);
   const [isVatRegistered, setIsVatRegistered] = useState(false);
+  const [taxDeclarationConfirmed, setTaxDeclarationConfirmed] = useState(false);
+  const [sellerCountry, setSellerCountry] = useState<string | null>(null);
   const [postcodeError, setPostcodeError] = useState<string | null>(null);
   const [postcodeLoading, setPostcodeLoading] = useState(false);
   const [postcodeVerified, setPostcodeVerified] = useState(false);
@@ -100,7 +107,7 @@ const SellerProfile = () => {
       const [profileRes, storeRes] = await Promise.all([
         supabase
           .from("seller_profiles")
-          .select("businessName, vatNumber, companyRegistrationNumber, businessAddress, contactPhone, rating, totalSales, createdAt, sellerStatus, sellerType, isVatRegistered")
+          .select("businessName, vatNumber, companyRegistrationNumber, businessAddress, contactPhone, rating, totalSales, createdAt, sellerStatus, sellerType, isVatRegistered, country, taxDeclarationConfirmed")
           .eq("userId", user.id)
           .maybeSingle(),
         supabase
@@ -111,7 +118,7 @@ const SellerProfile = () => {
       ]);
 
       const p = profileRes.data;
-      const addr = (p?.businessAddress as { address?: string; city?: string; postcode?: string } | null) ?? {};
+      const addr = (p?.businessAddress as { address?: string; city?: string; postcode?: string; country?: string } | null) ?? {};
 
       setForm({
         businessName: p?.businessName ?? "",
@@ -134,9 +141,14 @@ const SellerProfile = () => {
       setSellerStatus(p?.sellerStatus ?? "draft");
       setSellerType((p as Record<string, string | null> | null)?.sellerType ?? null);
       setIsVatRegistered(Boolean((p as Record<string, unknown> | null)?.isVatRegistered));
-      // If the profile already has a valid UK postcode saved, treat it as
-      // verified so sellers can re-save without re-clicking the lookup button.
-      if (addr.postcode && isValidUKPostcode(addr.postcode)) {
+      setTaxDeclarationConfirmed(Boolean((p as Record<string, unknown> | null)?.taxDeclarationConfirmed));
+      const storedCountry = typeof (p as Record<string, unknown> | null)?.country === "string"
+        ? String((p as Record<string, unknown>).country)
+        : null;
+      setSellerCountry(storedCountry);
+      // A syntactically valid postcode alone is not tax-location evidence. Only
+      // treat it as verified when the stored seller country already records GB.
+      if (addr.postcode && isValidUKPostcode(addr.postcode) && isStoredGbCountry(storedCountry)) {
         setPostcodeVerified(true);
       }
     };
@@ -191,6 +203,10 @@ const SellerProfile = () => {
       }
 
       setPostcodeVerified(true);
+      setSellerCountry("GB");
+      // Location evidence changed/was reverified, so the seller must reconfirm
+      // the declaration that binds VAT status to this location.
+      setTaxDeclarationConfirmed(false);
       setForm((prev) => ({
         ...prev,
         postcode: raw,
@@ -233,10 +249,18 @@ const SellerProfile = () => {
         toast({ title: "Invalid company number", description: "UK Companies House numbers are up to 8 digits, optionally prefixed with letters (e.g. 12345678 or SC123456).", variant: "destructive" });
         return;
       }
-      if (isVatRegistered && !form.vatNumber.trim()) {
-        toast({ title: "VAT number required", description: "You have indicated you are VAT registered — please provide your VAT number.", variant: "destructive" });
-        return;
-      }
+    }
+    if (isVatRegistered && !form.vatNumber.trim()) {
+      toast({ title: "VAT number required", description: "You have indicated you are VAT registered — please provide your VAT number.", variant: "destructive" });
+      return;
+    }
+    if (isStoredGbCountry(sellerCountry) && !taxDeclarationConfirmed) {
+      toast({
+        title: "Tax declaration confirmation required",
+        description: "Please confirm that the VAT registration status shown on this profile is accurate before saving.",
+        variant: "destructive",
+      });
+      return;
     }
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -260,11 +284,18 @@ const SellerProfile = () => {
           {
             userId: user.id,
             businessName: form.businessName,
-            vatNumber: form.vatNumber,
+            vatNumber: isVatRegistered ? form.vatNumber : "",
             companyRegistrationNumber: form.companyNumber,
             isVatRegistered,
             contactPhone: form.phone,
-            businessAddress: { address: form.address, city: form.city, postcode: form.postcode },
+            country: sellerCountry,
+            taxDeclarationConfirmed: isStoredGbCountry(sellerCountry) ? taxDeclarationConfirmed : false,
+            businessAddress: {
+              address: form.address,
+              city: form.city,
+              postcode: form.postcode,
+              ...(isStoredGbCountry(sellerCountry) ? { country: "United Kingdom", countryCode: "GB" } : {}),
+            },
             // Onboarding flags: set when all required fields are present.
             ...(hasRequiredFields ? { profileCompleted: true, storeCreated: true } : {}),
           },
@@ -422,7 +453,11 @@ const SellerProfile = () => {
                   id="isVatRegistered"
                   type="checkbox"
                   checked={isVatRegistered}
-                  onChange={(e) => setIsVatRegistered(e.target.checked)}
+                  onChange={(e) => {
+                    setIsVatRegistered(e.target.checked);
+                    setTaxDeclarationConfirmed(false);
+                    if (!e.target.checked) updateField("vatNumber", "");
+                  }}
                   className="h-3.5 w-3.5 cursor-pointer"
                 />
                 <label htmlFor="isVatRegistered" className="text-xs cursor-pointer select-none text-muted-foreground">
@@ -434,8 +469,35 @@ const SellerProfile = () => {
                   <Label className="text-xs">
                     VAT Number <span className="text-red-500">*</span>
                   </Label>
-                  <Input value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} className="mt-1" placeholder="e.g. GB123456789" />
+                  <Input
+                    value={form.vatNumber}
+                    onChange={(e) => {
+                      updateField("vatNumber", e.target.value);
+                      setTaxDeclarationConfirmed(false);
+                    }}
+                    className="mt-1"
+                    placeholder="e.g. GB123456789"
+                  />
                 </>
+              )}
+              {isStoredGbCountry(sellerCountry) && (
+                <div className="mt-3 rounded-md border border-border bg-muted/30 p-3">
+                  <div className="flex items-start gap-2">
+                    <input
+                      id="taxDeclarationConfirmed"
+                      type="checkbox"
+                      checked={taxDeclarationConfirmed}
+                      onChange={(e) => setTaxDeclarationConfirmed(e.target.checked)}
+                      className="mt-0.5 h-3.5 w-3.5 cursor-pointer"
+                    />
+                    <label htmlFor="taxDeclarationConfirmed" className="text-xs cursor-pointer select-none text-foreground leading-5">
+                      I confirm that the VAT registration status shown above is accurate for this UK seller account.
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1.5">
+                    This confirmation is recorded with the transaction tax evidence. Reconfirm after changing VAT status or tax location.
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -495,6 +557,8 @@ const SellerProfile = () => {
                     updateField("postcode", e.target.value);
                     setPostcodeError(null);
                     setPostcodeVerified(false);
+                    setSellerCountry(null);
+                    setTaxDeclarationConfirmed(false);
                   }}
                   placeholder="e.g. SW1A 1AA"
                   className={postcodeError ? "border-red-500 focus:border-red-500" : postcodeVerified ? "border-emerald-500" : ""}
@@ -515,7 +579,7 @@ const SellerProfile = () => {
                 <p className="text-red-500 text-xs mt-1">{postcodeError}</p>
               )}
               <p className="text-[11px] text-muted-foreground mt-1">
-                UK postcode lookup is optional and supports UK postcodes only. International sellers can enter postcode manually.
+                UK sellers must verify their postcode before the tax declaration can be recorded. International seller tax treatment remains unavailable in the current checkout boundary.
               </p>
             </div>
           </div>

@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { resolveMarketplaceTaxV1 } from './_shared/marketplaceTax';
 
 interface CheckoutItem {
   productId: string;
@@ -31,6 +32,12 @@ interface PaymentIntentBody {
 interface DBProduct {
   id: string;
   price: number;
+  priceExVat: number | null;
+  vatRate: number | null;
+  taxTreatmentStatus: string | null;
+  taxTreatmentSource: string | null;
+  taxEvidenceVersion: number | null;
+  taxEvidenceCapturedAt: string | null;
   title: string;
   sellerId: string;
   isActive: boolean;
@@ -137,7 +144,7 @@ export const handler: Handler = async (event) => {
   const productIds = submittedProductIds;
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images')
+    .select('id, price, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images')
     .in('id', productIds);
 
   if (dbError) {
@@ -233,6 +240,12 @@ export const handler: Handler = async (event) => {
       sellerId: dbProduct.sellerId,
       quantity: item.quantity,
       price: dbProduct.price,
+      priceExVat: dbProduct.priceExVat,
+      vatRate: dbProduct.vatRate,
+      taxTreatmentStatus: dbProduct.taxTreatmentStatus,
+      taxTreatmentSource: dbProduct.taxTreatmentSource,
+      taxEvidenceVersion: dbProduct.taxEvidenceVersion,
+      taxEvidenceCapturedAt: dbProduct.taxEvidenceCapturedAt,
       title: dbProduct.title,
       image: Array.isArray(dbProduct.images) && dbProduct.images.length > 0 ? dbProduct.images[0] : null,
       listingContext: dbProduct.listingContext === 'service' ? 'service' as const : 'product' as const,
@@ -247,7 +260,7 @@ export const handler: Handler = async (event) => {
   const checkoutSellerId = uniqueSellerIds[0];
   const { data: sellerProfile, error: sellerProfileError } = await supabase
     .from('seller_profiles')
-    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName')
+    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
     .eq('userId', checkoutSellerId)
     .maybeSingle<{
       stripeAccountId: string | null;
@@ -256,6 +269,14 @@ export const handler: Handler = async (event) => {
       isPaused: boolean | null;
       businessName: string | null;
       fullName: string | null;
+      country: string | null;
+      isVatRegistered: boolean | null;
+      vatNumber: string | null;
+      businessAddress: Record<string, unknown> | null;
+      taxDeclarationConfirmed: boolean | null;
+      taxDeclarationVersion: number | null;
+      taxDeclarationSource: string | null;
+      taxDeclarationCapturedAt: string | null;
     }>();
 
   if (sellerProfileError) {
@@ -276,14 +297,41 @@ export const handler: Handler = async (event) => {
     return { statusCode: 409, body: JSON.stringify({ error: 'Seller commercial identity is incomplete. Please try again later.' }) };
   }
 
-  const VAT_RATE = 0.20;
+  const taxDecision = resolveMarketplaceTaxV1({
+    seller: {
+      country: sellerProfile.country,
+      isVatRegistered: sellerProfile.isVatRegistered,
+      vatNumber: sellerProfile.vatNumber,
+      businessAddress: sellerProfile.businessAddress,
+      taxDeclarationConfirmed: sellerProfile.taxDeclarationConfirmed,
+      taxDeclarationVersion: sellerProfile.taxDeclarationVersion,
+      taxDeclarationSource: sellerProfile.taxDeclarationSource,
+      taxDeclarationCapturedAt: sellerProfile.taxDeclarationCapturedAt,
+    },
+    products: enrichedItems.map((item) => ({
+      id: item.productId,
+      price: item.price,
+      priceExVat: item.priceExVat,
+      vatRate: item.vatRate,
+      listingContext: item.listingContext,
+      taxTreatmentStatus: item.taxTreatmentStatus,
+      taxTreatmentSource: item.taxTreatmentSource,
+      taxEvidenceVersion: item.taxEvidenceVersion,
+      taxEvidenceCapturedAt: item.taxEvidenceCapturedAt,
+    })),
+    shippingAddress: effectiveShippingAddress,
+    billingAddress,
+  });
+  if (!taxDecision.ok) {
+    return { statusCode: 409, body: JSON.stringify({ error: taxDecision.message, code: taxDecision.code }) };
+  }
+
   const { data: buyerProfile, error: buyerProfileError } = await supabase
     .from('buyer_profiles')
-    .select('accountType, isVatVerified, companyName, vatNumber')
+    .select('accountType, companyName, vatNumber')
     .eq('userId', verifiedBuyerId)
     .maybeSingle<{
       accountType: string | null;
-      isVatVerified: boolean | null;
       companyName: string | null;
       vatNumber: string | null;
     }>();
@@ -315,7 +363,7 @@ export const handler: Handler = async (event) => {
     .trim() || buyerEmail;
 
   const isB2BBuyer = Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
-  const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
+  const applyReverseCharge = taxDecision.applyReverseCharge;
   const buyerSnapshot = {
     id: verifiedBuyerId,
     name: buyerName,
@@ -334,10 +382,7 @@ export const handler: Handler = async (event) => {
     (sum, item) => sum + Math.round(item.price * 100) * item.quantity,
     0,
   );
-  const chargeableSubtotalPence = enrichedItems.reduce((sum, item) => {
-    const unitPrice = applyReverseCharge ? item.price / (1 + VAT_RATE) : item.price;
-    return sum + Math.round(unitPrice * 100) * item.quantity;
-  }, 0);
+  const chargeableSubtotalPence = catalogSubtotalPence;
   const shippingAmountPence = Math.round(shippingAmount * 100);
   shippingAmount = shippingAmountPence / 100;
   const totalPence = chargeableSubtotalPence + shippingAmountPence;
@@ -406,6 +451,7 @@ export const handler: Handler = async (event) => {
           commercialSnapshotVersion: 1,
           buyerSnapshot,
           sellerSnapshot,
+          taxSnapshot: taxDecision.snapshot,
           items: enrichedItems,
           shippingAddress: effectiveShippingAddress,
           billingAddress,

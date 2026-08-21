@@ -1,7 +1,7 @@
 /**
  * generate-invoice
  *
- * Generates a printable HTML invoice for a given order and streams it
+ * Generates a printable HTML order document for a given order and streams it
  * back to the buyer's browser.
  *
  * Security:
@@ -9,11 +9,12 @@
  *   – The authenticated user must be the order's buyer OR an admin.
  *   – Service-role data access is protected by the ownership check below.
  *
- * Commercial-history rule:
- *   – Post-cutover orders with commercialSnapshotSource MUST render checkout-time
- *     buyer/seller/product identity from immutable snapshots.
- *   – Only legacy rows with no authoritative snapshot may use today's profile /
- *     product values as a display-only fallback. No fallback is ever persisted.
+ * Commercial/tax-history rule:
+ *   – Post-cutover orders MUST render checkout-time buyer/seller/product/tax
+ *     identity from immutable snapshots.
+ *   – Legacy identity may use today's profile/product values as display-only
+ *     fallback. Legacy tax treatment is never re-derived from mutable buyer VAT
+ *     status; only stored order amounts are displayed.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -27,6 +28,19 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+type TaxDecisionSnapshot = {
+  version?: number;
+  jurisdiction?: string;
+  destinationCountry?: string;
+  treatment?: string;
+  sellerVatRegistered?: boolean;
+  sellerVatNumber?: string | null;
+  reverseCharge?: boolean;
+  vatAmountPence?: number;
+  evidenceSource?: string;
+  evidenceVersion?: number;
 };
 
 export const handler: Handler = async (event) => {
@@ -103,6 +117,9 @@ export const handler: Handler = async (event) => {
       isB2BSnapshot,
       reverseChargeSnapshot,
       commercialSnapshotSource,
+      taxDecisionSnapshot,
+      taxDecisionSource,
+      taxDecisionCapturedAt,
       products ( title, images )
     `)
     .eq('id', orderId)
@@ -126,6 +143,9 @@ export const handler: Handler = async (event) => {
       isB2BSnapshot: boolean | null;
       reverseChargeSnapshot: boolean | null;
       commercialSnapshotSource: string | null;
+      taxDecisionSnapshot: TaxDecisionSnapshot | null;
+      taxDecisionSource: string | null;
+      taxDecisionCapturedAt: string | null;
       products: { title?: string; images?: string[] } | null;
     }>();
 
@@ -139,20 +159,50 @@ export const handler: Handler = async (event) => {
 
   const { data: items, error: itemError } = await supabase
     .from('order_items')
-    .select('quantity, pricePerUnit, subtotal, productTitleSnapshot, productSnapshotSource, products ( title )')
+    .select('quantity, pricePerUnit, vatRate, subtotal, productTitleSnapshot, productSnapshotSource, taxTreatmentSnapshot, taxTreatmentSource, products ( title )')
     .eq('orderId', orderId);
   if (itemError) {
     return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Unable to load invoice items' }) };
   }
 
   const hasCommercialSnapshot = Boolean(order.commercialSnapshotSource);
+  const hasTaxSnapshot = order.taxDecisionSource === 'checkout_verified_tax_v1' && Boolean(order.taxDecisionSnapshot);
+
+  if (order.taxDecisionSource && !hasTaxSnapshot) {
+    return { statusCode: 409, headers: corsHeaders, body: JSON.stringify({ error: 'This order has incomplete immutable tax evidence. Please contact support.' }) };
+  }
+
+  if (hasTaxSnapshot && (
+    order.taxDecisionSnapshot?.version !== 1 ||
+    order.taxDecisionSnapshot?.jurisdiction !== 'GB' ||
+    order.taxDecisionSnapshot?.destinationCountry !== 'GB' ||
+    order.taxDecisionSnapshot?.treatment !== 'seller_non_vat_declared' ||
+    order.taxDecisionSnapshot?.sellerVatRegistered !== false ||
+    order.taxDecisionSnapshot?.reverseCharge !== false ||
+    order.taxDecisionSnapshot?.vatAmountPence !== 0 ||
+    Number(order.vatAmount) !== 0
+  )) {
+    return { statusCode: 409, headers: corsHeaders, body: JSON.stringify({ error: 'This order tax evidence conflicts with the stored financial totals. Please contact support.' }) };
+  }
+
+  const invalidLineTax = hasTaxSnapshot && (items ?? []).some((item) => {
+    if (item.taxTreatmentSource !== 'checkout_verified_tax_v1') return true;
+    const snapshot = item.taxTreatmentSnapshot as Record<string, unknown> | null;
+    return !snapshot
+      || snapshot.treatment !== 'seller_non_vat_declared'
+      || Number(snapshot.evidenceVersion) !== 1
+      || Number(snapshot.vatRate) !== 0
+      || Number(item.vatRate) !== 0;
+  });
+  if (invalidLineTax) {
+    return { statusCode: 409, headers: corsHeaders, body: JSON.stringify({ error: 'This order contains incomplete or conflicting line tax evidence. Please contact support.' }) };
+  }
 
   let buyerRow: { firstName?: string; lastName?: string; email?: string } | null = null;
   let buyerProfileRow: {
     accountType?: string | null;
     companyName?: string | null;
     vatNumber?: string | null;
-    isVatVerified?: boolean | null;
   } | null = null;
   let sellerRow: { businessName?: string } | null = null;
 
@@ -172,13 +222,12 @@ export const handler: Handler = async (event) => {
     buyerProfileRow = order.buyerId
       ? (await supabase
           .from('buyer_profiles')
-          .select('accountType, companyName, vatNumber, isVatVerified')
+          .select('accountType, companyName, vatNumber')
           .eq('userId', order.buyerId)
           .maybeSingle<{
             accountType?: string | null;
             companyName?: string | null;
             vatNumber?: string | null;
-            isVatVerified?: boolean | null;
           }>()
         ).data
       : null;
@@ -203,9 +252,6 @@ export const handler: Handler = async (event) => {
   const isB2B = hasCommercialSnapshot
     ? order.isB2BSnapshot === true
     : Boolean(buyerProfileRow?.accountType) && buyerProfileRow?.accountType !== 'individual';
-  const isReverseCharge = hasCommercialSnapshot
-    ? order.reverseChargeSnapshot === true
-    : isB2B && Boolean(buyerProfileRow?.isVatVerified);
   const buyerCompanyName = hasCommercialSnapshot
     ? order.buyerCompanyNameSnapshot
     : buyerProfileRow?.companyName ?? null;
@@ -244,17 +290,20 @@ export const handler: Handler = async (event) => {
     .filter(Boolean)
     .join(', ');
 
-  const vatNumber = process.env.VITE_VAT_NUMBER || '';
   const companyName = process.env.VITE_COMPANY_NAME || 'Loadify Market';
   const companyAddress = process.env.VITE_COMPANY_ADDRESS || 'United Kingdom';
   const supportEmail = process.env.VITE_SUPPORT_EMAIL || 'contact@loadifymarket.co.uk';
+
+  const taxLabel = hasTaxSnapshot
+    ? 'VAT — not charged by seller'
+    : 'VAT (stored order amount)';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Invoice ${escapeHtml(orderNum)} — Loadify Market</title>
+  <title>Order ${escapeHtml(orderNum)} — Loadify Market</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; color: #121A2B; background: #fff; padding: 40px; max-width: 800px; margin: 0 auto; font-size: 14px; }
@@ -276,6 +325,7 @@ export const handler: Handler = async (event) => {
     .totals td { padding: 6px 12px; font-size: 13px; }
     .totals td:last-child { text-align: right; }
     .totals .grand-total td { font-weight: 700; font-size: 15px; border-top: 2px solid #121A2B; padding-top: 10px; }
+    .tax-note { margin: 12px 0; padding: 10px 14px; background: #f8fafc; border: 1px solid #dbe3ee; border-radius: 6px; font-size: 12px; color: #334155; }
     .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.8; }
     .status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: capitalize; background: #dcfce7; color: #166534; }
     @media print { body { padding: 20px; } @page { margin: 15mm; } }
@@ -287,10 +337,9 @@ export const handler: Handler = async (event) => {
       <h1>Loadify Market</h1>
       <span>${escapeHtml(companyName)}</span>
       <span>${escapeHtml(companyAddress)}</span>
-      ${vatNumber ? `<span>VAT: ${escapeHtml(vatNumber)}</span>` : ''}
     </div>
     <div class="invoice-meta">
-      <h2>INVOICE</h2>
+      <h2>ORDER DOCUMENT</h2>
       <p>
         Order: <strong>${escapeHtml(orderNum)}</strong><br />
         Date: ${escapeHtml(orderDate)}<br />
@@ -307,7 +356,7 @@ export const handler: Handler = async (event) => {
         <strong>${escapeHtml(billToName)}</strong><br />
         ${billToContact ? `${escapeHtml(billToContact)}<br />` : ''}
         ${buyerEmail ? `${escapeHtml(buyerEmail)}<br />` : ''}
-        ${isB2B && buyerVatNumber ? `VAT: ${escapeHtml(buyerVatNumber)}<br />` : ''}
+        ${isB2B && buyerVatNumber ? `Buyer VAT: ${escapeHtml(buyerVatNumber)}<br />` : ''}
         ${addrLine ? escapeHtml(addrLine) : ''}
       </p>
       ${isB2B ? `<p style="margin-top:6px;font-size:11px;color:#374151;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Business Account</p>` : ''}
@@ -338,25 +387,21 @@ export const handler: Handler = async (event) => {
 
   <div class="totals">
     <table>
-      <tr><td>Subtotal (ex VAT)</td><td>${formatGBP(order.subtotal)}</td></tr>
-      ${isReverseCharge
-        ? `<tr><td>VAT — Reverse Charge (Customer Accounts for VAT)</td><td>${formatGBP(0)}</td></tr>`
-        : `<tr><td>VAT (20%)</td><td>${formatGBP(order.vatAmount)}</td></tr>`
-      }
+      <tr><td>Subtotal</td><td>${formatGBP(order.subtotal)}</td></tr>
+      <tr><td>${taxLabel}</td><td>${formatGBP(order.vatAmount)}</td></tr>
       <tr><td>Shipping</td><td>${formatGBP(order.shippingAmount)}</td></tr>
       <tr class="grand-total"><td>Total</td><td>${formatGBP(order.total)}</td></tr>
     </table>
   </div>
 
-  ${isReverseCharge ? `
-  <div style="margin:12px 0;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:6px;font-size:12px;color:#713f12;">
-    <strong>VAT Reverse Charge:</strong> As a VAT-registered business customer, you are liable to account for VAT on this supply under the reverse charge mechanism. The seller has not charged VAT.
+  ${hasTaxSnapshot ? `
+  <div class="tax-note">
+    <strong>Tax treatment:</strong> The seller is recorded for this transaction as not VAT registered. VAT was not charged. This conclusion comes from immutable checkout-time tax evidence stored with the order.
   </div>` : ''}
 
   <div class="footer">
-    <p>This invoice was generated by Loadify Market · ${escapeHtml(supportEmail)}</p>
+    <p>This order document was generated by Loadify Market · ${escapeHtml(supportEmail)}</p>
     <p>For queries about this order, please contact us quoting order number <strong>${escapeHtml(orderNum)}</strong>.</p>
-    ${vatNumber ? `<p>VAT Registration Number: ${escapeHtml(vatNumber)}</p>` : ''}
     <p style="margin-top:12px;"><button onclick="window.print()" style="background:#0A1930;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button></p>
   </div>
 </body>
@@ -367,7 +412,7 @@ export const handler: Handler = async (event) => {
     headers: {
       ...corsHeaders,
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Disposition': `inline; filename="invoice-${orderNum}.html"`,
+      'Content-Disposition': `inline; filename="order-${orderNum}.html"`,
       'Cache-Control': 'no-store',
     },
     body: html,
