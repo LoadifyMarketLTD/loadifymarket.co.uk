@@ -1,64 +1,55 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, Store, Truck, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Facebook, Instagram, Linkedin, ShieldCheck, Store, Truck, Twitter } from "lucide-react";
 import SocialCard from "@/components/ui/SocialCard";
 import TikTokIcon from "@/components/ui/TikTokIcon";
 
 const ColHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[11px] font-bold tracking-widest uppercase text-primary mb-4">
-    {children}
-  </p>
+  <p className="mb-4 text-[10px] font-black uppercase tracking-[0.16em] text-primary">{children}</p>
 );
 
 const FooterLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <li>
-    <Link
-      to={to}
-      className="text-[13px] text-muted-foreground hover:text-primary transition-colors duration-150"
-    >
+    <Link to={to} className="text-[13px] text-muted-foreground transition-colors duration-150 hover:text-white">
       {children}
     </Link>
   </li>
 );
 
-const Footer = () => {
-  return (
-    <footer className="bg-surface text-muted-foreground border-t border-white/[0.06]">
-      <div
-        className="sm:hidden flex flex-col items-center gap-3 bg-surface"
-        style={{ padding: '20px 16px' }}
-      >
-        <div className="flex items-center gap-5 flex-wrap justify-center">
-          <Link to="/terms" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Terms</Link>
-          <Link to="/privacy" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Privacy</Link>
-          <Link to="/contact" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Support</Link>
-        </div>
-        <p style={{ fontSize: '12px', textAlign: 'center' }} className="text-white/65">
-          &copy; {new Date().getFullYear()} Loadify Market
-        </p>
+const legalLinks = [
+  { to: "/terms", label: "Terms" },
+  { to: "/privacy", label: "Privacy" },
+  { to: "/cookies", label: "Cookies" },
+  { to: "/disclaimer", label: "Disclaimer" },
+  { to: "/acceptable-use-policy", label: "Acceptable Use" },
+  { to: "/prohibited-items-policy", label: "Prohibited Items" },
+  { to: "/seller-verification-policy", label: "Seller Verification" },
+  { to: "/ip-trademark-complaints", label: "IP Complaints" },
+  { to: "/returns-policy", label: "Returns Policy" },
+  { to: "/shipping-policy", label: "Shipping Policy" },
+  { to: "/buyer-terms", label: "Buyer Terms" },
+  { to: "/seller-terms", label: "Seller Terms" },
+];
+
+const Footer = () => (
+  <footer className="border-t border-white/[0.06] bg-surface text-muted-foreground">
+    <div className="sm:hidden flex flex-col items-center gap-3 px-4 py-5">
+      <div className="flex flex-wrap items-center justify-center gap-5">
+        <Link to="/terms" className="text-[13px] text-white/75">Terms</Link>
+        <Link to="/privacy" className="text-[13px] text-white/75">Privacy</Link>
+        <Link to="/contact" className="text-[13px] text-white/75">Support</Link>
       </div>
+      <p className="text-center text-[12px] text-white/60">&copy; {new Date().getFullYear()} Loadify Market</p>
+    </div>
 
-      <div className="hidden sm:block border-b border-white/[0.07]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
-              Secure Marketplace
-            </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
-              Stripe-Powered Checkout
-            </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Truck className="h-5 w-5 text-primary shrink-0" />
-              Order Tracking
-            </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Store className="h-5 w-5 text-primary shrink-0" />
-              UK Operated
-            </div>
+    <div className="hidden sm:block">
+      <div className="border-b border-white/[0.07]">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-6 py-5 lg:flex-row lg:items-center lg:px-8">
+          <div className="flex flex-wrap gap-x-6 gap-y-3 text-[12px] font-semibold text-white/60">
+            <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" aria-hidden="true" />Stripe-powered checkout</span>
+            <span className="inline-flex items-center gap-2"><Truck className="h-4 w-4 text-primary" aria-hidden="true" />Order tracking</span>
+            <span className="inline-flex items-center gap-2"><Store className="h-4 w-4 text-primary" aria-hidden="true" />UK operated</span>
           </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <SocialCard href="https://www.facebook.com/profile.php?id=61583570176707" label="Loadify Market on Facebook" Icon={Facebook} platform="facebook" size="footer" />
             <SocialCard href="https://www.twitter.com/loadifymarket" label="Loadify Market on X / Twitter" Icon={Twitter} platform="twitter" size="footer" />
             <SocialCard href="https://www.instagram.com/loadifymarket" label="Loadify Market on Instagram" Icon={Instagram} platform="instagram" size="footer" />
@@ -68,133 +59,73 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="hidden sm:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-          <div className="col-span-2 sm:col-span-3 lg:col-span-2">
-            <p className="text-lg font-bold text-foreground mb-3">Loadify Market</p>
-            <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">
-              Loadify Market is a UK-operated online marketplace run by <strong className="text-muted-foreground">XDrive Logistics Ltd</strong>.
-              Buyers can discover and purchase products through Loadify, while approved sellers can build their catalogue and manage marketplace orders.
-              Seller, fulfilment, delivery and return information is shown through the relevant product and order experience.
+      <div className="mx-auto max-w-7xl px-6 py-9 lg:px-8 lg:py-10">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-8 lg:grid-cols-[1.7fr_0.8fr_0.8fr_0.9fr]">
+          <div className="col-span-2 max-w-xl lg:col-span-1">
+            <p className="text-xl font-black tracking-[-0.02em] text-white">Loadify Market</p>
+            <p className="mt-3 max-w-lg text-[13px] leading-6 text-white/58">
+              A UK-operated marketplace where customers can discover and purchase products and approved sellers can build their catalogue and manage marketplace orders.
             </p>
-            <ul className="space-y-1 text-[12px] text-muted-foreground/85">
-              <li>Company No. 13171804</li>
-              <li>VAT GB375949535</li>
-              <li>101 Cornelian Street, Blackburn BB1 9QL, UK</li>
-              <li>
-                <a href="mailto:contact@loadifymarket.co.uk" className="hover:text-white/80 transition-colors">
-                  contact@loadifymarket.co.uk
-                </a>
-              </li>
-              <li>
-                <a href="tel:+447423272138" className="hover:text-white/80 transition-colors">
-                  +44 7423 272138
-                </a>
-              </li>
-            </ul>
+            <div className="mt-5 grid gap-1 text-[11px] leading-5 text-white/45 sm:grid-cols-2 lg:grid-cols-1">
+              <span>XDrive Logistics Ltd · Company No. 13171804</span>
+              <span>VAT GB375949535 · Blackburn BB1 9QL, UK</span>
+              <a href="mailto:contact@loadifymarket.co.uk" className="transition-colors hover:text-white/75">contact@loadifymarket.co.uk</a>
+              <a href="tel:+447423272138" className="transition-colors hover:text-white/75">+44 7423 272138</a>
+            </div>
           </div>
 
           <div>
-            <ColHeading>For Buyers</ColHeading>
+            <ColHeading>Shop</ColHeading>
             <ul className="space-y-2.5">
               <FooterLink to="/catalog">Browse Marketplace</FooterLink>
-              <FooterLink to="/category/health-beauty">Health &amp; Beauty</FooterLink>
-              <FooterLink to="/wholesale-info">Marketplace Info</FooterLink>
-              <FooterLink to="/category/kitchen-dining">Kitchenware</FooterLink>
               <FooterLink to="/catalog">All Categories</FooterLink>
               <FooterLink to="/track-order">Track Order</FooterLink>
+              <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
               <FooterLink to="/faq">Help &amp; FAQ</FooterLink>
             </ul>
           </div>
 
           <div>
-            <ColHeading>For Sellers</ColHeading>
+            <ColHeading>Sell</ColHeading>
             <ul className="space-y-2.5">
               <FooterLink to="/register?type=seller">Start Selling</FooterLink>
               <FooterLink to="/seller">Seller Dashboard</FooterLink>
               <FooterLink to="/seller/products/new">List a Product</FooterLink>
               <FooterLink to="/seller-terms">Seller Fees &amp; Pricing</FooterLink>
               <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
-              <FooterLink to="/#how-it-works-sellers">How It Works</FooterLink>
-              <FooterLink to="/contact">Partner With Us</FooterLink>
             </ul>
           </div>
 
           <div>
-            <ColHeading>Marketplace</ColHeading>
-            <ul className="space-y-2.5">
-              <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>
-              <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
-              <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
-              <FooterLink to="/contact">Report a Problem</FooterLink>
-            </ul>
-
-            <p className="text-[11px] font-bold tracking-widest uppercase text-primary mt-7 mb-4">Company</p>
+            <ColHeading>Loadify</ColHeading>
             <ul className="space-y-2.5">
               <FooterLink to="/about">About Us</FooterLink>
               <FooterLink to="/contact">Contact Us</FooterLink>
-              <FooterLink to="/faq">Help &amp; Support</FooterLink>
-            </ul>
-          </div>
-
-          <div>
-            <ColHeading>Legal</ColHeading>
-            <ul className="space-y-2.5">
-              <FooterLink to="/terms">Terms &amp; Conditions</FooterLink>
-              <FooterLink to="/privacy">Privacy Policy</FooterLink>
-              <FooterLink to="/cookies">Cookie Policy</FooterLink>
-              <FooterLink to="/disclaimer">Disclaimer</FooterLink>
-              <FooterLink to="/acceptable-use-policy">Acceptable Use Policy</FooterLink>
-              <FooterLink to="/prohibited-items-policy">Prohibited Items Policy</FooterLink>
-              <FooterLink to="/seller-verification-policy">Seller Verification Policy</FooterLink>
-              <FooterLink to="/ip-trademark-complaints">IP / Trademark Complaints</FooterLink>
-              <FooterLink to="/returns-policy">Returns Policy</FooterLink>
-              <FooterLink to="/shipping-policy">Shipping Policy</FooterLink>
-              <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>
-              <FooterLink to="/seller-terms">Seller Terms</FooterLink>
+              <FooterLink to="/contact">Partner With Us</FooterLink>
+              <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
+              <FooterLink to="/contact">Report a Problem</FooterLink>
             </ul>
           </div>
         </div>
       </div>
 
-      <div className="hidden sm:block border-t border-white/[0.07]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-          <p className="text-[12px] text-muted-foreground/80">
-            &copy; 2021 XDrive Logistics Ltd (Company No. 13171804). All rights reserved.
-            Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.
-          </p>
-          <p className="text-[12px] text-muted-foreground/80 lg:text-right">
-            Stripe-powered payments · Marketplace order tracking · Transaction-specific seller, fulfilment and return terms apply.
-          </p>
-        </div>
-
-        <div className="border-t border-white/[0.05]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-x-5 gap-y-1">
-            {[
-              { to: "/terms", label: "Terms" },
-              { to: "/privacy", label: "Privacy" },
-              { to: "/cookies", label: "Cookies" },
-              { to: "/disclaimer", label: "Disclaimer" },
-              { to: "/acceptable-use-policy", label: "Acceptable Use" },
-              { to: "/prohibited-items-policy", label: "Prohibited Items" },
-              { to: "/seller-verification-policy", label: "Seller Verification" },
-              { to: "/ip-trademark-complaints", label: "IP Complaints" },
-              { to: "/buyer-terms", label: "Buyer Terms" },
-              { to: "/seller-terms", label: "Seller Terms" },
-            ].map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                className="text-[11px] text-muted-foreground/75 hover:text-muted-foreground transition-colors"
-              >
-                {l.label}
+      <div className="border-t border-white/[0.07]">
+        <div className="mx-auto max-w-7xl px-6 py-5 lg:px-8">
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {legalLinks.map((link) => (
+              <Link key={link.to} to={link.to} className="text-[10px] font-semibold text-white/38 transition-colors hover:text-white/70">
+                {link.label}
               </Link>
             ))}
           </div>
+          <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.05] pt-4 text-[11px] leading-5 text-white/38 lg:flex-row lg:items-center lg:justify-between">
+            <p>&copy; 2021 XDrive Logistics Ltd. Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.</p>
+            <p className="lg:text-right">Transaction-specific seller, fulfilment, delivery and return terms apply.</p>
+          </div>
         </div>
       </div>
-    </footer>
-  );
-};
+    </div>
+  </footer>
+);
 
 export default Footer;
