@@ -1,79 +1,49 @@
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
+
+const sellerProof = ["Build your catalogue", "Manage marketplace orders", "Eligible payouts through Stripe Connect"];
 
 export default function SellerCTA() {
   return (
-    <section
-      className="sm:bg-surface sm:border-y sm:border-primary/40 bg-surface"
-    >
-      {/* ── Mobile: card with margin/radius ───────────────────────── */}
-      <div className="sm:hidden" style={{ padding: '24px 16px' }}>
-        <div
-          style={{
-            background: 'rgba(12,10,0,1)',
-            border: '1px solid rgba(212,175,55,0.2)',
-            borderRadius: '20px',
-            padding: '20px',
-            textAlign: 'center',
-          }}
-        >
-          {/* Heading */}
-          <p style={{ fontWeight: 800, fontSize: '24px', lineHeight: 1.2, marginBottom: '10px' }} className="text-white">
-            Start Selling for{' '}
-            <span className="text-primary" style={{}}>FREE</span>
-          </p>
+    <section className="bg-[#F7F9FC] px-4 pb-10 pt-4 sm:px-6 sm:pb-14 lg:px-10" aria-label="Sell on Loadify Market">
+      <div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[30px] bg-[#0A234F] px-6 py-8 text-white shadow-[0_28px_70px_rgba(10,35,79,0.20)] sm:px-8 sm:py-10 lg:px-11 lg:py-12">
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]" aria-hidden="true" />
+        <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
 
-          {/* Subtext */}
-          <p style={{ fontSize: '14px', lineHeight: 1.55, marginBottom: '22px' }} className="text-muted-foreground">
-            List products free, sell at fixed prices, and keep more from every order.
-          </p>
-
-          {/* Gold CTA button */}
-          <Link
-            to="/register?type=seller"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '52px',
-              background: 'rgba(212,175,55,1)',
-              color: 'rgba(18,26,43,1)',
-              fontWeight: 700,
-              fontSize: '16px',
-              borderRadius: '14px',
-              textDecoration: 'none',
-              marginBottom: '12px',
-            }}
-          >
-            Open Your Seller Account
-          </Link>
-
-          <p style={{ fontSize: '12px' }} className="text-muted-foreground">
-            0% seller commission until 31 December 2026.
-          </p>
-        </div>
-      </div>
-
-      {/* ── Desktop layout — unchanged ────────────────────────────── */}
-      <div className="hidden sm:block px-8 py-8">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-foreground font-medium text-base text-center sm:text-left">
-            List products free, sell at fixed prices, and keep more from every order with 0% seller commission until 31 December 2026.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
-            <Link
-              to="/register?type=seller"
-              data-magnetic
-              className="bg-primary hover:shadow-[0_0_22px_rgba(212,175,55,0.25)] hover:-translate-y-0.5 text-background font-bold px-6 py-2.5 rounded-xl transition-all duration-300 text-sm whitespace-nowrap"
-            >
-              Open Your Free Seller Account
-            </Link>
-            <p className="text-muted-foreground/80 text-sm whitespace-nowrap">
-              Stripe payments. Fixed prices. No monthly fee.
+        <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="max-w-[820px]">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">For serious sellers</p>
+            <h2 className="mt-3 text-3xl font-black leading-[1.02] tracking-[-0.035em] sm:text-4xl lg:text-[2.8rem]">
+              Bring your products to a marketplace built for serious sellers.
+            </h2>
+            <p className="mt-4 max-w-[760px] text-sm font-medium leading-6 text-white/78 sm:text-base sm:leading-7">
+              Put your catalogue where buyers can discover it, then manage marketplace orders and eligible payouts from the same seller environment.
             </p>
+
+            <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              {sellerProof.map((item) => (
+                <div key={item} className="flex items-start gap-2 text-xs font-semibold leading-5 text-white/80">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#F5A300]" aria-hidden="true" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="min-w-[240px] rounded-2xl border border-white/12 bg-white/[0.06] p-4 sm:p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/65">Seller launch offer</p>
+            <p className="mt-2 text-2xl font-black text-[#F5A300]">0% commission</p>
+            <p className="mt-1 text-xs font-semibold text-white/70">Until 31 December 2026</p>
+            <Link to="/register?type=seller" data-magnetic className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F] transition-all hover:-translate-y-0.5 hover:bg-[#E69500]">
+              Start selling
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <Link to="/catalog" className="mt-3 inline-flex w-full items-center justify-center text-xs font-bold text-white/70 transition-colors hover:text-white">
+              See what is live now
+            </Link>
           </div>
         </div>
       </div>
-
     </section>
   );
 }
