@@ -17,35 +17,24 @@ const sellerCapabilities = [
   {
     number: "03",
     icon: CreditCard,
-    title: "Use an eligible Stripe Connect payout path",
-    description: "Where eligible, seller payouts follow the platform’s structured Stripe Connect flow.",
+    title: "Follow a structured payout path",
+    description: "Where eligible, seller payouts follow the platform’s Stripe Connect flow.",
   },
 ];
 
 export default function FeaturesGrid() {
   return (
-    <section
-      className="w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-white shadow-[0_18px_55px_rgba(10,35,79,0.08)]"
-      aria-label="Why sell on Loadify Market"
-    >
+    <section className="w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-white shadow-[0_18px_55px_rgba(10,35,79,0.08)]" aria-label="Why sell on Loadify Market">
       <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="relative overflow-hidden bg-[#0A234F] px-6 py-8 text-white sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-          <div
-            className="absolute inset-0 opacity-16"
-            aria-hidden="true"
-            style={{
-              backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)',
-              backgroundSize: '42px 42px',
-            }}
-          />
+          <div className="absolute inset-0 opacity-16" aria-hidden="true" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '42px 42px' }} />
           <div className="relative">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Sell on Loadify</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Built for serious sellers</p>
             <h2 className="mt-3 max-w-[500px] text-3xl font-black leading-[1.02] tracking-[-0.035em] sm:text-4xl">
-              Selling should feel like running a business, not filling out a form.
+              Your products deserve more than a listing.
             </h2>
-            <p className="mt-5 max-w-[480px] text-sm font-medium leading-6 text-white/72 sm:text-base sm:leading-7">
-              Loadify gives merchants a structured marketplace environment for catalogue, orders and eligible payouts — connected to the same place buyers shop.
+            <p className="mt-5 max-w-[480px] text-sm font-medium leading-6 text-white/80 sm:text-base sm:leading-7">
+              Bring your catalogue to Loadify and keep listings, marketplace orders and eligible payouts connected to the same place buyers shop.
             </p>
 
             <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-[#F5A300]/30 bg-[#F5A300]/10 px-3 py-2 text-[11px] font-extrabold text-[#FFD77A]">
@@ -53,18 +42,12 @@ export default function FeaturesGrid() {
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-              <Link
-                to="/register?type=seller"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F] transition-all hover:-translate-y-0.5 hover:bg-[#E69500]"
-              >
+              <Link to="/register?type=seller" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F] transition-all hover:-translate-y-0.5 hover:bg-[#E69500]">
                 Start selling
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
-              <Link
-                to="/catalog"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-white/10"
-              >
-                Shop the marketplace
+              <Link to="/catalog" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-white/10">
+                See what is live now
               </Link>
             </div>
 
@@ -76,7 +59,7 @@ export default function FeaturesGrid() {
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="border-l border-white/15 pl-3 first:border-l-0 first:pl-0">
                   <Icon className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />
-                  <p className="mt-2 text-[10px] font-bold text-white/75">{label}</p>
+                  <p className="mt-2 text-[10px] font-bold text-white/80">{label}</p>
                 </div>
               ))}
             </div>
@@ -84,7 +67,7 @@ export default function FeaturesGrid() {
         </div>
 
         <div className="px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0E3FA9]">Your seller workflow</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0E3FA9]">From product to payout</p>
           <h3 className="mt-2 max-w-[620px] text-2xl font-black tracking-[-0.025em] text-[#0A234F] sm:text-3xl">
             Bring the products. Keep the operation together.
           </h3>
