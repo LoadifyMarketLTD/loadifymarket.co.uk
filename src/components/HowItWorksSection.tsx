@@ -48,21 +48,18 @@ function StepCard({ step }: { step: Step }) {
   return (
     <div
       data-parallax
-      className="rounded-2xl border border-white/5 bg-elevated p-6 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] hover:border-primary/40"
+      className="rounded-2xl border border-white/10 bg-[#0A234F] p-6 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(29,87,216,0.22)] hover:border-[#F5A300]/40"
     >
-      <Icon
-        className="w-7 h-7 text-primary shrink-0 icon-pulse"
-        aria-hidden="true"
-      />
+      <Icon className="w-7 h-7 text-[#F5A300] shrink-0 icon-pulse" aria-hidden="true" />
       <p className="text-base font-semibold text-white leading-tight">{step.title}</p>
-      <p className="text-sm text-slate-400 leading-relaxed">{step.description}</p>
+      <p className="text-sm text-white/62 leading-relaxed">{step.description}</p>
     </div>
   );
 }
 
 function StepsPanel({ id, title, steps }: { id: string; title: string; steps: Step[] }) {
   return (
-    <div id={id} className="w-full rounded-2xl border border-white/5 bg-elevated p-6 lg:p-8">
+    <div id={id} className="w-full rounded-2xl border border-white/10 bg-[#0B2F6B] p-6 lg:p-8">
       <h2 className="text-xl font-semibold text-white mb-4">{title}</h2>
       <div className="grid grid-cols-3 gap-6">
         {steps.map((step) => (
