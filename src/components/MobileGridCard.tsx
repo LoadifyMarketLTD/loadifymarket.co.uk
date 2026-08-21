@@ -18,7 +18,7 @@ interface MobileGridCardProps {
   priority?: boolean;
 }
 
-const darkPlaceholder = (
+const lightPlaceholder = (
   <div
     aria-hidden="true"
     style={{
@@ -29,7 +29,7 @@ const darkPlaceholder = (
       justifyContent: 'center',
     }}
   >
-    <ProductImagePlaceholder theme="dark" />
+    <ProductImagePlaceholder theme="light" />
   </div>
 );
 
@@ -37,12 +37,12 @@ export default function MobileGridCard({ id, title, price, image, location, prio
   return (
     <Link
       to={`/product/${id}`}
-      className="block rounded-2xl border border-white/10 bg-[#0B2F6B] p-2.5 shadow-[0_12px_28px_rgba(10,35,79,0.18)]"
+      className="block rounded-2xl border border-[#0A234F]/10 bg-white p-2.5 shadow-[0_12px_28px_rgba(10,35,79,0.14)]"
       style={{ textDecoration: 'none' }}
       aria-label={title}
     >
       <div
-        className="bg-white/[0.07]"
+        className="bg-[#F2F4F7]"
         style={{
           width: '100%',
           aspectRatio: '1 / 1',
@@ -58,13 +58,13 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           fetchPriority={priority ? 'high' : undefined}
           decoding={priority ? 'auto' : 'async'}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          fallback={darkPlaceholder}
+          fallback={lightPlaceholder}
         />
       </div>
 
       <div style={{ paddingTop: 8, paddingBottom: 4 }}>
         <p
-          className="text-white/90"
+          className="text-[#0A234F]/90"
           style={{
             fontSize: 'clamp(12px, 3.2vw, 13px)',
             fontWeight: 500,
@@ -79,7 +79,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           {title}
         </p>
         <p
-          className="text-[#F5A300]"
+          className="text-[#1D57D8]"
           style={{
             fontSize: 'clamp(13px, 3.8vw, 15px)',
             fontWeight: 700,
@@ -90,7 +90,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
         </p>
         {location && (
           <p
-            className="text-white/52"
+            className="text-[#0A234F]/52"
             style={{
               fontSize: 11,
               margin: '3px 0 0',
