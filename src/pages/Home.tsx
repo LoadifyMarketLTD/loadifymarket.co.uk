@@ -8,6 +8,7 @@ import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
 import MobileGridCard from "@/components/MobileGridCard";
 import { useMobileGrid } from "@/hooks/useMobileGrid";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
@@ -72,7 +73,7 @@ function MobileHome() {
   }, [loadMore]);
 
   return (
-    <div className="md:hidden min-h-screen bg-[#F7F9FC]">
+    <div className="min-h-screen bg-[#F7F9FC]">
       <MobileAppHeader />
       <MobileHeroBanner />
 
@@ -169,7 +170,47 @@ function MobileHome() {
   );
 }
 
+function DesktopHome() {
+  return (
+    <>
+      <HeroSection />
+
+      <section className="bg-[#F7F9FC] pb-10" aria-label="Loadify Market trust signals">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+          <TrustStrip />
+        </div>
+      </section>
+
+      <section className="bg-[#071B3A] py-8" aria-label="Shop Loadify Market">
+        <ShopByCategory />
+        <div className="mt-1">
+          <FeaturedProducts />
+        </div>
+      </section>
+
+      <section className="bg-[#F7F9FC] py-12" aria-label="Why Loadify is different">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+          <FeaturesGrid />
+        </div>
+
+        <LazySection rootMargin="320px">
+          <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+            <HowItWorksSection />
+          </div>
+          <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+            <SecurityTrust />
+          </div>
+        </LazySection>
+      </section>
+
+      <SellerCTA />
+    </>
+  );
+}
+
 export default function Home() {
+  const isMobile = useIsMobile();
+
   useEffect(() => { trackViewHome(); }, []);
 
   return (
@@ -181,41 +222,7 @@ export default function Home() {
       />
 
       <main id="main-content">
-        <MobileHome />
-
-        <div className="hidden md:block">
-          <HeroSection />
-
-          <section className="bg-[#F7F9FC] pb-10" aria-label="Loadify Market trust signals">
-            <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-              <TrustStrip />
-            </div>
-          </section>
-
-          <section className="bg-[#071B3A] py-8" aria-label="Shop Loadify Market">
-            <ShopByCategory />
-            <div className="mt-1">
-              <FeaturedProducts />
-            </div>
-          </section>
-
-          <section className="bg-[#F7F9FC] py-12" aria-label="Why Loadify is different">
-            <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-              <FeaturesGrid />
-            </div>
-
-            <LazySection rootMargin="320px">
-              <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-                <HowItWorksSection />
-              </div>
-              <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-                <SecurityTrust />
-              </div>
-            </LazySection>
-          </section>
-
-          <SellerCTA />
-        </div>
+        {isMobile ? <MobileHome /> : <DesktopHome />}
       </main>
     </MainLayout>
   );
