@@ -1,55 +1,96 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, PackageSearch } from "lucide-react";
-import { useCategories } from "@/hooks/useCategories";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { useCategories, type CategoryNode } from "@/hooks/useCategories";
+
+const PRIORITY_SLUGS = ["electronics", "clothing-fashion", "home-garden", "health-beauty", "sports-fitness", "automotive"];
+
+const CATEGORY_IMAGES: Record<string, string> = {
+  electronics: "/images/categories/electronics.jpeg",
+  "clothing-fashion": "/images/categories/fashion.jpeg",
+  "home-garden": "/images/categories/home-kitchen.jpeg",
+  "health-beauty": "/images/categories/beauty.jpeg",
+  "sports-fitness": "/images/categories/sports.jpeg",
+  automotive: "/images/categories/automotive.jpeg",
+};
+
+function imageFor(category: CategoryNode) {
+  if (CATEGORY_IMAGES[category.slug]) return CATEGORY_IMAGES[category.slug];
+  const value = `${category.slug} ${category.name}`.toLowerCase();
+  if (value.includes("car") || value.includes("auto")) return "/images/categories/automotive.jpeg";
+  if (value.includes("trainer") || value.includes("fashion") || value.includes("cloth")) return "/images/categories/fashion.jpeg";
+  if (value.includes("food") || value.includes("crisp")) return "/images/categories/food-drink.jpeg";
+  if (value.includes("sport") || value.includes("cardio") || value.includes("fitness")) return "/images/categories/sports.jpeg";
+  if (value.includes("garden") || value.includes("tool")) return "/images/categories/tools-diy.jpeg";
+  if (value.includes("beauty") || value.includes("health")) return "/images/categories/beauty.jpeg";
+  if (value.includes("elect") || value.includes("printer")) return "/images/categories/electronics.jpeg";
+  return "/images/categories/home-kitchen.jpeg";
+}
 
 export default function ShopByCategory() {
   const { categories } = useCategories();
-  const visible = categories.slice(0, 8);
+
+  const priority = PRIORITY_SLUGS
+    .map((slug) => categories.find((category) => category.slug === slug))
+    .filter((category): category is CategoryNode => Boolean(category));
+
+  const priorityIds = new Set(priority.map((category) => category.id));
+  const visible = [...priority, ...categories.filter((category) => !priorityIds.has(category.id))].slice(0, 5);
 
   if (visible.length === 0) return null;
 
   return (
-    <section aria-label="Shop by category" className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
-      <div className="flex items-end justify-between gap-4 mb-5">
+    <section aria-label="Shop by category" className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-10">
+      <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] font-black text-primary uppercase tracking-[0.18em] mb-1">Browse</p>
-          <h2 className="text-lg sm:text-xl font-semibold text-white">Shop by category</h2>
-          <p className="text-[11px] sm:text-xs text-slate-300 mt-1">Start with what you need and explore the marketplace faster.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Explore Loadify</p>
+          <h2 className="mt-1 text-2xl font-black tracking-[-0.025em] text-white sm:text-3xl">Start with what you’re looking for.</h2>
+          <p className="mt-2 text-sm text-white/60">Real marketplace categories, presented like a shop — not a database menu.</p>
         </div>
-        <Link to="/catalog" className="text-[11px] font-bold text-primary uppercase tracking-wide hover:underline flex items-center gap-1 shrink-0">
-          All Categories <ArrowRight className="h-3 w-3" />
+        <Link to="/catalog" className="hidden items-center gap-2 text-xs font-extrabold text-[#F5A300] transition-colors hover:text-white sm:inline-flex">
+          All categories <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {visible.map((category, index) => (
-          <Link
-            key={category.id}
-            to={`/catalog?category=${encodeURIComponent(category.name)}`}
-            className="group min-h-[116px] rounded-2xl border border-white/[0.08] bg-elevated px-5 py-4 flex flex-col justify-between overflow-hidden relative hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_0_28px_rgba(212,175,55,0.12)] transition-all duration-300"
-          >
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/[0.03] via-transparent to-primary/[0.04]" aria-hidden="true" />
-            <div className="relative flex items-start justify-between gap-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/[0.08] text-primary">
-                <PackageSearch className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <span className="text-[10px] font-black tracking-[0.14em] text-white/60" aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-            </div>
-
-            <div className="relative flex items-end justify-between gap-3 mt-5">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/60 block mb-1">Explore</span>
-                <span className="text-sm sm:text-base font-semibold text-white group-hover:text-primary transition-colors line-clamp-2">
-                  {category.name}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:auto-rows-[168px]">
+        {visible.map((category, index) => {
+          const featured = index === 0;
+          return (
+            <Link
+              key={category.id}
+              to={`/catalog?category=${encodeURIComponent(category.name)}`}
+              className={[
+                "group relative overflow-hidden rounded-[22px] border border-white/10 bg-[#101D33] shadow-[0_16px_35px_rgba(0,0,0,0.16)]",
+                featured ? "col-span-2 min-h-[238px] md:row-span-2 md:min-h-0" : "min-h-[150px] md:min-h-0",
+              ].join(" ")}
+            >
+              <img
+                src={imageFor(category)}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#071B3A]/90 via-[#071B3A]/18 to-transparent" aria-hidden="true" />
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-5">
+                <div>
+                  <span className="block text-[9px] font-black uppercase tracking-[0.14em] text-white/55">Shop</span>
+                  <span className={`mt-1 block font-extrabold text-white ${featured ? "text-xl sm:text-2xl" : "text-sm sm:text-base"}`}>
+                    {category.name}
+                  </span>
+                </div>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/90 text-[#0A234F] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                 </span>
               </div>
-              <ArrowRight className="h-4 w-4 text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
+
+      <Link to="/catalog" className="mt-4 inline-flex items-center gap-2 text-xs font-extrabold text-[#F5A300] sm:hidden">
+        Browse all categories <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
     </section>
   );
 }
