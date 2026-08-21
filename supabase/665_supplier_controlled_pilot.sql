@@ -236,7 +236,7 @@ BEGIN
     RETURN jsonb_build_object('enabled',false,'reason','pilot_supplier_scope_required','interfaceVersion',1);
   END IF;
 
-  SELECT p,s INTO v_pilot,v_supplier
+  SELECT p.* INTO v_pilot
     FROM private.supplier_pilot_programs p
     JOIN private.supplier_foundation_suppliers s ON s.id=p.supplier_id
    WHERE p.status IN ('preparing','active')
@@ -248,6 +248,9 @@ BEGIN
   IF NOT FOUND THEN
     RETURN jsonb_build_object('enabled',false,'reason','pilot_scope_not_allowlisted','interfaceVersion',1);
   END IF;
+  SELECT * INTO v_supplier
+    FROM private.supplier_foundation_suppliers
+   WHERE id=v_pilot.supplier_id;
 
   IF v_pilot.status='preparing' AND v_operation NOT IN ('import','stock_sync','price_sync') THEN
     RETURN jsonb_build_object('enabled',false,'reason','pilot_not_active','pilotId',v_pilot.id,'interfaceVersion',1);
