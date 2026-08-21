@@ -98,7 +98,7 @@ const FeaturedProducts = () => {
 
                     <div className="flex flex-1 flex-col p-3 sm:p-3.5">
                       {item.category && (
-                        <span className="line-clamp-1 text-[9px] font-black uppercase tracking-[0.13em] text-[#0E3FA9]">
+                        <span className="line-clamp-1 text-[9px] font-black uppercase tracking-[0.13em] text-[#1D57D8]">
                           {item.category.name}
                         </span>
                       )}
