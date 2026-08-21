@@ -1,17 +1,14 @@
 import { CreditCard, PackageCheck, Search, Truck } from "lucide-react";
 
 const buyerJourney = [
-  { icon: Search, label: "Discover", detail: "Browse marketplace products and categories." },
-  { icon: CreditCard, label: "Checkout", detail: "Pay inside the Loadify purchase flow." },
-  { icon: Truck, label: "Track", detail: "Follow order progress from your account." },
-  { icon: PackageCheck, label: "Resolve", detail: "Keep order history and support connected." },
+  { icon: Search, label: "Discover", detail: "Browse the products that are live on Loadify now." },
+  { icon: CreditCard, label: "Checkout", detail: "Complete your purchase inside the Loadify checkout flow." },
+  { icon: Truck, label: "Track", detail: "Follow order progress from your Loadify account." },
+  { icon: PackageCheck, label: "Resolve", detail: "Keep order history and support connected in one place." },
 ];
 
 const HowItWorksSection = () => (
-  <section
-    className="w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-white shadow-[0_18px_50px_rgba(10,35,79,0.07)]"
-    aria-label="How buying on Loadify works"
-  >
+  <section className="w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-white shadow-[0_18px_50px_rgba(10,35,79,0.07)]" aria-label="How buying on Loadify works">
     <div className="grid grid-cols-1 lg:grid-cols-[0.82fr_1.18fr]">
       <div className="bg-[#F7F9FC] px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0E3FA9]">For buyers</p>
@@ -19,7 +16,7 @@ const HowItWorksSection = () => (
           Find it. Buy it. Follow it.
         </h2>
         <p className="mt-5 max-w-[460px] text-sm leading-6 text-[#64748B] sm:text-base sm:leading-7">
-          The technology can stay behind the scenes. The shopping journey should stay simple, visible and recognisably Loadify.
+          Browse current listings, check out inside Loadify and keep your order journey visible from your account.
         </p>
       </div>
 
