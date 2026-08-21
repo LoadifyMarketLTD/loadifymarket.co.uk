@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { Helmet } from "react-helmet-async";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
@@ -73,58 +72,79 @@ function MobileHome() {
   }, [loadMore]);
 
   return (
-    <div className="md:hidden min-h-screen bg-background">
+    <div className="md:hidden min-h-screen bg-[#F7F9FC]">
       <MobileAppHeader />
       <MobileHeroBanner />
-      <MobileCategoryShortcuts />
 
-      <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: 14 }}>
+      <div className="px-[var(--mob-side,16px)] pb-5 pt-1">
         <TrustStrip />
       </div>
 
+      <div className="bg-[#071B3A] pb-7 pt-3">
+        <MobileCategoryShortcuts />
+
+        <section
+          aria-label="Marketplace products"
+          style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: 18 }}
+        >
+          <div style={{ marginBottom: 14 }}>
+            <p className="text-[#F5A300]" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
+              Marketplace reality
+            </p>
+            <h2 className="text-white" style={{ fontSize: 20, fontWeight: 820, lineHeight: 1.2 }}>
+              Shop what is live now
+            </h2>
+            <p className="text-white/60" style={{ fontSize: 12, marginTop: 4, lineHeight: 1.45 }}>
+              Real listings, real categories and no invented marketplace volume.
+            </p>
+          </div>
+
+          {loading ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 'clamp(10px, 3vw, 14px)',
+              }}
+            >
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonGridCard key={i} />)}
+            </div>
+          ) : (
+            <MobileProductGrid products={leadProducts} />
+          )}
+        </section>
+      </div>
+
+      <SellerCTA />
+
+      <section className="px-[var(--mob-side,16px)] pb-6" aria-label="Seller platform value">
+        <FeaturesGrid />
+      </section>
+
+      <section className="px-[var(--mob-side,16px)] pb-8" aria-label="Loadify Intelligence direction">
+        <SecurityTrust />
+      </section>
+
       <section
-        aria-label="Marketplace products"
+        aria-label="More marketplace products"
+        className="bg-[#071B3A]"
         style={{
           paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 20,
+          paddingTop: remainingProducts.length > 0 ? 24 : 0,
           paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 20px)',
         }}
       >
-        <div style={{ marginBottom: 14 }}>
-          <p className="text-primary" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
-            Shop Loadify
-          </p>
-          <h2 className="text-foreground" style={{ fontSize: 19, fontWeight: 780, lineHeight: 1.2 }}>
-            Explore the marketplace
-          </h2>
-          <p className="text-foreground/65" style={{ fontSize: 12, marginTop: 4, lineHeight: 1.45 }}>
-            Live products available to browse and buy now.
-          </p>
-        </div>
-
-        {loading ? (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 'clamp(10px, 3vw, 14px)',
-            }}
-          >
-            {Array.from({ length: 12 }).map((_, i) => <SkeletonGridCard key={i} />)}
-          </div>
-        ) : (
+        {remainingProducts.length > 0 && (
           <>
-            <MobileProductGrid products={leadProducts} />
-
-            {products.length > 0 && (
-              <div style={{ marginInline: 'calc(var(--mob-side, 16px) * -1)', marginTop: 10, marginBottom: 10 }}>
-                <SellerCTA />
-              </div>
-            )}
-
-            {remainingProducts.length > 0 && (
-              <MobileProductGrid products={remainingProducts} startIndex={6} />
-            )}
+            <div style={{ marginBottom: 14 }}>
+              <p className="text-[#F5A300]" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
+                Keep exploring
+              </p>
+              <h2 className="text-white" style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.2 }}>
+                More from the marketplace
+              </h2>
+            </div>
+            <MobileProductGrid products={remainingProducts} startIndex={6} />
           </>
         )}
 
@@ -154,20 +174,9 @@ export default function Home() {
 
   return (
     <MainLayout>
-      <Helmet>
-        <link
-          rel="preload"
-          as="image"
-          href="/hero-gold.webp"
-          type="image/webp"
-          media="(min-width: 768px)"
-          // @ts-expect-error fetchpriority is a valid HTML attr not yet in React types
-          fetchpriority="high"
-        />
-      </Helmet>
       <SEO
-        title="UK Online Marketplace for Buyers & Sellers | Loadify Market"
-        description="Discover products across categories, shop securely with Stripe-powered checkout, track orders, or start selling to UK buyers on Loadify Market."
+        title="UK Marketplace Built for Buyers & Serious Sellers | Loadify Market"
+        description="Shop across categories or start selling on Loadify Market. Stripe-powered checkout, order tracking and seller tools in one UK-operated marketplace."
         canonical="/"
       />
 
@@ -177,28 +186,29 @@ export default function Home() {
         <div className="hidden md:block">
           <HeroSection />
 
-          <section className="bg-background py-8" aria-label="Loadify Market overview">
-            <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
+          <section className="bg-[#F7F9FC] pb-10" aria-label="Loadify Market trust signals">
+            <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
               <TrustStrip />
             </div>
+          </section>
 
-            <div className="mt-5">
-              <ShopByCategory />
-            </div>
-
+          <section className="bg-[#071B3A] py-8" aria-label="Shop Loadify Market">
+            <ShopByCategory />
             <div className="mt-1">
               <FeaturedProducts />
             </div>
+          </section>
 
-            <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 mt-8">
+          <section className="bg-[#F7F9FC] py-12" aria-label="Why Loadify is different">
+            <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
               <FeaturesGrid />
             </div>
 
-            <LazySection rootMargin="300px">
-              <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 mt-8">
+            <LazySection rootMargin="320px">
+              <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
                 <HowItWorksSection />
               </div>
-              <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 mt-8">
+              <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
                 <SecurityTrust />
               </div>
             </LazySection>
