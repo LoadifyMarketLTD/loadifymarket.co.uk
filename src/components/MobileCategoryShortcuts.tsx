@@ -12,7 +12,6 @@ interface Category {
   id: string;
   label: string;
   to: string;
-  /** URL fragment to match for active detection (e.g. "/category/electrical") */
   match: string;
 }
 
@@ -31,7 +30,6 @@ const CATEGORIES: Category[] = [
 export default function MobileCategoryShortcuts() {
   const { pathname } = useLocation();
 
-  // "All" is active when on the home page or catalog root
   const activePill =
     pathname === '/' || pathname === '/catalog'
       ? 'all'
@@ -57,7 +55,7 @@ export default function MobileCategoryShortcuts() {
                 key={id}
                 to={to}
                 aria-label={`Browse ${label}`}
-              className={`${active ? 'bg-primary/[0.12] border-primary text-primary font-semibold' : 'bg-white/[0.06] border-white/[0.14] text-foreground/85 font-medium'}`}
+                className={`${active ? 'bg-[#F5A300]/[0.13] border-[#F5A300] text-[#F5A300] font-semibold' : 'bg-[#0B2F6B] border-white/15 text-white/85 font-medium'}`}
                 style={{
                   textDecoration: 'none',
                   display: 'flex',
@@ -79,11 +77,7 @@ export default function MobileCategoryShortcuts() {
               </Link>
             );
           })}
-          {/* Trailing spacer so last pill clears the container edge */}
-          <div
-            style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }}
-            aria-hidden="true"
-          />
+          <div style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }} aria-hidden="true" />
         </div>
       </div>
     </section>
