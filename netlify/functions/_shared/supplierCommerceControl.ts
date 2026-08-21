@@ -9,7 +9,9 @@ export type SupplierCommerceOperation =
   | 'reservation'
   | 'supplier_order'
   | 'tracking_ingest'
-  | 'return_recovery';
+  | 'return_recovery'
+  | 'stock_sync'
+  | 'price_sync';
 
 export interface SupplierCommerceScope {
   providerRef?: string;
