@@ -10,8 +10,8 @@
 | Stage | Name | Status |
 |---|---|---|
 | 0 | Documented baseline + execution governance | **PASS** |
-| 1 | Identity / role / relationship contract | **CURRENT NEXT STAGE — NOT STARTED** |
-| 2 | Public entrypoint & registration architecture | NOT STARTED |
+| 1 | Identity / role / relationship contract | **PASS** |
+| 2 | Public entrypoint & registration architecture | **CURRENT NEXT STAGE — NOT STARTED** |
 | 3 | Marketplace Seller activation / onboarding V2 | NOT STARTED |
 | 4 | Buyer onboarding alignment | NOT STARTED |
 | 5 | Workspace destination & readiness contract | NOT STARTED |
@@ -223,3 +223,139 @@ The successful deploy consumed the synchronized current-main foundation while re
 Return execution priority to **STAGE 1 — IDENTITY / ROLE / RELATIONSHIP CONTRACT**.
 
 Before Stage 1 implementation writes, produce the controlling identity/role/relationship contract and prove whether the current single-role model can safely support buyer→seller activation without destructive role replacement. Final visual polish remains deferred.
+
+---
+
+## 2026-08-21 — STAGE 1 — IDENTITY / ROLE / RELATIONSHIP CONTRACT
+
+**Status:** PASS  
+**Baseline `main`:** `50302455a6c8afcd52da45150f7de6f0ce91d942`  
+**Docs branch:** `docs/identity-onboarding-workspaces-plan-20260821`  
+**PR:** `#560`  
+**Contract commit:** `244a4ee4c5c057389e29ef1090f468e654a4eb09`
+
+### Purpose
+
+Resolve the account model before registration/onboarding implementation so Loadify can support one identity with Buyer and Marketplace Seller contexts without confusing Supplier Commerce, weakening Admin authority or relying on destructive role replacement.
+
+### Evidence audited
+
+Current runtime/schema evidence included:
+
+- `src/types/index.ts` — strict `buyer | seller | admin` UserRole and canonical SellerStatus;
+- `supabase/280_three_role_system.sql` — DB CHECK constraint and singular role helpers;
+- `supabase/340_sync_role_to_auth_metadata.sql` — live DB role mirrored into server-controlled Auth app metadata;
+- `netlify/functions/set-account-role.ts` — current self-service Buyer/Seller replacement behaviour;
+- `src/pages/onboarding/RoleSelection.tsx` — UI currently treats Buyer/Seller as replaceable account type;
+- `src/components/auth/RequireBuyer.tsx` — Buyer Space rejects Seller role;
+- `src/components/auth/RequireSellerAny.tsx` — Seller onboarding rejects Buyer role;
+- `src/components/auth/RequireSeller.tsx` — active Seller Workspace fail-closed lifecycle guard;
+- `src/lib/roleUtils.ts` — current role-only access helpers;
+- `src/App.tsx` — auth hydration, app_metadata fallback and role-based dashboard routing;
+- `netlify/functions/register.ts` — current server-validated buyer/seller account creation;
+- `netlify/functions/recheck-activation.ts` and `_shared/sellerActivation.ts` — canonical Seller activation readiness;
+- `supabase/410_fix_role_escalation.sql` — direct authenticated role escalation blocked by RLS;
+- `supabase/608_enforce_active_account_authorization.sql` — live account activity is global fail-closed truth;
+- `supabase/10_rls_policies.sql` / product RLS — Buyer ownership is often role-independent, while Seller creation remains role-sensitive;
+- `supabase/617_supplier_foundation.sql` — Supplier is a separate private commercial entity/lifecycle, not a public Seller user role;
+- `src/pages/pixel-perfect/Signup.tsx` — current Seller CTA destination still labels Seller as Supplier/Trade Supplier.
+
+### Key findings
+
+1. Current `users.role` is singular and cannot truthfully represent Buyer+Seller coexistence.
+2. `set-account-role` destructively replaces Buyer with Seller or Seller with Buyer while leaving opposite profile rows behind.
+3. Existing route guards make Buyer Space and Seller context mutually exclusive by role.
+4. Seller readiness itself is already correctly separate and fail-closed through `sellerStatus`.
+5. Buyer-owned RLS frequently uses `auth.uid()` ownership rather than Buyer role, reducing migration blast radius.
+6. Seller authorization cannot safely be inferred from `seller_profiles` existence because current profile RLS permits an authenticated owner to insert their own profile row.
+7. Supplier Foundation is already private and separate; no `supplier` UserRole is needed or permitted.
+
+### Controlling decision
+
+**ADDITIVE CAPABILITY MIGRATION REQUIRED.**
+
+Target layers:
+
+`Auth Identity → Loadify Account Control → server-governed Buyer/Seller capabilities → relationship readiness → dedicated workspace`
+
+- Admin remains the privileged system role.
+- Buyer becomes a normal commerce capability.
+- Marketplace Seller becomes an additional server-governed capability plus existing Seller relationship/lifecycle.
+- `users.role` stays temporarily for compatibility/default context; do not drop/rename it in the first migration.
+- new capabilities must be stored in a server-governed additive table; profile existence is not authority.
+- existing Sellers backfill Buyer + Seller capabilities;
+- existing Buyers backfill Buyer capability;
+- Admin gets no automatic commerce capability;
+- Buyer→Seller becomes `start-seller-activation`, preserving Buyer data/capability;
+- generic public role switching is retired;
+- workspace switching becomes navigation preference, never authorization mutation.
+
+### Required artifact
+
+Created:
+
+`docs/identity-onboarding-workspaces-2026-08-21/03_IDENTITY_ROLE_RELATIONSHIP_CONTRACT.md`
+
+It records:
+
+- current and target models;
+- state diagram;
+- role/capability/relationship matrix;
+- transition rules;
+- dedicated workspace rules;
+- NOT-A-ROLE list;
+- additive migration decision;
+- RLS/security implications;
+- backfill/compatibility strategy;
+- Supplier Partner separation;
+- Stage 2 and Stage 5 implications.
+
+### Branch Guard
+
+After contract creation, docs branch vs `main`:
+
+- status: ahead only;
+- ahead by: 9 commits;
+- behind by: 0;
+- changed files: 6;
+- all changed files are under `docs/identity-onboarding-workspaces-2026-08-21/`;
+- runtime source changes: NONE;
+- migration/schema changes: NONE;
+- registration/onboarding UI changes: NONE;
+- Workspace/Admin visual changes: NONE;
+- Supplier Commerce control changes: NONE;
+- PR #529 runtime diff: unchanged by Stage 1.
+
+### Tests / evidence
+
+- TypeScript: N/A — contract-only stage
+- Lint: N/A — contract-only stage
+- Build: N/A — contract-only stage
+- DB writes: NONE
+- production changes: NONE
+
+### Residual risks / deferred
+
+- additive capability schema/helper/backfill has not yet been implemented; it is a Stage 2 foundation prerequisite;
+- every `is_seller()` consumer must be inventoried before helper semantics change;
+- Buyer+Seller coexistence introduces mandatory self-purchase validation;
+- seller profile direct-write policies must not become a capability-escalation path;
+- `users.role` remains compatibility debt until all consumers move to capabilities;
+- Supplier external membership remains deferred until Phase O proves a real need.
+
+### Exact resume point
+
+**STAGE 2 — PUBLIC ENTRYPOINT & REGISTRATION ARCHITECTURE.**
+
+Execution order inside Stage 2:
+
+1. create isolated implementation branch from current `main`;
+2. implement and test additive `account_capabilities` foundation + backfill + RLS/helper boundary;
+3. replace destructive Buyer→Seller switching with a trusted idempotent Seller Activation boundary;
+4. hydrate capabilities safely in app state and migrate the minimum guards required for Buyer+Seller coexistence;
+5. rebuild public Buyer/Seller registration semantics against that foundation;
+6. keep Supplier Partner outside public role registration;
+7. run migration/security/auth tests + Branch Guard;
+8. update this ledger before proceeding to Stage 3 Seller Onboarding V2.
+
+Final visual polish remains deferred.
