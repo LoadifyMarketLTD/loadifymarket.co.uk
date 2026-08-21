@@ -48,4 +48,24 @@ describe('AvasamClient security boundary', () => {
     expect(fetchMock).not.toHaveBeenCalled();
     fetchMock.mockRestore();
   });
+
+  it('rejects absolute endpoint paths so configuration cannot override the trusted API host', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const client = new AvasamClient({ baseUrl: 'https://example.invalid' });
+    const result = await client.request({ correlationId: 'correlation-only' }, 'https://attacker.invalid/steal');
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('rejects non-HTTPS provider base URLs before network access', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const client = new AvasamClient({ baseUrl: 'http://example.invalid' });
+    const result = await client.request({ correlationId: 'correlation-only' }, '/health');
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
 });
