@@ -2,11 +2,14 @@ import { Link } from "react-router-dom";
 
 export default function SellerCTA() {
   return (
-    <section className="sm:bg-[#0A234F] sm:border-y sm:border-[#F5A300]/40 bg-[#0A234F]">
+    <section
+      className="sm:bg-[#0A234F] sm:border-y sm:border-[#F5A300]/40 bg-[#F7F9FC]"
+      style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(29,87,216,0.24), transparent 42%)' }}
+    >
       <div className="sm:hidden" style={{ padding: '24px 16px' }}>
         <div
           style={{
-            background: '#0B2F6B',
+            background: 'radial-gradient(circle at 100% 0%, rgba(29,87,216,0.26), transparent 44%), #0A234F',
             border: '1px solid rgba(245,163,0,0.24)',
             borderRadius: '20px',
             padding: '20px',
