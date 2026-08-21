@@ -17,8 +17,6 @@ import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import { supabase } from '@/lib/supabase';
 
-// ── Generic nav item ──────────────────────────────────────────────────────────
-
 function NavItem({
   to,
   icon: Icon,
@@ -32,7 +30,7 @@ function NavItem({
   isActive: boolean;
   exact?: boolean;
 }) {
-  void exact; // consumed by parent logic
+  void exact;
   return (
     <Link
       to={to}
@@ -41,20 +39,18 @@ function NavItem({
       aria-current={isActive ? 'page' : undefined}
     >
       <Icon
-        className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-primary' : 'text-white/45'}`}
+        className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F5A300]' : 'text-white/58'}`}
         strokeWidth={isActive ? 2.2 : 1.8}
         aria-hidden="true"
       />
       <span
-        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none transition-colors ${isActive ? 'font-bold text-primary' : 'font-normal text-white/40'}`}
+        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none transition-colors ${isActive ? 'font-bold text-[#F5A300]' : 'font-normal text-white/52'}`}
       >
         {label}
       </span>
     </Link>
   );
 }
-
-// ── Messages button with unread badge ────────────────────────────────────────
 
 function MessagesNavButton({ isActive }: { isActive: boolean }) {
   const { user } = useAuthStore();
@@ -91,14 +87,14 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
     >
       <div className="relative">
         <Mail
-          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-primary' : 'text-white/45'}`}
+          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F5A300]' : 'text-white/58'}`}
           strokeWidth={isActive ? 2.2 : 1.8}
           aria-hidden="true"
         />
         {unread > 0 && (
           <span
             aria-hidden="true"
-            className="bg-primary flex items-center justify-center"
+            className="flex items-center justify-center bg-[#F5A300] text-[#0A234F]"
             style={{
               position: 'absolute',
               top: '-4px',
@@ -116,15 +112,13 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
         )}
       </div>
       <span
-        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none ${isActive ? 'font-bold text-primary' : 'font-normal text-white/40'}`}
+        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none ${isActive ? 'font-bold text-[#F5A300]' : 'font-normal text-white/52'}`}
       >
         Inbox
       </span>
     </button>
   );
 }
-
-// ── Bottom nav ────────────────────────────────────────────────────────────────
 
 export default function MobileBottomNav() {
   const location = useLocation();
@@ -139,7 +133,6 @@ export default function MobileBottomNav() {
     navigate('/sell');
   };
 
-  // Exact match for home ("/"), prefix match for everything else
   const isHomeActive = location.pathname === '/';
   const isActive = (to: string) =>
     location.pathname === to || location.pathname.startsWith(to + '/');
@@ -147,51 +140,43 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-[9997] md:hidden bg-background/[0.97]"
+      className="fixed bottom-0 left-0 right-0 z-[9997] bg-[#0A234F]/[0.98] md:hidden"
       style={{
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
-        borderTop: '1px solid rgba(255,255,255,0.07)',
+        borderTop: '1px solid rgba(245,163,0,0.20)',
+        boxShadow: '0 -10px 28px rgba(10,35,79,0.18)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
       <div style={{ minHeight: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-around', paddingTop: '4px', paddingBottom: '4px' }}>
-
-        {/* Home */}
         <NavItem to="/" icon={Home} label="Home" isActive={isHomeActive} exact />
-
-        {/* Search */}
         <NavItem to="/categories" icon={Search} label="Search" isActive={isActive('/categories')} />
 
-        {/* Sell — elevated large gold circle */}
         <button
           onClick={handleSell}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '0 8px', background: 'none', border: 'none', cursor: 'pointer' }}
           aria-label="Sell an item"
         >
           <div
-            className="bg-primary flex items-center justify-center"
+            className="flex items-center justify-center bg-[#F5A300] text-[#0A234F]"
             style={{
               width: '52px',
               height: '52px',
               borderRadius: '50%',
               marginTop: '-26px',
-              boxShadow: '0 0 24px rgba(200,134,10,0.50), 0 6px 16px rgba(0,0,0,0.65)',
+              boxShadow: '0 0 24px rgba(245,163,0,0.38), 0 6px 16px rgba(10,35,79,0.36)',
             }}
           >
             <Plus className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
           </div>
-          <span style={{ fontSize: '10px', fontWeight: 600, lineHeight: 1, marginTop: '1px' }}>
+          <span className="text-white" style={{ fontSize: '10px', fontWeight: 700, lineHeight: 1, marginTop: '1px' }}>
             Sell
           </span>
         </button>
 
-        {/* Messages */}
         <MessagesNavButton isActive={isActive('/inbox')} />
-
-        {/* Profile */}
         <NavItem to={profilePath} icon={User} label="Profile" isActive={isActive(profilePath)} />
-
       </div>
     </nav>
   );
