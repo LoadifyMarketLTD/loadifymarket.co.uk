@@ -30,8 +30,8 @@
 - [x] PHASE J — Payment → Supplier Handshake + Acknowledgement + Idempotency + Reconciliation merged through PR #550; Branch Guard PASS and production DB deployment PASS recorded below.
 - [x] PHASE K — Tracking + Exceptions merged through PR #552; Branch Guard PASS and production DB deployment PASS recorded below.
 - [x] PHASE L — Returns + Customer Refunds + Supplier Recovery + Financial Reconciliation merged through PR #554; Branch Guard PASS and production DB deployment PASS recorded below.
-- [ ] PHASE M — **CURRENT NEXT PHASE: SUPPLIER CONTROL CENTRE + SECURITY + RISK/SLA GOVERNANCE + KILL SWITCH + INCIDENT VISIBILITY**.
-- [ ] PHASE N.
+- [x] PHASE M — Supplier Control Centre + Security + Risk/SLA Governance + Kill Switch + Incident Visibility merged through PR #556; Branch Guard PASS and production DB deployment PASS recorded below.
+- [ ] PHASE N — **CURRENT NEXT PHASE: SUPPLIER SIMULATOR + RECOVERY/REPLAY VALIDATION**.
 - [ ] PHASE O.
 - [ ] PHASE P.
 - [ ] PHASE Q.
@@ -57,6 +57,7 @@
 | [x] | #550 | merge commit `49bf5b6c8e3fcdb78ff11d8fff1785914cf090c8` | Phase J payment-to-supplier handshake, acknowledgement, idempotency, lost-response recovery and supplier-order reconciliation; Branch Guard PASS before merge |
 | [x] | #552 | merge commit `448bd9a5bc3a5998c208abc85a17cdf4b6d48d03` | Phase K tracking normalisation + operational exception engine; Branch Guard PASS and production deployment PASS |
 | [x] | #554 | merge commit `4b3c7dedeb29965decd509b0838f0fcbfdd9efdf` | Phase L returns, customer refund evidence, supplier recovery and financial reconciliation; Branch Guard PASS and production deployment PASS |
+| [x] | #556 | merge commit `c3af2f0a4629fcacaca286a8d3b9d6364d7f8883` | Phase M Supplier Control Centre, security/risk/SLA governance, scoped kill switch and incident visibility; Branch Guard PASS and production deployment PASS |
 
 ## PR #531 — P1 closeout record
 
@@ -155,7 +156,7 @@ Phase C scope closed by #536:
 - incident and durable recovery framework;
 - provider/legal capability evidence and re-verification framework;
 - privacy/retention registry framework;
-- no provider-specific core model and no unrelated UI redesign.
+- no provider-specific commerce core and no unrelated UI redesign.
 
 **Deployment distinction:** migration `supabase/616_supplier_commerce_platform_control_foundations.sql` is merged to `main`, but this ledger entry does not claim that migration 616 has been applied to production unless a separate verified deployment record is later added.
 
@@ -500,15 +501,67 @@ All global Supplier Commerce controls remain `enabled = false`, including `*`, `
 
 **PHASE L production DB deployment: PASS.**
 
+## PR #556 — Phase M Supplier Control Centre + Security + Risk/SLA Governance closeout record
+
+**Merged:** 21 August 2026  
+**Merge commit:** `c3af2f0a4629fcacaca286a8d3b9d6364d7f8883`  
+**Head tested before merge:** `b1d2431dcfc6b3358c89faaf3d87e1c12d6c8855`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- Phase M dedicated Supplier Control Centre tests: 23/23 PASS;
+- upstream Phase C–L Supplier Commerce tests: 180/180 PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- final isolated worktree was clean and finished with `PHASE M CORE VALIDATION: PASS`;
+- full suite retained the known baseline: 27 failed / 402 passed / 429 total; no new Phase M regression family.
+
+Phase M scope closed by #556:
+
+- canonical Supplier Control Centre visibility spans supplier security posture, active SLA, current risk assessment, open SLA breaches, incidents, controls, recent operations, recovery queue and auditable operator actions;
+- supplier risk policy is versioned and historical/active terms are guarded against rewrite;
+- supplier security posture includes adapter auth, secret storage, credential rotation, webhook verification, least privilege, configuration integrity and re-verification evidence;
+- green security posture cannot coexist with failed or unknown required security components;
+- raw credentials/secrets are forbidden from governance evidence;
+- SLA breach evidence is deterministic, append-only, identity-protected and exact-replay idempotent with collision rejection;
+- risk assessments consume canonical lifecycle, security, incidents and SLA truth under the active policy;
+- supplier/provider kill switches use the existing canonical control plane and can only disable, never enable Supplier Commerce;
+- supplier kill-switch aliases are normalised to the canonical supplier UUID consumed by runtime scope decisions;
+- kill-switch activation opens/updates an incident and writes canonical audit evidence;
+- incident/SLA terminal transitions require recovery/resolution evidence and cannot regress;
+- the server governance decision fails closed on missing/stale/red security, missing/stale/red risk, active scoped kill switches and critical incidents/SLA breaches;
+- Phase P remains the owner of aggregate performance; Phase M records governance/evidence truth only;
+- no Workspace or Super Admin visual redesign was introduced;
+- no Supplier Commerce runtime control was enabled by Phase M.
+
+### Phase M production deployment
+
+Production Supabase migration history records the Phase M chain in order:
+
+- `20260821124619 / supplier_control_centre_foundation`;
+- `20260821124705 / supplier_control_centre_governance`;
+- `20260821124739 / supplier_control_centre_kill_switch`;
+- `20260821124811 / supplier_control_centre_closure`;
+- `20260821124835 / supplier_control_centre_identity_security_closure`;
+- `20260821124900 / supplier_sla_breach_idempotency_closure`.
+
+Post-deployment verification confirmed the Phase M control-centre tables and the governance-decision, control-centre, scoped kill-switch and SLA-breach RPC boundaries are live.
+
+All global Supplier Commerce controls remain `enabled = false`, including `*`, `checkout`, `import`, `price_sync`, `publish`, `reservation`, `return_recovery`, `stock_sync`, `supplier_order` and `tracking_ingest`.
+
+**PHASE M production DB deployment: PASS.**  
+See `13_PHASE_M_PRODUCTION_DEPLOYMENT_2026-08-21.md` for the detailed deployment evidence record.
+
 ## Current handoff
 
-The repository and production database are now past Gate B and through Phase L:
+The repository and production database are now past Gate B and through Phase M:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H PASS + DEPLOYED → PHASE I PASS + DEPLOYED → PHASE J PASS + DEPLOYED → PHASE K PASS + DEPLOYED → PHASE L PASS + DEPLOYED → PHASE M → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H PASS + DEPLOYED → PHASE I PASS + DEPLOYED → PHASE J PASS + DEPLOYED → PHASE K PASS + DEPLOYED → PHASE L PASS + DEPLOYED → PHASE M PASS + DEPLOYED → PHASE N → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE M — SUPPLIER CONTROL CENTRE + SECURITY + RISK/SLA GOVERNANCE + KILL SWITCH + INCIDENT VISIBILITY.**
+**CURRENT NEXT PHASE: PHASE N — SUPPLIER SIMULATOR + RECOVERY/REPLAY VALIDATION.**
 
-Phase M must consolidate operator control, supplier security/risk and SLA governance, kill-switch administration and incident visibility on top of the completed C–L canonical runtime without bypassing existing server-enforced controls or creating parallel commerce truth.
+Phase N must exercise Supplier Commerce through a provider-neutral simulator, verify deterministic recovery/replay behaviour across the completed C–M canonical runtime, prove failure/retry/unknown-outcome handling without enabling live Supplier Commerce, and preserve the existing fail-closed control plane.
 
 Any newly demonstrated P0/P1 foundation defect still stops the sequence and returns to Branch Guard repair before downstream continuation.
 
