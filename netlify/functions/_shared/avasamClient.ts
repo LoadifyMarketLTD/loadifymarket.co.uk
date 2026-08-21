@@ -19,7 +19,7 @@ export interface AvasamClientConfig {
 
 export interface AvasamRequestContext {
   correlationId: string;
-  idempotencyKey: string;
+  idempotencyKey?: string;
 }
 
 export class AvasamClientConfigurationError extends Error {
@@ -45,16 +45,16 @@ export class AvasamClient {
   private readonly config: AvasamClientConfig;
 
   constructor(config: AvasamClientConfig = {}) {
-    this.config = config;
+    this.config = { ...config };
   }
 
   private headers(context: AvasamRequestContext): Record<string, string> {
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      'X-Correlation-Id': context.correlationId,
-      'Idempotency-Key': context.idempotencyKey,
+      'X-Correlation-Id': required(context.correlationId, 'correlationId'),
     };
+    if (context.idempotencyKey?.trim()) headers['Idempotency-Key'] = context.idempotencyKey.trim();
     if (this.config.apiToken?.trim()) headers.Authorization = `Bearer ${this.config.apiToken.trim()}`;
     if (this.config.apiKey?.trim()) headers[this.config.apiKeyHeader?.trim() || 'X-API-Key'] = this.config.apiKey.trim();
     return headers;
@@ -87,8 +87,6 @@ export class AvasamClient {
       return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: error instanceof Error ? error.message : 'Avasam request failed' };
     }
   }
-
-  get configForRead(): AvasamClientConfig { return this.config; }
 }
 
 export function avasamClientFromEnvironment(): AvasamClient {
