@@ -16,6 +16,7 @@ import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
 import SellerCTA from "@/components/SellerCTA";
+import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
 import { trackViewHome } from "@/lib/analytics";
 
@@ -116,7 +117,7 @@ function MobileHome() {
         className="bg-[#F7F9FC] px-[var(--mob-side,16px)]"
         style={{
           paddingTop: remainingProducts.length > 0 ? 4 : 0,
-          paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 20px)',
+          paddingBottom: remainingProducts.length > 0 || loadingMore ? 24 : 0,
         }}
       >
         {(remainingProducts.length > 0 || loadingMore) && (
@@ -149,6 +150,8 @@ function MobileHome() {
 
         {!loading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />}
       </section>
+
+      <Footer />
     </div>
   );
 }
