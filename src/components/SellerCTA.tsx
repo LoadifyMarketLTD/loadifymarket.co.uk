@@ -7,23 +7,17 @@ export default function SellerCTA() {
   return (
     <section className="bg-[#F7F9FC] px-4 pb-10 pt-4 sm:px-6 sm:pb-14 lg:px-10" aria-label="Sell on Loadify Market">
       <div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[30px] bg-[#0A234F] px-6 py-8 text-white shadow-[0_28px_70px_rgba(10,35,79,0.20)] sm:px-8 sm:py-10 lg:px-11 lg:py-12">
-        <div
-          className="absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl"
-          aria-hidden="true"
-        />
+        <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]" aria-hidden="true" />
+        <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
 
         <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="max-w-[820px]">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">For sellers</p>
             <h2 className="mt-3 text-3xl font-black leading-[1.02] tracking-[-0.035em] sm:text-4xl lg:text-[2.8rem]">
-              Bring your catalogue to a marketplace built to operate.
+              Put your catalogue where buyers can discover it.
             </h2>
             <p className="mt-4 max-w-[760px] text-sm font-medium leading-6 text-white/70 sm:text-base sm:leading-7">
-              Loadify gives merchants a structured place to list products, manage marketplace orders and use an eligible Stripe Connect payout path — while buyers shop through the same coherent marketplace experience.
+              List products, manage marketplace orders and use an eligible Stripe Connect payout path from one seller environment — while customers shop through Loadify.
             </p>
 
             <div className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -37,7 +31,7 @@ export default function SellerCTA() {
           </div>
 
           <div className="min-w-[240px] rounded-2xl border border-white/12 bg-white/[0.06] p-4 sm:p-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/45">Launch campaign</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/45">Seller launch offer</p>
             <p className="mt-2 text-2xl font-black text-[#F5A300]">0% commission</p>
             <p className="mt-1 text-xs font-semibold text-white/65">Until 31 December 2026</p>
             <Link
@@ -52,7 +46,7 @@ export default function SellerCTA() {
               to="/catalog"
               className="mt-3 inline-flex w-full items-center justify-center text-xs font-bold text-white/65 transition-colors hover:text-white"
             >
-              Explore Loadify as a buyer
+              Explore the marketplace
             </Link>
           </div>
         </div>
