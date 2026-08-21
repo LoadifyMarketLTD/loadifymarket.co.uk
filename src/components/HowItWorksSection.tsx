@@ -48,7 +48,7 @@ function StepCard({ step }: { step: Step }) {
   return (
     <div
       data-parallax
-      className="rounded-2xl border border-white/10 bg-[#0A234F] p-6 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(29,87,216,0.22)] hover:border-[#F5A300]/40"
+      className="rounded-2xl border border-white/10 bg-white/[0.045] p-6 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.07] hover:shadow-[0_0_25px_rgba(29,87,216,0.22)] hover:border-[#F5A300]/40"
     >
       <Icon className="w-7 h-7 text-[#F5A300] shrink-0 icon-pulse" aria-hidden="true" />
       <p className="text-base font-semibold text-white leading-tight">{step.title}</p>
@@ -59,7 +59,11 @@ function StepCard({ step }: { step: Step }) {
 
 function StepsPanel({ id, title, steps }: { id: string; title: string; steps: Step[] }) {
   return (
-    <div id={id} className="w-full rounded-2xl border border-white/10 bg-[#0B2F6B] p-6 lg:p-8">
+    <div
+      id={id}
+      className="w-full rounded-2xl border border-white/10 bg-[#0A234F] p-6 lg:p-8"
+      style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(29,87,216,0.24), transparent 42%)' }}
+    >
       <h2 className="text-xl font-semibold text-white mb-4">{title}</h2>
       <div className="grid grid-cols-3 gap-6">
         {steps.map((step) => (
