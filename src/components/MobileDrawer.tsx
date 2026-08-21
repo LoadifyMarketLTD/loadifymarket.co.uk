@@ -43,22 +43,22 @@ interface MainScreenProps {
   onCategoryExpand: (slug: string | null) => void;
 }
 
-const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
-  electronics: { icon: Smartphone, iconColor: "text-cyan-400" },
-  "home-garden": { icon: Home, iconColor: "text-success" },
-  "clothing-fashion": { icon: Shirt, iconColor: "text-blue-400" },
-  "toys-games": { icon: Gamepad2, iconColor: "text-purple-400" },
-  toys: { icon: Gamepad2, iconColor: "text-purple-400" },
-  "sports-fitness": { icon: Dumbbell, iconColor: "text-primary" },
-  automotive: { icon: Car, iconColor: "text-slate-300" },
-  "health-beauty": { icon: HeartPulse, iconColor: "text-rose-400" },
-  pets: { icon: PawPrint, iconColor: "text-orange-400" },
-  "pet-supplies": { icon: PawPrint, iconColor: "text-primary" },
-  "food-drink": { icon: UtensilsCrossed, iconColor: "text-danger" },
-  "office-business": { icon: Briefcase, iconColor: "text-sky-400" },
+const ICON_MAP: Record<string, LucideIcon> = {
+  electronics: Smartphone,
+  "home-garden": Home,
+  "clothing-fashion": Shirt,
+  "toys-games": Gamepad2,
+  toys: Gamepad2,
+  "sports-fitness": Dumbbell,
+  automotive: Car,
+  "health-beauty": HeartPulse,
+  pets: PawPrint,
+  "pet-supplies": PawPrint,
+  "food-drink": UtensilsCrossed,
+  "office-business": Briefcase,
 };
 
-const DEFAULT_ICON = { icon: Briefcase, iconColor: "text-white/75" };
+const DEFAULT_ICON = Briefcase;
 const FEATURED_SLUGS = ["handmade", "toys-games", "toys", "health-beauty", "electronics", "clothing-fashion", "home-garden", "sports-fitness", "automotive"];
 
 function chooseDrawerCategories(categories: CategoryNode[]) {
@@ -78,7 +78,7 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
       <div className="h-14 px-4 flex items-center justify-between border-b border-white/[0.12] shrink-0">
         <Link to="/" onClick={onClose} className="flex items-center gap-2" aria-label="Loadify Market — Home">
           <img src={logo} alt="" aria-hidden="true" className="h-7 w-7" />
-          <span className="font-display text-base font-bold text-white leading-none">Loadify <span className="text-primary">Market</span></span>
+          <span className="font-display text-base font-bold text-white leading-none">Loadify <span className="text-[#F5A300]">Market</span></span>
         </Link>
         <button ref={closeBtnRef} onClick={onClose} className="p-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10" aria-label="Close menu">
           <X className="h-5 w-5" />
@@ -91,31 +91,31 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
         <div className="h-px bg-white/10 mx-4" />
 
         <div className="pt-4">
-          <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">Quick Actions</p>
+          <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/45">Quick Actions</p>
           <DrawerCTACards onClose={onClose} />
         </div>
 
         <div className="h-px bg-white/10 mx-4" />
 
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">Browse Categories</p>
-          <Link to="/catalog" onClick={onClose} className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-white">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-white/45">Browse Categories</p>
+          <Link to="/catalog" onClick={onClose} className="flex items-center gap-1 text-[11px] font-bold text-[#F5A300] hover:text-white">
             All <ArrowRight className="h-3 w-3" aria-hidden="true" />
           </Link>
         </div>
 
         <nav aria-label="Featured product categories">
           {visibleCategories.map((cat) => {
-            const { icon: Icon, iconColor } = ICON_MAP[cat.slug] ?? DEFAULT_ICON;
+            const Icon = ICON_MAP[cat.slug] ?? DEFAULT_ICON;
             const isOpen = expandedSlug === cat.slug;
             const categoryUrl = `/catalog?category=${encodeURIComponent(cat.name)}`;
             const hasChildren = cat.children.length > 0;
 
             return (
               <div key={cat.slug}>
-                <div className="flex border-b border-white/[0.05]">
+                <div className="flex border-b border-white/[0.06]">
                   <Link to={categoryUrl} onClick={onClose} className="flex min-h-[50px] flex-1 items-center gap-3 px-4 transition-colors hover:bg-white/[0.07]">
-                    <Icon className={`h-[18px] w-[18px] shrink-0 ${iconColor}`} aria-hidden="true" />
+                    <Icon className="h-[18px] w-[18px] shrink-0 text-[#F5A300]" aria-hidden="true" />
                     <span className="text-[15px] font-semibold text-white/90 flex-1 text-left">{cat.name}</span>
                   </Link>
                   {hasChildren && (
@@ -124,7 +124,7 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
                       onClick={() => onCategoryExpand(isOpen ? null : cat.slug)}
                       aria-expanded={isOpen}
                       aria-label={`${isOpen ? "Collapse" : "Expand"} ${cat.name}`}
-                      className="flex w-12 items-center justify-center text-white/40 transition-colors hover:bg-white/[0.07] hover:text-white"
+                      className="flex w-12 items-center justify-center text-white/45 transition-colors hover:bg-white/[0.07] hover:text-white"
                     >
                       <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                     </button>
@@ -132,7 +132,7 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
                 </div>
 
                 {isOpen && hasChildren && (
-                  <div className="bg-white/[0.04] border-b border-white/[0.07]">
+                  <div className="bg-white/[0.045] border-b border-white/[0.07]">
                     {cat.children.slice(0, 6).map((sub) => (
                       <Link
                         key={sub.slug}
@@ -144,7 +144,7 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
                       </Link>
                     ))}
                     {cat.children.length > 6 && (
-                      <Link to={categoryUrl} onClick={onClose} className="flex h-[42px] items-center px-8 text-[13px] font-bold text-primary hover:bg-white/[0.07]">
+                      <Link to={categoryUrl} onClick={onClose} className="flex h-[42px] items-center px-8 text-[13px] font-bold text-[#F5A300] hover:bg-white/[0.07]">
                         View all {cat.name}
                       </Link>
                     )}
@@ -155,17 +155,17 @@ const MainScreen = ({ user, dashboardPath, onLogout, onClose, closeBtnRef, categ
           })}
         </nav>
 
-        <Link to="/catalog" onClick={onClose} className="mx-4 mt-4 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.05] px-4 text-sm font-semibold text-white/85 hover:bg-white/[0.09]">
-          Browse all categories <ArrowRight className="h-4 w-4 text-primary" aria-hidden="true" />
+        <Link to="/catalog" onClick={onClose} className="mx-4 mt-4 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.055] px-4 text-sm font-semibold text-white/85 hover:bg-white/[0.09]">
+          Browse all categories <ArrowRight className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />
         </Link>
 
         <div className="h-px bg-white/10 mx-4 mt-4" />
 
         <nav aria-label="Support links" className="flex flex-col py-2">
-          <Link to="/register?type=seller" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors">Start Selling</Link>
-          <Link to="/shipping-policy" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors">Shipping Policy</Link>
-          <Link to="/wholesale-info" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors">Marketplace Information</Link>
-          <Link to="/about" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors">About Us</Link>
+          <Link to="/register?type=seller" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/70 hover:text-[#F5A300] hover:bg-white/[0.055] transition-colors">Start Selling</Link>
+          <Link to="/shipping-policy" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/70 hover:text-[#F5A300] hover:bg-white/[0.055] transition-colors">Shipping Policy</Link>
+          <Link to="/wholesale-info" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/70 hover:text-[#F5A300] hover:bg-white/[0.055] transition-colors">Marketplace Information</Link>
+          <Link to="/about" onClick={onClose} className="px-4 h-11 flex items-center text-sm font-medium text-white/70 hover:text-[#F5A300] hover:bg-white/[0.055] transition-colors">About Us</Link>
         </nav>
 
         <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
@@ -233,7 +233,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         ref={panelRef}
         className={[
           "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[380px]",
-          "bg-background border-r border-white/[0.12] shadow-2xl flex flex-col",
+          "bg-[#0A234F] border-r border-white/[0.12] shadow-2xl flex flex-col",
           "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
