@@ -36,9 +36,9 @@ export default function MobileHeroBanner() {
       }}
     >
       <div
-        className="bg-[#0B2F6B]"
+        className="bg-[#0A234F]"
         style={{
-          border: '1px solid rgba(255,255,255,0.10)',
+          border: '1px solid rgba(10,35,79,0.10)',
           borderRadius: 16,
           padding: 'clamp(16px, 5vw, 24px)',
           display: 'flex',
@@ -46,7 +46,8 @@ export default function MobileHeroBanner() {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 16,
-          boxShadow: '0 16px 36px rgba(10,35,79,0.24)',
+          boxShadow: '0 16px 36px rgba(10,35,79,0.20)',
+          backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(29,87,216,0.25), transparent 46%)',
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
