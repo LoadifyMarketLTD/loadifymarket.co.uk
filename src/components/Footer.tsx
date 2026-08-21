@@ -70,7 +70,7 @@ const Footer = () => (
             <a href="tel:+447423272138" className="hover:text-white">+44 7423 272138</a>
           </div>
 
-          <div className="mt-7 grid grid-cols-2 gap-x-7 gap-y-7 border-t border-white/10 pt-6">
+          <div className="mt-7 grid grid-cols-3 gap-x-4 border-t border-white/10 pt-6">
             <div>
               <ColHeading>Shop</ColHeading>
               <ul className="space-y-2.5">
@@ -93,9 +93,9 @@ const Footer = () => (
               </ul>
             </div>
 
-            <div className="col-span-2 border-t border-white/10 pt-6">
+            <div>
               <ColHeading>Loadify</ColHeading>
-              <ul className="grid grid-cols-2 gap-x-7 gap-y-2.5">
+              <ul className="space-y-2.5">
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/contact">Contact Us</FooterLink>
                 <FooterLink to="/contact">Partner With Us</FooterLink>
