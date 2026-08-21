@@ -44,7 +44,7 @@ export default function ShopByCategory() {
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Explore Loadify</p>
           <h2 className="mt-1 text-2xl font-black tracking-[-0.025em] text-white sm:text-3xl">Start with what you’re looking for.</h2>
-          <p className="mt-2 text-sm text-white/60">Real marketplace categories, presented like a shop — not a database menu.</p>
+          <p className="mt-2 text-sm text-white/60">Browse across the marketplace and find the categories that matter to you.</p>
         </div>
         <Link to="/catalog" className="hidden items-center gap-2 text-xs font-extrabold text-[#F5A300] transition-colors hover:text-white sm:inline-flex">
           All categories <ArrowRight className="h-4 w-4" aria-hidden="true" />
