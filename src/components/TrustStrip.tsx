@@ -1,7 +1,6 @@
 import { ShieldCheck, BadgeCheck, Percent } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-/* UK flag SVG inline — no external dep */
 const UKFlag = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" className="h-[18px] sm:h-5 w-auto" aria-label="UK flag">
     <clipPath id="a"><path d="M0 0v30h60V0z"/></clipPath>
@@ -39,19 +38,13 @@ const TrustStrip = () => (
       <div
         key={label}
         className={[
-          /* layout */
           "flex items-center gap-2.5 sm:gap-3",
-          /* shape — mobile: 16px radius; desktop: 2xl */
           "rounded-2xl",
-          /* background — mobile: #12121A solid; desktop: gradient */
-          "bg-surface sm:bg-elevated",
-          /* border — mobile: faint white; desktop: same then hover changes it */
-          "border border-white/[0.07] sm:border-white/5",
-          /* padding — mobile: 14px; desktop: px-5 py-4 */
+          "bg-[#0B2F6B]",
+          "border border-white/10",
           "p-[14px] sm:px-5 sm:py-4",
-          /* desktop hover */
           "transition-all duration-300",
-          "sm:hover:-translate-y-1 sm:hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] sm:hover:border-primary/40",
+          "sm:hover:-translate-y-1 sm:hover:shadow-[0_0_25px_rgba(29,87,216,0.24)] sm:hover:border-[#F5A300]/40",
         ].join(" ")}
       >
         <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 overflow-hidden">
@@ -59,8 +52,8 @@ const TrustStrip = () => (
             ? <UKFlag />
             : Icon && (
                 <Icon
-                  className="h-[18px] w-[18px] sm:h-6 sm:w-6 text-primary sm:text-primary"
-                  style={{ filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.4))' }}
+                  className="h-[18px] w-[18px] sm:h-6 sm:w-6 text-[#F5A300]"
+                  style={{ filter: 'drop-shadow(0 0 6px rgba(245,163,0,0.32))' }}
                   aria-hidden="true"
                 />
               )
@@ -68,7 +61,7 @@ const TrustStrip = () => (
         </span>
         <div className="min-w-0">
           <p className="text-[13px] sm:text-sm font-semibold text-white leading-tight">{label}</p>
-          <p className="text-[11px] sm:text-xs text-muted-foreground sm:text-slate-400 leading-tight mt-0.5">{sub}</p>
+          <p className="text-[11px] sm:text-xs text-white/62 leading-tight mt-0.5">{sub}</p>
         </div>
       </div>
     ))}
