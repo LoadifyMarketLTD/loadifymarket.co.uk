@@ -7,6 +7,8 @@ const foundation = repo('supabase/654_supplier_control_centre_foundation.sql');
 const governance = repo('supabase/655_supplier_control_centre_governance.sql');
 const killSwitch = repo('supabase/656_supplier_control_centre_kill_switch.sql');
 const closure = repo('supabase/657_supplier_control_centre_closure.sql');
+const identityClosure = repo('supabase/658_supplier_control_centre_identity_security_closure.sql');
+const slaClosure = repo('supabase/659_supplier_sla_breach_idempotency_closure.sql');
 const adminApi = repo('netlify/functions/admin-supplier-control-centre.ts');
 
 describe('Phase M Supplier Control Centre + governance', () => {
@@ -21,21 +23,29 @@ describe('Phase M Supplier Control Centre + governance', () => {
     expect(killSwitch).toContain('Kill-switch RPC can only disable');
     expect(killSwitch).toContain('enabled=false');
     expect(killSwitch).not.toContain('enabled=true');
+    expect(identityClosure).not.toContain('enabled=true');
   });
 
   it('implements atomic supplier/provider wildcard kill switches through the canonical control plane', () => {
-    expect(killSwitch).toContain("operation='*'");
-    expect(killSwitch).toContain("v_scope_type NOT IN ('supplier','provider')");
-    expect(killSwitch).toContain('supplier_commerce_control_audit');
-    expect(killSwitch).toContain("'supplier_kill_switch'");
-    expect(killSwitch).toContain("'provider_kill_switch'");
+    expect(identityClosure).toContain("operation='*'");
+    expect(identityClosure).toContain("v_scope_type NOT IN ('supplier','provider')");
+    expect(identityClosure).toContain('supplier_commerce_control_audit');
+    expect(identityClosure).toContain("'supplier_kill_switch'");
+    expect(identityClosure).toContain("'provider_kill_switch'");
+  });
+
+  it('normalises supplier kill-switch aliases to the canonical UUID consumed by runtime scope decisions', () => {
+    expect(identityClosure).toContain("WHERE s.id::text=v_scope_ref OR s.supplier_key=v_scope_ref");
+    expect(identityClosure).toContain('v_scope_ref:=v_supplier_id::text');
+    expect(identityClosure).toContain("'canonicalScopeRef',v_scope_ref");
+    expect(identityClosure).toContain('runtime scoped controls cannot be bypassed by identity mismatch');
   });
 
   it('opens an incident whenever the kill switch is activated', () => {
-    expect(killSwitch).toContain('supplier_commerce_incidents');
-    expect(killSwitch).toContain("'mitigating'");
-    expect(killSwitch).toContain('v_incident_key');
-    expect(killSwitch).toContain('incidentId');
+    expect(identityClosure).toContain('supplier_commerce_incidents');
+    expect(identityClosure).toContain("'mitigating'");
+    expect(identityClosure).toContain('v_incident_key');
+    expect(identityClosure).toContain('incidentId');
   });
 
   it('requires active admin authority for all governance mutations', () => {
@@ -43,6 +53,7 @@ describe('Phase M Supplier Control Centre + governance', () => {
     expect(governance).toContain('u."isActive"=true');
     expect(killSwitch).toContain('require_active_admin_v1');
     expect(closure).toContain('require_active_admin_v1');
+    expect(identityClosure).toContain('require_active_admin_v1');
     expect(adminApi).toContain("authenticateActiveAccount(event, admin, ['admin'])");
   });
 
@@ -60,6 +71,13 @@ describe('Phase M Supplier Control Centre + governance', () => {
     expect(governance).toContain('security posture requires a future reverify due time');
   });
 
+  it('prevents a green security posture from hiding failed or unknown components', () => {
+    expect(identityClosure).toContain('supplier_security_green_consistency_check');
+    for (const field of ['adapter_auth_state=\'pass\'','secret_storage_state=\'pass\'','credential_rotation_state=\'pass\'','least_privilege_state=\'pass\'','config_integrity_state=\'pass\'']) {
+      expect(identityClosure).toContain(field);
+    }
+  });
+
   it('keeps security, risk and control-centre history append-only', () => {
     expect(closure).toContain('Supplier Control Centre governance history is append-only');
     expect(closure).toContain('trg_guard_supplier_security_audit_immutable_v1');
@@ -74,15 +92,22 @@ describe('Phase M Supplier Control Centre + governance', () => {
   });
 
   it('binds SLA breach evidence to the canonical supplier SLA version', () => {
-    expect(governance).toContain('supplier SLA version mismatch');
-    expect(governance).toContain('SLA breach order/leg/supplier identity mismatch');
+    expect(slaClosure).toContain('supplier SLA version mismatch');
+    expect(slaClosure).toContain('SLA breach order/leg/supplier identity mismatch');
     expect(foundation).toContain('sla_version_id uuid NOT NULL REFERENCES private.supplier_sla_versions');
   });
 
-  it('makes SLA breach ingestion deterministic and replay-idempotent', () => {
-    expect(governance).toContain("digest(concat_ws('|'");
-    expect(governance).toContain('ON CONFLICT(breach_key)');
+  it('makes SLA breach ingestion deterministic and exact-replay idempotent', () => {
+    expect(slaClosure).toContain("digest(concat_ws('|'");
+    expect(slaClosure).toContain('SELECT * INTO v_existing');
+    expect(slaClosure).toContain('RETURN v_existing.id');
     expect(foundation).toContain('breach_key text NOT NULL UNIQUE');
+  });
+
+  it('rejects changed SLA evidence under an existing deterministic breach key', () => {
+    expect(slaClosure).toContain('supplier SLA breach idempotency collision');
+    expect(slaClosure).toContain('supplier SLA breach evidence identity is immutable');
+    expect(slaClosure).toContain('trg_guard_supplier_sla_breach_identity_v1');
   });
 
   it('requires resolution evidence before terminal SLA or incident states', () => {
