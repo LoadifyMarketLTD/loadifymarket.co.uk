@@ -63,14 +63,14 @@ const Footer = () => (
         <div className="grid grid-cols-2 gap-x-8 gap-y-8 lg:grid-cols-[1.7fr_0.8fr_0.8fr_0.9fr]">
           <div className="col-span-2 max-w-xl lg:col-span-1">
             <p className="text-xl font-black tracking-[-0.02em] text-white">Loadify Market</p>
-            <p className="mt-3 max-w-lg text-[13px] leading-6 text-white/58">
+            <p className="mt-3 max-w-lg text-[13px] leading-6 text-white/60">
               A UK-operated marketplace where customers can discover and purchase products and approved sellers can build their catalogue and manage marketplace orders.
             </p>
-            <div className="mt-5 grid gap-1 text-[11px] leading-5 text-white/45 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="mt-5 grid gap-1 text-[11px] leading-5 text-white/60 sm:grid-cols-2 lg:grid-cols-1">
               <span>XDrive Logistics Ltd · Company No. 13171804</span>
               <span>VAT GB375949535 · Blackburn BB1 9QL, UK</span>
-              <a href="mailto:contact@loadifymarket.co.uk" className="transition-colors hover:text-white/75">contact@loadifymarket.co.uk</a>
-              <a href="tel:+447423272138" className="transition-colors hover:text-white/75">+44 7423 272138</a>
+              <a href="mailto:contact@loadifymarket.co.uk" className="transition-colors hover:text-white/80">contact@loadifymarket.co.uk</a>
+              <a href="tel:+447423272138" className="transition-colors hover:text-white/80">+44 7423 272138</a>
             </div>
           </div>
 
@@ -113,12 +113,12 @@ const Footer = () => (
         <div className="mx-auto max-w-7xl px-6 py-5 lg:px-8">
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             {legalLinks.map((link) => (
-              <Link key={link.to} to={link.to} className="text-[10px] font-semibold text-white/38 transition-colors hover:text-white/70">
+              <Link key={link.to} to={link.to} className="text-[10px] font-semibold text-white/60 transition-colors hover:text-white/85">
                 {link.label}
               </Link>
             ))}
           </div>
-          <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.05] pt-4 text-[11px] leading-5 text-white/38 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.05] pt-4 text-[11px] leading-5 text-white/60 lg:flex-row lg:items-center lg:justify-between">
             <p>&copy; 2021 XDrive Logistics Ltd. Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.</p>
             <p className="lg:text-right">Transaction-specific seller, fulfilment, delivery and return terms apply.</p>
           </div>
