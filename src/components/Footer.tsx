@@ -4,12 +4,12 @@ import SocialCard from "@/components/ui/SocialCard";
 import TikTokIcon from "@/components/ui/TikTokIcon";
 
 const ColHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="mb-4 text-[10px] font-black uppercase tracking-[0.16em] text-primary">{children}</p>
+  <p className="mb-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#F5A300]">{children}</p>
 );
 
 const FooterLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <li>
-    <Link to={to} className="text-[13px] text-muted-foreground transition-colors duration-150 hover:text-white">
+    <Link to={to} className="text-[13px] text-white/70 transition-colors duration-150 hover:text-white">
       {children}
     </Link>
   </li>
@@ -32,23 +32,26 @@ const legalLinks = [
 
 const Footer = () => (
   <footer className="bg-[#F7F9FC] px-4 pb-8 sm:px-6 sm:pb-10 lg:px-10">
-    <div className="mx-auto max-w-[1280px] overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-surface text-muted-foreground shadow-[0_20px_55px_rgba(10,35,79,0.12)]">
-      <div className="sm:hidden flex flex-col items-center gap-3 px-4 py-5">
+    <div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-gradient-to-br from-[#0A234F] via-[#0B2F6B] to-[#123F82] text-white shadow-[0_20px_55px_rgba(10,35,79,0.16)]">
+      <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-[#1D57D8]/30 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -bottom-32 -left-24 h-64 w-64 rounded-full bg-[#F5A300]/[0.08] blur-3xl" aria-hidden="true" />
+
+      <div className="relative sm:hidden flex flex-col items-center gap-3 px-4 py-5">
         <div className="flex flex-wrap items-center justify-center gap-5">
-          <Link to="/terms" className="text-[13px] text-white/75">Terms</Link>
-          <Link to="/privacy" className="text-[13px] text-white/75">Privacy</Link>
-          <Link to="/contact" className="text-[13px] text-white/75">Support</Link>
+          <Link to="/terms" className="text-[13px] text-white/80">Terms</Link>
+          <Link to="/privacy" className="text-[13px] text-white/80">Privacy</Link>
+          <Link to="/contact" className="text-[13px] text-white/80">Support</Link>
         </div>
-        <p className="text-center text-[12px] text-white/60">&copy; {new Date().getFullYear()} Loadify Market</p>
+        <p className="text-center text-[12px] text-white/65">&copy; {new Date().getFullYear()} Loadify Market</p>
       </div>
 
-      <div className="hidden sm:block">
-        <div className="border-b border-white/[0.07]">
+      <div className="relative hidden sm:block">
+        <div className="border-b border-white/10 bg-white/[0.035]">
           <div className="mx-auto flex flex-col items-start justify-between gap-4 px-6 py-5 lg:flex-row lg:items-center lg:px-8">
-            <div className="flex flex-wrap gap-x-6 gap-y-3 text-[12px] font-semibold text-white/60">
-              <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" aria-hidden="true" />Stripe-powered checkout</span>
-              <span className="inline-flex items-center gap-2"><Truck className="h-4 w-4 text-primary" aria-hidden="true" />Order tracking</span>
-              <span className="inline-flex items-center gap-2"><Store className="h-4 w-4 text-primary" aria-hidden="true" />UK operated</span>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-[12px] font-semibold text-white/72">
+              <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />Stripe-powered checkout</span>
+              <span className="inline-flex items-center gap-2"><Truck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />Order tracking</span>
+              <span className="inline-flex items-center gap-2"><Store className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />UK operated</span>
             </div>
             <div className="flex items-center gap-2.5">
               <SocialCard href="https://www.facebook.com/profile.php?id=61583570176707" label="Loadify Market on Facebook" Icon={Facebook} platform="facebook" size="footer" />
@@ -64,14 +67,14 @@ const Footer = () => (
           <div className="grid grid-cols-2 gap-x-8 gap-y-8 lg:grid-cols-[1.7fr_0.8fr_0.8fr_0.9fr]">
             <div className="col-span-2 max-w-xl lg:col-span-1">
               <p className="text-xl font-black tracking-[-0.02em] text-white">Loadify Market</p>
-              <p className="mt-3 max-w-lg text-[13px] leading-6 text-white/60">
+              <p className="mt-3 max-w-lg text-[13px] leading-6 text-white/72">
                 A UK-operated marketplace where customers can discover and purchase products and approved sellers can build their catalogue and manage marketplace orders.
               </p>
-              <div className="mt-5 grid gap-1 text-[11px] leading-5 text-white/60 sm:grid-cols-2 lg:grid-cols-1">
+              <div className="mt-5 grid gap-1 text-[11px] leading-5 text-white/62 sm:grid-cols-2 lg:grid-cols-1">
                 <span>XDrive Logistics Ltd · Company No. 13171804</span>
                 <span>VAT GB375949535 · Blackburn BB1 9QL, UK</span>
-                <a href="mailto:contact@loadifymarket.co.uk" className="transition-colors hover:text-white/80">contact@loadifymarket.co.uk</a>
-                <a href="tel:+447423272138" className="transition-colors hover:text-white/80">+44 7423 272138</a>
+                <a href="mailto:contact@loadifymarket.co.uk" className="transition-colors hover:text-white">contact@loadifymarket.co.uk</a>
+                <a href="tel:+447423272138" className="transition-colors hover:text-white">+44 7423 272138</a>
               </div>
             </div>
 
@@ -110,16 +113,16 @@ const Footer = () => (
           </div>
         </div>
 
-        <div className="border-t border-white/[0.07]">
+        <div className="border-t border-white/10 bg-[#071B3A]/25">
           <div className="px-6 py-5 lg:px-8">
             <div className="flex flex-wrap gap-x-5 gap-y-2">
               {legalLinks.map((link) => (
-                <Link key={link.to} to={link.to} className="text-[10px] font-semibold text-white/60 transition-colors hover:text-white/85">
+                <Link key={link.to} to={link.to} className="text-[10px] font-semibold text-white/60 transition-colors hover:text-white/90">
                   {link.label}
                 </Link>
               ))}
             </div>
-            <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.05] pt-4 text-[11px] leading-5 text-white/60 lg:flex-row lg:items-center lg:justify-between">
+            <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.08] pt-4 text-[11px] leading-5 text-white/60 lg:flex-row lg:items-center lg:justify-between">
               <p>&copy; 2021 XDrive Logistics Ltd. Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.</p>
               <p className="lg:text-right">Transaction-specific seller, fulfilment, delivery and return terms apply.</p>
             </div>
