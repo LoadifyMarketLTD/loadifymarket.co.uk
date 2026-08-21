@@ -3,7 +3,6 @@ import type {
   SupplierAdapterResult,
   SupplierAdapterV1,
 } from './supplierAdapter';
-import { AvasamClient, avasamClientFromEnvironment } from './avasamClient';
 import { SUPPLIER_ADAPTER_INTERFACE_VERSION } from './supplierAdapter';
 
 /**
@@ -18,8 +17,6 @@ export class AvasamAdapterV1 implements SupplierAdapterV1 {
   readonly providerKey = 'avasam';
   readonly adapterVersion = '1.0.0-contract-foundation';
   readonly capabilities = [] as const;
-
-  constructor(private readonly client: AvasamClient = avasamClientFromEnvironment()) {}
 
   private unavailable<T>(capability: string): Promise<SupplierAdapterResult<T>> {
     return Promise.resolve({
