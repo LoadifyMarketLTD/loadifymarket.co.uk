@@ -6,67 +6,27 @@ interface DrawerCTACardsProps {
 }
 
 const CTA_CARDS = [
-  {
-    icon: Tag,
-    label: "Insights",
-    route: "/catalog?filter=price-crunch",
-    iconClass: "text-primary",
-  },
-  {
-    icon: RefreshCw,
-    label: "Back in Stock",
-    route: "/catalog?filter=back-in-stock",
-    iconClass: "text-sky-400",
-  },
-  {
-    icon: TrendingUp,
-    label: "Best Sellers",
-    route: "/catalog?filter=best-sellers",
-    iconClass: "text-primary",
-  },
-  {
-    icon: Clock,
-    label: "Latest Products",
-    route: "/catalog?filter=latest",
-    iconClass: "text-violet-400",
-  },
-  {
-    icon: Package,
-    label: "Add Products",
-    route: "/catalog?filter=pallet-deals",
-    iconClass: "text-orange-400",
-  },
-  {
-    icon: XCircle,
-    label: "Inactive Products",
-    route: "/catalog?filter=delisted",
-    iconClass: "text-danger",
-  },
-  {
-    icon: ShoppingBag,
-    label: "Multi Buy",
-    route: "/catalog?filter=multi-buy",
-    iconClass: "text-pink-400",
-  },
-  {
-    icon: Store,
-    label: "Shop by Brand",
-    route: "/catalog?filter=brand",
-    iconClass: "text-teal-400",
-  },
+  { icon: Tag, label: "Insights", route: "/catalog?filter=price-crunch" },
+  { icon: RefreshCw, label: "Back in Stock", route: "/catalog?filter=back-in-stock" },
+  { icon: TrendingUp, label: "Best Sellers", route: "/catalog?filter=best-sellers" },
+  { icon: Clock, label: "Latest Products", route: "/catalog?filter=latest" },
+  { icon: Package, label: "Add Products", route: "/catalog?filter=pallet-deals" },
+  { icon: XCircle, label: "Inactive Products", route: "/catalog?filter=delisted" },
+  { icon: ShoppingBag, label: "Multi Buy", route: "/catalog?filter=multi-buy" },
+  { icon: Store, label: "Shop by Brand", route: "/catalog?filter=brand" },
 ] as const;
 
 const DrawerCTACards = ({ onClose }: DrawerCTACardsProps) => (
   <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-    {CTA_CARDS.map(({ icon: Icon, label, route, iconClass }) => (
+    {CTA_CARDS.map(({ icon: Icon, label, route }) => (
       <Link
         key={label}
         to={route}
         onClick={onClose}
-        className="bg-surface border border-white/5 rounded-xl p-3 flex flex-col items-start gap-1.5 h-[68px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] hover:border-primary/40 active:scale-[0.97]"
+        className="bg-[#0B2F6B] border border-white/10 rounded-xl p-3 flex flex-col items-start gap-1.5 h-[68px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(29,87,216,0.22)] hover:border-[#F5A300]/40 active:scale-[0.97]"
       >
-        <Icon className={`h-5 w-5 ${iconClass}`} aria-hidden="true" />
-        <span className="text-xs font-semibold text-white/80 leading-tight">{label}</span>
+        <Icon className="h-5 w-5 text-[#F5A300]" aria-hidden="true" />
+        <span className="text-xs font-semibold text-white/82 leading-tight">{label}</span>
       </Link>
     ))}
   </div>
