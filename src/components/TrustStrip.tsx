@@ -40,12 +40,13 @@ const TrustStrip = () => (
         className={[
           "flex items-center gap-2.5 sm:gap-3",
           "rounded-2xl",
-          "bg-[#0B2F6B]",
+          "bg-[#0A234F]",
           "border border-white/10",
           "p-[14px] sm:px-5 sm:py-4",
           "transition-all duration-300",
           "sm:hover:-translate-y-1 sm:hover:shadow-[0_0_25px_rgba(29,87,216,0.24)] sm:hover:border-[#F5A300]/40",
         ].join(" ")}
+        style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(29,87,216,0.24), transparent 46%)' }}
       >
         <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 overflow-hidden">
           {flag
