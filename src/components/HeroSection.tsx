@@ -98,7 +98,7 @@ const HeroSection = () => (
       <div className="relative mx-auto w-full max-w-[620px] lg:mx-0">
         <div className="absolute -inset-4 rounded-[38px] border border-[#0E3FA9]/10" aria-hidden="true" />
         <div className="relative grid grid-cols-2 gap-3 rounded-[30px] border border-[#0A234F]/10 bg-white p-3 shadow-[0_30px_80px_rgba(10,35,79,0.16)] sm:gap-4 sm:p-4">
-          {showcase.map((item) => (
+          {showcase.map((item, index) => (
             <Link
               key={item.title}
               to={item.to}
@@ -109,13 +109,14 @@ const HeroSection = () => (
                 alt=""
                 aria-hidden="true"
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                loading="eager"
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "low"}
                 decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#071B3A]/85 via-[#071B3A]/15 to-transparent" aria-hidden="true" />
               <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-5">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/60">Explore</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/70">Explore</p>
                   <p className="mt-1 text-base font-extrabold text-white sm:text-lg">{item.title}</p>
                 </div>
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/90 text-[#0A234F] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
@@ -129,7 +130,7 @@ const HeroSection = () => (
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#F5A300]">For merchants</p>
               <p className="mt-1 text-lg font-extrabold">Your catalogue belongs where customers can shop it.</p>
-              <p className="mt-1.5 text-xs leading-5 text-white/65">List products, manage marketplace orders and use an eligible Stripe Connect payout path.</p>
+              <p className="mt-1.5 text-xs leading-5 text-white/70">List products, manage marketplace orders and use an eligible Stripe Connect payout path.</p>
             </div>
             <Link
               to="/register?type=seller"
