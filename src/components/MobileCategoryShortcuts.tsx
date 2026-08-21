@@ -55,7 +55,7 @@ export default function MobileCategoryShortcuts() {
                 key={id}
                 to={to}
                 aria-label={`Browse ${label}`}
-                className={`${active ? 'bg-[#F5A300]/[0.13] border-[#F5A300] text-[#F5A300] font-semibold' : 'bg-[#0B2F6B] border-white/15 text-white/85 font-medium'}`}
+                className={`${active ? 'bg-[#F5A300]/[0.13] border-[#F5A300] text-[#8A5A00] font-semibold' : 'bg-white border-[#0A234F]/15 text-[#0A234F]/85 font-medium'}`}
                 style={{
                   textDecoration: 'none',
                   display: 'flex',
