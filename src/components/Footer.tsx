@@ -32,9 +32,9 @@ const legalLinks = [
 
 const Footer = () => (
   <footer className="bg-[#F7F9FC] px-4 pb-8 sm:px-6 sm:pb-10 lg:px-10">
-    <div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-gradient-to-br from-[#0A234F] via-[#0B2F6B] to-[#123F82] text-white shadow-[0_20px_55px_rgba(10,35,79,0.16)]">
-      <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-[#1D57D8]/30 blur-3xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute -bottom-32 -left-24 h-64 w-64 rounded-full bg-[#F5A300]/[0.08] blur-3xl" aria-hidden="true" />
+    <div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] text-white shadow-[0_22px_60px_rgba(10,35,79,0.17)]">
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]" aria-hidden="true" />
+      <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
 
       <div className="relative sm:hidden flex flex-col items-center gap-3 px-4 py-5">
         <div className="flex flex-wrap items-center justify-center gap-5">
@@ -46,7 +46,7 @@ const Footer = () => (
       </div>
 
       <div className="relative hidden sm:block">
-        <div className="border-b border-white/10 bg-white/[0.035]">
+        <div className="border-b border-white/10 bg-white/[0.045]">
           <div className="mx-auto flex flex-col items-start justify-between gap-4 px-6 py-5 lg:flex-row lg:items-center lg:px-8">
             <div className="flex flex-wrap gap-x-6 gap-y-3 text-[12px] font-semibold text-white/72">
               <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />Stripe-powered checkout</span>
@@ -113,16 +113,16 @@ const Footer = () => (
           </div>
         </div>
 
-        <div className="border-t border-white/10 bg-[#071B3A]/25">
+        <div className="border-t border-white/10 bg-white/[0.045]">
           <div className="px-6 py-5 lg:px-8">
             <div className="flex flex-wrap gap-x-5 gap-y-2">
               {legalLinks.map((link) => (
-                <Link key={link.to} to={link.to} className="text-[10px] font-semibold text-white/60 transition-colors hover:text-white/90">
+                <Link key={link.to} to={link.to} className="text-[10px] font-semibold text-white/62 transition-colors hover:text-white/90">
                   {link.label}
                 </Link>
               ))}
             </div>
-            <div className="mt-4 flex flex-col gap-2 border-t border-white/[0.08] pt-4 text-[11px] leading-5 text-white/60 lg:flex-row lg:items-center lg:justify-between">
+            <div className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-4 text-[11px] leading-5 text-white/62 lg:flex-row lg:items-center lg:justify-between">
               <p>&copy; 2021 XDrive Logistics Ltd. Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.</p>
               <p className="lg:text-right">Transaction-specific seller, fulfilment, delivery and return terms apply.</p>
             </div>
