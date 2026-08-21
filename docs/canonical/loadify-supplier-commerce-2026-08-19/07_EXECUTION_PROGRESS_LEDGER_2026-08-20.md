@@ -28,9 +28,9 @@
 - [x] PHASE H — Stock + Price Sync merged through PR #546; Branch Guard PASS and production DB deployment PASS recorded below.
 - [x] PHASE I — Order Orchestrator + Commerce Risk + Reservation merged through PR #548; Branch Guard PASS and production DB deployment PASS recorded below.
 - [x] PHASE J — Payment → Supplier Handshake + Acknowledgement + Idempotency + Reconciliation merged through PR #550; Branch Guard PASS and production DB deployment PASS recorded below.
-- [ ] PHASE K — **CURRENT NEXT PHASE: TRACKING + EXCEPTIONS**.
-- [ ] PHASE L.
-- [ ] PHASE M.
+- [x] PHASE K — Tracking + Exceptions merged through PR #552; Branch Guard PASS and production DB deployment PASS recorded below.
+- [x] PHASE L — Returns + Customer Refunds + Supplier Recovery + Financial Reconciliation merged through PR #554; Branch Guard PASS and production DB deployment PASS recorded below.
+- [ ] PHASE M — **CURRENT NEXT PHASE: SUPPLIER CONTROL CENTRE + SECURITY + RISK/SLA GOVERNANCE + KILL SWITCH + INCIDENT VISIBILITY**.
 - [ ] PHASE N.
 - [ ] PHASE O.
 - [ ] PHASE P.
@@ -55,6 +55,8 @@
 | [x] | #546 | merge commit `eb2d1c5ae505d059455af8e04d48f9d6ff6f9242` | Phase H Stock + Price Sync; provider-neutral sync, freshness/safety-stock guards, price-drift closure, checkout guard, admin governance and variant binding; Branch Guard PASS before merge |
 | [x] | #548 | merge commit `82e2e34a5567693eea6e2e0c23c5d1fe8cdae822` | Phase I Order Orchestrator + Commerce Risk + Reservation; one public order truth, internal fulfilment legs, risk policy and evidence-backed reservations; Branch Guard PASS before merge |
 | [x] | #550 | merge commit `49bf5b6c8e3fcdb78ff11d8fff1785914cf090c8` | Phase J payment-to-supplier handshake, acknowledgement, idempotency, lost-response recovery and supplier-order reconciliation; Branch Guard PASS before merge |
+| [x] | #552 | merge commit `448bd9a5bc3a5998c208abc85a17cdf4b6d48d03` | Phase K tracking normalisation + operational exception engine; Branch Guard PASS and production deployment PASS |
+| [x] | #554 | merge commit `4b3c7dedeb29965decd509b0838f0fcbfdd9efdf` | Phase L returns, customer refund evidence, supplier recovery and financial reconciliation; Branch Guard PASS and production deployment PASS |
 
 ## PR #531 — P1 closeout record
 
@@ -407,15 +409,106 @@ Post-deployment verification confirmed the payment-evidence, supplier-order-hand
 
 **PHASE J production DB deployment: PASS.**
 
+## PR #552 — Phase K Tracking + Exceptions closeout record
+
+**Merged:** 21 August 2026  
+**Merge commit:** `448bd9a5bc3a5998c208abc85a17cdf4b6d48d03`  
+**Head tested before merge:** `22c62dfd6d1dc6a965ffb38d99806d40754f657b`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- Phase K dedicated tests: 16/16 PASS;
+- upstream Phase C–J Supplier Commerce tests: PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- full suite retained the known 27-failure baseline with 355 passing tests and no new Phase K failure family.
+
+Phase K scope closed by #552:
+
+- provider-neutral tracking ingestion consumes reconciled Phase J supplier-order truth;
+- provider statuses are normalised through approved, versioned mappings;
+- raw tracking events are append-only and replay-idempotent;
+- per-leg shipment truth remains internal under one canonical customer order;
+- shipment identity, tracking reference and delivered/returned terminal truth are guarded;
+- no-tracking, delayed-dispatch, carrier/tracking and failed-delivery exceptions are detected and governed;
+- every operational exception carries state, owner, next action, customer impact, financial impact and resolution evidence;
+- active-admin visibility/governance is enforced;
+- money movement remains separated from Phase K and is owned by Phase L;
+- no Supplier Commerce runtime control was enabled by Phase K.
+
+### Phase K production deployment
+
+Production Supabase migration history records the Phase K chain in order:
+
+- `20260821101601 / supplier_tracking_exception_foundation`;
+- `20260821101627 / supplier_tracking_runtime_guards`;
+- `20260821101656 / supplier_exception_engine`;
+- `20260821101715 / supplier_tracking_exception_closure`.
+
+Post-deployment verification confirmed tracking mappings, leg shipments, tracking events, exception tables and the tracking/exception RPC and guard boundaries are live. Global controls remained OFF, including `tracking_ingest`.
+
+**PHASE K production DB deployment: PASS.**
+
+## PR #554 — Phase L Returns + Refunds + Supplier Recovery + Financial Reconciliation closeout record
+
+**Merged:** 21 August 2026  
+**Merge commit:** `4b3c7dedeb29965decd509b0838f0fcbfdd9efdf`  
+**Head tested before merge:** `df4bf06b5373a4bd52920fff358d2b7a936b8d29`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- Phase L dedicated tests: PASS;
+- upstream Phase C–K Supplier Commerce tests: PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- final isolated worktree was clean and finished with `PHASE L CORE VALIDATION: PASS`;
+- full suite retained the known baseline failure family and introduced no Phase L regression family.
+
+Phase L scope closed by #554:
+
+- supplier return cases are governed by canonical order/leg/handshake/shipment identity and adapter capability evidence;
+- customer refund truth is recorded independently from supplier recovery truth;
+- refund/recovery evidence and events are append-only;
+- exact refund replay idempotency is resolved before cumulative over-refund limits;
+- multiple return cases cannot cumulatively exceed the canonical fulfilment-leg quantity and concurrent creation is serialized;
+- customer refunds, supplier recoveries and unrecovered loss integrate with the append-only canonical financial ledger;
+- financial reconciliation explicitly distinguishes `RECONCILED`, `PARTIALLY_RECONCILED`, `EXCEPTION` and `UNRECOVERED`;
+- automated reimbursement context is fail-closed outside the currently supported GBP economics;
+- active-admin financial/return status visibility is enforced;
+- customer refund does not imply supplier recovery, and order completion does not imply financial reconciliation;
+- no Supplier Commerce runtime control was enabled by Phase L.
+
+### Phase L production deployment
+
+Production deployment was applied and verified after #554. Migration history records:
+
+- `20260821120654 / supplier_returns_recovery_foundation`;
+- `20260821120742 / supplier_returns_recovery_runtime_guards`;
+- `20260821120850 / supplier_financial_reconciliation`;
+- `20260821120908 / supplier_financial_exception_extension`;
+- `20260821120935 / supplier_returns_recovery_closure`;
+- `20260821121000 / supplier_refund_idempotency_closure`;
+- `20260821121024 / supplier_return_quantity_closure`.
+
+The source migration `supabase/650_supplier_financial_reconciliation.sql` was deployed as two production migration records (`supplier_financial_reconciliation` and `supplier_financial_exception_extension`) because the deployment connector rejected the combined submission; post-deployment verification confirms the complete intended Phase L schema/function result is live.
+
+Post-deployment verification confirmed the return-case, refund-evidence, recovery-evidence, financial-reconciliation and return/recovery-event tables; prepare/authorisation/refund/recovery/reconciliation/financial-exception/recovery-context/admin-status functions; and identity, quantity and append-only evidence guards are live.
+
+All global Supplier Commerce controls remain `enabled = false`, including `*`, `checkout`, `import`, `price_sync`, `publish`, `reservation`, `return_recovery`, `stock_sync`, `supplier_order` and `tracking_ingest`.
+
+**PHASE L production DB deployment: PASS.**
+
 ## Current handoff
 
-The repository and production database are now past Gate B and through Phase J:
+The repository and production database are now past Gate B and through Phase L:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H PASS + DEPLOYED → PHASE I PASS + DEPLOYED → PHASE J PASS + DEPLOYED → PHASE K → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H PASS + DEPLOYED → PHASE I PASS + DEPLOYED → PHASE J PASS + DEPLOYED → PHASE K PASS + DEPLOYED → PHASE L PASS + DEPLOYED → PHASE M → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE K — TRACKING + EXCEPTIONS.**
+**CURRENT NEXT PHASE: PHASE M — SUPPLIER CONTROL CENTRE + SECURITY + RISK/SLA GOVERNANCE + KILL SWITCH + INCIDENT VISIBILITY.**
 
-Phase K must implement tracking and exception handling as the next canonical vertical slice, consuming confirmed supplier-order truth from Phase J without creating parallel order or shipment truth and remaining fail-closed under the Phase C control plane.
+Phase M must consolidate operator control, supplier security/risk and SLA governance, kill-switch administration and incident visibility on top of the completed C–L canonical runtime without bypassing existing server-enforced controls or creating parallel commerce truth.
 
 Any newly demonstrated P0/P1 foundation defect still stops the sequence and returns to Branch Guard repair before downstream continuation.
 
