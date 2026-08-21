@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 import {
   SUPPLIER_ORDER_ORCHESTRATOR_INTERFACE_VERSION,
+  assessSupplierCommerceRisk,
   reserveSupplierOffer,
   releaseSupplierReservation,
 } from '../_shared/supplierOrderOrchestrator';
@@ -12,6 +13,7 @@ const repo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 const foundation = repo('supabase/634_supplier_order_orchestrator_risk_reservation.sql');
 const runtime = repo('supabase/635_supplier_order_orchestrator_runtime_guards.sql');
 const governance = repo('supabase/636_supplier_order_risk_admin_governance.sql');
+const audit = repo('supabase/637_supplier_order_orchestration_audit_closure.sql');
 const helper = repo('netlify/functions/_shared/supplierOrderOrchestrator.ts');
 const adminApi = repo('netlify/functions/admin-supplier-order-orchestration.ts');
 
@@ -50,10 +52,16 @@ describe('Phase I Order Orchestrator + Commerce Risk + Reservation', () => {
     expect(runtime).toContain("ELSE 'ALLOW'");
   });
 
+  it('supports buyer, supplier, order and platform risk subjects independently from compliance', () => {
+    expect(foundation).toContain("subject_type IN ('buyer','supplier','order','platform')");
+    expect(helper).toContain("export type CommerceRiskSubject = 'buyer' | 'supplier' | 'order' | 'platform'");
+    expect(helper).toContain('server_supplier_commerce_risk_decision_v1');
+  });
+
   it('does not automatically ban accounts as a side effect of a risk decision', () => {
     expect(foundation).toContain('Risk action does not itself ban an account');
     expect(runtime).toContain('It never bans accounts by itself');
-    expect(runtime).not.toContain("UPDATE public.users SET");
+    expect(runtime).not.toContain('UPDATE public.users SET');
     expect(runtime).not.toContain("lifecycle_status='banned'");
   });
 
@@ -108,6 +116,15 @@ describe('Phase I Order Orchestrator + Commerce Risk + Reservation', () => {
     expect(governance).not.toContain('UPDATE public.orders');
   });
 
+  it('records append-only orchestration and reservation lifecycle audit evidence', () => {
+    expect(audit).toContain('private.supplier_order_orchestration_events');
+    expect(audit).toContain('supplier order orchestration events are append-only');
+    expect(audit).toContain("'reservation_created'");
+    expect(audit).toContain("'reservation_released'");
+    expect(audit).toContain("'reservation_expired'");
+    expect(audit).toContain("'orchestration_state_changed'");
+  });
+
   it('keeps Phase I private storage server-only and admin governance active-admin-only', () => {
     for (const table of [
       'supplier_order_orchestrations',
@@ -119,9 +136,48 @@ describe('Phase I Order Orchestrator + Commerce Risk + Reservation', () => {
     ]) {
       expect(foundation).toContain(`REVOKE ALL ON TABLE private.${table} FROM PUBLIC, anon, authenticated, service_role`);
     }
+    expect(audit).toContain('REVOKE ALL ON TABLE private.supplier_order_orchestration_events FROM PUBLIC, anon, authenticated, service_role');
     expect(governance).toContain("u.role='admin'");
     expect(governance).toContain('u."isActive"=true');
     expect(adminApi).toContain("authenticateActiveAccount(event, admin, ['admin'])");
+  });
+
+  it('fails closed when generic commerce-risk evidence is unavailable', async () => {
+    const rpc = vi.fn(async () => ({ data: { eligible: true }, error: null }));
+    const client = { rpc } as unknown as SupabaseClient;
+    await expect(assessSupplierCommerceRisk(client, {
+      orderId: ORDER,
+      subjectType: 'buyer',
+      subjectRef: 'buyer-1',
+      signals: { paymentFraudScore: 50 },
+      idempotencyKey: 'risk-1',
+    })).resolves.toEqual({
+      eligible: false,
+      reason: 'commerce_risk_unavailable',
+      interfaceVersion: 1,
+    });
+  });
+
+  it('accepts a structurally complete ALLOW risk decision from the server boundary', async () => {
+    const expected = {
+      eligible: true,
+      reason: 'policy_score_allow',
+      action: 'ALLOW' as const,
+      riskScore: 12,
+      assessmentId: '88888888-8888-4888-8888-888888888888',
+      policyId: '99999999-9999-4999-8999-999999999999',
+      policyVersion: 3,
+      interfaceVersion: 1 as const,
+    };
+    const rpc = vi.fn(async () => ({ data: expected, error: null }));
+    const client = { rpc } as unknown as SupabaseClient;
+    await expect(assessSupplierCommerceRisk(client, {
+      orderId: ORDER,
+      subjectType: 'platform',
+      subjectRef: 'checkout:1',
+      signals: { duplicateOrder: false, reconciliationMismatch: false, anomalyScore: 12 },
+      idempotencyKey: 'risk-2',
+    })).resolves.toEqual(expected);
   });
 
   it('fails closed when reservation RPC evidence is unavailable or malformed', async () => {
