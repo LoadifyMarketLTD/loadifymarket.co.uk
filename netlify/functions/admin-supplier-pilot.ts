@@ -18,6 +18,7 @@ type PilotAction =
   | { action: 'status'; pilotId?: string }
   | { action: 'create'; pilotKey: string; supplierId: string; providerKey: string; cohortKey: string; maximumOrderCount: number; maximumOrderValueMinor: number; acceptanceThresholds: Record<string, unknown>; simulatorEvidenceRef: string; evidence?: Record<string, unknown> }
   | { action: 'add_offer'; pilotId: string; supplierOfferId: string; externalVariantRef?: string; selectionEvidence: Record<string, unknown> }
+  | { action: 'add_cohort_member'; pilotId: string; buyerId: string; evidence: Record<string, unknown> }
   | { action: 'readiness'; pilotId: string }
   | { action: 'prepare'; pilotId: string; reason: string }
   | { action: 'activate'; pilotId: string; reason: string }
@@ -93,12 +94,24 @@ export const handler: Handler = async (event) => {
     return jsonResponse(200, { ok: true, pilotOfferId: data }, METHODS);
   }
 
+  if (body.action === 'add_cohort_member') {
+    const pilotId = text(body.pilotId); const buyerId = text(body.buyerId); const evidence = object(body.evidence);
+    if (!pilotId || !buyerId || !evidence || Object.keys(evidence).length === 0) {
+      return jsonResponse(400, { error: 'Pilot, buyer and cohort membership evidence are required' }, METHODS);
+    }
+    const { data, error } = await admin.rpc('server_admin_add_supplier_pilot_cohort_member_v1', {
+      p_actor_id: auth.actor.id, p_pilot_id: pilotId, p_buyer_id: buyerId, p_evidence: evidence,
+    });
+    if (error) return jsonResponse(400, { error: 'Unable to add controlled pilot cohort member' }, METHODS);
+    return jsonResponse(200, { ok: true, cohortMemberId: data }, METHODS);
+  }
+
   if (body.action === 'readiness' || body.action === 'acceptance') {
     const pilotId = text(body.pilotId);
     if (!pilotId) return jsonResponse(400, { error: 'pilotId is required' }, METHODS);
-    const rpc = body.action === 'readiness' ? 'server_supplier_pilot_readiness_v1' : 'server_supplier_pilot_acceptance_v1';
+    const rpc = body.action === 'readiness' ? 'server_supplier_pilot_activation_readiness_v1' : 'server_supplier_pilot_acceptance_v1';
     const { data, error } = await admin.rpc(rpc, { p_pilot_id: pilotId });
-    if (error) return jsonResponse(400, { error: body.action === 'readiness' ? 'Unable to evaluate pilot readiness' : 'Unable to evaluate pilot acceptance' }, METHODS);
+    if (error) return jsonResponse(400, { error: body.action === 'readiness' ? 'Unable to evaluate pilot activation readiness' : 'Unable to evaluate pilot acceptance' }, METHODS);
     return jsonResponse(200, { ok: true, result: data }, METHODS);
   }
 
