@@ -97,6 +97,40 @@ describe('set-account-role legacy compatibility', () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
+  it('blocks legacy Seller activation when Seller registration is disabled', async () => {
+    const rpc = vi.fn();
+    const updateUserById = vi.fn();
+
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        rpc,
+        auth: { admin: { updateUserById } },
+      })),
+    }));
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: {
+          id: 'buyer-1',
+          role: 'buyer',
+          email: 'buyer@example.com',
+          appMetadata: {},
+        },
+      }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      getFeatureFlags: vi.fn().mockResolvedValue({ sellerRegistration: false }),
+    }));
+
+    const { handler } = await import('../set-account-role');
+    const res = await handler(makeEvent({ role: 'seller' }), {} as never);
+
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body).error).toContain('temporarily disabled');
+    expect(rpc).not.toHaveBeenCalled();
+    expect(updateUserById).not.toHaveBeenCalled();
+  });
+
   it('uses the atomic Seller activation RPC and never resets Seller lifecycle directly', async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: { ok: true, sellerStatus: 'active', createdSellerProfile: false },
@@ -120,6 +154,9 @@ describe('set-account-role legacy compatibility', () => {
           appMetadata: { provider: 'email' },
         },
       }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      getFeatureFlags: vi.fn().mockResolvedValue({ sellerRegistration: true }),
     }));
 
     const { handler } = await import('../set-account-role');
