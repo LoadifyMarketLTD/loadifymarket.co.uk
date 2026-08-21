@@ -5,16 +5,6 @@ export interface AvasamClientConfig {
   apiToken?: string;
   apiKey?: string;
   apiKeyHeader?: string;
-  catalogPath?: string;
-  stockPath?: string;
-  pricePath?: string;
-  shippingPath?: string;
-  orderPath?: string;
-  acknowledgementPath?: string;
-  trackingPath?: string;
-  cancellationPath?: string;
-  returnsPath?: string;
-  reimbursementPath?: string;
 }
 
 export interface AvasamRequestContext {
@@ -72,7 +62,9 @@ export class AvasamClient {
       const resolvedPath = requiredRelativePath(path, 'Avasam endpoint path configuration');
       const response = await fetch(buildUrl(baseUrl, resolvedPath), {
         ...init,
-        headers: { ...this.headers(context), ...(init.headers || {}) },
+        // Provider authentication and correlation/idempotency headers are owned
+        // by this boundary and cannot be replaced by provider-callers.
+        headers: { ...(init.headers || {}), ...this.headers(context) },
       });
       const text = await response.text();
       let body: unknown = null;
@@ -95,21 +87,15 @@ export class AvasamClient {
   }
 }
 
+/**
+ * Creates only the transport/auth boundary. Concrete catalog/order/etc. paths
+ * are deliberately excluded until verified against Avasam's provider contract.
+ */
 export function avasamClientFromEnvironment(): AvasamClient {
   return new AvasamClient({
     baseUrl: process.env.AVASAM_API_BASE_URL,
     apiToken: process.env.AVASAM_API_TOKEN,
     apiKey: process.env.AVASAM_API_KEY,
     apiKeyHeader: process.env.AVASAM_API_KEY_HEADER,
-    catalogPath: process.env.AVASAM_CATALOG_PATH,
-    stockPath: process.env.AVASAM_STOCK_PATH,
-    pricePath: process.env.AVASAM_PRICE_PATH,
-    shippingPath: process.env.AVASAM_SHIPPING_PATH,
-    orderPath: process.env.AVASAM_ORDER_PATH,
-    acknowledgementPath: process.env.AVASAM_ACKNOWLEDGEMENT_PATH,
-    trackingPath: process.env.AVASAM_TRACKING_PATH,
-    cancellationPath: process.env.AVASAM_CANCELLATION_PATH,
-    returnsPath: process.env.AVASAM_RETURNS_PATH,
-    reimbursementPath: process.env.AVASAM_REIMBURSEMENT_PATH,
   });
 }
