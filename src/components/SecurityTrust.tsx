@@ -8,9 +8,9 @@ const directions = [
 
 export default function SecurityTrust() {
   return (
-    <section className="relative w-full overflow-hidden rounded-[30px] bg-[#071B3A] px-6 py-7 text-white shadow-[0_22px_60px_rgba(7,27,58,0.16)] sm:px-8 sm:py-8 lg:px-10" aria-label="Loadify Intelligence direction">
+    <section className="relative w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] px-6 py-7 text-white shadow-[0_22px_60px_rgba(10,35,79,0.17)] sm:px-8 sm:py-8 lg:px-10" aria-label="Loadify Intelligence direction">
       <div className="absolute inset-0 opacity-16" aria-hidden="true" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
-      <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/20 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
 
       <div className="relative grid grid-cols-1 gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
@@ -32,7 +32,7 @@ export default function SecurityTrust() {
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             {directions.map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-[#F5A300]">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.07] text-[#F5A300]">
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <p className="text-sm font-extrabold text-white/90">{label}</p>
@@ -40,7 +40,7 @@ export default function SecurityTrust() {
             ))}
           </div>
 
-          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3">
+          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3">
             <LockKeyhole className="h-5 w-5 shrink-0 text-[#F5A300]" aria-hidden="true" />
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.13em] text-white/60">Permanent principle</p>
