@@ -3,10 +3,8 @@ import { ShieldCheck, Store, Truck, Facebook, Twitter, Instagram, Linkedin } fro
 import SocialCard from "@/components/ui/SocialCard";
 import TikTokIcon from "@/components/ui/TikTokIcon";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
-
 const ColHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[11px] font-bold tracking-widest uppercase text-primary mb-4">
+  <p className="text-[11px] font-bold tracking-widest uppercase text-[#F5A300] mb-4">
     {children}
   </p>
 );
@@ -15,98 +13,88 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
   <li>
     <Link
       to={to}
-      className="text-[13px] text-muted-foreground hover:text-primary transition-colors duration-150"
+      className="text-[13px] text-white/68 hover:text-[#F5A300] transition-colors duration-150"
     >
       {children}
     </Link>
   </li>
 );
 
-// ─── Footer ──────────────────────────────────────────────────────────────────
-
 const Footer = () => {
   return (
-    <footer className="bg-surface text-muted-foreground border-t border-white/[0.06]">
-
-      {/* ── Mobile: compact footer ───────────────────────────────────────── */}
+    <footer className="bg-[#0A234F] text-white/68 border-t border-white/10">
       <div
-        className="sm:hidden flex flex-col items-center gap-3 bg-surface"
+        className="sm:hidden flex flex-col items-center gap-3 bg-[#0A234F]"
         style={{ padding: '20px 16px' }}
       >
         <div className="flex items-center gap-5 flex-wrap justify-center">
-          <Link to="/terms"   style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Terms</Link>
-          <Link to="/privacy" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Privacy</Link>
-          <Link to="/contact" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Support</Link>
+          <Link to="/terms" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Terms</Link>
+          <Link to="/privacy" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Privacy</Link>
+          <Link to="/contact" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/75">Support</Link>
         </div>
-        <p style={{ fontSize: '12px', textAlign: 'center' }} className="text-white/45">
+        <p style={{ fontSize: '12px', textAlign: 'center' }} className="text-white/52">
           &copy; {new Date().getFullYear()} Loadify Market
         </p>
       </div>
 
-      {/* ── Trust row (desktop only) ─────────────────────────────────────── */}
-      <div className="hidden sm:block border-b border-white/[0.07]">
+      <div className="hidden sm:block border-b border-white/10 bg-[#0B2F6B]/45">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
+            <div className="flex items-center gap-2 text-sm font-medium text-white/68">
+              <ShieldCheck className="h-5 w-5 text-[#F5A300] shrink-0" />
               Registered Sellers
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
+            <div className="flex items-center gap-2 text-sm font-medium text-white/68">
+              <ShieldCheck className="h-5 w-5 text-[#F5A300] shrink-0" />
               Secure Platform
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Truck className="h-5 w-5 text-primary shrink-0" />
+            <div className="flex items-center gap-2 text-sm font-medium text-white/68">
+              <Truck className="h-5 w-5 text-[#F5A300] shrink-0" />
               UK Delivery Support
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Store className="h-5 w-5 text-primary shrink-0" />
+            <div className="flex items-center gap-2 text-sm font-medium text-white/68">
+              <Store className="h-5 w-5 text-[#F5A300] shrink-0" />
               UK-Based Marketplace
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <SocialCard href="https://www.facebook.com/profile.php?id=61583570176707" label="Loadify Market on Facebook"   Icon={Facebook}  platform="facebook"  size="footer" />
-            <SocialCard href="https://www.twitter.com/loadifymarket"           label="Loadify Market on X / Twitter" Icon={Twitter}   platform="twitter"   size="footer" />
-            <SocialCard href="https://www.instagram.com/loadifymarket"         label="Loadify Market on Instagram"   Icon={Instagram} platform="instagram" size="footer" />
-            <SocialCard href="https://www.tiktok.com/@loadifymarket"           label="Loadify Market on TikTok"      Icon={TikTokIcon} platform="tiktok"   size="footer" />
-            <SocialCard href="https://www.linkedin.com/company/loadify-market"  label="Loadify Market on LinkedIn"    Icon={Linkedin}  platform="linkedin"  size="footer" />
+            <SocialCard href="https://www.facebook.com/profile.php?id=61583570176707" label="Loadify Market on Facebook" Icon={Facebook} platform="facebook" size="footer" />
+            <SocialCard href="https://www.twitter.com/loadifymarket" label="Loadify Market on X / Twitter" Icon={Twitter} platform="twitter" size="footer" />
+            <SocialCard href="https://www.instagram.com/loadifymarket" label="Loadify Market on Instagram" Icon={Instagram} platform="instagram" size="footer" />
+            <SocialCard href="https://www.tiktok.com/@loadifymarket" label="Loadify Market on TikTok" Icon={TikTokIcon} platform="tiktok" size="footer" />
+            <SocialCard href="https://www.linkedin.com/company/loadify-market" label="Loadify Market on LinkedIn" Icon={Linkedin} platform="linkedin" size="footer" />
           </div>
         </div>
       </div>
 
-      {/* ── Main columns (desktop only) ─────────────────────────────────── */}
       <div className="hidden sm:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
-
-          {/* Col 1 — About (spans 2 columns on lg) */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
-            <p className="text-lg font-bold text-foreground mb-3">Loadify Market</p>
-            <p className="text-[13px] text-muted-foreground leading-relaxed mb-4">
-              Loadify Market is operated by <strong className="text-muted-foreground">XDrive Logistics Ltd</strong>.
+            <p className="text-lg font-bold text-white mb-3">Loadify Market</p>
+            <p className="text-[13px] text-white/68 leading-relaxed mb-4">
+              Loadify Market is operated by <strong className="text-white/80">XDrive Logistics Ltd</strong>.
               We are a UK-based marketplace that connects buyers with independent sellers in the UK and approved international sellers that comply with UK and Stripe requirements.
               Loadify Market does not own, stock, sell, or ship any products — all orders are
               fulfilled directly by the independent seller.
             </p>
-            <ul className="space-y-1 text-[12px] text-muted-foreground/75">
+            <ul className="space-y-1 text-[12px] text-white/55">
               <li>Company No. 13171804</li>
               <li>VAT GB375949535</li>
               <li>101 Cornelian Street, Blackburn BB1 9QL, UK</li>
               <li>
-                <a href="mailto:contact@loadifymarket.co.uk" className="hover:text-white/70 transition-colors">
+                <a href="mailto:contact@loadifymarket.co.uk" className="hover:text-[#F5A300] transition-colors">
                   contact@loadifymarket.co.uk
                 </a>
               </li>
               <li>
-                <a href="tel:+447423272138" className="hover:text-white/70 transition-colors">
+                <a href="tel:+447423272138" className="hover:text-[#F5A300] transition-colors">
                   +44 7423 272138
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Col 2 — For Buyers */}
           <div>
             <ColHeading>For Buyers</ColHeading>
             <ul className="space-y-2.5">
@@ -120,7 +108,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 3 — For Sellers */}
           <div>
             <ColHeading>For Sellers</ColHeading>
             <ul className="space-y-2.5">
@@ -134,7 +121,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 4 — Marketplace + Company */}
           <div>
             <ColHeading>Marketplace</ColHeading>
             <ul className="space-y-2.5">
@@ -144,7 +130,7 @@ const Footer = () => {
               <FooterLink to="/contact">Report a Problem</FooterLink>
             </ul>
 
-            <p className="text-[11px] font-bold tracking-widest uppercase text-primary mt-7 mb-4">
+            <p className="text-[11px] font-bold tracking-widest uppercase text-[#F5A300] mt-7 mb-4">
               Company
             </p>
             <ul className="space-y-2.5">
@@ -154,7 +140,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 5 — Legal */}
           <div>
             <ColHeading>Legal</ColHeading>
             <ul className="space-y-2.5">
@@ -172,28 +157,23 @@ const Footer = () => {
               <FooterLink to="/seller-terms">Seller Terms</FooterLink>
             </ul>
           </div>
-
         </div>
       </div>
 
-      {/* ── Bottom bar (desktop only) ────────────────────────────────────── */}
-      <div className="hidden sm:block border-t border-white/[0.07]">
+      <div className="hidden sm:block border-t border-white/10 bg-[#0B2F6B]/35">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-
-          <p className="text-[12px] text-muted-foreground/65">
+          <p className="text-[12px] text-white/55">
             &copy; 2021 XDrive Logistics Ltd (Company No. 13171804). All rights reserved.
             Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.
           </p>
 
-          <p className="text-[12px] text-muted-foreground/65 lg:text-right">
+          <p className="text-[12px] text-white/55 lg:text-right">
             Payments secured by Stripe · Independent sellers fulfil all orders ·
             Loadify Market is not a seller or retailer.
           </p>
-
         </div>
 
-        {/* Quick legal links bar */}
-        <div className="border-t border-white/[0.05]">
+        <div className="border-t border-white/[0.08]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-x-5 gap-y-1">
             {[
               { to: "/terms", label: "Terms" },
@@ -210,7 +190,7 @@ const Footer = () => {
               <Link
                 key={l.to}
                 to={l.to}
-                className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground/85 transition-colors"
+                className="text-[11px] text-white/52 hover:text-[#F5A300] transition-colors"
               >
                 {l.label}
               </Link>
@@ -218,7 +198,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-
     </footer>
   );
 };
