@@ -4,12 +4,11 @@ import type { HandlerEvent } from '@netlify/functions';
 function makeEvent(
   body: unknown,
   method = 'POST',
-  authorization = 'Bearer ' + 'test-token',
 ): HandlerEvent {
   return {
     httpMethod: method,
     body: JSON.stringify(body),
-    headers: authorization ? { authorization } : {},
+    headers: { authorization: 'Bearer test-token' },
     multiValueHeaders: {},
     isBase64Encoded: false,
     path: '/.netlify/functions/set-account-role',
@@ -20,7 +19,7 @@ function makeEvent(
   };
 }
 
-describe('set-account-role', () => {
+describe('set-account-role legacy compatibility', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -46,137 +45,123 @@ describe('set-account-role', () => {
     expect(res.statusCode).toBe(405);
   });
 
-  it('returns 500 when env vars are missing', async () => {
-    delete process.env.VITE_SUPABASE_URL;
-    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  it('rejects admin self-service role changes', async () => {
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({})),
+    }));
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: { id: 'admin-1', role: 'admin', email: null, appMetadata: {} },
+      }),
+    }));
+
     const { handler } = await import('../set-account-role');
     const res = await handler(makeEvent({ role: 'buyer' }), {} as never);
-    expect(res.statusCode).toBe(500);
+    expect(res.statusCode).toBe(403);
   });
 
-  it('returns 401 without authorization header', async () => {
-    const { handler } = await import('../set-account-role');
-    const res = await handler(makeEvent({ role: 'buyer' }, 'POST', ''), {} as never);
-    expect(res.statusCode).toBe(401);
-  });
-
-  it('returns 401 when token is invalid', async () => {
+  it('rejects an invalid role', async () => {
     vi.doMock('@supabase/supabase-js', () => ({
-      createClient: vi.fn(() => ({
-        auth: {
-          getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: { message: 'invalid' } }),
-        },
-      })),
+      createClient: vi.fn(() => ({})),
     }));
-    const { handler } = await import('../set-account-role');
-    const res = await handler(makeEvent({ role: 'buyer' }), {} as never);
-    expect(res.statusCode).toBe(401);
-  });
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: { id: 'buyer-1', role: 'buyer', email: null, appMetadata: {} },
+      }),
+    }));
 
-  it('returns 400 when role is not buyer/seller', async () => {
-    vi.doMock('@supabase/supabase-js', () => ({
-      createClient: vi.fn(() => ({
-        auth: {
-          getUser: vi.fn().mockResolvedValue({
-            data: { user: { id: 'user-1', app_metadata: {} } },
-            error: null,
-          }),
-        },
-      })),
-    }));
     const { handler } = await import('../set-account-role');
     const res = await handler(makeEvent({ role: 'admin' }), {} as never);
     expect(res.statusCode).toBe(400);
   });
 
-  it('updates authenticated user, initializes seller records, and syncs trusted auth role', async () => {
-    const updateEq = vi.fn().mockResolvedValue({ error: null });
-    const usersUpdate = vi.fn().mockReturnValue({ eq: updateEq });
-    const sellerProfilesUpsert = vi.fn().mockResolvedValue({ error: null });
-    const sellerStoresUpsert = vi.fn().mockResolvedValue({ error: null });
-    const buyerProfilesUpsert = vi.fn().mockResolvedValue({ error: null });
-    const updateUserById = vi.fn().mockResolvedValue({ data: {}, error: null });
-
+  it('does not let a Seller relationship be erased by switching role to Buyer', async () => {
+    const rpc = vi.fn();
     vi.doMock('@supabase/supabase-js', () => ({
-      createClient: vi.fn(() => ({
-        auth: {
-          getUser: vi.fn().mockResolvedValue({
-            data: {
-              user: {
-                id: 'auth-user-id',
-                app_metadata: { provider: 'email', providers: ['email'] },
-              },
-            },
-            error: null,
-          }),
-          admin: { updateUserById },
-        },
-        from: vi.fn((table: string) => {
-          if (table === 'users') return { update: usersUpdate };
-          if (table === 'seller_profiles') return { upsert: sellerProfilesUpsert };
-          if (table === 'seller_stores') return { upsert: sellerStoresUpsert };
-          if (table === 'buyer_profiles') return { upsert: buyerProfilesUpsert };
-          return { upsert: vi.fn() };
-        }),
-      })),
+      createClient: vi.fn(() => ({ rpc })),
+    }));
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: { id: 'seller-1', role: 'seller', email: null, appMetadata: {} },
+      }),
     }));
 
     const { handler } = await import('../set-account-role');
-    const res = await handler(
-      makeEvent({ role: 'seller', userId: 'attacker-supplied-id' }),
-      {} as never,
-    );
+    const res = await handler(makeEvent({ role: 'buyer' }), {} as never);
+
+    expect(res.statusCode).toBe(409);
+    expect(JSON.parse(res.body).error).toContain('Buyer access');
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('uses the atomic Seller activation RPC and never resets Seller lifecycle directly', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: { ok: true, sellerStatus: 'active', createdSellerProfile: false },
+      error: null,
+    });
+    const updateUserById = vi.fn().mockResolvedValue({ data: {}, error: null });
+
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        rpc,
+        auth: { admin: { updateUserById } },
+      })),
+    }));
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: {
+          id: 'seller-1',
+          role: 'seller',
+          email: 'seller@example.com',
+          appMetadata: { provider: 'email' },
+        },
+      }),
+    }));
+
+    const { handler } = await import('../set-account-role');
+    const res = await handler(makeEvent({ role: 'seller' }), {} as never);
 
     expect(res.statusCode).toBe(200);
-    expect(usersUpdate).toHaveBeenCalledWith({
-      role: 'seller',
-      onboardingCompleted: false,
-      onboardingStep: 1,
+    expect(rpc).toHaveBeenCalledWith('server_start_seller_activation_v1', {
+      p_user_id: 'seller-1',
     });
-    expect(updateEq).toHaveBeenCalledWith('id', 'auth-user-id');
-    expect(sellerProfilesUpsert).toHaveBeenCalledWith(
-      { userId: 'auth-user-id', sellerStatus: 'draft', isApproved: false },
-      { onConflict: 'userId' },
-    );
-    expect(sellerStoresUpsert).toHaveBeenCalledWith(
-      { userId: 'auth-user-id', isActive: false },
-      { onConflict: 'userId' },
-    );
-    expect(buyerProfilesUpsert).not.toHaveBeenCalled();
-    expect(updateUserById).toHaveBeenCalledWith('auth-user-id', {
-      app_metadata: {
-        provider: 'email',
-        providers: ['email'],
-        role: 'seller',
-      },
+    expect(JSON.parse(res.body)).toMatchObject({
+      role: 'seller',
+      sellerStatus: 'active',
+      compatibilityEndpoint: true,
     });
   });
 
-  it('ensures buyer profile exists and syncs buyer role to app_metadata', async () => {
+  it('keeps Buyer -> Buyer idempotent and ensures the Buyer profile exists', async () => {
     const updateEq = vi.fn().mockResolvedValue({ error: null });
     const usersUpdate = vi.fn().mockReturnValue({ eq: updateEq });
-    const sellerProfilesUpsert = vi.fn().mockResolvedValue({ error: null });
-    const sellerStoresUpsert = vi.fn().mockResolvedValue({ error: null });
     const buyerProfilesUpsert = vi.fn().mockResolvedValue({ error: null });
     const updateUserById = vi.fn().mockResolvedValue({ data: {}, error: null });
 
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
-        auth: {
-          getUser: vi.fn().mockResolvedValue({
-            data: { user: { id: 'buyer-user-id', app_metadata: { provider: 'email' } } },
-            error: null,
-          }),
-          admin: { updateUserById },
-        },
+        auth: { admin: { updateUserById } },
         from: vi.fn((table: string) => {
           if (table === 'users') return { update: usersUpdate };
-          if (table === 'seller_profiles') return { upsert: sellerProfilesUpsert };
-          if (table === 'seller_stores') return { upsert: sellerStoresUpsert };
           if (table === 'buyer_profiles') return { upsert: buyerProfilesUpsert };
-          return { upsert: vi.fn() };
+          throw new Error(`unexpected table ${table}`);
         }),
       })),
+    }));
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: {
+          id: 'buyer-1',
+          role: 'buyer',
+          email: 'buyer@example.com',
+          appMetadata: { provider: 'email' },
+        },
+      }),
     }));
 
     const { handler } = await import('../set-account-role');
@@ -188,19 +173,17 @@ describe('set-account-role', () => {
       onboardingCompleted: true,
       onboardingStep: 0,
     });
-    expect(updateEq).toHaveBeenCalledWith('id', 'buyer-user-id');
+    expect(updateEq).toHaveBeenCalledWith('id', 'buyer-1');
     expect(buyerProfilesUpsert).toHaveBeenCalledWith(
-      { userId: 'buyer-user-id' },
+      { userId: 'buyer-1' },
       { onConflict: 'userId' },
     );
-    expect(sellerProfilesUpsert).not.toHaveBeenCalled();
-    expect(sellerStoresUpsert).not.toHaveBeenCalled();
-    expect(updateUserById).toHaveBeenCalledWith('buyer-user-id', {
+    expect(updateUserById).toHaveBeenCalledWith('buyer-1', {
       app_metadata: { provider: 'email', role: 'buyer' },
     });
   });
 
-  it('returns 500 if trusted auth metadata cannot be synchronized', async () => {
+  it('fails closed when trusted auth metadata cannot be synchronized', async () => {
     const updateEq = vi.fn().mockResolvedValue({ error: null });
     const buyerProfilesUpsert = vi.fn().mockResolvedValue({ error: null });
     const updateUserById = vi.fn().mockResolvedValue({
@@ -210,19 +193,21 @@ describe('set-account-role', () => {
 
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
-        auth: {
-          getUser: vi.fn().mockResolvedValue({
-            data: { user: { id: 'buyer-user-id', app_metadata: {} } },
-            error: null,
-          }),
-          admin: { updateUserById },
-        },
+        auth: { admin: { updateUserById } },
         from: vi.fn((table: string) => {
-          if (table === 'users') return { update: vi.fn().mockReturnValue({ eq: updateEq }) };
+          if (table === 'users') {
+            return { update: vi.fn().mockReturnValue({ eq: updateEq }) };
+          }
           if (table === 'buyer_profiles') return { upsert: buyerProfilesUpsert };
-          return { upsert: vi.fn().mockResolvedValue({ error: null }) };
+          throw new Error(`unexpected table ${table}`);
         }),
       })),
+    }));
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: { id: 'buyer-1', role: 'buyer', email: null, appMetadata: {} },
+      }),
     }));
 
     const { handler } = await import('../set-account-role');
