@@ -47,10 +47,7 @@ function validDecision(data: unknown): data is SupplierStockPriceDecision {
     && typeof value.policyVersion === 'number';
 }
 
-export async function evaluateSupplierStockPrice(
-  client: SupabaseClient,
-  input: SupplierStockPriceDecisionInput,
-): Promise<SupplierStockPriceDecision> {
+export async function evaluateSupplierStockPrice(client: SupabaseClient, input: SupplierStockPriceDecisionInput): Promise<SupplierStockPriceDecision> {
   try {
     const { data, error } = await client.rpc('server_supplier_stock_price_decision_v1', {
       p_supplier_offer_id: input.supplierOfferId,
@@ -121,5 +118,44 @@ export async function mutateSupplierSyncPolicy(
     return { ok: true, data };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : 'supplier sync policy mutation failed' };
+  }
+}
+
+export async function retireSupplierSyncPolicy(
+  client: SupabaseClient,
+  actorId: string,
+  supplierOfferId: string,
+  reason: string,
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
+  try {
+    const { data, error } = await client.rpc('server_admin_retire_supplier_sync_policy_v1', {
+      p_actor_id: actorId,
+      p_supplier_offer_id: supplierOfferId,
+      p_reason: reason,
+    });
+    if (error) return { ok: false, error: error.message || 'supplier sync policy retirement failed' };
+    return { ok: true, data };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'supplier sync policy retirement failed' };
+  }
+}
+
+export async function readSupplierSyncStatus(
+  client: SupabaseClient,
+  actorId: string,
+  input: Omit<SupplierStockPriceDecisionInput, 'canonicalProductId'>,
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
+  try {
+    const { data, error } = await client.rpc('server_admin_supplier_sync_status_v1', {
+      p_actor_id: actorId,
+      p_supplier_offer_id: input.supplierOfferId,
+      p_commercial_mode: input.commercialMode,
+      p_territory: input.territory || 'GB',
+      p_external_variant_ref: input.externalVariantRef || '',
+    });
+    if (error || !data || typeof data !== 'object') return { ok: false, error: error?.message || 'supplier sync status unavailable' };
+    return { ok: true, data };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'supplier sync status unavailable' };
   }
 }
