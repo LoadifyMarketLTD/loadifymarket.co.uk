@@ -39,14 +39,14 @@ export default function MobileHeroBanner({ products, loading }: MobileHeroBanner
       <div className="absolute inset-0 pointer-events-none opacity-55" aria-hidden="true" style={{ backgroundImage: 'linear-gradient(rgba(10,35,79,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(10,35,79,0.04) 1px, transparent 1px)', backgroundSize: '36px 36px' }} />
 
       <div className="relative">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-white px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] text-[#0E3FA9] shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-white px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.13em] text-[#1D57D8] shadow-sm">
           <span className="h-1.5 w-1.5 rounded-full bg-[#F5A300]" aria-hidden="true" />
           UK marketplace for buyers & sellers
         </div>
 
         <h1 className="mt-4 text-[clamp(31px,9vw,43px)] font-black leading-[0.98] tracking-[-0.045em] text-[#0A234F]">
           Find something worth buying.
-          <span className="block text-[#0E3FA9]">Bring something worth selling.</span>
+          <span className="block text-[#1D57D8]">Bring something worth selling.</span>
         </h1>
 
         <p className="mt-4 text-[14px] font-medium leading-[1.55] text-[#475569]">
@@ -70,10 +70,10 @@ export default function MobileHeroBanner({ products, loading }: MobileHeroBanner
         <div className="mt-5 overflow-hidden rounded-[20px] border border-[#0A234F]/10 bg-white p-2.5 shadow-[0_16px_38px_rgba(10,35,79,0.12)]">
           <div className="mb-2.5 flex items-center justify-between px-1">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.13em] text-[#0E3FA9]">Live on Loadify</p>
+              <p className="text-[8px] font-black uppercase tracking-[0.13em] text-[#1D57D8]">Live on Loadify</p>
               <p className="mt-0.5 text-[12px] font-extrabold text-[#0A234F]">Current marketplace listings</p>
             </div>
-            <button onClick={() => navigate('/catalog')} className="text-[10px] font-extrabold text-[#0E3FA9]">Browse all</button>
+            <button onClick={() => navigate('/catalog')} className="text-[10px] font-extrabold text-[#1D57D8]">Browse all</button>
           </div>
 
           {loading ? (
@@ -87,7 +87,7 @@ export default function MobileHeroBanner({ products, loading }: MobileHeroBanner
                   <img src={product.image} alt={product.title} className="aspect-square w-full object-cover" loading="eager" decoding="async" />
                   <span className="block px-2 pb-2 pt-1.5">
                     <span className="block truncate text-[9px] font-extrabold text-[#0A234F]">{product.title}</span>
-                    <span className="mt-0.5 block text-[10px] font-black text-[#0E3FA9]">£{product.price.toFixed(2)}</span>
+                    <span className="mt-0.5 block text-[10px] font-black text-[#1D57D8]">£{product.price.toFixed(2)}</span>
                   </span>
                 </button>
               ))}
