@@ -25,8 +25,8 @@
 - [x] PHASE E — Canonical Supplier Data merged through PR #540; Branch Guard PASS recorded below.
 - [x] PHASE F — Import / Normalisation merged through PR #542; Branch Guard PASS recorded below.
 - [x] PHASE G — Commercial Economics merged through PR #544; Branch Guard PASS and production DB deployment PASS recorded below.
-- [ ] PHASE H — **CURRENT NEXT PHASE**.
-- [ ] PHASE I.
+- [x] PHASE H — Stock + Price Sync merged through PR #546; Branch Guard PASS and production DB deployment PASS recorded below.
+- [ ] PHASE I — **CURRENT NEXT PHASE**.
 - [ ] PHASE J.
 - [ ] PHASE K.
 - [ ] PHASE L.
@@ -52,6 +52,7 @@
 | [x] | #540 | merge commit `bf4cd7113fef82581639ca9a4425e9a0770b5053` | Phase E Canonical Supplier Data; canonical product identity, supplier offers, catalog identity and evidence-backed deduplication; Branch Guard PASS before merge |
 | [x] | #542 | merge commit `004bc59e5e6c882c5f15ad64d7ec801224973af3` | Phase F Import / Normalisation; auditable, resumable and idempotent import with AI Facts Lock, rights/compliance review and Phase C kill-switch enforcement; Branch Guard PASS before merge |
 | [x] | #544 | merge commit `5e5e519a2467a9f1eb2d8b3fbfba7635ac08d0e0` | Phase G Commercial Economics; landed cost, versioned tax rules, transparent pricing/margin controls and append-only canonical financial ledger; Branch Guard PASS before merge |
+| [x] | #546 | merge commit `eb2d1c5ae505d059455af8e04d48f9d6ff6f9242` | Phase H Stock + Price Sync; provider-neutral sync, freshness/safety-stock guards, price-drift closure, checkout guard, admin governance and variant binding; Branch Guard PASS before merge |
 
 ## PR #531 — P1 closeout record
 
@@ -298,15 +299,58 @@ Post-deployment verification confirmed the Phase G tax-rule, landed-cost, pricin
 **PHASE C–G production DB foundation deployment: PASS.**  
 See `10_PHASE_G_PRODUCTION_DEPLOYMENT_2026-08-21.md` for the Phase G production deployment evidence record.
 
+## PR #546 — Phase H Stock + Price Sync closeout record
+
+**Merged:** 21 August 2026  
+**Merge commit:** `eb2d1c5ae505d059455af8e04d48f9d6ff6f9242`  
+**Head tested before merge:** `b7e679e1622fc3beeee0a62e1ba42d8063674e41`
+
+Verified PowerShell Branch Guard evidence before merge:
+
+- Phase H dedicated tests: 17/17 PASS;
+- upstream Phase C–G Supplier Commerce tests: 68/68 PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- production build: PASS;
+- validation ran in an isolated worktree and finished with `PHASE H FINAL VALIDATION: PASS`.
+
+Phase H scope closed by #546:
+
+- provider-neutral stock and price ingestion uses canonical `SupplierAdapterV1` capabilities;
+- raw supplier stock and raw supplier price remain append-only evidence, not buyer-visible truth;
+- versioned sync policies govern stock/price freshness, safety stock and unknown-quantity handling;
+- stale, missing, unknown or exhausted stock fails closed;
+- stale/missing price fails closed and Phase G commercial economics remains authoritative;
+- supplier-price drift or currency drift blocks readiness until landed-cost/pricing evidence is recomputed;
+- checkout uses a server-side guard rather than trusting UI stock/price state;
+- active-admin governance, policy retirement/history and audit are enforced;
+- exact external-variant binding prevents stock/price observations from being attached to the wrong canonical supplier catalog variant;
+- `stock_sync` and `price_sync` were added to the Phase C control plane OFF by default.
+
+### Phase H production deployment
+
+Production Supabase migration history records the Phase H chain in order:
+
+- `20260821082631 / supplier_stock_price_sync`;
+- `20260821082717 / supplier_stock_price_sync_guards`;
+- `20260821082737 / supplier_sync_policy_versioning_closure`;
+- `20260821082806 / supplier_price_drift_closure`;
+- `20260821082844 / supplier_sync_admin_governance`;
+- `20260821082858 / supplier_sync_variant_binding_closure`.
+
+Post-deployment verification confirmed the Phase H sync-policy, stock-observation, price-observation and policy-audit tables plus stock/price decision, checkout guard, ingestion and variant-binding functions are live. Global controls `*`, `checkout`, `stock_sync` and `price_sync` all remain `enabled = false`, preserving fail-closed runtime state.
+
+**PHASE H production DB deployment: PASS.**
+
 ## Current handoff
 
-The repository and production database are now past Gate B and through Phase G foundations:
+The repository and production database are now past Gate B and through Phase H:
 
-`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H → ... → PHASE Q`
+`P1 CLOSED + DEPLOYED → GATE B PASS → PHASE C PASS → PHASE D PASS → PHASE E PASS → PHASE F PASS → PHASE G PASS + DEPLOYED → PHASE H PASS + DEPLOYED → PHASE I → ... → PHASE Q`
 
-**CURRENT NEXT PHASE: PHASE H — STOCK + PRICE SYNC.**
+**CURRENT NEXT PHASE: PHASE I — ORDER ORCHESTRATOR + COMMERCE RISK + RESERVATION.**
 
-Phase H must implement the canonical stock-and-price synchronization vertical slice on top of the Phase D–G supplier/offer/economics truth. It must preserve the invariant **SUPPLIER RAW STOCK ≠ LOADIFY SELLABLE STOCK**, implement freshness/stale detection and safe price-change/tolerance handling, and keep downstream buyer/checkout truth fail-closed when stock or price evidence is stale, unavailable or outside accepted tolerance. Phase C controls remain authoritative and Supplier Commerce runtime remains disabled until the applicable downstream gates are satisfied.
+Phase I must implement the canonical order-orchestration, commerce-risk and reservation vertical slice on top of the Phase D–H supplier/offer/economics/stock-price truth. Payment success must remain distinct from supplier-order success, and reservation/order state must remain fail-closed under the Phase C control plane and Phase H stock/price readiness evidence.
 
 Any newly demonstrated P0/P1 foundation defect still stops the sequence and returns to Branch Guard repair before downstream continuation.
 
