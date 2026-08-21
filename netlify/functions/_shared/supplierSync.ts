@@ -88,3 +88,38 @@ export async function evaluateSupplierCheckoutGuard(
     return { eligible: false, reason: 'supplier_checkout_guard_unavailable', interfaceVersion: SUPPLIER_SYNC_INTERFACE_VERSION };
   }
 }
+
+export interface SupplierSyncPolicyInput {
+  supplierOfferId: string;
+  stockMaxAgeSeconds: number;
+  priceMaxAgeSeconds: number;
+  safetyStockQuantity?: number;
+  allowUnknownQuantity?: boolean;
+  policyVersion: number;
+  status: 'draft' | 'approved';
+  evidence: Record<string, unknown>;
+}
+
+export async function mutateSupplierSyncPolicy(
+  client: SupabaseClient,
+  actorId: string,
+  input: SupplierSyncPolicyInput,
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
+  try {
+    const { data, error } = await client.rpc('server_admin_supplier_sync_policy_v1', {
+      p_actor_id: actorId,
+      p_supplier_offer_id: input.supplierOfferId,
+      p_stock_max_age_seconds: input.stockMaxAgeSeconds,
+      p_price_max_age_seconds: input.priceMaxAgeSeconds,
+      p_safety_stock_quantity: input.safetyStockQuantity ?? 0,
+      p_allow_unknown_quantity: input.allowUnknownQuantity ?? false,
+      p_policy_version: input.policyVersion,
+      p_status: input.status,
+      p_evidence: input.evidence,
+    });
+    if (error) return { ok: false, error: error.message || 'supplier sync policy mutation failed' };
+    return { ok: true, data };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : 'supplier sync policy mutation failed' };
+  }
+}
