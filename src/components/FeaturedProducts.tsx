@@ -39,18 +39,22 @@ const FeaturedProducts = () => {
 
   if (loading) {
     return (
-      <section className="relative" aria-label="Marketplace products">
+      <section
+        className="relative bg-[#0A234F]"
+        style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(29,87,216,0.25), transparent 40%)' }}
+        aria-label="Marketplace products"
+      >
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
-          <div className="h-4 w-44 bg-white/10 rounded mb-1 animate-pulse" />
-          <div className="h-3 w-56 bg-white/10 rounded mb-4 animate-pulse" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/10">
+          <div className="h-4 w-44 bg-white/12 rounded mb-1 animate-pulse" />
+          <div className="h-3 w-56 bg-white/12 rounded mb-4 animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="bg-[#0B2F6B]">
-                <div className="aspect-square bg-white/10 animate-pulse" />
+              <div key={i} className="overflow-hidden rounded-[18px] bg-white">
+                <div className="aspect-square bg-[#0A234F]/8 animate-pulse" />
                 <div className="px-2.5 py-2.5 space-y-1.5">
-                  <div className="h-2.5 w-16 bg-white/10 rounded animate-pulse" />
-                  <div className="h-2.5 w-full bg-white/10 rounded animate-pulse" />
-                  <div className="h-3.5 w-12 bg-white/10 rounded animate-pulse" />
+                  <div className="h-2.5 w-16 bg-[#0A234F]/10 rounded animate-pulse" />
+                  <div className="h-2.5 w-full bg-[#0A234F]/10 rounded animate-pulse" />
+                  <div className="h-3.5 w-12 bg-[#0A234F]/10 rounded animate-pulse" />
                 </div>
               </div>
             ))}
@@ -61,14 +65,18 @@ const FeaturedProducts = () => {
   }
 
   return (
-    <section className="relative" aria-label="Marketplace products">
+    <section
+      className="relative bg-[#0A234F]"
+      style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(29,87,216,0.25), transparent 40%)' }}
+      aria-label="Marketplace products"
+    >
       <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-[13px] font-black text-white uppercase tracking-widest">
               Marketplace Products
             </h2>
-            <p className="text-[11px] text-white/60 mt-0.5">
+            <p className="text-[11px] text-white/65 mt-0.5">
               Listed by verified UK trade suppliers
             </p>
           </div>
@@ -83,7 +91,7 @@ const FeaturedProducts = () => {
         </div>
 
         {products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {products.map((item) => {
               const img =
                 Array.isArray(item.images) && item.images.length > 0
@@ -94,9 +102,9 @@ const FeaturedProducts = () => {
                 <Link
                   key={item.id}
                   to={href}
-                  className="group flex flex-col bg-[#0B2F6B] hover:bg-[#123F82] hover:shadow-md hover:scale-[1.02] transition-all duration-200"
+                  className="group flex flex-col overflow-hidden rounded-[18px] bg-white hover:shadow-[0_18px_38px_rgba(10,35,79,0.24)] hover:scale-[1.02] transition-all duration-200"
                 >
-                  <div className="aspect-square bg-[#0B2F6B] overflow-hidden">
+                  <div className="aspect-square bg-[#F2F4F7] overflow-hidden">
                     {img ? (
                       <img
                         src={img}
@@ -111,22 +119,22 @@ const FeaturedProducts = () => {
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full bg-[#123F82] flex items-center justify-center">
-                        <span className="text-white/55 text-xs">No image</span>
+                      <div className="w-full h-full bg-[#1D57D8]/8 flex items-center justify-center">
+                        <span className="text-[#0A234F]/55 text-xs">No image</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1 border-t border-white/10">
+                  <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1 border-t border-[#0A234F]/8">
                     {item.category && (
-                      <span className="text-[10px] font-bold text-[#F5A300] uppercase tracking-wide line-clamp-1">
+                      <span className="text-[10px] font-bold text-[#1D57D8] uppercase tracking-wide line-clamp-1">
                         {item.category.name}
                       </span>
                     )}
-                    <p className="text-xs font-semibold text-white leading-snug line-clamp-2 flex-1">
+                    <p className="text-xs font-semibold text-[#0A234F] leading-snug line-clamp-2 flex-1">
                       {item.title}
                     </p>
-                    <p className="text-sm font-black text-white mt-1">
+                    <p className="text-sm font-black text-[#0A234F] mt-1">
                       £{item.price.toLocaleString("en-GB", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -138,11 +146,11 @@ const FeaturedProducts = () => {
             })}
           </div>
         ) : (
-          <div className="border border-white/10 bg-[#0B2F6B] px-6 py-10">
-            <p className="text-sm font-semibold text-white">
+          <div className="border border-[#0A234F]/10 bg-white px-6 py-10 text-[#0A234F]">
+            <p className="text-sm font-semibold">
               No listings available yet.
             </p>
-            <p className="text-xs text-white/60 mt-1.5 mb-6 max-w-md leading-relaxed">
+            <p className="text-xs text-[#0A234F]/60 mt-1.5 mb-6 max-w-md leading-relaxed">
               We are currently onboarding verified UK trade suppliers.
               Be among the first to list products on Loadify Market.
             </p>
