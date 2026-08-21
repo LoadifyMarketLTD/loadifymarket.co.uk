@@ -31,13 +31,7 @@ function SkeletonGridCard() {
 
 function MobileProductGrid({ products, startIndex = 0 }: { products: ReturnType<typeof useMobileGrid>["products"]; startIndex?: number }) {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 'clamp(10px, 3vw, 14px)',
-      }}
-    >
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)' }}>
       {products.map((p, i) => (
         <MobileGridCard
           key={p.id}
@@ -73,17 +67,14 @@ function MobileHome() {
   return (
     <div className="min-h-screen bg-[#F7F9FC]">
       <MobileAppHeader />
-      <MobileHeroBanner />
+      <MobileHeroBanner products={leadProducts} loading={loading} />
 
       <div className="px-[var(--mob-side,16px)] pb-5 pt-1">
         <TrustStrip />
       </div>
 
       <div className="bg-[#071B3A] pb-7 pt-5">
-        <section
-          aria-label="Marketplace products"
-          style={{ paddingInline: 'var(--mob-side, 16px)' }}
-        >
+        <section aria-label="Marketplace products" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
           <div style={{ marginBottom: 14 }}>
             <p className="text-[#F5A300]" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
               Live on Loadify
@@ -97,13 +88,7 @@ function MobileHome() {
           </div>
 
           {loading ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 'clamp(10px, 3vw, 14px)',
-              }}
-            >
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)' }}>
               {Array.from({ length: 6 }).map((_, i) => <SkeletonGridCard key={i} />)}
             </div>
           ) : (
@@ -146,21 +131,12 @@ function MobileHome() {
         )}
 
         {loadingMore && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 'clamp(10px, 3vw, 14px)',
-              marginTop: 12,
-            }}
-          >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)', marginTop: 12 }}>
             {Array.from({ length: 4 }).map((_, i) => <SkeletonGridCard key={`more-${i}`} />)}
           </div>
         )}
 
-        {!loading && hasMore && (
-          <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
-        )}
+        {!loading && hasMore && <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />}
       </section>
     </div>
   );
