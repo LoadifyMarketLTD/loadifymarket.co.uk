@@ -68,8 +68,8 @@ export interface SupplierOrderRequest {
   shippingServiceRef?: string;
   destinationCountry: string;
   // Customer PII is intentionally not part of the generic adapter contract here.
-  // A later order-orchestrator phase must define the minimum provider-specific
-  // disclosure envelope under the privacy/retention contract.
+  // Provider implementations may translate the minimum lawful server-side
+  // disclosure envelope without leaking credentials or PII into the core model.
 }
 
 export interface SupplierOrderAcknowledgement {
@@ -106,6 +106,13 @@ export interface SupplierAdapterV1 {
   quoteShipping?(context: SupplierAdapterContext, input: { externalOfferRef: string; quantity: number; destinationCountry: string }): Promise<SupplierAdapterResult<SupplierShippingQuote[]>>;
   submitOrder?(context: SupplierAdapterContext, input: SupplierOrderRequest): Promise<SupplierAdapterResult<SupplierOrderAcknowledgement>>;
   getOrderAcknowledgement?(context: SupplierAdapterContext, supplierOrderRef: string): Promise<SupplierAdapterResult<SupplierOrderAcknowledgement>>;
+  /**
+   * Optional lost-response recovery hook. Providers that can query by the same
+   * idempotency key used for submitOrder should implement this so an UNKNOWN
+   * outcome can be resolved without a blind duplicate submit. Recovery must use
+   * the same idempotency key used for submitOrder.
+   */
+  findOrderByIdempotencyKey?(context: SupplierAdapterContext): Promise<SupplierAdapterResult<SupplierOrderAcknowledgement>>;
   getTracking?(context: SupplierAdapterContext, supplierOrderRef: string): Promise<SupplierAdapterResult<SupplierTrackingEvent[]>>;
   cancelOrder?(context: SupplierAdapterContext, supplierOrderRef: string): Promise<SupplierAdapterResult<{ cancelled: boolean }>>;
   requestReturn?(context: SupplierAdapterContext, supplierOrderRef: string, reasonCode: string): Promise<SupplierAdapterResult<{ returnRef: string }>>;
