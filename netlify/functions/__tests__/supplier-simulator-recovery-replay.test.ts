@@ -8,7 +8,10 @@ const repo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 const foundation = repo('supabase/660_supplier_simulator_recovery_validation.sql');
 const closure = repo('supabase/661_supplier_simulator_recovery_validation_closure.sql');
 const simulatorSource = repo('netlify/functions/_shared/supplierSimulator.ts');
-const contract = repo('docs/canonical/loadify-supplier-commerce-2026-08-19/03_CANONICAL_EXECUTION_CONTRACT_LINES_1251_1750.md');
+const contract = [
+  repo('docs/canonical/loadify-supplier-commerce-2026-08-19/03_CANONICAL_EXECUTION_CONTRACT_LINES_1251_1750.md'),
+  repo('docs/canonical/loadify-supplier-commerce-2026-08-19/04_CANONICAL_EXECUTION_CONTRACT_LINES_1751_2210.md'),
+].join('\n');
 
 const context = (key = 'phase-n-idem-1'): SupplierAdapterContext => ({
   correlationId: '11111111-1111-4111-8111-111111111111',
