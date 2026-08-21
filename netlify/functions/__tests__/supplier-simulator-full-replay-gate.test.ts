@@ -6,7 +6,10 @@ const repo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 const fullGate = repo('supabase/662_supplier_simulator_full_replay_gate.sql');
 const controlFoundation = repo('supabase/616_supplier_commerce_platform_control_foundations.sql');
 const governance = repo('supabase/657_supplier_control_centre_closure.sql');
-const contract = repo('docs/canonical/loadify-supplier-commerce-2026-08-19/03_CANONICAL_EXECUTION_CONTRACT_LINES_1251_1750.md');
+const contract = [
+  repo('docs/canonical/loadify-supplier-commerce-2026-08-19/03_CANONICAL_EXECUTION_CONTRACT_LINES_1251_1750.md'),
+  repo('docs/canonical/loadify-supplier-commerce-2026-08-19/04_CANONICAL_EXECUTION_CONTRACT_LINES_1751_2210.md'),
+].join('\n');
 
 describe('Phase N full recovery/replay no-fake-pass gate', () => {
   it('requires the complete canonical simulator scenario set before PASS', () => {
