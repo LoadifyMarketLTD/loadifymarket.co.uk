@@ -122,8 +122,9 @@ Before any Stage 1 write:
 
 ## 2026-08-21 — PR #529 VISUAL BASELINE / MAIN SYNCHRONISATION CHECKPOINT
 
-**Repository synchronisation status:** PASS  
-**Deploy-preview validation:** PENDING at time of this ledger entry  
+**Status:** PASS  
+**Repository synchronisation:** PASS  
+**Deploy-preview validation:** PASS  
 **Merge to `main`:** NOT AUTHORISED / NOT PERFORMED
 
 ### Purpose
@@ -191,6 +192,16 @@ Exact #529 diff remains:
 - `src/components/TrustStrip.tsx`
 - `src/pages/Home.tsx`
 
+### Deploy-preview evidence
+
+Netlify deploy-preview status for HEAD `98679ca49983541544ceea977894f3183f0d2cff`: **SUCCESS**.
+
+Stable preview:
+
+`https://deploy-preview-529--loadifymarketcouk.netlify.app`
+
+The successful deploy consumed the synchronized current-main foundation while retaining the exact #529 public visual blobs. No build failure was introduced by synchronisation.
+
 ### No-change assertions
 
 - no visual polish was performed;
@@ -201,12 +212,14 @@ Exact #529 diff remains:
 - PR #529 remains DRAFT and unmerged;
 - saved visual checkpoint remains untouched.
 
-### Validation still required before checkpoint closeout
+### Residual / deferred
 
-- Netlify deploy preview for `98679ca49983541544ceea977894f3183f0d2cff` must finish successfully;
-- review resulting homepage preview for any build/runtime regression caused by consuming current-main backend/runtime foundations;
-- record final preview/CI evidence before calling the entire visual-baseline synchronisation checkpoint fully closed.
+- final visual polish remains intentionally deferred until platform functional completion/release-candidate stability;
+- inventory-aware category merchandising and other previously audited visual/UX refinements remain deferred to the appropriate later stabilisation/polish stage unless needed for functional correctness;
+- registration/onboarding destination remains a separate functional workstream and must be corrected before any release decision involving the premium seller CTA journey.
 
 ### Exact resume point
 
-Wait for / inspect the #529 deploy preview for HEAD `98679ca49983541544ceea977894f3183f0d2cff`. If healthy and visually unchanged, close the synchronisation checkpoint and return execution priority to **STAGE 1 — IDENTITY / ROLE / RELATIONSHIP CONTRACT**. Final visual polish remains deferred until platform functional completion/release-candidate stability.
+Return execution priority to **STAGE 1 — IDENTITY / ROLE / RELATIONSHIP CONTRACT**.
+
+Before Stage 1 implementation writes, produce the controlling identity/role/relationship contract and prove whether the current single-role model can safely support buyer→seller activation without destructive role replacement. Final visual polish remains deferred.
