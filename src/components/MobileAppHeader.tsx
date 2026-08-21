@@ -79,7 +79,7 @@ export default function MobileAppHeader() {
           paddingLeft: 16,
           paddingRight: 16,
         }}
-        className="bg-background"
+        className="bg-[#0A234F] text-white"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
@@ -94,7 +94,7 @@ export default function MobileAppHeader() {
 
             <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>
               <span
-                className="text-foreground"
+                className="text-white"
                 style={{
                   fontSize: 'clamp(14px, 4.2vw, 19px)',
                   fontWeight: 800,
@@ -115,7 +115,7 @@ export default function MobileAppHeader() {
                   fontFamily: 'var(--font-display)',
                   whiteSpace: 'nowrap',
                 }}
-                className="text-primary"
+                className="text-[#F5A300]"
               >
                 MARKET
               </span>
@@ -146,7 +146,7 @@ export default function MobileAppHeader() {
                   paddingLeft: 2,
                   paddingRight: 2,
                 }}
-                className="bg-primary text-black"
+                className="bg-[#F5A300] text-[#0A234F]"
               >
                 {unread > 9 ? '9+' : unread}
               </span>
@@ -162,7 +162,7 @@ export default function MobileAppHeader() {
           >
             <Search style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/65" aria-hidden="true" />
             <span
-              className="text-foreground/70"
+              className="text-white/70"
               style={{
                 fontSize: 14,
                 whiteSpace: 'nowrap',
@@ -178,9 +178,9 @@ export default function MobileAppHeader() {
           <button
             aria-label="Browse and filter catalogue"
             onClick={() => navigate('/catalog')}
-            className="h-11 w-11 shrink-0 rounded-xl border border-[#f2b84b66] bg-[#1c1400] flex items-center justify-center cursor-pointer"
+            className="h-11 w-11 shrink-0 rounded-xl border border-white/15 bg-white/[0.07] flex items-center justify-center cursor-pointer"
           >
-            <Filter style={{ width: 18, height: 18 }} className="text-primary" aria-hidden="true" />
+            <Filter style={{ width: 18, height: 18 }} className="text-[#F5A300]" aria-hidden="true" />
           </button>
         </div>
       </header>
