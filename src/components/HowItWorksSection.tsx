@@ -24,22 +24,30 @@ const HowItWorksSection = () => (
       </div>
 
       <div className="px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-        <div className="grid grid-cols-1 gap-0 sm:grid-cols-2">
-          {buyerJourney.map(({ icon: Icon, label, detail }, index) => (
-            <div
-              key={label}
-              className="flex gap-4 border-b border-[#0A234F]/10 py-5 first:pt-0 last:border-b-0 sm:min-h-[132px] sm:border-b sm:border-r sm:px-6 sm:py-6 sm:first:pt-6 sm:nth-[2n]:border-r-0 sm:nth-[n+3]:border-b-0"
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0A234F] text-[#F5A300]">
-                <Icon className="h-4 w-4" aria-hidden="true" />
+        <div className="grid grid-cols-1 sm:grid-cols-2">
+          {buyerJourney.map(({ icon: Icon, label, detail }, index) => {
+            const isRightColumn = index % 2 === 1;
+            const isBottomRow = index >= 2;
+            return (
+              <div
+                key={label}
+                className={[
+                  "flex gap-4 border-b border-[#0A234F]/10 py-5 first:pt-0 last:border-b-0 sm:min-h-[132px] sm:px-6 sm:py-6 sm:first:pt-6",
+                  isRightColumn ? "sm:border-r-0" : "sm:border-r",
+                  isBottomRow ? "sm:border-b-0" : "sm:border-b",
+                ].join(" ")}
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0A234F] text-[#F5A300]">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#0E3FA9]/55">0{index + 1}</p>
+                  <p className="mt-1 text-base font-extrabold text-[#0A234F]">{label}</p>
+                  <p className="mt-1.5 text-sm leading-6 text-[#64748B]">{detail}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#0E3FA9]/55">0{index + 1}</p>
-                <p className="mt-1 text-base font-extrabold text-[#0A234F]">{label}</p>
-                <p className="mt-1.5 text-sm leading-6 text-[#64748B]">{detail}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
