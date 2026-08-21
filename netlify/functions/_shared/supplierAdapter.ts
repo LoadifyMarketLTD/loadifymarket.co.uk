@@ -109,7 +109,8 @@ export interface SupplierAdapterV1 {
   /**
    * Optional lost-response recovery hook. Providers that can query by the same
    * idempotency key used for submitOrder should implement this so an UNKNOWN
-   * outcome can be resolved without a blind duplicate submit.
+   * outcome can be resolved without a blind duplicate submit. Recovery must use
+   * the same idempotency key used for submitOrder.
    */
   findOrderByIdempotencyKey?(context: SupplierAdapterContext): Promise<SupplierAdapterResult<SupplierOrderAcknowledgement>>;
   getTracking?(context: SupplierAdapterContext, supplierOrderRef: string): Promise<SupplierAdapterResult<SupplierTrackingEvent[]>>;
