@@ -3,6 +3,60 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export const SUPPLIER_ORDER_ORCHESTRATOR_INTERFACE_VERSION = 1 as const;
 
 export type CommerceRiskAction = 'ALLOW' | 'REVIEW' | 'HOLD' | 'RESTRICT' | 'BLOCK';
+export type CommerceRiskSubject = 'buyer' | 'supplier' | 'order' | 'platform';
+
+export interface CommerceRiskDecision {
+  eligible: boolean;
+  reason: string;
+  interfaceVersion: 1;
+  action?: CommerceRiskAction;
+  riskScore?: number;
+  assessmentId?: string | null;
+  policyId?: string;
+  policyVersion?: number;
+}
+
+function isRiskDecision(value: unknown): value is CommerceRiskDecision {
+  if (!value || typeof value !== 'object') return false;
+  const row = value as Record<string, unknown>;
+  if (typeof row.eligible !== 'boolean' || typeof row.reason !== 'string' || row.interfaceVersion !== 1) return false;
+  if (row.action !== undefined && !['ALLOW', 'REVIEW', 'HOLD', 'RESTRICT', 'BLOCK'].includes(String(row.action))) return false;
+  if (row.riskScore !== undefined && typeof row.riskScore !== 'number') return false;
+  return true;
+}
+
+export async function assessSupplierCommerceRisk(
+  client: SupabaseClient,
+  input: {
+    orderId: string;
+    subjectType: CommerceRiskSubject;
+    subjectRef: string;
+    signals: Record<string, unknown>;
+    policyKey?: string;
+    idempotencyKey?: string;
+    orchestrationId?: string | null;
+  },
+): Promise<CommerceRiskDecision> {
+  try {
+    const { data, error } = await client.rpc('server_supplier_commerce_risk_decision_v1', {
+      p_order_id: input.orderId,
+      p_subject_type: input.subjectType,
+      p_subject_ref: input.subjectRef,
+      p_signals: input.signals,
+      p_policy_key: input.policyKey || 'supplier_commerce_default',
+      p_idempotency_key: input.idempotencyKey || null,
+      p_orchestration_id: input.orchestrationId || null,
+    });
+    if (error || !isRiskDecision(data)) throw error || new Error('invalid commerce risk evidence');
+    return data;
+  } catch {
+    return {
+      eligible: false,
+      reason: 'commerce_risk_unavailable',
+      interfaceVersion: SUPPLIER_ORDER_ORCHESTRATOR_INTERFACE_VERSION,
+    };
+  }
+}
 
 export interface SupplierReservationInput {
   orderId: string;
