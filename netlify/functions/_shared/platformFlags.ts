@@ -1,19 +1,19 @@
 /**
  * Centralised platform feature-flag reader.
  *
- * All serverless functions should call these helpers instead of querying
- * platform_settings directly.  The helpers are intentionally non-fatal:
- * if the DB is unreachable they fall back to safe defaults so a transient
- * read error never blocks legitimate traffic.
+ * General marketplace callers may use the compatibility reader below, which
+ * preserves the historical non-fatal defaults. Security/availability gates
+ * such as public Buyer/Seller registration must instead use the strict reader
+ * so an unavailable settings row can never silently reopen registration.
  *
  * Row layout in platform_settings
  * ┌────────────────────┬─────────────────────────────────────────────────────┐
- * │ key                │ value (JSONB)                                        │
+ * │ key                │ value (JSONB)                                      │
  * ├────────────────────┼─────────────────────────────────────────────────────┤
  * │ feature_flags      │ { sellerRegistration, buyerRegistration, rfqSystem, │
- * │                    │   reviewSystem, autoApproveProducts,                 │
- * │                    │   requireCompanyApproval }                           │
- * │ maintenance_mode   │ true | false                                        │
+ * │                    │   reviewSystem, autoApproveProducts,               │
+ * │                    │   requireCompanyApproval }                         │
+ * │ maintenance_mode   │ true | false                                      │
  * └────────────────────┴─────────────────────────────────────────────────────┘
  */
 
@@ -26,15 +26,14 @@ export interface FeatureFlags {
   reviewSystem: boolean;
   autoApproveProducts: boolean;
   /**
-   * When true, newly registered company sellers (sellerType='company') are
-   * flagged with requiresAdminApproval=true and cannot auto-activate via
-   * Stripe alone — admin must explicitly approve them.
-   * Default: false (all sellers auto-activate as today).
+   * When true, newly registered company sellers are flagged as requiring an
+   * explicit Loadify approval step. This flag is readiness policy, not proof
+   * that Stripe alone can activate a seller.
    */
   requireCompanyApproval: boolean;
 }
 
-/** Safe defaults — everything enabled except auto-approve and company gate. */
+/** Historical compatibility defaults for non-critical callers. */
 const FLAG_DEFAULTS: FeatureFlags = {
   sellerRegistration: true,
   buyerRegistration: true,
@@ -44,11 +43,16 @@ const FLAG_DEFAULTS: FeatureFlags = {
   requireCompanyApproval: false,
 };
 
+function mergeFeatureFlags(value: unknown): FeatureFlags | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return { ...FLAG_DEFAULTS, ...(value as Partial<FeatureFlags>) };
+}
+
 /**
- * Reads the feature_flags row from platform_settings and merges it with
- * FLAG_DEFAULTS so callers always receive a fully-typed object.
+ * Compatibility reader for non-critical feature behavior.
  *
- * Non-fatal: returns FLAG_DEFAULTS on any DB error.
+ * Non-fatal: returns historical defaults when the row cannot be read. Do NOT
+ * use this function for registration/activation availability gates.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getFeatureFlags(supabase: SupabaseClient<any>): Promise<FeatureFlags> {
@@ -58,13 +62,36 @@ export async function getFeatureFlags(supabase: SupabaseClient<any>): Promise<Fe
       .select('value')
       .eq('key', 'feature_flags')
       .maybeSingle();
-    if (data?.value && typeof data.value === 'object') {
-      return { ...FLAG_DEFAULTS, ...(data.value as Partial<FeatureFlags>) };
-    }
+    return mergeFeatureFlags(data?.value) ?? { ...FLAG_DEFAULTS };
   } catch {
-    // Non-fatal — fall through to defaults.
+    return { ...FLAG_DEFAULTS };
   }
-  return { ...FLAG_DEFAULTS };
+}
+
+/**
+ * Strict reader for security/availability-sensitive registration boundaries.
+ *
+ * Any query error, missing row, or malformed value rejects. Callers must fail
+ * closed (normally 503) rather than assuming registration is enabled.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getFeatureFlagsStrict(supabase: SupabaseClient<any>): Promise<FeatureFlags> {
+  const { data, error } = await supabase
+    .from('platform_settings')
+    .select('value')
+    .eq('key', 'feature_flags')
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`feature_flags query failed: ${error.message}`);
+  }
+
+  const flags = mergeFeatureFlags(data?.value);
+  if (!flags) {
+    throw new Error('feature_flags row is missing or malformed');
+  }
+
+  return flags;
 }
 
 /**
