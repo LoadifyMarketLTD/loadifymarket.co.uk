@@ -93,6 +93,29 @@ describe('start-seller-activation', () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
+  it('fails closed when Seller registration availability cannot be verified', async () => {
+    const rpc = vi.fn();
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({ rpc, auth: { admin: { updateUserById: vi.fn() } } })),
+    }));
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: { id: 'buyer-1', role: 'buyer', email: 'buyer@example.com', appMetadata: {} },
+      }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      getFeatureFlags: vi.fn().mockRejectedValue(new Error('platform settings unavailable')),
+    }));
+
+    const { handler } = await import('../start-seller-activation');
+    const res = await handler(makeEvent(), {} as never);
+
+    expect(res.statusCode).toBe(503);
+    expect(JSON.parse(res.body).error).toContain('could not be verified');
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it('starts Seller activation for the authenticated actor only and syncs app metadata', async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: { ok: true, sellerStatus: 'draft', createdSellerProfile: true },
