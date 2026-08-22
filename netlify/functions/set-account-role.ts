@@ -84,20 +84,6 @@ export const handler: Handler = async (event) => {
       }, METHODS);
     }
 
-    const { error: appMetadataError } = await supabase.auth.admin.updateUserById(userId, {
-      app_metadata: {
-        ...auth.actor.appMetadata,
-        role: 'seller',
-      },
-    });
-
-    if (appMetadataError) {
-      console.error('set-account-role: app_metadata sync failed:', appMetadataError.message);
-      return jsonResponse(500, {
-        error: 'Seller activation started but session authorization could not be synchronized. Please sign in again.',
-      }, METHODS);
-    }
-
     const result = (data && typeof data === 'object') ? data as Record<string, unknown> : {};
     return jsonResponse(200, {
       ok: true,
@@ -130,20 +116,6 @@ export const handler: Handler = async (event) => {
   if (buyerProfileError) {
     console.error('set-account-role: buyer profile init failed:', buyerProfileError.message);
     return jsonResponse(500, { error: 'Failed to initialize Buyer account' }, METHODS);
-  }
-
-  const { error: appMetadataError } = await supabase.auth.admin.updateUserById(userId, {
-    app_metadata: {
-      ...auth.actor.appMetadata,
-      role: 'buyer',
-    },
-  });
-
-  if (appMetadataError) {
-    console.error('set-account-role: app_metadata sync failed:', appMetadataError.message);
-    return jsonResponse(500, {
-      error: 'Account state was saved but session authorization could not be synchronized. Please sign in again.',
-    }, METHODS);
   }
 
   return jsonResponse(200, { ok: true, role: 'buyer', compatibilityEndpoint: true }, METHODS);
