@@ -174,13 +174,20 @@ try {
 
     $numericMigrations = @(
         Get-ChildItem -LiteralPath (Join-Path $WorktreePath "supabase") -File -Filter "*.sql" |
-            Where-Object { $_.Name -match '^\d+_.*\.sql$' } |
+            Where-Object {
+                $_.Name -match '^\d+_.*\.sql$' -and
+                $_.Name -ne '00_consolidated_schema.sql'
+            } |
             Sort-Object `
                 @{ Expression = { [int]([regex]::Match($_.Name, '^(\d+)_').Groups[1].Value) } }, `
                 @{ Expression = { $_.Name } }
     )
     if ($numericMigrations.Count -eq 0) {
-        throw "STOP: no numeric migrations found in supabase/"
+        throw "STOP: no executable numeric migrations found in supabase/"
+    }
+
+    if ($numericMigrations.Name -contains '00_consolidated_schema.sql') {
+        throw "STOP: deprecated consolidated schema tombstone entered executable replay set"
     }
 
     Write-Host ("Numeric replay files: {0}" -f $numericMigrations.Count)
