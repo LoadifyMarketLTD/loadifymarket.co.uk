@@ -12,6 +12,16 @@ interface Props {
 
 type FetchState = 'loading' | 'active' | 'draft' | 'submitted' | 'suspended' | 'error';
 
+type LiveSellerProfile = {
+  sellerStatus: string | null;
+  sellerType: string | null;
+  profileCompleted: boolean | null;
+  storeCreated: boolean | null;
+  firstProductCreated: boolean | null;
+};
+
+const CANONICAL_SELLER_TYPES = new Set(['individual', 'sole_trader', 'company']);
+
 const CardShell = ({ children }: { children: ReactNode }) => (
   <div className="min-h-screen bg-background flex items-center justify-center px-4">
     <div className="rounded-xl p-10 max-w-md w-full text-center" style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -24,16 +34,31 @@ function isOnboardingCatalogueRoute(pathname: string): boolean {
   return /^\/seller\/products\/(?:new|[^/]+\/edit)$/.test(pathname);
 }
 
+function hasCanonicalOnboardingTruth(
+  profile: LiveSellerProfile | null | undefined,
+  onboardingCompleted: boolean | null | undefined,
+): boolean {
+  return Boolean(
+    onboardingCompleted === true &&
+    profile &&
+    profile.sellerType &&
+    CANONICAL_SELLER_TYPES.has(profile.sellerType) &&
+    profile.profileCompleted === true &&
+    profile.storeCreated === true &&
+    profile.firstProductCreated === true
+  );
+}
+
 /**
  * Seller workspace guard.
  *
  * Full Seller Workspace access requires BOTH:
  *   - sellerStatus === 'active'; and
- *   - server-managed users.onboardingCompleted === true.
+ *   - live canonical onboarding truth: canonical sellerType + server-managed
+ *     profile/store/catalogue projections + users.onboardingCompleted.
  *
- * This keeps commercial activation separate from marketplace setup while
- * preventing an active seller from bypassing mandatory store/catalogue setup by
- * navigating directly to /seller.
+ * Do not trust a hydrated onboardingCompleted=true by itself. Historical rows
+ * may contain legacy completion flags created before Stage 3 canonical truth.
  *
  * Admin bypass is allowed only through hasAdminAccess(), which itself requires
  * DB-hydrated isAdmin=true.
@@ -66,10 +91,10 @@ export default function RequireSeller({ children }: Props) {
     return 'loading';
   });
   const [onboardingComplete, setOnboardingComplete] = useState<boolean>(
-    () => user?.onboardingCompleted === true,
+    () => Boolean(user && hasAdminAccess(user)),
   );
   const [onboardingChecked, setOnboardingChecked] = useState<boolean>(
-    () => Boolean(user && (hasAdminAccess(user) || user.onboardingCompleted === true)),
+    () => Boolean(user && hasAdminAccess(user)),
   );
 
   useEffect(() => {
@@ -87,19 +112,7 @@ export default function RequireSeller({ children }: Props) {
     if (user.sellerStatus === 'suspended') {
       queueMicrotask(() => {
         setFetchState('suspended');
-        setOnboardingChecked(true);
-      });
-      return;
-    }
-
-    // A DB-hydrated true completion flag is safe to reuse. A false value may be
-    // stale within the current session immediately after the Stage 3 server
-    // reconciliation marks onboarding complete, so resolve false/missing state
-    // from the live database before deciding workspace access.
-    if (isActiveSellerAccess(user) && user.onboardingCompleted === true) {
-      queueMicrotask(() => {
-        setFetchState('active');
-        setOnboardingComplete(true);
+        setOnboardingComplete(false);
         setOnboardingChecked(true);
       });
       return;
@@ -111,9 +124,9 @@ export default function RequireSeller({ children }: Props) {
       const [profileRes, userRes] = await Promise.all([
         supabase
           .from('seller_profiles')
-          .select('sellerStatus')
+          .select('sellerStatus, sellerType, profileCompleted, storeCreated, firstProductCreated')
           .eq('userId', user.id)
-          .maybeSingle<{ sellerStatus: string | null }>(),
+          .maybeSingle<LiveSellerProfile>(),
         supabase
           .from('users')
           .select('onboardingCompleted')
@@ -123,9 +136,13 @@ export default function RequireSeller({ children }: Props) {
 
       if (cancelled) return;
 
-      // Setup completion fails closed on lookup failure. This cannot grant
-      // workspace access; at worst the seller is sent back to onboarding.
-      const setupComplete = !userRes.error && userRes.data?.onboardingCompleted === true;
+      // Full workspace setup fails closed on either lookup failure and requires
+      // the complete Stage 3 canonical truth, not a legacy completion boolean.
+      const setupComplete = Boolean(
+        !profileRes.error &&
+        !userRes.error &&
+        hasCanonicalOnboardingTruth(profileRes.data, userRes.data?.onboardingCompleted),
+      );
       setOnboardingComplete(setupComplete);
       setOnboardingChecked(true);
 
@@ -230,8 +247,8 @@ export default function RequireSeller({ children }: Props) {
   }
 
   // Mandatory Stage 3 setup cannot be bypassed through a direct Seller
-  // Workspace URL, even if Stripe/profile facts have already made sellerStatus
-  // active. The onboarding route itself is outside RequireSeller.
+  // Workspace URL, even if sellerStatus or a historical completion flag says
+  // active/complete. The onboarding route itself is outside RequireSeller.
   if (!onboardingComplete) return <Navigate to="/onboarding" replace />;
 
   if (fetchState === 'draft') return <Navigate to="/onboarding" replace />;
