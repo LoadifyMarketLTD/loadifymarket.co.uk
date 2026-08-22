@@ -1,99 +1,40 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck, Store } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
+import { useAuthStore } from "@/store";
 
-/* ── Password strength ─────────────────────────────────────────────── */
-const getStrength = (pw: string) => {
-  if (!pw) return { label: "", pct: 0, color: "bg-gray-300" };
-  if (pw.length < 6) return { label: "Too short", pct: 20, color: "bg-danger/100" };
-  if (pw.length < 8) return { label: "Weak", pct: 40, color: "bg-orange-400" };
-  const hasUpper = /[A-Z]/.test(pw);
-  const hasNum = /[0-9]/.test(pw);
-  const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-  const score = [hasUpper, hasNum, hasSpecial].filter(Boolean).length;
-  if (score === 0) return { label: "Moderate", pct: 60, color: "bg-primary" };
-  if (score === 1) return { label: "Good", pct: 75, color: "bg-lime-500" };
-  return { label: "Strong", pct: 100, color: "bg-green-600" };
-};
+const inputClass =
+  "mt-1.5 block h-11 w-full rounded-xl border border-[#0A234F]/15 bg-white px-3.5 text-sm text-[#0A234F] outline-none transition focus:border-[#0E3FA9]/60 focus:ring-2 focus:ring-[#0E3FA9]/10";
+const labelClass = "block text-xs font-extrabold text-[#334155]";
 
-/* ── Shared primitives ─────────────────────────────────────────────── */
-const lbl = "block text-[13px] font-semibold text-slate-300 uppercase tracking-wide mb-0.5";
-const req = <span className="text-danger"> *</span>;
-
-/* Touch-friendly input — h-11 (44px) meets Apple/Google touch-target spec */
-const inputBase =
-  "block w-full h-11 rounded-lg border border-white/10 bg-elevated text-white text-sm px-3 focus:outline-none focus:border-primary focus:ring-0";
-
-/* Select wrapper adds the caret manually */
-const SelectField = ({
-  id, name, value, onChange, required = false, children,
-}: {
-  id: string; name: string; value: string;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  required?: boolean; children: React.ReactNode;
-}) => (
-  <div className="relative">
-    <select
-      id={id} name={name} value={value} onChange={onChange} required={required}
-      className={`${inputBase} appearance-none pr-6 cursor-pointer`}
-    >
-      {children}
-    </select>
-    <svg
-      className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none"
-      fill="none" viewBox="0 0 24 24" stroke="currentColor"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  </div>
-);
-
-/* ── Main page ─────────────────────────────────────────────────────── */
 const Signup = () => {
-  const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [registrationDisabled, setRegistrationDisabled] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-
+  const { user } = useAuthStore();
   const isSeller = searchParams.get("type") === "seller";
-  const isPrivate = searchParams.get("account") === "private";
   const role: "buyer" | "seller" = isSeller ? "seller" : "buyer";
 
-  const [f, setF] = useState({
-    /* Col 1 */
-    firstName: "", middleName: "", lastName: "", email: "",
-    newsletter: false, vatNumber: "", customerType: "", requestAssistance: false,
-    /** Seller-only: captured for compliance routing. */
+  const [loading, setLoading] = useState(false);
+  const [registrationDisabled, setRegistrationDisabled] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
     sellerType: "" as "" | "individual" | "sole_trader" | "company",
-    /* Col 2 */
-    company: "", phone: "", country: "United Kingdom",
-    postcode: "", streetAddress: "", city: "",
-    /* Col 3 */
-    password: "", confirmPassword: "", showPassword: false,
-    /* Bottom */
     agreeTerms: false,
     agreeSellerCompliance: false,
+    newsletter: false,
   });
 
-  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    setF((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }));
-  };
-
-  const strength = getStrength(f.password);
-  const passwordsMatch = f.confirmPassword.length > 0 && f.password === f.confirmPassword;
-  const passwordsMismatch = f.confirmPassword.length > 0 && f.password !== f.confirmPassword;
-
-  // Check registration feature flags on mount and whenever the role toggle changes
   useEffect(() => {
     void supabase
       .from("platform_settings")
@@ -103,86 +44,119 @@ const Signup = () => {
       .then(({ data }) => {
         if (data?.value && typeof data.value === "object") {
           const flags = data.value as Record<string, boolean>;
-          const flag = isSeller ? flags.sellerRegistration : flags.buyerRegistration;
-          setRegistrationDisabled(flag === false);
+          setRegistrationDisabled((isSeller ? flags.sellerRegistration : flags.buyerRegistration) === false);
         }
       });
   }, [isSeller]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const title = isSeller ? "Create your seller account" : "Create your Loadify account";
+  const description = isSeller
+    ? "Start with one secure Loadify identity, then complete your business, verification, store and payout setup step by step."
+    : "Create one account for shopping, orders, tracking, returns and account management.";
+
+  const destination = useMemo(() => {
+    if (!user) return null;
+    if (user.role === "admin") return "/admin";
+    if (isSeller) {
+      if (user.role === "seller") {
+        return user.sellerStatus === "active" ? "/seller" : "/onboarding";
+      }
+      return null;
+    }
+    return "/buyer";
+  }, [user, isSeller]);
+
+  const setField = (name: keyof typeof form, value: string | boolean) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const startSellerForExistingAccount = async () => {
+    if (!user || user.role === "admin") return;
     setError("");
-    if (!f.firstName.trim() || !f.lastName.trim()) {
-      setError("First name and last name are required."); return;
+    setLoading(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/start-seller-activation", {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Unable to start Seller setup");
+
+      // Refresh the auth session so App.tsx rehydrates the newly persisted
+      // compatibility role before RequireSellerAny evaluates /onboarding.
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        throw new Error("Seller setup started, but your session could not be refreshed. Please sign in again to continue.");
+      }
+
+      toast({
+        title: "Seller setup started",
+        description: "Your Buyer access stays on this same Loadify account.",
+      });
+      navigate("/onboarding", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to start Seller setup");
+    } finally {
+      setLoading(false);
     }
-    if (!f.email.trim()) { setError("Email address is required."); return; }
-    if (isSeller && !f.company.trim()) { setError("Store / company name is required for seller accounts."); return; }
-    if (f.password.length < 8) {
-      setError("Password must be at least 8 characters."); return;
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError("");
+
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setError("First name and last name are required.");
+      return;
     }
-    if (f.password !== f.confirmPassword) {
-      setError("Passwords do not match."); return;
+    if (!form.email.trim()) {
+      setError("Email address is required.");
+      return;
     }
-    if (!f.agreeTerms) {
-      setError("You must agree to the Privacy Policy and Terms of Use."); return;
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
     }
-    if (isSeller && !f.agreeSellerCompliance) {
-      setError("Seller compliance confirmation is required."); return;
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
     }
-    if (isSeller && !f.sellerType) {
-      setError("Please select your seller type (Individual, Sole Trader, or Company)."); return;
+    if (isSeller && !form.sellerType) {
+      setError("Select the legal type you will sell under.");
+      return;
+    }
+    if (!form.agreeTerms) {
+      setError("You must agree to the Terms and Privacy Policy.");
+      return;
+    }
+    if (isSeller && !form.agreeSellerCompliance) {
+      setError("Please confirm the Seller Terms and verification requirements.");
+      return;
     }
 
     setLoading(true);
     try {
-      const businessAddress: Record<string, string> = {};
-      if (f.streetAddress.trim()) businessAddress.streetAddress = f.streetAddress.trim();
-      if (f.city.trim())          businessAddress.city          = f.city.trim();
-      if (f.postcode.trim())      businessAddress.postcode      = f.postcode.trim();
-      if (f.country.trim())       businessAddress.country       = f.country.trim();
-
-      const body: Record<string, unknown> = {
-        firstName:          f.firstName.trim(),
-        lastName:           f.lastName.trim(),
-        email:              f.email.trim(),
-        password:           f.password,
-        role,
-        ...(f.middleName.trim()   ? { middleName:          f.middleName.trim() }   : {}),
-        ...(f.phone.trim()        ? { phone:               f.phone.trim() }        : {}),
-        ...(f.vatNumber.trim()    ? { vatNumber:           f.vatNumber.trim() }    : {}),
-        ...(f.customerType        ? { customerType:        f.customerType }        : {}),
-        ...(f.newsletter          ? { newsletter:          true }                  : {}),
-        ...(f.requestAssistance   ? { requestAssistance:   true }                  : {}),
-        ...(Object.keys(businessAddress).length > 0 ? { businessAddress }         : {}),
-        // Seller-type captured at registration for compliance routing
-        ...(isSeller && f.sellerType ? { sellerType: f.sellerType }               : {}),
-        ...(isSeller && f.agreeSellerCompliance ? { sellerComplianceConfirmed: true } : {}),
-      };
-
-      // storeName is used for sellers; companyName for buyers
-      if (f.company.trim()) {
-        if (role === 'seller') {
-          body.storeName   = f.company.trim();
-        } else {
-          body.companyName = f.company.trim();
-        }
-      }
-
-      const res = await fetch("/.netlify/functions/register", {
+      const response = await fetch("/.netlify/functions/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          role,
+          newsletter: form.newsletter,
+          ...(isSeller ? { sellerType: form.sellerType } : {}),
+        }),
       });
-      const json = (await res.json()) as { error?: string; message?: string };
-      if (!res.ok) throw new Error(json.error || "Registration failed");
+      const payload = (await response.json()) as { error?: string; message?: string };
+      if (!response.ok) throw new Error(payload.error || "Registration failed");
 
       toast({
-        title: "Account created!",
-        description: "Check your email to confirm your account, then sign in.",
+        title: "Account created",
+        description: "Check your email to confirm your address, then sign in.",
       });
-      // Redirect to login with a flag so the login page can show
-      // the "check your email" confirmation banner.
-      navigate("/login?registered=1", { replace: true });
+      navigate(`/login?registered=1${isSeller ? "&next=%2Fonboarding" : ""}`, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
@@ -193,555 +167,232 @@ const Signup = () => {
   return (
     <MainLayout>
       <SEO
-        title="Create an Account | Loadify Market"
-        description="Sign up to Loadify Market. Create a buyer or seller account and start buying or listing products on the UK's multi-category marketplace."
+        title={isSeller ? "Start Selling | Loadify Market" : "Create an Account | Loadify Market"}
+        description={isSeller
+          ? "Create a Marketplace Seller account on Loadify and continue through business, verification, store and payout setup."
+          : "Create a Loadify Market account for shopping, orders, tracking and returns."}
         robots="noindex, nofollow"
       />
-      {/* ── Full-page container — light grey, NO card ────────────── */}
-      <main id="main-content" className="bg-background pt-4 md:pt-28 pb-10">
-        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
 
-          {/* ══════════════════════════════════════════════════════════
-              PAGE HEADER — dominant B2B registration heading
-          ══════════════════════════════════════════════════════════ */}
-          <div className="mb-3">
-
-            {/* Primary heading bar */}
-            <div className="bg-surface border border-white/10 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <h1 className="text-white text-xl font-black uppercase tracking-widest leading-tight">
-                  {isPrivate ? "Personal Account Registration" : "Business Account Registration"}
-                </h1>
-                <p className="text-slate-500 text-[11px] uppercase tracking-widest mt-0.5">
-                  {isSeller
-                    ? isPrivate ? "Private Seller Account — Loadify Market" : "Trade Supplier Account — Loadify Market Wholesale Platform"
-                    : isPrivate ? "Private Buyer Account — Loadify Market" : "Trade Buyer Account — Loadify Market Wholesale Platform"}
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 shrink-0">
-                {/* Buyer / Supplier toggle */}
-                <div className="flex items-center gap-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const p = new URLSearchParams(searchParams);
-                      p.delete("type");
-                      setSearchParams(p);
-                    }}
-                    className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
-                      !isSeller ? "bg-primary text-white" : "bg-transparent text-slate-500 hover:text-white"
-                    }`}
-                  >
-                    Buyer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const p = new URLSearchParams(searchParams);
-                      p.set("type", "seller");
-                      setSearchParams(p);
-                    }}
-                    className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
-                      isSeller ? "bg-primary text-white" : "bg-transparent text-slate-500 hover:text-white"
-                    }`}
-                  >
-                    Supplier
-                  </button>
-                </div>
-                {/* Company / Private toggle */}
-                <div className="flex items-center gap-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const p = new URLSearchParams(searchParams);
-                      p.delete("account");
-                      setSearchParams(p);
-                    }}
-                    className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
-                      !isPrivate ? "bg-secondary text-white" : "bg-transparent text-slate-500 hover:text-white"
-                    }`}
-                  >
-                    Company
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const p = new URLSearchParams(searchParams);
-                      p.set("account", "private");
-                      setSearchParams(p);
-                    }}
-                    className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
-                      isPrivate ? "bg-secondary text-white" : "bg-transparent text-slate-500 hover:text-white"
-                    }`}
-                  >
-                    Private
-                  </button>
-                </div>
-                <span className="text-slate-500 text-[11px] hidden sm:block">
-                  Registered?{" "}
-                  <Link to="/login" className="text-primary hover:underline font-semibold">
-                    Sign In
-                  </Link>
-                </span>
-              </div>
-            </div>
-
-            {/* IMPORTANT notice bar — like reference */}
-            <div className="bg-warning/10 border-l-4 border-warning px-5 py-2.5 flex items-start gap-3">
-                <span className="text-warning text-[11px] font-black uppercase tracking-widest shrink-0 mt-0.5">
-                  Important:
-                </span>
-                <p className="text-warning text-[11px] leading-snug">
-                {isPrivate
-                  ? <>This registration is for <strong>individual buyers and sellers</strong>. All accounts are subject to review.</>
-                  : <>Create an account to buy or sell on Loadify Market. Available for <strong>individuals and businesses</strong>. Loadify Market is UK-based and international sellers may apply subject to UK legal and Stripe compliance requirements.</>
-
-                }
-                {" "}Fields marked <span className="text-danger font-bold">*</span> are mandatory. Already have an account?{" "}
-                <Link to="/login" className="underline font-semibold hover:text-warning">Sign in here</Link>.
-              </p>
-            </div>
-
-          </div>
-
-          {/* ── REGISTRATION DISABLED BANNER ──────────────────────── */}
-          {registrationDisabled && (
-            <div className="flex items-start gap-2 bg-primary-soft border border-primary/40 px-4 py-3 mt-2">
-              <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <p className="text-sm text-primary">
-                <strong>{isSeller ? "Seller" : "Buyer"} registration is currently disabled.</strong>{" "}
-                New accounts cannot be created at this time. Please check back later or{" "}
-                <Link to="/login" className="underline font-semibold hover:text-primary">sign in</Link> if you already have an account.
-              </p>
-            </div>
-          )}
-
-          {/* ── ERROR BANNER ──────────────────────────────────────── */}
-          {error && (
-            <div className="flex items-start gap-2 bg-danger/10 border border-danger/30 px-4 py-2.5 mt-0">
-              <AlertCircle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
-              <p className="text-sm text-danger">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} noValidate>
-
-            {/* ═══════════════════════════════════════════════════════
-                MAIN GRID — 3 columns desktop, 2 tablet, 1 mobile
-            ════════════════════════════════════════════════════════ */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-white/10 border-t-0">
-
-              {/* ╔══════════════════════════════════════════════════╗
-                  ║  COLUMN 1 — Personal / Business Information      ║
-                  ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-surface border-b md:border-b-0 md:border-r border-white/10">
-                {/* Column header */}
-                <div className="bg-secondary/30 border-b border-white/10 px-4 py-2">
-                  <span className="text-[11px] font-black text-white uppercase tracking-widest">
-                    Personal / Business Information
-                  </span>
-                </div>
-
-                <div className="px-4 py-3 space-y-2">
-
-                  <div>
-                    <label htmlFor="firstName" className={lbl}>First Name{req}</label>
-                    <input
-                      id="firstName" name="firstName" type="text"
-                      autoComplete="given-name" required
-                      value={f.firstName} onChange={set} className={inputBase}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="middleName" className={lbl}>Middle Name / Initial</label>
-                    <input
-                      id="middleName" name="middleName" type="text"
-                      value={f.middleName} onChange={set} className={inputBase}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="lastName" className={lbl}>Last Name{req}</label>
-                    <input
-                      id="lastName" name="lastName" type="text"
-                      autoComplete="family-name" required
-                      value={f.lastName} onChange={set} className={inputBase}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className={lbl}>Email Address{req}</label>
-                    <input
-                      id="email" name="email" type="email"
-                      autoComplete="email" required
-                      value={f.email} onChange={set} className={inputBase}
-                    />
-                  </div>
-
-                  {/* Newsletter checkbox */}
-                  <div className="flex items-start gap-2 py-0.5">
-                    <input
-                      id="newsletter" name="newsletter" type="checkbox"
-                      checked={f.newsletter} onChange={set}
-                      className="mt-0.5 h-3.5 w-3.5 border border-white/10 cursor-pointer"
-                    />
-                    <label
-                      htmlFor="newsletter"
-                      className="text-[11px] text-slate-400 leading-snug cursor-pointer"
-                    >
-                      Subscribe to our trade newsletter for exclusive offers and updates
-                    </label>
-                  </div>
-
-                  {!isPrivate && (
-                  <div>
-                    <label htmlFor="vatNumber" className={lbl}>Tax / VAT Number</label>
-                    <input
-                      id="vatNumber" name="vatNumber" type="text"
-                      placeholder="e.g. GB123456789"
-                      value={f.vatNumber} onChange={set} className={inputBase}
-                    />
-                  </div>
-                  )}
-
-                  <div>
-                    <label htmlFor="customerType" className={lbl}>Customer Type{req}</label>
-                    <SelectField
-                      id="customerType" name="customerType" required
-                      value={f.customerType} onChange={set}
-                    >
-                      <option value="">— Please Select —</option>
-                      <option>Retailer</option>
-                      <option>Wholesaler / Distributor</option>
-                      <option>Online Seller</option>
-                      <option>Market Trader</option>
-                      <option>Sole Trader</option>
-                      <option>Limited Company</option>
-                      <option>Charity / Non-Profit</option>
-                      <option>Other</option>
-                    </SelectField>
-                  </div>
-
-                  {/* Assistance checkbox */}
-                  <div className="flex items-start gap-2 py-0.5">
-                    <input
-                      id="requestAssistance" name="requestAssistance" type="checkbox"
-                      checked={f.requestAssistance} onChange={set}
-                      className="mt-0.5 h-3.5 w-3.5 border border-white/10 cursor-pointer"
-                    />
-                    <label
-                      htmlFor="requestAssistance"
-                      className="text-[11px] text-slate-400 leading-snug cursor-pointer"
-                    >
-                      I would like assistance setting up my account from the sales team
-                    </label>
-                  </div>
-
-                  {/* Seller type — shown only for seller registrations */}
-                  {isSeller && (
-                    <div>
-                      <label htmlFor="sellerType" className={lbl}>
-                        Seller Type{req}
-                      </label>
-                      <SelectField
-                        id="sellerType" name="sellerType" required
-                        value={f.sellerType} onChange={set}
-                      >
-                        <option value="">— Please Select —</option>
-                        <option value="individual">Individual (Private Seller)</option>
-                        <option value="sole_trader">Sole Trader</option>
-                        <option value="company">Registered Company (Ltd / PLC)</option>
-                      </SelectField>
-                      <p className="text-[10px] text-slate-500 mt-0.5">
-                        Company sellers must provide their Companies House registration number and VAT number.
-                      </p>
-                    </div>
-                  )}
-
-                </div>
-              </div>
-
-              {/* ╔══════════════════════════════════════════════════╗
-                  ║  COLUMN 2 — Address Information                  ║
-                  ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-elevated border-b md:border-b-0 md:border-r-0 lg:border-r border-white/10">
-                {/* Column header */}
-                <div className="bg-secondary/30 border-b border-white/10 px-4 py-2">
-                  <span className="text-[11px] font-black text-white uppercase tracking-widest">
-                    Address Information
-                  </span>
-                </div>
-
-                <div className="px-4 py-3 space-y-2">
-
-                  <div>
-                    <label htmlFor="company" className={lbl}>Company{isSeller && req}</label>
-                    <input
-                      id="company" name="company" type="text"
-                      autoComplete="organization" required={isSeller}
-                      placeholder={isSeller ? "" : "Optional"}
-                      value={f.company} onChange={set} className={inputBase}
-                    />
-                    {!isSeller && (
-                      <p className="text-[10px] text-slate-500 mt-0.5">Optional — leave blank if you are an individual buyer.</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="phone" className={lbl}>Phone Number{req}</label>
-                    <input
-                      id="phone" name="phone" type="tel"
-                      autoComplete="tel" required
-                      value={f.phone} onChange={set} className={inputBase}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="country" className={lbl}>Country{req}</label>
-                    <SelectField
-                      id="country" name="country" required
-                      value={f.country} onChange={set}
-                    >
-                      <option>United Kingdom</option>
-                      <option>Republic of Ireland</option>
-                      <option>Channel Islands</option>
-                      <option>Isle of Man</option>
-                      <option>Other</option>
-                    </SelectField>
-                  </div>
-
-                  <div>
-                    <label htmlFor="postcode" className={lbl}>Zip / Postcode{req}</label>
-                    <div className="flex gap-0">
-                      <input
-                        id="postcode" name="postcode" type="text" required
-                        value={f.postcode} onChange={set}
-                        className={`${inputBase} flex-1`}
-                      />
-                      <button
-                        type="button"
-                        className="px-3 h-11 bg-primary hover:bg-primary-hover text-black text-[11px] font-black uppercase tracking-wide border border-primary-hover transition-colors whitespace-nowrap rounded-r-lg"
-                      >
-                        Find Address
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      Enter your postcode and click "Find Address" to auto-fill.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="streetAddress" className={lbl}>Street Address{req}</label>
-                    <input
-                      id="streetAddress" name="streetAddress" type="text"
-                      autoComplete="street-address" required
-                      value={f.streetAddress} onChange={set} className={inputBase}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="city" className={lbl}>City{req}</label>
-                    <input
-                      id="city" name="city" type="text"
-                      autoComplete="address-level2" required
-                      value={f.city} onChange={set} className={inputBase}
-                    />
-                  </div>
-
-                </div>
-              </div>
-
-              {/* ╔══════════════════════════════════════════════════╗
-                  ║  COLUMN 3 — Sign-in Information                  ║
-                  ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-surface md:col-span-2 lg:col-span-1">
-                {/* Column header */}
-                <div className="bg-secondary/30 border-b border-white/10 px-4 py-2">
-                  <span className="text-[11px] font-black text-white uppercase tracking-widest">
-                    Sign-in Information
-                  </span>
-                </div>
-
-                <div className="px-4 py-3 space-y-2">
-
-                  <div>
-                    <label htmlFor="password" className={lbl}>Password{req}</label>
-                    <div className="relative">
-                      <input
-                        id="password" name="password"
-                        type={showPw ? "text" : "password"}
-                        autoComplete="new-password" required
-                        value={f.password} onChange={set}
-                        className={`${inputBase} pr-8`}
-                      />
-                      <button
-                        type="button"
-                        aria-label={showPw ? "Hide password" : "Show password"}
-                        onClick={() => setShowPw((v) => !v)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                      >
-                        {showPw ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-
-                    {/* Strength bar */}
-                    {f.password.length > 0 && (
-                      <div className="mt-1.5 space-y-0.5">
-                        <div className="h-[3px] w-full bg-white/10">
-                          <div
-                            className={`h-full transition-all duration-300 ${strength.color}`}
-                            style={{ width: `${strength.pct}%` }}
-                          />
-                        </div>
-                        <p className="text-[11px] text-slate-500">
-                          Password strength:{" "}
-                          <span className="font-semibold text-slate-300">{strength.label}</span>
-                        </p>
-                      </div>
-                    )}
-
-                    <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
-                      Must be at least 8 characters. Use a combination of uppercase letters,
-                      numbers, and symbols for a stronger password.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="confirmPassword" className={lbl}>Confirm Password{req}</label>
-                    <input
-                      id="confirmPassword" name="confirmPassword"
-                      type={showPw ? "text" : "password"}
-                      autoComplete="new-password" required
-                      value={f.confirmPassword} onChange={set}
-                      className={`${inputBase} ${passwordsMismatch ? "border-red-500" : ""}`}
-                    />
-                    {passwordsMatch && (
-                      <p className="text-[11px] text-success mt-0.5 font-medium">
-                        ✓ Passwords match
-                      </p>
-                    )}
-                    {passwordsMismatch && (
-                      <p className="text-[11px] text-red-500 mt-0.5">
-                        Passwords do not match
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Show Password checkbox */}
-                  <div className="flex items-center gap-2 pt-1">
-                    <input
-                      id="showPassword" type="checkbox"
-                      checked={showPw} onChange={() => setShowPw((v) => !v)}
-                      className="h-3.5 w-3.5 border border-white/10 cursor-pointer"
-                    />
-                    <label
-                      htmlFor="showPassword"
-                      className="text-[11px] text-slate-400 cursor-pointer select-none"
-                    >
-                      Show Password
-                    </label>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
-            {/* end 3-col grid */}
-
-            {/* ════════════════════════════════════════════════════════
-                BOTTOM SECTION — reCAPTCHA · Terms · Submit
-            ════════════════════════════════════════════════════════ */}
-            <div className="bg-surface border border-t-4 border-t-primary border-x-white/10 border-b-white/10">
-
-              <div className="px-5 py-4 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-
-                {/* Left: reCAPTCHA + Terms */}
-                <div className="flex flex-col gap-3">
-
-                  {/* Mandatory terms checkbox */}
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Legal Agreement <span className="text-danger">*</span></p>
-                    <div className="flex items-start gap-2 border border-white/10 bg-elevated px-3 py-2.5 max-w-lg">
-                      <input
-                        id="agreeTerms" name="agreeTerms" type="checkbox"
-                        required checked={f.agreeTerms} onChange={set}
-                        className="mt-0.5 h-4 w-4 border-2 border-white/30 cursor-pointer shrink-0"
-                      />
-                      <label
-                        htmlFor="agreeTerms"
-                        className="text-xs text-slate-300 leading-relaxed cursor-pointer"
-                      >
-                        <span className="text-danger font-bold">*</span>{" "}
-                        I have read and agree to the{" "}
-                        <Link to="/privacy" className="text-primary underline font-semibold">
-                          Privacy Policy
-                        </Link>{" "}
-                        and{" "}
-                        <Link to="/terms" className="text-primary underline font-semibold">
-                          Terms and Conditions of Use
-                        </Link>
-                        . I confirm I am registering for <strong>business use only</strong> and am
-                        authorised to create this account on behalf of my organisation.
-                      </label>
-                    </div>
-                  </div>
-                  {isSeller && (
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Seller Compliance Confirmation <span className="text-danger">*</span></p>
-                      <div className="flex items-start gap-2 border border-white/10 bg-elevated px-3 py-2.5 max-w-lg">
-                        <input
-                          id="agreeSellerCompliance"
-                          name="agreeSellerCompliance"
-                          type="checkbox"
-                          required={isSeller}
-                          checked={f.agreeSellerCompliance}
-                          onChange={set}
-                          className="mt-0.5 h-4 w-4 border-2 border-white/30 cursor-pointer shrink-0"
-                        />
-                        <label
-                          htmlFor="agreeSellerCompliance"
-                          className="text-xs text-slate-300 leading-relaxed cursor-pointer"
-                        >
-                          <span className="text-danger font-bold">*</span> I confirm that my products comply with UK laws, Stripe policies and intellectual property regulations.
-                        </label>
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-
-                {/* Right: Submit */}
-                <div className="flex flex-col items-start lg:items-end gap-2 shrink-0">
-                  <button
-                    type="submit"
-                    disabled={loading || registrationDisabled}
-                    className="px-14 py-3 text-black text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full lg:min-w-[280px] bg-primary hover:bg-primary-hover"
-                  >
-                    {loading
-                      ? "Submitting…"
-                      : isSeller
-                      ? isPrivate ? "▶  Submit Seller Application" : "▶  Submit Supplier Application"
-                      : isPrivate ? "▶  Create Personal Account" : "▶  Create Business Account"}
-                  </button>
-                  <p className="text-[10px] text-slate-500 lg:text-right leading-relaxed">
-                    Fields marked <span className="text-danger font-bold">*</span> are mandatory.
-                    <br />
-                    You will receive a confirmation email once your application is reviewed.
-                    <br />
-                    Already have an account?{" "}
-                    <Link to="/login" className="text-primary underline font-semibold">
-                      Sign in here
-                    </Link>
-                    .
+      <main id="main-content" className="min-h-screen bg-[#F7F9FC] pb-14 pt-6 text-[#0A234F] md:pt-[150px]">
+        <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-[26px] border border-[#0A234F]/10 bg-white shadow-[0_22px_65px_rgba(10,35,79,0.10)]">
+            <div className="grid lg:grid-cols-[0.82fr_1.18fr]">
+              <aside className="relative overflow-hidden bg-[#0A234F] px-6 py-8 text-white sm:px-8 lg:px-10 lg:py-12">
+                <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#1D57D8]/30 blur-3xl" aria-hidden="true" />
+                <div className="relative">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">
+                    {isSeller ? "Marketplace Seller" : "Loadify account"}
                   </p>
+                  <h1 className="mt-3 text-3xl font-black leading-[1.03] tracking-[-0.035em] sm:text-4xl">{title}</h1>
+                  <p className="mt-4 text-sm font-medium leading-6 text-white/75 sm:text-base">{description}</p>
+
+                  <div className="mt-7 space-y-3 text-sm text-white/80">
+                    {(isSeller
+                      ? [
+                          "Your Buyer access stays on the same identity",
+                          "Seller readiness is completed progressively",
+                          "Stripe payouts are connected during Seller setup",
+                        ]
+                      : [
+                          "Shop current marketplace listings",
+                          "Keep orders, tracking and returns together",
+                          "Add Seller access later without another login",
+                        ]
+                    ).map((item) => (
+                      <div key={item} className="flex items-start gap-2.5">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#F5A300]" aria-hidden="true" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-white">
+                      <ShieldCheck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />
+                      One identity. Separate responsibilities.
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-white/65">
+                      Marketplace Seller access is separate from Supplier Partner relationships and is subject to Loadify Seller readiness controls.
+                    </p>
+                  </div>
                 </div>
+              </aside>
 
-              </div>
+              <section className="px-5 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-11">
+                {user ? (
+                  <div className="flex min-h-[430px] flex-col justify-center">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#0E3FA9]">Signed in</p>
+                    <h2 className="mt-2 text-2xl font-black tracking-[-0.025em] text-[#0A234F]">
+                      {isSeller
+                        ? user.role === "seller" ? "Your Seller relationship already exists." : "Use this account to start selling."
+                        : "Your Loadify account is ready."}
+                    </h2>
+                    <p className="mt-3 max-w-xl text-sm leading-6 text-[#64748B]">
+                      {isSeller
+                        ? user.role === "seller"
+                          ? "Continue to your current Seller setup or Seller Workspace. No second account is needed."
+                          : "We will add Marketplace Seller access to this identity. Your Buyer orders, wishlist and account history stay intact."
+                        : "You do not need to register again. Continue to Buyer Space."}
+                    </p>
+
+                    {error && (
+                      <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" role="alert">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                      {destination ? (
+                        <Link to={destination} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-5 text-sm font-extrabold text-[#0A234F]">
+                          Continue <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                        </Link>
+                      ) : isSeller && user.role !== "admin" ? (
+                        <button
+                          type="button"
+                          disabled={loading || registrationDisabled}
+                          onClick={startSellerForExistingAccount}
+                          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-5 text-sm font-extrabold text-[#0A234F] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
+                          Start Seller setup
+                        </button>
+                      ) : null}
+                      <Link to="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#0A234F]/15 px-5 text-sm font-bold text-[#0A234F]">
+                        Back to marketplace
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} noValidate>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#0E3FA9]">Account creation</p>
+                        <h2 className="mt-1 text-2xl font-black tracking-[-0.025em] text-[#0A234F]">
+                          {isSeller ? "Start your Seller journey" : "Join Loadify"}
+                        </h2>
+                      </div>
+                      <p className="text-xs text-[#64748B]">
+                        Already registered? <Link to="/login" className="font-extrabold text-[#0E3FA9] hover:underline">Sign in</Link>
+                      </p>
+                    </div>
+
+                    {registrationDisabled && (
+                      <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800" role="alert">
+                        {isSeller ? "Seller" : "Buyer"} registration is temporarily disabled.
+                      </div>
+                    )}
+
+                    {error && (
+                      <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" role="alert">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                      <label className={labelClass}>
+                        First name
+                        <input autoComplete="given-name" className={inputClass} value={form.firstName} onChange={(e) => setField("firstName", e.target.value)} />
+                      </label>
+                      <label className={labelClass}>
+                        Last name
+                        <input autoComplete="family-name" className={inputClass} value={form.lastName} onChange={(e) => setField("lastName", e.target.value)} />
+                      </label>
+                    </div>
+
+                    <label className={`${labelClass} mt-4`}>
+                      Email address
+                      <input type="email" autoComplete="email" className={inputClass} value={form.email} onChange={(e) => setField("email", e.target.value)} />
+                    </label>
+
+                    {isSeller && (
+                      <label className={`${labelClass} mt-4`}>
+                        How will you sell?
+                        <select className={inputClass} value={form.sellerType} onChange={(e) => setField("sellerType", e.target.value)}>
+                          <option value="">Select legal type</option>
+                          <option value="individual">Individual</option>
+                          <option value="sole_trader">Sole trader</option>
+                          <option value="company">Registered company</option>
+                        </select>
+                        <span className="mt-1.5 block text-[11px] font-medium leading-4 text-[#64748B]">
+                          Business details, store identity and verification continue after email confirmation.
+                        </span>
+                      </label>
+                    )}
+
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <label className={labelClass}>
+                        Password
+                        <div className="relative">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            autoComplete="new-password"
+                            className={`${inputClass} pr-11`}
+                            value={form.password}
+                            onChange={(e) => setField("password", e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((value) => !value)}
+                            className="absolute right-3 top-[13px] text-[#64748B]"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </label>
+                      <label className={labelClass}>
+                        Confirm password
+                        <input type={showPassword ? "text" : "password"} autoComplete="new-password" className={inputClass} value={form.confirmPassword} onChange={(e) => setField("confirmPassword", e.target.value)} />
+                      </label>
+                    </div>
+                    <p className="mt-2 text-[11px] font-medium text-[#64748B]">Use at least 8 characters.</p>
+
+                    <div className="mt-6 space-y-3 border-t border-[#0A234F]/10 pt-5">
+                      <label className="flex items-start gap-3 text-xs font-medium leading-5 text-[#475569]">
+                        <input type="checkbox" className="mt-1 h-4 w-4" checked={form.agreeTerms} onChange={(e) => setField("agreeTerms", e.target.checked)} />
+                        <span>
+                          I agree to the <Link to="/terms" className="font-bold text-[#0E3FA9] hover:underline">Terms &amp; Conditions</Link> and <Link to="/privacy" className="font-bold text-[#0E3FA9] hover:underline">Privacy Policy</Link>.
+                        </span>
+                      </label>
+
+                      {isSeller && (
+                        <label className="flex items-start gap-3 text-xs font-medium leading-5 text-[#475569]">
+                          <input type="checkbox" className="mt-1 h-4 w-4" checked={form.agreeSellerCompliance} onChange={(e) => setField("agreeSellerCompliance", e.target.checked)} />
+                          <span>
+                            I agree to the <Link to="/seller-terms" className="font-bold text-[#0E3FA9] hover:underline">Seller Terms</Link> and understand that Seller activation is subject to Loadify verification/readiness requirements.
+                          </span>
+                        </label>
+                      )}
+
+                      <label className="flex items-start gap-3 text-xs font-medium leading-5 text-[#475569]">
+                        <input type="checkbox" className="mt-1 h-4 w-4" checked={form.newsletter} onChange={(e) => setField("newsletter", e.target.checked)} />
+                        <span>Send me useful Loadify marketplace updates. Optional.</span>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading || registrationDisabled}
+                      className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-5 text-sm font-extrabold text-[#0A234F] transition hover:bg-[#E69500] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {isSeller ? "Create Seller account" : "Create account"}
+                      {!loading && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+                    </button>
+
+                    <div className="mt-5 text-center text-xs text-[#64748B]">
+                      {isSeller ? (
+                        <>Here to shop? <Link to="/register" className="font-extrabold text-[#0E3FA9] hover:underline">Create a Buyer account</Link></>
+                      ) : (
+                        <>Want to sell? <Link to="/register?type=seller" className="font-extrabold text-[#0E3FA9] hover:underline">Start as a Marketplace Seller</Link></>
+                      )}
+                    </div>
+                  </form>
+                )}
+              </section>
             </div>
-            {/* end bottom */}
-
-          </form>
+          </div>
         </div>
       </main>
     </MainLayout>

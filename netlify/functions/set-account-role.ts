@@ -2,15 +2,21 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { jsonResponse, optionsResponse } from './_shared/http';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { getFeatureFlagsStrict } from './_shared/platformFlags';
 
 const METHODS = 'POST, OPTIONS';
-const SELLER_INITIAL_STEP = 1;
 const BUYER_ONBOARDING_STEP = 0;
 
+/**
+ * Legacy compatibility boundary.
+ *
+ * Buyer/Seller is no longer a destructive public account-type toggle. New UI
+ * must use start-seller-activation for Buyer -> Marketplace Seller activation.
+ * This endpoint remains temporarily for legacy callers while preventing a
+ * Seller relationship from being silently replaced with Buyer-only state.
+ */
 export const handler: Handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return optionsResponse(METHODS);
-  }
+  if (event.httpMethod === 'OPTIONS') return optionsResponse(METHODS);
   if (event.httpMethod !== 'POST') {
     return jsonResponse(405, { error: 'Method not allowed' }, METHODS);
   }
@@ -25,8 +31,6 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // This endpoint writes through service_role. A still-valid access token from a
-  // suspended account must never be sufficient to change role/onboarding state.
   const auth = await authenticateActiveAccount(event, supabase);
   if (!auth.ok) {
     return jsonResponse(auth.status, { error: 'Authentication required' }, METHODS);
@@ -49,81 +53,77 @@ export const handler: Handler = async (event) => {
     return jsonResponse(400, { error: 'Invalid role. Allowed values: buyer, seller.' }, METHODS);
   }
 
-  // public.users remains the canonical database source of truth for role and
-  // onboarding state. The authenticated active user can only update their own
-  // account through this service-role endpoint, never an attacker-supplied id.
+  // Never use a role change to erase an established Seller relationship. A
+  // Seller can navigate to Buyer Space under the same identity; workspace
+  // switching is navigation, not authorization mutation.
+  if (role === 'buyer' && auth.actor.role === 'seller') {
+    return jsonResponse(409, {
+      error: 'Seller accounts already include Buyer access. Open Buyer Space instead of changing account type.',
+    }, METHODS);
+  }
+
+  if (role === 'seller') {
+    // Legacy callers must obey the same strict server-side registration control
+    // as the canonical start-seller-activation endpoint. An unavailable settings
+    // row fails closed rather than silently reopening Seller registration.
+    try {
+      const flags = await getFeatureFlagsStrict(supabase);
+      if (flags.sellerRegistration === false) {
+        return jsonResponse(403, {
+          error: 'Seller registration is temporarily disabled. Please try again later.',
+        }, METHODS);
+      }
+    } catch (error) {
+      console.error('set-account-role: seller registration flag lookup failed:', error instanceof Error ? error.message : error);
+      return jsonResponse(503, {
+        error: 'Seller registration availability could not be verified. Please try again later.',
+      }, METHODS);
+    }
+
+    const { data, error } = await supabase.rpc('server_start_seller_activation_v1', {
+      p_user_id: userId,
+    });
+
+    if (error) {
+      console.error('set-account-role: seller activation compatibility call failed:', error.message);
+      return jsonResponse(error.code === '42501' ? 403 : 500, {
+        error: 'Failed to start Seller activation',
+      }, METHODS);
+    }
+
+    const result = (data && typeof data === 'object') ? data as Record<string, unknown> : {};
+    return jsonResponse(200, {
+      ok: true,
+      role: 'seller',
+      sellerStatus: typeof result.sellerStatus === 'string' ? result.sellerStatus : 'draft',
+      compatibilityEndpoint: true,
+    }, METHODS);
+  }
+
+  // Buyer -> Buyer is idempotent. Updating role explicitly keeps legacy
+  // environments in sync and migration 669's trigger guarantees Buyer capability.
   const { error: userUpdateError } = await supabase
     .from('users')
     .update({
-      role,
-      onboardingCompleted: role === 'buyer',
-      onboardingStep: role === 'seller' ? SELLER_INITIAL_STEP : BUYER_ONBOARDING_STEP,
+      role: 'buyer',
+      onboardingCompleted: true,
+      onboardingStep: BUYER_ONBOARDING_STEP,
     })
     .eq('id', userId);
 
   if (userUpdateError) {
-    console.error('set-account-role: users update failed:', userUpdateError.message);
-    return jsonResponse(500, { error: 'Failed to update account role' }, METHODS);
+    console.error('set-account-role: buyer users update failed:', userUpdateError.message);
+    return jsonResponse(500, { error: 'Failed to update Buyer account state' }, METHODS);
   }
 
-  if (role === 'seller') {
-    const [{ error: sellerProfileError }, { error: sellerStoreError }] = await Promise.all([
-      supabase
-        .from('seller_profiles')
-        .upsert(
-          {
-            userId,
-            sellerStatus: 'draft',
-            isApproved: false,
-          },
-          { onConflict: 'userId' },
-        ),
-      supabase
-        .from('seller_stores')
-        .upsert(
-          {
-            userId,
-            isActive: false,
-          },
-          { onConflict: 'userId' },
-        ),
-    ]);
+  const { error: buyerProfileError } = await supabase
+    .from('buyer_profiles')
+    .upsert({ userId }, { onConflict: 'userId' });
 
-    if (sellerProfileError || sellerStoreError) {
-      console.error(
-        'set-account-role: seller init failed:',
-        sellerProfileError?.message || sellerStoreError?.message,
-      );
-      return jsonResponse(500, { error: 'Failed to initialize seller account' }, METHODS);
-    }
-  } else {
-    const { error: buyerProfileError } = await supabase
-      .from('buyer_profiles')
-      .upsert({ userId }, { onConflict: 'userId' });
-
-    if (buyerProfileError) {
-      console.error('set-account-role: buyer init failed:', buyerProfileError.message);
-      return jsonResponse(500, { error: 'Failed to initialize buyer account' }, METHODS);
-    }
+  if (buyerProfileError) {
+    console.error('set-account-role: buyer profile init failed:', buyerProfileError.message);
+    return jsonResponse(500, { error: 'Failed to initialize Buyer account' }, METHODS);
   }
 
-  // Mirror the server-validated role into app_metadata so session consumers can
-  // observe the current role. Authorization still re-checks the live DB account.
-  const { error: appMetadataError } = await supabase.auth.admin.updateUserById(userId, {
-    app_metadata: {
-      ...auth.actor.appMetadata,
-      role,
-    },
-  });
-
-  if (appMetadataError) {
-    console.error('set-account-role: app_metadata sync failed:', appMetadataError.message);
-    return jsonResponse(
-      500,
-      { error: 'Account role was saved but session authorization could not be synchronized. Please try again.' },
-      METHODS,
-    );
-  }
-
-  return jsonResponse(200, { ok: true, role }, METHODS);
+  return jsonResponse(200, { ok: true, role: 'buyer', compatibilityEndpoint: true }, METHODS);
 };
