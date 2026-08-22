@@ -23,7 +23,7 @@ function required(value: string | undefined, name: string): string {
 
 function requiredRelativePath(value: string | undefined, name: string): string {
   const path = required(value, name);
-  if (!path.startsWith('/') || path.startsWith('//') || path.includes('://')) {
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('://') || path.includes('\\')) {
     throw new AvasamClientConfigurationError(`${name} must be a relative API path`);
   }
   return path;
@@ -34,8 +34,19 @@ function buildUrl(baseUrl: string, path: string): string {
   if (base.protocol !== 'https:') {
     throw new AvasamClientConfigurationError('AVASAM_API_BASE_URL must use HTTPS');
   }
+  if (base.username || base.password) {
+    throw new AvasamClientConfigurationError('AVASAM_API_BASE_URL must not contain embedded credentials');
+  }
   return new URL(path, base).toString();
 }
+
+const RESERVED_TRUSTED_HEADERS = new Set([
+  'authorization',
+  'x-correlation-id',
+  'idempotency-key',
+  'accept',
+  'content-type',
+]);
 
 export class AvasamClient {
   private readonly config: AvasamClientConfig;
@@ -52,7 +63,13 @@ export class AvasamClient {
     };
     if (context.idempotencyKey?.trim()) headers['Idempotency-Key'] = context.idempotencyKey.trim();
     if (this.config.apiToken?.trim()) headers.Authorization = `Bearer ${this.config.apiToken.trim()}`;
-    if (this.config.apiKey?.trim()) headers[this.config.apiKeyHeader?.trim() || 'X-API-Key'] = this.config.apiKey.trim();
+    if (this.config.apiKey?.trim()) {
+      const headerName = this.config.apiKeyHeader?.trim() || 'X-API-Key';
+      if (RESERVED_TRUSTED_HEADERS.has(headerName.toLowerCase())) {
+        throw new AvasamClientConfigurationError(`AVASAM_API_KEY_HEADER cannot override trusted header '${headerName}'`);
+      }
+      headers[headerName] = this.config.apiKey.trim();
+    }
     return headers;
   }
 
