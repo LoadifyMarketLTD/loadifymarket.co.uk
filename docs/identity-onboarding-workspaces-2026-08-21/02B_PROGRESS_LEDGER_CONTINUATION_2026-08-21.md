@@ -209,3 +209,99 @@ Exact next order:
 5. keep Supplier Commerce controls OFF;
 6. Stage 3 Seller Onboarding V2 remains blocked until Stage 2 merge/deployment/hosted verification is closed;
 7. repository-wide historical fresh-rebuild debt remains a required Release Gate repair item.
+
+---
+
+## 2026-08-22 — STAGE 2 MERGED / DEPLOYED / HOSTED VERIFIED
+
+**Workstream:** Identity / Onboarding / Workspaces  
+**Implementation PR:** #561  
+**Validated implementation HEAD:** `8fbff9ccb9cf7f4d67fa29bda4dd42668f7abf91`  
+**PR #561 merge commit:** `97bea01608cb3641f01c8be8b4029d2ac2dc9768`  
+**Hosted security-closure PR:** #574  
+**PR #574 validated head:** `ae953c0ef12d9dd12c1844f4a9d81feb64780be4`  
+**PR #574 merge commit / current main at closure:** `dcd54b061352d3062d29f9a6903b439eb3586358`  
+**Stage 2 final status:** **PASS + MERGED + DEPLOYED + HOSTED VERIFIED**
+
+### Controlled production deployment order
+
+Production project `fwdfpmfvgygvqciecesx` was updated through discrete migration applications rather than an unreviewed bulk `db push`.
+
+Applied hosted migration history:
+
+1. `20260822173051 supplier_controlled_pilot_adapter_territory_guard` — source Phase O `669_supplier_controlled_pilot_adapter_territory_guard.sql`;
+2. `20260822173119 account_capabilities_foundation` — Identity `669_account_capabilities_foundation.sql`;
+3. `20260822173133 identity_seller_provisioning_hardening` — Identity `670_identity_seller_provisioning_hardening.sql`;
+4. `20260822174002 identity_function_execute_privilege_closure` — `671_identity_function_execute_privilege_closure.sql` from merged PR #574.
+
+All four migration applications completed successfully.
+
+### Hosted Identity verification
+
+After 669/670 deployment, production verification confirmed:
+
+- `public.account_capabilities` exists;
+- RLS is enabled;
+- `authenticated` has SELECT but not INSERT/UPDATE/DELETE on `account_capabilities`;
+- `server_start_seller_activation_v1(uuid)` is not executable by `anon` or `authenticated` and remains executable by `service_role`;
+- active Buyer capability rows: **4**;
+- active Seller capability rows: **3**;
+- current Buyer users with Buyer capability: **1/1**;
+- current Seller users with Buyer capability: **3/3**;
+- current Seller users with Seller capability: **3/3**;
+- Admin active ordinary capabilities: **0**;
+- historical non-ready active Seller stores were reconciled from **1** before 670 to **0** after 670;
+- genuinely readiness-valid Seller stores were not blanket-demoted.
+
+### Hosted function privilege closure
+
+Post-deploy Security Advisor exposed a Stage 2-specific production-default-privilege issue: newly created public `SECURITY DEFINER` helpers inherited explicit role EXECUTE grants, so revoking only `PUBLIC` was insufficient for the intended direct-RPC boundary.
+
+PR #574 added `671_identity_function_execute_privilege_closure.sql` and was separately authorized and merged before deployment.
+
+After hosted 671 application, direct PostgreSQL privilege verification confirmed:
+
+- `anon -> has_account_capability(text)`: **false**;
+- `authenticated -> has_account_capability(text)`: **true**;
+- `service_role -> has_account_capability(text)`: **true**;
+- `anon -> is_seller()`: **false**;
+- `authenticated -> is_seller()`: **true**;
+- `service_role -> is_seller()`: **true**;
+- `anon/authenticated -> sync_legacy_role_to_account_capabilities()`: **false / false**;
+- `service_role -> sync_legacy_role_to_account_capabilities()`: **true**;
+- `anon/authenticated -> handle_new_user_profile()`: **false / false**;
+- `service_role -> handle_new_user_profile()`: **true**.
+
+The post-671 Security Advisor no longer reports anonymous EXECUTE exposure for the Stage 2 `has_account_capability`, `is_seller`, or `sync_legacy_role_to_account_capabilities` functions. Authenticated warnings for the capability-query helpers remain because authenticated execution is intentional for those live authorization helpers.
+
+### Supplier Commerce / Phase O post-deploy verification
+
+Supplier Commerce remained fail-closed throughout deployment and verification:
+
+- enabled Supplier Commerce controls: **0**;
+- Phase O readiness function still requires `a.territory='GB'` for adapter selection;
+- Phase O readiness function remains non-executable by `anon` / `authenticated` and executable by `service_role`;
+- no real supplier pilot was activated;
+- simulator/infrastructure evidence remains distinct from real Controlled Pilot PASS.
+
+### Remaining security / release debt — not hidden by Stage 2 PASS
+
+The Supabase Security Advisor still reports pre-existing project-wide debt for Phase Q, including the `public.seller_profiles_public` security-definer-view ERROR, multiple older security-definer function exposure warnings, RLS-enabled/no-policy informational items, and leaked-password protection being disabled.
+
+The repository-wide historical fresh-rebuild defect discovered during Stage 2 validation also remains open: the historical numeric replay fails before Stage 2 at `10_rls_policies.sql` because `delivery_requests` is referenced before it exists in that reconstructed sequence.
+
+These items do not invalidate the factual Stage 2 implementation/deployment result, but they remain blockers/debt for the final Loadify Release Gate and Phase Q governance/security work.
+
+### Final Stage 2 verdict / next resume point
+
+**STAGE 2: PASS + MERGED + DEPLOYED + HOSTED VERIFIED.**
+
+Stage 3 Seller Onboarding V2 is now unblocked from the Stage 2 dependency perspective.
+
+Exact continuation order:
+
+1. begin Stage 3 Seller Onboarding V2 on a new branch from current `main@dcd54b061352d3062d29f9a6903b439eb3586358`;
+2. remove remaining legacy Supplier/Service semantics from Seller onboarding and align progressive Seller activation / Stripe / KYC semantics without redesigning Workspace/Admin/Super Admin;
+3. keep Supplier Commerce controls OFF and do not treat Phase O infrastructure as real pilot PASS;
+4. preserve the accepted homepage visual baseline;
+5. keep repository-wide fresh-rebuild debt and Phase Q security/governance debt explicitly open for the final Release Gate.
