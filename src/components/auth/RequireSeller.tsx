@@ -20,6 +20,10 @@ const CardShell = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
+function isOnboardingCatalogueRoute(pathname: string): boolean {
+  return /^\/seller\/products\/(?:new|[^/]+\/edit)$/.test(pathname);
+}
+
 /**
  * Active seller workspace guard.
  *
@@ -28,11 +32,17 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  * falls back to session metadata because user_metadata is user-editable.
  * Admin bypass is allowed only through hasAdminAccess(), which itself requires
  * DB-hydrated isAdmin=true.
+ *
+ * Stage 3 exception: draft/submitted Marketplace Sellers may enter only the
+ * product create/edit route so they can prepare a catalogue draft during
+ * onboarding. The server create/update endpoints independently forbid public
+ * publishing until sellerStatus + Stripe + tax readiness are satisfied.
  */
 export default function RequireSeller({ children }: Props) {
   const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const allowOnboardingCatalogue = isOnboardingCatalogueRoute(location.pathname);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -71,8 +81,6 @@ export default function RequireSeller({ children }: Props) {
     let cancelled = false;
 
     const verifySeller = async () => {
-      // Always resolve missing/draft/submitted state against the canonical DB.
-      // This prevents session metadata from being enough to unlock the workspace.
       const { data, error } = await supabase
         .from('seller_profiles')
         .select('sellerStatus')
@@ -90,7 +98,6 @@ export default function RequireSeller({ children }: Props) {
         console.warn('RequireSeller: seller status query failed; using server recheck', error.message);
       }
 
-      // Server recheck uses service-role-backed canonical activation conditions.
       try {
         const response = await authorizedFetch('/.netlify/functions/recheck-activation', { method: 'POST' });
         if (response.ok) {
@@ -165,6 +172,15 @@ export default function RequireSeller({ children }: Props) {
     );
   }
 
+  // Narrow Stage 3 exception: catalogue drafts can be prepared before seller
+  // commercial activation. No other Seller Workspace route is opened here.
+  if (
+    allowOnboardingCatalogue &&
+    (fetchState === 'draft' || fetchState === 'submitted')
+  ) {
+    return <>{children}</>;
+  }
+
   if (fetchState === 'draft') return <Navigate to="/onboarding" replace />;
 
   if (fetchState === 'submitted') {
@@ -172,9 +188,9 @@ export default function RequireSeller({ children }: Props) {
       <CardShell>
         <p className="text-5xl mb-4">⏳</p>
         <h2 className="text-2xl font-bold text-white mb-2">Application Under Review</h2>
-        <p className="text-slate-400 mb-6">Your seller application has been submitted and is awaiting approval.</p>
+        <p className="text-slate-400 mb-6">Your seller application has been submitted and is awaiting approval or remaining activation requirements.</p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/" className="btn-primary">Back to Home</Link>
+          <Link to="/onboarding" className="btn-primary">View Seller Setup</Link>
           <Link to="/contact" className="btn-secondary">Contact Support</Link>
         </div>
       </CardShell>
