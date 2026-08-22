@@ -54,4 +54,17 @@ describe('release-hardening security contracts', () => {
     expect(sql).toContain('category_filter_definitions');
     expect(sql).toContain('server-only rate-limit tables still expose client CRUD privileges');
   });
+
+  it('revalidates buyer and seller live account state before service-role checkout side effects', () => {
+    for (const source of [
+      read('netlify/functions/create-checkout.ts'),
+      read('netlify/functions/create-payment-intent.ts'),
+    ]) {
+      expect(source).toContain("import { authenticateActiveAccount } from './_shared/activeAccountAuth'");
+      expect(source).toContain('const buyerAuth = await authenticateActiveAccount(event, supabase)');
+      expect(source).toContain('sellerAccount.role !== \'seller\'');
+      expect(source).toContain('sellerAccount.isActive !== true');
+      expect(source).toContain(".select('id, role, isActive')");
+    }
+  });
 });
