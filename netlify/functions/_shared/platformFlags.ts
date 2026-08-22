@@ -43,9 +43,59 @@ const FLAG_DEFAULTS: FeatureFlags = {
   requireCompanyApproval: false,
 };
 
-function mergeFeatureFlags(value: unknown): FeatureFlags | null {
+const KNOWN_FLAG_KEYS = [
+  'sellerRegistration',
+  'buyerRegistration',
+  'rfqSystem',
+  'reviewSystem',
+  'autoApproveProducts',
+  'requireCompanyApproval',
+] as const;
+
+function asFlagRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return { ...FLAG_DEFAULTS, ...(value as Partial<FeatureFlags>) };
+  return value as Record<string, unknown>;
+}
+
+function mergeFeatureFlags(value: unknown): FeatureFlags | null {
+  const record = asFlagRecord(value);
+  if (!record) return null;
+
+  const merged: FeatureFlags = { ...FLAG_DEFAULTS };
+  for (const key of KNOWN_FLAG_KEYS) {
+    if (typeof record[key] === 'boolean') {
+      merged[key] = record[key] as boolean;
+    }
+  }
+  return merged;
+}
+
+function mergeFeatureFlagsStrict(value: unknown): FeatureFlags | null {
+  const record = asFlagRecord(value);
+  if (!record) return null;
+
+  // Registration availability is an operator-controlled security boundary.
+  // Missing or non-boolean registration gates must never fall back to enabled.
+  if (
+    typeof record.sellerRegistration !== 'boolean' ||
+    typeof record.buyerRegistration !== 'boolean'
+  ) {
+    return null;
+  }
+
+  // If a known optional flag is present it must still be a boolean. This keeps
+  // the returned FeatureFlags contract trustworthy (for example, the string
+  // "false" must never become truthy through Boolean(value) downstream).
+  for (const key of KNOWN_FLAG_KEYS) {
+    if (key in record && typeof record[key] !== 'boolean') {
+      return null;
+    }
+  }
+
+  return {
+    ...FLAG_DEFAULTS,
+    ...(record as Partial<FeatureFlags>),
+  };
 }
 
 /**
@@ -71,8 +121,9 @@ export async function getFeatureFlags(supabase: SupabaseClient<any>): Promise<Fe
 /**
  * Strict reader for security/availability-sensitive registration boundaries.
  *
- * Any query error, missing row, or malformed value rejects. Callers must fail
- * closed (normally 503) rather than assuming registration is enabled.
+ * Any query error, missing row, malformed registration gate, or malformed
+ * present known flag rejects. Callers must fail closed (normally 503) rather
+ * than assuming registration is enabled.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getFeatureFlagsStrict(supabase: SupabaseClient<any>): Promise<FeatureFlags> {
@@ -86,7 +137,7 @@ export async function getFeatureFlagsStrict(supabase: SupabaseClient<any>): Prom
     throw new Error(`feature_flags query failed: ${error.message}`);
   }
 
-  const flags = mergeFeatureFlags(data?.value);
+  const flags = mergeFeatureFlagsStrict(data?.value);
   if (!flags) {
     throw new Error('feature_flags row is missing or malformed');
   }
