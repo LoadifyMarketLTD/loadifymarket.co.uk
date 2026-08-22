@@ -153,8 +153,8 @@ export const handler: Handler = async (event) => {
 
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
-      refresh_url: `${appUrl}/seller/setup?connect=refresh`,
-      return_url: `${appUrl}/seller/setup?connect=success`,
+      refresh_url: `${appUrl}/onboarding?connect=refresh`,
+      return_url: `${appUrl}/onboarding?connect=success`,
       type: 'account_onboarding',
     });
 

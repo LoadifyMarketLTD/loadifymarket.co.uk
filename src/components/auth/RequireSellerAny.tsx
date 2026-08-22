@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store';
-import { hasAdminAccess } from '../../lib/roleUtils';
+import { hasAdminAccess, hasSellerAccess } from '../../lib/roleUtils';
 
 interface Props {
   children: ReactNode;
@@ -48,8 +48,9 @@ export default function RequireSellerAny({ children }: Props) {
   // Admin can access for inspection
   if (hasAdminAccess(user)) return <>{children}</>;
 
-  // Any seller (draft, submitted, active, suspended) can access onboarding pages
-  if (user.role === 'seller') return <>{children}</>;
+  // Any Marketplace Seller context can access onboarding/profile surfaces.
+  // Keep this boundary aligned with the full Seller Workspace guard.
+  if (hasSellerAccess(user)) return <>{children}</>;
 
   // Buyer or any other authenticated non-seller — show access denied
   return (
