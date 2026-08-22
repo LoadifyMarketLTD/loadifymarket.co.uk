@@ -51,9 +51,11 @@ export const handler: Handler = async (event) => {
         error: 'Seller registration is temporarily disabled. Please try again later.',
       }, METHODS);
     }
-  } catch {
-    // Keep existing registration behaviour if settings cannot be read. The
-    // database boundary still validates the active non-admin account.
+  } catch (error) {
+    console.error('start-seller-activation: seller registration flag lookup failed:', error instanceof Error ? error.message : error);
+    return jsonResponse(503, {
+      error: 'Seller registration availability could not be verified. Please try again later.',
+    }, METHODS);
   }
 
   const { data, error } = await supabase.rpc('server_start_seller_activation_v1', {
