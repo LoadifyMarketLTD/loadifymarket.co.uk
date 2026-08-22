@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ShoppingBag, Store, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 
 /**
@@ -55,6 +56,15 @@ const RoleSelection = () => {
           // Keep generic error for malformed payloads.
         }
         throw new Error(message);
+      }
+
+      // public.users.role and auth app_metadata.role are updated by the trusted
+      // activation transaction. Refresh the token before entering /onboarding
+      // so the global auth listener rehydrates the new Seller context and route
+      // guards never evaluate a stale Buyer session.
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        throw new Error("Seller setup started, but your session could not be refreshed. Please sign in again to continue.");
       }
 
       toast({
