@@ -23,6 +23,8 @@ const FacebookIcon = () => (
   </svg>
 );
 
+const NATIVE_OAUTH_CALLBACK = "loadifymarket://app/auth/callback";
+
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -43,15 +45,12 @@ const Login = () => {
   const oauthFailed = searchParams.get("error") === "oauth_failed";
 
   useEffect(() => {
-    if (user) {
-      const nextUrl = sanitizeRedirectUrl(searchParams.get("next"));
-      if (nextUrl) navigate(nextUrl, { replace: true });
-      else if (user.role === "seller") navigate("/seller", { replace: true });
-      else if (user.role === "admin") navigate("/admin", { replace: true });
-      else if (user.role === "buyer") navigate("/buyer", { replace: true });
-      // For any other/unknown role value, do not navigate — wait for the
-      // Zustand store to receive a corrected profile from the DB query.
-    }
+    // Only a fully hydrated active platform account may leave the login page.
+    // /dashboard owns canonical role/workspace routing.
+    if (!user || user.isActive !== true) return;
+
+    const nextUrl = sanitizeRedirectUrl(searchParams.get("next"));
+    navigate(nextUrl ?? "/dashboard", { replace: true });
   }, [user, searchParams, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,7 +91,7 @@ const Login = () => {
         const { data, error: oauthErr } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: "loadifymarket://app/auth/callback",
+            redirectTo: NATIVE_OAUTH_CALLBACK,
             skipBrowserRedirect: true,
           },
         });
@@ -131,7 +130,7 @@ const Login = () => {
         const { data, error: oauthErr } = await supabase.auth.signInWithOAuth({
           provider: "facebook",
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: NATIVE_OAUTH_CALLBACK,
             skipBrowserRedirect: true,
           },
         });

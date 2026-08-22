@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
-import { hasAdminAccess } from './lib/roleUtils';
+import { hasAdminAccess, hasBuyerAccess, hasSellerAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
 import Header from './components/Header';
@@ -161,16 +161,31 @@ function PageLoader() {
  */
 function DashboardRedirect() {
   const { user, isLoading } = useAuthStore();
+
   if (isLoading) return <PageLoader />;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'admin') return <Navigate to="/admin" replace />;
-  // Sellers with incomplete onboarding go to the wizard first.
-  // `onboardingCompleted` is loaded from the DB in App.tsx auth listener.
-  if (user.role === 'seller') {
-    if (user.onboardingCompleted === false) return <Navigate to="/onboarding" replace />;
+
+  // Account-level activity is authoritative. Do not route a blocked or
+  // incompletely hydrated identity into a commerce workspace.
+  if (user.isActive !== true) {
+    return <Navigate to="/login?error=account_inactive" replace />;
+  }
+
+  if (hasAdminAccess(user)) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  // Delegate Seller onboarding/readiness truth to RequireSeller instead of
+  // trusting the historical users.onboardingCompleted projection here.
+  if (hasSellerAccess(user)) {
     return <Navigate to="/seller" replace />;
   }
-  return <Navigate to="/buyer" replace />;
+
+  if (hasBuyerAccess(user)) {
+    return <Navigate to="/buyer" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
 }
 
 /** Redirects legacy /tracking/:orderNumber to /track-order?orderNumber=:orderNumber */
@@ -182,6 +197,20 @@ function TrackingRedirect() {
 function CategoryRedirect() {
   const { slug } = useParams<{ slug: string }>();
   return <Navigate to={`/category/${slug ?? ''}`} replace />;
+}
+
+function isTrustedNativeDeepLink(parsed: URL): boolean {
+  if (parsed.protocol === 'loadifymarket:') {
+    return (
+      parsed.hostname === 'app' &&
+      parsed.pathname.startsWith('/auth/callback')
+    );
+  }
+
+  return (
+    parsed.protocol === 'https:' &&
+    parsed.hostname === 'loadifymarket.co.uk'
+  );
 }
 
 
@@ -268,6 +297,14 @@ function App() {
         try {
           const parsed = new URL(url);
 
+          // Never route arbitrary external origins through the native app.
+          // OAuth uses the dedicated custom scheme; normal app links must be
+          // HTTPS links from the production Loadify Market host.
+          if (!isTrustedNativeDeepLink(parsed)) {
+            console.warn('[DeepLink] Ignored untrusted URL origin');
+            return;
+          }
+
           // OAuth callback — exchange the code/token with Supabase and
           // let onAuthStateChange update the store automatically.
           if (parsed.pathname.startsWith('/auth/callback')) {
@@ -292,40 +329,6 @@ function App() {
   }, [navigate]);
 
   useEffect(() => {
-    // Build a minimal User object from Supabase auth session metadata when the
-    // public.users table query fails or returns no row (e.g. the live database
-    // hasn't had the 20_fix_users_table.sql migration applied yet).
-    function userFromSession(authUser: {
-      id: string;
-      email?: string | null;
-      user_metadata?: Record<string, unknown>;
-      app_metadata?: Record<string, unknown>;
-      email_confirmed_at?: string | null;
-    }): import('./types').User {
-      const userMeta = authUser.user_metadata || {};
-      const appMeta = authUser.app_metadata || {};
-      const strVal = (obj: Record<string, unknown>, key: string) =>
-        typeof obj[key] === 'string' ? (obj[key] as string) : undefined;
-      const candidateRole = strVal(appMeta, 'role');
-      const role: import('./types').UserRole =
-        candidateRole === 'admin' || candidateRole === 'seller' || candidateRole === 'buyer'
-          ? candidateRole
-          : 'buyer';
-      return {
-        id: authUser.id,
-        email: authUser.email ?? '',
-        role,
-        firstName: strVal(userMeta, 'first_name'),
-        lastName: strVal(userMeta, 'last_name'),
-        // Derive from Supabase Auth state — email_confirmed_at is set when the
-        // email address has been confirmed, regardless of the custom users table.
-        isEmailVerified: authUser.email_confirmed_at != null,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-    }
-
     // Lift the joined seller_profiles row (if any) into a flat sellerStatus field
     // on the user object, and remove the raw join array.  This is called after
     // every users query so RequireSeller can use the cached value immediately
@@ -391,23 +394,48 @@ function App() {
                   (data as Record<string, unknown>).role === 'admin';
                 setUser(data);
               } else {
+                // Stage 7 fail-closed boundary: an authenticated Supabase
+                // session is not sufficient proof that the platform account is
+                // active. If the authoritative public.users row cannot be read,
+                // do not invent role/activity truth from session metadata.
                 if (error) {
-                  console.warn('users table query failed, falling back to auth session:', error.message);
-                  setUser(userFromSession(session.user));
+                  console.warn(
+                    '[Auth] Authoritative user profile lookup failed; denying protected access:',
+                    error.message,
+                  );
                 } else {
-                  // Row not yet found — e.g. the DB insert trigger hasn't fired
-                  // yet on a fresh sign-up, or a transient query failure.  Fall
-                  // back to auth-session metadata so the user is not incorrectly
-                  // kicked back to the login page.
-                  setUser(userFromSession(session.user));
+                  console.warn(
+                    '[Auth] Authoritative user profile is missing; denying protected access',
+                  );
                 }
+
+                void supabase.auth
+                  .signOut({ scope: 'local' })
+                  .catch((signOutError) => {
+                    console.warn(
+                      '[Auth] Local fail-closed sign-out failed',
+                      signOutError,
+                    );
+                  });
+
+                setUser(null);
               }
             })
             .catch((err: unknown) => {
-              // Network error during profile fetch — unblock loading so the
-              // app does not hang on a spinner indefinitely.
+              // An unexpected profile-hydration failure must also fail closed.
+              // Never preserve a stale or session-derived commerce identity.
               console.error('[Auth] Profile fetch threw unexpectedly:', err);
-              setLoading(false);
+
+              void supabase.auth
+                .signOut({ scope: 'local' })
+                .catch((signOutError) => {
+                  console.warn(
+                    '[Auth] Local fail-closed sign-out failed',
+                    signOutError,
+                  );
+                });
+
+              setUser(null);
             });
         } else {
           setUser(null);

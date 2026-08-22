@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasAdminAccess, hasSellerAccess } from '../../lib/roleUtils';
 
@@ -44,6 +44,10 @@ export default function RequireSellerAny({ children }: Props) {
   }
 
   if (!user) return null;
+
+  if (user.isActive !== true) {
+    return <Navigate to="/login?error=account_inactive" replace />;
+  }
 
   // Admin can access for inspection
   if (hasAdminAccess(user)) return <>{children}</>;

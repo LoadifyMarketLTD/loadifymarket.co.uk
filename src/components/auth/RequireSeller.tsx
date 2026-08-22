@@ -195,6 +195,7 @@ export default function RequireSeller({ children }: Props) {
   }, [user]);
 
   const loading = isLoading || (
+    user?.isActive === true &&
     user?.role === 'seller' &&
     (fetchState === 'loading' || !onboardingChecked)
   );
@@ -207,6 +208,10 @@ export default function RequireSeller({ children }: Props) {
     );
   }
   if (!user) return null;
+
+  if (user.isActive !== true) {
+    return <Navigate to="/login?error=account_inactive" replace />;
+  }
 
   if (!hasSellerAccess(user) && !hasAdminAccess(user)) {
     return (
