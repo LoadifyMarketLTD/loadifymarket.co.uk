@@ -16,6 +16,8 @@ function makeEvent(body: unknown, method = 'POST'): HandlerEvent {
   };
 }
 
+const TAX_CAPTURED_AT = '2026-08-20T19:00:00.000Z';
+
 describe('update-product', () => {
   const originalEnv = { ...process.env };
 
@@ -39,11 +41,18 @@ describe('update-product', () => {
       type: string | null;
       condition: string | null;
       price: number | null;
+      priceExVat: number | null;
+      vatRate: number | null;
+      taxTreatmentStatus: string | null;
+      taxTreatmentSource: string | null;
+      taxEvidenceVersion: number | null;
+      taxEvidenceCapturedAt: string | null;
       listingContext: string | null;
       stockQuantity: number | null;
       stockStatus: string | null;
       listingStatus: string | null;
       reservedUntil: string | null;
+      isActive: boolean;
     }>;
   }) {
     const productUpdates: Array<Record<string, unknown>> = [];
@@ -53,18 +62,44 @@ describe('update-product', () => {
       type: 'product',
       condition: 'new',
       price: 25,
+      priceExVat: 25,
+      vatRate: 0,
+      taxTreatmentStatus: 'seller_non_vat_declared',
+      taxTreatmentSource: 'seller_profile_non_vat_declaration_v1',
+      taxEvidenceVersion: 1,
+      taxEvidenceCapturedAt: TAX_CAPTURED_AT,
       listingContext: 'goods',
       stockQuantity: 0,
       stockStatus: 'out_of_stock',
       listingStatus: 'active',
       reservedUntil: null,
+      isActive: true,
       ...args?.productRow,
     };
+
+    let sellerProfileLookupIndex = 0;
+    const sellerProfiles = [
+      {
+        sellerStatus: 'active',
+        stripeConnectStatus: 'active',
+        isPaused: false,
+      },
+      {
+        country: 'GB',
+        isVatRegistered: false,
+        vatNumber: null,
+        businessAddress: { postcode: 'BB1 1AA', countryCode: 'GB' },
+        taxDeclarationConfirmed: true,
+        taxDeclarationVersion: 1,
+        taxDeclarationSource: 'seller_self_declaration_v1',
+        taxDeclarationCapturedAt: TAX_CAPTURED_AT,
+      },
+    ];
 
     const supabase = {
       auth: {
         getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'seller-1' } },
+          data: { user: { id: 'seller-1', email: 'seller@test.com', app_metadata: {} } },
           error: null,
         }),
       },
@@ -74,7 +109,7 @@ describe('update-product', () => {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
             maybeSingle: vi.fn().mockResolvedValue({
-              data: { role: args?.role ?? 'seller' },
+              data: { id: 'seller-1', role: args?.role ?? 'seller', isActive: true },
               error: null,
             }),
           };
@@ -84,14 +119,10 @@ describe('update-product', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({
-              data: {
-                sellerStatus: 'active',
-                stripeConnectStatus: 'active',
-                isPaused: false,
-              },
+            maybeSingle: vi.fn().mockImplementation(async () => ({
+              data: sellerProfiles[Math.min(sellerProfileLookupIndex++, sellerProfiles.length - 1)],
               error: null,
-            }),
+            })),
           };
         }
 
@@ -125,6 +156,9 @@ describe('update-product', () => {
 
         if (table === 'product_shipping') {
           return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ count: 1, error: null }),
+            }),
             delete: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ error: null }),
             }),
@@ -175,6 +209,8 @@ describe('update-product', () => {
       listingContext: 'product',
       stockQuantity: 10,
       stockStatus: 'low_stock',
+      vatRate: 0,
+      taxTreatmentStatus: 'seller_non_vat_declared',
     });
   });
 
@@ -202,6 +238,8 @@ describe('update-product', () => {
       listingContext: 'product',
       stockQuantity: 1,
       stockStatus: 'low_stock',
+      vatRate: 0,
+      taxTreatmentStatus: 'seller_non_vat_declared',
     });
   });
 
@@ -230,6 +268,8 @@ describe('update-product', () => {
       listingContext: 'service',
       stockQuantity: 0,
       stockStatus: 'in_stock',
+      vatRate: null,
+      taxTreatmentStatus: null,
     });
   });
 
