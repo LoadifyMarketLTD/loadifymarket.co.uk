@@ -1,15 +1,9 @@
 /**
  * Unit tests for the register Netlify function.
- *
- * Strategy: import the handler directly and inject a mock Supabase client
- * via the environment-variable pathway the function uses. The tests focus on
- * the request-validation paths that do *not* require a real database, which
- * makes them fast and deterministic.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { HandlerEvent } from '@netlify/functions';
 
-// Build a minimal HandlerEvent for POST requests.
 function makeEvent(body: unknown, method = 'POST'): HandlerEvent {
   return {
     httpMethod: method,
@@ -25,18 +19,26 @@ function makeEvent(body: unknown, method = 'POST'): HandlerEvent {
   };
 }
 
-describe('register handler – request validation', () => {
+function mockStrictFlags(overrides: Record<string, boolean> = {}) {
+  vi.doMock('../_shared/platformFlags', () => ({
+    getFeatureFlagsStrict: vi.fn().mockResolvedValue({
+      sellerRegistration: true,
+      buyerRegistration: true,
+      rfqSystem: false,
+      reviewSystem: true,
+      autoApproveProducts: false,
+      requireCompanyApproval: false,
+      ...overrides,
+    }),
+  }));
+}
+
+describe('register handler – Stage 2 boundary', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
-    // Provide required env vars so the function passes the env check.
     process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
-
-    // Prevent real outbound HTTP calls (confirmation email, admin notification,
-    // welcome emails) from being made during unit tests.  Without this stub the
-    // "successful registration" test times out in CI because the handler awaits
-    // fetch() to the send-email function which is unreachable in the test env.
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -45,7 +47,6 @@ describe('register handler – request validation', () => {
         json: vi.fn().mockResolvedValue({}),
       } as unknown),
     );
-
     vi.resetModules();
   });
 
@@ -70,9 +71,8 @@ describe('register handler – request validation', () => {
   });
 
   it('returns 400 for invalid JSON body', async () => {
-    const { handler } = await import('../register');
-    // Mock createClient so the function doesn't actually call Supabase.
     vi.doMock('@supabase/supabase-js', () => ({ createClient: vi.fn(() => ({})) }));
+    const { handler } = await import('../register');
     const event = makeEvent({});
     event.body = 'not-json';
     const res = await handler(event, {} as never);
@@ -109,6 +109,17 @@ describe('register handler – request validation', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/at least 8/i);
   });
 
+  it('requires a valid legal type for Marketplace Seller registration', async () => {
+    vi.doMock('@supabase/supabase-js', () => ({ createClient: vi.fn(() => ({})) }));
+    const { handler } = await import('../register');
+    const res = await handler(
+      makeEvent({ email: 'seller@b.com', password: 'secret123', firstName: 'Jane', lastName: 'Doe', role: 'seller' }),
+      {} as never,
+    );
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body as string).error).toMatch(/legal type/i);
+  });
+
   it('returns 429 when rate limit is exceeded', async () => {
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
@@ -140,7 +151,22 @@ describe('register handler – request validation', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/too many/i);
   });
 
-  it('returns 200 on duplicate-email error from Supabase (no enumeration)', async () => {
+  it('fails closed when registration availability cannot be verified', async () => {
+    vi.doMock('@supabase/supabase-js', () => ({ createClient: vi.fn(() => ({})) }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      getFeatureFlagsStrict: vi.fn().mockRejectedValue(new Error('settings unavailable')),
+    }));
+    const { handler } = await import('../register');
+    const res = await handler(
+      makeEvent({ email: 'a@b.com', password: 'secret123', firstName: 'Jane', lastName: 'Doe', role: 'buyer' }),
+      {} as never,
+    );
+    expect(res.statusCode).toBe(503);
+    expect(JSON.parse(res.body as string).error).toMatch(/could not be verified/i);
+  });
+
+  it('returns 200 on duplicate-email error from Supabase without enumeration', async () => {
+    mockStrictFlags();
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
         auth: {
@@ -158,16 +184,14 @@ describe('register handler – request validation', () => {
       makeEvent({ email: 'a@b.com', password: 'secret123', firstName: 'Jane', lastName: 'Doe', role: 'buyer' }),
       {} as never,
     );
-    // Returns 200 to prevent user enumeration (OWASP ASVS 2.7.4).
-    // The response body uses a 'message' field (not 'error') — 200 responses
-    // should not carry an error field per HTTP semantics.
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body as string) as { message?: string; error?: string };
     expect(body.error).toBeUndefined();
     expect(body.message).toMatch(/not already in use/i);
   });
 
-  it('returns 503 on Supabase database trigger error (never exposes internal message)', async () => {
+  it('returns 503 on Supabase database trigger error without leaking the internal message', async () => {
+    mockStrictFlags();
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
         auth: {
@@ -187,20 +211,17 @@ describe('register handler – request validation', () => {
     );
     expect(res.statusCode).toBe(503);
     const body = JSON.parse(res.body as string) as { error?: string };
-    // Raw Supabase internal message must not leak to the client.
     expect(body.error).not.toMatch(/database error creating/i);
     expect(body.error).toMatch(/technical issue|try again/i);
   });
 
-  it('returns 200 on successful registration', async () => {
+  it('returns 200 on successful Buyer registration', async () => {
+    mockStrictFlags();
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
         auth: {
           admin: {
-            createUser: vi.fn().mockResolvedValue({
-              data: { user: { id: 'user-uuid-123' } },
-              error: null,
-            }),
+            createUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-uuid-123' } }, error: null }),
             generateLink: vi.fn().mockResolvedValue({
               data: { properties: { action_link: 'https://mock.supabase.co/auth/confirm?token=abc' } },
               error: null,
@@ -219,5 +240,108 @@ describe('register handler – request validation', () => {
     );
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body as string).userId).toBe('user-uuid-123');
+  });
+
+  it('creates a new Seller as draft with an inactive store and no invented store name', async () => {
+    mockStrictFlags();
+    const sellerProfileUpsert = vi.fn().mockResolvedValue({ error: null });
+    const sellerStoreUpsert = vi.fn().mockResolvedValue({ error: null });
+    const usersInsert = vi.fn().mockResolvedValue({ error: null });
+    const createUser = vi.fn().mockResolvedValue({ data: { user: { id: 'seller-uuid-1' } }, error: null });
+
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          admin: {
+            createUser,
+            generateLink: vi.fn().mockResolvedValue({ data: { properties: {} }, error: null }),
+            deleteUser: vi.fn(),
+          },
+        },
+        from: vi.fn((table: string) => {
+          if (table === 'users') return { insert: usersInsert };
+          if (table === 'seller_profiles') return { upsert: sellerProfileUpsert };
+          if (table === 'seller_stores') return { upsert: sellerStoreUpsert };
+          throw new Error(`unexpected table ${table}`);
+        }),
+      })),
+    }));
+
+    const { handler } = await import('../register');
+    const res = await handler(
+      makeEvent({
+        email: 'seller@b.com',
+        password: 'secret123',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        role: 'seller',
+        sellerType: 'sole_trader',
+      }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(createUser).toHaveBeenCalledWith(expect.objectContaining({ app_metadata: { role: 'seller' } }));
+    expect(sellerProfileUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'seller-uuid-1',
+        sellerType: 'sole_trader',
+        sellerStatus: 'draft',
+        isApproved: false,
+      }),
+      { onConflict: 'userId' },
+    );
+    const profilePayload = sellerProfileUpsert.mock.calls[0][0] as Record<string, unknown>;
+    expect(profilePayload.storeName).toBeUndefined();
+    expect(sellerStoreUpsert).toHaveBeenCalledWith(
+      { userId: 'seller-uuid-1', isActive: false },
+      { onConflict: 'userId' },
+    );
+  });
+
+  it('cleans up a newly-created account if essential Seller provisioning fails', async () => {
+    mockStrictFlags();
+    const deleteUser = vi.fn().mockResolvedValue({ error: null });
+    const publicDeleteEq = vi.fn().mockResolvedValue({ error: null });
+
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          admin: {
+            createUser: vi.fn().mockResolvedValue({ data: { user: { id: 'seller-bad-1' } }, error: null }),
+            deleteUser,
+          },
+        },
+        from: vi.fn((table: string) => {
+          if (table === 'users') {
+            return {
+              insert: vi.fn().mockResolvedValue({ error: null }),
+              delete: vi.fn().mockReturnValue({ eq: publicDeleteEq }),
+            };
+          }
+          if (table === 'seller_profiles') {
+            return { upsert: vi.fn().mockResolvedValue({ error: { message: 'profile write failed' } }) };
+          }
+          throw new Error(`unexpected table ${table}`);
+        }),
+      })),
+    }));
+
+    const { handler } = await import('../register');
+    const res = await handler(
+      makeEvent({
+        email: 'seller@b.com',
+        password: 'secret123',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        role: 'seller',
+        sellerType: 'company',
+      }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(500);
+    expect(publicDeleteEq).toHaveBeenCalledWith('id', 'seller-bad-1');
+    expect(deleteUser).toHaveBeenCalledWith('seller-bad-1');
   });
 });
