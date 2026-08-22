@@ -74,7 +74,7 @@ describe('update-product', () => {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
             maybeSingle: vi.fn().mockResolvedValue({
-              data: { role: args?.role ?? 'seller' },
+              data: { role: args?.role ?? 'seller', isActive: true },
               error: null,
             }),
           };
