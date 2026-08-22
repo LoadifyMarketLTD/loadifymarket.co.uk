@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HandlerEvent } from '@netlify/functions';
 
 function makeEvent(
   httpMethod: string,
-  path: string,
+  pathName: string,
   body: unknown,
   authorization = 'Bearer valid-token',
 ): HandlerEvent {
@@ -14,11 +15,11 @@ function makeEvent(
     headers: { authorization },
     multiValueHeaders: {},
     isBase64Encoded: false,
-    path,
+    path: pathName,
     queryStringParameters: null,
     multiValueQueryStringParameters: null,
     rawQuery: '',
-    rawUrl: `http://localhost${path}`,
+    rawUrl: `http://localhost${pathName}`,
   };
 }
 
@@ -66,7 +67,7 @@ describe('canonical shipment write boundary', () => {
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+          single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
         };
       }),
     };
@@ -108,7 +109,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'orders') {
@@ -190,7 +191,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -269,7 +270,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -357,7 +358,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -439,7 +440,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -496,7 +497,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -562,7 +563,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -607,7 +608,7 @@ describe('canonical shipment write boundary', () => {
 
   it('keeps the DB migration service-role-only, atomic, idempotent and one-shipment-per-order', () => {
     const sql = readFileSync(
-      new URL('../../../supabase/607_lock_shipment_writes_to_server.sql', import.meta.url),
+      path.resolve(process.cwd(), 'supabase/607_lock_shipment_writes_to_server.sql'),
       'utf8',
     );
 
