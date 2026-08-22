@@ -75,11 +75,16 @@ SELECT ok(
 );
 
 SELECT ok(
-  NOT has_table_privilege('anon', 'public.category_filter_definitions', 'SELECT')
-  AND NOT has_table_privilege('authenticated', 'public.category_filter_definitions', 'SELECT')
-  AND NOT has_table_privilege('anon', 'public.category_filter_definitions', 'INSERT')
-  AND NOT has_table_privilege('authenticated', 'public.category_filter_definitions', 'UPDATE'),
-  'category_filter_definitions remains server-only after privilege closure'
+  to_regclass('public.category_filter_definitions') IS NULL
+  OR NOT EXISTS (
+    SELECT 1
+      FROM information_schema.role_table_grants g
+     WHERE g.table_schema = 'public'
+       AND g.table_name = 'category_filter_definitions'
+       AND g.grantee IN ('anon', 'authenticated')
+       AND g.privilege_type IN ('SELECT', 'INSERT', 'UPDATE', 'DELETE')
+  ),
+  'category_filter_definitions is absent or remains server-only after privilege closure'
 );
 
 SELECT * FROM finish();
