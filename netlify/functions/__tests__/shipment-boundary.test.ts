@@ -66,7 +66,7 @@ describe('canonical shipment write boundary', () => {
         return {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+          single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
         };
       }),
     };
@@ -108,7 +108,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'orders') {
@@ -190,7 +190,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -269,7 +269,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -357,7 +357,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -439,7 +439,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -496,7 +496,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -562,7 +562,7 @@ describe('canonical shipment write boundary', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
         if (table === 'shipments') {
