@@ -83,7 +83,7 @@ describe('start-seller-activation', () => {
       }),
     }));
     vi.doMock('../_shared/platformFlags', () => ({
-      getFeatureFlags: vi.fn().mockResolvedValue({ sellerRegistration: false }),
+      getFeatureFlagsStrict: vi.fn().mockResolvedValue({ sellerRegistration: false }),
     }));
 
     const { handler } = await import('../start-seller-activation');
@@ -105,7 +105,7 @@ describe('start-seller-activation', () => {
       }),
     }));
     vi.doMock('../_shared/platformFlags', () => ({
-      getFeatureFlags: vi.fn().mockRejectedValue(new Error('platform settings unavailable')),
+      getFeatureFlagsStrict: vi.fn().mockRejectedValue(new Error('platform settings unavailable')),
     }));
 
     const { handler } = await import('../start-seller-activation');
@@ -137,7 +137,7 @@ describe('start-seller-activation', () => {
       }),
     }));
     vi.doMock('../_shared/platformFlags', () => ({
-      getFeatureFlags: vi.fn().mockResolvedValue({ sellerRegistration: true }),
+      getFeatureFlagsStrict: vi.fn().mockResolvedValue({ sellerRegistration: true }),
     }));
 
     const { handler } = await import('../start-seller-activation');
