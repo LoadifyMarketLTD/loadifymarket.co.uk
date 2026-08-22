@@ -77,9 +77,43 @@ describe('AvasamClient security boundary', () => {
     fetchMock.mockRestore();
   });
 
+  it('rejects backslash-based URL escape paths before network access', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const client = new AvasamClient({ baseUrl: 'https://example.invalid' });
+    const result = await client.request({ correlationId: 'correlation-only' }, '/\\attacker.invalid/steal');
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
   it('rejects non-HTTPS provider base URLs before network access', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch');
     const client = new AvasamClient({ baseUrl: 'http://example.invalid' });
+    const result = await client.request({ correlationId: 'correlation-only' }, '/health');
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('rejects embedded credentials in the provider base URL', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const client = new AvasamClient({ baseUrl: 'https://user:password@example.invalid' });
+    const result = await client.request({ correlationId: 'correlation-only' }, '/health');
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('rejects API-key header configuration that can override trusted headers', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const client = new AvasamClient({
+      baseUrl: 'https://example.invalid',
+      apiKey: 'attacker-key',
+      apiKeyHeader: 'Authorization',
+    });
     const result = await client.request({ correlationId: 'correlation-only' }, '/health');
     expect(result.ok).toBe(false);
     expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
