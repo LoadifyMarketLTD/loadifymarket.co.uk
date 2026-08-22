@@ -9,6 +9,8 @@ import { authenticateActiveAccount } from './_shared/activeAccountAuth';
  * Fetches the live Stripe Connect account status for the authenticated active
  * seller and persists the result in seller_profiles.stripeConnectStatus.
  * Stripe Account location is also persisted as server-only tax evidence.
+ *
+ * Stage 3 invariant: Stripe readiness never creates or completes store identity.
  */
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -126,9 +128,7 @@ export const handler: Handler = async (event) => {
       stripeUpdate.taxCountrySource = 'stripe_connect_account_v1';
       stripeUpdate.taxCountryCapturedAt = new Date().toISOString();
     }
-    if (stripeConnectStatus === 'active') {
-      stripeUpdate.storeCreated = true;
-    }
+
     const { error: stripeStatusUpdateError } = await supabase
       .from('seller_profiles')
       .update(stripeUpdate)

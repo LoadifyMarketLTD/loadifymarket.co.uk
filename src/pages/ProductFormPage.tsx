@@ -455,54 +455,6 @@ export default function ProductFormPage() {
         }
         const created = await res.json() as { id: string; isApproved: boolean };
 
-        // Mark first product created for onboarding completion tracking.
-        // Non-fatal: onboarding checklist will still derive this from product count.
-        // Fetch all onboarding flags in a single query to avoid extra round trips.
-        const { data: spRow } = await supabase
-          .from('seller_profiles')
-          .select([
-            'firstProductCreated',
-            'profileCompleted',
-            'storeCreated',
-            'hasServiceCapability',
-            'sellerStatus',
-          ].join(', '))
-          .eq('userId', user.id)
-          .maybeSingle<{
-            firstProductCreated: boolean | null;
-            profileCompleted: boolean | null;
-            storeCreated: boolean | null;
-            hasServiceCapability: boolean | null;
-            sellerStatus: string | null;
-          }>();
-
-        if (!spRow?.firstProductCreated) {
-          await supabase
-            .from('seller_profiles')
-            .update({ firstProductCreated: true })
-            .eq('userId', user.id);
-
-          // The DB trigger (trg_sync_seller_onboarding) will auto-set
-          // onboardingCompleted when all other flags are also true.
-          // Force-check here using the flags we already fetched above.
-          // hasServiceCapability will be TRUE after the product insert fires the DB trigger,
-          // so we only gate on profileCompleted + storeCreated + sellerStatus here.
-          if (
-            spRow?.profileCompleted &&
-            spRow?.storeCreated &&
-            spRow?.sellerStatus !== 'suspended' &&
-            spRow?.sellerStatus !== 'rejected'
-          ) {
-            // onboardingStep 8 = all gate flags satisfied (5 wizard UI steps map to
-            // 8 DB sub-steps tracked in seller_profiles; value mirrors ONBOARDING_COMPLETE_STEP
-            // in src/pages/onboarding/SellerOnboarding.tsx).
-            await supabase
-              .from('users')
-              .update({ onboardingCompleted: true, onboardingStep: 8 })
-              .eq('id', user.id);
-          }
-        }
-
         setSuccessMessage(
           publishMode
             ? (created.isApproved
@@ -517,7 +469,7 @@ export default function ProductFormPage() {
       }
 
       // Brief success feedback, then navigate back
-      setTimeout(() => navigate('/seller'), SUCCESS_REDIRECT_DELAY_MS);
+      setTimeout(() => navigate(publishMode ? '/seller' : '/onboarding'), SUCCESS_REDIRECT_DELAY_MS);
     } catch (error) {
       console.error('Error saving product:', error);
       const msg =

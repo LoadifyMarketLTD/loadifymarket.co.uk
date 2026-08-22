@@ -20,19 +20,34 @@ const CardShell = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
+function isOnboardingCatalogueRoute(pathname: string): boolean {
+  return /^\/seller\/products\/(?:new|[^/]+\/edit)$/.test(pathname);
+}
+
 /**
- * Active seller workspace guard.
+ * Seller workspace guard.
  *
- * Only sellerStatus === 'active' may enter the seller workspace. A missing
- * status is never treated as active. This is important when auth hydration
- * falls back to session metadata because user_metadata is user-editable.
+ * Full Seller Workspace access requires BOTH:
+ *   - sellerStatus === 'active'; and
+ *   - server-managed users.onboardingCompleted === true.
+ *
+ * This keeps commercial activation separate from marketplace setup while
+ * preventing an active seller from bypassing mandatory store/catalogue setup by
+ * navigating directly to /seller.
+ *
  * Admin bypass is allowed only through hasAdminAccess(), which itself requires
  * DB-hydrated isAdmin=true.
+ *
+ * Stage 3 exception: draft/submitted/active-but-incomplete Marketplace Sellers
+ * may enter only the product create/edit route so they can prepare a catalogue
+ * draft during onboarding. The server create/update endpoints independently
+ * forbid public publishing until sellerStatus + Stripe + tax readiness pass.
  */
 export default function RequireSeller({ children }: Props) {
   const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const allowOnboardingCatalogue = isOnboardingCatalogueRoute(location.pathname);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -50,36 +65,71 @@ export default function RequireSeller({ children }: Props) {
     if (user.sellerStatus === 'draft') return 'draft';
     return 'loading';
   });
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean>(
+    () => user?.onboardingCompleted === true,
+  );
+  const [onboardingChecked, setOnboardingChecked] = useState<boolean>(
+    () => Boolean(user && (hasAdminAccess(user) || user.onboardingCompleted === true)),
+  );
 
   useEffect(() => {
     if (!user) return;
     if (hasAdminAccess(user)) {
-      queueMicrotask(() => setFetchState('active'));
+      queueMicrotask(() => {
+        setFetchState('active');
+        setOnboardingComplete(true);
+        setOnboardingChecked(true);
+      });
       return;
     }
     if (!hasSellerAccess(user)) return;
 
-    if (isActiveSellerAccess(user)) {
-      queueMicrotask(() => setFetchState('active'));
+    if (user.sellerStatus === 'suspended') {
+      queueMicrotask(() => {
+        setFetchState('suspended');
+        setOnboardingChecked(true);
+      });
       return;
     }
-    if (user.sellerStatus === 'suspended') {
-      queueMicrotask(() => setFetchState('suspended'));
+
+    // A DB-hydrated true completion flag is safe to reuse. A false value may be
+    // stale within the current session immediately after the Stage 3 server
+    // reconciliation marks onboarding complete, so resolve false/missing state
+    // from the live database before deciding workspace access.
+    if (isActiveSellerAccess(user) && user.onboardingCompleted === true) {
+      queueMicrotask(() => {
+        setFetchState('active');
+        setOnboardingComplete(true);
+        setOnboardingChecked(true);
+      });
       return;
     }
 
     let cancelled = false;
 
     const verifySeller = async () => {
-      // Always resolve missing/draft/submitted state against the canonical DB.
-      // This prevents session metadata from being enough to unlock the workspace.
-      const { data, error } = await supabase
-        .from('seller_profiles')
-        .select('sellerStatus')
-        .eq('userId', user.id)
-        .maybeSingle<{ sellerStatus: string | null }>();
+      const [profileRes, userRes] = await Promise.all([
+        supabase
+          .from('seller_profiles')
+          .select('sellerStatus')
+          .eq('userId', user.id)
+          .maybeSingle<{ sellerStatus: string | null }>(),
+        supabase
+          .from('users')
+          .select('onboardingCompleted')
+          .eq('id', user.id)
+          .maybeSingle<{ onboardingCompleted: boolean | null }>(),
+      ]);
 
       if (cancelled) return;
+
+      // Setup completion fails closed on lookup failure. This cannot grant
+      // workspace access; at worst the seller is sent back to onboarding.
+      const setupComplete = !userRes.error && userRes.data?.onboardingCompleted === true;
+      setOnboardingComplete(setupComplete);
+      setOnboardingChecked(true);
+
+      const { data, error } = profileRes;
       if (!error) {
         const dbStatus = data?.sellerStatus;
         if (dbStatus === 'active' || dbStatus === 'suspended') {
@@ -90,7 +140,6 @@ export default function RequireSeller({ children }: Props) {
         console.warn('RequireSeller: seller status query failed; using server recheck', error.message);
       }
 
-      // Server recheck uses service-role-backed canonical activation conditions.
       try {
         const response = await authorizedFetch('/.netlify/functions/recheck-activation', { method: 'POST' });
         if (response.ok) {
@@ -119,6 +168,8 @@ export default function RequireSeller({ children }: Props) {
     void verifySeller().catch((err: unknown) => {
       if (!cancelled) {
         console.warn('RequireSeller: unexpected verification error', err);
+        setOnboardingComplete(false);
+        setOnboardingChecked(true);
         setFetchState('error');
       }
     });
@@ -126,7 +177,10 @@ export default function RequireSeller({ children }: Props) {
     return () => { cancelled = true; };
   }, [user]);
 
-  const loading = isLoading || (user?.role === 'seller' && fetchState === 'loading');
+  const loading = isLoading || (
+    user?.role === 'seller' &&
+    (fetchState === 'loading' || !onboardingChecked)
+  );
 
   if (loading) {
     return (
@@ -165,6 +219,21 @@ export default function RequireSeller({ children }: Props) {
     );
   }
 
+  // Narrow Stage 3 exception: catalogue drafts can be prepared before full
+  // setup/commercial activation. No other Seller Workspace route is opened.
+  if (
+    allowOnboardingCatalogue &&
+    !onboardingComplete &&
+    (fetchState === 'draft' || fetchState === 'submitted' || fetchState === 'active')
+  ) {
+    return <>{children}</>;
+  }
+
+  // Mandatory Stage 3 setup cannot be bypassed through a direct Seller
+  // Workspace URL, even if Stripe/profile facts have already made sellerStatus
+  // active. The onboarding route itself is outside RequireSeller.
+  if (!onboardingComplete) return <Navigate to="/onboarding" replace />;
+
   if (fetchState === 'draft') return <Navigate to="/onboarding" replace />;
 
   if (fetchState === 'submitted') {
@@ -172,9 +241,9 @@ export default function RequireSeller({ children }: Props) {
       <CardShell>
         <p className="text-5xl mb-4">⏳</p>
         <h2 className="text-2xl font-bold text-white mb-2">Application Under Review</h2>
-        <p className="text-slate-400 mb-6">Your seller application has been submitted and is awaiting approval.</p>
+        <p className="text-slate-400 mb-6">Your seller application has been submitted and is awaiting approval or remaining activation requirements.</p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/" className="btn-primary">Back to Home</Link>
+          <Link to="/onboarding" className="btn-primary">View Seller Setup</Link>
           <Link to="/contact" className="btn-secondary">Contact Support</Link>
         </div>
       </CardShell>
