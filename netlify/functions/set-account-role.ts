@@ -2,7 +2,7 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { jsonResponse, optionsResponse } from './_shared/http';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
-import { getFeatureFlags } from './_shared/platformFlags';
+import { getFeatureFlagsStrict } from './_shared/platformFlags';
 
 const METHODS = 'POST, OPTIONS';
 const BUYER_ONBOARDING_STEP = 0;
@@ -63,13 +63,20 @@ export const handler: Handler = async (event) => {
   }
 
   if (role === 'seller') {
-    // Legacy callers must obey the same server-side registration control as
-    // the canonical start-seller-activation endpoint. Otherwise an old/direct
-    // caller could bypass an operator-disabled Seller registration gate.
-    const flags = await getFeatureFlags(supabase);
-    if (flags.sellerRegistration === false) {
-      return jsonResponse(403, {
-        error: 'Seller registration is temporarily disabled. Please try again later.',
+    // Legacy callers must obey the same strict server-side registration control
+    // as the canonical start-seller-activation endpoint. An unavailable settings
+    // row fails closed rather than silently reopening Seller registration.
+    try {
+      const flags = await getFeatureFlagsStrict(supabase);
+      if (flags.sellerRegistration === false) {
+        return jsonResponse(403, {
+          error: 'Seller registration is temporarily disabled. Please try again later.',
+        }, METHODS);
+      }
+    } catch (error) {
+      console.error('set-account-role: seller registration flag lookup failed:', error instanceof Error ? error.message : error);
+      return jsonResponse(503, {
+        error: 'Seller registration availability could not be verified. Please try again later.',
       }, METHODS);
     }
 
@@ -94,7 +101,7 @@ export const handler: Handler = async (event) => {
   }
 
   // Buyer -> Buyer is idempotent. Updating role explicitly keeps legacy
-  // environments in sync and migration 663's trigger guarantees Buyer capability.
+  // environments in sync and migration 669's trigger guarantees Buyer capability.
   const { error: userUpdateError } = await supabase
     .from('users')
     .update({
