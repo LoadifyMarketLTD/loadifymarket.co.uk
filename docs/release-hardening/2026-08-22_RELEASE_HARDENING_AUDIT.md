@@ -3,7 +3,7 @@
 **Date:** 22 August 2026  
 **Base:** `main@aca0d19c1cad7fe047ca1e591df790cf2280b840`  
 **Branch:** `release-hardening/audit-20260822`  
-**Mode:** repository implementation + production read-only audit. No production DDL/config mutation.
+**Mode:** repository implementation + production read-only audit. No production DDL/config mutation. Local validation only; no GitHub Actions/Netlify for this lane.
 
 ## 1. Why this lane exists
 
@@ -26,7 +26,7 @@ Read-only verification at branch start:
 - pilot offers: `0`;
 - pilot cohort members: `0`;
 - pilot evidence: `0`;
-- latest production migration: `20260822185156 / seller_onboarding_v2_truth`.
+- latest production migration at branch start: `20260822185156 / seller_onboarding_v2_truth`.
 
 Conclusion: real Phase O Controlled Pilot has not started. No Supplier Commerce control was changed by this audit.
 
@@ -43,7 +43,7 @@ Verified historical references:
 - `100_fix_users_permissions.sql` repeats a legacy delivery-request grant;
 - `455_fix_missing_triggers_functions.sql` creates updated-at triggers on both relations.
 
-The canonical removal migration later explicitly drops both obsolete relations:
+The canonical timestamped removal later explicitly drops both obsolete relations:
 
 `supabase/migrations/20260818102000_remove_unused_transport_surfaces_20260818.sql`
 
@@ -64,9 +64,7 @@ This preserves the historical statements without leaving obsolete product surfac
 
 ### Regression guard
 
-Added:
-
-`netlify/functions/__tests__/legacy-transport-replay-envelope.test.ts`
+Added `netlify/functions/__tests__/legacy-transport-replay-envelope.test.ts`.
 
 It locks:
 
@@ -77,9 +75,9 @@ It locks:
 
 Status: **IMPLEMENTED IN BRANCH / VALIDATION PENDING**.
 
-## 4. Security Advisor audit — current factual findings
+## 4. Security hardening — current factual findings
 
-### 4.1 Public seller profile view — real ERROR
+### 4.1 Public seller profile view — real Security Advisor finding
 
 Security Advisor reports:
 
@@ -97,9 +95,7 @@ Simply setting `security_invoker=true` on the existing private-backed view would
 
 ### Repository fix: migration 673
 
-Added:
-
-`673_public_seller_projection_security_closure.sql`
+Added `673_public_seller_projection_security_closure.sql`.
 
 The migration:
 
@@ -122,20 +118,9 @@ Status: **IMPLEMENTED IN BRANCH / PRODUCTION UNCHANGED / VALIDATION PENDING**.
 
 ### 4.2 Trigger-only SECURITY DEFINER helper exposed as RPC
 
-Security Advisor reports direct API execution for:
+Security Advisor reports direct API execution for `public.sync_seller_suspension_from_user_activity()`.
 
-`public.sync_seller_suspension_from_user_activity()`
-
-This function is a trigger helper and has no legitimate public RPC contract.
-
-Migration 673 revokes direct EXECUTE from:
-
-- PUBLIC;
-- anon;
-- authenticated;
-- service_role.
-
-The database trigger continues to own the lifecycle behavior.
+This function is a trigger helper and has no legitimate public RPC contract. Migration 673 revokes direct EXECUTE from PUBLIC, anon, authenticated and service_role. The database trigger continues to own the lifecycle behavior.
 
 Status: **IMPLEMENTED IN BRANCH / VALIDATION PENDING**.
 
@@ -162,11 +147,32 @@ Blindly revoking EXECUTE would risk breaking RLS evaluation. These warnings rema
 
 Admin payout RPCs (`approve_payout`, `complete_payout`, `reject_payout`, `log_admin_action`) also self-check `is_admin()` and use an empty `search_path`. Seller `request_payout` authenticates the caller and validates Seller/balance/Stripe state. Their advisor warnings require contract review, not automatic removal.
 
+### 4.4 Service-role checkout stale-account boundary — real P1 found during fixture audit
+
+While reconciling the previously failing checkout tests, a runtime defect was demonstrated rather than assumed to be stale test harness:
+
+- `payment_sessions` has restrictive active-account RLS;
+- web/mobile checkout use a service-role Supabase client, so browser RLS is not the authority at that server boundary;
+- the handlers authenticated the JWT but did not re-read `public.users.isActive` for the buyer before reservation/payment side effects;
+- seller readiness relied on denormalized `seller_profiles` even though the canonical database contract independently treats `public.users.isActive` as the suspension authority.
+
+A stale JWT for an inactive buyer therefore required an explicit trusted-server guard before product reservation / Stripe creation. Existing seller regression tests also showed the intended live seller-account invariant.
+
+Repository repair:
+
+- `create-checkout.ts` now calls `authenticateActiveAccount(event, supabase)` before any reservation/payment side effect;
+- `create-payment-intent.ts` applies the same boundary;
+- both handlers re-read the listing seller from `public.users` and require `role='seller' AND isActive=true` before using seller profile readiness;
+- payment amounts, tax resolver, order lifecycle and Stripe transfer semantics are unchanged;
+- inactive buyer/seller regression coverage is locked in tests and in `release-hardening-security-contract.test.ts`.
+
+Status: **P1 REPAIRED IN BRANCH / PRODUCTION UNCHANGED / LOCAL VALIDATION PENDING**.
+
 ## 5. Server-only table privilege debt
 
 Security Advisor reports many `RLS enabled, no policy` INFO findings.
 
-Direct grant audit found two groups:
+Direct grant audit found two groups.
 
 ### Already server-only
 
@@ -180,9 +186,7 @@ Several older rate-limit tables still inherited CRUD grants for anon/authenticat
 
 ### Repository fix: migration 674
 
-Added:
-
-`674_server_only_privilege_closure.sql`
+Added `674_server_only_privilege_closure.sql`.
 
 It:
 
@@ -198,22 +202,71 @@ Status: **IMPLEMENTED IN BRANCH / VALIDATION PENDING**.
 
 ## 6. Leaked-password protection
 
-Security Advisor reports:
+Security Advisor reports `Leaked Password Protection Disabled`.
 
-`Leaked Password Protection Disabled`.
-
-This is a Supabase Auth project configuration change, not a repository SQL migration. It is therefore **HOLD — PRODUCTION CONFIG MUTATION**, pending explicit controlled application after repository hardening is validated.
+This is a Supabase Auth project configuration change, not a repository SQL migration. It remains **HOLD — PRODUCTION CONFIG MUTATION**, pending separately authorized application after repository hardening is validated.
 
 No Auth configuration was changed during this audit.
 
-## 7. Tests added
+## 7. Test-harness reconciliation and validation assets
 
-- `legacy-transport-replay-envelope.test.ts`
-- `release-hardening-security-contract.test.ts`
+The earlier local full suite produced `23 failures / 7 suites`. Inspection confirmed several failures were stale harness rather than permission to weaken runtime guards.
 
-These are source/contract regression tests. They do not replace a disposable PostgreSQL fresh-rebuild test or hosted verification.
+Reconciled test-only issues include:
 
-## 8. Current acceptance state
+- active-account mocks now expose the canonical `id / role / isActive` shape;
+- seller commercial/tax truth fixtures now represent current published-listing requirements;
+- Windows-fragile source reads using `new URL(..., import.meta.url)` were replaced with deterministic repo-root `path.resolve(process.cwd(), ...)` reads in the affected static contract suites;
+- checkout safety fixtures now contain current product tax evidence and seller declaration truth.
+
+Tests/guards added or strengthened include:
+
+- `legacy-transport-replay-envelope.test.ts`;
+- `release-hardening-security-contract.test.ts`;
+- `create-checkout.test.ts` inactive-buyer and inactive-seller protection;
+- existing mobile inactive-seller regression remains authoritative;
+- `supabase/tests/release_hardening_contract.sql` for final disposable-DB schema/privilege assertions.
+
+The earlier targeted hardening run was **8/8 PASS**, but those tests changed afterwards and therefore that old result is historical evidence only. The current branch must be re-run before any PASS claim.
+
+## 8. Local validation policy
+
+Owner direction for this lane is explicit:
+
+- no GitHub Actions;
+- no Netlify preview/build credit consumption;
+- no PR opened merely to obtain CI;
+- no production Supabase mutation;
+- use local PowerShell in an isolated Git worktree;
+- preserve the owner's existing Android working-copy modifications.
+
+Added:
+
+`scripts/validate-release-hardening-local.ps1`
+
+The validator:
+
+1. fetches and locks current `origin/main` and the hardening branch SHA;
+2. requires hardening merge-base to equal current main (`behind=0`);
+3. does not require or modify the owner's source worktree;
+4. creates a disposable detached worktree at the exact hardening SHA;
+5. runs `npm ci`;
+6. runs targeted hardening suites;
+7. runs repaired/regression suites;
+8. runs the complete Vitest suite;
+9. runs ESLint, TypeScript and production build with placeholder public build vars;
+10. only after Node/TS/build green, starts an isolated local Supabase stack;
+11. replays numeric `supabase/*.sql` migrations in numeric order with filename tie-break;
+12. then replays timestamped `supabase/migrations/*.sql`;
+13. runs DB lint;
+14. runs `supabase/tests/release_hardening_contract.sql`;
+15. re-fetches origin and invalidates evidence if main or the branch moved during the run;
+16. rejects any `src/`, `public/` or `android/` contamination in this hardening diff;
+17. removes the disposable worktree/local stack in `finally`.
+
+The script intentionally does **not** use `supabase db push`, production credentials, GitHub Actions or Netlify.
+
+## 9. Current acceptance state
 
 ### Implemented
 
@@ -222,34 +275,53 @@ These are source/contract regression tests. They do not replace a disposable Pos
 - seller public projection redesign migration;
 - trigger-only RPC privilege closure;
 - server-only rate-limit/category-filter privilege closure;
-- regression tests;
-- this audit ledger.
+- checkout live-account service-role boundary repair;
+- stale test-harness reconciliation identified so far;
+- cross-platform static test file reading repairs;
+- disposable DB contract;
+- strict local PowerShell validator;
+- this reconciled audit ledger.
 
 ### Still required before PASS
 
-1. exact Branch Guard against current main;
-2. targeted test execution;
-3. TypeScript/lint/build;
-4. real fresh-rebuild execution in disposable PostgreSQL/Supabase environment;
-5. validate migration 673 against a production-equivalent schema without applying to production;
-6. re-run Security Advisor after controlled production DDL only when authorized;
-7. separately decide/apply leaked-password protection configuration;
-8. no production mutation until merge/deployment authorization.
+1. run the new targeted hardening suites locally;
+2. run the repaired/regression suite group locally;
+3. full Vitest suite PASS;
+4. ESLint PASS;
+5. TypeScript PASS;
+6. production build PASS;
+7. fresh isolated numeric + timestamped database replay PASS;
+8. DB lint PASS;
+9. release-hardening pgTAP DB contract PASS;
+10. final Branch Guard with `behind=0` and exact diff audit;
+11. re-run Security Advisor only after controlled production DDL, if/when separately authorized;
+12. separately decide/apply leaked-password protection configuration;
+13. no production mutation until merge/deployment authorization.
 
-## 9. No-change assertions
+No item above is considered PASS merely because the script exists.
+
+## 10. No-change assertions
 
 This branch does not intentionally change:
 
 - Supplier Commerce controls;
 - Avasam/provider capabilities;
 - real Phase O state;
-- Buyer/Seller business semantics;
+- marketplace pricing/tax calculation semantics;
 - Stripe/payment amounts;
+- transfer/payout semantics;
 - order lifecycle;
 - homepage baseline;
 - Workspace/Admin/Super Admin visuals;
+- Android project files;
 - PR #575 scope.
 
-## 10. Exact resume point
+The only runtime behavior intentionally tightened in this release-hardening continuation is the current-account authorization boundary before service-role checkout/payment side effects.
 
-Validate the branch as a release-hardening slice. If repository and disposable-DB validation pass, open/maintain a DRAFT PR and stop before merge/production DDL until separately authorized.
+## 11. Exact resume point
+
+Run `scripts/validate-release-hardening-local.ps1` from the owner's repository. The script creates and removes its own disposable worktree, so the existing local Android modifications remain outside the validation worktree.
+
+If any step fails: **STOP at the first failure, repair the root cause in `release-hardening/audit-20260822`, then rerun from the start.**
+
+If all local evidence is green: perform one final exact-diff/Branch Guard review and stop. **Do not open a PR, merge, deploy, use Netlify, run GitHub Actions or mutate production until separately authorized.**
