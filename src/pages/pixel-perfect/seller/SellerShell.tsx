@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";import {
-  LayoutDashboard, Package, ShoppingCart, Truck,
+  LayoutDashboard, Package, ShoppingCart, ShoppingBag, Truck,
   RotateCcw, Star, Settings, UserCircle, ChevronRight, Store,
   LogOut, Menu, Bell, MessageSquare,
 } from "lucide-react";
@@ -81,6 +81,14 @@ const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentPro
 
     {/* Bottom actions */}
     <div className="p-3 border-t border-border space-y-1">
+      <NavLink
+        to="/buyer"
+        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+      >
+        <ShoppingBag className="h-4 w-4 shrink-0" />
+        <span>Buyer Space</span>
+      </NavLink>
+
       <NavLink
         to="/"
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"

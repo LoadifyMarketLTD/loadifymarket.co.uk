@@ -507,7 +507,7 @@ function App() {
           </RequireSeller>
         } />
 
-        {/* Seller: Setup page — Stripe Connect return URL lands here with ?connect=success|refresh */}
+        {/* Seller: legacy setup bridge — historical Stripe return URLs forward to canonical /onboarding */}
         <Route path="seller/setup" element={
           <RequireSellerAny>
             <RequireEmailVerified>
@@ -550,7 +550,7 @@ function App() {
           <Route path="messages" element={<Suspense fallback={<PageLoader />}><PPSellerMessages /></Suspense>} />
         </Route>
 
-        {/* /buyer – RequireBuyer (buyer role only; sellers→/seller, admins→/admin) */}
+        {/* /buyer – RequireBuyer (Buyer capability includes ordinary Marketplace Sellers; Admin remains isolated) */}
         <Route path="buyer" element={
           <RequireBuyer>
             <RequireEmailVerified>

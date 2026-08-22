@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Building2,
   CheckCircle2,
@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store';
-import { hasAdminAccess } from '@/lib/roleUtils';
+import { hasAdminAccess, hasSellerAccess } from '@/lib/roleUtils';
 import { toast } from '@/hooks/use-toast';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { openExternalUrl } from '@/lib/capacitorUtils';
@@ -118,6 +118,8 @@ function StatusRow({ label, done, detail }: { label: string; done: boolean; deta
 const SellerOnboarding = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const connectReturn = searchParams.get('connect');
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [loading, setLoading] = useState(true);
@@ -156,16 +158,65 @@ const SellerOnboarding = () => {
 
   useEffect(() => {
     if (!user) return;
+
     if (hasAdminAccess(user)) {
       navigate('/admin', { replace: true });
       return;
     }
-    if (user.role !== 'seller') {
+
+    if (!hasSellerAccess(user)) {
       navigate('/buyer', { replace: true });
       return;
     }
-    void refreshStatus(true);
-  }, [user, navigate, refreshStatus]);
+
+    let cancelled = false;
+
+    const loadCanonicalStatus = async () => {
+      if (
+        connectReturn === 'success' ||
+        connectReturn === 'refresh'
+      ) {
+        try {
+          const response = await authorizedFetch(
+            '/.netlify/functions/connect-status',
+            { method: 'POST' },
+          );
+
+          if (!response.ok) {
+            console.warn(
+              'SellerOnboarding: Stripe return status refresh was not successful',
+              response.status,
+            );
+          }
+        } catch (error) {
+          console.warn(
+            'SellerOnboarding: Stripe return status refresh failed',
+            error,
+          );
+        }
+      }
+
+      if (cancelled) return;
+
+      await refreshStatus(true);
+
+      if (
+        !cancelled &&
+        (
+          connectReturn === 'success' ||
+          connectReturn === 'refresh'
+        )
+      ) {
+        navigate('/onboarding', { replace: true });
+      }
+    };
+
+    void loadCanonicalStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, navigate, refreshStatus, connectReturn]);
 
   const completedSteps = useMemo(() => {
     if (!status) return [false, false, false, false, false];
@@ -247,7 +298,7 @@ const SellerOnboarding = () => {
     }
   };
 
-  if (user && (hasAdminAccess(user) || user.role !== 'seller')) return null;
+  if (user && (hasAdminAccess(user) || !hasSellerAccess(user))) return null;
 
   if (loading || !status) {
     return (
