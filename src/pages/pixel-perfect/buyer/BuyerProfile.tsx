@@ -306,7 +306,7 @@ const BuyerProfile = () => {
                 <Building2 className="h-4 w-4 text-primary" /> Business Account
               </CardTitle>
               <CardDescription>
-                Add your company details to access B2B pricing and receive proper business invoices.
+                Add optional company and VAT details for supported business account, invoice and tax handling.
               </CardDescription>
             </div>
             {b2bForm.accountType !== "individual" && (
@@ -358,14 +358,14 @@ const BuyerProfile = () => {
                 </span>
               ) : b2bForm.vatNumber && b2bForm.accountType !== "individual" ? (
                 <span className="text-xs text-primary">
-                  VAT verification pending admin review
+                  VAT details saved — verification may be required
                 </span>
               ) : null}
             </div>
           </div>
           {b2bForm.accountType !== "individual" && (
             <p className="text-xs text-muted-foreground">
-              Once your VAT number is verified by our team, you will receive ex-VAT pricing and reverse-charge invoices automatically.
+              Business and VAT details do not automatically change marketplace prices or tax treatment. Checkout and invoices use the applicable server-side rules.
             </p>
           )}
           <div className="pt-2">

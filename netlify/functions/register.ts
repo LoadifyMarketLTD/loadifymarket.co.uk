@@ -101,6 +101,11 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'A valid Seller legal type is required' }) };
   }
 
+  const validBuyerAccountTypes = new Set(['individual', 'business', 'reseller', 'distributor']);
+  if (role === 'buyer' && customerType && !validBuyerAccountTypes.has(customerType)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid Buyer account type' }) };
+  }
+
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -295,20 +300,41 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  if (role === 'buyer' && (companyName?.trim() || vatNumber?.trim() || customerType)) {
+  const hasExplicitBuyerBusinessProfile =
+    role === 'buyer' &&
+    Boolean(
+      companyName?.trim() ||
+      vatNumber?.trim() ||
+      customerType ||
+      (businessAddress && Object.keys(businessAddress).length > 0)
+    );
+
+  if (hasExplicitBuyerBusinessProfile) {
     const b2bUpdate: Record<string, unknown> = {
       userId,
-      accountType: customerType || 'individual',
+      accountType: customerType || 'business',
     };
     if (companyName?.trim()) b2bUpdate.companyName = companyName.trim();
     if (vatNumber?.trim()) b2bUpdate.vatNumber = vatNumber.trim();
     if (businessAddress && Object.keys(businessAddress).length > 0) {
       b2bUpdate.businessAddress = businessAddress;
     }
+
     const { error: bpErr } = await supabase
       .from('buyer_profiles')
       .upsert(b2bUpdate, { onConflict: 'userId' });
-    if (bpErr) console.warn('register: buyer_profiles B2B upsert (non-fatal):', bpErr.message);
+
+    if (bpErr) {
+      await cleanupFailedRegistration(
+        `buyer_profiles business upsert failed: ${bpErr.message}`,
+      );
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: 'Failed to initialize business Buyer profile. Please try again.',
+        }),
+      };
+    }
   }
 
   const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
