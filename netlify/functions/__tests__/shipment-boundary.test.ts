@@ -57,7 +57,9 @@ describe('canonical shipment write boundary', () => {
   it('rejects fulfilment-time attempts to rewrite paid shipping terms', async () => {
     const rpc = vi.fn();
     const supabase = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'seller-1' } }, error: null }) },
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'seller-1' } }, error: null }),
+      },
       rpc,
       from: vi.fn((table: string) => {
         if (table !== 'users') throw new Error(`Unexpected table before rejection: ${table}`);
@@ -68,33 +70,89 @@ describe('canonical shipment write boundary', () => {
         };
       }),
     };
+
     vi.doMock('@supabase/supabase-js', () => ({ createClient: vi.fn(() => supabase) }));
     installSharedMocks();
+
     const { handler } = await import('../create-shipment');
-    const res = await handler(makeEvent('POST', '/.netlify/functions/create-shipment', { order_id: 'order-1', shipping_cost: 999 }), {} as never);
+    const res = await handler(
+      makeEvent('POST', '/.netlify/functions/create-shipment', {
+        order_id: 'order-1',
+        shipping_cost: 999,
+      }),
+      {} as never,
+    );
+
     expect(res.statusCode).toBe(409);
     expect(JSON.parse(res.body).error).toContain('fixed at checkout');
     expect(rpc).not.toHaveBeenCalled();
   });
 
   it('routes shipment create/update through the atomic server RPC', async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: { shipment: { id: 'shipment-1', order_id: 'order-1' }, created: true, changed: true }, error: null });
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        shipment: { id: 'shipment-1', order_id: 'order-1' },
+        created: true,
+        changed: true,
+      },
+      error: null,
+    });
+
     const supabase = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'seller-1' } }, error: null }) }, rpc,
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'seller-1' } }, error: null }),
+      },
+      rpc,
       from: vi.fn((table: string) => {
-        if (table === 'users') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }) };
-        if (table === 'orders') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'order-1', orderNumber: 'LM-1', status: 'paid', productId: 'product-1', sellerId: 'seller-1', buyerId: 'buyer-1', stripePaymentIntentId: 'pi_1', rfqId: null, rfqResponseId: null, escrowStatus: 'held' }, error: null }) };
-        if (table === 'products') return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'product-1', listingContext: 'product' }, error: null }) };
+        if (table === 'users') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
+          };
+        }
+        if (table === 'orders') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: {
+                id: 'order-1', orderNumber: 'LM-1', status: 'paid', productId: 'product-1',
+                sellerId: 'seller-1', buyerId: 'buyer-1', stripePaymentIntentId: 'pi_1',
+                rfqId: null, rfqResponseId: null, escrowStatus: 'held',
+              },
+              error: null,
+            }),
+          };
+        }
+        if (table === 'products') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'product-1', listingContext: 'product' }, error: null }),
+          };
+        }
         throw new Error(`Direct shipment table mutation is not allowed in this handler: ${table}`);
       }),
     };
+
     vi.doMock('@supabase/supabase-js', () => ({ createClient: vi.fn(() => supabase) }));
     installSharedMocks();
+
     const { handler } = await import('../create-shipment');
-    const res = await handler(makeEvent('POST', '/.netlify/functions/create-shipment', { order_id: 'order-1', courier_name: 'Carrier', tracking_number: 'TRACK-1' }), {} as never);
+    const res = await handler(
+      makeEvent('POST', '/.netlify/functions/create-shipment', {
+        order_id: 'order-1', courier_name: 'Carrier', tracking_number: 'TRACK-1',
+      }),
+      {} as never,
+    );
+
     expect(res.statusCode).toBe(201);
     expect(JSON.parse(res.body).changed).toBe(true);
-    expect(rpc).toHaveBeenCalledWith('server_upsert_shipment', { p_order_id: 'order-1', p_actor_id: 'seller-1', p_courier_name: 'Carrier', p_set_courier_name: true, p_tracking_number: 'TRACK-1', p_set_tracking_number: true, p_dispatched_at: null, p_set_dispatched_at: false });
+    expect(rpc).toHaveBeenCalledWith('server_upsert_shipment', {
+      p_order_id: 'order-1', p_actor_id: 'seller-1', p_courier_name: 'Carrier', p_set_courier_name: true,
+      p_tracking_number: 'TRACK-1', p_set_tracking_number: true, p_dispatched_at: null, p_set_dispatched_at: false,
+    });
   });
 
   it('routes shipment status + audit + order mapping through one atomic RPC', async () => {
