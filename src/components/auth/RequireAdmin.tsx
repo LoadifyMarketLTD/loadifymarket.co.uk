@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasAdminAccess } from '../../lib/roleUtils';
 
@@ -39,6 +39,10 @@ export default function RequireAdmin({ children }: Props) {
   }
 
   if (!user) return null;
+
+  if (user.isActive !== true) {
+    return <Navigate to="/login?error=account_inactive" replace />;
+  }
 
   if (!hasAdminAccess(user)) {
     return (

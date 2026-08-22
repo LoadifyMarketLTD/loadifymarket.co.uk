@@ -22,42 +22,155 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Listen for the PASSWORD_RECOVERY event that Supabase fires when a user
-    // arrives via the reset-password email link (the token is in the URL hash).
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setHasSession(true);
-        setSessionChecking(false);
-      }
-    });
-
+    let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-    // Fallback: user may already have an active session (e.g. still logged in)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+    const clearRecoveryCredentialsFromUrl = () => {
+      if (window.location.search || window.location.hash) {
+        window.history.replaceState(
+          window.history.state,
+          document.title,
+          '/reset-password',
+        );
+      }
+    };
+
+    const scheduleInvalidLink = () => {
+      timeoutId = setTimeout(() => {
+        if (cancelled) return;
+
+        setSessionChecking((checking) => {
+          if (checking) {
+            setError(
+              "This password reset link is invalid or has expired. Please request a new one.",
+            );
+          }
+
+          return false;
+        });
+      }, PASSWORD_RECOVERY_WAIT_MS);
+    };
+
+    // Browser page-load recovery can still arrive through Supabase's normal
+    // PASSWORD_RECOVERY event.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        event === "PASSWORD_RECOVERY" &&
+        session &&
+        !cancelled
+      ) {
         setHasSession(true);
         setSessionChecking(false);
-      } else {
-        // Don't show the error immediately — wait for the auth state change
-        // event which fires shortly after mount when the hash token is processed.
-        timeoutId = setTimeout(() => {
-          setSessionChecking((checking) => {
-            if (checking) {
-              setError("This password reset link is invalid or has expired. Please request a new one.");
-            }
-            return false;
-          });
-        }, PASSWORD_RECOVERY_WAIT_MS);
+        clearRecoveryCredentialsFromUrl();
       }
-    }).catch(() => {
-      setError("Failed to verify reset link. Please try again.");
-      setSessionChecking(false);
     });
 
+    const completeRecovery = async () => {
+      try {
+        const currentUrl = new URL(window.location.href);
+        const authCode = currentUrl.searchParams.get('code');
+
+        const hashParams = new URLSearchParams(
+          currentUrl.hash.replace(/^#/, ''),
+        );
+
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        const recoveryType =
+          hashParams.get('type') ??
+          currentUrl.searchParams.get('type');
+
+        const hasRecoveryCredentials = Boolean(
+          authCode ||
+          (
+            recoveryType === 'recovery' &&
+            accessToken &&
+            refreshToken
+          ),
+        );
+
+        // Capacitor App Links can reach this route after the Supabase client
+        // has already initialized. Explicitly consume the recovery credentials
+        // instead of relying only on detectSessionInUrl at client startup.
+        if (authCode) {
+          const { error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(authCode);
+
+          if (exchangeError) {
+            const {
+              data: { session: alreadyRecovered },
+            } = await supabase.auth.getSession();
+
+            if (!alreadyRecovered) {
+              throw exchangeError;
+            }
+          }
+        } else if (
+          recoveryType === 'recovery' &&
+          accessToken &&
+          refreshToken
+        ) {
+          const { error: sessionError } =
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+          if (sessionError) {
+            throw sessionError;
+          }
+        }
+
+        const {
+          data: { session },
+          error: getSessionError,
+        } = await supabase.auth.getSession();
+
+        if (getSessionError) {
+          throw getSessionError;
+        }
+
+        if (cancelled) return;
+
+        if (session) {
+          setHasSession(true);
+          setSessionChecking(false);
+
+          if (hasRecoveryCredentials) {
+            clearRecoveryCredentialsFromUrl();
+          }
+
+          return;
+        }
+
+        scheduleInvalidLink();
+      } catch (recoveryError) {
+        console.error(
+          '[ResetPassword] Recovery session verification failed:',
+          recoveryError,
+        );
+
+        if (!cancelled) {
+          setError(
+            "Failed to verify reset link. Please request a new one.",
+          );
+          setSessionChecking(false);
+        }
+      }
+    };
+
+    void completeRecovery();
+
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
-      clearTimeout(timeoutId);
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, []);
 
