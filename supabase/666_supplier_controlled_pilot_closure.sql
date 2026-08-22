@@ -38,7 +38,7 @@ BEGIN
   -- Reservation, tracking and return paths carry an approved offer identity,
   -- so derive the supplier only from the exact allowlisted offer when present.
   IF v_offer_ref IS NOT NULL THEN
-    SELECT p,s,o INTO v_pilot,v_supplier,v_offer
+    SELECT p.* INTO v_pilot
       FROM private.supplier_pilot_programs p
       JOIN private.supplier_foundation_suppliers s ON s.id=p.supplier_id
       JOIN private.supplier_pilot_offers po ON po.pilot_id=p.id
@@ -57,7 +57,7 @@ BEGIN
     IF v_supplier_ref IS NULL THEN
       RETURN jsonb_build_object('enabled',false,'reason','pilot_supplier_or_offer_scope_required','interfaceVersion',1);
     END IF;
-    SELECT p,s INTO v_pilot,v_supplier
+    SELECT p.* INTO v_pilot
       FROM private.supplier_pilot_programs p
       JOIN private.supplier_foundation_suppliers s ON s.id=p.supplier_id
      WHERE p.status IN ('preparing','active')
@@ -70,6 +70,20 @@ BEGIN
 
   IF v_pilot.id IS NULL THEN
     RETURN jsonb_build_object('enabled',false,'reason','pilot_scope_not_allowlisted','interfaceVersion',1);
+  END IF;
+  SELECT * INTO v_supplier
+    FROM private.supplier_foundation_suppliers
+   WHERE id=v_pilot.supplier_id;
+  IF v_offer_ref IS NOT NULL THEN
+    SELECT o.* INTO v_offer
+      FROM private.supplier_pilot_offers po
+      JOIN private.supplier_offers o ON o.id=po.supplier_offer_id
+     WHERE po.pilot_id=v_pilot.id
+       AND v_offer_ref IN (o.id::text,o.offer_key)
+       AND o.supplier_id=v_pilot.supplier_id
+       AND o.territory=v_pilot.territory
+       AND o.status='approved'
+     LIMIT 1;
   END IF;
 
   IF v_pilot.status='preparing' AND v_operation NOT IN ('import','stock_sync','price_sync') THEN

@@ -6,6 +6,7 @@ const repo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 const pilot = repo('supabase/665_supplier_controlled_pilot.sql');
 const closure = repo('supabase/666_supplier_controlled_pilot_closure.sql');
 const evidenceClosure = repo('supabase/668_supplier_controlled_pilot_cohort_evidence_closure.sql');
+const adapterTerritoryGuard = repo('supabase/669_supplier_controlled_pilot_adapter_territory_guard.sql');
 const adminApi = repo('netlify/functions/admin-supplier-pilot.ts');
 const orchestrator = repo('supabase/635_supplier_order_orchestrator_runtime_guards.sql');
 const tracking = repo('supabase/644_supplier_tracking_exception_foundation.sql');
@@ -122,6 +123,12 @@ describe('Phase O Controlled Pilot', () => {
     expect(adminApi).toContain("body.action === 'readiness' ? 'server_supplier_pilot_activation_readiness_v1'");
   });
 
+  it('binds Phase O adapter readiness to the same GB territory as the controlled pilot', () => {
+    expect(adapterTerritoryGuard).toContain("a.territory='GB'");
+    expect(adapterTerritoryGuard).toContain('one_active_verified_gb_adapter_version_with_all_pilot_capabilities_is_required');
+    expect(adapterTerritoryGuard).toContain('capabilities cannot be aggregated across registrations or territories');
+  });
+
   it('preserves first activation across a real pause/restart kill-switch exercise', () => {
     expect(closure).toContain('activated_at=COALESCE(activated_at,now())');
     expect(pilot).toContain('server_admin_pause_supplier_pilot_v1');
@@ -198,5 +205,7 @@ describe('Phase O Controlled Pilot', () => {
     expect(pilot).not.toContain('SuperAdmin');
     expect(evidenceClosure).not.toContain('Workspace');
     expect(evidenceClosure).not.toContain('SuperAdmin');
+    expect(adapterTerritoryGuard).not.toContain('Workspace');
+    expect(adapterTerritoryGuard).not.toContain('SuperAdmin');
   });
 });
