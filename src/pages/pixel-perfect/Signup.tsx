@@ -84,7 +84,11 @@ const Signup = () => {
 
       // Refresh the auth session so App.tsx rehydrates the newly persisted
       // compatibility role before RequireSellerAny evaluates /onboarding.
-      await supabase.auth.refreshSession();
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        throw new Error("Seller setup started, but your session could not be refreshed. Please sign in again to continue.");
+      }
+
       toast({
         title: "Seller setup started",
         description: "Your Buyer access stays on this same Loadify account.",
