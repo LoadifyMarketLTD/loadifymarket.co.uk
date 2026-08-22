@@ -95,7 +95,7 @@ describe('set-account-role legacy compatibility', () => {
       }),
     }));
     vi.doMock('../_shared/platformFlags', () => ({
-      getFeatureFlags: vi.fn().mockResolvedValue({ sellerRegistration: false }),
+      getFeatureFlagsStrict: vi.fn().mockResolvedValue({ sellerRegistration: false }),
     }));
     const { handler } = await import('../set-account-role');
     const res = await handler(makeEvent({ role: 'seller' }), {} as never);
@@ -103,6 +103,28 @@ describe('set-account-role legacy compatibility', () => {
     expect(JSON.parse(res.body).error).toContain('temporarily disabled');
     expect(rpc).not.toHaveBeenCalled();
     expect(updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when legacy Seller activation availability cannot be verified', async () => {
+    const rpc = vi.fn();
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({ rpc })),
+    }));
+    vi.doMock('../_shared/activeAccountAuth', () => ({
+      authenticateActiveAccount: vi.fn().mockResolvedValue({
+        ok: true,
+        actor: { id: 'buyer-1', role: 'buyer', email: 'buyer@example.com', appMetadata: {} },
+      }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      getFeatureFlagsStrict: vi.fn().mockRejectedValue(new Error('settings unavailable')),
+    }));
+
+    const { handler } = await import('../set-account-role');
+    const res = await handler(makeEvent({ role: 'seller' }), {} as never);
+    expect(res.statusCode).toBe(503);
+    expect(JSON.parse(res.body).error).toContain('could not be verified');
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it('uses the atomic Seller activation RPC and never resets Seller lifecycle directly', async () => {
@@ -121,7 +143,7 @@ describe('set-account-role legacy compatibility', () => {
       }),
     }));
     vi.doMock('../_shared/platformFlags', () => ({
-      getFeatureFlags: vi.fn().mockResolvedValue({ sellerRegistration: true }),
+      getFeatureFlagsStrict: vi.fn().mockResolvedValue({ sellerRegistration: true }),
     }));
     const { handler } = await import('../set-account-role');
     const res = await handler(makeEvent({ role: 'seller' }), {} as never);
