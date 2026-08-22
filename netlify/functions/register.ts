@@ -2,14 +2,22 @@ import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { getClientIp } from './_shared/getClientIp';
-import { getFeatureFlags } from './_shared/platformFlags';
+import { getFeatureFlagsStrict } from './_shared/platformFlags';
 
 /**
  * POST /.netlify/functions/register
  *
- * Creates an unconfirmed Supabase Auth user with the Admin API, persists the
- * marketplace profile, and sends confirmation/welcome notifications through
- * the platform email pipeline.
+ * Creates an unconfirmed Supabase Auth user, persists the minimum marketplace
+ * identity/relationship state, and only then sends confirmation/welcome email.
+ *
+ * Stage 2 contract:
+ *   - Buyer and Marketplace Seller are public marketplace relationships.
+ *   - Supplier Partner is NOT a public user role here.
+ *   - Seller starts fail-closed: sellerStatus='draft', isApproved=false and
+ *     seller_stores.isActive=false until later onboarding/readiness gates pass.
+ *   - Store identity is never invented during account creation.
+ *   - registration availability is a strict operator gate and fails closed when
+ *     platform settings cannot be read.
  *
  * Authorization data belongs in app_metadata. user_metadata is intentionally
  * limited to user-editable profile/preferences and must never be trusted for
@@ -40,7 +48,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
@@ -88,7 +96,14 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Password must be at least 8 characters' }) };
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const validSellerTypes = new Set(['individual', 'sole_trader', 'company']);
+  if (role === 'seller' && (!sellerType || !validSellerTypes.has(sellerType))) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'A valid Seller legal type is required' }) };
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 
   const ip = getClientIp(event);
   if (ip) {
@@ -108,40 +123,43 @@ export const handler: Handler = async (event) => {
     }
   }
 
+  let featureFlags: Awaited<ReturnType<typeof getFeatureFlagsStrict>>;
   try {
-    const flags = await getFeatureFlags(supabase);
-    if (role === 'seller' && flags.sellerRegistration === false) {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Seller registration is temporarily disabled. Please try again later.' }),
-      };
-    }
-    if (role === 'buyer' && flags.buyerRegistration === false) {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Buyer registration is temporarily disabled. Please try again later.' }),
-      };
-    }
-  } catch {
-    // Preserve existing fail-open registration behaviour if settings are
-    // temporarily unavailable. The role itself is still server-validated.
+    featureFlags = await getFeatureFlagsStrict(supabase);
+  } catch (error) {
+    console.error('register: registration availability lookup failed:', error instanceof Error ? error.message : error);
+    return {
+      statusCode: 503,
+      body: JSON.stringify({ error: 'Registration availability could not be verified. Please try again later.' }),
+    };
+  }
+
+  if (role === 'seller' && featureFlags.sellerRegistration === false) {
+    return {
+      statusCode: 403,
+      body: JSON.stringify({ error: 'Seller registration is temporarily disabled. Please try again later.' }),
+    };
+  }
+  if (role === 'buyer' && featureFlags.buyerRegistration === false) {
+    return {
+      statusCode: 403,
+      body: JSON.stringify({ error: 'Buyer registration is temporarily disabled. Please try again later.' }),
+    };
   }
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
     password,
-    app_metadata: {
-      role,
-    },
+    app_metadata: { role },
     user_metadata: {
       first_name: firstName,
       last_name: lastName,
-      ...(middleName        ? { middle_name:        middleName }        : {}),
-      ...(phone             ? { phone }                                  : {}),
-      ...(vatNumber         ? { vat_number:         vatNumber }         : {}),
-      ...(customerType      ? { customer_type:      customerType }      : {}),
-      ...(newsletter        ? { newsletter:         true }              : {}),
-      ...(requestAssistance ? { request_assistance: true }              : {}),
+      ...(middleName ? { middle_name: middleName } : {}),
+      ...(phone ? { phone } : {}),
+      ...(vatNumber ? { vat_number: vatNumber } : {}),
+      ...(customerType ? { customer_type: customerType } : {}),
+      ...(newsletter ? { newsletter: true } : {}),
+      ...(requestAssistance ? { request_assistance: true } : {}),
     },
   });
 
@@ -197,8 +215,25 @@ export const handler: Handler = async (event) => {
 
   const userId = authData.user.id;
 
+  const cleanupFailedRegistration = async (reason: string) => {
+    console.error(`register: ${reason}; cleaning up newly-created account ${userId}`);
+    try {
+      const { error } = await supabase.from('users').delete().eq('id', userId);
+      if (error) console.error('register: public.users cleanup failed:', error.message);
+    } catch (error) {
+      console.error('register: public.users cleanup threw:', error);
+    }
+    try {
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) console.error('register: auth user cleanup failed:', error.message);
+    } catch (error) {
+      console.error('register: auth user cleanup threw:', error);
+    }
+  };
+
   // The auth.users trigger may already have inserted this row. A duplicate is
-  // therefore expected and non-fatal; any other write error is logged.
+  // expected; any other failure is fatal because an Auth-only orphan identity
+  // must never be returned to the user as a successful marketplace account.
   const { error: profileError } = await supabase.from('users').insert({
     id: userId,
     email,
@@ -210,74 +245,25 @@ export const handler: Handler = async (event) => {
   });
 
   if (profileError && profileError.code !== '23505') {
-    console.error('register: users insert failed:', profileError.message);
+    await cleanupFailedRegistration(`users insert failed: ${profileError.message}`);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to initialize account. Please try again.' }) };
   }
 
-  const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
-
-  const { data: confirmLinkData, error: confirmLinkError } = await supabase.auth.admin.generateLink({
-    type: 'signup',
-    email,
-    options: {
-      redirectTo: `${appUrl}/login?confirmed=1`,
-    },
-  });
-
-  if (confirmLinkError) {
-    console.warn('register: generateLink failed (non-fatal):', confirmLinkError.message);
-  } else {
-    const actionLink = (confirmLinkData as { properties?: { action_link?: string } }).properties?.action_link;
-    if (actionLink) {
-      try {
-        const confirmEmailRes = await fetch(`${appUrl}/.netlify/functions/send-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
-          },
-          body: JSON.stringify({
-            to: email,
-            subject: 'Confirm your Loadify Market email address',
-            template: 'confirm_email',
-            data: {
-              userName: `${firstName} ${lastName}`,
-              actionLink,
-            },
-          }),
-        });
-        if (!confirmEmailRes.ok) {
-          const errBody = await confirmEmailRes.json().catch(() => ({})) as Record<string, unknown>;
-          console.error('register: confirmation email delivery failed:', confirmEmailRes.status, errBody);
-        }
-      } catch (err) {
-        console.error('register: confirmation email fetch threw (non-fatal):', err);
-      }
-    } else {
-      console.warn('register: action_link missing from generateLink response — confirmation email not sent');
-    }
-  }
+  let explicitStoreName: string | null = null;
 
   if (role === 'seller') {
-    const effectiveStoreName = storeName?.trim() || `${firstName}'s Store`;
-    const validSellerTypes = new Set(['individual', 'sole_trader', 'company']);
-    const safeSellerType = sellerType && validSellerTypes.has(sellerType) ? sellerType : null;
-
-    let requiresAdminApproval = false;
-    if (safeSellerType === 'company') {
-      try {
-        const flags = await getFeatureFlags(supabase);
-        requiresAdminApproval = Boolean(flags.requireCompanyApproval);
-      } catch {
-        // Keep existing behaviour if settings are temporarily unavailable.
-      }
-    }
+    explicitStoreName = storeName?.trim() || null;
+    const safeSellerType = sellerType as 'individual' | 'sole_trader' | 'company';
+    const requiresAdminApproval = safeSellerType === 'company' && Boolean(featureFlags.requireCompanyApproval);
 
     const sellerProfileUpdate: Record<string, unknown> = {
       userId,
       fullName: `${firstName} ${lastName}`,
-      storeName: effectiveStoreName,
-      ...(safeSellerType ? { sellerType: safeSellerType } : {}),
+      sellerType: safeSellerType,
+      sellerStatus: 'draft',
+      isApproved: false,
       requiresAdminApproval,
+      ...(explicitStoreName ? { storeName: explicitStoreName } : {}),
     };
     if (phone?.trim()) sellerProfileUpdate.contactPhone = phone.trim();
     if (vatNumber?.trim()) sellerProfileUpdate.vatNumber = vatNumber.trim();
@@ -289,13 +275,24 @@ export const handler: Handler = async (event) => {
       sellerProfileUpdate,
       { onConflict: 'userId' },
     );
-    if (spErr) console.warn('register: seller_profiles upsert (non-fatal):', spErr.message);
+    if (spErr) {
+      await cleanupFailedRegistration(`seller_profiles upsert failed: ${spErr.message}`);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to initialize Seller setup. Please try again.' }) };
+    }
 
+    const sellerStoreUpdate: Record<string, unknown> = {
+      userId,
+      isActive: false,
+      ...(explicitStoreName ? { storeName: explicitStoreName } : {}),
+    };
     const { error: ssErr } = await supabase.from('seller_stores').upsert(
-      { userId, storeName: effectiveStoreName },
+      sellerStoreUpdate,
       { onConflict: 'userId' },
     );
-    if (ssErr) console.warn('register: seller_stores upsert (non-fatal):', ssErr.message);
+    if (ssErr) {
+      await cleanupFailedRegistration(`seller_stores upsert failed: ${ssErr.message}`);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to initialize Seller store. Please try again.' }) };
+    }
   }
 
   if (role === 'buyer' && (companyName?.trim() || vatNumber?.trim() || customerType)) {
@@ -314,6 +311,45 @@ export const handler: Handler = async (event) => {
     if (bpErr) console.warn('register: buyer_profiles B2B upsert (non-fatal):', bpErr.message);
   }
 
+  const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+
+  const { data: confirmLinkData, error: confirmLinkError } = await supabase.auth.admin.generateLink({
+    type: 'signup',
+    email,
+    options: { redirectTo: `${appUrl}/login?confirmed=1` },
+  });
+
+  if (confirmLinkError) {
+    console.warn('register: generateLink failed (non-fatal):', confirmLinkError.message);
+  } else {
+    const actionLink = (confirmLinkData as { properties?: { action_link?: string } }).properties?.action_link;
+    if (actionLink) {
+      try {
+        const confirmEmailRes = await fetch(`${appUrl}/.netlify/functions/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+          },
+          body: JSON.stringify({
+            to: email,
+            subject: 'Confirm your Loadify Market email address',
+            template: 'confirm_email',
+            data: { userName: `${firstName} ${lastName}`, actionLink },
+          }),
+        });
+        if (!confirmEmailRes.ok) {
+          const errBody = (await confirmEmailRes.json().catch(() => ({}))) as Record<string, unknown>;
+          console.error('register: confirmation email delivery failed:', confirmEmailRes.status, errBody);
+        }
+      } catch (error) {
+        console.error('register: confirmation email fetch threw (non-fatal):', error);
+      }
+    } else {
+      console.warn('register: action_link missing from generateLink response — confirmation email not sent');
+    }
+  }
+
   const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
   if (!adminEmail) {
     console.warn('register: ADMIN_NOTIFICATION_EMAIL is not set — admin notification email skipped.');
@@ -326,7 +362,7 @@ export const handler: Handler = async (event) => {
       sellerName: `${firstName} ${lastName}`,
     };
     if (role === 'seller') {
-      notificationData.storeName = storeName?.trim() || `${firstName}'s Store`;
+      notificationData.storeName = explicitStoreName || 'Not set yet';
     }
     fetch(`${appUrl}/.netlify/functions/send-email`, {
       method: 'POST',
@@ -334,13 +370,8 @@ export const handler: Handler = async (event) => {
         'Content-Type': 'application/json',
         ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
       },
-      body: JSON.stringify({
-        to: adminEmail,
-        subject,
-        template,
-        data: notificationData,
-      }),
-    }).catch((err: unknown) => console.warn('register: admin notification failed (non-fatal):', err));
+      body: JSON.stringify({ to: adminEmail, subject, template, data: notificationData }),
+    }).catch((error: unknown) => console.warn('register: admin notification failed (non-fatal):', error));
   }
 
   if (role === 'seller') {
@@ -356,7 +387,7 @@ export const handler: Handler = async (event) => {
         template: 'seller_welcome',
         data: { sellerName: `${firstName} ${lastName}` },
       }),
-    }).catch((err: unknown) => console.warn('register: seller welcome email failed (non-fatal):', err));
+    }).catch((error: unknown) => console.warn('register: seller welcome email failed (non-fatal):', error));
   }
 
   if (role === 'buyer') {
@@ -372,7 +403,7 @@ export const handler: Handler = async (event) => {
         template: 'buyer_welcome',
         data: { buyerName: `${firstName} ${lastName}` },
       }),
-    }).catch((err: unknown) => console.warn('register: buyer welcome email failed (non-fatal):', err));
+    }).catch((error: unknown) => console.warn('register: buyer welcome email failed (non-fatal):', error));
   }
 
   return {
