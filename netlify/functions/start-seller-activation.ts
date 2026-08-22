@@ -2,7 +2,7 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { jsonResponse, optionsResponse } from './_shared/http';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
-import { getFeatureFlags } from './_shared/platformFlags';
+import { getFeatureFlagsStrict } from './_shared/platformFlags';
 
 const METHODS = 'POST, OPTIONS';
 
@@ -49,7 +49,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const flags = await getFeatureFlags(supabase);
+    const flags = await getFeatureFlagsStrict(supabase);
     if (flags.sellerRegistration === false) {
       return jsonResponse(403, {
         error: 'Seller registration is temporarily disabled. Please try again later.',
