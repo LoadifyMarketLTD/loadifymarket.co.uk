@@ -242,6 +242,148 @@ describe('register handler – Stage 2 boundary', () => {
     expect(JSON.parse(res.body as string).userId).toBe('user-uuid-123');
   });
 
+  it('rejects an invalid optional Buyer business account type', async () => {
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({})),
+    }));
+
+    const { handler } = await import('../register');
+    const res = await handler(
+      makeEvent({
+        email: 'buyer@b.com',
+        password: 'secret123',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        role: 'buyer',
+        customerType: 'supplier',
+      }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body as string).error).toMatch(/buyer account type/i);
+  });
+
+  it('persists an explicitly requested Buyer business profile before returning success', async () => {
+    mockStrictFlags();
+
+    const usersInsert = vi.fn().mockResolvedValue({ error: null });
+    const buyerProfileUpsert = vi.fn().mockResolvedValue({ error: null });
+
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          admin: {
+            createUser: vi.fn().mockResolvedValue({
+              data: { user: { id: 'buyer-business-1' } },
+              error: null,
+            }),
+            generateLink: vi.fn().mockResolvedValue({
+              data: { properties: {} },
+              error: null,
+            }),
+            deleteUser: vi.fn(),
+          },
+        },
+        from: vi.fn((table: string) => {
+          if (table === 'users') return { insert: usersInsert };
+          if (table === 'buyer_profiles') {
+            return { upsert: buyerProfileUpsert };
+          }
+          throw new Error(`unexpected table ${table}`);
+        }),
+      })),
+    }));
+
+    const { handler } = await import('../register');
+    const res = await handler(
+      makeEvent({
+        email: 'trade@b.com',
+        password: 'secret123',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        role: 'buyer',
+        companyName: 'Example Trading Ltd',
+        businessAddress: {
+          line1: '1 Example Road',
+          city: 'London',
+          postcode: 'SW1A 1AA',
+          country: 'United Kingdom',
+        },
+      }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(buyerProfileUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'buyer-business-1',
+        accountType: 'business',
+        companyName: 'Example Trading Ltd',
+      }),
+      { onConflict: 'userId' },
+    );
+  });
+
+  it('fails atomically when an explicitly requested Buyer business profile cannot be persisted', async () => {
+    mockStrictFlags();
+
+    const deleteUser = vi.fn().mockResolvedValue({ error: null });
+    const publicDeleteEq = vi.fn().mockResolvedValue({ error: null });
+
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          admin: {
+            createUser: vi.fn().mockResolvedValue({
+              data: { user: { id: 'buyer-business-bad-1' } },
+              error: null,
+            }),
+            deleteUser,
+          },
+        },
+        from: vi.fn((table: string) => {
+          if (table === 'users') {
+            return {
+              insert: vi.fn().mockResolvedValue({ error: null }),
+              delete: vi.fn().mockReturnValue({ eq: publicDeleteEq }),
+            };
+          }
+          if (table === 'buyer_profiles') {
+            return {
+              upsert: vi.fn().mockResolvedValue({
+                error: { message: 'business profile write failed' },
+              }),
+            };
+          }
+          throw new Error(`unexpected table ${table}`);
+        }),
+      })),
+    }));
+
+    const { handler } = await import('../register');
+    const res = await handler(
+      makeEvent({
+        email: 'trade@b.com',
+        password: 'secret123',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        role: 'buyer',
+        companyName: 'Example Trading Ltd',
+      }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(500);
+    expect(JSON.parse(res.body as string).error).toMatch(
+      /business buyer profile/i,
+    );
+    expect(publicDeleteEq).toHaveBeenCalledWith(
+      'id',
+      'buyer-business-bad-1',
+    );
+    expect(deleteUser).toHaveBeenCalledWith('buyer-business-bad-1');
+  });
   it('creates a new Seller as draft with an inactive store and no invented store name', async () => {
     mockStrictFlags();
     const sellerProfileUpsert = vi.fn().mockResolvedValue({ error: null });

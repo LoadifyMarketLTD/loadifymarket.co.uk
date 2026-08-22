@@ -71,9 +71,9 @@ const HEAR_ABOUT_US = [
 ];
 
 const TRUST_POINTS = [
-  { icon: "✔", text: "Shop Over 10,000 Product Lines" },
-  { icon: "✔", text: "Join Over 500 Businesses" },
-  { icon: "✔", text: "UK, Ireland & International" },
+  { icon: "✔", text: "Keep business details with your Buyer account" },
+  { icon: "✔", text: "Use the same Loadify identity for permitted Buyer and Seller access" },
+  { icon: "✔", text: "Manage orders and account details from Buyer Space" },
 ];
 
 // ─── Password strength helper ─────────────────────────────────────────────────
@@ -229,10 +229,10 @@ export default function TradeAccount() {
       if (!res.ok) throw new Error(json.error || "Registration failed");
 
       toast({
-        title: "Trade account created!",
-        description: "You can now sign in and start browsing products across the marketplace.",
+        title: "Trade account created",
+        description: "Check your email to confirm your address, then sign in to Buyer Space.",
       });
-      navigate("/login", { replace: true });
+      navigate("/login?registered=1", { replace: true });
     } catch (err) {
       toast({
         title: "Registration failed",
@@ -262,7 +262,7 @@ export default function TradeAccount() {
             <span className="text-primary mt-0.5 shrink-0">⚠️</span>
             <p className="text-sm text-primary">
               <strong>IMPORTANT:</strong> Please ensure all details are correct before submitting.
-              Your business details will be used for account verification and order processing.
+              Your business details are stored with your Buyer profile and used only where supported for account, order, invoice and tax handling.
             </p>
           </div>
         </div>
