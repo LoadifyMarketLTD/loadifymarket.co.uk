@@ -10,20 +10,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Restrict the default GITHUB_TOKEN to the minimum permissions needed.
-# Individual jobs that require additional access must declare them explicitly.
 permissions:
   contents: read
 
 jobs:
-  # ── 1. Lint ────────────────────────────────────────────────────────────────
   lint:
     name: Lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v7
         with:
@@ -36,14 +33,13 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-  # ── 2. Type-check ──────────────────────────────────────────────────────────
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v7
         with:
@@ -56,14 +52,13 @@ jobs:
       - name: TypeScript type check
         run: npx tsc -b --noEmit
 
-  # ── 3. Test ────────────────────────────────────────────────────────────────
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v7
         with:
@@ -76,14 +71,13 @@ jobs:
       - name: Run tests
         run: npm test
 
-  # ── 4. Build ───────────────────────────────────────────────────────────────
   migration-health:
     name: Migration Health
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Validate migration inventory and health script
         run: |
@@ -136,7 +130,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v7
         with:
@@ -164,8 +158,9 @@ jobs:
       VITE_SUPABASE_URL: https://placeholder.supabase.co
       VITE_SUPABASE_ANON_KEY: placeholder-anon-key
       VITE_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+      
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v7
         with:
