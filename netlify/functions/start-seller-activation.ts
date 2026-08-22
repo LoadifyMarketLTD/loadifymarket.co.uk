@@ -14,6 +14,10 @@ const METHODS = 'POST, OPTIONS';
  *
  * The database RPC is service-role only and performs the capability grant,
  * seller-profile/store initialization and compatibility role update atomically.
+ * Migration 340 mirrors that compatibility role update into Auth app metadata
+ * in the same database transaction, so there is no second post-commit Auth
+ * mutation that can leave the activation flow in a partially synchronized
+ * state.
  */
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return optionsResponse(METHODS);
@@ -67,23 +71,6 @@ export const handler: Handler = async (event) => {
     const forbidden = error.code === '42501';
     return jsonResponse(forbidden ? 403 : 500, {
       error: forbidden ? 'Seller activation is not available for this account' : 'Failed to start Seller activation',
-    }, METHODS);
-  }
-
-  // Migration 340 mirrors the compatibility users.role update into Auth app
-  // metadata. Refreshing it here as well keeps the current session-facing role
-  // deterministic even when a deployment has trigger lag/version skew.
-  const { error: metadataError } = await supabase.auth.admin.updateUserById(auth.actor.id, {
-    app_metadata: {
-      ...auth.actor.appMetadata,
-      role: 'seller',
-    },
-  });
-
-  if (metadataError) {
-    console.error('start-seller-activation: app_metadata sync failed:', metadataError.message);
-    return jsonResponse(500, {
-      error: 'Seller activation started but session authorization could not be synchronized. Please sign in again.',
     }, METHODS);
   }
 
