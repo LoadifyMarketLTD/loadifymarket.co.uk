@@ -10,21 +10,24 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Restrict the default GITHUB_TOKEN to the minimum permissions needed.
+# Individual jobs that require additional access must declare them explicitly.
 permissions:
   contents: read
 
 jobs:
+  # ── 1. Lint ────────────────────────────────────────────────────────────────
   lint:
     name: Lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -33,17 +36,18 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+  # ── 2. Type-check ──────────────────────────────────────────────────────────
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -52,17 +56,18 @@ jobs:
       - name: TypeScript type check
         run: npx tsc -b --noEmit
 
+  # ── 3. Test ────────────────────────────────────────────────────────────────
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -71,13 +76,14 @@ jobs:
       - name: Run tests
         run: npm test
 
+  # ── 4. Build ────────────────────────────────────────────────────────────────
   migration-health:
     name: Migration Health
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate migration inventory and health script
         run: |
@@ -101,6 +107,10 @@ jobs:
           if not nums:
               raise SystemExit('No numeric migration prefixes found.')
 
+          # Sort numerically and check the list is non-decreasing.
+          # The repository intentionally mixes 2-digit legacy prefixes (10, 20, …)
+          # with 3-digit modern prefixes (100, 110, …), which is valid because the
+          # application applies them in ascending numeric order at deploy time.
           nums_sorted = sorted(nums)
           for i in range(1, len(nums_sorted)):
               if nums_sorted[i] < nums_sorted[i - 1]:
@@ -109,6 +119,8 @@ jobs:
                       f'{nums_sorted[i]} follows {nums_sorted[i-1]}'
                   )
 
+          # Flag unexpected new duplicate prefixes (> 2 occurrences of any single
+          # number suggests a merge conflict or a misnamed file).
           counts = Counter(nums_sorted)
           bad_dupes = [n for n, c in counts.items() if c > 2]
           if bad_dupes:
@@ -130,11 +142,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -155,16 +167,18 @@ jobs:
     permissions:
       contents: read
     env:
+      # Provide stub env vars so Vite doesn't fail with missing-variable errors.
+      # Real secrets are injected by Netlify at deploy time; we only need the
+      # build to succeed here.
       VITE_SUPABASE_URL: https://placeholder.supabase.co
       VITE_SUPABASE_ANON_KEY: placeholder-anon-key
       VITE_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
-      
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
