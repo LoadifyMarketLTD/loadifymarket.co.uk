@@ -72,6 +72,27 @@ describe('release-hardening security contracts', () => {
     expect(correctiveRls).toContain('WITH CHECK (is_admin())');
   });
 
+  it('keeps migration 220 product-analytics hardening replay-idempotent', () => {
+    const sql = read('supabase/220_fix_rls_security_gaps.sql');
+
+    for (const policy of [
+      'product_analytics_select',
+      'product_analytics_insert',
+      'product_analytics_update',
+      'product_analytics_delete',
+    ]) {
+      const drop = `DROP POLICY IF EXISTS "${policy}" ON product_analytics;`;
+      const create = `CREATE POLICY "${policy}"`;
+      expect(sql).toContain(drop);
+      expect(sql).toContain(create);
+      expect(sql.indexOf(drop)).toBeLessThan(sql.indexOf(create));
+    }
+
+    expect(sql).toContain('CREATE POLICY "product_analytics_update"');
+    expect(sql).toContain('CREATE POLICY "product_analytics_delete"');
+    expect(sql.match(/USING \(is_admin\(\)\);/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
   it('revalidates buyer and seller live account state before service-role checkout side effects', () => {
     for (const source of [
       read('netlify/functions/create-checkout.ts'),
