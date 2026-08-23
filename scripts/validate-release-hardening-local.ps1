@@ -107,7 +107,9 @@ try {
     Invoke-NativeStep "4. TARGETED RELEASE-HARDENING TESTS" {
         npx vitest run `
             netlify/functions/__tests__/legacy-transport-replay-envelope.test.ts `
-            netlify/functions/__tests__/release-hardening-security-contract.test.ts
+            netlify/functions/__tests__/release-hardening-security-contract.test.ts `
+            src/lib/authorizedFetch.test.ts `
+            src/pages/onboarding/SellerOnboarding.test.tsx
     }
 
     Invoke-NativeStep "5. REPAIRED / REGRESSION SUITES" {
@@ -119,7 +121,10 @@ try {
             netlify/functions/__tests__/update-product.test.ts `
             netlify/functions/__tests__/create-checkout.test.ts `
             netlify/functions/__tests__/create-payment-intent.test.ts `
-            netlify/functions/__tests__/checkout-safety.test.ts
+            netlify/functions/__tests__/checkout-safety.test.ts `
+            netlify/functions/__tests__/shipment-boundary.test.ts `
+            netlify/functions/__tests__/start-seller-activation.test.ts `
+            netlify/functions/__tests__/set-account-role.test.ts
     }
 
     Invoke-NativeStep "6. FULL TEST SUITE" { npm test }
@@ -131,7 +136,8 @@ try {
     $env:VITE_STRIPE_PUBLISHABLE_KEY = "pk_test_placeholder"
     Invoke-NativeStep "9. PRODUCTION BUILD" { npm run build }
 
-    Write-Host "`n=== 10. FRESH LOCAL DATABASE REPLAY ===" -ForegroundColor Cyan
+    Write-Host "`n=== 10. FRESH DISPOSABLE DATABASE REPLAY ===" -ForegroundColor Cyan
+    Write-Host "This is a replay diagnostic in an isolated local database only; it is not a production bootstrap/deploy procedure." -ForegroundColor Yellow
     Write-Host "This phase starts only because tests/lint/typecheck/build are green." -ForegroundColor Yellow
 
     if (-not (Get-Command supabase -ErrorAction SilentlyContinue)) {
@@ -172,25 +178,44 @@ try {
     $dbContainer = $dbContainers[0]
     Write-Host "LOCAL DB CONTAINER=$dbContainer" -ForegroundColor Green
 
+    $supabaseRoot = Join-Path $WorktreePath "supabase"
+    $resetPath = Join-Path $supabaseRoot "00_reset.sql"
+    $helperBootstrapPath = Join-Path $supabaseRoot "PART_1_extensions_helpers.sql"
+
+    if (-not (Test-Path -LiteralPath $resetPath)) {
+        throw "STOP: historical replay reset file is missing -> 00_reset.sql"
+    }
+    if (-not (Test-Path -LiteralPath $helperBootstrapPath)) {
+        throw "STOP: historical replay helper bootstrap is missing -> PART_1_extensions_helpers.sql"
+    }
+
+    # The historical modular chain explicitly requires helper functions before
+    # 01_users_profiles.sql. 00_reset.sql drops those helpers, so the only valid
+    # disposable replay order is: reset -> PART_1 helpers -> numeric 01+.
+    Invoke-LocalSqlFile -DbContainer $dbContainer -File (Get-Item -LiteralPath $resetPath)
+    Invoke-LocalSqlFile -DbContainer $dbContainer -File (Get-Item -LiteralPath $helperBootstrapPath)
+
     $numericMigrations = @(
-        Get-ChildItem -LiteralPath (Join-Path $WorktreePath "supabase") -File -Filter "*.sql" |
+        Get-ChildItem -LiteralPath $supabaseRoot -File -Filter "*.sql" |
             Where-Object {
                 $_.Name -match '^\d+_.*\.sql$' -and
-                $_.Name -ne '00_consolidated_schema.sql'
+                $_.Name -ne '00_consolidated_schema.sql' -and
+                $_.Name -ne '00_reset.sql'
             } |
             Sort-Object `
                 @{ Expression = { [int]([regex]::Match($_.Name, '^(\d+)_').Groups[1].Value) } }, `
                 @{ Expression = { $_.Name } }
     )
     if ($numericMigrations.Count -eq 0) {
-        throw "STOP: no executable numeric migrations found in supabase/"
+        throw "STOP: no executable numeric migrations found after replay bootstrap"
     }
 
-    if ($numericMigrations.Name -contains '00_consolidated_schema.sql') {
-        throw "STOP: deprecated consolidated schema tombstone entered executable replay set"
+    if ($numericMigrations.Name -contains '00_consolidated_schema.sql' -or
+        $numericMigrations.Name -contains '00_reset.sql') {
+        throw "STOP: replay bootstrap file entered numeric 01+ migration set"
     }
 
-    Write-Host ("Numeric replay files: {0}" -f $numericMigrations.Count)
+    Write-Host ("Numeric 01+ replay files: {0}" -f $numericMigrations.Count)
     foreach ($migration in $numericMigrations) {
         Invoke-LocalSqlFile -DbContainer $dbContainer -File $migration
     }
@@ -229,20 +254,39 @@ try {
         throw "STOP: hardening branch is no longer based on current main"
     }
 
+    $finalCounts = (Get-GitValue { git -C $RepoRoot rev-list --left-right --count "origin/main...origin/$ExpectedBranch" }) -split '\s+'
+    if ($finalCounts.Count -lt 2) { throw "STOP: cannot parse final ahead/behind counts" }
+    $finalBehind = [int]$finalCounts[0]
+    $finalAhead = [int]$finalCounts[1]
+    if ($finalBehind -ne 0) {
+        throw "STOP: hardening branch became behind main by $finalBehind commit(s)"
+    }
+
     $changedFiles = @(git -C $RepoRoot diff --name-only "origin/main...origin/$ExpectedBranch")
     if ($LASTEXITCODE -ne 0) { throw "STOP: exact diff inspection failed" }
+
+    $allowedSrcPaths = @(
+        'src/lib/authorizedFetch.ts',
+        'src/lib/authorizedFetch.test.ts',
+        'src/pages/onboarding/SellerOnboarding.tsx',
+        'src/pages/onboarding/SellerOnboarding.test.tsx'
+    )
 
     $forbidden = @(
         $changedFiles | Where-Object {
             $_ -like 'android/*' -or
-            $_ -like 'src/*' -or
-            $_ -like 'public/*'
+            $_ -like 'public/*' -or
+            (($_ -like 'src/*') -and ($_ -notin $allowedSrcPaths))
         }
     )
     if ($forbidden.Count -gt 0) {
         Write-Host "Unexpected UI/mobile files in hardening diff:" -ForegroundColor Red
         $forbidden | ForEach-Object { Write-Host $_ }
         throw "STOP: release-hardening scope contamination detected"
+    }
+
+    if ($changedFiles -contains 'src/pages/Home.tsx') {
+        throw "STOP: homepage entered release-hardening diff"
     }
 
     Write-Host "Exact hardening diff:" -ForegroundColor Cyan
@@ -252,8 +296,10 @@ try {
     Write-Host " LOADIFY RELEASE-HARDENING LOCAL VALIDATION = PASS" -ForegroundColor Green
     Write-Host " MAIN=$finalMainHead" -ForegroundColor Green
     Write-Host " BRANCH=$finalBranchHead" -ForegroundColor Green
+    Write-Host " AHEAD=$finalAhead BEHIND=$finalBehind" -ForegroundColor Green
     Write-Host " NODE FULL SUITE / LINT / TYPECHECK / BUILD = PASS" -ForegroundColor Green
-    Write-Host " FRESH NUMERIC + TIMESTAMPED DB REPLAY / LINT / DB CONTRACT = PASS" -ForegroundColor Green
+    Write-Host " FRESH DISPOSABLE HISTORICAL + TIMESTAMPED DB REPLAY / LINT / DB CONTRACT = PASS" -ForegroundColor Green
+    Write-Host " HOMEPAGE / ADMIN / WORKSPACE / ANDROID / PUBLIC SURFACES = UNTOUCHED" -ForegroundColor Green
     Write-Host " NO CI / NO NETLIFY / NO PRODUCTION DB PUSH" -ForegroundColor Green
     Write-Host "==============================================================" -ForegroundColor Green
 }
