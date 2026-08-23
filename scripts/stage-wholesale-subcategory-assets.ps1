@@ -64,12 +64,26 @@ $manifest = Get-Content 'scripts/wholesale-subcategory-assets.json' -Raw | Conve
 $entries = @($manifest.categories | ForEach-Object { $_.subcategories })
 
 if ($manifest.categories.Count -ne 16) { throw "Expected 16 categories, got $($manifest.categories.Count)." }
+foreach ($category in $manifest.categories) {
+  if ($category.subcategories.Count -ne 6) {
+    throw "Category '$($category.category)' must have exactly 6 subcategory sources; got $($category.subcategories.Count)."
+  }
+}
 if ($entries.Count -ne 96) { throw "Expected 96 subcategory images, got $($entries.Count)." }
 
 $sourceIds = @($entries | ForEach-Object { $_.sourceId })
 $targets = @($entries | ForEach-Object { $_.targetPath })
 if (($sourceIds | Sort-Object -Unique).Count -ne 96) { throw 'Source-image IDs are not globally unique.' }
 if (($targets | Sort-Object -Unique).Count -ne 96) { throw 'Target image paths are not globally unique.' }
+
+foreach ($entry in $entries) {
+  if ($entry.sourceUrl -notmatch '^https://unsplash\.com/photos/') {
+    throw "Unexpected visual source host for '$($entry.title)': $($entry.sourceUrl)"
+  }
+  if ($entry.targetPath -notmatch '^public/category-visuals/subcategories/[a-z0-9-]+/[a-z0-9-]+\.jpg$') {
+    throw "Unsafe or invalid target path for '$($entry.title)': $($entry.targetPath)"
+  }
+}
 
 $repoRoot = (Resolve-Path '.').Path
 $tempRoot = Join-Path $env:TEMP 'loadify-wholesale-subcategory-assets'
@@ -116,5 +130,5 @@ Write-Host 'No database, migration, Android or production changes were made.'
 Write-Host "`nRun next:"
 Write-Host '  git status --short -- public/category-visuals/subcategories'
 Write-Host '  npm run typecheck'
-Write-Host '  npm test -- --run src/data/wholesaleSubcategoryBlueprint.test.ts src/data/wholesaleVisualTaxonomy.test.ts src/data/wholesaleSubcategoryVisualManifest.test.ts'
+Write-Host '  npm test -- src/data/wholesaleSubcategoryBlueprint.test.ts src/data/wholesaleVisualTaxonomy.test.ts src/data/wholesaleSubcategoryVisualManifest.test.ts src/data/wholesaleLocalAssets.test.ts'
 Write-Host '  npm run build'
