@@ -141,7 +141,7 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#145CEB]">Explore visually</p>
                 <h3 className="mt-1 font-display text-xl font-extrabold text-[#071039]">{expandedCategory.label}</h3>
                 <p className="mt-1 text-sm text-[#65708A]">
-                  Dedicated subcategory imagery replaces the parent fallback automatically as each asset is approved.
+                  Each approved subcategory uses its own dedicated image. Parent imagery is only a temporary work-branch fallback.
                 </p>
               </div>
               <Link to={catalogSearchUrl(expandedCategory.label)} className="text-sm font-bold text-[#0057E7] hover:underline">
@@ -159,11 +159,12 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
                 >
                   <div className="aspect-[4/3] overflow-hidden bg-slate-100">
                     <img
-                      src={subcategory.imagePath}
+                      src={subcategory.displayImage}
                       alt={`${subcategory.label} products`}
                       loading="lazy"
                       className="h-full w-full object-cover transition duration-500 group-hover/sub:scale-[1.035]"
                       onError={(event) => {
+                        if (subcategory.status === 'dedicated') return;
                         const image = event.currentTarget;
                         const stage = image.dataset.fallbackStage;
                         if (!stage) {
