@@ -8,6 +8,7 @@ export type WholesaleSubcategoryVisualManifestEntry = {
   subcategorySlug: string;
   assetPath: string;
   displayImage: string;
+  sourceImage?: string;
   sourcePage?: string;
   status: 'subcategory-pending' | 'dedicated';
   alt: string;
@@ -57,6 +58,7 @@ export const WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST: WholesaleSubcategoryVisualMa
         subcategorySlug: subcategory.slug,
         assetPath: subcategory.imagePath,
         displayImage: subcategory.displayImage,
+        sourceImage: subcategory.sourceImage,
         sourcePage: subcategory.sourcePage,
         status: subcategory.status,
         alt: `${subcategory.label}: ${blueprint.focus}`,
