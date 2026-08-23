@@ -18,6 +18,7 @@ import SecurityTrust from "@/components/SecurityTrust";
 import SellerCTA from "@/components/SellerCTA";
 import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
+import CategoryBrowseSection from "@/components/catalog/CategoryBrowseSection";
 import { trackViewHome } from "@/lib/analytics";
 
 function SkeletonGridCard() {
@@ -73,6 +74,8 @@ function MobileHome() {
       <div className="px-[var(--mob-side,16px)] pb-5 pt-1">
         <TrustStrip />
       </div>
+
+      <CategoryBrowseSection compact />
 
       <div className="px-[var(--mob-side,16px)] pb-7 pt-1">
         <section aria-label="Marketplace products" className="relative overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] px-4 py-5 text-white shadow-[0_20px_50px_rgba(10,35,79,0.16)]">
@@ -166,6 +169,8 @@ function DesktopHome() {
           <TrustStrip />
         </div>
       </section>
+
+      <CategoryBrowseSection />
 
       <FeaturedProducts />
 
