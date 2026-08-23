@@ -17,6 +17,15 @@ describe("canonical marketplace visual taxonomy", () => {
     }
   });
 
+  it("serves every dedicated subcategory image through the Loadify same-origin boundary", () => {
+    for (const category of marketplaceVisuals) {
+      for (const subcategory of category.subcategories) {
+        expect(subcategory.image).toMatch(/^\/api\/category-editorial-image\?/);
+        expect(subcategory.image).not.toMatch(/^https?:\/\//);
+      }
+    }
+  });
+
   it("gives every subcategory a dedicated non-parent image", () => {
     expect(marketplaceVisuals).toHaveLength(16);
     for (const category of marketplaceVisuals) {
