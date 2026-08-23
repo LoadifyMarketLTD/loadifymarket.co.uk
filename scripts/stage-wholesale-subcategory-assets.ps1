@@ -56,7 +56,7 @@ function Normalize-Jpeg4x3([string]$SourcePath, [string]$DestinationPath) {
       $cropY = [int][Math]::Floor(($source.Height - $cropHeight) / 2.0)
     }
 
-    $bitmap = New-Object System.Drawing.Bitmap 1400, 1050
+    $bitmap = [System.Drawing.Bitmap]::new(1400, 1050)
     try {
       $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
       try {
@@ -64,8 +64,8 @@ function Normalize-Jpeg4x3([string]$SourcePath, [string]$DestinationPath) {
         $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
         $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
         $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
-        $destRect = New-Object System.Drawing.Rectangle 0, 0, 1400, 1050
-        $srcRect = New-Object System.Drawing.Rectangle $cropX, $cropY, $cropWidth, $cropHeight
+        $destRect = [System.Drawing.Rectangle]::new(0, 0, 1400, 1050)
+        $srcRect = [System.Drawing.Rectangle]::new($cropX, $cropY, $cropWidth, $cropHeight)
         $graphics.DrawImage($source, $destRect, $srcRect, [System.Drawing.GraphicsUnit]::Pixel)
       } finally {
         $graphics.Dispose()
@@ -74,14 +74,18 @@ function Normalize-Jpeg4x3([string]$SourcePath, [string]$DestinationPath) {
       $jpegCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() |
         Where-Object { $_.MimeType -eq 'image/jpeg' } |
         Select-Object -First 1
-      $encoderParams = New-Object System.Drawing.Imaging.EncoderParameters 1
+      if (-not $jpegCodec) { throw 'JPEG encoder unavailable in System.Drawing.' }
+
+      $encoderParams = [System.Drawing.Imaging.EncoderParameters]::new(1)
+      $qualityParam = [System.Drawing.Imaging.EncoderParameter]::new(
+        [System.Drawing.Imaging.Encoder]::Quality,
+        [long]90
+      )
       try {
-        $encoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter(
-          [System.Drawing.Imaging.Encoder]::Quality,
-          [long]90
-        )
+        $encoderParams.Param[0] = $qualityParam
         $bitmap.Save($DestinationPath, $jpegCodec, $encoderParams)
       } finally {
+        $qualityParam.Dispose()
         $encoderParams.Dispose()
       }
     } finally {
