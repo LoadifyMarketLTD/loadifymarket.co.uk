@@ -1,23 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * Shared in-process rate limiter for Netlify serverless functions.
+ * Shared DB-backed rate limiter for Netlify serverless functions.
  *
- * Uses a Supabase table as the backing store so limits are shared across
- * concurrent function invocations and survive cold starts.
- *
- * Each call family (register, email, connect-onboard, etc.) should use a
- * distinct `tableName` so their quotas are tracked independently.
- *
- * Table schema (create once via SQL migration):
- *
- *   CREATE TABLE <tableName> (
- *     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- *     identifier TEXT NOT NULL,
- *     "windowEnd" TIMESTAMPTZ NOT NULL,
- *     attempts   INT NOT NULL DEFAULT 1,
- *     UNIQUE (identifier, "windowEnd")
- *   );
+ * Counters are consumed through the service-role-only
+ * `increment_rate_limit_counter` RPC. The RPC performs one atomic
+ * INSERT ... ON CONFLICT DO UPDATE statement, so concurrent first requests
+ * cannot race on the (identifier, windowEnd) unique key and concurrent
+ * increments cannot lose updates.
  */
 
 export interface RateLimitOptions {
@@ -38,7 +28,7 @@ export interface RateLimitOptions {
 export interface RateLimitResult {
   /** True when the caller has exceeded the allowed attempt count. */
   exceeded: boolean;
-  /** Current attempt count (after incrementing). */
+  /** Current attempt count after consuming this request. */
   attempts: number;
 }
 
@@ -68,7 +58,7 @@ function runInMemoryFallback(
   }
 
   const current = inMemoryFallback.get(key);
-  const attempts = (current?.attempts ?? 0) + 1;
+  const attempts = Math.min((current?.attempts ?? 0) + 1, maxAttempts + 1);
   inMemoryFallback.set(key, { attempts, windowEndMs });
   return { exceeded: attempts > maxAttempts, attempts };
 }
@@ -79,7 +69,7 @@ function handlePolicyFailure(
   identifier: string,
   windowEnd: string,
   maxAttempts: number,
-  stage: 'select' | 'update' | 'insert' | 'exception',
+  stage: 'rpc' | 'exception',
   error: unknown,
 ): RateLimitResult {
   console.error('rate-limiter-backend-unavailable', {
@@ -100,13 +90,12 @@ function handlePolicyFailure(
 }
 
 /**
- * Check and increment the rate-limit counter for `identifier`.
+ * Atomically consume one rate-limit attempt for `identifier`.
  *
- * Returns `{ exceeded: true }` when the caller should be rejected.
- * Returns `{ exceeded: false }` and increments the counter otherwise.
- *
- * Any database error is silently swallowed — rate limiting must never
- * block a legitimate request due to an infra hiccup.
+ * The first `maxAttempts` calls in a window are allowed. The next call returns
+ * `exceeded: true`. The database counter is capped at maxAttempts + 1 because
+ * only the exceeded/not-exceeded boundary is significant and unbounded writes
+ * from blocked callers provide no additional value.
  */
 export async function checkRateLimit(
   opts: RateLimitOptions,
@@ -119,69 +108,46 @@ export async function checkRateLimit(
     maxAttempts,
     policy = 'fail-open',
   } = opts;
+
+  const windowMs = windowMinutes * 60 * 1000;
   const windowEnd = new Date(
-    Math.ceil(Date.now() / (windowMinutes * 60 * 1000)) *
-      (windowMinutes * 60 * 1000),
+    Math.ceil(Date.now() / windowMs) * windowMs,
   ).toISOString();
 
   try {
-    const { data: rl, error: selectError } = await supabase
-      .from(tableName)
-      .select('id, attempts')
-      .eq('identifier', identifier)
-      .eq('windowEnd', windowEnd)
-      .maybeSingle<{ id: string; attempts: number }>();
+    const { data, error } = await supabase.rpc('increment_rate_limit_counter', {
+      p_table_name: tableName,
+      p_identifier: identifier,
+      p_window_end: windowEnd,
+      p_max_attempts: maxAttempts,
+    });
 
-    if (selectError) {
+    if (error) {
       return handlePolicyFailure(
         policy,
         tableName,
         identifier,
         windowEnd,
         maxAttempts,
-        'select',
-        selectError,
+        'rpc',
+        error,
       );
     }
 
-    if (rl && rl.attempts >= maxAttempts) {
-      return { exceeded: true, attempts: rl.attempts };
-    }
-
-    if (rl) {
-      const { error: updateError } = await supabase
-        .from(tableName)
-        .update({ attempts: rl.attempts + 1 })
-        .eq('id', rl.id);
-      if (updateError) {
-        return handlePolicyFailure(
-          policy,
-          tableName,
-          identifier,
-          windowEnd,
-          maxAttempts,
-          'update',
-          updateError,
-        );
-      }
-      return { exceeded: false, attempts: rl.attempts + 1 };
-    }
-
-    const { error: insertError } = await supabase
-      .from(tableName)
-      .insert({ identifier, windowEnd, attempts: 1 });
-    if (insertError) {
+    const attempts = Number(data);
+    if (!Number.isInteger(attempts) || attempts < 1) {
       return handlePolicyFailure(
         policy,
         tableName,
         identifier,
         windowEnd,
         maxAttempts,
-        'insert',
-        insertError,
+        'rpc',
+        new Error('increment_rate_limit_counter returned an invalid attempt count'),
       );
     }
-    return { exceeded: false, attempts: 1 };
+
+    return { exceeded: attempts > maxAttempts, attempts };
   } catch (error) {
     return handlePolicyFailure(
       policy,
