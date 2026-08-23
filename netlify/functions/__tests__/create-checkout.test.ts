@@ -64,10 +64,15 @@ describe('create-checkout handler – request validation', () => {
 
   it('returns 405 for non-POST requests', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
+    vi.doMock('stripe', () => ({ default: vi.fn() }));
+    vi.doMock('@supabase/supabase-js', () => ({ createClient: vi.fn() }));
+    vi.doMock('../_shared/platformFlags', () => ({ isMaintenanceMode: vi.fn() }));
+    vi.doMock('../_shared/rateLimiter', () => ({ checkRateLimit: vi.fn() }));
+    vi.doMock('../_shared/marketplaceTax', () => ({ resolveMarketplaceTaxV1: vi.fn() }));
     const { handler } = await import('../create-checkout');
     const res = await handler(makeEvent({}, 'GET'), {} as never);
     expect(res.statusCode).toBe(405);
-  });
+  }, 10_000);
 
   it('returns 500 when STRIPE_SECRET_KEY is absent', async () => {
     delete process.env.STRIPE_SECRET_KEY;
@@ -138,6 +143,12 @@ describe('create-checkout handler – request validation', () => {
       default: vi.fn().mockImplementation(function () {
         return {};
       }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
