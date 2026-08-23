@@ -127,28 +127,35 @@ export async function authorizedFetch(
       controller.signal,
     );
 
-    // Decode the JWT payload to check the expiry time (no library needed — JWTs
-    // are just base64url-encoded JSON). If the token has already expired or will
-    // expire within 60 s, force-refresh it before making the request so the
-    // Netlify function never receives a stale token.
+    // Decode the JWT payload only to decide whether proactive refresh is needed.
+    // Malformed/unexpected payloads must not replace an independent caller abort
+    // with a parsing TypeError, and they must not swallow an abort from refresh.
     if (session?.access_token) {
+      let expiresAtMs: number | null = null;
       try {
         const [, rawPayload] = session.access_token.split('.');
-        const padded =
-          rawPayload.replace(/-/g, '+').replace(/_/g, '/') +
-          '='.repeat((4 - (rawPayload.length % 4)) % 4);
-        const payload = JSON.parse(atob(padded)) as { exp?: number };
-        if (payload.exp && payload.exp * 1000 - Date.now() < 60_000) {
-          const { data: refreshed } = await waitForAbortable(
-            supabase.auth.refreshSession(),
-            controller.signal,
-          );
-          if (refreshed.session) session = refreshed.session;
+        if (rawPayload) {
+          const padded =
+            rawPayload.replace(/-/g, '+').replace(/_/g, '/') +
+            '='.repeat((4 - (rawPayload.length % 4)) % 4);
+          const payload = JSON.parse(atob(padded)) as { exp?: number };
+          if (payload.exp) expiresAtMs = payload.exp * 1000;
         }
-      } catch (error) {
-        if (controller.signal.aborted) throw error;
-        /* ignore JWT parse errors */
+      } catch {
+        /* ignore JWT parse errors; Supabase session remains authoritative */
       }
+
+      if (expiresAtMs !== null && expiresAtMs - Date.now() < 60_000) {
+        const { data: refreshed } = await waitForAbortable(
+          supabase.auth.refreshSession(),
+          controller.signal,
+        );
+        if (refreshed.session) session = refreshed.session;
+      }
+    }
+
+    if (controller.signal.aborted) {
+      throw createAbortError();
     }
 
     if (!session?.access_token) {
