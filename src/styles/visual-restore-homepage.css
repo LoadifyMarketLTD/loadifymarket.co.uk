@@ -8,8 +8,16 @@ body.pixel-perfect-public-active {
   background-attachment: initial;
 }
 
-body.pixel-perfect-public-active::before {
-  display: none;
+body.pixel-perfect-public-active::before,
+body.pixel-perfect-public-active .noise-layer {
+  display: none !important;
+}
+
+/* The current application Header is global. The restored public storefront
+ * supplies its own Navbar, so hide only that global <header> while this scoped
+ * layout is mounted. Dashboard/internal routes are unaffected. */
+body.pixel-perfect-public-active header {
+  display: none !important;
 }
 
 .pixel-perfect-public {
@@ -18,7 +26,6 @@ body.pixel-perfect-public-active::before {
 
   --card: 0 0% 100%;
   --card-foreground: 215 25% 15%;
-
   --popover: 0 0% 100%;
   --popover-foreground: 215 25% 15%;
 
@@ -29,13 +36,11 @@ body.pixel-perfect-public-active::before {
 
   --secondary: 210 40% 96%;
   --secondary-foreground: 215 25% 15%;
-
   --muted: 210 25% 94%;
   --muted-foreground: 215 15% 50%;
 
   --accent: 43 96% 56%;
   --accent-foreground: 215 25% 12%;
-
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
@@ -66,18 +71,13 @@ body.pixel-perfect-public-active::before {
   color: hsl(var(--foreground));
 }
 
-.pixel-perfect-public .bg-gradient-hero {
-  background: var(--gradient-hero);
+/* Current public pages were offset for the 122px global header. The supplied
+ * Navbar is 64px tall, matching the original Pixel Perfect shell. */
+.pixel-perfect-public #main-content {
+  padding-top: 5rem !important;
 }
 
-.pixel-perfect-public .bg-gradient-accent {
-  background: var(--gradient-accent);
-}
-
-.pixel-perfect-public .shadow-card {
-  box-shadow: var(--shadow-card);
-}
-
-.pixel-perfect-public .shadow-elevated {
-  box-shadow: var(--shadow-elevated);
-}
+.pixel-perfect-public .bg-gradient-hero { background: var(--gradient-hero); }
+.pixel-perfect-public .bg-gradient-accent { background: var(--gradient-accent); }
+.pixel-perfect-public .shadow-card { box-shadow: var(--shadow-card); }
+.pixel-perfect-public .shadow-elevated { box-shadow: var(--shadow-elevated); }
