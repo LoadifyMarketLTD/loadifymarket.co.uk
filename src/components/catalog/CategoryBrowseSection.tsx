@@ -51,7 +51,9 @@ const catalogSearchUrl = (value: string) => `/catalog?q=${encodeURIComponent(val
 
 export default function CategoryBrowseSection({ compact = false }: CategoryBrowseSectionProps) {
   const [showAll, setShowAll] = useState(false);
+  const [expandedCategorySlug, setExpandedCategorySlug] = useState<string | null>(null);
   const visibleCategories = showAll ? WHOLESALE_VISUAL_TAXONOMY : WHOLESALE_VISUAL_TAXONOMY.slice(0, 8);
+  const expandedCategory = WHOLESALE_VISUAL_TAXONOMY.find((category) => category.slug === expandedCategorySlug) ?? null;
 
   return (
     <section id="categories" aria-label="Browse wholesale categories" className="bg-[#F7F9FC] py-10 md:py-14">
@@ -68,6 +70,7 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {visibleCategories.map((category) => {
             const Icon = ICON_BY_KEY[category.imageKey] ?? Tags;
+            const isExpanded = expandedCategorySlug === category.slug;
 
             return (
               <article
@@ -112,22 +115,88 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
                     ))}
                   </ul>
 
-                  <Link
-                    to={catalogSearchUrl(category.label)}
+                  <button
+                    type="button"
+                    onClick={() => setExpandedCategorySlug(isExpanded ? null : category.slug)}
                     className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-bold text-[#0057E7] hover:underline"
+                    aria-expanded={isExpanded}
+                    aria-controls={`subcategory-gallery-${category.slug}`}
                   >
-                    View All <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
+                    {isExpanded ? 'Hide visuals' : 'View All'}
+                    {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
                 </div>
               </article>
             );
           })}
         </div>
 
+        {expandedCategory ? (
+          <div
+            id={`subcategory-gallery-${expandedCategory.slug}`}
+            className="mt-7 rounded-2xl border border-[#DCE2ED] bg-white p-4 shadow-[0_8px_30px_rgba(10,35,79,0.06)] sm:p-5"
+          >
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#145CEB]">Explore visually</p>
+                <h3 className="mt-1 font-display text-xl font-extrabold text-[#071039]">{expandedCategory.label}</h3>
+                <p className="mt-1 text-sm text-[#65708A]">
+                  Dedicated subcategory imagery replaces the parent fallback automatically as each asset is approved.
+                </p>
+              </div>
+              <Link to={catalogSearchUrl(expandedCategory.label)} className="text-sm font-bold text-[#0057E7] hover:underline">
+                Browse matching listings
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {expandedCategory.subcategories.map((subcategory) => (
+                <Link
+                  key={subcategory.slug}
+                  to={catalogSearchUrl(subcategory.label)}
+                  className="group/sub overflow-hidden rounded-xl border border-[#E0E6EF] bg-[#FBFCFE] transition hover:-translate-y-0.5 hover:border-[#145CEB]/30 hover:shadow-md"
+                  data-visual-status={subcategory.status}
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+                    <img
+                      src={subcategory.imagePath}
+                      alt={`${subcategory.label} products`}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition duration-500 group-hover/sub:scale-[1.035]"
+                      onError={(event) => {
+                        const image = event.currentTarget;
+                        const stage = image.dataset.fallbackStage;
+                        if (!stage) {
+                          image.dataset.fallbackStage = 'root';
+                          image.src = expandedCategory.imagePath;
+                          return;
+                        }
+                        if (stage === 'root' && image.src !== expandedCategory.fallbackImage) {
+                          image.dataset.fallbackStage = 'external';
+                          image.src = expandedCategory.fallbackImage;
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm font-bold leading-tight text-[#071039]">{subcategory.label}</p>
+                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#7B859B]">
+                      {subcategory.status === 'dedicated' ? 'Dedicated visual' : 'Visual pending'}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-7 text-center">
           <button
             type="button"
-            onClick={() => setShowAll((value) => !value)}
+            onClick={() => {
+              setShowAll((value) => !value);
+              setExpandedCategorySlug(null);
+            }}
             className="inline-flex items-center gap-2 text-sm font-bold text-[#0057E7] transition hover:underline"
           >
             {showAll ? 'Show First 8 Categories' : `View All ${WHOLESALE_VISUAL_TAXONOMY.length} Categories`}
