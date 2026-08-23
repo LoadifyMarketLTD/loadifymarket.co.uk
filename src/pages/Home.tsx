@@ -11,8 +11,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
-import FeaturedProducts from "@/components/FeaturedProducts";
-import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
 import SellerCTA from "@/components/SellerCTA";
@@ -21,6 +19,7 @@ import LazySection from "@/components/LazySection";
 import {
   HomepageCategoriesSection,
   HomepageFinalCTA,
+  HomepageHowItWorksSection,
   HomepagePlatformStrip,
   HomepageWhySection,
 } from "@/components/HomepageBlueprintSections";
@@ -167,22 +166,17 @@ function DesktopHome() {
     <>
       <HeroSection />
 
-      <section className="bg-white pb-2" aria-label="Loadify Market trust signals">
+      <section className="border-y border-slate-200 bg-white py-2" aria-label="Loadify Market trust signals">
         <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
           <TrustStrip />
         </div>
       </section>
 
-      <FeaturedProducts />
       <HomepageWhySection />
       <HomepagePlatformStrip />
 
       <LazySection rootMargin="320px">
-        <section className="bg-[#F7F9FC] py-16" aria-label="How Loadify works">
-          <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-            <HowItWorksSection />
-          </div>
-        </section>
+        <HomepageHowItWorksSection />
         <HomepageCategoriesSection />
       </LazySection>
 
