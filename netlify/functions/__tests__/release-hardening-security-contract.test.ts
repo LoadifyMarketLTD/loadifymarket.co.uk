@@ -55,6 +55,23 @@ describe('release-hardening security contracts', () => {
     expect(sql).toContain('server-only rate-limit tables still expose client CRUD privileges');
   });
 
+  it('keeps the historical payment-session hardening replay-idempotent and admin-only', () => {
+    const baseRls = read('supabase/10_rls_policies.sql');
+    const correctiveRls = read('supabase/80_fix_rls_security_gaps.sql');
+
+    expect(baseRls).toContain('CREATE POLICY "payment_sessions_admin_write" ON payment_sessions');
+    expect(baseRls).toContain('USING (is_admin()) WITH CHECK (is_admin())');
+
+    const dropHardened = 'DROP POLICY IF EXISTS "payment_sessions_admin_write" ON payment_sessions;';
+    const createHardened = 'CREATE POLICY "payment_sessions_admin_write" ON payment_sessions';
+    expect(correctiveRls).toContain('DROP POLICY IF EXISTS "payment_sessions_write" ON payment_sessions;');
+    expect(correctiveRls).toContain(dropHardened);
+    expect(correctiveRls).toContain(createHardened);
+    expect(correctiveRls.indexOf(dropHardened)).toBeLessThan(correctiveRls.indexOf(createHardened));
+    expect(correctiveRls).toContain('USING (is_admin())');
+    expect(correctiveRls).toContain('WITH CHECK (is_admin())');
+  });
+
   it('revalidates buyer and seller live account state before service-role checkout side effects', () => {
     for (const source of [
       read('netlify/functions/create-checkout.ts'),
