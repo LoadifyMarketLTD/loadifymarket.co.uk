@@ -1,0 +1,60 @@
+/*
+ * Scoped visual tokens copied from the user-provided Loadify homepage restore package.
+ * This file is intentionally isolated from the canonical global theme until runtime
+ * integration is reviewed. Business/auth/commerce behavior remains canonical.
+ */
+.visual-restore-homepage {
+  --vr-background: 210 20% 98%;
+  --vr-foreground: 215 25% 15%;
+  --vr-card: 0 0% 100%;
+  --vr-card-foreground: 215 25% 15%;
+  --vr-primary: 217 91% 40%;
+  --vr-primary-foreground: 0 0% 100%;
+  --vr-secondary: 210 40% 96%;
+  --vr-secondary-foreground: 215 25% 15%;
+  --vr-muted: 210 25% 94%;
+  --vr-muted-foreground: 215 15% 50%;
+  --vr-accent: 43 96% 56%;
+  --vr-accent-foreground: 215 25% 12%;
+  --vr-border: 214 20% 90%;
+  --vr-primary-dark: 217 91% 30%;
+  --vr-primary-light: 217 85% 55%;
+  --vr-surface: 210 33% 97%;
+  --vr-gradient-hero: linear-gradient(135deg, hsl(217 91% 30%) 0%, hsl(217 91% 45%) 100%);
+  --vr-gradient-accent: linear-gradient(135deg, hsl(43 96% 56%) 0%, hsl(38 100% 50%) 100%);
+  --vr-shadow-card: 0 1px 3px hsl(217 91% 40% / 0.06), 0 6px 16px hsl(217 91% 40% / 0.04);
+  --vr-shadow-elevated: 0 4px 12px hsl(217 91% 40% / 0.08), 0 16px 40px hsl(217 91% 40% / 0.06);
+
+  background: hsl(var(--vr-background));
+  color: hsl(var(--vr-foreground));
+}
+
+.visual-restore-homepage .vr-card {
+  background: hsl(var(--vr-card));
+  color: hsl(var(--vr-card-foreground));
+  border-color: hsl(var(--vr-border));
+  box-shadow: var(--vr-shadow-card);
+}
+
+.visual-restore-homepage .vr-muted {
+  background: hsl(var(--vr-muted));
+  color: hsl(var(--vr-muted-foreground));
+}
+
+.visual-restore-homepage .vr-primary {
+  background: hsl(var(--vr-primary));
+  color: hsl(var(--vr-primary-foreground));
+}
+
+.visual-restore-homepage .vr-accent {
+  background: var(--vr-gradient-accent);
+  color: hsl(var(--vr-accent-foreground));
+}
+
+.visual-restore-homepage .vr-hero-gradient {
+  background: var(--vr-gradient-hero);
+}
+
+.visual-restore-homepage .vr-elevated {
+  box-shadow: var(--vr-shadow-elevated);
+}
