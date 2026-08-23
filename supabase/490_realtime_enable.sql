@@ -12,8 +12,8 @@
 -- Required for Realtime to include old/new values of all columns in UPDATE
 -- events (not just the primary key). Without FULL replica identity, UPDATE
 -- payloads only contain the primary key + changed columns.
-ALTER TABLE public.offers SET (replica_identity = full);
-ALTER TABLE public.orders SET (replica_identity = full);
+ALTER TABLE public.offers REPLICA IDENTITY FULL;
+ALTER TABLE public.orders REPLICA IDENTITY FULL;
 
 -- Add to the Supabase managed Realtime publication only when not already a
 -- member. PostgreSQL raises an error for duplicate publication membership, so
