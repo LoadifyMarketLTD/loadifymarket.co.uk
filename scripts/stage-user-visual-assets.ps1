@@ -84,9 +84,38 @@ foreach ($relative in $files) {
   Copy-Item -LiteralPath $src -Destination $dst -Force
 }
 
-Write-Host "`nStaged 24 user-provided visual assets." -ForegroundColor Green
+# Canonical category navigation assets. These are editorial images only and do
+# not represent live listings. Nine canonical roots already have a semantic
+# match in the user's restore package. Pets intentionally remains unresolved
+# until a dedicated premium image is supplied/generated.
+$categoryVisualTarget = Join-Path $repo "public\category-visuals"
+if (-not (Test-Path $categoryVisualTarget)) {
+  New-Item -ItemType Directory -Path $categoryVisualTarget -Force | Out-Null
+}
+
+$categoryMap = @{
+  "electronics"       = "categories\electronics.jpg"
+  "home-garden"       = "categories\home.jpg"
+  "clothing-fashion"  = "categories\clothing.jpg"
+  "toys-games"        = "categories\toys.jpg"
+  "sports-fitness"    = "categories\sports.jpg"
+  "automotive"        = "categories\automotive.jpg"
+  "health-beauty"     = "categories\health-beauty.jpg"
+  "food-drink"        = "categories\food-drink.jpg"
+  "office-business"   = "categories\office.jpg"
+}
+
+foreach ($slug in $categoryMap.Keys) {
+  $src = Join-Path $assetSource $categoryMap[$slug]
+  $dst = Join-Path $categoryVisualTarget "$slug.jpg"
+  Copy-Item -LiteralPath $src -Destination $dst -Force
+}
+
+Write-Host "`nStaged 24 user-provided source assets." -ForegroundColor Green
+Write-Host "Staged 9 canonical root category navigation images." -ForegroundColor Green
+Write-Host "Pets still requires its own dedicated visual." -ForegroundColor Yellow
 Write-Host "No commit was created automatically." -ForegroundColor Yellow
 Write-Host "`n=== GIT STATUS ===" -ForegroundColor Cyan
-git status --short -- src/assets
+git status --short -- src/assets public/category-visuals
 
 Remove-Item $temp -Recurse -Force
