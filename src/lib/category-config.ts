@@ -1,5 +1,7 @@
 import {
   Baby,
+  Boxes,
+  Briefcase,
   Car,
   Dumbbell,
   Gamepad2,
@@ -7,14 +9,12 @@ import {
   HeartPulse,
   Home,
   Laptop,
-  PackageCheck,
-  PackageOpen,
-  PackageSearch,
+  Package,
+  RotateCcw,
   ShoppingBag,
-  Tags,
+  Tag,
   Utensils,
   Wrench,
-  BriefcaseBusiness,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { marketplaceTaxonomy, marketplaceCategorySlug, marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
@@ -57,13 +57,13 @@ const iconByLabel: Record<string, LucideIcon> = {
   "Tools & DIY": Wrench,
   "Sports & Leisure": Dumbbell,
   Automotive: Car,
-  "Office & Stationery": BriefcaseBusiness,
+  "Office & Stationery": Briefcase,
   "Baby & Nursery": Baby,
   "Jewellery & Watches": Gem,
-  "Mixed Lots": PackageSearch,
-  "Customer Returns": PackageOpen,
-  Overstock: PackageCheck,
-  "Clearance Deals": Tags,
+  "Mixed Lots": Boxes,
+  "Customer Returns": RotateCcw,
+  Overstock: Package,
+  "Clearance Deals": Tag,
 };
 
 const CATEGORY_CONFIG: readonly CategoryConfig[] = marketplaceTaxonomy.map((category) => {
@@ -74,7 +74,7 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = marketplaceTaxonomy.map((cate
     label: category.label,
     title: category.label,
     subtitle: `Browse ${category.label.toLowerCase()} across six dedicated marketplace subcategories.`,
-    icon: iconByLabel[category.label] ?? Tags,
+    icon: iconByLabel[category.label] ?? Tag,
     iconColor: "text-primary",
     accentBg: "bg-primary/10",
     image: visual?.image ?? "",
