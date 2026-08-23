@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS,
+  PENDING_WHOLESALE_SUBCATEGORY_VISUALS,
   WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST,
   WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST_COUNT,
-  PENDING_WHOLESALE_SUBCATEGORY_VISUALS,
 } from './wholesaleSubcategoryVisualManifest';
 
 describe('wholesale subcategory visual manifest', () => {
@@ -15,8 +16,10 @@ describe('wholesale subcategory visual manifest', () => {
     expect(new Set(paths).size).toBe(96);
   });
 
-  it('keeps all subcategory assets pending until dedicated files exist', () => {
-    expect(PENDING_WHOLESALE_SUBCATEGORY_VISUALS).toHaveLength(96);
+  it('accounts for every subcategory as pending or dedicated', () => {
+    expect(
+      PENDING_WHOLESALE_SUBCATEGORY_VISUALS.length + DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.length,
+    ).toBe(96);
   });
 
   it('locks the shared visual standard', () => {
@@ -30,28 +33,37 @@ describe('wholesale subcategory visual manifest', () => {
     }
   });
 
-  it('forbids duplicate final image paths inside the same parent category', () => {
+  it('forbids duplicate final visual sources inside the same parent category', () => {
     const byCategory = new Map<string, string[]>();
 
-    for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
-      if (entry.status !== 'dedicated') continue;
-      const paths = byCategory.get(entry.categorySlug) ?? [];
-      paths.push(entry.assetPath);
-      byCategory.set(entry.categorySlug, paths);
+    for (const entry of DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS) {
+      const visuals = byCategory.get(entry.categorySlug) ?? [];
+      visuals.push(entry.displayImage);
+      byCategory.set(entry.categorySlug, visuals);
     }
 
-    for (const [categorySlug, paths] of byCategory) {
+    for (const [categorySlug, visuals] of byCategory) {
       expect(
-        new Set(paths).size,
+        new Set(visuals).size,
         `Duplicate dedicated subcategory imagery detected in ${categorySlug}`,
-      ).toBe(paths.length);
+      ).toBe(visuals.length);
     }
   });
 
-  it('never treats a parent-category image as a dedicated subcategory image', () => {
-    for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
-      if (entry.status !== 'dedicated') continue;
-      expect(entry.assetPath).not.toMatch(/^\/category-visuals\/wholesale\//);
+  it('never treats a parent-category image as a dedicated subcategory visual', () => {
+    for (const entry of DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS) {
+      expect(entry.displayImage).not.toMatch(/\/category-visuals\/wholesale\//);
+      expect(entry.displayImage).not.toEqual(entry.assetPath.replace('/subcategories/', '/wholesale/'));
     }
+  });
+
+  it('Home & Garden has six distinct dedicated visuals', () => {
+    const homeGarden = DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.filter(
+      (entry) => entry.categorySlug === 'home-and-garden',
+    );
+
+    expect(homeGarden).toHaveLength(6);
+    expect(new Set(homeGarden.map((entry) => entry.displayImage)).size).toBe(6);
+    expect(homeGarden.every((entry) => Boolean(entry.sourcePage))).toBe(true);
   });
 });
