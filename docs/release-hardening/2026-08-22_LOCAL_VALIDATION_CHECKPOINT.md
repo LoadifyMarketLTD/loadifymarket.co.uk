@@ -1,63 +1,79 @@
 # LOADIFY MARKET — RELEASE-HARDENING LOCAL VALIDATION CHECKPOINT
 
-**Date:** 22 August 2026  
+**Updated:** 23 August 2026  
 **Repository:** `LoadifyMarketLTD/loadifymarket.co.uk`  
 **Lane:** `release-hardening/audit-20260822`  
-**Reason for checkpoint:** repository implementation/static Branch Guard is complete enough to enter the mandatory local PowerShell gate, but this chat cannot execute commands on the owner's Windows machine. No PASS is claimed before that local evidence exists.
+**Reason for checkpoint:** repository implementation and static Branch Guard have reached the mandatory owner-local PowerShell/Docker/Supabase validation boundary. This chat cannot execute commands on the owner's Windows machine, and the assistant container cannot clone GitHub because outbound GitHub DNS/network access is unavailable. **No PASS is claimed before real local evidence exists.**
 
 ---
 
-## 1. CURRENT GITHUB TRUTH
+## 1. CURRENT GITHUB TRUTH AT THIS CHECKPOINT
 
-At the last verification before this checkpoint:
+Immediately before this checkpoint update:
 
 - `main = aca0d19c1cad7fe047ca1e591df790cf2280b840`
 - hardening branch = `release-hardening/audit-20260822`
-- hardening compare = **ahead 23 / behind 0** before adding this checkpoint document
+- hardening HEAD = `e5b637590d18f3500b035d85ae364608871e89f5`
+- compare = **ahead 30 / behind 0**
 - merge-base = exact current `main`
-- expected hardening HEAD immediately before this checkpoint commit = `667550dadcb0405e9ae6f02c453ad4d83d994d09`
-- only open PR = **#575 — Plan Seller Workspace capability expansion**
-- PR #575 remains untouched
-- hardening branch has no PR
+- open PR **#581 — Release hardening/audit 20260822** now exists with this hardening branch as head and `main` as base
+- open draft PR **#575 — Plan Seller Workspace capability expansion** remains separate and untouched
+- PR #581 is repository reality only; this checkpoint does **not** authorize merge, CI, Netlify, deployment, or production mutation
 
-Adding this checkpoint document intentionally adds one docs-only commit to the hardening branch. Re-verify current main/head/ahead/behind before local validation; repository truth wins if anything moved.
+This checkpoint update itself creates one additional docs-only commit, so the branch SHA/ahead count must be re-read after the commit and again by the local validator before evidence is accepted.
 
 ---
 
-## 2. OWNER VALIDATION POLICY
+## 2. OWNER POLICY / HARD GUARDS
 
-This lane must remain:
+This lane remains:
 
 - **NO GitHub Actions / CI**
 - **NO Netlify preview/build validation**
-- **NO PR opened just to obtain CI**
-- **NO production Supabase migration / db push**
-- **NO production Auth config mutation**
-- **NO merge into main without separate authorization**
-- **NO modification of PR #575**
-- **NO Workspace/Admin/Super Admin redesign**
-- **NO Supplier Commerce activation**
+- **NO merge to main without separate owner authorization**
+- **NO production deployment**
+- **NO production Supabase migration / `db push`**
+- **NO production Auth configuration mutation**
+- **NO modification of deferred PR #575**
+- **NO Supplier Commerce Phase O activation or control changes**
+- **NO Workspace/Admin/Super Admin visual redesign**
+- **NO homepage modification**
 
-Validation is local PowerShell only.
+The homepage is explicitly frozen. `src/pages/Home.tsx` is **not** in the hardening diff.
 
 ---
 
-## 3. OWNER LOCAL ANDROID WORKTREE — ABSOLUTE PRESERVATION RULE
+## 3. OWNER LOCAL ANDROID WORKTREE — PRESERVE ABSOLUTELY
 
-The owner's working copy has local Android modifications that must survive untouched:
+The owner's source working copy contains local Android changes that must survive untouched:
 
 - `android/app/capacitor.build.gradle`
 - `android/capacitor.settings.gradle`
 
-Never run destructive cleanup/reset/restore on those files.
+Never reset, restore, checkout over, stash/drop, or otherwise mutate those files.
 
-The validator therefore does **not** checkout the hardening branch into the owner's working tree. It creates a disposable detached `git worktree` under `%TEMP%` at the exact remote branch SHA, validates there, then removes it.
+The validator therefore does not validate inside the dirty source worktree. It fetches the remote refs, creates a disposable detached Git worktree under `%TEMP%` at the exact remote hardening SHA, validates there, and removes only that disposable worktree afterwards.
 
 ---
 
-## 4. ORIGINAL RELEASE-HARDENING IMPLEMENTATION
+## 4. EXACT CURRENT `src/*` SCOPE — HOMEPAGE FROZEN
 
-The branch originally contained the historical replay/security closure:
+At the last exact `main...release-hardening/audit-20260822` compare, the **only** `src/*` files in this branch were:
+
+1. `src/lib/authorizedFetch.ts`
+2. `src/lib/authorizedFetch.test.ts`
+3. `src/pages/onboarding/SellerOnboarding.tsx`
+4. `src/pages/onboarding/SellerOnboarding.test.tsx`
+
+There is no homepage file, no Admin file, no Seller Workspace visual file, no Buyer Workspace visual file, no `public/*`, and no `android/*` file in the current hardening diff.
+
+The validator now uses these four paths as a strict `src/*` allowlist and rejects every other changed `src/*` path. It also contains an explicit veto for `src/pages/Home.tsx`.
+
+---
+
+## 5. ORIGINAL RELEASE-HARDENING IMPLEMENTATION RETAINED
+
+The branch still contains the historical replay/security closure:
 
 - `supabase/09_zz_legacy_transport_replay_compat.sql`
 - `supabase/456_00_remove_legacy_transport_replay_compat.sql`
@@ -65,141 +81,207 @@ The branch originally contained the historical replay/security closure:
 - `supabase/674_server_only_privilege_closure.sql`
 - `netlify/functions/__tests__/legacy-transport-replay-envelope.test.ts`
 - `netlify/functions/__tests__/release-hardening-security-contract.test.ts`
-- release-hardening audit ledger
+- `supabase/tests/release_hardening_contract.sql`
 
-Purpose:
+Purpose remains unchanged:
 
-1. allow historical numeric migration replay to pass the removed `delivery_requests` / `transport_quotes` references without restoring those product surfaces permanently;
-2. close the owner-rights `seller_profiles_public` view Security Advisor debt by replacing it with a curated read-only RLS projection table;
-3. revoke unnecessary ordinary-client CRUD privileges on server-only rate-limit state and `category_filter_definitions` where present;
-4. revoke direct API execution of the trigger-only seller-suspension helper.
+1. replay historical statements that still mention retired `delivery_requests` / `transport_quotes` without restoring those surfaces permanently;
+2. replace the owner-rights `seller_profiles_public` view with a curated read-only RLS projection table;
+3. remove unnecessary ordinary-client CRUD privileges from server-only rate-limit state and `category_filter_definitions` where present;
+4. revoke direct API execution of the trigger-only seller-suspension helper;
+5. prove final disposable-schema security invariants with pgTAP.
 
----
-
-## 5. TEST-HARNESS RECONCILIATION COMPLETED IN BRANCH
-
-The previous local full run reported `23 failures / 7 suites`. Investigation confirmed several stale fixtures and Windows-only path fragility. Runtime security was not weakened to satisfy tests.
-
-Repairs made:
-
-- `commercial-history-consumers.test.ts` now reads repo files via `path.resolve(process.cwd(), ...)`;
-- `commercial-snapshot-cutover.test.ts` uses the same deterministic repo-root reading;
-- `marketplace-tax-evidence.test.ts` uses the same deterministic repo-root reading;
-- `delete-product.test.ts` now supplies canonical active-account fixture fields: `id`, `role`, `isActive=true`;
-- `update-product.test.ts` now supplies current seller activation + commercial/tax declaration + product tax evidence + shipping readiness fixtures;
-- `checkout-safety.test.ts` now supplies current active buyer/seller, immutable buyer identity, seller business identity, GB non-VAT declaration truth, product P1 tax evidence and shipping truth;
-- `create-checkout.test.ts` now has current active-account fixtures and stale-buyer/inactive-seller regression coverage;
-- `create-payment-intent.test.ts` now has both inactive-seller and stale-buyer mobile regression coverage.
-
-The old `8/8 targeted PASS` result predates these changes and is historical evidence only. Current branch must be rerun.
+No production DDL was applied.
 
 ---
 
-## 6. REAL P1 FOUND DURING FIXTURE AUDIT — REPAIRED
+## 6. TEST-HARNESS RECONCILIATION RETAINED
 
-The failing checkout fixtures exposed a real trusted-server authorization gap, not merely a stale test.
+The earlier local full run reported `23 failures / 7 suites`. Investigation separated stale fixtures/path assumptions from real runtime defects; runtime security was not weakened merely to satisfy tests.
 
-### Root cause
+Repairs already present include:
 
-- checkout/payment handlers use a Supabase service-role client;
-- browser RLS is therefore not the authority at that server boundary;
-- the old handlers validated the JWT but did not re-read current `public.users.isActive` for the buyer before product reservations / Stripe payment side effects;
-- seller readiness relied on denormalized `seller_profiles` even though canonical account suspension truth lives in `public.users.isActive`.
+- deterministic repo-root source reads for static contract tests;
+- current active-account fixture shapes;
+- seller commercial/tax declaration evidence fixtures;
+- current product tax evidence and shipping readiness fixtures;
+- checkout active-buyer / active-seller truth;
+- stale-buyer and inactive-seller regression coverage;
+- shipment boundary active-account fixture reconciliation.
 
-A stale JWT therefore required an explicit current-account server check.
+The historical `8/8 targeted PASS` predates later changes and is not current evidence. All gates must be rerun on the final locked branch SHA.
 
-### Repair
+---
 
-`netlify/functions/create-checkout.ts` and `netlify/functions/create-payment-intent.ts` now:
+## 7. REAL P1 SERVICE-ROLE CHECKOUT DEFECT — REPAIRED
+
+`create-checkout.ts` and `create-payment-intent.ts` use service-role database access, so browser RLS is not sufficient at their trusted server boundary.
+
+The repaired handlers now:
 
 1. call `authenticateActiveAccount(event, supabase)` before reservation/payment side effects;
-2. fail closed with 403 when the authenticated buyer account is no longer active;
-3. preserve buyerId/auth-user identity matching;
-4. re-read the listing seller from `public.users`;
-5. require `role='seller' AND isActive=true` before seller profile / Stripe readiness can authorize payment;
-6. preserve the existing tax resolver, prices, `totalPence`, transfer group, payment-session snapshot, order materializer and payout semantics.
+2. re-read current `public.users.isActive` for the authenticated buyer;
+3. reject stale JWT access from an inactive buyer with 403;
+4. preserve `buyerId` = authenticated actor identity matching;
+5. re-read the listing seller from `public.users`;
+6. require current `role='seller' AND isActive=true` before seller profile / Stripe readiness can authorize payment;
+7. preserve existing prices, tax resolver, payment amounts, transfer group, payment-session snapshots, order materialization and payout semantics.
 
-No unrelated UI or commercial redesign was introduced.
-
----
-
-## 7. DISPOSABLE DATABASE EVIDENCE ADDED
-
-Added:
-
-`supabase/tests/release_hardening_contract.sql`
-
-The pgTAP contract verifies after full local replay:
-
-- `delivery_requests` absent;
-- `transport_quotes` absent;
-- `seller_profiles_public` is a real table/projection, not an owner-rights view;
-- projection RLS enabled;
-- anon/authenticated retain SELECT only;
-- anon/authenticated cannot mutate projection;
-- authenticated cannot directly execute trigger-only seller suspension helper;
-- no anon/authenticated CRUD grants remain on `*_rate_limits` tables;
-- `category_filter_definitions` is either absent or present with ordinary-client CRUD closed.
+No unrelated product/UI redesign was introduced.
 
 ---
 
-## 8. CURRENT PRODUCTION READ-ONLY RECHECK
+## 8. SELLER ONBOARDING INFINITE-SPINNER REGRESSION — REPAIRED
 
-No production mutation was made.
+### Demonstrated root cause
 
-Latest read-only verification immediately before this checkpoint:
+`SellerOnboarding.tsx` previously rendered the full-page spinner whenever `loading || !status`.
 
-- migration head remains `20260822185156 / seller_onboarding_v2_truth`;
-- `public.seller_profiles_public` is still a PostgreSQL view (`relkind='v'`), owner `postgres`, RLS false;
+On an initial canonical-status failure:
+
+- `loading` became `false` in `finally`;
+- `status` remained `null`;
+- the component therefore rendered the spinner forever even though the request had already failed.
+
+Additionally, shared `authorizedFetch()` had no finite deadline, so a stalled Supabase session lookup, refresh, or network fetch could also leave a caller waiting indefinitely.
+
+### Runtime repair
+
+`src/lib/authorizedFetch.ts` now:
+
+- has one finite **30-second** deadline across session lookup, token refresh, and network fetch;
+- uses an internal `AbortController`;
+- propagates a caller-provided `AbortSignal`;
+- returns `Request timed out. Please try again.` for its own timeout;
+- preserves the existing Capacitor URL rewrite, proactive token refresh, auth header, and missing-session behavior.
+
+`src/pages/onboarding/SellerOnboarding.tsx` now:
+
+- stores the initial load failure in `loadError`;
+- only shows the initial full-page spinner while `loading === true`;
+- when no status is available after failure, renders a stable `Seller setup unavailable` state;
+- exposes an explicit `Retry Seller setup` action;
+- clears the error when canonical status loads successfully;
+- retains the existing toast and onboarding lifecycle behavior.
+
+### Regression tests added
+
+`src/lib/authorizedFetch.test.ts` locks:
+
+1. stalled fetch => finite timeout;
+2. stalled Supabase session lookup => finite timeout before fetch begins;
+3. caller abort remains caller abort rather than being mislabeled as internal timeout.
+
+`src/pages/onboarding/SellerOnboarding.test.tsx` locks:
+
+1. failed initial load exits the spinner and exposes an actionable error state;
+2. Retry can recover the page after a temporary failure.
+
+These tests have been committed but **have not yet been proven PASS by the mandatory local run**.
+
+---
+
+## 9. CAPABILITY FOUNDATION AUDIT — NO NEW BYPASS FOUND
+
+The Stage 2 identity/capability foundation was audited without changing it.
+
+Verified contract:
+
+- `public.has_account_capability(text)` requires the current authenticated identity, a non-revoked capability, `public.users.isActive=true`, and excludes admin from ordinary Buyer/Seller capabilities;
+- `public.is_seller()` delegates to `has_account_capability('seller')`;
+- `server_start_seller_activation_v1(uuid)` is service-role-only and atomically initializes Buyer+Seller capability truth / Seller relationship state;
+- current UI `hasSellerAccess()` continues to use `users.role='seller'` only as the temporary compatibility/default routing context while DB authorization consumes the capability foundation;
+- identity function execute privileges remain explicitly closed according to the Stage 2 privilege migration.
+
+No change was required in this slice.
+
+---
+
+## 10. FRESH HISTORICAL REPLAY BOOTSTRAP — ROOT CAUSE CORRECTED
+
+A second real validator defect was found during static audit.
+
+Historical root file `01_users_profiles.sql` explicitly depends on the helper functions created by `PART_1_extensions_helpers.sql`, including `update_updated_at_column()`.
+
+`00_reset.sql` explicitly drops those helper functions.
+
+The previous validator therefore had an invalid historical replay sequence because it could execute:
+
+`00_reset.sql -> 01_users_profiles.sql`
+
+without recreating the required helpers first.
+
+The corrected disposable diagnostic order is now:
+
+1. `00_reset.sql`
+2. `PART_1_extensions_helpers.sql`
+3. ordered numeric root SQL from `01+` using numeric prefix + filename tie-break
+4. ordered timestamped `supabase/migrations/*.sql`
+5. DB lint
+6. pgTAP release-hardening DB contract
+
+Important distinction: root standalone `supabase/*.sql` files are historical/modular material, while repository guidance says normal executable database changes belong under `supabase/migrations/`. The validator therefore labels this root-chain execution explicitly as a **disposable historical replay diagnostic**, not a production bootstrap/deploy procedure.
+
+`00_consolidated_schema.sql` remains explicitly excluded.
+
+---
+
+## 11. CURRENT STRICT POWERSHELL VALIDATOR
+
+`scripts/validate-release-hardening-local.ps1` now performs, in order:
+
+1. source-worktree status read only; no mutation;
+2. fetch origin;
+3. lock exact current `origin/main` and hardening SHA;
+4. require merge-base=current main and behind=0;
+5. create disposable detached worktree;
+6. `npm ci`;
+7. targeted hardening tests, including the new timeout/onboarding tests;
+8. repaired/regression test group, including checkout/payment, shipment and seller-activation boundaries;
+9. complete Vitest suite;
+10. ESLint;
+11. TypeScript;
+12. production build with placeholder public Vite values;
+13. only after all Node/TS/build gates are green, start isolated local Supabase;
+14. refuse to reuse/stop a pre-existing `supabase_db_*` stack;
+15. hold timestamp migrations aside for explicit replay sequencing;
+16. apply `00_reset.sql`;
+17. apply `PART_1_extensions_helpers.sql`;
+18. apply numeric root SQL `01+` in deterministic order;
+19. apply timestamped migrations;
+20. run `supabase db lint --local --schema public --level error --fail-on error`;
+21. run `supabase test db supabase/tests/release_hardening_contract.sql --local`;
+22. re-fetch origin;
+23. invalidate evidence if main or branch changed during the run;
+24. require final behind=0;
+25. inspect exact final diff;
+26. reject all `android/*` and `public/*` changes;
+27. allow only the four explicitly listed onboarding/timeout `src/*` paths;
+28. explicitly reject `src/pages/Home.tsx`;
+29. print PASS only after every preceding gate succeeds;
+30. stop isolated Supabase and remove disposable worktree in `finally`.
+
+---
+
+## 12. PRODUCTION READ-ONLY STATE — NO MUTATION
+
+The last production read-only verification remains:
+
+- migration head: `20260822185156 / seller_onboarding_v2_truth`;
+- `public.seller_profiles_public` still the pre-673 PostgreSQL view (`relkind='v'`), owner `postgres`, RLS false;
 - `private.seller_profiles_public_data` still exists;
-- `public.delivery_requests` is absent;
-- `public.transport_quotes` is absent;
+- `public.delivery_requests` absent;
+- `public.transport_quotes` absent;
 - `category_filter_definitions` still exposes historical ordinary-client grants;
-- **9 public `*_rate_limits` tables** currently expose at least one anon/authenticated CRUD grant.
+- 9 public `*_rate_limits` tables still expose at least one anon/authenticated CRUD grant.
 
-This confirms migrations 673/674 have **not** been applied accidentally and their production preconditions still match the audited state.
-
----
-
-## 9. STRICT POWERSHELL VALIDATOR
-
-Added:
-
-`scripts/validate-release-hardening-local.ps1`
-
-The validator:
-
-1. prints but never modifies the source working tree;
-2. fetches origin;
-3. locks current `origin/main` and hardening SHA;
-4. requires hardening merge-base = current main and behind=0;
-5. creates a disposable detached worktree at the exact hardening SHA;
-6. runs `npm ci`;
-7. runs targeted hardening tests;
-8. runs the repaired/regression suite group;
-9. runs the complete Vitest suite;
-10. runs ESLint;
-11. runs TypeScript typecheck;
-12. runs production build with placeholder public build variables;
-13. only if all Node/TS/build gates are green, starts a fresh isolated local Supabase stack;
-14. refuses to stop/reuse any pre-existing `supabase_db_*` container;
-15. moves timestamped migrations aside during stack startup so the numeric historical replay can be tested explicitly;
-16. replays executable numeric `supabase/*.sql` files in numeric-prefix / filename order;
-17. explicitly excludes deprecated `00_consolidated_schema.sql` from execution;
-18. replays timestamped `supabase/migrations/*.sql` afterwards;
-19. runs `supabase db lint --local --schema public --level error --fail-on error`;
-20. runs `supabase test db supabase/tests/release_hardening_contract.sql --local`;
-21. re-fetches origin and invalidates the evidence if main or hardening branch moved during the run;
-22. rejects `android/*`, `src/*` or `public/*` contamination in the final hardening diff;
-23. removes the disposable worktree and local Supabase stack in `finally`.
-
-Every native command gate checks `$LASTEXITCODE` and stops immediately on failure.
+Therefore migrations 673/674 have not been applied accidentally. Production remains unchanged.
 
 ---
 
-## 10. EXACT OWNER COMMAND — DOES NOT CHECKOUT OR MODIFY THE DIRTY SOURCE WORKTREE
+## 13. EXACT OWNER COMMAND — SAFE FOR THE DIRTY SOURCE WORKTREE
 
-Run this in PowerShell:
+Run this exact block in **PowerShell**:
 
 ```powershell
 & {
@@ -232,59 +314,69 @@ Run this in PowerShell:
 }
 ```
 
-This command performs only a fetch against the existing source repo, materializes the validator into `%TEMP%`, and lets the validator create its own disposable worktree. It does not checkout/reset/stash/restore the Android files.
+Why this is safe for the source worktree:
+
+- it only fetches/reads remote Git data from the existing source repo;
+- it materializes the current validator into `%TEMP%`;
+- validation runs in a separate detached Git worktree;
+- it does not checkout the hardening branch into the owner's working directory;
+- it does not reset/restore/stash/drop the Android changes;
+- it does not invoke CI, Netlify or production database mutation.
 
 ---
 
-## 11. ACCEPTANCE GATES STILL PENDING
+## 14. ACCEPTANCE GATES STILL PENDING
 
-Do **not** declare release-hardening PASS until the local validator proves all of the following on the same locked branch SHA:
+Do **not** declare release-hardening PASS until one exact locked branch SHA proves all of these in one complete local validator run:
 
 - targeted hardening tests PASS;
+- timeout/onboarding regression tests PASS;
 - repaired/regression suites PASS;
 - full Vitest suite PASS;
 - ESLint PASS;
 - TypeScript PASS;
 - production build PASS;
-- complete fresh numeric migration replay PASS;
+- disposable historical numeric replay PASS;
 - timestamped migration replay PASS;
 - DB lint PASS;
 - release-hardening pgTAP contract PASS;
-- final branch still behind 0;
-- main did not move during validation;
-- branch did not move during validation;
-- exact diff remains scope-clean.
+- final branch behind=0;
+- main did not move during the run;
+- hardening branch did not move during the run;
+- exact final diff remains scope-clean;
+- homepage remains absent from the diff.
 
-If any step fails, STOP at the **first failure**, repair the root cause on `release-hardening/audit-20260822`, then rerun the validator from the beginning.
+If any gate fails, stop at the **first failure**, repair only the demonstrated root cause on this hardening branch, then rerun the validator from the beginning.
 
 ---
 
-## 12. NO-ACTION GUARD AFTER LOCAL PASS
+## 15. NO-ACTION GUARD AFTER A LOCAL PASS
 
-Even if all local validation becomes green, this checkpoint does **not** authorize:
+Even a complete local PASS does **not** by itself authorize:
 
-- PR creation;
-- merge into main;
-- GitHub Actions;
-- Netlify;
-- production deploy;
+- merging PR #581;
+- modifying or merging PR #575;
+- GitHub Actions / CI;
+- Netlify preview/build/deploy;
+- production deployment;
 - `supabase db push`;
-- applying 673/674 to production;
-- Auth config changes;
-- modifying PR #575;
+- applying migrations 673/674 to production;
+- production Auth configuration changes;
 - resetting/restoring/stashing Android local changes;
+- homepage work;
+- Workspace/Admin/Super Admin visual redesign;
 - Supplier Commerce activation.
 
-After a full local PASS, perform final evidence review and wait for separate owner authorization for any merge/deploy/production action.
+After local PASS, re-read GitHub truth, verify the exact printed SHA/diff, record evidence, and stop before merge/deploy/production until separately authorized.
 
 ---
 
-## 13. EXACT RESUME POINT
+## 16. EXACT RESUME POINT
 
-1. Owner runs the PowerShell block in section 10.
-2. Capture the first failure or the final PASS banner verbatim.
-3. Continue from that exact evidence; do not restart the audit.
-4. If the validator fails, repair only the demonstrated root cause, then rerun from the start.
-5. If it passes, perform final exact-diff/Branch Guard evidence review and stop before PR/merge/deploy/production.
+1. Run the PowerShell block in section 13.
+2. Return the console output beginning with the **first `STOP:` / first failing native gate**, or the complete final PASS banner if every gate succeeds.
+3. Do not skip later into the validator after a failure.
+4. On failure, repair only the demonstrated root cause and rerun from the beginning.
+5. On PASS, verify the printed MAIN/BRANCH SHAs against live GitHub, perform the final Branch Guard/evidence review, and stop before merge/deploy/production.
 
-**NO FAKE PASS. LOCAL VALIDATION IS THE NEXT REQUIRED EVIDENCE.**
+**NO FAKE PASS. HOMEPAGE FROZEN. OWNER-LOCAL VALIDATION IS THE NEXT REQUIRED EVIDENCE.**
