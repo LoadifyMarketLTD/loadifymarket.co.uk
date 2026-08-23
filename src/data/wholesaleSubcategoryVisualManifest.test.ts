@@ -15,8 +15,9 @@ describe('wholesale subcategory visual manifest', () => {
     const paths = WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST.map((entry) => entry.assetPath);
     expect(paths).toHaveLength(96);
     expect(new Set(paths).size).toBe(96);
-    for (const path of paths) {
-      expect(path).toMatch(/^\/category-visuals\/subcategories\/[a-z0-9-]+\/[a-z0-9-]+\.jpg$/);
+    for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
+      expect(entry.assetPath).toMatch(/^\/category-visuals\/subcategories\/[a-z0-9-]+\/[a-z0-9-]+\.jpg$/);
+      expect(entry.displayImage).toBe(entry.assetPath);
     }
   });
 
@@ -33,20 +34,21 @@ describe('wholesale subcategory visual manifest', () => {
       expect(entry.visualBrief.length).toBeGreaterThan(100);
       expect(entry.alt.length).toBeGreaterThan(10);
       expect(entry.focus.length).toBeGreaterThan(3);
+      expect(entry.sourceImage).toMatch(/^https:\/\/unsplash\.com\/photos\//);
       expect(entry.sourcePage).toMatch(/^https:\/\/unsplash\.com\/photos\//);
     }
   });
 
-  it('forbids reuse of a final visual source anywhere across the 96 subcategories', () => {
-    const visuals = DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.map((entry) => entry.displayImage);
-    const sources = DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.map((entry) => entry.sourcePage);
-    expect(new Set(visuals).size).toBe(96);
-    expect(new Set(sources).size).toBe(96);
+  it('forbids reuse of a source image anywhere across the 96 subcategories', () => {
+    const images = DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.map((entry) => entry.sourceImage);
+    const pages = DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.map((entry) => entry.sourcePage);
+    expect(new Set(images).size).toBe(96);
+    expect(new Set(pages).size).toBe(96);
   });
 
   it('never treats a parent-category image as a dedicated subcategory visual', () => {
     for (const entry of DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS) {
-      expect(entry.displayImage).not.toMatch(/\/category-visuals\/wholesale\//);
+      expect(entry.displayImage).not.toMatch(/^\/category-visuals\/wholesale\//);
       expect(entry.assetPath).not.toMatch(/^\/category-visuals\/wholesale\//);
     }
   });
