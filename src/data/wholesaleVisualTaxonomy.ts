@@ -32,6 +32,8 @@ export interface WholesaleVisualCategory {
   subcategories: WholesaleVisualSubcategory[];
 }
 
+type DedicatedVisual = { displayImage: string; sourcePage: string };
+
 const FOCUSED_IMAGE_CRAFT_RAW =
   'https://raw.githubusercontent.com/LoadifyMarketLTD/focused-image-craft/main/src/assets/categories';
 
@@ -42,7 +44,34 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-const HOME_GARDEN_DEDICATED_VISUALS: Record<string, { displayImage: string; sourcePage: string }> = {
+const ELECTRONICS_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
+  'Phones & Tablets': {
+    displayImage: 'https://images.unsplash.com/photo-1750744788280-aa47aba79a57?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/devices-like-laptops-tablets-and-phones-are-on-a-desk-TK0kQP476cU',
+  },
+  'Laptops & PCs': {
+    displayImage: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/turned-on-gray-laptop-computer-XJXWbfSo2f0',
+  },
+  'TV & Audio': {
+    displayImage: 'https://images.unsplash.com/photo-1567466062001-5d3ad19e8418?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/white-and-gray-google-smart-speaker-beside-black-flat-screen-tv-o9KZozGAKQo',
+  },
+  'Gaming Consoles': {
+    displayImage: 'https://images.unsplash.com/photo-1754006126024-f8b0c002877b?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/close-up-view-of-a-gaming-controller-lit-in-green--dNlbaqOZJU',
+  },
+  Accessories: {
+    displayImage: 'https://images.unsplash.com/photo-1706290134049-c5c72d24146a?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/a-close-up-of-a-power-cord-and-a-charger-Fhyt8se0E50',
+  },
+  'Smart Home': {
+    displayImage: 'https://images.unsplash.com/photo-1761384409444-2f8359d67a69?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/a-white-smart-speaker-on-a-white-surface-kDCIBGqU0_0',
+  },
+};
+
+const HOME_GARDEN_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
   Furniture: {
     displayImage: 'https://images.unsplash.com/photo-1741288340498-d78d59a33675?auto=format&fit=crop&fm=jpg&q=82&w=1400',
     sourcePage: 'https://unsplash.com/photos/a-bright-modern-living-room-with-comfortable-furniture-jw_Y7R3NabQ',
@@ -69,12 +98,18 @@ const HOME_GARDEN_DEDICATED_VISUALS: Record<string, { displayImage: string; sour
   },
 };
 
+const DEDICATED_VISUALS_BY_CATEGORY: Record<string, Record<string, DedicatedVisual>> = {
+  'Electronics & Technology': ELECTRONICS_DEDICATED_VISUALS,
+  'Home & Garden': HOME_GARDEN_DEDICATED_VISUALS,
+};
+
 const defineCategory = (
   label: string,
   imageKey: string,
   subcategories: string[],
 ): WholesaleVisualCategory => {
   const slug = slugify(label);
+  const dedicatedBySubcategory = DEDICATED_VISUALS_BY_CATEGORY[label];
   return {
     label,
     slug,
@@ -83,7 +118,7 @@ const defineCategory = (
     fallbackImage: `${FOCUSED_IMAGE_CRAFT_RAW}/${imageKey}.jpg`,
     subcategories: subcategories.map((subcategory) => {
       const subcategorySlug = slugify(subcategory);
-      const dedicated = label === 'Home & Garden' ? HOME_GARDEN_DEDICATED_VISUALS[subcategory] : undefined;
+      const dedicated = dedicatedBySubcategory?.[subcategory];
       return {
         label: subcategory,
         slug: subcategorySlug,
