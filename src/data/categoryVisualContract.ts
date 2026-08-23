@@ -80,7 +80,9 @@ export function categoryVisualPath(slug: string): string {
 }
 
 export function resolveCategoryVisual(slug: string, label: string, parentSlug?: string | null) {
-  const rootSlug = parentSlug ?? LEVEL_TWO_PARENT[slug] ?? slug;
+  const rootSlug = parentSlug
+    ? (LEVEL_TWO_PARENT[parentSlug] ?? parentSlug)
+    : (LEVEL_TWO_PARENT[slug] ?? slug);
   const rootFallback = ROOT_VISUAL_BY_SLUG.get(rootSlug);
 
   return {
