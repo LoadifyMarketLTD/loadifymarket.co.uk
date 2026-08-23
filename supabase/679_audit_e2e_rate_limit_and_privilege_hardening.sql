@@ -4,8 +4,12 @@
 --   1. Make all shared Netlify rate-limit counter consumption atomic.
 --   2. Remove duplicate quoted updatedAt triggers while retaining the canonical
 --      unquoted/lower-case trigger created by the consolidated trigger repair.
---   3. Close direct client execution of write-capable SECURITY DEFINER helpers
---      that are not application RPC boundaries.
+--   3. Close direct client execution of the write-capable product-view analytics
+--      helper, which has no repository runtime RPC call-site.
+--
+-- Existing migrations 673/674 already contain the separate seller-suspension
+-- trigger EXECUTE closure and server-only rate-limit table privilege closure;
+-- this migration intentionally does not duplicate or override those contracts.
 --
 -- This migration does NOT enable Supplier Commerce controls and does not alter
 -- Auth configuration, marketplace pricing, payments, orders, or UI state.
@@ -121,22 +125,13 @@ DROP TRIGGER IF EXISTS "trg_seller_stores_updatedAt" ON public.seller_stores;
 DROP TRIGGER IF EXISTS "trg_users_updatedAt" ON public.users;
 
 -- ---------------------------------------------------------------------------
--- 3. Write-capable SECURITY DEFINER privilege closure
+-- 3. Product-view analytics RPC privilege closure
 -- ---------------------------------------------------------------------------
 -- Product-view analytics is a write operation, not a client authorization
--- predicate. No repository runtime call-site uses the direct PostgREST RPC.
--- Keep it available to trusted server/database execution only so anonymous or
+-- predicate. Repository search found no runtime direct RPC call-site. Keep the
+-- function available to trusted server/database execution only so anonymous or
 -- ordinary authenticated clients cannot inflate products.views or analytics.
 REVOKE ALL ON FUNCTION public.track_product_view(uuid, uuid, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.track_product_view(uuid, uuid, text) FROM anon;
 REVOKE ALL ON FUNCTION public.track_product_view(uuid, uuid, text) FROM authenticated;
 GRANT EXECUTE ON FUNCTION public.track_product_view(uuid, uuid, text) TO service_role;
-
--- Trigger functions are not application RPC boundaries. Migration 608 created
--- this function after the earlier execute-privilege closure, so explicitly
--- remove inherited PUBLIC/client EXECUTE while leaving trigger execution and
--- service-role maintenance available.
-REVOKE ALL ON FUNCTION public.sync_seller_suspension_from_user_activity() FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.sync_seller_suspension_from_user_activity() FROM anon;
-REVOKE ALL ON FUNCTION public.sync_seller_suspension_from_user_activity() FROM authenticated;
-GRANT EXECUTE ON FUNCTION public.sync_seller_suspension_from_user_activity() TO service_role;
