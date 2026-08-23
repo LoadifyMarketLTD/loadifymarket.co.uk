@@ -1,8 +1,9 @@
+import type { SyntheticEvent } from "react";
 import { Link } from "react-router-dom";
 import { marketplaceVisuals } from "@/data/marketplaceVisuals";
 import { marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
 
-const applyFallback = (fallback: string) => (event: React.SyntheticEvent<HTMLImageElement>) => {
+const applyFallback = (fallback: string) => (event: SyntheticEvent<HTMLImageElement>) => {
   const image = event.currentTarget;
   if (image.dataset.fallbackApplied === "true") return;
   image.dataset.fallbackApplied = "true";
