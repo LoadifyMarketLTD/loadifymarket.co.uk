@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import SEO from '@/components/SEO';
 import FocusedHomepageNavbar from '@/components/FocusedHomepageNavbar';
 import HeroSection from '@/components/HeroSection';
+import Footer from '@/components/Footer';
 import {
   FocusedCTASection,
   FocusedCategoriesSection,
   FocusedFeaturesSection,
-  FocusedHomepageFooter,
   FocusedHowItWorksSection,
   FocusedStatsSection,
   FocusedTrustSection,
@@ -40,7 +40,7 @@ export default function Home() {
         <FocusedCTASection />
       </main>
 
-      <FocusedHomepageFooter />
+      <Footer />
     </div>
   );
 }
