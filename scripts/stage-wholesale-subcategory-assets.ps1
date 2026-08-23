@@ -20,7 +20,7 @@ function Assert-RepoRoot {
   }
 }
 
-function Assert-JpegFile([string]$Path) {
+function Assert-JpegBytes([string]$Path) {
   $info = Get-Item -LiteralPath $Path
   if ($info.Length -lt 20000) {
     throw "Downloaded image is unexpectedly small: $Path ($($info.Length) bytes)."
@@ -35,25 +35,73 @@ function Assert-JpegFile([string]$Path) {
   } finally {
     $stream.Dispose()
   }
+}
 
+function Normalize-Jpeg4x3([string]$SourcePath, [string]$DestinationPath) {
+  Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+  $source = [System.Drawing.Image]::FromFile($SourcePath)
   try {
-    Add-Type -AssemblyName System.Drawing -ErrorAction Stop
-    $image = [System.Drawing.Image]::FromFile($Path)
+    $targetRatio = 4.0 / 3.0
+    $sourceRatio = [double]$source.Width / [double]$source.Height
+
+    if ($sourceRatio -gt $targetRatio) {
+      $cropHeight = $source.Height
+      $cropWidth = [int][Math]::Round($cropHeight * $targetRatio)
+      $cropX = [int][Math]::Floor(($source.Width - $cropWidth) / 2.0)
+      $cropY = 0
+    } else {
+      $cropWidth = $source.Width
+      $cropHeight = [int][Math]::Round($cropWidth / $targetRatio)
+      $cropX = 0
+      $cropY = [int][Math]::Floor(($source.Height - $cropHeight) / 2.0)
+    }
+
+    $bitmap = New-Object System.Drawing.Bitmap 1400, 1050
     try {
-      if ($image.Width -lt 1000 -or $image.Height -lt 700) {
-        throw "Image resolution below visual contract minimum: $($image.Width)x$($image.Height) at $Path"
+      $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+      try {
+        $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
+        $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+        $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+        $destRect = New-Object System.Drawing.Rectangle 0, 0, 1400, 1050
+        $srcRect = New-Object System.Drawing.Rectangle $cropX, $cropY, $cropWidth, $cropHeight
+        $graphics.DrawImage($source, $destRect, $srcRect, [System.Drawing.GraphicsUnit]::Pixel)
+      } finally {
+        $graphics.Dispose()
       }
-      $ratio = [double]$image.Width / [double]$image.Height
-      if ([Math]::Abs($ratio - (4.0 / 3.0)) -gt 0.03) {
-        throw "Image is not approximately 4:3: $($image.Width)x$($image.Height) at $Path"
+
+      $jpegCodec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() |
+        Where-Object { $_.MimeType -eq 'image/jpeg' } |
+        Select-Object -First 1
+      $encoderParams = New-Object System.Drawing.Imaging.EncoderParameters 1
+      try {
+        $encoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter(
+          [System.Drawing.Imaging.Encoder]::Quality,
+          [long]90
+        )
+        $bitmap.Save($DestinationPath, $jpegCodec, $encoderParams)
+      } finally {
+        $encoderParams.Dispose()
       }
     } finally {
-      $image.Dispose()
+      $bitmap.Dispose()
     }
-  } catch [System.IO.FileNotFoundException] {
-    Write-Warning 'System.Drawing is unavailable; JPEG byte and size validation still passed.'
-  } catch [System.TypeInitializationException] {
-    Write-Warning 'System.Drawing is unavailable; JPEG byte and size validation still passed.'
+  } finally {
+    $source.Dispose()
+  }
+}
+
+function Assert-FinalJpeg([string]$Path) {
+  Assert-JpegBytes $Path
+  Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+  $image = [System.Drawing.Image]::FromFile($Path)
+  try {
+    if ($image.Width -ne 1400 -or $image.Height -ne 1050) {
+      throw "Final image must be exactly 1400x1050 (4:3), got $($image.Width)x$($image.Height): $Path"
+    }
+  } finally {
+    $image.Dispose()
   }
 }
 
@@ -96,39 +144,45 @@ foreach ($entry in $entries) {
   New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
 
   if ((Test-Path -LiteralPath $target) -and -not $Force) {
-    Assert-JpegFile $target
+    Assert-FinalJpeg $target
     $completed++
     Write-Host "[$completed/96] EXISTS  $($entry.targetPath)"
     continue
   }
 
-  $temp = Join-Path $tempRoot ("{0}-{1}.jpg" -f ([Guid]::NewGuid().ToString('N')), $entry.sourceId)
+  $rawTemp = Join-Path $tempRoot ("{0}-{1}-raw.jpg" -f ([Guid]::NewGuid().ToString('N')), $entry.sourceId)
+  $finalTemp = Join-Path $tempRoot ("{0}-{1}-final.jpg" -f ([Guid]::NewGuid().ToString('N')), $entry.sourceId)
   $attempt = 0
   $downloaded = $false
   while (-not $downloaded -and $attempt -lt 3) {
     $attempt++
     try {
-      Invoke-WebRequest -Uri $entry.sourceUrl -OutFile $temp -MaximumRedirection 10 -Headers @{ 'User-Agent' = 'LoadifyMarketVisualStager/1.0' }
-      Assert-JpegFile $temp
+      Invoke-WebRequest -Uri $entry.sourceUrl -OutFile $rawTemp -MaximumRedirection 10 -Headers @{ 'User-Agent' = 'LoadifyMarketVisualStager/1.0'; 'Accept' = 'image/jpeg,image/*;q=0.8' }
+      Assert-JpegBytes $rawTemp
       $downloaded = $true
     } catch {
-      Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
+      Remove-Item -LiteralPath $rawTemp -Force -ErrorAction SilentlyContinue
       if ($attempt -ge 3) { throw }
       Start-Sleep -Seconds (2 * $attempt)
     }
   }
 
-  Move-Item -LiteralPath $temp -Destination $target -Force
-  Assert-JpegFile $target
+  Normalize-Jpeg4x3 -SourcePath $rawTemp -DestinationPath $finalTemp
+  Assert-FinalJpeg $finalTemp
+  Move-Item -LiteralPath $finalTemp -Destination $target -Force
+  Remove-Item -LiteralPath $rawTemp -Force -ErrorAction SilentlyContinue
+  Assert-FinalJpeg $target
   $completed++
   Write-Host "[$completed/96] STAGED  $($entry.targetPath)"
 }
 
 Write-Host "`n=== WHOLESALE SUBCATEGORY VISUAL STAGING COMPLETE ==="
-Write-Host "Images validated: $completed / 96"
+Write-Host "Images normalized and validated: $completed / 96"
+Write-Host 'Final format: JPEG 1400x1050, exact 4:3, quality 90.'
 Write-Host 'No database, migration, Android or production changes were made.'
 Write-Host "`nRun next:"
 Write-Host '  git status --short -- public/category-visuals/subcategories'
+Write-Host '  powershell -ExecutionPolicy Bypass -File .\scripts\audit-wholesale-visual-assets.ps1 -OpenReport'
 Write-Host '  npm run typecheck'
 Write-Host '  npm test -- src/data/wholesaleSubcategoryBlueprint.test.ts src/data/wholesaleVisualTaxonomy.test.ts src/data/wholesaleSubcategoryVisualManifest.test.ts src/data/wholesaleLocalAssets.test.ts'
 Write-Host '  npm run build'
