@@ -1,74 +1,80 @@
 import { Link } from "react-router-dom";
 import { useCategories } from "@/hooks/useCategories";
+import { visualForCategory } from "@/data/marketplaceVisuals";
 
 /**
- * Shop by Category — DB-driven taxonomy tile grid.
- * Top-level categories from the DB, 3 cols mobile → 4 tablet → 5 desktop.
- * Flat, bordered tiles: no rounded cards, no gradients, no glow effects.
+ * Shop by Category — DB-driven taxonomy with canonical editorial imagery.
+ * Images are navigation aids only; live inventory still comes exclusively from seller listings.
  */
 const CategoryGrid = () => {
   const { categories, loading } = useCategories();
 
   return (
-    <section
-    className="bg-background border-b border-white/10"
-      aria-labelledby="cats-heading"
-    >
-      <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-7">
-
-        {/* Header row */}
-        <div className="flex items-center justify-between mb-4">
+    <section className="bg-background border-b border-white/10" aria-labelledby="cats-heading">
+      <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
+        <div className="flex items-end justify-between gap-4 mb-5">
           <div>
-            <h2
-              id="cats-heading"
-              className="text-[13px] font-black text-white uppercase tracking-widest"
-            >
+            <h2 id="cats-heading" className="text-[13px] font-black text-white uppercase tracking-widest">
               Shop by Category
             </h2>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-slate-400 mt-1">
               {loading ? "Loading…" : `${categories.length} marketplace categories`}
             </p>
           </div>
-          <Link
-            to="/catalog"
-            className="text-[11px] font-bold text-secondary uppercase tracking-wide hover:underline"
-          >
+          <Link to="/catalog" className="text-[11px] font-bold text-secondary uppercase tracking-wide hover:underline">
             Browse All →
           </Link>
         </div>
 
-        {/* Tile grid — gap-px creates hairline borders between tiles */}
-        {!loading && categories.length === 0 && (
-          <p className="text-[11px] text-slate-400 text-center py-4">
-            No categories available.
-          </p>
+        {loading && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="aspect-[4/3] rounded-xl bg-white/5 animate-pulse" aria-hidden="true" />
+            ))}
+          </div>
         )}
+
+        {!loading && categories.length === 0 && (
+          <p className="text-[11px] text-slate-400 text-center py-6">No categories available.</p>
+        )}
+
         {!loading && categories.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-px bg-white/5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {categories.map((cat) => {
-              const sub =
-                cat.children.slice(0, 2).map((c) => c.name).join(" • ") +
-                (cat.children.length > 2 ? " • ..." : "");
+              const visual = visualForCategory(cat.slug) ?? visualForCategory(cat.name);
               return (
                 <Link
                   key={cat.slug}
-                  to={`/catalog?category=${encodeURIComponent(cat.name)}`}
-                  className="flex flex-col items-start gap-1.5 px-3 py-4 bg-surface hover:bg-elevated transition-colors group"
+                  to={`/category/${cat.slug}`}
+                  className="group overflow-hidden rounded-xl border border-white/10 bg-surface hover:border-primary/40 transition-all"
                 >
-                  <span className="text-[11px] font-bold text-white leading-tight line-clamp-2 w-full">
-                    {cat.name}
-                  </span>
-                  {sub && (
-                    <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none line-clamp-1 w-full">
-                      {sub}
-                    </span>
-                  )}
+                  <div className="aspect-[4/3] overflow-hidden bg-white/5">
+                    {visual ? (
+                      <img
+                        src={visual.image}
+                        alt={visual.altText}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-primary text-2xl font-black">
+                        {cat.name.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-3 py-3">
+                    <span className="block text-[12px] font-bold text-white leading-tight">{cat.name}</span>
+                    {cat.children.length > 0 && (
+                      <span className="mt-1 block text-[9px] uppercase tracking-wide text-slate-400">
+                        {cat.children.length} subcategories
+                      </span>
+                    )}
+                  </div>
                 </Link>
               );
             })}
           </div>
         )}
-
       </div>
     </section>
   );
