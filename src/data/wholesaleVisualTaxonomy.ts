@@ -8,7 +8,7 @@
  * Contract:
  * - 16 wholesale categories
  * - exactly 6 subcategories per category (96 total)
- * - root images use the original focused-image-craft imageKey mapping
+ * - root images are served from /category-visuals/wholesale/<slug>.jpg
  * - subcategory images remain `subcategory-pending` until a dedicated asset
  *   exists at /category-visuals/subcategories/<slug>.jpg
  */
@@ -27,8 +27,12 @@ export interface WholesaleVisualCategory {
   slug: string;
   imageKey: string;
   imagePath: string;
+  fallbackImage: string;
   subcategories: WholesaleVisualSubcategory[];
 }
+
+const FOCUSED_IMAGE_CRAFT_RAW =
+  'https://raw.githubusercontent.com/LoadifyMarketLTD/focused-image-craft/main/src/assets/categories';
 
 const slugify = (value: string) =>
   value
@@ -41,21 +45,25 @@ const defineCategory = (
   label: string,
   imageKey: string,
   subcategories: string[],
-): WholesaleVisualCategory => ({
-  label,
-  slug: slugify(label),
-  imageKey,
-  imagePath: `/assets/categories/${imageKey}.jpg`,
-  subcategories: subcategories.map((subcategory) => {
-    const slug = slugify(subcategory);
-    return {
-      label: subcategory,
-      slug,
-      imagePath: `/category-visuals/subcategories/${slug}.jpg`,
-      status: 'subcategory-pending' as const,
-    };
-  }),
-});
+): WholesaleVisualCategory => {
+  const slug = slugify(label);
+  return {
+    label,
+    slug,
+    imageKey,
+    imagePath: `/category-visuals/wholesale/${slug}.jpg`,
+    fallbackImage: `${FOCUSED_IMAGE_CRAFT_RAW}/${imageKey}.jpg`,
+    subcategories: subcategories.map((subcategory) => {
+      const subcategorySlug = slugify(subcategory);
+      return {
+        label: subcategory,
+        slug: subcategorySlug,
+        imagePath: `/category-visuals/subcategories/${subcategorySlug}.jpg`,
+        status: 'subcategory-pending' as const,
+      };
+    }),
+  };
+};
 
 export const WHOLESALE_VISUAL_TAXONOMY: WholesaleVisualCategory[] = [
   defineCategory('Electronics & Technology', 'electronics', ['Phones & Tablets', 'Laptops & PCs', 'TV & Audio', 'Gaming Consoles', 'Accessories', 'Smart Home']),
