@@ -77,6 +77,17 @@ body.pixel-perfect-public-active header {
   padding-top: 5rem !important;
 }
 
+/* Category routes receive their own rich visual banner immediately below the
+ * restored Navbar. Reduce the legacy page offset and suppress the old icon-only
+ * category intro so the visual banner is the single category identity block. */
+body.visual-category-route .pixel-perfect-public #main-content {
+  padding-top: 1rem !important;
+}
+
+body.visual-category-route .pixel-perfect-public #main-content > .container > div.py-6 {
+  display: none !important;
+}
+
 .pixel-perfect-public .bg-gradient-hero { background: var(--gradient-hero); }
 .pixel-perfect-public .bg-gradient-accent { background: var(--gradient-accent); }
 .pixel-perfect-public .shadow-card { box-shadow: var(--shadow-card); }
