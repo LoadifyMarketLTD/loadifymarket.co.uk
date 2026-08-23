@@ -24,45 +24,9 @@ import {
 } from 'lucide-react';
 import { WHOLESALE_VISUAL_TAXONOMY } from '@/data/wholesaleVisualTaxonomy';
 
-import electronicsImg from '@/assets/categories/electronics.jpg';
-import clothingImg from '@/assets/categories/clothing.jpg';
-import homeImg from '@/assets/categories/home.jpg';
-import healthBeautyImg from '@/assets/categories/health-beauty.jpg';
-import toysImg from '@/assets/categories/toys.jpg';
-import foodDrinkImg from '@/assets/categories/food-drink.jpg';
-import toolsImg from '@/assets/categories/tools.jpg';
-import sportsImg from '@/assets/categories/sports.jpg';
-import automotiveImg from '@/assets/categories/automotive.jpg';
-import officeImg from '@/assets/categories/office.jpg';
-import babyImg from '@/assets/categories/baby.jpg';
-import jewelleryImg from '@/assets/categories/jewellery.jpg';
-import mixedPalletsImg from '@/assets/categories/mixed-pallets.jpg';
-import returnsImg from '@/assets/categories/returns.jpg';
-import overstockImg from '@/assets/categories/overstock.jpg';
-import clearanceImg from '@/assets/categories/clearance.jpg';
-
 interface CategoryBrowseSectionProps {
   compact?: boolean;
 }
-
-const IMAGE_BY_KEY: Record<string, string> = {
-  electronics: electronicsImg,
-  clothing: clothingImg,
-  home: homeImg,
-  'health-beauty': healthBeautyImg,
-  toys: toysImg,
-  'food-drink': foodDrinkImg,
-  tools: toolsImg,
-  sports: sportsImg,
-  automotive: automotiveImg,
-  office: officeImg,
-  baby: babyImg,
-  jewellery: jewelleryImg,
-  'mixed-pallets': mixedPalletsImg,
-  returns: returnsImg,
-  overstock: overstockImg,
-  clearance: clearanceImg,
-};
 
 const ICON_BY_KEY: Record<string, LucideIcon> = {
   electronics: Laptop,
@@ -104,7 +68,6 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {visibleCategories.map((category) => {
             const Icon = ICON_BY_KEY[category.imageKey] ?? Tags;
-            const image = IMAGE_BY_KEY[category.imageKey];
 
             return (
               <article
@@ -114,10 +77,15 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
                 <Link to={catalogSearchUrl(category.label)} className="block overflow-hidden bg-slate-100">
                   <div className="aspect-[16/5.6] overflow-hidden">
                     <img
-                      src={image}
+                      src={category.imagePath}
                       alt={`${category.label} products`}
                       loading="lazy"
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+                      onError={(event) => {
+                        if (event.currentTarget.src !== category.fallbackImage) {
+                          event.currentTarget.src = category.fallbackImage;
+                        }
+                      }}
                     />
                   </div>
                 </Link>
