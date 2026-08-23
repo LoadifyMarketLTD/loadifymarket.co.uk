@@ -3,6 +3,7 @@ param(
   [string]$ArchivePath = "",
   [switch]$SkipRootAssets,
   [switch]$ForceSubcategoryDownload,
+  [switch]$OpenAuditReport,
   [switch]$StartDevServer
 )
 
@@ -45,6 +46,14 @@ if ($subcategoryImages.Count -ne 96) { throw "Expected 96 wholesale subcategory 
 Write-Host "Root images: $($rootImages.Count)/16" -ForegroundColor Green
 Write-Host "Subcategory images: $($subcategoryImages.Count)/96" -ForegroundColor Green
 
+Write-Host "`n=== IMAGE DUPLICATE / PARENT-REUSE GUARD ===" -ForegroundColor Cyan
+if ($OpenAuditReport) {
+  & powershell -ExecutionPolicy Bypass -File '.\scripts\audit-wholesale-visual-assets.ps1' -OpenReport
+} else {
+  & powershell -ExecutionPolicy Bypass -File '.\scripts\audit-wholesale-visual-assets.ps1'
+}
+if ($LASTEXITCODE -ne 0) { throw 'Wholesale visual image audit failed.' }
+
 if (-not (Test-Path '.\node_modules')) {
   Write-Host 'node_modules missing; running npm ci...' -ForegroundColor Yellow
   npm ci
@@ -66,11 +75,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Production build failed.' }
 Write-Host "`n=== LOCAL RELEASE GATE PASS ===" -ForegroundColor Green
 Write-Host '16/16 root visuals present.'
 Write-Host '96/96 dedicated subcategory visuals present.'
+Write-Host '96/96 subcategory file hashes unique.'
+Write-Host '0 parent-image reuse violations.'
 Write-Host 'Typecheck PASS.'
 Write-Host 'Visual contract tests PASS.'
 Write-Host 'Production build PASS.'
-Write-Host "`nManual browser inspection is still required before any PR/merge to main."
-Write-Host 'Inspect: homepage category grid, /catalog, all 16 View All galleries, mobile/tablet/desktop widths.'
+Write-Host "`nManual semantic/browser inspection is still required before any PR/merge to main."
+Write-Host 'Inspect the generated audit report plus homepage, /catalog, all 16 View All galleries, mobile/tablet/desktop widths.'
 
 Write-Host "`n=== WORKTREE (PRESERVED) ===" -ForegroundColor Cyan
 git status --short
