@@ -11,7 +11,7 @@
 
 -- FULL replica identity ensures all column values are included in change
 -- payloads, not just the primary key.
-ALTER TABLE public.messages SET (replica_identity = full);
+ALTER TABLE public.messages REPLICA IDENTITY FULL;
 
 DO $$
 BEGIN
