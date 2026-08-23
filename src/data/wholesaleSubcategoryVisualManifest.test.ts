@@ -57,13 +57,37 @@ describe('wholesale subcategory visual manifest', () => {
     }
   });
 
-  it('Home & Garden has six distinct dedicated visuals', () => {
-    const homeGarden = DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.filter(
-      (entry) => entry.categorySlug === 'home-and-garden',
-    );
+  it('forbids partially completed parent categories', () => {
+    const counts = new Map<string, { dedicated: number; total: number }>();
 
-    expect(homeGarden).toHaveLength(6);
-    expect(new Set(homeGarden.map((entry) => entry.displayImage)).size).toBe(6);
-    expect(homeGarden.every((entry) => Boolean(entry.sourcePage))).toBe(true);
+    for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
+      const current = counts.get(entry.categorySlug) ?? { dedicated: 0, total: 0 };
+      current.total += 1;
+      if (entry.status === 'dedicated') current.dedicated += 1;
+      counts.set(entry.categorySlug, current);
+    }
+
+    for (const [categorySlug, count] of counts) {
+      expect(count.total, `${categorySlug} must keep exactly six subcategories`).toBe(6);
+      expect(
+        count.dedicated === 0 || count.dedicated === 6,
+        `${categorySlug} is only partially complete (${count.dedicated}/6 dedicated visuals)`,
+      ).toBe(true);
+    }
+  });
+
+  it('completed categories use six distinct sourced visuals', () => {
+    const completedCategorySlugs = [
+      ...new Set(DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.map((entry) => entry.categorySlug)),
+    ];
+
+    for (const categorySlug of completedCategorySlugs) {
+      const entries = DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS.filter(
+        (entry) => entry.categorySlug === categorySlug,
+      );
+      expect(entries).toHaveLength(6);
+      expect(new Set(entries.map((entry) => entry.displayImage)).size).toBe(6);
+      expect(entries.every((entry) => Boolean(entry.sourcePage))).toBe(true);
+    }
   });
 });
