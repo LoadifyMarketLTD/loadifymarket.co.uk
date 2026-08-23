@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import FeaturedProducts from "@/components/FeaturedProducts";
+import VisualMarketplaceCategories from "@/components/VisualMarketplaceCategories";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
@@ -168,6 +169,7 @@ function DesktopHome() {
       </section>
 
       <FeaturedProducts />
+      <VisualMarketplaceCategories />
 
       <section className="bg-[#F7F9FC] py-12" aria-label="Why Loadify is different">
         <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
