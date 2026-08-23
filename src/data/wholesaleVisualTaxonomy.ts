@@ -9,8 +9,7 @@
  * - 16 wholesale categories
  * - exactly 6 subcategories per category (96 total)
  * - root images are served from /category-visuals/wholesale/<slug>.jpg
- * - subcategory images remain `subcategory-pending` until a dedicated asset
- *   exists at /category-visuals/subcategories/<slug>.jpg
+ * - each subcategory has its own final visual; parent fallback is work-branch-only
  */
 
 export type SubcategoryVisualStatus = 'subcategory-pending' | 'dedicated';
@@ -19,6 +18,8 @@ export interface WholesaleVisualSubcategory {
   label: string;
   slug: string;
   imagePath: string;
+  displayImage: string;
+  sourcePage?: string;
   status: SubcategoryVisualStatus;
 }
 
@@ -41,6 +42,33 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+const HOME_GARDEN_DEDICATED_VISUALS: Record<string, { displayImage: string; sourcePage: string }> = {
+  Furniture: {
+    displayImage: 'https://images.unsplash.com/photo-1741288340498-d78d59a33675?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/a-bright-modern-living-room-with-comfortable-furniture-jw_Y7R3NabQ',
+  },
+  'Kitchen & Dining': {
+    displayImage: 'https://images.unsplash.com/photo-1771003936708-bfeb23b5d082?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/bright-kitchen-with-dining-table-and-stainless-steel-refrigerator-alXdbCZoQZI',
+  },
+  'Bedding & Linen': {
+    displayImage: 'https://images.unsplash.com/photo-1750271334785-4f6008035021?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/a-clean-bright-bedroom-with-a-large-bed-L9GsIbPCXKU',
+  },
+  'Garden & Outdoor': {
+    displayImage: 'https://images.unsplash.com/photo-1782033799503-ef0687f7ce57?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/garden-patio-with-two-chairs-lush-plants-and-warm-lighting-fVRSm1R5U_Q',
+  },
+  Lighting: {
+    displayImage: 'https://images.unsplash.com/photo-1768578927267-d589f8a294b8?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/three-modern-pendant-lights-hang-over-a-kitchen-island-Vhtg2xwr6rc',
+  },
+  'Décor & Accessories': {
+    displayImage: 'https://images.unsplash.com/photo-1770513649192-c59f4e17df59?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/three-lit-candles-reflect-in-a-mirror-qwA42l83ylg',
+  },
+};
+
 const defineCategory = (
   label: string,
   imageKey: string,
@@ -55,11 +83,14 @@ const defineCategory = (
     fallbackImage: `${FOCUSED_IMAGE_CRAFT_RAW}/${imageKey}.jpg`,
     subcategories: subcategories.map((subcategory) => {
       const subcategorySlug = slugify(subcategory);
+      const dedicated = label === 'Home & Garden' ? HOME_GARDEN_DEDICATED_VISUALS[subcategory] : undefined;
       return {
         label: subcategory,
         slug: subcategorySlug,
         imagePath: `/category-visuals/subcategories/${subcategorySlug}.jpg`,
-        status: 'subcategory-pending' as const,
+        displayImage: dedicated?.displayImage ?? `/category-visuals/subcategories/${subcategorySlug}.jpg`,
+        sourcePage: dedicated?.sourcePage,
+        status: dedicated ? ('dedicated' as const) : ('subcategory-pending' as const),
       };
     }),
   };
