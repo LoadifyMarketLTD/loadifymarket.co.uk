@@ -138,6 +138,22 @@ describe('release-hardening security contracts', () => {
     expect(privateCutover).toContain('DROP TABLE IF EXISTS public.seller_profiles_public_data;');
   });
 
+  it('reconstructs the hosted-only legacy payment safety pre-state before migration 611', () => {
+    const compat = read('supabase/610_zz_legacy_payment_safety_prestate_compat.sql');
+    const reconcile = read('supabase/611_reconcile_payment_safety_hold.sql');
+
+    expect(compat).toContain("'payments_safety_hold'");
+    expect(compat).toContain("'true'::jsonb");
+    expect(compat).toContain('ON CONFLICT (key) DO NOTHING');
+    expect(compat).toContain('CREATE OR REPLACE FUNCTION private.guard_payment_sessions_during_safety_hold()');
+    expect(compat).toContain('IF COALESCE(v_hold, true) THEN');
+    expect(compat).toContain('BEFORE INSERT ON public.payment_sessions');
+    expect(compat).toContain('trg_guard_payment_sessions_during_safety_hold');
+    expect(compat).toContain('REVOKE ALL ON FUNCTION private.guard_payment_sessions_during_safety_hold()');
+    expect(reconcile).toContain("SET value = 'false'::jsonb");
+    expect(reconcile).toContain('emergency payment safety-hold trigger was not preserved');
+  });
+
   it('revalidates buyer and seller live account state before service-role checkout side effects', () => {
     for (const source of [
       read('netlify/functions/create-checkout.ts'),
