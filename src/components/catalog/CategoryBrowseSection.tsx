@@ -1,80 +1,170 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCategoryVisualTree } from '@/hooks/useCategoryVisualTree';
-import CategoryVisualCard from './CategoryVisualCard';
+import {
+  Baby,
+  BriefcaseBusiness,
+  Car,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Dumbbell,
+  Gamepad2,
+  Heart,
+  Home,
+  Laptop,
+  Layers3,
+  PackageOpen,
+  RotateCcw,
+  Shirt,
+  Sparkles,
+  Tags,
+  UtensilsCrossed,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react';
+import { WHOLESALE_VISUAL_TAXONOMY } from '@/data/wholesaleVisualTaxonomy';
+
+import electronicsImg from '@/assets/categories/electronics.jpg';
+import clothingImg from '@/assets/categories/clothing.jpg';
+import homeImg from '@/assets/categories/home.jpg';
+import healthBeautyImg from '@/assets/categories/health-beauty.jpg';
+import toysImg from '@/assets/categories/toys.jpg';
+import foodDrinkImg from '@/assets/categories/food-drink.jpg';
+import toolsImg from '@/assets/categories/tools.jpg';
+import sportsImg from '@/assets/categories/sports.jpg';
+import automotiveImg from '@/assets/categories/automotive.jpg';
+import officeImg from '@/assets/categories/office.jpg';
+import babyImg from '@/assets/categories/baby.jpg';
+import jewelleryImg from '@/assets/categories/jewellery.jpg';
+import mixedPalletsImg from '@/assets/categories/mixed-pallets.jpg';
+import returnsImg from '@/assets/categories/returns.jpg';
+import overstockImg from '@/assets/categories/overstock.jpg';
+import clearanceImg from '@/assets/categories/clearance.jpg';
 
 interface CategoryBrowseSectionProps {
   compact?: boolean;
 }
 
+const IMAGE_BY_KEY: Record<string, string> = {
+  electronics: electronicsImg,
+  clothing: clothingImg,
+  home: homeImg,
+  'health-beauty': healthBeautyImg,
+  toys: toysImg,
+  'food-drink': foodDrinkImg,
+  tools: toolsImg,
+  sports: sportsImg,
+  automotive: automotiveImg,
+  office: officeImg,
+  baby: babyImg,
+  jewellery: jewelleryImg,
+  'mixed-pallets': mixedPalletsImg,
+  returns: returnsImg,
+  overstock: overstockImg,
+  clearance: clearanceImg,
+};
+
+const ICON_BY_KEY: Record<string, LucideIcon> = {
+  electronics: Laptop,
+  clothing: Shirt,
+  home: Home,
+  'health-beauty': Heart,
+  toys: Gamepad2,
+  'food-drink': UtensilsCrossed,
+  tools: Wrench,
+  sports: Dumbbell,
+  automotive: Car,
+  office: BriefcaseBusiness,
+  baby: Baby,
+  jewellery: Sparkles,
+  'mixed-pallets': Layers3,
+  returns: RotateCcw,
+  overstock: PackageOpen,
+  clearance: Tags,
+};
+
+const catalogSearchUrl = (value: string) => `/catalog?q=${encodeURIComponent(value)}`;
+
 export default function CategoryBrowseSection({ compact = false }: CategoryBrowseSectionProps) {
-  const { categories, loading } = useCategoryVisualTree();
-
-  if (loading) {
-    return (
-      <section aria-label="Browse categories" className="bg-[#F7F9FC] py-10">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-            {Array.from({ length: 10 }).map((_, index) => (
-              <div key={index} className="aspect-[4/3] animate-pulse rounded-2xl bg-slate-200" />
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (categories.length === 0) return null;
+  const [showAll, setShowAll] = useState(false);
+  const visibleCategories = showAll ? WHOLESALE_VISUAL_TAXONOMY : WHOLESALE_VISUAL_TAXONOMY.slice(0, 8);
 
   return (
-    <section aria-label="Browse categories" className="bg-[#F7F9FC] py-10 md:py-14">
+    <section id="categories" aria-label="Browse wholesale categories" className="bg-[#F7F9FC] py-10 md:py-14">
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-        <div className="mb-7 flex items-end justify-between gap-4">
-          <div>
-            <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#1D57D8]">Browse the marketplace</p>
-            <h2 className="font-display text-2xl font-extrabold tracking-tight text-[#0A234F] md:text-3xl">Shop by category</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">
-              Explore the full marketplace structure even while new sellers are still adding stock. Category imagery is navigational and does not represent live listings.
-            </p>
-          </div>
-          <Link to="/catalog" className="hidden shrink-0 text-sm font-bold text-[#1D57D8] hover:underline sm:inline">Browse all products</Link>
+        <div className="mx-auto mb-7 max-w-2xl text-center md:mb-9">
+          <h2 className="font-display text-3xl font-extrabold tracking-tight text-[#071039] md:text-4xl">
+            Browse by Category
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-5 text-[#536184] md:text-base">
+            Find exactly what you're looking for across our wide range of wholesale, stock and clearance categories.
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
-          {categories.map((category) => (
-            <CategoryVisualCard
-              key={category.id}
-              name={category.name}
-              slug={category.slug}
-              compact={compact}
-            />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {visibleCategories.map((category) => {
+            const Icon = ICON_BY_KEY[category.imageKey] ?? Tags;
+            const image = IMAGE_BY_KEY[category.imageKey];
 
-        <div className="mt-8 space-y-7">
-          {categories.map((category) => (
-            category.children.length > 0 ? (
-              <div key={`${category.id}-children`}>
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-display text-lg font-bold text-[#0A234F]">{category.name}</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">Select an area to explore its specialist subcategories.</p>
-                  </div>
-                  <Link to={`/category/${category.slug}`} className="text-xs font-bold text-[#1D57D8] hover:underline">View category</Link>
-                </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                  {category.children.map((child) => (
-                    <CategoryVisualCard
-                      key={child.id}
-                      name={child.name}
-                      slug={child.slug}
-                      parentSlug={category.slug}
-                      compact
+            return (
+              <article
+                key={category.slug}
+                className="group overflow-hidden rounded-xl border border-[#DCE2ED] bg-white shadow-[0_1px_2px_rgba(10,35,79,0.03)] transition duration-200 hover:-translate-y-0.5 hover:border-[#1D57D8]/30 hover:shadow-[0_10px_28px_rgba(10,35,79,0.08)]"
+              >
+                <Link to={catalogSearchUrl(category.label)} className="block overflow-hidden bg-slate-100">
+                  <div className="aspect-[16/5.6] overflow-hidden">
+                    <img
+                      src={image}
+                      alt={`${category.label} products`}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
                     />
-                  ))}
+                  </div>
+                </Link>
+
+                <div className={compact ? 'px-4 pb-4 pt-3' : 'px-4 pb-5 pt-3.5'}>
+                  <div className="mb-3 flex items-center gap-2.5">
+                    <Icon className="h-5 w-5 shrink-0 text-[#145CEB]" strokeWidth={1.9} />
+                    <h3 className="font-display text-[17px] font-bold leading-tight text-[#071039]">
+                      {category.label}
+                    </h3>
+                  </div>
+
+                  <ul className="space-y-1.5">
+                    {category.subcategories.map((subcategory) => (
+                      <li key={subcategory.slug}>
+                        <Link
+                          to={catalogSearchUrl(subcategory.label)}
+                          className="block text-[12px] font-medium leading-[1.25] text-[#172449] transition hover:text-[#145CEB]"
+                          data-visual-status={subcategory.status}
+                        >
+                          {subcategory.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    to={catalogSearchUrl(category.label)}
+                    className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-bold text-[#0057E7] hover:underline"
+                  >
+                    View All <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
-              </div>
-            ) : null
-          ))}
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="mt-7 text-center">
+          <button
+            type="button"
+            onClick={() => setShowAll((value) => !value)}
+            className="inline-flex items-center gap-2 text-sm font-bold text-[#0057E7] transition hover:underline"
+          >
+            {showAll ? 'Show First 8 Categories' : `View All ${WHOLESALE_VISUAL_TAXONOMY.length} Categories`}
+            {showAll ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
         </div>
       </div>
     </section>
