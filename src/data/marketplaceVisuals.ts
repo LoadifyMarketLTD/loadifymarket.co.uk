@@ -25,8 +25,8 @@ const rootImages: Record<string, string> = {
   clearance: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1600&h=1200&q=82",
 };
 
-const netlifyImage = (remoteUrl: string) =>
-  `/.netlify/images?url=${encodeURIComponent(remoteUrl)}&w=1600&h=1200&fit=cover&q=82`;
+const proxiedImage = (remoteUrl: string) =>
+  `/.netlify/functions/visual-image-proxy?url=${encodeURIComponent(remoteUrl)}`;
 
 export type MarketplaceVisual = {
   title: string;
@@ -38,7 +38,7 @@ export type MarketplaceVisual = {
 
 export const marketplaceVisuals: MarketplaceVisual[] = marketplaceTaxonomy.map((category) => {
   const parentRemoteImage = rootImages[category.imageKey] || rootImages["mixed-pallets"];
-  const parentImage = netlifyImage(parentRemoteImage);
+  const parentImage = proxiedImage(parentRemoteImage);
   const duplicateImages = duplicateDedicatedImagesWithinCategory(category.label);
   if (import.meta.env.DEV && duplicateImages.length > 0) {
     throw new Error(`Duplicate subcategory images in ${category.label}`);
@@ -52,7 +52,7 @@ export const marketplaceVisuals: MarketplaceVisual[] = marketplaceTaxonomy.map((
     }
     return {
       title,
-      image: netlifyImage(subRemoteImage),
+      image: proxiedImage(subRemoteImage),
       altText: `${title} — representative products from ${category.label}`,
     };
   });
