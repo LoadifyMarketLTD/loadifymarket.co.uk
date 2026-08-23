@@ -3,9 +3,14 @@
  * user's Supabase JWT in the Authorization header.
  *
  * Automatically proactively refreshes the access token when it has expired
- * or will expire within 60 seconds.  This prevents "Unauthorized" (401/403)
+ * or will expire within 60 seconds. This prevents "Unauthorized" (401/403)
  * errors from Netlify functions caused by silently-expired tokens, which is
  * especially common on the mobile APK after a cold restart or a long session.
+ *
+ * The whole authorized request lifecycle is also bounded by a finite timeout.
+ * This includes session lookup / refresh as well as the network fetch, so UI
+ * callers cannot remain in a loading state forever when an auth or network
+ * promise stalls.
  */
 
 import { supabase } from './supabase';
@@ -32,8 +37,11 @@ const NETLIFY_BASE = (
   })()
 // The hard-coded fallback is safe: this rewrite only runs on the native APK
 // (isCapacitorContext() guard below) where loadifymarket.co.uk is always the
-// correct backend.  Mirrors the same pattern in capacitorFetchPatch.ts.
+// correct backend. Mirrors the same pattern in capacitorFetchPatch.ts.
 ).replace(/\/$/, '');
+
+export const AUTHORIZED_FETCH_TIMEOUT_MS = 30_000;
+const AUTHORIZED_FETCH_TIMEOUT_MESSAGE = 'Request timed out. Please try again.';
 
 function resolveUrl(path: string): string {
   if (isCapacitorContext() && path.startsWith('/.netlify/functions/')) {
@@ -42,12 +50,44 @@ function resolveUrl(path: string): string {
   return path;
 }
 
+function createAbortError(): Error {
+  const error = new Error('The operation was aborted.');
+  error.name = 'AbortError';
+  return error;
+}
+
+function waitForAbortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(createAbortError());
+
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      signal.removeEventListener('abort', onAbort);
+      reject(createAbortError());
+    };
+
+    signal.addEventListener('abort', onAbort, { once: true });
+
+    promise.then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
 /**
  * Make an authorized fetch to a Netlify function (or any endpoint that
  * requires a Supabase JWT Bearer token).
  *
  * Handles:
  *  - Proactive token refresh (60-second window before expiry)
+ *  - Finite 30-second deadline across auth lookup, refresh and fetch
+ *  - Caller-provided AbortSignal propagation
  *  - Sets Content-Type: application/json automatically
  *  - Throws a clear error if the session is missing or expired
  *
@@ -59,43 +99,87 @@ export async function authorizedFetch(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  // Rewrite relative Netlify function paths to absolute URLs on Capacitor APK.
-  // This is a defensive duplicate of the rewrite in patchCapacitorFetch; it
-  // ensures correctness even if CapacitorHttp's own JS injection overwrites our
-  // window.fetch patch after main.tsx runs.
-  const url = resolveUrl(path);
+  const controller = new AbortController();
+  const externalSignal = init.signal;
+  let timedOut = false;
 
-  let { data: { session } } = await supabase.auth.getSession();
+  const abortFromCaller = () => controller.abort();
+  if (externalSignal?.aborted) {
+    controller.abort();
+  } else if (externalSignal) {
+    externalSignal.addEventListener('abort', abortFromCaller, { once: true });
+  }
 
-  // Decode the JWT payload to check the expiry time (no library needed — JWTs
-  // are just base64url-encoded JSON).  If the token has already expired or will
-  // expire within 60 s, force-refresh it before making the request so the
-  // Netlify function never receives a stale token.
-  if (session?.access_token) {
-    try {
-      const [, rawPayload] = session.access_token.split('.');
-      const padded =
-        rawPayload.replace(/-/g, '+').replace(/_/g, '/') +
-        '='.repeat((4 - (rawPayload.length % 4)) % 4);
-      const payload = JSON.parse(atob(padded)) as { exp?: number };
-      if (payload.exp && payload.exp * 1000 - Date.now() < 60_000) {
-        const { data: refreshed } = await supabase.auth.refreshSession();
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, AUTHORIZED_FETCH_TIMEOUT_MS);
+
+  try {
+    // Rewrite relative Netlify function paths to absolute URLs on Capacitor APK.
+    // This is a defensive duplicate of the rewrite in patchCapacitorFetch; it
+    // ensures correctness even if CapacitorHttp's own JS injection overwrites our
+    // window.fetch patch after main.tsx runs.
+    const url = resolveUrl(path);
+
+    let { data: { session } } = await waitForAbortable(
+      supabase.auth.getSession(),
+      controller.signal,
+    );
+
+    // Decode the JWT payload only to decide whether proactive refresh is needed.
+    // Malformed/unexpected payloads must not replace an independent caller abort
+    // with a parsing TypeError, and they must not swallow an abort from refresh.
+    if (session?.access_token) {
+      let expiresAtMs: number | null = null;
+      try {
+        const [, rawPayload] = session.access_token.split('.');
+        if (rawPayload) {
+          const padded =
+            rawPayload.replace(/-/g, '+').replace(/_/g, '/') +
+            '='.repeat((4 - (rawPayload.length % 4)) % 4);
+          const payload = JSON.parse(atob(padded)) as { exp?: number };
+          if (payload.exp) expiresAtMs = payload.exp * 1000;
+        }
+      } catch {
+        /* ignore JWT parse errors; Supabase session remains authoritative */
+      }
+
+      if (expiresAtMs !== null && expiresAtMs - Date.now() < 60_000) {
+        const { data: refreshed } = await waitForAbortable(
+          supabase.auth.refreshSession(),
+          controller.signal,
+        );
         if (refreshed.session) session = refreshed.session;
       }
-    } catch {
-      /* ignore JWT parse errors */
     }
-  }
 
-  if (!session?.access_token) {
-    throw new Error('Your session has expired. Please sign in again.');
-  }
+    if (controller.signal.aborted) {
+      throw createAbortError();
+    }
 
-  const headers = new Headers(init.headers || {});
-  if (!headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
-  }
-  headers.set('Authorization', `Bearer ${session.access_token}`);
+    if (!session?.access_token) {
+      throw new Error('Your session has expired. Please sign in again.');
+    }
 
-  return fetch(url, { ...init, headers });
+    const headers = new Headers(init.headers || {});
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+    headers.set('Authorization', `Bearer ${session.access_token}`);
+
+    return await fetch(url, {
+      ...init,
+      headers,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (timedOut) {
+      throw new Error(AUTHORIZED_FETCH_TIMEOUT_MESSAGE);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    externalSignal?.removeEventListener('abort', abortFromCaller);
+  }
 }

@@ -63,7 +63,10 @@ describe('delete-product', () => {
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            maybeSingle: vi.fn().mockResolvedValue({ data: { role: args?.role ?? 'seller' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { id: callerId, role: args?.role ?? 'seller', isActive: true },
+              error: null,
+            }),
           };
         }
 

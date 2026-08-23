@@ -2,16 +2,20 @@
 -- Keep the public seller-profile API shape while ensuring the backing cache is
 -- not directly reachable through the exposed public schema.
 
+-- Fresh historical replay does not otherwise create this schema before 598.
+-- Make the migration self-contained instead of relying on live-only state.
+CREATE SCHEMA IF NOT EXISTS private;
+
 CREATE TABLE IF NOT EXISTS private.seller_profiles_public_data (
   "userId" uuid PRIMARY KEY,
   "businessName" text,
   "marketplaceRole" text,
   "isApproved" boolean,
   "verificationStatus" text,
-  rating numeric,
+  rating numeric(3,2),
   "salesCount" integer,
   "totalSales" integer,
-  "deliverySuccessRate" numeric,
+  "deliverySuccessRate" numeric(5,4),
   "paymentBehaviour" text,
   "businessAddress" jsonb,
   "createdAt" timestamptz
@@ -146,6 +150,8 @@ EXECUTE FUNCTION private.sync_seller_profiles_public_data();
 
 -- Preserve the public API contract consumed by SellerPublicProfilePage. A
 -- direct phone number is intentionally not published; city/country remain.
+-- The cache column typmods intentionally match the preceding public view so
+-- CREATE OR REPLACE VIEW can switch backing relations without a type change.
 CREATE OR REPLACE VIEW public.seller_profiles_public AS
 SELECT
   "userId",

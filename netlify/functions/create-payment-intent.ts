@@ -7,6 +7,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { resolveMarketplaceTaxV1 } from './_shared/marketplaceTax';
@@ -92,22 +93,24 @@ export const handler: Handler = async (event) => {
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
   const reservationToken = randomUUID();
 
-  let verifiedBuyerId = '';
-  const authHeader = event.headers['authorization'];
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authUser) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
-    }
-    if (buyerId && buyerId !== authUser.id) {
-      return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
-    }
-    verifiedBuyerId = authUser.id;
+  // Mobile payment creation also runs with service_role. Enforce current account
+  // state before product reservations or Stripe side effects so a stale JWT from
+  // a suspended account cannot cross the trusted server boundary.
+  const buyerAuth = await authenticateActiveAccount(event, supabase);
+  if (!buyerAuth.ok) {
+    return {
+      statusCode: buyerAuth.status,
+      body: JSON.stringify({
+        error: buyerAuth.status === 401
+          ? 'Authentication required. Please sign in to complete your purchase.'
+          : 'This account is not active and cannot complete checkout.',
+      }),
+    };
   }
 
-  if (!verifiedBuyerId) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required. Please sign in to complete your purchase.' }) };
+  const verifiedBuyerId = buyerAuth.actor.id;
+  if (buyerId && buyerId !== verifiedBuyerId) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
   }
 
   const piRl = await checkRateLimit({
@@ -123,15 +126,8 @@ export const handler: Handler = async (event) => {
   }
 
   const maintenance = await isMaintenanceMode(supabase);
-  if (maintenance) {
-    const { data: callerRow } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', verifiedBuyerId)
-      .maybeSingle<{ role: string | null }>();
-    if (callerRow?.role !== 'admin') {
-      return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
-    }
+  if (maintenance && buyerAuth.actor.role !== 'admin') {
+    return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
   }
 
   await supabase.rpc('release_expired_reservations').catch((err: unknown) => {
@@ -258,6 +254,20 @@ export const handler: Handler = async (event) => {
   }
 
   const checkoutSellerId = uniqueSellerIds[0];
+  const { data: sellerAccount, error: sellerAccountError } = await supabase
+    .from('users')
+    .select('id, role, isActive')
+    .eq('id', checkoutSellerId)
+    .maybeSingle<{ id: string; role: string; isActive: boolean }>();
+
+  if (sellerAccountError) {
+    console.error('create-payment-intent: seller account query failed:', sellerAccountError.message);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller account. Please try again.' }) };
+  }
+  if (!sellerAccount || sellerAccount.role !== 'seller' || sellerAccount.isActive !== true) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'This seller is not currently available to accept payments.' }) };
+  }
+
   const { data: sellerProfile, error: sellerProfileError } = await supabase
     .from('seller_profiles')
     .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')

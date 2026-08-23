@@ -38,7 +38,7 @@ function activeBuyerQuery() {
   };
 }
 
-function sequencedAccountQuery(accounts: Array<{ id: string; role: string; isActive: boolean }>) {
+function sequencedAccountQuery(accounts: Array<Record<string, unknown>>) {
   let lookupIndex = 0;
   return () => ({
     select: vi.fn().mockReturnThis(),
@@ -82,6 +82,52 @@ describe('create-checkout handler – request validation', () => {
     const { handler } = await import('../create-checkout');
     const res = await handler(makeEvent(validBody), {} as never);
     expect(res.statusCode).toBe(500);
+  });
+
+  it('rejects a stale JWT when the buyer account is inactive before any checkout write', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
+    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+    const productsFrom = vi.fn();
+
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'buyer-1', email: 'buyer@test.com', app_metadata: {} } },
+            error: null,
+          }),
+        },
+        from: vi.fn((table: string) => {
+          if (table === 'users') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: 'buyer-1', role: 'buyer', isActive: false },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'products') productsFrom();
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }),
+      })),
+    }));
+
+    const { handler } = await import('../create-checkout');
+    const res = await handler(
+      makeEvent(validBody, 'POST', { authorization: 'Bearer stale-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body as string).error).toMatch(/not active/i);
+    expect(productsFrom).not.toHaveBeenCalled();
   });
 
   it('returns 400 when a product is unavailable (not active)', async () => {
@@ -182,7 +228,14 @@ describe('create-checkout handler – request validation', () => {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
               maybeSingle: vi.fn().mockResolvedValue({
-                data: { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active', isPaused: false },
+                data: {
+                  stripeAccountId: 'acct_123',
+                  stripeConnectStatus: 'active',
+                  sellerStatus: 'active',
+                  isPaused: false,
+                  businessName: 'Seller One Ltd',
+                  fullName: 'Seller One',
+                },
                 error: null,
               }),
             };
@@ -191,7 +244,7 @@ describe('create-checkout handler – request validation', () => {
             return {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
-              maybeSingle: vi.fn().mockResolvedValue({ data: { accountType: 'individual', isVatVerified: false }, error: null }),
+              maybeSingle: vi.fn().mockResolvedValue({ data: { accountType: 'individual' }, error: null }),
             };
           }
           return {

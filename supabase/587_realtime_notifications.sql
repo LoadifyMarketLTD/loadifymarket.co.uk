@@ -13,8 +13,7 @@
 --   Uses membership check before ALTER PUBLICATION ADD TABLE.
 -- ─────────────────────────────────────────────────────────────────────────────
 
-ALTER TABLE public.notifications
-  SET (replica_identity = full);
+ALTER TABLE public.notifications REPLICA IDENTITY FULL;
 
 DO $$
 BEGIN

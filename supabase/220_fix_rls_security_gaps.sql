@@ -40,10 +40,16 @@ CREATE POLICY "users_insert"
 -- Split the permissive ALL policy into targeted per-operation policies.
 -- SELECT / INSERT remain open (view counting by anon is intentional).
 -- UPDATE / DELETE require admin/owner to prevent analytics data poisoning.
+-- Drop both historical umbrella policies and every canonical replacement
+-- policy so this corrective migration is safe when replayed after a baseline
+-- that already contains the hardened policy names.
 
-DROP POLICY IF EXISTS "product_analytics_all"   ON product_analytics;
-DROP POLICY IF EXISTS "product_analytics_write" ON product_analytics;
+DROP POLICY IF EXISTS "product_analytics_all"    ON product_analytics;
+DROP POLICY IF EXISTS "product_analytics_write"  ON product_analytics;
 DROP POLICY IF EXISTS "product_analytics_select" ON product_analytics;
+DROP POLICY IF EXISTS "product_analytics_insert" ON product_analytics;
+DROP POLICY IF EXISTS "product_analytics_update" ON product_analytics;
+DROP POLICY IF EXISTS "product_analytics_delete" ON product_analytics;
 
 CREATE POLICY "product_analytics_select"
   ON product_analytics

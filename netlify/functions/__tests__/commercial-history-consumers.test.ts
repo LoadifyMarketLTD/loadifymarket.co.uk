@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const readRepo = (relativePath: string) =>
-  readFileSync(new URL(`../../../${relativePath}`, import.meta.url), 'utf8');
+  readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
 
 const invoice = readRepo('netlify/functions/generate-invoice.ts');
 const tracking = readRepo('netlify/functions/track-shipment.ts');

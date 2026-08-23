@@ -311,7 +311,9 @@ GRANT EXECUTE ON FUNCTION public.release_expired_reservations() TO service_role;
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Public seller profile privacy
 -- Preserve the existing API shape while exposing only city/country from the
--- address and no direct phone number.
+-- address and no direct phone number. Migration 598 later moves this sanitized
+-- projection behind a private cache; 594 must remain replay-safe before that
+-- cache exists.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE VIEW public.seller_profiles_public AS
@@ -337,7 +339,7 @@ SELECT
   END AS "businessAddress",
   NULL::text AS "contactPhone",
   "createdAt"
-FROM public.seller_profiles_public_data;
+FROM public.seller_profiles;
 
 REVOKE ALL ON public.seller_profiles_public FROM PUBLIC;
 GRANT SELECT ON public.seller_profiles_public TO anon, authenticated, service_role;

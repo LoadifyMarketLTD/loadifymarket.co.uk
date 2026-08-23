@@ -1,12 +1,14 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const read = (relativePath: string) => readFileSync(new URL(relativePath, import.meta.url), 'utf8');
+const readRepo = (relativePath: string) =>
+  readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
 
-const webCheckout = read('../create-checkout.ts');
-const mobileCheckout = read('../create-payment-intent.ts');
-const webhook = read('../stripe-webhook.ts');
-const migration = read('../../../supabase/610_snapshot_order_commercial_identity.sql');
+const webCheckout = readRepo('netlify/functions/create-checkout.ts');
+const mobileCheckout = readRepo('netlify/functions/create-payment-intent.ts');
+const webhook = readRepo('netlify/functions/stripe-webhook.ts');
+const migration = readRepo('supabase/610_snapshot_order_commercial_identity.sql');
 
 describe('commercial snapshot cutover contract', () => {
   it.each([
@@ -33,8 +35,6 @@ describe('commercial snapshot cutover contract', () => {
     expect(webhook).toContain('p_commission_rate: commissionRate');
     expect(webhook).toContain('firstPaidTransition');
 
-    // The webhook must no longer coordinate the transactional persistence unit
-    // through separate HTTP/database requests.
     expect(webhook).not.toContain(".upsert(orderItems, { onConflict: 'orderId,productId'");
     expect(webhook).not.toContain("sb.rpc('finalize_paid_order_item'");
     expect(webhook).not.toContain(".update({ status: 'paid' })");

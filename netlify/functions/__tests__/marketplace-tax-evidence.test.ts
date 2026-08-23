@@ -1,24 +1,27 @@
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   buildSellerNonVatProductEvidence,
   resolveMarketplaceTaxV1,
 } from '../_shared/marketplaceTax';
 
-const read = (relativePath: string) => readFileSync(new URL(relativePath, import.meta.url), 'utf8');
-const webCheckout = read('../create-checkout.ts');
-const mobileCheckout = read('../create-payment-intent.ts');
-const createProduct = read('../create-product.ts');
-const updateProduct = read('../update-product.ts');
-const connectOnboard = read('../connect-onboard.ts');
-const connectStatus = read('../connect-status.ts');
-const invoice = read('../generate-invoice.ts');
-const cutoverPreflight = read('../../../supabase/611_zz_marketplace_tax_cutover_preflight.sql');
-const taxMigration = read('../../../supabase/612_marketplace_tax_evidence_boundary.sql');
-const declarationMigration = read('../../../supabase/613_seller_tax_declaration_evidence.sql');
-const declarationSnapshotMigration = read('../../../supabase/614_strengthen_marketplace_tax_snapshot_declaration.sql');
-const locationEvidenceMigration = read('../../../supabase/615_authoritative_seller_tax_location_evidence.sql');
-const sellerProfile = read('../../../src/pages/pixel-perfect/seller/SellerProfile.tsx');
+const readRepo = (relativePath: string) =>
+  readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
+
+const webCheckout = readRepo('netlify/functions/create-checkout.ts');
+const mobileCheckout = readRepo('netlify/functions/create-payment-intent.ts');
+const createProduct = readRepo('netlify/functions/create-product.ts');
+const updateProduct = readRepo('netlify/functions/update-product.ts');
+const connectOnboard = readRepo('netlify/functions/connect-onboard.ts');
+const connectStatus = readRepo('netlify/functions/connect-status.ts');
+const invoice = readRepo('netlify/functions/generate-invoice.ts');
+const cutoverPreflight = readRepo('supabase/611_zz_marketplace_tax_cutover_preflight.sql');
+const taxMigration = readRepo('supabase/612_marketplace_tax_evidence_boundary.sql');
+const declarationMigration = readRepo('supabase/613_seller_tax_declaration_evidence.sql');
+const declarationSnapshotMigration = readRepo('supabase/614_strengthen_marketplace_tax_snapshot_declaration.sql');
+const locationEvidenceMigration = readRepo('supabase/615_authoritative_seller_tax_location_evidence.sql');
+const sellerProfile = readRepo('src/pages/pixel-perfect/seller/SellerProfile.tsx');
 
 const product = {
   id: 'p1',

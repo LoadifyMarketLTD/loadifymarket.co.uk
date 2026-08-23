@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { resolveMarketplaceTaxV1 } from './_shared/marketplaceTax';
@@ -113,25 +114,24 @@ export const handler: Handler = async (event) => {
     reservedProductIds = [];
   };
 
-  let verifiedBuyerId = '';
-  const authHeader = event.headers['authorization'];
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authUser) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
-    }
-    if (buyerId && buyerId !== authUser.id) {
-      return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
-    }
-    verifiedBuyerId = authUser.id;
+  // Checkout runs with service_role, so browser RLS cannot protect this boundary.
+  // Re-read the canonical public.users state before any reservation/payment write
+  // so a stale JWT from a suspended account fails closed immediately.
+  const buyerAuth = await authenticateActiveAccount(event, supabase);
+  if (!buyerAuth.ok) {
+    return {
+      statusCode: buyerAuth.status,
+      body: JSON.stringify({
+        error: buyerAuth.status === 401
+          ? 'Authentication required. Please sign in to complete your purchase.'
+          : 'This account is not active and cannot complete checkout.',
+      }),
+    };
   }
 
-  if (!verifiedBuyerId) {
-    return {
-      statusCode: 401,
-      body: JSON.stringify({ error: 'Authentication required. Please sign in to complete your purchase.' }),
-    };
+  const verifiedBuyerId = buyerAuth.actor.id;
+  if (buyerId && buyerId !== verifiedBuyerId) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
   }
 
   const checkoutRl = await checkRateLimit({
@@ -150,15 +150,8 @@ export const handler: Handler = async (event) => {
   }
 
   const maintenance = await isMaintenanceMode(supabase);
-  if (maintenance) {
-    const { data: callerRow } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', verifiedBuyerId)
-      .maybeSingle<{ role: string | null }>();
-    if (callerRow?.role !== 'admin') {
-      return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
-    }
+  if (maintenance && buyerAuth.actor.role !== 'admin') {
+    return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
   }
 
   const maybeRpc = (supabase as typeof supabase & { rpc?: (fn: string) => Promise<unknown> }).rpc;
@@ -246,6 +239,24 @@ export const handler: Handler = async (event) => {
   }
 
   const checkoutSellerId = uniqueSellerIds[0];
+
+  // seller_profiles is denormalised lifecycle state. Re-read public.users as the
+  // authoritative suspension boundary so stale profile state can never keep a
+  // suspended seller commercially payable through a service-role checkout.
+  const { data: sellerAccount, error: sellerAccountError } = await supabase
+    .from('users')
+    .select('id, role, isActive')
+    .eq('id', checkoutSellerId)
+    .maybeSingle<{ id: string; role: string; isActive: boolean }>();
+
+  if (sellerAccountError) {
+    console.error('create-checkout: seller account query failed:', sellerAccountError.message);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller account. Please try again.' }) };
+  }
+  if (!sellerAccount || sellerAccount.role !== 'seller' || sellerAccount.isActive !== true) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'This seller is not currently available to accept payments.' }) };
+  }
+
   const { data: sellerProfile, error: sellerProfileError } = await supabase
     .from('seller_profiles')
     .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')

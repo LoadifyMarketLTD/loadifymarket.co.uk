@@ -123,6 +123,7 @@ const SellerOnboarding = () => {
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [savingType, setSavingType] = useState(false);
   const [savingStore, setSavingStore] = useState(false);
@@ -141,13 +142,16 @@ const SellerOnboarding = () => {
       if (!response.ok) throw new Error(payload.error || 'Unable to load Seller setup');
 
       setStatus(payload);
+      setLoadError(null);
       setStep(payload.readiness.nextStep);
       setStoreName(payload.store.storeName ?? '');
       setStoreDescription(payload.store.storeDescription ?? '');
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      setLoadError(message);
       toast({
         title: 'Unable to load Seller setup',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -300,10 +304,31 @@ const SellerOnboarding = () => {
 
   if (user && (hasAdminAccess(user) || !hasSellerAccess(user))) return null;
 
-  if (loading || !status) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-success" />
+      </div>
+    );
+  }
+
+  if (!status) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-2xl font-bold text-gray-900">Seller setup unavailable</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            {loadError || 'Seller setup could not be loaded. Please try again.'}
+          </p>
+          <Button
+            className="mt-6 bg-success text-white hover:bg-success/90"
+            onClick={() => void refreshStatus()}
+            disabled={refreshing}
+          >
+            {refreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            Retry Seller setup
+          </Button>
+        </div>
       </div>
     );
   }

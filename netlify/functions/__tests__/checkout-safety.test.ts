@@ -19,6 +19,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { HandlerEvent } from '@netlify/functions';
 
+const TAX_CAPTURED_AT = '2026-08-20T19:00:00.000Z';
+
 // ── Shared helpers ─────────────────────────────────────────────────────────────
 
 function makeEvent(
@@ -40,7 +42,6 @@ function makeEvent(
   };
 }
 
-// A minimal valid checkout body with a single seller
 const singleSellerBody = {
   items: [{ productId: 'p1', quantity: 1, price: 20, title: 'Widget', sellerId: 's1' }],
   buyerId: 'buyer-1',
@@ -49,7 +50,6 @@ const singleSellerBody = {
   shippingMethodId: '11111111-1111-1111-1111-111111111111',
 };
 
-// Two products from different sellers
 const multiSellerBody = {
   items: [
     { productId: 'p1', quantity: 1, price: 20, title: 'Widget A', sellerId: 's1' },
@@ -65,35 +65,47 @@ type MockSellerProfile = {
   stripeConnectStatus: string | null;
   sellerStatus: string | null;
   isPaused?: boolean | null;
+  businessName?: string | null;
+  fullName?: string | null;
+  country?: string | null;
+  isVatRegistered?: boolean | null;
+  vatNumber?: string | null;
+  businessAddress?: Record<string, unknown> | null;
+  taxDeclarationConfirmed?: boolean | null;
+  taxDeclarationVersion?: number | null;
+  taxDeclarationSource?: string | null;
+  taxDeclarationCapturedAt?: string | null;
 };
 
-/**
- * Creates a mocked @supabase/supabase-js createClient that routes calls based
- * on which table is queried. All parameters are optional; the defaults represent
- * a perfectly healthy single-seller checkout that should succeed.
- */
+type MockProduct = {
+  id: string;
+  price: number;
+  title: string;
+  sellerId: string;
+  isActive: boolean;
+  isApproved: boolean;
+  stockQuantity: number;
+  listingContext?: string;
+  listingStatus?: string;
+  priceExVat?: number | null;
+  vatRate?: number | null;
+  taxTreatmentStatus?: string | null;
+  taxTreatmentSource?: string | null;
+  taxEvidenceVersion?: number | null;
+  taxEvidenceCapturedAt?: string | null;
+};
+
 function makeSupabaseMock(opts: {
   authUserId?: string;
   authError?: Error | null;
+  buyerActive?: boolean;
   sellerAccount?: { id: string; role: string; isActive: boolean };
-  // Products returned by from('products').select(...).in(...)
-  products?: Array<{
-    id: string;
-    price: number;
-    title: string;
-    sellerId: string;
-    isActive: boolean;
-    isApproved: boolean;
-    stockQuantity: number;
-    listingContext?: string;
-    listingStatus?: string;
-  }>;
+  products?: MockProduct[];
   productsError?: Error | null;
   sellerProfile?: MockSellerProfile | null;
   sellerProfileError?: Error | null;
   sessionInsertError?: Error | null;
   productShippingRows?: unknown[] | null;
-  // For webhook tests
   paymentSessionsUpdate?: ReturnType<typeof vi.fn>;
   paymentSessionMaybeSingle?: { data: unknown; error: unknown };
   orderSingle?: { data: unknown; error: unknown };
@@ -102,12 +114,42 @@ function makeSupabaseMock(opts: {
   const {
     authUserId = 'buyer-1',
     authError = null,
+    buyerActive = true,
     sellerAccount = { id: 's1', role: 'seller', isActive: true },
     products = [
-      { id: 'p1', price: 20, title: 'Widget', sellerId: 's1', isActive: true, isApproved: true, stockQuantity: 10 },
+      {
+        id: 'p1',
+        price: 20,
+        priceExVat: 20,
+        vatRate: 0,
+        taxTreatmentStatus: 'seller_non_vat_declared',
+        taxTreatmentSource: 'seller_profile_non_vat_declaration_v1',
+        taxEvidenceVersion: 1,
+        taxEvidenceCapturedAt: TAX_CAPTURED_AT,
+        title: 'Widget',
+        sellerId: 's1',
+        isActive: true,
+        isApproved: true,
+        stockQuantity: 10,
+      },
     ],
     productsError = null,
-    sellerProfile = { stripeAccountId: 'acct_123', stripeConnectStatus: 'active', sellerStatus: 'active', isPaused: false },
+    sellerProfile = {
+      stripeAccountId: 'acct_123',
+      stripeConnectStatus: 'active',
+      sellerStatus: 'active',
+      isPaused: false,
+      businessName: 'Seller One Ltd',
+      fullName: 'Seller One',
+      country: 'GB',
+      isVatRegistered: false,
+      vatNumber: null,
+      businessAddress: { postcode: 'BB1 1AA', countryCode: 'GB' },
+      taxDeclarationConfirmed: true,
+      taxDeclarationVersion: 1,
+      taxDeclarationSource: 'seller_self_declaration_v1',
+      taxDeclarationCapturedAt: TAX_CAPTURED_AT,
+    },
     sellerProfileError = null,
     sessionInsertError = null,
     productShippingRows = [{
@@ -126,9 +168,10 @@ function makeSupabaseMock(opts: {
   } = opts;
 
   let userLookupIndex = 0;
-  const liveAccounts = [
-    { id: authUserId, role: 'buyer', isActive: true },
+  const userRows = [
+    { id: authUserId, role: 'buyer', isActive: buyerActive },
     sellerAccount,
+    { email: 'buyer@test.com', firstName: 'Buyer', lastName: 'One' },
   ];
 
   return {
@@ -146,7 +189,7 @@ function makeSupabaseMock(opts: {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
               maybeSingle: vi.fn().mockImplementation(async () => ({
-                data: liveAccounts[Math.min(userLookupIndex++, liveAccounts.length - 1)] ?? null,
+                data: userRows[Math.min(userLookupIndex++, userRows.length - 1)] ?? null,
                 error: null,
               })),
             };
@@ -163,7 +206,9 @@ function makeSupabaseMock(opts: {
               }),
               update: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnThis(),
+                in: vi.fn().mockReturnThis(),
                 select: vi.fn().mockResolvedValue({ count: 1, error: null }),
+                catch: vi.fn().mockResolvedValue(undefined),
               }),
             };
           case 'product_shipping':
@@ -179,6 +224,15 @@ function makeSupabaseMock(opts: {
               maybeSingle: vi.fn().mockResolvedValue({
                 data: sellerProfile,
                 error: sellerProfileError,
+              }),
+            };
+          case 'buyer_profiles':
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { accountType: 'individual', companyName: null, vatNumber: null },
+                error: null,
               }),
             };
           case 'payment_sessions': {
@@ -244,24 +298,33 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     vi.restoreAllMocks();
   });
 
-  // ── Test 1: No auth → 401 ───────────────────────────────────────────────
   it('Test 1: unauthenticated buyer returns 401 (P1)', async () => {
     vi.doMock('@supabase/supabase-js', () => makeSupabaseMock({}));
     vi.doMock('stripe', () => ({ default: vi.fn() }));
 
     const { handler } = await import('../create-checkout');
-    // No Authorization header → verifiedBuyerId stays ''
     const res = await handler(makeEvent(singleSellerBody), {} as never);
 
     expect(res.statusCode).toBe(401);
     expect(JSON.parse(res.body as string).error).toMatch(/sign in/i);
   });
 
-  // ── Test 2: Authenticated buyer is not blocked by auth check ────────────
+  it('Test 1b: inactive buyer with a stale JWT is blocked with 403', async () => {
+    vi.doMock('@supabase/supabase-js', () => makeSupabaseMock({ buyerActive: false }));
+    vi.doMock('stripe', () => ({ default: vi.fn() }));
+
+    const { handler } = await import('../create-checkout');
+    const res = await handler(
+      makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer stale-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body as string).error).toMatch(/not active/i);
+  });
+
   it('Test 2: authenticated buyer passes P1 auth gate', async () => {
     vi.doMock('@supabase/supabase-js', () => makeSupabaseMock({}));
-    // Use 'function' (not arrow) for the Stripe constructor mock — vi.fn() with an
-    // arrow implementation cannot be used with 'new', causing the handler to throw.
     vi.doMock('stripe', () => ({
       default: vi.fn(function MockStripe() {
         return {
@@ -279,21 +342,16 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     }));
 
     const { handler } = await import('../create-checkout');
-    // Use lowercase 'authorization' — Netlify normalises to lowercase at the edge but
-    // unit-test HandlerEvent mocks are NOT normalised, so the key must match exactly.
     const res = await handler(
       makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
       {} as never,
     );
 
-    // Should NOT be 401 (auth check passed).
     expect(res.statusCode).not.toBe(401);
     const body = JSON.parse(res.body as string) as { error?: string };
-    // body.error may be undefined on a 200 success — guard with ?? '' before matching.
     expect(body.error ?? '').not.toMatch(/sign in/i);
   });
 
-  // ── Test 3: Multi-seller cart → 400 (P3) ───────────────────────────────
   it('Test 3: multi-seller cart is rejected with 400 (P3)', async () => {
     vi.doMock('@supabase/supabase-js', () =>
       makeSupabaseMock({
@@ -315,7 +373,6 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/one seller at a time/i);
   });
 
-  // ── Test 4: Suspended seller → 400 (P5) ────────────────────────────────
   it('Test 4: suspended seller is blocked with 400 (P5)', async () => {
     vi.doMock('@supabase/supabase-js', () =>
       makeSupabaseMock({
@@ -334,7 +391,24 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/not currently available to accept payments/i);
   });
 
-  // ── Test 5: Seller without Stripe account → 400 (P2) ───────────────────
+  it('Test 4b: inactive seller live account is blocked even if profile state is active', async () => {
+    vi.doMock('@supabase/supabase-js', () =>
+      makeSupabaseMock({
+        sellerAccount: { id: 's1', role: 'seller', isActive: false },
+      }),
+    );
+    vi.doMock('stripe', () => ({ default: vi.fn() }));
+
+    const { handler } = await import('../create-checkout');
+    const res = await handler(
+      makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body as string).error).toMatch(/not currently available to accept payments/i);
+  });
+
   it('Test 5: seller with no Stripe account is blocked with 400 (P2)', async () => {
     vi.doMock('@supabase/supabase-js', () =>
       makeSupabaseMock({
@@ -353,7 +427,6 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/not currently available to accept payments/i);
   });
 
-  // ── Test 6: Seller Stripe status not active → 400 (P2) ─────────────────
   it('Test 6: seller with Stripe status "pending" is blocked with 400 (P2)', async () => {
     vi.doMock('@supabase/supabase-js', () =>
       makeSupabaseMock({
@@ -372,11 +445,8 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/not currently available to accept payments/i);
   });
 
-  // ── Test 7: Valid seller + single seller → 200 (all checks pass) ────────
   it('Test 7: valid single-seller with active Stripe returns 200 with checkout URL', async () => {
     vi.doMock('@supabase/supabase-js', () => makeSupabaseMock({}));
-    // Use 'function' (not arrow) for the Stripe constructor mock — vi.fn() with an
-    // arrow implementation cannot be used with 'new', causing the handler to throw.
     vi.doMock('stripe', () => ({
       default: vi.fn(function MockStripe() {
         return {
@@ -406,8 +476,6 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
   });
 });
 
-// ── Test 8: payment_intent.payment_failed → sessions marked failed (P4A) ──────
-
 describe('handlePaymentFailed – marks payment_sessions as failed (P4A)', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -435,8 +503,6 @@ describe('handlePaymentFailed – marks payment_sessions as failed (P4A)', () =>
 
   it('Test 8b: skips update when transfer_group is absent (legacy intent)', async () => {
     const update = vi.fn();
-
-    // Mobile lookup returns no session; the single chain object is reused for all from() calls
     const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
     const mockSb = {
       from: vi.fn(() => ({
@@ -454,12 +520,9 @@ describe('handlePaymentFailed – marks payment_sessions as failed (P4A)', () =>
       { id: 'pi_legacy', transfer_group: null } as import('stripe').default.PaymentIntent,
     );
 
-    // No session found and no transfer_group → early return, no update attempted
     expect(update).not.toHaveBeenCalled();
   });
 });
-
-// ── Test 9: charge.dispute.created → stored in disputes table (P4B) ───────────
 
 describe('handleStripeDispute – stores dispute record in DB (P4B)', () => {
   afterEach(() => {
@@ -516,7 +579,6 @@ describe('handleStripeDispute – stores dispute record in DB (P4B)', () => {
     expect(insertArg.buyerId).toBe('buyer-1');
     expect(insertArg.sellerId).toBe('seller-1');
     expect(insertArg.status).toBe('in_review');
-    // subject must mention the Stripe dispute ID so admin can look it up
     expect(String(insertArg.subject)).toContain('dp_test_123');
   });
 
@@ -548,12 +610,9 @@ describe('handleStripeDispute – stores dispute record in DB (P4B)', () => {
       } as import('stripe').default.Dispute,
     );
 
-    // disputes.insert must NOT be called when no linked order exists
     expect(insertMock).not.toHaveBeenCalled();
   });
 });
-
-// ── P4C: Refund column name fix ───────────────────────────────────────────────
 
 describe('create-refund – P4C column name fix (stripePaymentIntent)', () => {
   it('source code uses stripePaymentIntent, not paymentIntentId', async () => {
@@ -564,15 +623,11 @@ describe('create-refund – P4C column name fix (stripePaymentIntent)', () => {
     const __dirname = dirname(__filename);
     const src = readFileSync(resolve(__dirname, '../create-refund.ts'), 'utf-8');
 
-    // The correct column name must appear in the select call
     expect(src).toContain('stripePaymentIntent');
-    // The old wrong column name must NOT appear
     expect(src).not.toContain("'stripeSessionId, paymentIntentId, status'");
     expect(src).not.toContain('paymentSession?.paymentIntentId');
   });
 });
-
-// ── Phase 2A: Refund clawback protection ─────────────────────────────────────
 
 describe('create-refund – Phase 2A refund clawback (explicit transfer reversal)', () => {
   it('delegates transfer clawback to the shared reversal helper', async () => {
@@ -607,11 +662,6 @@ describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
     vi.restoreAllMocks();
   });
 
-  /**
-   * Creates a minimal Supabase mock for handleConnectAccountUpdated.
-   * The function updates seller_profiles and optionally reads users.
-   * tryAutoActivateSeller is lazily imported — we mock that module too.
-   */
   function makeWebhookSupabaseMock(opts: {
     sellerProfilesUpdateData?: Array<{ userId: string }>;
     sellerProfilesUpdateError?: Error | null;
@@ -634,7 +684,6 @@ describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
               }),
             };
           }
-          // users table (looked up when firstActivation is true)
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
@@ -649,14 +698,12 @@ describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
     const mockAccountsUpdate = vi.fn().mockResolvedValue({});
 
     vi.doMock('@supabase/supabase-js', () => makeWebhookSupabaseMock());
-    // Mock the lazy sellerActivation import used inside handleConnectAccountUpdated
     vi.doMock('../_shared/sellerActivation', () => ({
       tryAutoActivateSeller: vi.fn().mockResolvedValue(null),
     }));
 
     const { handleConnectAccountUpdated } = await import('../stripe-webhook');
 
-    // Inject a mock stripe client via the override parameter
     const mockStripeClient = {
       accounts: { update: mockAccountsUpdate },
     } as unknown as import('stripe').default;
@@ -701,7 +748,6 @@ describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
       mockStripeClient,
     );
 
-    // delay_days should NOT be set when status is not 'active'
     expect(mockAccountsUpdate).not.toHaveBeenCalled();
   });
 
@@ -720,7 +766,6 @@ describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
       accounts: { update: mockAccountsUpdate },
     } as unknown as import('stripe').default;
 
-    // Should NOT throw even though stripe.accounts.update rejects
     await expect(
       handleConnectAccountUpdated(
         {
@@ -733,9 +778,7 @@ describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
       ),
     ).resolves.toBeUndefined();
 
-    // accounts.update was attempted
     expect(mockAccountsUpdate).toHaveBeenCalledOnce();
-    // Auto-activation still ran after the failure
     expect(mockAutoActivate).toHaveBeenCalledOnce();
   });
 });

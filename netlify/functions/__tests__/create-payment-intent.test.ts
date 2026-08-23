@@ -50,11 +50,13 @@ describe('create-payment-intent – shipping tamper protection', () => {
   function mockCommonSupabase(overrides?: {
     productShippingRows?: unknown[];
     productRows?: Array<typeof productRow>;
+    buyerActive?: boolean;
     sellerAccount?: { id: string; role: string; isActive: boolean };
+    onProductsLookup?: ReturnType<typeof vi.fn>;
   }) {
     let userLookupIndex = 0;
     const userRows = [
-      { id: 'buyer-1', role: 'buyer', isActive: true },
+      { id: 'buyer-1', role: 'buyer', isActive: overrides?.buyerActive ?? true },
       overrides?.sellerAccount ?? { id: 'seller-1', role: 'seller', isActive: true },
     ];
 
@@ -79,6 +81,7 @@ describe('create-payment-intent – shipping tamper protection', () => {
             };
           }
           if (table === 'products') {
+            overrides?.onProductsLookup?.();
             return {
               select: vi.fn().mockReturnThis(),
               in: vi.fn().mockResolvedValue({ data: overrides?.productRows ?? [productRow], error: null }),
@@ -111,6 +114,36 @@ describe('create-payment-intent – shipping tamper protection', () => {
       })),
     }));
   }
+
+  it('rejects a stale mobile JWT when the buyer account is inactive before product/payment work', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
+    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+    const productsLookup = vi.fn();
+
+    vi.doMock('stripe', () => ({
+      default: vi.fn().mockImplementation(function () {
+        return {};
+      }),
+    }));
+    vi.doMock('../_shared/platformFlags', () => ({
+      isMaintenanceMode: vi.fn().mockResolvedValue(false),
+    }));
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
+    }));
+    mockCommonSupabase({ buyerActive: false, onProductsLookup: productsLookup });
+
+    const { handler } = await import('../create-payment-intent');
+    const res = await handler(
+      makeEvent(baseBody, 'POST', { authorization: 'Bearer stale-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body as string).error).toMatch(/not active/i);
+    expect(productsLookup).not.toHaveBeenCalled();
+  });
 
   it('returns 400 when goods cart is missing shippingMethodId', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
