@@ -10,7 +10,7 @@ export interface SellerIdentity {
  * Returns the best display name for a logged-in user.
  *
  * Priority:
- *  1. admin role → 'Loadify Market Admin'
+ *  1. owner / admin role → 'Loadify Market Admin'
  *  2. storeName   (seller accounts with a store)
  *  3. businessName (company seller/buyer accounts)
  *  4. firstName + lastName
@@ -23,7 +23,7 @@ export function getDisplayName(
   sellerProfile?: SellerIdentity | null,
 ): string {
   if (!user) return 'Account';
-  if (user.role === 'admin') return 'Loadify Market Admin';
+  if (user.role === 'admin' || user.role === 'owner') return 'Loadify Market Admin';
   if (sellerProfile?.storeName) return sellerProfile.storeName;
   if (sellerProfile?.businessName) return sellerProfile.businessName;
   const fullName = [user.firstName, user.lastName].map(s => s?.trim() ?? '').filter(Boolean).join(' ');

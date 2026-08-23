@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 
 interface RequireAuthProps {
@@ -37,15 +37,11 @@ export default function RequireAuth({ children }: RequireAuthProps) {
     );
   }
 
-  if (!user) {
-    return null;
+  // If authenticated, render children
+  if (user) {
+    return <>{children}</>;
   }
 
-  // Defence in depth: an authenticated Supabase session is not sufficient
-  // when the platform account is explicitly inactive or not fully hydrated.
-  if (user.isActive !== true) {
-    return <Navigate to="/login?error=account_inactive" replace />;
-  }
-
-  return <>{children}</>;
+  // Return null while redirecting
+  return null;
 }

@@ -25,7 +25,7 @@ export default function RoleBadge({ role, size = 'sm' }: RoleBadgeProps) {
         return {
           icon: Truck,
           label: 'Carrier',
-          className: 'bg-purple-500/20 border border-purple-500/40 text-purple-300',
+          className: 'bg-blue-500/20 border border-blue-500/40 text-blue-300',
         };
       case 'broker':
         return {
@@ -37,7 +37,7 @@ export default function RoleBadge({ role, size = 'sm' }: RoleBadgeProps) {
         return {
           icon: Package,
           label: 'Seller',
-          className: 'bg-success/100/20 border border-green-500/40 text-success',
+          className: 'bg-green-500/20 border border-green-500/40 text-green-300',
         };
       default:
         return null;

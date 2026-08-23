@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import MainLayout from "@/layouts/MainLayout";
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
@@ -21,11 +20,12 @@ import {
   ShieldAlert,
   BarChart2,
   ExternalLink,
+  Edit2,
   RefreshCcw,
   Send,
 } from 'lucide-react';import { formatDistanceToNow } from 'date-fns';
+import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
-import { authorizedFetch } from '../lib/authorizedFetch';
 
 const DEFAULT_COMMISSION_RATE = 7;
 
@@ -44,6 +44,8 @@ export default function AdminSellerDetailPage() {
   const [data, setData] = useState<SellerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [editingCommission, setEditingCommission] = useState(false);
+  const [commissionValue, setCommissionValue] = useState('');
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [resendMessage, setResendMessage] = useState('');
 
@@ -96,6 +98,7 @@ export default function AdminSellerDetailPage() {
         store: storeData || null,
         products: productsData || [],
       });
+      setCommissionValue(String(profile.commission ?? DEFAULT_COMMISSION_RATE));
     } catch (err) {
       console.error('Error fetching seller detail:', err);
     } finally {
@@ -107,38 +110,35 @@ export default function AdminSellerDetailPage() {
     fetchSeller();
   }, [fetchSeller]);
 
-  const changeAccountStatus = async (op: 'suspend' | 'reactivate') => {
+  const approveSeller = async () => {
     if (!id) return;
-    const response = await authorizedFetch('/.netlify/functions/admin-user-status', {
-      method: 'POST',
-      body: JSON.stringify({ op, userId: id }),
-    });
-    const payload = await response.json() as { error?: string };
-    if (!response.ok) {
-      throw new Error(payload.error ?? `HTTP ${response.status}`);
-    }
-    await fetchSeller();
-  };
-
-  const suspendSeller = async () => {
-    if (!id || !confirm('Suspend this seller? They will not be able to use seller features.')) return;
     setActionLoading(true);
     try {
-      await changeAccountStatus('suspend');
+      const { error } = await supabase
+        .from('seller_profiles')
+        .update({ isApproved: true })
+        .eq('userId', id);
+      if (error) throw error;
+      await fetchSeller();
     } catch (err) {
-      console.error('Error suspending seller:', err);
+      console.error('Error approving seller:', err);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const reactivateSeller = async () => {
-    if (!id) return;
+  const revokeSeller = async () => {
+    if (!id || !confirm('Revoke approval for this seller?')) return;
     setActionLoading(true);
     try {
-      await changeAccountStatus('reactivate');
+      const { error } = await supabase
+        .from('seller_profiles')
+        .update({ isApproved: false })
+        .eq('userId', id);
+      if (error) throw error;
+      await fetchSeller();
     } catch (err) {
-      console.error('Error reactivating seller:', err);
+      console.error('Error revoking seller:', err);
     } finally {
       setActionLoading(false);
     }
@@ -148,7 +148,12 @@ export default function AdminSellerDetailPage() {
     if (!id || !confirm('Block this user? They will not be able to log in.')) return;
     setActionLoading(true);
     try {
-      await changeAccountStatus('suspend');
+      const { error } = await supabase
+        .from('users')
+        .update({ isActive: false })
+        .eq('id', id);
+      if (error) throw error;
+      await fetchSeller();
     } catch (err) {
       console.error('Error blocking user:', err);
     } finally {
@@ -160,9 +165,37 @@ export default function AdminSellerDetailPage() {
     if (!id) return;
     setActionLoading(true);
     try {
-      await changeAccountStatus('reactivate');
+      const { error } = await supabase
+        .from('users')
+        .update({ isActive: true })
+        .eq('id', id);
+      if (error) throw error;
+      await fetchSeller();
     } catch (err) {
       console.error('Error unblocking user:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const saveCommission = async () => {
+    if (!id) return;
+    const parsed = parseFloat(commissionValue);
+    if (isNaN(parsed) || parsed < 0 || parsed > 100) {
+      alert('Commission must be a number between 0 and 100');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('seller_profiles')
+        .update({ commission: parsed })
+        .eq('userId', id);
+      if (error) throw error;
+      setEditingCommission(false);
+      await fetchSeller();
+    } catch (err) {
+      console.error('Error saving commission:', err);
     } finally {
       setActionLoading(false);
     }
@@ -173,9 +206,10 @@ export default function AdminSellerDetailPage() {
     setResendStatus('sending');
     setResendMessage('');
     try {
-      const res = await authorizedFetch('/.netlify/functions/resend-verification', {
+      const res = await fetch('/.netlify/functions/resend-verification', {
         method: 'POST',
-        body: JSON.stringify({ userId: id }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: id, adminId: adminUser.id }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to send');
@@ -191,47 +225,39 @@ export default function AdminSellerDetailPage() {
 
   if (!hasAdminAccess(adminUser)) {
     return (
-      <MainLayout>
-        <main className="flex-1 pt-4 md:pt-28">
-          <div className="container mx-auto px-4 py-8">
-            <div className="card text-center py-12">
-              <p className="text-danger">Access Denied: Admin only</p>
-            </div>
-          </div>
-        </main>
-    </MainLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="card text-center py-12">
+          <p className="text-red-600">Access Denied: Admin only</p>
+        </div>
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex-1 pt-4 md:pt-28 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-10 h-10 border-2 border-navy-800 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-500">Loading seller details...</p>
-          </div>
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-navy-800 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">Loading seller details...</p>
         </div>
-    </MainLayout>
+      </div>
     );
   }
 
   if (!data) {
     return (
-      <MainLayout>
-        <main className="flex-1 pt-4 md:pt-28">
-          <div className="container mx-auto px-4 py-8">
-            <div className="card text-center py-16">
-              <ShieldAlert className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Seller Not Found</h2>
-              <p className="text-gray-500 mb-6">This seller does not exist or was deleted.</p>
-              <button onClick={() => navigate('/admin/approvals')} className="btn-primary">
-                Back to Sellers
-              </button>
-            </div>
+      <div className="bg-gray-50 min-h-screen">
+        <div className="container mx-auto px-4 py-8">
+          <div className="card text-center py-16">
+            <ShieldAlert className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Seller Not Found</h2>
+            <p className="text-gray-500 mb-6">This seller does not exist or was deleted.</p>
+            <button onClick={() => navigate('/admin/sellers')} className="btn-primary">
+              Back to Sellers
+            </button>
           </div>
-        </main>
-    </MainLayout>
+        </div>
+      </div>
     );
   }
 
@@ -242,13 +268,12 @@ export default function AdminSellerDetailPage() {
   const inactiveProducts  = products.filter((p) => p.isApproved && !p.isActive);
 
   return (
-    <MainLayout>
-      <main className="flex-1 pt-4 md:pt-28">
+    <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-8">
 
         {/* Back link */}
         <button
-          onClick={() => navigate('/admin/approvals')}
+          onClick={() => navigate('/admin/sellers')}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-navy-800 transition-colors mb-6 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -262,51 +287,47 @@ export default function AdminSellerDetailPage() {
               {sellerUser.firstName} {sellerUser.lastName}
             </h1>
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              {(profile.sellerStatus === 'active') ? (
+              {profile.isApproved ? (
                 <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
                   <CheckCircle className="w-3 h-3" />
-                  Seller account active
-                </span>
-              ) : (profile.sellerStatus === 'suspended') ? (
-                <span className="inline-flex items-center gap-1 bg-red-100 text-danger text-xs px-2 py-1 rounded">
-                  <Ban className="w-3 h-3" />
-                  Seller account suspended
+                  Approved Seller
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 bg-primary text-primary text-xs px-2 py-1 rounded">
+                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
                   <ShieldAlert className="w-3 h-3" />
-                  Setup in progress
+                  Pending Approval
                 </span>
               )}
               {!sellerUser.isActive && (
-                <span className="inline-flex items-center gap-1 bg-red-100 text-danger text-xs px-2 py-1 rounded">
+                <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
                   <Ban className="w-3 h-3" />
                   Blocked
                 </span>
               )}
+              <VerificationBadge isVerified={profile.isApproved} size="sm" />
               {profile.marketplaceRole && <RoleBadge role={profile.marketplaceRole} size="sm" />}
             </div>
           </div>
 
           {/* Quick action buttons */}
           <div className="flex flex-wrap gap-2">
-            {profile.sellerStatus !== 'suspended' ? (
+            {!profile.isApproved ? (
               <button
-                onClick={suspendSeller}
+                onClick={approveSeller}
                 disabled={actionLoading}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors"
+                className="btn-primary flex items-center gap-2"
               >
-                <Ban className="w-4 h-4" />
-                Suspend Seller
+                <CheckCircle className="w-4 h-4" />
+                Approve Seller
               </button>
             ) : (
               <button
-                onClick={reactivateSeller}
+                onClick={revokeSeller}
                 disabled={actionLoading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm transition-colors"
+                className="btn-outline flex items-center gap-2"
               >
-                <CheckCircle className="w-4 h-4" />
-                Reactivate Seller
+                <XCircle className="w-4 h-4" />
+                Revoke Approval
               </button>
             )}
 
@@ -314,7 +335,7 @@ export default function AdminSellerDetailPage() {
               <button
                 onClick={blockUser}
                 disabled={actionLoading}
-                className="bg-red-600 text-gray-900 px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors"
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors"
               >
                 <Ban className="w-4 h-4" />
                 Block User
@@ -323,7 +344,7 @@ export default function AdminSellerDetailPage() {
               <button
                 onClick={unblockUser}
                 disabled={actionLoading}
-                className="bg-green-600 text-gray-900 px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm transition-colors"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm transition-colors"
               >
                 <CheckCircle className="w-4 h-4" />
                 Unblock User
@@ -353,7 +374,7 @@ export default function AdminSellerDetailPage() {
           {/* Resend status toast */}
           {resendStatus !== 'idle' && resendStatus !== 'sending' && (
             <div className={`mt-2 text-sm px-3 py-2 rounded flex items-center gap-2 ${
-              resendStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-danger'
+              resendStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
             }`}>
               {resendStatus === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
               {resendMessage}
@@ -404,7 +425,7 @@ export default function AdminSellerDetailPage() {
                     {sellerUser.isActive ? (
                       <span className="text-green-700 font-medium">Active</span>
                     ) : (
-                      <span className="text-danger font-medium">Blocked</span>
+                      <span className="text-red-700 font-medium">Blocked</span>
                     )}
                   </dd>
                 </div>
@@ -414,7 +435,7 @@ export default function AdminSellerDetailPage() {
                     {sellerUser.isEmailVerified ? (
                       <span className="text-green-700 font-medium">Yes</span>
                     ) : (
-                      <span className="text-primary font-medium">No</span>
+                      <span className="text-yellow-700 font-medium">No</span>
                     )}
                   </dd>
                 </div>
@@ -479,10 +500,10 @@ export default function AdminSellerDetailPage() {
                     </dd>
                   </div>
                 )}
-                {profile.sellerStatus && (
+                {profile.verificationStatus && (
                   <div>
-                    <dt className="text-gray-500">Seller Status</dt>
-                    <dd className="mt-0.5 capitalize">{profile.sellerStatus}</dd>
+                    <dt className="text-gray-500">Verification Status</dt>
+                    <dd className="mt-0.5 capitalize">{profile.verificationStatus}</dd>
                   </div>
                 )}
                 {profile.marketplaceRole && (
@@ -537,7 +558,7 @@ export default function AdminSellerDetailPage() {
                       {store.isActive ? (
                         <span className="text-green-700 font-medium">Yes</span>
                       ) : (
-                        <span className="text-danger font-medium">No</span>
+                        <span className="text-red-700 font-medium">No</span>
                       )}
                     </dd>
                   </div>
@@ -560,7 +581,7 @@ export default function AdminSellerDetailPage() {
               <p className="text-xs text-gray-500 mb-4">
                 <span className="text-green-700 font-medium">{approvedProducts.length} active</span>
                 {' · '}
-                <span className="text-primary font-medium">{pendingProducts.length} pending</span>
+                <span className="text-yellow-700 font-medium">{pendingProducts.length} pending</span>
                 {' · '}
                 <span className="text-gray-500">{inactiveProducts.length} inactive</span>
               </p>
@@ -594,7 +615,7 @@ export default function AdminSellerDetailPage() {
                         {product.isApproved && product.isActive ? (
                           <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Active</span>
                         ) : !product.isApproved ? (
-                          <span className="bg-primary text-primary text-xs px-2 py-0.5 rounded">Pending</span>
+                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Pending</span>
                         ) : (
                           <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded">Inactive</span>
                         )}
@@ -627,7 +648,7 @@ export default function AdminSellerDetailPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500 flex items-center gap-1">
-                    <Star className="w-4 h-4 text-primary" /> Rating
+                    <Star className="w-4 h-4 text-amber-400" /> Rating
                   </span>
                   <span className="font-semibold text-gray-900">
                     {profile.rating.toFixed(1)} / 5.0
@@ -662,13 +683,55 @@ export default function AdminSellerDetailPage() {
               </div>
             </div>
 
-            {/* Commission Rate
-                NOTE: Per-seller commission overrides are stored in seller_profiles.commission
-                but are NOT yet applied by the payment webhook (stripe-webhook.ts), which
-                always uses the global promo rate (0% until 31 Dec 2026, then 7%).
-                This section is hidden to avoid misleading admins until per-seller
-                commission override logic is implemented in the webhook.
-            */}
+            {/* Commission */}
+            <div className="card">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Commission Rate</h2>
+              {editingCommission ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Commission (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={commissionValue}
+                      onChange={(e) => setCommissionValue(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-800"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveCommission}
+                      disabled={actionLoading}
+                      className="btn-primary text-sm flex-1"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingCommission(false);
+                        setCommissionValue(String(profile.commission ?? DEFAULT_COMMISSION_RATE));
+                      }}
+                      className="btn-outline text-sm flex-1"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-navy-800">{profile.commission}%</span>
+                  <button
+                    onClick={() => setEditingCommission(true)}
+                    className="btn-outline flex items-center gap-1 text-sm"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Stripe Connect / Payout */}
             <div className="card">
@@ -693,7 +756,7 @@ export default function AdminSellerDetailPage() {
                         </span>
                       )}
                       {(profile.stripeConnectStatus === 'pending' || !profile.stripeConnectStatus) && (
-                        <span className="inline-flex items-center gap-1 bg-primary text-primary text-xs px-2 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">
                           <ShieldAlert className="w-3 h-3" /> Pending Setup
                         </span>
                       )}
@@ -714,7 +777,6 @@ export default function AdminSellerDetailPage() {
           </div>
         </div>
       </div>
-      </main>
-    </MainLayout>
+    </div>
   );
 }

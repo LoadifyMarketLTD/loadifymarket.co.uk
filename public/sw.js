@@ -1,118 +1,90 @@
-// Loadify Market — Progressive Web App Service Worker
-//
-// Caching strategy:
-//   /assets/*             Cache-first (Vite content-hashed JS/CSS bundles — immutable)
-//   fonts.gstatic.com     Cache-first (woff2 font files — immutable)
-//   fonts.googleapis.com  Network pass-through (honours page CSP style loading)
-//   Everything else       Network-first with cache fallback
-//
-// API calls (Supabase, Netlify Functions, Stripe, Google Analytics) are always
-// passed directly to the network and never cached.
-//
-// Bump CACHE_NAME when deploying a breaking change to force cache eviction.
+// Service Worker for Loadify Market PWA
+const CACHE_NAME = 'loadify-market-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/favicon.svg',
+  '/manifest.webmanifest',
+  // Note: PNG icons should be generated from favicon.svg for full PWA support
+  // For now, using SVG as fallback
+];
 
-const CACHE_NAME = 'loadify-v3';
-
-// ── Install: activate immediately without waiting for existing clients ────────
-self.addEventListener('install', () => {
+// Install event - cache essential resources
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        // Try to cache all URLs, but don't fail if some are missing
+        return Promise.all(
+          urlsToCache.map(url => 
+            cache.add(url).catch(err => {
+              console.log(`Failed to cache ${url}:`, err);
+              return Promise.resolve();
+            })
+          )
+        );
+      })
+  );
   self.skipWaiting();
 });
 
-// ── Activate: evict stale caches from previous SW versions ───────────────────
+// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((k) => k !== CACHE_NAME)
-            .map((k) => caches.delete(k)),
-        ),
-      )
-      .then(() => self.clients.claim()),
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
+  self.clients.claim();
 });
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Returns true for requests that must always bypass the cache. */
-function isApiCall(url) {
-  return (
-    url.hostname.endsWith('.supabase.co') ||
-    url.pathname.startsWith('/.netlify/functions/') ||
-    url.hostname === 'js.stripe.com' ||
-    url.hostname === 'api.stripe.com' ||
-    url.hostname.includes('google-analytics.com') ||
-    url.hostname.includes('googletagmanager.com')
-  );
-}
-
-/** Returns true for resources that should be served cache-first. */
-function isCacheFirst(url) {
-  // Vite outputs content-hashed filenames into /assets/ — safe to cache forever.
-  if (url.pathname.startsWith('/assets/')) return true;
-  // Google Fonts woff2 files and font CSS are versioned by URL — cache forever.
-  if (url.hostname === 'fonts.gstatic.com') return true;
-  return false;
-}
-
-function offlineResponse() {
-  return new Response('', {
-    status: 503,
-    statusText: 'Service Unavailable',
-  });
-}
-
-// ── Fetch: route requests through the appropriate strategy ────────────────────
+// Fetch event - serve from cache when possible, fallback to network
 self.addEventListener('fetch', (event) => {
-  const { request } = event;
-
-  // Only intercept GET requests over HTTP(S).
-  if (request.method !== 'GET') return;
-
-  let url;
-  try {
-    url = new URL(request.url);
-  } catch {
-    return;
-  }
-  if (!url.protocol.startsWith('http')) return;
-
-  // Always network for API and third-party analytics.
-  if (isApiCall(url)) return;
-
-  if (isCacheFirst(url)) {
-    // ── Cache-first ───────────────────────────────────────────────────────────
-    event.respondWith(
-      caches.open(CACHE_NAME)
-        .then((cache) =>
-          cache.match(request).then((cached) => {
-            if (cached) return cached;
-            return fetch(request)
-              .then((response) => {
-                if (response.ok) cache.put(request, response.clone());
-                return response;
-              })
-              .catch(() => new Response('', { status: 504, statusText: 'Gateway Timeout' }));
-          }),
-        )
-        .catch(() => offlineResponse()),
-    );
-    return;
-  }
-
-  // ── Network-first with cache fallback (SPA shell, public images, icons) ──────
   event.respondWith(
-    fetch(request)
+    caches.match(event.request)
       .then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        // Cache hit - return response
+        if (response) {
+          return response;
         }
-        return response;
+        // Clone the request
+        const fetchRequest = event.request.clone();
+
+        return fetch(fetchRequest).then(
+          (response) => {
+            // Check if valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Clone the response
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          }
+        ).catch((error) => {
+          // Network request failed, return a fallback if available
+          console.log('Fetch failed; returning offline page instead.', error);
+          
+          // For navigation requests, you could return a custom offline page here
+          // For now, return a generic error response
+          return new Response('Network error occurred', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        });
       })
-      .catch(() =>
-        caches.match(request).then((cached) => cached ?? offlineResponse()),
-      ),
   );
 });

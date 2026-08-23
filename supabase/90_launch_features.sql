@@ -35,12 +35,12 @@ ALTER TABLE seller_balance ENABLE ROW LEVEL SECURITY;
 
 -- Seller sees own row; admin/owner see all
 CREATE POLICY "seller_balance_select" ON seller_balance FOR SELECT
-  USING (auth.uid() = "sellerId" OR is_admin());
+  USING (auth.uid() = "sellerId" OR is_admin_or_owner());
 
 -- Only DB functions (SECURITY DEFINER) or admin may mutate rows directly
 CREATE POLICY "seller_balance_admin_write" ON seller_balance FOR ALL
-  USING  (is_admin())
-  WITH CHECK (is_admin());
+  USING  (is_admin_or_owner())
+  WITH CHECK (is_admin_or_owner());
 
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ ALTER TABLE payout_requests ENABLE ROW LEVEL SECURITY;
 
 -- Seller sees own requests; admin sees all
 CREATE POLICY "payout_requests_select" ON payout_requests FOR SELECT
-  USING (auth.uid() = "sellerId" OR is_admin());
+  USING (auth.uid() = "sellerId" OR is_admin_or_owner());
 
 -- Sellers may only insert their own request (amount/status enforced by RPC)
 CREATE POLICY "payout_requests_seller_insert" ON payout_requests FOR INSERT
@@ -81,8 +81,8 @@ CREATE POLICY "payout_requests_seller_insert" ON payout_requests FOR INSERT
 
 -- Only admin may update (approve / reject / complete)
 CREATE POLICY "payout_requests_admin_update" ON payout_requests FOR UPDATE
-  USING  (is_admin())
-  WITH CHECK (is_admin());
+  USING  (is_admin_or_owner())
+  WITH CHECK (is_admin_or_owner());
 
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -124,11 +124,11 @@ DROP POLICY IF EXISTS "disputes_update" ON disputes;
 
 CREATE POLICY "disputes_update" ON disputes FOR UPDATE
   -- who may touch the row at all
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin())
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner())
   -- what the resulting row may look like
   WITH CHECK (
     -- admins can set any status
-    is_admin()
+    is_admin_or_owner()
     OR (
       -- buyers and sellers may update their own disputes but cannot
       -- self-resolve or self-close; those transitions are admin-only
@@ -138,7 +138,7 @@ CREATE POLICY "disputes_update" ON disputes FOR UPDATE
   );
 
 -- dispute_messages_insert: the existing policy is correct but the admin branch
--- has a subtle issue — "auth.uid() = userId AND (... OR is_admin())"
+-- has a subtle issue — "auth.uid() = userId AND (... OR is_admin_or_owner())"
 -- means admin messages are correctly attributed to the admin's own user ID.
 -- No change needed for messages; leaving in place.
 
@@ -157,7 +157,7 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "audit_logs_insert" ON audit_logs;
 
 CREATE POLICY "audit_logs_insert" ON audit_logs FOR INSERT
-  WITH CHECK (is_admin());   -- direct inserts: admin/owner only
+  WITH CHECK (is_admin_or_owner());   -- direct inserts: admin/owner only
                                       -- SECURITY DEFINER RPCs bypass this
 
 -- 5b. log_admin_action() — convenience RPC called from the application
@@ -401,5 +401,5 @@ CREATE TRIGGER trg_checkout_rate_limits_updatedAt
 ALTER TABLE checkout_rate_limits ENABLE ROW LEVEL SECURITY;
 -- Only service-role (Netlify functions) and admin can read/write this table
 CREATE POLICY "checkout_rate_limits_admin" ON checkout_rate_limits FOR ALL
-  USING  (is_admin())
-  WITH CHECK (is_admin());
+  USING  (is_admin_or_owner())
+  WITH CHECK (is_admin_or_owner());

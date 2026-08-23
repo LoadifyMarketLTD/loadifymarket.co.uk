@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from './supabase';
 import { useAuthStore } from '../store';
-import { toast } from '@/components/ui/use-toast';
 
 export function useWishlist() {
   const { user } = useAuthStore();
@@ -19,9 +18,11 @@ export function useWishlist() {
         .from('wishlists')
         .select('productIds')
         .eq('userId', user.id)
-        .maybeSingle();
+        .single();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
 
       const productIds = data?.productIds || [];
       const inWishlist = productIds.includes(productId);
@@ -35,7 +36,7 @@ export function useWishlist() {
 
   const toggleWishlist = useCallback(async (productId: string) => {
     if (!user) {
-      toast({ title: 'Sign in required', description: 'Please log in to save items to your wishlist.', variant: 'destructive' });
+      alert('Please login to add items to your wishlist');
       return false;
     }
 
@@ -46,7 +47,7 @@ export function useWishlist() {
         .from('wishlists')
         .select('productIds')
         .eq('userId', user.id)
-        .maybeSingle();
+        .single();
 
       const currentProductIds = wishlistData?.productIds || [];
       let updatedProductIds: string[];
@@ -76,7 +77,7 @@ export function useWishlist() {
       return wasAdded;
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-      toast({ title: 'Wishlist error', description: 'Failed to update your wishlist. Please try again.', variant: 'destructive' });
+      alert('Failed to update wishlist');
       return null;
     } finally {
       setLoading(false);

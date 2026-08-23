@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
   id                UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email             TEXT        UNIQUE NOT NULL,
   role              TEXT        NOT NULL DEFAULT 'buyer'
-                      CHECK (role IN ('buyer','seller','admin')),
+                      CHECK (role IN ('guest','buyer','seller','admin','owner')),
   "marketplaceRole" TEXT        CHECK ("marketplaceRole" IN ('carrier','broker','seller')),
   "firstName"       TEXT,
   "lastName"        TEXT,
@@ -109,7 +109,6 @@ CREATE TABLE IF NOT EXISTS seller_profiles (
   "responseTimeHours"         DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   "onTimeShipmentRate"        DECIMAL(5,2) NOT NULL DEFAULT 100.00,
   "marketplaceRole"           TEXT         CHECK ("marketplaceRole" IN ('carrier','broker','seller')),
-  "paymentBehaviour"          TEXT         CHECK ("paymentBehaviour" IN ('pays_on_time','sometimes_late','repeated_delays')),
   "isVerified"                BOOLEAN      NOT NULL DEFAULT FALSE,
   "profileCompleteness"       INTEGER      NOT NULL DEFAULT 0,
   "createdAt"                 TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -129,22 +128,6 @@ BEGIN
       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
   END IF;
 END $$;
-
--- ── MIGRATE EXISTING SELLER_PROFILES TABLE ──────────────────────
--- Safe to run even when upgrading from an older schema that pre-dates
--- these columns.  Each statement is a no-op if the column already exists.
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "disputeRate"         DECIMAL(5,4) NOT NULL DEFAULT 0.0000;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "deliverySuccessRate" DECIMAL(5,4) NOT NULL DEFAULT 1.0000;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "responseTimeHours"   DECIMAL(5,2) NOT NULL DEFAULT 0.00;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "onTimeShipmentRate"  DECIMAL(5,2) NOT NULL DEFAULT 100.00;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "marketplaceRole"     TEXT         CHECK ("marketplaceRole" IN ('carrier','broker','seller'));
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "paymentBehaviour"    TEXT         CHECK ("paymentBehaviour" IN ('pays_on_time','sometimes_late','repeated_delays'));
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "isVerified"          BOOLEAN      NOT NULL DEFAULT FALSE;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "profileCompleteness" INTEGER      NOT NULL DEFAULT 0;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "contactPhone"        TEXT;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "stripeConnectStatus" TEXT         CHECK ("stripeConnectStatus" IN ('pending', 'restricted', 'active'));
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "sellerStatus"        TEXT         NOT NULL DEFAULT 'draft' CHECK ("sellerStatus" IN ('draft', 'submitted', 'active', 'suspended'));
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "activatedAt"         TIMESTAMPTZ;
 
 -- ──────────────────────────────────────────────────────────────
 -- public.seller_stores
@@ -184,7 +167,7 @@ END $$;
 CREATE OR REPLACE FUNCTION handle_new_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.role = 'buyer' THEN
+  IF NEW.role IN ('buyer','guest') THEN
     INSERT INTO buyer_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;
   ELSIF NEW.role = 'seller' THEN
     INSERT INTO seller_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;
@@ -214,11 +197,11 @@ ALTER TABLE seller_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seller_stores   ENABLE ROW LEVEL SECURITY;
 
 -- Helper functions (no-ops if they already exist)
-CREATE OR REPLACE FUNCTION is_admin()
+CREATE OR REPLACE FUNCTION is_admin_or_owner()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM users
-    WHERE id = auth.uid() AND role = 'admin'
+    WHERE id = auth.uid() AND role IN ('admin','owner')
   );
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
@@ -232,21 +215,21 @@ BEGIN
   DROP POLICY IF EXISTS "users_delete" ON users;
 
   CREATE POLICY "users_select" ON users FOR SELECT
-    USING (auth.uid() = id OR is_admin());
+    USING (auth.uid() = id OR is_admin_or_owner());
   CREATE POLICY "users_update" ON users FOR UPDATE
-    USING (auth.uid() = id OR is_admin());
+    USING (auth.uid() = id OR is_admin_or_owner());
   -- Allow unauthenticated inserts so signUp can write the profile row
   -- before email confirmation (session may be null at that point).
   CREATE POLICY "users_insert" ON users FOR INSERT
     WITH CHECK (TRUE);
   CREATE POLICY "users_delete" ON users FOR DELETE
-    USING (is_admin());
+    USING (is_admin_or_owner());
 
   -- buyer_profiles
   DROP POLICY IF EXISTS "buyer_profiles_all" ON buyer_profiles;
   CREATE POLICY "buyer_profiles_all" ON buyer_profiles FOR ALL
-    USING (auth.uid() = "userId" OR is_admin())
-    WITH CHECK (auth.uid() = "userId" OR is_admin());
+    USING (auth.uid() = "userId" OR is_admin_or_owner())
+    WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
 
   -- seller_profiles
   DROP POLICY IF EXISTS "seller_profiles_select" ON seller_profiles;
@@ -255,20 +238,20 @@ BEGIN
   DROP POLICY IF EXISTS "seller_profiles_delete" ON seller_profiles;
   CREATE POLICY "seller_profiles_select" ON seller_profiles FOR SELECT USING (TRUE);
   CREATE POLICY "seller_profiles_update" ON seller_profiles FOR UPDATE
-    USING (auth.uid() = "userId" OR is_admin());
+    USING (auth.uid() = "userId" OR is_admin_or_owner());
   CREATE POLICY "seller_profiles_insert" ON seller_profiles FOR INSERT
-    WITH CHECK (auth.uid() = "userId" OR is_admin());
+    WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
   CREATE POLICY "seller_profiles_delete" ON seller_profiles FOR DELETE
-    USING (is_admin());
+    USING (is_admin_or_owner());
 
   -- seller_stores
   DROP POLICY IF EXISTS "seller_stores_select" ON seller_stores;
   DROP POLICY IF EXISTS "seller_stores_manage" ON seller_stores;
   CREATE POLICY "seller_stores_select" ON seller_stores FOR SELECT
-    USING ("isActive" = TRUE OR auth.uid() = "userId" OR is_admin());
+    USING ("isActive" = TRUE OR auth.uid() = "userId" OR is_admin_or_owner());
   CREATE POLICY "seller_stores_manage" ON seller_stores FOR ALL
-    USING (auth.uid() = "userId" OR is_admin())
-    WITH CHECK (auth.uid() = "userId" OR is_admin());
+    USING (auth.uid() = "userId" OR is_admin_or_owner())
+    WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
 END $$;
 
 -- ──────────────────────────────────────────────────────────────

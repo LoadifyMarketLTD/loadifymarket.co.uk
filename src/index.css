@@ -1,397 +1,585 @@
+/* Google Fonts are loaded via <link> in index.html to avoid CSS @import request chaining */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* ── Master color system ───────────────────────────────────────────── */
-    --background: 225 44% 7%;        /* #0A0E1A */
-    --foreground: 213 27% 97%;       /* #F5F7FA */
-
-    --card: 220 40% 12%;             /* #121A2B */
-    --card-foreground: 213 27% 97%;
-
-    --popover: 220 32% 16%;          /* #182235 */
-    --popover-foreground: 213 27% 97%;
-
-    --primary: 45 64% 52%;           /* #D4AF37 */
-    --primary-foreground: 0 0% 5%;
-    --primary-hover: 39 63% 48%;     /* #C69B2D */
-    --primary-soft: 45 64% 52%;
-
-    --secondary: 220 54% 40%;        /* #2E4F9B */
-    --secondary-foreground: 213 27% 97%;
-
-    --muted: 220 40% 12%;
-    --muted-foreground: 217 18% 70%; /* #A7B0C0 */
-
-    --accent: 166 63% 33%;           /* #1F8A70 */
-    --accent-foreground: 213 27% 97%;
-
-    --destructive: 0 62% 56%;        /* #D64545 */
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 221 28% 23%;           /* #2A344A */
-    --input: 221 28% 23%;
-    --ring: 45 64% 52%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 225 44% 7%;
-    --sidebar-foreground: 217 18% 70%;
-    --sidebar-primary: 45 64% 52%;
-    --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 220 40% 12%;
-    --sidebar-accent-foreground: 213 27% 97%;
-    --sidebar-border: 221 28% 23%;
-    --sidebar-ring: 45 64% 52%;
-
-    /* Custom tokens */
-    --primary-dark: 39 63% 48%;
-    --primary-light: 45 64% 58%;
-    --surface: 220 40% 12%;
-    --surface-raised: 220 32% 16%;
-    --gradient-hero: linear-gradient(135deg, #C69B2D 0%, #D4AF37 100%);
-    --gradient-accent: linear-gradient(135deg, #D4AF37 0%, #C69B2D 100%);
-    --shadow-card: 0 10px 40px rgba(0,0,0,0.6);
-    --shadow-elevated: 0 0 20px rgba(212,175,55,0.15), 0 10px 40px rgba(0,0,0,0.8);
-
-    --font-display: 'Space Grotesk', sans-serif;
-    --font-body: 'Inter', sans-serif;
-
-    /* ── Mobile spacing system ────────────────────────────────────────────
-     * --mob-side    : consistent horizontal gutter on mobile screens
-     * --mob-nav-h   : visible height of MobileBottomNav (excl. safe-area)
-     * Use these in calc() expressions alongside env(safe-area-inset-bottom)
-     * to ensure content is never hidden behind the bottom nav bar.
-     * ─────────────────────────────────────────────────────────────────── */
-    --mob-side: clamp(12px, 4vw, 20px);
-    --mob-nav-h: 68px;
-
-    /* ── Responsive global Header height ──────────────────────────────────
-     * Header Row 1: h-[60px] (mobile) / h-[72px] (md+)
-     * Header Row 2: h-[50px] (all sizes, category nav)
-     * Mobile total: 60 + 50 = 110px = 6.875rem
-     * Desktop total: 72 + 50 = 122px = 7.625rem
-     *
-     * --header-h   → used by non-shell pages (Login, Register, Catalog, etc.)
-     * --shell-offset-h → used by dashboard shells (/seller, /admin, /buyer).
-     *   On mobile the global Header is hidden on shell paths, so the offset
-     *   is 0 (only safe-area-inset-top is needed).
-     * ─────────────────────────────────────────────────────────────────── */
-    --header-h: 6.875rem;       /* 110px — mobile header height */
-    --shell-offset-h: 0px;      /* shells hide global header on mobile */
+  /* Prevent horizontal overflow globally */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
 
-  @media (min-width: 768px) {
-    :root {
-      --header-h: 7.625rem;     /* 122px — desktop header height */
-      --shell-offset-h: 7.625rem; /* desktop: shells sit below the global header */
-    }
+  html {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  :root {
+    /* Vibrant Professional Blue Design Tokens */
+    --color-jet: #0F2D52;
+    --color-graphite: #1A4080;
+    --color-primary: #38BDF8;
+    --color-primary-rgb: 56, 189, 248;
+    --color-gold: #F4C400;
+    --color-white: #FFFFFF;
+    --color-smoke: #F2F2F2;
+    /* Marketplace theme tokens */
+    --color-navy: #1E3A5F;
+    --color-cta: #F4C400;
+
+    /* Typography */
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-jet text-white;
+    background-color: var(--color-jet);
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ensure media never overflows */
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Premium Typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight;
+  }
+
+  /* Selection styling */
+  ::selection {
+    background-color: rgba(var(--color-primary-rgb), 0.35);
+    color: white;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-jet);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-graphite);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary);
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  /* Prevent any overflowing element from creating horizontal page scroll on mobile */
-  html {
-    overflow-x: hidden;
-  }
-  body {
-    @apply text-foreground;
-    font-family: var(--font-body);
-    overflow-x: hidden;
-    /* Ensure full-width on all devices */
-    min-width: 320px;
-    position: relative;
-    background: radial-gradient(circle at top, #182235, #0A0E1A);
-    background-attachment: fixed;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+@layer components {
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC BUTTON SYSTEM
+     ═══════════════════════════════════════════════════════════ */
+
+  .btn-primary {
+    @apply bg-gold text-jet px-8 py-4 rounded-premium-sm font-semibold
+           transition-all duration-300 ease-out
+           hover:bg-gold-400 hover:shadow-cinematic-gold hover:scale-[1.02]
+           active:scale-[0.98];
   }
 
-  #root {
-    min-height: 100vh;
+  .btn-blue {
+    @apply bg-primary text-white px-8 py-4 rounded-premium-sm font-semibold
+           transition-all duration-300 ease-out
+           hover:bg-primary-400 hover:shadow-cinematic-blue hover:scale-[1.02]
+           active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply bg-transparent text-white px-8 py-4 rounded-premium-sm font-semibold
+           border-2 border-white/30 backdrop-blur-sm
+           transition-all duration-300 ease-out
+           hover:border-gold hover:text-gold hover:bg-white/5
+           active:scale-[0.98];
+  }
+
+  .btn-outline {
+    @apply bg-transparent text-gold px-8 py-4 rounded-premium-sm font-semibold
+           border-2 border-gold
+           transition-all duration-300 ease-out
+           hover:bg-gold hover:text-jet hover:shadow-cinematic-gold
+           active:scale-[0.98];
+  }
+
+  .btn-glass {
+    @apply bg-white/10 backdrop-blur-glass text-white px-6 py-3 rounded-premium-sm font-medium
+           border border-white/20
+           transition-all duration-300 ease-out
+           hover:bg-white/20 hover:border-gold/50
+           active:scale-[0.98];
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC CARD SYSTEM
+     ═══════════════════════════════════════════════════════════ */
+
+  .card {
+    @apply bg-graphite rounded-premium-md p-6
+           shadow-premium-card
+           transition-all duration-500 ease-out;
+  }
+
+  .card-cinematic {
+    @apply relative overflow-hidden rounded-premium-md
+           bg-graphite shadow-cinematic
+           transition-all duration-500 ease-out
+           hover:shadow-cinematic-lg hover:scale-[1.02];
+  }
+
+  .card-glass {
+    @apply bg-white/5 backdrop-blur-glass rounded-premium-md p-6
+           border border-white/10
+           shadow-glass
+           transition-all duration-300 ease-out
+           hover:bg-white/10 hover:border-gold/30;
+  }
+
+  /* Compact variant for dense forms (Transport Quote page) */
+  .card-glass-compact {
+    @apply bg-white/5 backdrop-blur-glass rounded-xl p-4
+           border border-white/10
+           shadow-glass;
+  }
+
+  .card-product {
+    @apply relative overflow-hidden rounded-premium-md bg-graphite
+           shadow-premium-card cursor-pointer
+           transition-all duration-500 ease-out
+           hover:shadow-cinematic-gold hover:scale-[1.01];
+  }
+
+  .card-product-image {
+    @apply w-full h-64 object-cover
+           transition-transform duration-700 ease-out
+           group-hover:scale-110;
+  }
+
+  .card-product-overlay {
+    @apply absolute inset-0 bg-gradient-overlay opacity-0
+           transition-opacity duration-500
+           group-hover:opacity-100;
+  }
+
+  .card-product-content {
+    @apply absolute bottom-0 left-0 right-0 p-6
+           bg-gradient-overlay;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC INPUT SYSTEM
+     ═══════════════════════════════════════════════════════════ */
+
+  .input-field {
+    @apply w-full px-5 py-4 bg-graphite/50 text-white
+           border border-white/10 rounded-premium-sm
+           placeholder:text-white/50
+           transition-all duration-300 ease-out
+           focus:outline-none focus:border-gold/50 focus:bg-graphite
+           focus:ring-2 focus:ring-gold/20;
+  }
+
+  /* Compact input for dense forms (Transport Quote page) */
+  .input-field-sm {
+    @apply w-full px-3 py-2 bg-graphite/50 text-white text-sm
+           border border-white/10 rounded-lg
+           placeholder:text-white/40
+           transition-all duration-200 ease-out
+           focus:outline-none focus:border-gold/50 focus:bg-graphite
+           focus:ring-1 focus:ring-gold/20;
+  }
+
+  /* Compact form helpers */
+  .field-label {
+    @apply block text-xs font-medium text-white/60 mb-1;
+  }
+
+  .field-icon {
+    @apply absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none;
+  }
+
+  .field-error {
+    @apply text-red-400 text-xs mt-0.5;
+  }
+
+  .section-heading-sm {
+    @apply flex items-center gap-2 text-sm font-bold text-white mb-3;
+  }
+
+  .input-search {
+    @apply w-full px-6 py-4 bg-white/5 text-white
+           border-0 rounded-full backdrop-blur-sm
+           placeholder:text-white/60
+           transition-all duration-300 ease-out
+           focus:outline-none focus:bg-white/10
+           focus:ring-2 focus:ring-gold/30;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC NAVIGATION
+     ═══════════════════════════════════════════════════════════ */
+
+  .nav-link {
+    @apply text-white/80 font-medium
+           transition-all duration-300 ease-out
+           hover:text-gold;
+  }
+
+  .nav-link-active {
+    @apply text-gold font-semibold;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     GLASS MORPHISM EFFECTS
+     ═══════════════════════════════════════════════════════════ */
+
+  .glass {
+    @apply bg-white/5 backdrop-blur-glass border border-white/10;
+  }
+
+  .glass-dark {
+    @apply bg-jet/80 backdrop-blur-glass border border-white/5;
+  }
+
+  .glass-gold {
+    @apply bg-gold/10 backdrop-blur-glass border border-gold/20;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC TYPOGRAPHY
+     ═══════════════════════════════════════════════════════════ */
+
+  .heading-hero {
+    @apply text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-tight;
+  }
+
+  .heading-section {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight;
+  }
+
+  .heading-card {
+    @apply text-xl md:text-2xl font-bold;
+  }
+
+  .text-gold-accent {
+    @apply text-gold font-semibold;
+  }
+
+  .price-tag {
+    @apply text-2xl md:text-3xl font-bold text-gold;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC BACKGROUNDS
+     ═══════════════════════════════════════════════════════════ */
+
+  .bg-cinematic {
+    @apply bg-gradient-cinematic;
+  }
+
+  .bg-hero {
+    background:
+      radial-gradient(ellipse at 15% 15%, rgba(56, 189, 248, 0.25) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 85%, rgba(245, 158, 11, 0.15) 0%, transparent 45%),
+      radial-gradient(ellipse at 60% 30%, rgba(74, 126, 192, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, #071425 0%, #0F2D52 40%, #1A4080 70%, #0F2D52 100%);
+  }
+
+  .bg-section-alt {
+    @apply bg-graphite/30;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC EFFECTS
+     ═══════════════════════════════════════════════════════════ */
+
+  .glow-gold {
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.35);
+  }
+
+  .glow-gold-intense {
+    box-shadow: 0 0 50px rgba(245, 158, 11, 0.55);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 30px rgba(var(--color-primary-rgb), 0.4);
+  }
+
+  .glow-primary-intense {
+    box-shadow: 0 0 50px rgba(var(--color-primary-rgb), 0.65);
+  }
+
+  .light-beam {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    transform: translateZ(0);
+    background: radial-gradient(ellipse at center, rgba(var(--color-primary-rgb), 0.18) 0%, rgba(245, 158, 11, 0.06) 45%, transparent 70%);
+  }
+
+  /* Desktop safety kill switch - disable on laptops where overflow occurs */
+  @media (max-width: 1280px) {
+    .light-beam {
+      display: none !important;
+    }
+  }
+
+  .vignette {
+    box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.5);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC DIVIDERS & DECORATIONS
+     ═══════════════════════════════════════════════════════════ */
+
+  .divider-gold {
+    @apply h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent;
+  }
+
+  .divider-fade {
+    @apply h-px bg-gradient-to-r from-transparent via-white/20 to-transparent;
+  }
+
+  .hexagon-icon {
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CINEMATIC BADGES
+     ═══════════════════════════════════════════════════════════ */
+
+  .badge {
+    @apply px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider;
+  }
+
+  .badge-gold {
+    @apply badge bg-gold/20 text-gold border border-gold/30;
+  }
+
+  .badge-premium {
+    @apply badge bg-gradient-gold text-jet;
+  }
+
+  .badge-stock {
+    @apply badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+  }
+
+  .badge-low-stock {
+    @apply badge bg-amber-500/20 text-amber-400 border border-amber-500/30;
+  }
+
+  .badge-out-stock {
+    @apply badge bg-red-500/20 text-red-400 border border-red-500/30;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RESPONSIVE CONTAINER
+     ═══════════════════════════════════════════════════════════ */
+
+  .container-cinematic {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-wide {
+    @apply max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CATEGORY GRID
+     ═══════════════════════════════════════════════════════════ */
+
+  .category-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8;
+  }
+
+  .product-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     MARKETPLACE LIGHT THEME COMPONENTS
+     ═══════════════════════════════════════════════════════════ */
+
+  .marketplace-body {
+    @apply bg-white text-gray-900;
+  }
+
+  .btn-cta {
+    @apply bg-[#F4C400] text-gray-900 px-6 py-3 rounded font-semibold transition-all hover:bg-yellow-500 hover:shadow-md active:scale-[0.98];
+  }
+
+  .btn-cta-outline {
+    @apply border-2 border-[#F4C400] text-gray-900 px-6 py-3 rounded font-semibold transition-all hover:bg-[#F4C400];
+  }
+
+  .btn-navy {
+    @apply bg-[#1E3A5F] text-white px-6 py-3 rounded font-semibold transition-all hover:bg-[#2C4E73];
+  }
+
+  .card-market {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  .section-marketplace {
+    @apply bg-white;
+  }
+
+  .section-marketplace-alt {
+    @apply bg-[#F5F6F7];
+  }
+
+  .section-marketplace-light {
+    @apply bg-[#F8F9FA];
+  }
+
+  .container-market {
+    @apply max-w-[1360px] mx-auto px-6 lg:px-8;
+  }
+
+  .product-grid-market {
+    @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4;
+  }
+
+  .input-market {
+    @apply w-full px-4 py-2.5 bg-white text-gray-900 border border-gray-300 rounded placeholder:text-gray-400 focus:outline-none focus:border-[#F4C400] focus:ring-2 focus:ring-[#F4C400]/20;
+  }
+
+  .badge-deal {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#C2410C] text-white;
   }
 }
 
 @layer utilities {
-  .text-gradient-hero {
-    background: var(--gradient-hero);
+  /* Animations */
+  .animate-fadeIn {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-fadeInUp {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Hover scale with preserve-3d for smooth transforms */
+  .hover-lift {
+    @apply transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-cinematic-lg;
+  }
+
+  /* Image zoom on hover */
+  .img-zoom {
+    @apply overflow-hidden;
+  }
+
+  .img-zoom img {
+    @apply transition-transform duration-700 ease-out;
+  }
+
+  .img-zoom:hover img {
+    @apply scale-110;
+  }
+
+  /* Text gradient */
+  .text-gradient-gold {
+    @apply bg-gradient-gold bg-clip-text text-transparent;
+  }
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 50%, #F59E0B 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  .bg-gradient-hero {
-    background: var(--gradient-hero);
-  }
-  .bg-gradient-accent {
-    background: var(--gradient-accent);
-  }
-  .shadow-card {
-    box-shadow: var(--shadow-card);
-  }
-  .shadow-elevated {
-    box-shadow: var(--shadow-elevated);
-  }
-}
 
-/* ── Existing brand utilities preserved from main project ─────────────────── */
-@layer components {
-  .container-market {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  /* Premium underline effect */
+  .underline-gold {
+    @apply relative;
+  }
+
+  .underline-gold::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-gold transition-all duration-300;
+  }
+
+  .underline-gold:hover::after {
+    @apply w-full;
   }
 }
 
-
-/* Cookie-banner safe-area offset: clears the mobile bottom nav plus any iOS
-   home-indicator / Android gesture bar. Uses the same --mob-nav-h token (68px)
-   that MobileBottomNav and the product CTA bar use, so the value stays in sync
-   if the nav height ever changes. Reset to 0 at sm+ breakpoint via sm:mb-0
-   (see CookieConsent.tsx). */
-.mb-safearea-nav {
-  margin-bottom: calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px));
-}
-
-@layer utilities {
-  .scrollbar-none {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .font-display {
-    font-family: var(--font-display);
-  }
-  .break-inside-avoid {
-    break-inside: avoid;
-    -webkit-column-break-inside: avoid;
-    page-break-inside: avoid;
-  }
-}
-
-section {
-  scroll-margin-top: 80px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   AMBIENT INTERACTION LAYER
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Gold cursor glow — follows --cursor-x / --cursor-y set by JS ─────────── */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 41;
-
-  background: radial-gradient(
-    400px circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
-    rgba(212, 175, 55, 0.08),
-    transparent 60%
-  );
-}
-
-/* ── Noise texture overlay — fine grain, barely perceptible ───────────────── */
-.noise-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 40;
-
-  /* SVG feTurbulence noise tile — no separate file needed */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 200px 200px;
-  opacity: 0.025;
-}
-
-/* ── Card 3D parallax ─────────────────────────────────────────────────────── */
-[data-parallax] {
-  transform-style: preserve-3d;
-  transition: transform 0.25s ease;
-}
-
-/* ── Magnetic button ──────────────────────────────────────────────────────── */
-[data-magnetic] {
-  transition: transform 0.2s ease;
-}
-
-/* ── Gold icon pulse — applied only to card icon wrappers via .icon-pulse ─── */
-@keyframes goldPulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.25));
-  }
-  50% {
-    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
-  }
-}
-
-/* ── Typing indicator bounce dots ─────────────────────────────────────────── */
-@keyframes bounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-  40%           { transform: translateY(-4px); opacity: 1; }
-}
-
-.icon-pulse {
-  animation: goldPulse 3s ease-in-out infinite;
-}
-
-/* Disable GPU-intensive animations on touch/mobile devices */
-@media (max-width: 767px) {
-  /* Disable gold icon pulse — reduces continuous GPU work in the WebView */
-  .icon-pulse {
-    animation: none;
-    filter: none;
+/* ═══════════════════════════════════════════════════════════
+   LAPTOP – FIX HERO IMAGES BEING CUT
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1280px) and (max-width: 1600px) {
+  .hero-images,
+  .hero-media,
+  .hero-image-wrapper {
+    height: auto !important;
+    max-height: 420px;
+    overflow: visible !important;
   }
 
-  /* Disable cursor glow overlay — cursor events don't fire on touch screens */
-  body::before {
-    display: none;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   PREMIUM PAYMENT & SOCIAL CARDS
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Shared shine sweep (::after moves from left → right on hover) ────────── */
-.payment-card,
-.social-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.payment-card::after,
-.social-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  transform: translateX(-120%);
-  background: linear-gradient(
-    120deg,
-    transparent,
-    rgba(255, 255, 255, 0.10),
-    transparent
-  );
-  transition: transform 0.6s ease;
-}
-
-.payment-card:hover::after,
-.social-card:hover::after {
-  transform: translateX(120%);
-}
-
-/* ── Platform-specific hover glow (subtle brand tint + gold base) ─────────── */
-.social-card.facebook:hover {
-  box-shadow:
-    0 0 20px rgba(24, 119, 242, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.social-card.twitter:hover {
-  box-shadow:
-    0 0 20px rgba(29, 161, 242, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.social-card.instagram:hover {
-  box-shadow:
-    0 0 20px rgba(225, 48, 108, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.social-card.linkedin:hover {
-  box-shadow:
-    0 0 20px rgba(10, 102, 194, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.social-card.tiktok:hover {
-  box-shadow:
-    0 0 20px rgba(105, 201, 208, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   NAVBAR — PRIMARY CATEGORY LINK ANIMATED UNDERLINE
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-.nav-cat-link {
-  position: relative;
-}
-
-.nav-cat-link::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -6px;
-  width: 0%;
-  height: 2px;
-  background: #D4AF37;
-  border-radius: 999px;
-  transition: width 0.3s ease;
-}
-
-.nav-cat-link:hover::after,
-.nav-cat-link.active::after {
-  width: 100%;
-}
-
-/* ── Safe-area inset utilities (Capacitor / notch phones) ─────────────────── */
-/* Use these on any fixed/sticky element that must clear the OS status bar or
-   bottom navigation bar.  In a browser the env() values resolve to 0.          */
-@layer utilities {
-  /* Padding helpers */
-  .pt-safe  { padding-top:    env(safe-area-inset-top,    0px); }
-  .pr-safe  { padding-right:  env(safe-area-inset-right,  0px); }
-  .pb-safe  { padding-bottom: env(safe-area-inset-bottom, 0px); }
-  .pl-safe  { padding-left:   env(safe-area-inset-left,   0px); }
-
-  /* Margin helpers (for absolute/fixed children that need to push down) */
-  .mt-safe  { margin-top:    env(safe-area-inset-top,    0px); }
-  .mb-safe  { margin-bottom: env(safe-area-inset-bottom, 0px); }
-
-  /* Min-height helper so full-screen containers clear the status bar */
-  .min-h-screen-safe {
-    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-  }
-
-  /* Combined utility: base 0.75rem (py-3) top padding plus the status-bar
-     safe-area inset. Use on mobile app-shell headers so content clears the
-     Android / iOS status bar without duplicating the calc() in every file. */
-  .pt-header-safe {
-    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
-  }
-
-  /* pt-header-spacer: clears the fixed public Header on all viewports.
-   * Uses --header-h CSS variable (6.875rem on mobile, 7.625rem on md+).
-   * Plus env(safe-area-inset-top) for iOS notch / Dynamic Island.
-   * Use on the spacer div below <Header /> on pages that use the global header. */
-  .pt-header-spacer {
-    padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  .hero-images img,
+  .hero-media img {
+    width: 100%;
+    height: auto !important;
+    max-height: 420px;
+    object-fit: contain !important;
+    object-position: center;
   }
 }

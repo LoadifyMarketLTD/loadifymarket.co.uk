@@ -1,13 +1,18 @@
 import Stripe from 'stripe';
+import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-import { randomUUID } from 'crypto';
-import type { Handler } from '@netlify/functions';
-import { authenticateActiveAccount } from './_shared/activeAccountAuth';
-import { isMaintenanceMode } from './_shared/platformFlags';
-import { checkRateLimit } from './_shared/rateLimiter';
-import { resolveMarketplaceTaxV1 } from './_shared/marketplaceTax';
 
-interface CheckoutItem {
+// Supabase service-role client for server-side price lookups.
+// Falls back gracefully when credentials are absent (e.g. local dev without .env).
+const supabase =
+  process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(
+        process.env.VITE_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      )
+    : null;
+
+interface CartItem {
   productId: string;
   quantity: number;
   price: number;
@@ -15,561 +20,278 @@ interface CheckoutItem {
   sellerId: string;
 }
 
-interface CheckoutBody {
-  items: CheckoutItem[];
+interface CheckoutRequest {
+  items: CartItem[];
   buyerId: string;
-  shippingAddress: Record<string, string>;
-  billingAddress: Record<string, string>;
-  /** Client-provided shipping amount is intentionally ignored. */
-  shippingAmount?: number;
-  shippingMethodId?: string;
-  shippingMethod?: string;
   guestEmail?: string;
+  shippingAmount?: number;
+  shippingMethod?: string;
+  shippingAddress: {
+    line1: string;
+    line2?: string;
+    city: string;
+    postal_code: string;
+    country: string;
+  };
+  billingAddress: {
+    line1: string;
+    line2?: string;
+    city: string;
+    postal_code: string;
+    country: string;
+  };
 }
-
-interface DBProduct {
-  id: string;
-  price: number;
-  priceExVat: number | null;
-  vatRate: number | null;
-  taxTreatmentStatus: string | null;
-  taxTreatmentSource: string | null;
-  taxEvidenceVersion: number | null;
-  taxEvidenceCapturedAt: string | null;
-  title: string;
-  sellerId: string;
-  isActive: boolean;
-  isApproved: boolean;
-  stockQuantity: number;
-  listingContext: string;
-  listingStatus: string;
-  images: string[];
-}
-
-const STRIPE_CHECKOUT_WINDOW_MINUTES = 30;
-const DB_RESERVATION_FAILSAFE_MINUTES = 60;
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  const stripeKey = process.env.STRIPE_SECRET_KEY ?? '';
-  if (!stripeKey || !stripeKey.startsWith('sk_')) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Payment provider configuration is invalid' }) };
-  }
-
-  const supabaseUrl = process.env.VITE_SUPABASE_URL ?? '';
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Database configuration is missing' }) };
-  }
-
-  let body: CheckoutBody;
-  try {
-    body = JSON.parse(event.body ?? '{}') as CheckoutBody;
-  } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
-  }
-
-  const {
-    items,
-    buyerId,
-    shippingAddress,
-    billingAddress,
-    shippingMethodId,
-    shippingMethod,
-  } = body;
-
-  if (!Array.isArray(items) || items.length === 0 || !billingAddress) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
-  }
-
-  if (items.some((item) => !item.productId || !Number.isInteger(item.quantity) || item.quantity <= 0)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Every checkout item must have a valid product and positive whole-number quantity.' }) };
-  }
-
-  const submittedProductIds = items.map((item) => item.productId);
-  if (new Set(submittedProductIds).size !== submittedProductIds.length) {
     return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Each product may appear only once in a checkout. Please update the quantity instead of adding a duplicate line.' }),
+      statusCode: 405,
+      body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-  const reservationToken = randomUUID();
-  let reservedProductIds: string[] = [];
-  const releaseReservedProducts = async () => {
-    if (reservedProductIds.length === 0) return;
-    await supabase
-      .from('products')
-      .update({ listingStatus: 'active', reservedUntil: null, reservationToken: null })
-      .in('id', reservedProductIds)
-      .eq('listingStatus', 'reserved')
-      .eq('reservationToken', reservationToken)
-      .catch((err: unknown) => {
-        console.error('create-checkout: failed to release product reservations:', err);
-      });
-    reservedProductIds = [];
-  };
-
-  // Checkout runs with service_role, so browser RLS cannot protect this boundary.
-  // Re-read the canonical public.users state before any reservation/payment write
-  // so a stale JWT from a suspended account fails closed immediately.
-  const buyerAuth = await authenticateActiveAccount(event, supabase);
-  if (!buyerAuth.ok) {
+  // ── Stripe key validation ──────────────────────────────────────────────────
+  // Trim to remove accidental whitespace / newlines that are a common source of
+  // "Invalid API Key" errors when the value is copy-pasted into Netlify's UI.
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim();
+  if (!stripeSecretKey || !stripeSecretKey.startsWith('sk_')) {
+    console.error(
+      'create-checkout: STRIPE_SECRET_KEY is missing or malformed. ' +
+      'Set a valid key (starting with sk_live_ or sk_test_) in Netlify environment variables.'
+    );
     return {
-      statusCode: buyerAuth.status,
-      body: JSON.stringify({
-        error: buyerAuth.status === 401
-          ? 'Authentication required. Please sign in to complete your purchase.'
-          : 'This account is not active and cannot complete checkout.',
-      }),
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Payment provider is not configured. Please contact support.' }),
     };
   }
 
-  const verifiedBuyerId = buyerAuth.actor.id;
-  if (buyerId && buyerId !== verifiedBuyerId) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
-  }
-
-  const checkoutRl = await checkRateLimit({
-    supabase,
-    tableName: 'create_checkout_rate_limits',
-    identifier: verifiedBuyerId,
-    windowMinutes: 60,
-    maxAttempts: 10,
-    policy: 'fail-closed',
+  const stripe = new Stripe(stripeSecretKey, {
+    apiVersion: '2025-08-27.basil',
   });
-  if (checkoutRl.exceeded) {
-    return {
-      statusCode: 429,
-      body: JSON.stringify({ error: 'Too many checkout attempts. Please wait a moment and try again.' }),
-    };
-  }
-
-  const maintenance = await isMaintenanceMode(supabase);
-  if (maintenance && buyerAuth.actor.role !== 'admin') {
-    return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
-  }
-
-  const maybeRpc = (supabase as typeof supabase & { rpc?: (fn: string) => Promise<unknown> }).rpc;
-  if (typeof maybeRpc === 'function') {
-    await maybeRpc.call(supabase, 'release_expired_reservations').catch((err: unknown) => {
-      console.warn('create-checkout: release_expired_reservations RPC failed (non-fatal):', err);
-    });
-    await maybeRpc.call(supabase, 'release_stale_unpaid_listing_locks').catch((err: unknown) => {
-      console.warn('create-checkout: release_stale_unpaid_listing_locks RPC failed (non-fatal):', err);
-    });
-  }
-
-  const productIds = submittedProductIds;
-  const { data: dbProducts, error: dbError } = await supabase
-    .from('products')
-    .select('id, price, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images')
-    .in('id', productIds);
-
-  if (dbError) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Database price validation failed' }) };
-  }
-
-  const productMap = new Map((dbProducts ?? []).map((p: DBProduct) => [p.id, p]));
-
-  for (const item of items) {
-    const dbProduct = productMap.get(item.productId);
-    if (
-      !dbProduct ||
-      !dbProduct.isActive ||
-      !dbProduct.isApproved ||
-      dbProduct.listingStatus !== 'active'
-    ) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: `Item "${dbProduct?.title ?? item.title}" is no longer available` }),
-      };
-    }
-    if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
-      return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" has an invalid price.` }) };
-    }
-    if (dbProduct.listingContext !== 'service') {
-      if (typeof dbProduct.stockQuantity !== 'number' || dbProduct.stockQuantity <= 0) {
-        return { statusCode: 400, body: JSON.stringify({ error: `Item "${dbProduct.title}" is out of stock` }) };
-      }
-      if (item.quantity > dbProduct.stockQuantity) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: `Only ${dbProduct.stockQuantity} unit(s) of "${dbProduct.title}" are available` }),
-        };
-      }
-    }
-  }
-
-  const isServiceOnlyCart = items.every((item) => productMap.get(item.productId)?.listingContext === 'service');
-  const effectiveShippingAddress = shippingAddress ?? {};
-  if (!isServiceOnlyCart && (!shippingAddress || Object.keys(shippingAddress).length === 0)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Shipping address is required for physical product orders.' }) };
-  }
-
-  const enrichedItems = items.map((item) => {
-    const dbProduct = productMap.get(item.productId) as DBProduct;
-    return {
-      productId: item.productId,
-      sellerId: dbProduct.sellerId,
-      quantity: item.quantity,
-      price: dbProduct.price,
-      priceExVat: dbProduct.priceExVat,
-      vatRate: dbProduct.vatRate,
-      taxTreatmentStatus: dbProduct.taxTreatmentStatus,
-      taxTreatmentSource: dbProduct.taxTreatmentSource,
-      taxEvidenceVersion: dbProduct.taxEvidenceVersion,
-      taxEvidenceCapturedAt: dbProduct.taxEvidenceCapturedAt,
-      title: dbProduct.title,
-      image: Array.isArray(dbProduct.images) && dbProduct.images.length > 0 ? dbProduct.images[0] : null,
-      listingContext: dbProduct.listingContext === 'service' ? 'service' as const : 'product' as const,
-    };
-  });
-
-  const uniqueSellerIds = [...new Set(enrichedItems.map((i) => i.sellerId))];
-  if (uniqueSellerIds.length !== 1) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'For now, please complete purchases from one seller at a time.' }),
-    };
-  }
-
-  const checkoutSellerId = uniqueSellerIds[0];
-
-  // seller_profiles is denormalised lifecycle state. Re-read public.users as the
-  // authoritative suspension boundary so stale profile state can never keep a
-  // suspended seller commercially payable through a service-role checkout.
-  const { data: sellerAccount, error: sellerAccountError } = await supabase
-    .from('users')
-    .select('id, role, isActive')
-    .eq('id', checkoutSellerId)
-    .maybeSingle<{ id: string; role: string; isActive: boolean }>();
-
-  if (sellerAccountError) {
-    console.error('create-checkout: seller account query failed:', sellerAccountError.message);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller account. Please try again.' }) };
-  }
-  if (!sellerAccount || sellerAccount.role !== 'seller' || sellerAccount.isActive !== true) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'This seller is not currently available to accept payments.' }) };
-  }
-
-  const { data: sellerProfile, error: sellerProfileError } = await supabase
-    .from('seller_profiles')
-    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
-    .eq('userId', checkoutSellerId)
-    .maybeSingle<{
-      stripeAccountId: string | null;
-      stripeConnectStatus: string | null;
-      sellerStatus: string | null;
-      isPaused: boolean | null;
-      businessName: string | null;
-      fullName: string | null;
-      country: string | null;
-      isVatRegistered: boolean | null;
-      vatNumber: string | null;
-      businessAddress: Record<string, unknown> | null;
-      taxDeclarationConfirmed: boolean | null;
-      taxDeclarationVersion: number | null;
-      taxDeclarationSource: string | null;
-      taxDeclarationCapturedAt: string | null;
-    }>();
-
-  if (sellerProfileError) {
-    console.error('create-checkout: seller profile query failed:', sellerProfileError.message);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller status. Please try again.' }) };
-  }
-
-  if (
-    !sellerProfile?.stripeAccountId ||
-    sellerProfile.stripeConnectStatus !== 'active' ||
-    sellerProfile.sellerStatus !== 'active' ||
-    sellerProfile.isPaused === true
-  ) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'This seller is not currently available to accept payments.' }) };
-  }
-
-  const sellerBusinessName = sellerProfile.businessName?.trim() || sellerProfile.fullName?.trim() || '';
-  if (!sellerBusinessName) {
-    return { statusCode: 409, body: JSON.stringify({ error: 'Seller commercial identity is incomplete. Please try again later.' }) };
-  }
-
-  let shippingAmount = 0;
-  let resolvedShippingMethodLabel = 'Standard';
-  const hasUUIDFormat = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-
-  if (!isServiceOnlyCart) {
-    if (!shippingMethodId || !hasUUIDFormat(shippingMethodId)) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Please select a valid shipping method.' }) };
-    }
-
-    const goodsProductIds = items
-      .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
-      .map((item) => item.productId);
-
-    const { data: productShippingRows, error: psError } = await supabase
-      .from('product_shipping')
-      .select('product_id, shipping_methods!method_id(id, active, name, shipping_rates(price))')
-      .eq('method_id', shippingMethodId)
-      .in('product_id', goodsProductIds);
-
-    if (psError) {
-      console.error('create-checkout: shipping method validation failed:', psError.message);
-      return { statusCode: 500, body: JSON.stringify({ error: 'Unable to validate shipping method. Please try again.' }) };
-    }
-
-    if (!productShippingRows || productShippingRows.length === 0) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'The selected shipping method is not available for these products.' }) };
-    }
-
-    const matchedGoodsProducts = new Set(productShippingRows.map((row) => row.product_id));
-    if (matchedGoodsProducts.size !== goodsProductIds.length) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'The selected shipping method is not available for all products in your cart.' }) };
-    }
-
-    type ShippingMethodRow = {
-      id: string;
-      active: boolean;
-      name?: string | null;
-      shipping_rates: Array<{ price: number }> | null;
-    };
-    const rawMethod = (productShippingRows[0] as Record<string, unknown>)['shipping_methods'];
-    const method: ShippingMethodRow | null = Array.isArray(rawMethod)
-      ? (rawMethod[0] as ShippingMethodRow) ?? null
-      : (rawMethod as ShippingMethodRow | null);
-
-    if (!method || !method.active) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'The selected shipping method is no longer available.' }) };
-    }
-
-    const validRates = (Array.isArray(method.shipping_rates) ? method.shipping_rates : [])
-      .map((rate) => Number(rate.price))
-      .filter((price) => Number.isFinite(price) && price >= 0);
-    if (validRates.length === 0) {
-      return { statusCode: 409, body: JSON.stringify({ error: 'The selected shipping method has no valid rate.' }) };
-    }
-    shippingAmount = Math.min(...validRates);
-    resolvedShippingMethodLabel = method.name?.trim() || 'Standard';
-  }
-
-  const taxDecision = resolveMarketplaceTaxV1({
-    seller: {
-      country: sellerProfile.country,
-      isVatRegistered: sellerProfile.isVatRegistered,
-      vatNumber: sellerProfile.vatNumber,
-      businessAddress: sellerProfile.businessAddress,
-      taxDeclarationConfirmed: sellerProfile.taxDeclarationConfirmed,
-      taxDeclarationVersion: sellerProfile.taxDeclarationVersion,
-      taxDeclarationSource: sellerProfile.taxDeclarationSource,
-      taxDeclarationCapturedAt: sellerProfile.taxDeclarationCapturedAt,
-    },
-    products: enrichedItems.map((item) => ({
-      id: item.productId,
-      price: item.price,
-      priceExVat: item.priceExVat,
-      vatRate: item.vatRate,
-      listingContext: item.listingContext,
-      taxTreatmentStatus: item.taxTreatmentStatus,
-      taxTreatmentSource: item.taxTreatmentSource,
-      taxEvidenceVersion: item.taxEvidenceVersion,
-      taxEvidenceCapturedAt: item.taxEvidenceCapturedAt,
-    })),
-    shippingAddress: effectiveShippingAddress,
-    billingAddress,
-  });
-  if (!taxDecision.ok) {
-    return { statusCode: 409, body: JSON.stringify({ error: taxDecision.message, code: taxDecision.code }) };
-  }
-
-  const { data: buyerProfile, error: buyerProfileError } = await supabase
-    .from('buyer_profiles')
-    .select('accountType, companyName, vatNumber')
-    .eq('userId', verifiedBuyerId)
-    .maybeSingle<{
-      accountType: string | null;
-      companyName: string | null;
-      vatNumber: string | null;
-    }>();
-
-  if (buyerProfileError) {
-    console.error('create-checkout: buyer profile query failed:', buyerProfileError.message);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify buyer identity. Please try again.' }) };
-  }
-
-  const { data: buyerUser, error: buyerUserError } = await supabase
-    .from('users')
-    .select('email, firstName, lastName')
-    .eq('id', verifiedBuyerId)
-    .maybeSingle<{ email: string; firstName: string | null; lastName: string | null }>();
-
-  if (buyerUserError || !buyerUser) {
-    console.error('create-checkout: buyer user query failed:', buyerUserError?.message ?? 'buyer row missing');
-    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify buyer identity. Please try again.' }) };
-  }
-
-  const buyerEmail = buyerUser.email?.trim() || '';
-  if (!buyerEmail) {
-    return { statusCode: 409, body: JSON.stringify({ error: 'Buyer email identity is incomplete. Please update your account details.' }) };
-  }
-  const buyerName = [buyerUser.firstName, buyerUser.lastName]
-    .map((part) => part?.trim() || '')
-    .filter(Boolean)
-    .join(' ')
-    .trim() || buyerEmail;
-
-  const isB2BBuyer = Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
-  const applyReverseCharge = taxDecision.applyReverseCharge;
-  const buyerSnapshot = {
-    id: verifiedBuyerId,
-    name: buyerName,
-    email: buyerEmail,
-    companyName: buyerProfile?.companyName?.trim() || null,
-    vatNumber: buyerProfile?.vatNumber?.trim() || null,
-    isB2B: isB2BBuyer,
-    reverseCharge: applyReverseCharge,
-  };
-  const sellerSnapshot = {
-    id: checkoutSellerId,
-    businessName: sellerBusinessName,
-  };
-
-  const catalogSubtotalPence = enrichedItems.reduce(
-    (sum, item) => sum + Math.round(item.price * 100) * item.quantity,
-    0,
-  );
-  const chargeableSubtotalPence = catalogSubtotalPence;
-  const shippingAmountPence = Math.round(shippingAmount * 100);
-  shippingAmount = shippingAmountPence / 100;
-  const totalPence = chargeableSubtotalPence + shippingAmountPence;
-  const subtotal = catalogSubtotalPence / 100;
-  const total = (catalogSubtotalPence + shippingAmountPence) / 100;
-  const chargeableSubtotal = chargeableSubtotalPence / 100;
-  const chargeableTotal = totalPence / 100;
-
-  const reservableProductIds = enrichedItems
-    .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
-    .map((item) => item.productId);
-  const reservedUntil = new Date(
-    Date.now() + DB_RESERVATION_FAILSAFE_MINUTES * 60 * 1000,
-  ).toISOString();
-  for (const productId of reservableProductIds) {
-    const { count } = await supabase
-      .from('products')
-      .update({ listingStatus: 'reserved', reservedUntil, reservationToken })
-      .eq('id', productId)
-      .eq('listingStatus', 'active')
-      .select('id', { count: 'exact', head: true });
-
-    if (!count || count === 0) {
-      await releaseReservedProducts();
-      const item = enrichedItems.find((i) => i.productId === productId);
-      return { statusCode: 409, body: JSON.stringify({ error: `Item "${item?.title ?? 'selected item'}" is no longer available` }) };
-    }
-    reservedProductIds.push(productId);
-  }
+  // ────────────────────────────────────────────────────────────────────────────
 
   try {
-    const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = enrichedItems.map((item) => {
-      return {
-        price_data: {
-          currency: 'gbp',
-          product_data: { name: item.title },
-          unit_amount: Math.round(item.price * 100),
+    const body: CheckoutRequest = JSON.parse(event.body || '{}');
+    const { items, buyerId, guestEmail, shippingAddress, billingAddress, shippingAmount = 0, shippingMethod = 'Standard' } = body;
+
+    // ── Fraud / Rate-limiting ────────────────────────────────────────────────
+    // Allow at most 10 checkout attempts per IP (or userId) within a 15-minute
+    // window. Limits are tracked in the checkout_rate_limits table (service role).
+    // Authenticated buyers are keyed by userId; guests by the forwarded IP.
+    // If neither is available the check is skipped — "unknown" callers are not
+    // bucketed together because a single key would incorrectly aggregate all
+    // unidentified traffic.
+    if (supabase) {
+      const RATE_LIMIT_MAX    = 10;
+      const RATE_LIMIT_WINDOW = 15; // minutes
+      const rawIp = event.headers['x-forwarded-for']?.split(',')[0]?.trim()
+                 || event.headers['client-ip'];
+      const identifier = buyerId || rawIp;  // prefer userId; fall back to IP
+
+      if (identifier) {
+        const windowEnd = new Date(
+          Math.ceil(Date.now() / (RATE_LIMIT_WINDOW * 60 * 1000)) * (RATE_LIMIT_WINDOW * 60 * 1000)
+        ).toISOString();
+
+        const { data: rl, error: rlSelectError } = await supabase
+          .from('checkout_rate_limits')
+          .select('id, attempts')
+          .eq('identifier', identifier)
+          .eq('windowEnd', windowEnd)
+          .maybeSingle<{ id: string; attempts: number }>();
+
+        if (!rlSelectError) {
+          if (rl && rl.attempts >= RATE_LIMIT_MAX) {
+            // Log suspicious activity via service-role client (bypasses RLS)
+            await supabase.from('audit_logs').insert({
+              action: 'rate_limit_exceeded',
+              tableName: 'checkout_rate_limits',
+              newData: { identifier, attempts: rl.attempts, windowEnd },
+            });
+            return {
+              statusCode: 429,
+              body: JSON.stringify({ error: 'Too many checkout attempts. Please try again later.' }),
+            };
+          }
+
+          if (rl) {
+            await supabase
+              .from('checkout_rate_limits')
+              .update({ attempts: rl.attempts + 1 })
+              .eq('id', rl.id);
+          } else {
+            await supabase
+              .from('checkout_rate_limits')
+              .insert({ identifier, windowEnd, attempts: 1 });
+          }
+        }
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
+    // ── Server-side price validation ────────────────────────────────────────
+    // Look up authoritative prices from the database so the client cannot
+    // manipulate prices by sending crafted cart payloads.
+    let validatedItems: CartItem[];
+
+    if (supabase) {
+      const productIds = items.map((i) => i.productId);
+      const { data: dbProducts, error: dbError } = await supabase
+        .from('products')
+        .select('id, price, title, sellerId, isActive, isApproved, stockQuantity')
+        .in('id', productIds);
+
+      if (dbError) {
+        console.error('Price lookup failed:', dbError.message);
+        // Fall through to client prices rather than blocking the purchase,
+        // but log the failure so it can be investigated.
+        validatedItems = items;
+      } else {
+        const productMap = new Map(
+          (dbProducts ?? []).map((p) => [p.id as string, p])
+        );
+
+        // Reject if any product is unavailable or not approved
+        for (const item of items) {
+          const dbProduct = productMap.get(item.productId);
+          if (!dbProduct) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({ error: `Product ${item.productId} not found` }),
+            };
+          }
+          if (!dbProduct.isActive || !dbProduct.isApproved) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({ error: `Product "${dbProduct.title}" is no longer available` }),
+            };
+          }
+          if (typeof dbProduct.stockQuantity === 'number' && dbProduct.stockQuantity < item.quantity) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({
+                error: `Insufficient stock for "${dbProduct.title}". Available: ${dbProduct.stockQuantity}`,
+              }),
+            };
+          }
+        }
+
+        // Replace client-supplied prices with DB prices
+        validatedItems = items.map((item) => {
+          const dbProduct = productMap.get(item.productId)!;
+          return {
+            ...item,
+            price: dbProduct.price as number,
+            title: (dbProduct.title as string) || item.title,
+            sellerId: (dbProduct.sellerId as string) || item.sellerId,
+          };
+        });
+      }
+    } else {
+      // No Supabase credentials — skip validation (development fallback only)
+      console.warn('create-checkout: Supabase not configured, skipping server-side price validation');
+      validatedItems = items;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
+    // Calculate totals
+    // Note: product prices from the DB are VAT-inclusive (displayed to buyers incl. VAT)
+    const VAT_RATE = 0.20; // 20% UK VAT
+    const COMMISSION_RATE = 0.07; // 7% marketplace commission
+
+    // Cart totals (VAT-inclusive)
+    const cartTotalIncVat = validatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const cartSubtotalExVat = cartTotalIncVat / (1 + VAT_RATE);
+    const cartVatAmount = cartTotalIncVat - cartSubtotalExVat;
+
+    // Shipping — shippingAmount is the ex-VAT shipping cost
+    const shippingVAT = shippingAmount * VAT_RATE;
+    const shippingIncVat = shippingAmount + shippingVAT;
+
+    const total = cartTotalIncVat + shippingIncVat;
+    const vatAmount = cartVatAmount + shippingVAT;
+    const commissionAmount = cartSubtotalExVat * COMMISSION_RATE;
+
+    // Create line items for Stripe (using validated server-side prices)
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = validatedItems.map(item => ({
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: item.title,
         },
-        quantity: item.quantity,
-      };
-    });
+        unit_amount: Math.round(item.price * 100), // Convert to pence
+      },
+      quantity: item.quantity,
+    }));
 
-    if (shippingAmountPence > 0) {
+    // Add shipping as a separate line item if applicable
+    if (shippingAmount > 0) {
       lineItems.push({
         price_data: {
           currency: 'gbp',
-          product_data: { name: `Shipping — ${resolvedShippingMethodLabel}` },
-          unit_amount: shippingAmountPence,
+          product_data: {
+            name: `Shipping (${shippingMethod})`,
+          },
+          unit_amount: Math.round((shippingAmount + shippingVAT) * 100),
         },
         quantity: 1,
       });
     }
 
-    const rawSiteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').trim();
-    let siteUrl: string;
-    try {
-      const parsed = new URL(rawSiteUrl);
-      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('bad protocol');
-      siteUrl = parsed.origin;
-    } catch {
-      await releaseReservedProducts();
-      return { statusCode: 500, body: JSON.stringify({ error: 'Application URL configuration is invalid' }) };
-    }
+    const customerEmail = guestEmail || event.headers['user-email'] || undefined;
 
-    const transferGroup = randomUUID();
+    // Generate a cryptographically unique transfer group ID for this checkout.
+    // Stripe Connect "separate charges and transfers" requires all transfers
+    // originating from one payment to share the same transfer_group so Stripe
+    // can link payouts back to the originating charge in the Dashboard and
+    // financial reports. The ID must be unique per checkout attempt.
+    const randomHex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    const transferGroup = `order-${buyerId || 'guest'}-${Date.now()}-${randomHex}`;
+
+    // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      mode: 'payment',
       line_items: lineItems,
-      expires_at: Math.floor(Date.now() / 1000) + STRIPE_CHECKOUT_WINDOW_MINUTES * 60,
-      success_url: `${siteUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/cart`,
-      payment_intent_data: { transfer_group: transferGroup },
-      metadata: {
-        buyerId: verifiedBuyerId,
-        productIds: productIds.join(','),
-        transferGroup,
-        reservationToken,
+      mode: 'payment',
+      success_url: `${process.env.URL || process.env.VITE_APP_URL}/orders/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.URL || process.env.VITE_APP_URL}/cart`,
+      // Link all seller payouts for this checkout to the same payment via
+      // transfer_group — required for Stripe Connect compliance.
+      payment_intent_data: {
+        transfer_group: transferGroup,
       },
+      metadata: {
+        buyerId: buyerId || '',
+        subtotal: cartTotalIncVat.toFixed(2),
+        vatAmount: vatAmount.toFixed(2),
+        commissionAmount: commissionAmount.toFixed(2),
+        total: total.toFixed(2),
+        shippingAmount: shippingAmount.toFixed(2),
+        shippingMethod,
+        shippingAddress: JSON.stringify(shippingAddress),
+        billingAddress: JSON.stringify(billingAddress),
+        items: JSON.stringify(validatedItems),
+        transferGroup,
+      },
+      ...(customerEmail ? { customer_email: customerEmail } : {}),
     });
 
-    const { error: sessionInsertError } = await supabase
-      .from('payment_sessions')
-      .insert({
-        stripeSessionId: session.id,
-        userId: verifiedBuyerId,
-        status: 'pending',
-        amount: chargeableTotal,
-        currency: 'GBP',
-        metadata: {
-          commercialSnapshotVersion: 1,
-          buyerSnapshot,
-          sellerSnapshot,
-          taxSnapshot: taxDecision.snapshot,
-          items: enrichedItems,
-          shippingAddress: effectiveShippingAddress,
-          billingAddress,
-          subtotal,
-          chargeableSubtotal,
-          chargeableSubtotalPence,
-          shippingAmount,
-          shippingAmountPence,
-          shippingMethodId: shippingMethodId ?? null,
-          shippingMethod: resolvedShippingMethodLabel || shippingMethod || 'Standard',
-          total: chargeableTotal,
-          totalPence,
-          catalogTotal: total,
-          buyerId: verifiedBuyerId,
-          transferGroup,
-          reservationToken,
-          isB2B: isB2BBuyer,
-          applyReverseCharge,
-        },
-      });
-
-    if (sessionInsertError) {
-      console.error('Failed to pre-insert payment_sessions record:', sessionInsertError);
-      await stripe.checkout.sessions.expire(session.id).catch((expireError: unknown) => {
-        console.error('Failed to expire orphaned Stripe Checkout Session:', expireError);
-      });
-      await releaseReservedProducts();
-      return { statusCode: 500, body: JSON.stringify({ error: 'Order initialisation failed. Please try again.' }) };
-    }
-
-    return { statusCode: 200, body: JSON.stringify({ url: session.url, sessionId: session.id }) };
-  } catch (err: unknown) {
-    await releaseReservedProducts();
-    console.error('create-checkout: checkout session creation failed:', err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Checkout session creation failed. Please try again.' }) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        sessionId: session.id,
+        url: session.url,
+      }),
+    };
+  } catch (error) {
+    console.error('Stripe checkout error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: error instanceof Error ? error.message : 'Failed to create checkout session',
+      }),
+    };
   }
 };

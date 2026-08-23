@@ -51,19 +51,22 @@ export interface SearchResults {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const RELATED_SEARCHES: Record<string, string[]> = {
-  phone:       ['phone accessories', 'iphone', 'samsung phone', 'phone case'],
-  laptop:      ['laptop accessories', 'gaming laptop', 'laptop stand', 'refurbished laptop'],
-  clothing:    ['mens clothing', 'womens clothing', 'kids clothing', 'fashion accessories'],
-  electronics: ['smart home', 'mixed electronics', 'refurbished electronics', 'tech bundle'],
-  tools:       ['power tools', 'hand tools', 'tool kit', 'garden tools'],
-  furniture:   ['flat pack furniture', 'office furniture', 'home decor', 'home furniture'],
-  toys:        ['kids toys', 'educational toys', 'toy bundle', 'outdoor toys'],
+  phone:       ['phone accessories', 'iphone', 'samsung phone', 'phone pallet'],
+  laptop:      ['laptop accessories', 'gaming laptop', 'laptop pallet', 'refurbished laptop'],
+  clothing:    ['mens clothing', 'womens clothing', 'clothing pallet', 'mixed lot clothing'],
+  electronics: ['electronics pallet', 'mixed electronics', 'refurbished electronics', 'tech bundle'],
+  tools:       ['power tools', 'hand tools', 'tools pallet', 'garden tools'],
+  furniture:   ['flat pack furniture', 'office furniture', 'furniture lot', 'home furniture'],
+  toys:        ['toys pallet', 'kids toys', 'educational toys', 'toy bundle'],
+  pallet:      ['electronics pallet', 'clothing pallet', 'mixed pallet', 'amazon returns pallet'],
 };
 
 /** Returns related searches for a given query. */
 export function getRelatedSearches(query: string): string[] {
   const q = query.toLowerCase().trim();
+  // Direct match
   if (RELATED_SEARCHES[q]) return RELATED_SEARCHES[q];
+  // Partial match
   for (const [key, suggestions] of Object.entries(RELATED_SEARCHES)) {
     if (q.includes(key) || key.includes(q)) return suggestions;
   }
@@ -75,16 +78,17 @@ export function getRelatedSearches(query: string): string[] {
 /** Strips dangerous characters and limits length. Safe for Supabase text search. */
 export function sanitiseSearchQuery(raw: string): string {
   return raw
+    // Replace every '<' and '>' individually — prevents incomplete-tag bypass
     .replace(/</g, '')
     .replace(/>/g, '')
-    .replace(/['"`;\\]/g, '')
+    .replace(/['"`;\\]/g, '')      // strip SQL/XSS characters
     .trim()
-    .slice(0, 200);
+    .slice(0, 200);                 // limit length
 }
 
 // ─── Supabase query builder ───────────────────────────────────────────────────
 
-/** Builds and executes a search over listings that are currently purchasable. */
+/** Builds and executes a Supabase products search query. */
 export async function searchProducts(
   filters: SearchFilters,
   page = 1,
@@ -94,34 +98,40 @@ export async function searchProducts(
 
   let q = supabase
     .from('products')
-    .select('*', { count: 'exact' })
+    .select('*, seller:seller_profiles!left(rating, businessName, isApproved, paymentBehaviour)', { count: 'exact' })
     .eq('isActive', true)
-    .eq('isApproved', true)
-    .eq('listingStatus', 'active')
-    .or('listingContext.eq.service,stockQuantity.gt.0');
+    .eq('isApproved', true);
 
+  // Full-text / ilike search across title + description
   if (safe) {
     q = q.or(`title.ilike.%${safe}%,description.ilike.%${safe}%`);
   }
 
+  // Category filter
   if (filters.category) {
     q = q.eq('categoryId', filters.category);
   }
 
+  // Price range
   if (filters.minPrice != null) q = q.gte('price', filters.minPrice);
   if (filters.maxPrice != null) q = q.lte('price', filters.maxPrice);
 
+  // Condition
   if (filters.condition) q = q.eq('condition', filters.condition);
+
+  // Listing type
   if (filters.listingType) q = q.eq('listingType', filters.listingType);
 
+  // Sorting
   switch (filters.sortBy) {
     case 'price_asc':  q = q.order('price', { ascending: true });  break;
     case 'price_desc': q = q.order('price', { ascending: false }); break;
     case 'newest':     q = q.order('createdAt', { ascending: false }); break;
     case 'top_rated':  q = q.order('rating', { ascending: false }); break;
-    default:           q = q.order('createdAt', { ascending: false });
+    default:           q = q.order('createdAt', { ascending: false }); // relevance falls back to recency
   }
 
+  // Pagination
   const from = (page - 1) * perPage;
   q = q.range(from, from + perPage - 1);
 
@@ -147,14 +157,13 @@ export async function getAutocompleteSuggestions(
   const suggestions: AutocompleteSuggestion[] = [];
 
   try {
+    // Products
     const { data: products } = await supabase
       .from('products')
       .select('id, title, categoryId')
       .ilike('title', `%${safe}%`)
       .eq('isActive', true)
       .eq('isApproved', true)
-      .eq('listingStatus', 'active')
-      .or('listingContext.eq.service,stockQuantity.gt.0')
       .limit(4);
 
     (products ?? []).forEach((p: { id: string; title: string }) => {
@@ -166,11 +175,11 @@ export async function getAutocompleteSuggestions(
       });
     });
 
+    // Categories
     const { data: cats } = await supabase
       .from('categories')
       .select('id, name, slug')
       .ilike('name', `%${safe}%`)
-      .eq('isActive', true)
       .limit(3);
 
     (cats ?? []).forEach((c: { id: string; name: string; slug: string }) => {
@@ -178,28 +187,25 @@ export async function getAutocompleteSuggestions(
         type: 'category',
         label: `${c.name} — Browse category`,
         value: c.name,
-        href: `/category/${c.slug}`,
+        href: `/shop?category=${c.slug}`,
       });
     });
 
-    // seller_stores is the canonical public storefront source. Its RLS exposes
-    // active stores only, and storeSlug matches the /seller/:slug route.
+    // Sellers
     const { data: sellers } = await supabase
-      .from('seller_stores')
-      .select('storeName, storeSlug')
-      .ilike('storeName', `%${safe}%`)
-      .eq('isActive', true)
-      .not('storeSlug', 'is', null)
+      .from('seller_profiles')
+      .select('userId, businessName, storeName')
+      .or(`businessName.ilike.%${safe}%,storeName.ilike.%${safe}%`)
+      .eq('isApproved', true)
       .limit(2);
 
-    (sellers ?? []).forEach((s: { storeName?: string | null; storeSlug?: string | null }) => {
-      if (!s.storeSlug) return;
-      const name = s.storeName?.trim() || 'Seller';
+    (sellers ?? []).forEach((s: { userId: string; businessName?: string; storeName?: string }) => {
+      const name = s.businessName || s.storeName || 'Seller';
       suggestions.push({
         type: 'seller',
         label: `${name} — Seller Store`,
         value: name,
-        href: `/seller/${encodeURIComponent(s.storeSlug)}`,
+        href: `/seller/${s.userId}`,
       });
     });
   } catch (e) {
@@ -218,6 +224,7 @@ export function useSearch(filters: SearchFilters, page = 1, debounceMs = 300) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
 
+  // Stable serialisation used only as a cache key — not passed as a dep directly
   const filtersKey = [
     filters.query,
     filters.category ?? '',
@@ -283,7 +290,7 @@ export function useAutocomplete(query: string, debounceMs = 200) {
 
 export async function fetchCategories(): Promise<Category[]> {
   try {
-    const { data } = await supabase.from('categories').select('*').eq('isActive', true).order('name');
+    const { data } = await supabase.from('categories').select('*').order('name');
     return data ?? [];
   } catch {
     return [];

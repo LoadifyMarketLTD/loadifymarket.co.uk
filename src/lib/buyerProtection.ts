@@ -1,17 +1,17 @@
 /**
- * Dispute Support — Core Business Logic
+ * Buyer Protection — Core Business Logic
  *
- * Order issue model:
+ * Escrow model:
  *  - Payment captured at checkout (Stripe PaymentIntent)
- *  - Seller response deadline: 48 hours after dispute opened
- *  - On dispute: case reviewed by admin
- *  - On resolution: refund or release based on admin decision
+ *  - Funds held until delivery confirmed OR 7 days after shipping
+ *  - On dispute: funds frozen until resolution
+ *  - On resolution: full/partial refund or release to seller
  *
  * Dispute timeline:
  *  Day 0 — buyer opens dispute (seller response deadline = +48 h)
  *  Day 2 — seller response deadline; if missed → auto-escalate to admin
  *  Day 5 — admin resolution deadline
- *  Day 7 — auto-resolve if admin has not acted (configurable)
+ *  Day 7 — auto-resolve in buyer's favour if admin has not acted (configurable)
  */
 
 import type { BuyerProtectionReason, DisputeResolutionType, EscrowStatus } from '../types';
@@ -136,7 +136,7 @@ export const DISPUTE_TIMELINE: DisputeTimelineEvent[] = [
   { day: 0, label: 'Dispute Opened',           description: 'Buyer opens dispute and submits evidence.',        isDeadline: false },
   { day: 2, label: 'Seller Response Deadline', description: 'Seller must respond within 48 hours.',             isDeadline: true  },
   { day: 5, label: 'Admin Resolution',         description: 'Platform admin reviews and issues a decision.',    isDeadline: true  },
-  { day: 7, label: 'Auto-Resolution',          description: 'Case is auto-resolved by admin if no decision has been made.', isDeadline: false },
+  { day: 7, label: 'Auto-Resolution',          description: 'Case auto-resolves in buyer\'s favour if no admin action.', isDeadline: false },
 ];
 
 /**
@@ -178,15 +178,15 @@ export interface EscrowInfo {
 export function getEscrowInfo(status: EscrowStatus | undefined): EscrowInfo {
   switch (status) {
     case 'held':
-      return { status: 'held',          label: 'Pending',           description: 'Payment is pending delivery confirmation.',                  color: 'text-primary' };
+      return { status: 'held',          label: 'Funds Held',        description: 'Payment is held in escrow pending delivery confirmation.',   color: 'text-yellow-400' };
     case 'released':
-      return { status: 'released',      label: 'Released',          description: 'Payment has been released to the seller.',                   color: 'text-success' };
+      return { status: 'released',      label: 'Funds Released',    description: 'Payment has been released to the seller.',                   color: 'text-green-400' };
     case 'refunded':
       return { status: 'refunded',      label: 'Refund Issued',     description: 'Full payment has been refunded to your original method.',     color: 'text-blue-400' };
     case 'partial_refund':
       return { status: 'partial_refund', label: 'Partial Refund',   description: 'A partial refund has been issued to your account.',           color: 'text-purple-400' };
     default:
-      return { status: 'held',          label: 'Pending',           description: 'Payment is pending.',                                        color: 'text-primary' };
+      return { status: 'held',          label: 'Funds Held',        description: 'Payment is secured in escrow.',                              color: 'text-yellow-400' };
   }
 }
 
@@ -229,7 +229,7 @@ export function checkProtectionEligibility(
   // 90-day window from order creation
   const ninetyDays = 90 * 24 * 60 * 60 * 1000;
   if (Date.now() - new Date(orderCreatedAt).getTime() > ninetyDays) {
-    return { eligible: false, reason: 'The 90-day dispute window for this order has expired.' };
+    return { eligible: false, reason: 'The 90-day buyer protection window for this order has expired.' };
   }
   return { eligible: true, reason: '' };
 }

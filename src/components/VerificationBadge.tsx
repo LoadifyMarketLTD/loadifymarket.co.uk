@@ -1,4 +1,4 @@
-import { ShieldCheck, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface VerificationBadgeProps {
   isVerified: boolean;
@@ -26,23 +26,21 @@ export default function VerificationBadge({
   if (isVerified) {
     return (
       <div
-        className={`inline-flex items-center gap-1.5 rounded-full bg-success/15 border border-success/40 text-success font-semibold ${sizeClasses[size]}`}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-gold/20 border border-gold/40 text-gold font-semibold ${sizeClasses[size]}`}
         title="Verified Seller"
-        aria-label="Verified Seller"
       >
-        <ShieldCheck className={iconSizes[size]} aria-hidden="true" />
-        {showLabel && <span>Verified Seller</span>}
+        <ShieldCheck className={iconSizes[size]} />
+        {showLabel && <span>Verified</span>}
       </div>
     );
   }
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/40 text-primary font-semibold ${sizeClasses[size]}`}
-      title="Unverified seller"
-      aria-label="Unverified seller"
+      className={`inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/20 text-white/60 font-semibold ${sizeClasses[size]}`}
+      title="Pending Verification"
     >
-      <AlertTriangle className={iconSizes[size]} aria-hidden="true" />
+      <AlertCircle className={iconSizes[size]} />
       {showLabel && <span>Unverified</span>}
     </div>
   );

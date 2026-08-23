@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import type React from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronDown, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Category } from '../types';
 
@@ -10,21 +10,15 @@ interface CategorySelectorProps {
   onSubcategoryChange?: (subcategoryId: string) => void;
 }
 
-type DbCategory = Category & {
-  parentId?: string;
-  parent_id?: string;
-  level?: number;
-  isActive?: boolean;
-};
+/** Shared Tailwind classes for each option row. */
+const optionBase =
+  'w-full flex items-center justify-between rounded-md text-base text-left transition-colors hover:bg-blue-50 px-3.5 py-2.5';
+const optionSelected = 'bg-blue-100 text-blue-800 font-medium';
+const optionDefault = 'text-gray-700';
 
-const resolveParentId = (category: DbCategory): string | undefined => category.parentId ?? category.parent_id;
-
-// ── Shared select styling constants ──────────────────────────────────────────
-const SELECT_CLASS =
-  'w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all';
-const SELECT_STYLE: React.CSSProperties = { colorScheme: 'dark' };
-const OPTION_PLACEHOLDER_STYLE: React.CSSProperties = { background: 'rgba(23,24,30,1)', color: 'rgba(142,146,154,1)' };
-const OPTION_ITEM_STYLE: React.CSSProperties = { background: 'rgba(23,24,30,1)', color: 'rgba(255,255,255,1)' };
+/** Shared Tailwind classes for the scrollable panel. */
+const panelClasses =
+  'absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-y-auto max-h-[300px] p-2';
 
 export default function CategorySelector({
   selectedCategoryId,
@@ -32,23 +26,27 @@ export default function CategorySelector({
   onCategoryChange,
   onSubcategoryChange,
 }: CategorySelectorProps) {
-  const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [mainCategories, setMainCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLevel2Id, setSelectedLevel2Id] = useState('');
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [subcategoryOpen, setSubcategoryOpen] = useState(false);
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const subcategoryRef = useRef<HTMLDivElement>(null);
 
+  // Fetch main categories (parentId is null). Order by name to avoid the
+  // reserved-word pitfall with the "order" column in PostgREST.
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchMainCategories = async () => {
       try {
         const { data, error } = await supabase
           .from('categories')
-          .select('id,name,slug,parentId,isActive,order')
-          .eq('isActive', true)
-          .order('level', { ascending: true })
-          .order('order', { ascending: true })
+          .select('*')
+          .is('parentId', null)
           .order('name', { ascending: true });
 
         if (error) throw error;
-        setCategories((data as DbCategory[]) || []);
+        setMainCategories(data || []);
       } catch (err) {
         console.error('Error fetching categories:', err);
       } finally {
@@ -56,62 +54,64 @@ export default function CategorySelector({
       }
     };
 
-    fetchCategories();
+    fetchMainCategories();
   }, []);
 
-  const categoriesById = useMemo(
-    () => new Map(categories.map((category) => [category.id, category])),
-    [categories],
-  );
-  const parentIdsWithChildren = useMemo(
-    () => new Set(categories.map((category) => resolveParentId(category)).filter(Boolean)),
-    [categories],
-  );
-
-  const level1Categories = useMemo(
-    () => categories.filter((category) => !resolveParentId(category)),
-    [categories],
-  );
-
-  const level2Categories = useMemo(
-    () => categories.filter((category) => resolveParentId(category) === selectedCategoryId),
-    [categories, selectedCategoryId],
-  );
-
-  const level3Categories = useMemo(
-    () => categories.filter((category) => resolveParentId(category) === selectedLevel2Id),
-    [categories, selectedLevel2Id],
-  );
-
+  // Fetch subcategories when main category changes
   useEffect(() => {
-    if (!selectedCategoryId || !selectedSubcategoryId) {
-      setSelectedLevel2Id('');
-      return;
-    }
+    const fetchSubcategories = async () => {
+      if (!selectedCategoryId) {
+        setSubcategories([]);
+        return;
+      }
 
-    const selectedNode = categoriesById.get(selectedSubcategoryId);
-    if (!selectedNode) {
-      setSelectedLevel2Id('');
-      return;
-    }
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('parentId', selectedCategoryId)
+          .order('name', { ascending: true });
 
-    const selectedNodeParentId = resolveParentId(selectedNode);
-    if (selectedNodeParentId === selectedCategoryId) {
-      setSelectedLevel2Id(selectedNode.id);
-      return;
-    }
+        if (error) throw error;
+        setSubcategories(data || []);
+      } catch (err) {
+        console.error('Error fetching subcategories:', err);
+      }
+    };
 
-    const level2Node = selectedNodeParentId ? categoriesById.get(selectedNodeParentId) : undefined;
-    if (level2Node && resolveParentId(level2Node) === selectedCategoryId) {
-      setSelectedLevel2Id(level2Node.id);
-      return;
-    }
+    fetchSubcategories();
+  }, [selectedCategoryId]);
 
-    setSelectedLevel2Id('');
-  }, [selectedCategoryId, selectedSubcategoryId, categoriesById]);
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setCategoryOpen(false);
+      }
+      if (subcategoryRef.current && !subcategoryRef.current.contains(e.target as Node)) {
+        setSubcategoryOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  const selectedCategory = categoriesById.get(selectedCategoryId);
-  const selectedSubcategory = selectedSubcategoryId ? categoriesById.get(selectedSubcategoryId) : undefined;
+  const handleCategoryKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === 'Escape') setCategoryOpen(false);
+    },
+    [],
+  );
+
+  const handleSubcategoryKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === 'Escape') setSubcategoryOpen(false);
+    },
+    [],
+  );
+
+  const selectedCategory = mainCategories.find((c) => c.id === selectedCategoryId);
+  const selectedSubcategory = subcategories.find((c) => c.id === selectedSubcategoryId);
 
   if (loading) {
     return <div className="text-gray-500 text-sm py-2">Loading categories…</div>;
@@ -119,95 +119,124 @@ export default function CategorySelector({
 
   return (
     <div className="space-y-4">
+      {/* Main Category */}
       <div>
-        <label htmlFor="main-category-select" className="block text-sm font-medium text-slate-300 mb-2">Main Category *</label>
-        <select
-          id="main-category-select"
-          aria-label="Main category"
-          value={selectedCategoryId}
-          onChange={(e) => {
-            setSelectedLevel2Id('');
-            onCategoryChange(e.target.value);
-            if (onSubcategoryChange) onSubcategoryChange('');
-          }}
-          className={SELECT_CLASS}
-          style={SELECT_STYLE}
-        >
-          <option value="" style={OPTION_PLACEHOLDER_STYLE}>Select a category</option>
-          {level1Categories.map((category) => (
-            <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <label id="category-label" className="block text-sm font-medium text-gray-700 mb-2">
+          Main Category *
+        </label>
+        <div ref={categoryRef} className="relative">
+          <button
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded={categoryOpen}
+            aria-labelledby="category-label"
+            onKeyDown={handleCategoryKeyDown}
+            onClick={() => setCategoryOpen((o) => !o)}
+            className="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-left text-base focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+          >
+            <span className={selectedCategory ? 'text-gray-900' : 'text-gray-400'}>
+              {selectedCategory ? selectedCategory.name : 'Select a category'}
+            </span>
+            <ChevronDown
+              className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${categoryOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {categoryOpen && (
+            <ul role="listbox" aria-labelledby="category-label" className={panelClasses}>
+              {mainCategories.length === 0 ? (
+                <li className="px-4 py-3 text-sm text-gray-500">No categories found</li>
+              ) : (
+                mainCategories.map((category) => {
+                  const isSelected = selectedCategoryId === category.id;
+                  return (
+                    <li key={category.id} role="option" aria-selected={isSelected}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onCategoryChange(category.id);
+                          if (onSubcategoryChange) onSubcategoryChange('');
+                          setCategoryOpen(false);
+                        }}
+                        className={`${optionBase} ${isSelected ? optionSelected : optionDefault}`}
+                      >
+                        {category.name}
+                        {isSelected && <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />}
+                      </button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          )}
+        </div>
       </div>
 
-      {selectedCategoryId && level2Categories.length > 0 && (
+      {/* Subcategory (if applicable) */}
+      {subcategories.length > 0 && (
         <div>
-          <label htmlFor="subcategory-select" className="block text-sm font-medium text-slate-300 mb-2">Subcategory</label>
-          <select
-            id="subcategory-select"
-            aria-label="Subcategory"
-            value={selectedLevel2Id}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSelectedLevel2Id(value);
-              const hasChildren = parentIdsWithChildren.has(value);
-              if (!onSubcategoryChange) return;
-              onSubcategoryChange(hasChildren ? '' : value);
-            }}
-            className={SELECT_CLASS}
-            style={SELECT_STYLE}
-          >
-            <option value="" style={OPTION_PLACEHOLDER_STYLE}>None</option>
-            {level2Categories.map((category) => (
-              <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+          <label id="subcategory-label" className="block text-sm font-medium text-gray-700 mb-2">
+            Subcategory (Optional)
+          </label>
+          <div ref={subcategoryRef} className="relative">
+            <button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={subcategoryOpen}
+              aria-labelledby="subcategory-label"
+              onKeyDown={handleSubcategoryKeyDown}
+              onClick={() => setSubcategoryOpen((o) => !o)}
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-left text-base focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+            >
+              <span className={selectedSubcategory ? 'text-gray-900' : 'text-gray-400'}>
+                {selectedSubcategory ? selectedSubcategory.name : 'None'}
+              </span>
+              <ChevronDown
+                className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-150 ${subcategoryOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-      {selectedLevel2Id && level3Categories.length > 0 && (
-        <div>
-          <label htmlFor="nested-subcategory-select" className="block text-sm font-medium text-slate-300 mb-2">Nested Subcategory</label>
-          <select
-            id="nested-subcategory-select"
-            aria-label="Nested subcategory"
-            value={selectedSubcategoryId || ''}
-            onChange={(e) => {
-              if (onSubcategoryChange) onSubcategoryChange(e.target.value);
-            }}
-            className={SELECT_CLASS}
-            style={SELECT_STYLE}
-          >
-            <option value="" style={OPTION_PLACEHOLDER_STYLE}>Select nested subcategory</option>
-            {level3Categories.map((category) => (
-              <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+            {subcategoryOpen && (
+              <ul role="listbox" aria-labelledby="subcategory-label" className={panelClasses}>
+                {/* "None" option */}
+                <li role="option" aria-selected={!selectedSubcategoryId}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onSubcategoryChange) onSubcategoryChange('');
+                      setSubcategoryOpen(false);
+                    }}
+                    className={`${optionBase} ${!selectedSubcategoryId ? optionSelected : optionDefault}`}
+                  >
+                    None
+                    {!selectedSubcategoryId && (
+                      <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    )}
+                  </button>
+                </li>
 
-      {selectedCategory && (
-        <nav aria-label="Category breadcrumb" className="text-xs text-slate-500">
-          <ol className="flex flex-wrap items-center gap-1">
-            <li>{selectedCategory.name}</li>
-            {selectedLevel2Id && (
-              <li>
-                <span aria-hidden="true">→</span> {categoriesById.get(selectedLevel2Id)?.name ?? ''}
-              </li>
+                {subcategories.map((category) => {
+                  const isSelected = selectedSubcategoryId === category.id;
+                  return (
+                    <li key={category.id} role="option" aria-selected={isSelected}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onSubcategoryChange) onSubcategoryChange(category.id);
+                          setSubcategoryOpen(false);
+                        }}
+                        className={`${optionBase} ${isSelected ? optionSelected : optionDefault}`}
+                      >
+                        {category.name}
+                        {isSelected && <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-            {selectedSubcategory && (
-              <li aria-current="location">
-                <span aria-hidden="true">→</span> {selectedSubcategory.name}
-              </li>
-            )}
-          </ol>
-        </nav>
+          </div>
+        </div>
       )}
     </div>
   );

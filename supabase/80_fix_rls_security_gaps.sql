@@ -40,19 +40,15 @@ CREATE POLICY "order_items_insert" ON order_items
       WHERE o.id = "orderId"
         AND (o."buyerId" = auth.uid() OR o."sellerId" = auth.uid())
     )
-    OR is_admin()
+    OR is_admin_or_owner()
   );
 
 -- ── 2. Tighten payment_sessions writes ───────────────────────────────────────
--- Remove both the historical blanket write policy and any already-hardened
--- admin-only policy created earlier in the modular bootstrap. Recreating the
--- same fail-closed policy makes this historical corrective migration replay-safe
--- without broadening access.
+-- Remove the blanket "everyone can write" policy.
 DROP POLICY IF EXISTS "payment_sessions_write" ON payment_sessions;
-DROP POLICY IF EXISTS "payment_sessions_admin_write" ON payment_sessions;
 
 -- Admin/owner access (needed for back-office operations)
 CREATE POLICY "payment_sessions_admin_write" ON payment_sessions
   FOR ALL
-  USING (is_admin())
-  WITH CHECK (is_admin());
+  USING (is_admin_or_owner())
+  WITH CHECK (is_admin_or_owner());

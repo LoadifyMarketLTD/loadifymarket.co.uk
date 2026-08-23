@@ -1,31 +1,26 @@
 import { useState, useEffect } from 'react';
-import MainLayout from "@/layouts/MainLayout";
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { SellerProfile, SellerStore } from '../types';
-import { Store, Package, MapPin, Mail, Phone, MessageCircle, ArrowRight, Calendar, Settings } from 'lucide-react';
+import type { Product, SellerProfile, SellerStore } from '../types';
+import { Store, Package, MapPin, Mail, Phone, ArrowLeft, MessageCircle, ArrowRight, Calendar } from 'lucide-react';
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 import PaymentBehaviourBadge from '../components/PaymentBehaviourBadge';
-import ProductCard from '@/components/catalog/ProductCard';
-import { adaptProducts } from '@/lib/productAdapter';
-import type { DBProduct } from '@/lib/productAdapter';
-import type { Product as CatalogProduct } from '@/components/catalog/ProductCard';
-import BreadcrumbNav from '../components/BreadcrumbNav';
+import ProductCard from '../components/ProductCard';
 import { formatDistanceToNow } from 'date-fns';
-import { useAuthStore } from '../store';
-import SEO from '@/components/SEO';
 
 interface SellerData extends SellerProfile {
-  createdAt?: string;
+  user?: {
+    email: string;
+    createdAt?: string;
+  };
   store?: SellerStore;
 }
 
 export default function SellerPublicProfilePage() {
   const { slug } = useParams<{ slug: string }>();
-  const { user } = useAuthStore();
   const [seller, setSeller] = useState<SellerData | null>(null);
-  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,7 +30,7 @@ export default function SellerPublicProfilePage() {
       try {
         setLoading(true);
 
-        // Step 1: Get the store to find the userId
+        // First, get the store to find the userId
         const { data: storeData, error: storeError } = await supabase
           .from('seller_stores')
           .select('*')
@@ -49,10 +44,13 @@ export default function SellerPublicProfilePage() {
           return;
         }
 
-        // Step 2: Fetch seller profile from seller_profiles_public
+        // Fetch seller profile
         const { data: profileData, error: profileError } = await supabase
-          .from('seller_profiles_public')
-          .select('*')
+          .from('seller_profiles')
+          .select(`
+            *,
+            user:users!inner(email, createdAt)
+          `)
           .eq('userId', storeData.userId)
           .single();
 
@@ -66,10 +64,23 @@ export default function SellerPublicProfilePage() {
 
         setSeller(combinedData);
 
-        // Step 3: Fetch active products with category joins
-        const { data: rawProducts, error: productsError } = await supabase
+        // Fetch active products from this seller
+        const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select('*, category:categories!categoryId(name, slug), subcategory:categories!subcategoryId(name, slug)')
+          .select(`
+            *,
+            seller:seller_profiles!left(
+              businessName,
+              isApproved,
+              rating,
+              marketplaceRole,
+              paymentBehaviour,
+              userId
+            ),
+            store:seller_stores!left(
+              storeSlug
+            )
+          `)
           .eq('sellerId', storeData.userId)
           .eq('isActive', true)
           .eq('isApproved', true)
@@ -78,18 +89,16 @@ export default function SellerPublicProfilePage() {
 
         if (productsError) throw productsError;
 
-        // Step 4: Merge seller info and adapt to UI shape
-        const merged = (rawProducts ?? []).map((product) => ({
+        // Transform data to include store slug in seller object
+        const transformedProducts = productsData?.map((product) => ({
           ...product,
-          seller: {
-            businessName: profileData.businessName,
-            isApproved: profileData.isApproved,
-            rating: profileData.rating,
-            userId: profileData.userId,
-          },
-        }));
+          seller: product.seller ? {
+            ...product.seller,
+            storeSlug: (product.store as { storeSlug?: string } | null)?.storeSlug,
+          } : undefined,
+        })) || [];
 
-        setProducts(adaptProducts(merged as unknown as DBProduct[]));
+        setProducts(transformedProducts);
       } catch (error) {
         console.error('Error fetching seller profile:', error);
       } finally {
@@ -102,64 +111,40 @@ export default function SellerPublicProfilePage() {
 
   if (loading) {
     return (
-      <MainLayout>
-        <main id="main-content" className="flex-1 pt-4 md:pt-28 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-500">Loading seller profile...</p>
-          </div>
-        </main>
-    </MainLayout>
+      <div className="bg-jet min-h-screen pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white/60">Loading seller profile...</p>
+        </div>
+      </div>
     );
   }
 
   if (!seller) {
     return (
-      <MainLayout>
-        <main id="main-content" className="flex-1 pt-4 md:pt-28">
-          <div className="container-cinematic py-12">
-            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
-              <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller not found</h2>
-              <p className="text-gray-500 mb-6">The seller profile you're looking for doesn't exist.</p>
-              <Link to="/catalog" className="btn-primary">
-                Browse Products
-              </Link>
-            </div>
+      <div className="bg-jet min-h-screen pt-24">
+        <div className="container-cinematic py-12">
+          <div className="card-glass text-center py-16">
+            <Store className="w-16 h-16 text-white/20 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Seller not found</h2>
+            <p className="text-white/60 mb-6">The seller profile you're looking for doesn't exist.</p>
+            <Link to="/catalog" className="btn-primary">
+              Browse Products
+            </Link>
           </div>
-        </main>
-    </MainLayout>
+        </div>
+      </div>
     );
   }
 
-  const sellerName = seller.businessName || seller.store?.storeName || 'Seller';
-  const sellerDescription = seller.store?.storeDescription
-    ? seller.store.storeDescription
-    : `Browse products from ${sellerName} on Loadify Market — a UK multi-category marketplace.`;
-  const sellerImage = seller.store?.storeLogo || seller.store?.storeBanner;
-
   return (
-    <MainLayout>
-      <SEO
-        title={`${sellerName} | Loadify Market`}
-        description={sellerDescription}
-        canonical={`/seller/${slug}`}
-        ogType="profile"
-        {...(sellerImage ? { ogImage: sellerImage } : {})}
-      />
-      <main className="flex-1 pt-4 md:pt-28">
-      {/* Breadcrumb */}
-      <div className="container-cinematic py-4">
-        <BreadcrumbNav
-          items={[
-            { label: "Home", to: "/" },
-            { label: "Catalog", to: "/catalog" },
-            { label: sellerName },
-          ]}
-          showBack={true}
-          backLabel="Back to Catalog"
-          backTo="/catalog"
-        />
+    <div className="bg-jet min-h-screen pt-24">
+      {/* Back Button */}
+      <div className="container-cinematic py-6">
+        <Link to="/catalog" className="inline-flex items-center gap-2 text-white/60 hover:text-gold transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Catalog
+        </Link>
       </div>
 
       {/* Store Banner */}
@@ -175,7 +160,7 @@ export default function SellerPublicProfilePage() {
 
       {/* Seller Profile Header */}
       <div className="container-cinematic py-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <div className="card-glass">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Logo */}
             <div className="flex-shrink-0">
@@ -186,8 +171,8 @@ export default function SellerPublicProfilePage() {
                   className="w-24 h-24 rounded-premium-sm object-cover"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-premium-sm bg-white flex items-center justify-center">
-                  <Store className="w-12 h-12 text-gray-400" />
+                <div className="w-24 h-24 rounded-premium-sm bg-graphite flex items-center justify-center">
+                  <Store className="w-12 h-12 text-white/40" />
                 </div>
               )}
             </div>
@@ -195,7 +180,7 @@ export default function SellerPublicProfilePage() {
             {/* Business Info */}
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-3">
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-white">
                   {seller.businessName || seller.store?.storeName || 'Seller'}
                 </h1>
                 <VerificationBadge isVerified={seller.isApproved} size="md" />
@@ -203,16 +188,11 @@ export default function SellerPublicProfilePage() {
               </div>
 
               {seller.store?.storeDescription && (
-                <p className="text-gray-600 mb-4 max-w-2xl">{seller.store.storeDescription}</p>
+                <p className="text-white/70 mb-4 max-w-2xl">{seller.store.storeDescription}</p>
               )}
 
-              {/* Marketplace intermediary notice */}
-              <p className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 mb-4 max-w-2xl">
-                This seller operates independently on Loadify Market. Products are supplied and fulfilled by the seller.
-              </p>
-
               {/* Contact Info */}
-              <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
+              <div className="flex flex-wrap gap-4 text-sm text-white/60 mb-4">
                 {seller.businessAddress && (
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
@@ -227,10 +207,10 @@ export default function SellerPublicProfilePage() {
                     <span>{seller.contactPhone}</span>
                   </div>
                 )}
-                {seller.isApproved && (
+                {seller.user?.email && (
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4" />
-                    <span>Active Seller</span>
+                    <span>{seller.user.email}</span>
                   </div>
                 )}
               </div>
@@ -238,76 +218,55 @@ export default function SellerPublicProfilePage() {
               {/* Payment Behaviour */}
               {seller.paymentBehaviour && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Payment Reliability</h3>
+                  <h3 className="text-sm font-medium text-white/60 mb-2">Payment Reliability</h3>
                   <PaymentBehaviourBadge behaviour={seller.paymentBehaviour} size="md" />
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-white/40 mt-2">
                     Information only. Not a payment guarantee.
                   </p>
                 </div>
               )}
 
               {/* Stats */}
-              <div className="flex flex-wrap gap-6 pt-4 border-t border-gray-200 mb-5">
+              <div className="flex flex-wrap gap-6 pt-4 border-t border-white/10 mb-5">
                 <div>
                   <p className="text-2xl font-bold text-gold">{(seller.rating || 0).toFixed(1)}</p>
-                  <p className="text-xs text-gray-500">Seller Rating</p>
+                  <p className="text-xs text-white/60">Seller Rating</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gold">{seller.totalSales || 0}</p>
-                  <p className="text-xs text-gray-500">Total Sales</p>
+                  <p className="text-xs text-white/60">Total Sales</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gold">{products.length}</p>
-                  <p className="text-xs text-gray-500">Active Listings</p>
+                  <p className="text-xs text-white/60">Active Listings</p>
                 </div>
-                {seller.createdAt && (
+                {seller.user?.createdAt && (
                   <div>
-                    <p className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                    <p className="text-sm font-medium text-white/80 flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-gold" />
-                      Member since {formatDistanceToNow(new Date(seller.createdAt), { addSuffix: false })}
+                      Member since {formatDistanceToNow(new Date(seller.user.createdAt), { addSuffix: false })}
                     </p>
-                    <p className="text-xs text-gray-500">Joined</p>
+                    <p className="text-xs text-white/60">Joined</p>
                   </div>
                 )}
               </div>
 
               {/* Seller CTAs */}
               <div className="flex flex-wrap gap-3">
-                {user?.id === seller.userId ? (
-                  <>
-                    <Link
-                      to="/seller/profile"
-                      className="btn-primary inline-flex items-center gap-2 text-sm"
-                    >
-                      <Settings className="w-4 h-4" />
-                      Edit Store Profile
-                    </Link>
-                    <Link
-                      to="/seller/products"
-                      className="btn-glass inline-flex items-center gap-2 text-sm"
-                    >
-                      <Package className="w-4 h-4" />
-                      Manage Listings
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      to="/buyer/messages"
-                      className="btn-primary inline-flex items-center gap-2 text-sm"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      Contact Seller
-                    </Link>
-                    <Link
-                      to={`/catalog?seller=${seller.userId}`}
-                      className="btn-glass inline-flex items-center gap-2 text-sm"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                      Browse All Listings
-                    </Link>
-                  </>
-                )}
+                <Link
+                  to="/messages"
+                  className="btn-primary inline-flex items-center gap-2 text-sm"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Contact Seller
+                </Link>
+                <Link
+                  to={`/catalog?seller=${seller.userId}`}
+                  className="btn-glass inline-flex items-center gap-2 text-sm"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  Browse All Listings
+                </Link>
               </div>
             </div>
           </div>
@@ -318,13 +277,13 @@ export default function SellerPublicProfilePage() {
       <div className="container-cinematic pb-12">
         <div className="flex items-center gap-3 mb-6">
           <Package className="w-6 h-6 text-gold" />
-          <h2 className="text-2xl font-bold text-gray-900">Active Listings</h2>
+          <h2 className="text-2xl font-bold text-white">Active Listings</h2>
         </div>
 
         {products.length === 0 ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-12">
-            <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">This seller has no active listings at the moment.</p>
+          <div className="card-glass text-center py-12">
+            <Package className="w-12 h-12 text-white/20 mx-auto mb-4" />
+            <p className="text-white/60">This seller has no active listings at the moment.</p>
           </div>
         ) : (
           <div className="product-grid">
@@ -334,7 +293,6 @@ export default function SellerPublicProfilePage() {
           </div>
         )}
       </div>
-      </main>
-    </MainLayout>
+    </div>
   );
 }

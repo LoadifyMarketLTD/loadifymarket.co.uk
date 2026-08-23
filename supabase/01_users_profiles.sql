@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   id                UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email             TEXT        UNIQUE NOT NULL,
   role              TEXT        NOT NULL DEFAULT 'buyer'
-                      CHECK (role IN ('buyer','seller','admin')),
+                      CHECK (role IN ('guest','buyer','seller','admin','owner')),
   "marketplaceRole" TEXT        CHECK ("marketplaceRole" IN ('carrier','broker','seller')),
   "firstName"       TEXT,
   "lastName"        TEXT,
@@ -81,22 +81,6 @@ CREATE INDEX IF NOT EXISTS idx_seller_profiles_verification ON seller_profiles (
 CREATE TRIGGER trg_seller_profiles_updatedAt BEFORE UPDATE ON seller_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ── MIGRATE EXISTING SELLER_PROFILES TABLE ──────────────────────
--- Safe to run even when upgrading from an older schema that pre-dates
--- these columns.  Each statement is a no-op if the column already exists.
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "disputeRate"         DECIMAL(5,4) NOT NULL DEFAULT 0.0000;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "deliverySuccessRate" DECIMAL(5,4) NOT NULL DEFAULT 1.0000;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "responseTimeHours"   DECIMAL(5,2) NOT NULL DEFAULT 0.00;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "onTimeShipmentRate"  DECIMAL(5,2) NOT NULL DEFAULT 100.00;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "marketplaceRole"     TEXT         CHECK ("marketplaceRole" IN ('carrier','broker','seller'));
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "paymentBehaviour"    TEXT         CHECK ("paymentBehaviour" IN ('pays_on_time','sometimes_late','repeated_delays'));
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "isVerified"          BOOLEAN      NOT NULL DEFAULT FALSE;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "profileCompleteness" INTEGER      NOT NULL DEFAULT 0;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "contactPhone"        TEXT;
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "stripeConnectStatus" TEXT         CHECK ("stripeConnectStatus" IN ('pending', 'restricted', 'active'));
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "sellerStatus"        TEXT         NOT NULL DEFAULT 'draft' CHECK ("sellerStatus" IN ('draft', 'submitted', 'active', 'suspended'));
-ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "activatedAt"         TIMESTAMPTZ;
-
 -- ── SELLER STORES ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS seller_stores (
   "userId"           UUID        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -142,7 +126,7 @@ CREATE TRIGGER trg_seller_verifications_updatedAt BEFORE UPDATE ON seller_verifi
 CREATE OR REPLACE FUNCTION handle_new_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.role = 'buyer' THEN
+  IF NEW.role IN ('buyer','guest') THEN
     INSERT INTO buyer_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;
   ELSIF NEW.role = 'seller' THEN
     INSERT INTO seller_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;

@@ -1,4 +1,4 @@
-export type UserRole = 'buyer' | 'seller' | 'admin';
+export type UserRole = 'guest' | 'buyer' | 'seller' | 'admin' | 'owner';
 
 // Marketplace roles for sellers/users
 export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;
@@ -6,25 +6,10 @@ export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;
 // Payment behaviour indicator
 export type PaymentBehaviour = 'pays_on_time' | 'sometimes_late' | 'repeated_delays' | null;
 
-/**
- * Canonical seller account lifecycle status (migration 210).
- *   draft     → signed up; setup not yet complete
- *   submitted → profile complete; Stripe not yet fully ready
- *   active    → profile complete AND Stripe ready (auto-set)
- *   suspended → manually suspended by admin
- */
-export type SellerStatus = 'draft' | 'submitted' | 'active' | 'suspended';
-
 export interface User {
   id: string;
   email: string;
   role: UserRole;
-  /**
-   * True when this user is a platform admin.
-   * Derived from role === 'admin' at auth-hydration time.
-   * Admin is a system-level flag — it cannot be assigned from the UI.
-   */
-  isAdmin?: boolean;
   marketplaceRole?: MarketplaceRole;
   firstName?: string;
   lastName?: string;
@@ -34,10 +19,6 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  /** Cached from seller_profiles at login time. Only set for role==='seller'. */
-  sellerStatus?: SellerStatus;
-  /** Onboarding completion flag from users.onboardingCompleted. */
-  onboardingCompleted?: boolean;
 }
 
 export interface BuyerProfile {
@@ -68,11 +49,7 @@ export interface SellerProfile {
   vatNumber?: string;
   companyRegistrationNumber?: string;
   businessAddress?: Address;
-  // Seller activation status (canonical — migration 210)
-  sellerStatus?: SellerStatus;
-  activatedAt?: string;
-  // Legacy verification fields (deprecated — kept for backwards compatibility)
-  // Use sellerStatus instead of verificationStatus for new code.
+  // Verification
   verificationStatus?: SellerVerificationStatus;
   verificationDocuments?: VerificationDocument[];
   verifiedAt?: string;
@@ -80,7 +57,6 @@ export interface SellerProfile {
   // Stripe Connect Express
   stripeAccountId?: string;
   stripeConnectStatus?: 'pending' | 'restricted' | 'active' | null;
-  /** @deprecated Use sellerStatus === 'active' instead */
   isApproved: boolean;
   // Reputation metrics
   rating: number;
@@ -101,13 +77,6 @@ export interface SellerProfile {
   profileCompleteness?: number;
   marketplaceRole?: MarketplaceRole;
   paymentBehaviour?: PaymentBehaviour;
-  // Shipping preferences (migration 260)
-  shippingDefaults?: {
-    carrier?: string;
-    dispatchTime?: string;
-    originPostcode?: string;
-    freeShippingThreshold?: string;
-  };
 }
 
 export interface Address {
@@ -118,12 +87,12 @@ export interface Address {
   country: string;
 }
 
-export type ProductType = 'product' | 'pallet' | 'lot' | 'clearance' | 'retail' | 'handmade' | 'wholesale';
-export type ProductCondition = 'new' | 'used' | 'refurbished' | 'returns_stock' | 'mixed' | 'other';
+export type ProductType = 'product' | 'pallet' | 'lot' | 'clearance' | 'retail' | 'handmade' | 'wholesale' | 'logistics';
+export type ProductCondition = 'new' | 'used' | 'refurbished';
 export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'clearance';
 
 // Listing type for filtering and display
-export type ListingType = 'pallet' | 'wholesale' | 'retail' | 'handmade';
+export type ListingType = 'pallet' | 'wholesale' | 'retail' | 'handmade' | 'logistics';
 
 export interface Product {
   id: string;
@@ -157,6 +126,13 @@ export interface Product {
   isHandmade?: boolean; // Flag for handmade items
   isUnique?: boolean; // Flag for unique/one-of-a-kind items
   artistName?: string; // For handmade items - creator/artist name
+  logisticsInfo?: {
+    // For logistics jobs
+    pickupLocation?: string;
+    deliveryLocation?: string;
+    vehicleType?: string;
+    pickupDate?: string;
+  };
   isActive: boolean;
   isApproved: boolean;
   views: number;
@@ -188,9 +164,6 @@ export interface Category {
   slug: string;
   description?: string;
   parentId?: string;
-  parent_id?: string;
-  level?: number;
-  isActive?: boolean;
   imageUrl?: string;
   order: number;
 }
@@ -405,35 +378,6 @@ export interface NotificationSettings {
   updatedAt?: string;
 }
 
-export type AppNotificationType =
-  | 'order'
-  | 'payment'
-  | 'shipment'
-  | 'delivery'
-  | 'return'
-  | 'dispute'
-  | 'message'
-  | 'system'
-  | 'general'
-  | 'product_question'
-  | 'listing_published'
-  | 'listing_sold'
-  | 'share_reminder'
-  | 'rfq'
-  | 'review';
-
-export interface AppNotification {
-  id: string;
-  type: AppNotificationType | string;
-  title: string;
-  message: string;
-  link: string | null;
-  isRead: boolean;
-  isArchived?: boolean;
-  archivedAt?: string | null;
-  createdAt: string;
-}
-
 export interface Message {
   id: string;
   conversationId: string;
@@ -454,28 +398,6 @@ export interface Conversation {
   productId?: string;
   lastMessageAt: string;
   createdAt: string;
-}
-
-export interface ConversationParticipant {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-}
-
-export interface InboxConversation {
-  id: string;
-  user1Id: string;
-  user2Id: string;
-  productId?: string | null;
-  lastMessageAt: string;
-  subject?: string | null;
-  isArchived?: boolean;
-  other: ConversationParticipant;
-  unreadCount: number;
-  lastMessagePreview: string | null;
-  lastMessageSenderId?: string | null;
-  productTitle?: string | null;
-  productImage?: string | null;
 }
 
 export interface Cart {
@@ -537,4 +459,41 @@ export interface RFQRequest {
   message?: string;
   status: RFQStatus;
   created_at: string;
+}
+
+// ─── Delivery Request (Loadify ↔ XDrive) ────────────────────────────────────
+
+export type DeliveryRequestStatus =
+  | 'draft'
+  | 'submitted'
+  | 'in_review'
+  | 'quoted'
+  | 'accepted'
+  | 'in_transit'
+  | 'delivered'
+  | 'cancelled';
+
+export interface DeliveryRequest {
+  /** Locally-generated UUID used as a stable key */
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  sellerId: string;
+  sellerName?: string;
+  buyerName: string;
+  buyerEmail: string;
+  pickupPostcode: string;
+  dropoffPostcode: string;
+  palletCount?: string;
+  weight?: string;
+  itemType?: string;
+  category?: string;
+  quantity?: string;
+  status: DeliveryRequestStatus;
+  /** Always 'loadify-market' for requests originating here */
+  source: string;
+  /** ISO timestamp */
+  createdAt: string;
+  /** Optional reference returned by XDrive */
+  xdriveRef?: string;
 }

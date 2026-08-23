@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import MainLayout from "@/layouts/MainLayout";
-import SEO from "@/components/SEO";
 import { useSearchParams } from 'react-router-dom';
 import { Package, Search, Truck, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import type { ShipmentEvent } from '../types/shipping';
@@ -49,23 +47,16 @@ export default function TrackOrderPage() {
       return;
     }
 
-    // Email is mandatory — the backend rejects requests without a valid email to
-    // prevent order enumeration attacks. We mirror that check here so users get a
-    // clear message immediately instead of a confusing backend 400.
-    if (!trackEmail) {
-      setError('Please enter the email address used when placing this order');
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/.netlify/functions/track-shipment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderNumber: trackOrderNumber, email: trackEmail }),
-      });
+      const params = new URLSearchParams({ orderNumber: trackOrderNumber });
+      if (trackEmail) {
+        params.append('email', trackEmail);
+      }
+
+      const response = await fetch(`/.netlify/functions/track-shipment?${params}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -86,9 +77,7 @@ export default function TrackOrderPage() {
     const orderNumberParam = searchParams.get('orderNumber');
     if (orderNumberParam) {
       setOrderNumber(orderNumberParam);
-      // Do NOT auto-trigger tracking here — the backend requires a valid email to
-      // prevent order enumeration attacks and will reject requests without one.
-      // Pre-fill the order number so the user only has to type their email.
+      handleTrack(orderNumberParam, '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only on mount
@@ -101,14 +90,14 @@ export default function TrackOrderPage() {
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'delivered':
-        return <CheckCircle className="w-6 h-6 text-success" aria-hidden="true" />;
+        return <CheckCircle className="w-6 h-6 text-green-600" aria-hidden="true" />;
       case 'in transit':
       case 'out for delivery':
       case 'dispatched':
         return <Truck className="w-6 h-6 text-blue-600" aria-hidden="true" />;
       case 'pending':
       case 'processing':
-        return <Clock className="w-6 h-6 text-warning" aria-hidden="true" />;
+        return <Clock className="w-6 h-6 text-yellow-600" aria-hidden="true" />;
       default:
         return <AlertCircle className="w-6 h-6 text-gray-600" aria-hidden="true" />;
     }
@@ -125,14 +114,7 @@ export default function TrackOrderPage() {
   };
 
   return (
-    <MainLayout>
-      <SEO
-        title="Track Your Order | Loadify Market"
-        description="Track the status and delivery progress of your Loadify Market order in real time."
-        canonical="/track-order"
-      />
-      <main id="main-content" className="flex-1 pt-4 md:pt-28 pb-16">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-navy-800 mb-2">Track Your Order</h1>
         <p className="text-gray-600">Enter your order number to track your shipment</p>
@@ -157,7 +139,7 @@ export default function TrackOrderPage() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address *
+              Email (optional, for verification)
             </label>
             <input
               id="email"
@@ -166,13 +148,11 @@ export default function TrackOrderPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your.email@example.com"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              required
             />
-            <p className="text-xs text-gray-500 mt-1">Enter the email address you used when placing the order.</p>
           </div>
 
           {error && (
-            <div className="bg-danger/10 border border-danger/30 text-danger px-4 py-3 rounded-lg">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
@@ -180,7 +160,7 @@ export default function TrackOrderPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 text-gray-900 py-3 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-orange-500 text-white py-3 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -243,11 +223,11 @@ export default function TrackOrderPage() {
             <h2 className="text-xl font-bold text-navy-800 mb-4">Shipment Status</h2>
             
             {trackingData.state === 'being_prepared' ? (
-              <div className="flex items-center gap-3 p-4 bg-primary-soft border border-primary/40 rounded-lg">
-                <Package className="w-8 h-8 text-warning" aria-hidden="true" />
+              <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <Package className="w-8 h-8 text-yellow-600" aria-hidden="true" />
                 <div>
-                  <p className="font-semibold text-primary">Your order is being prepared</p>
-                  <p className="text-sm text-primary">
+                  <p className="font-semibold text-yellow-800">Your order is being prepared</p>
+                  <p className="text-sm text-yellow-700">
                     The seller is preparing your order for shipment. You'll receive tracking information soon.
                   </p>
                 </div>
@@ -327,8 +307,6 @@ export default function TrackOrderPage() {
           )}
         </div>
       )}
-      </div>
-      </main>
-    </MainLayout>
+    </div>
   );
 }

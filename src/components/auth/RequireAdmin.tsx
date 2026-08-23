@@ -1,65 +1,39 @@
-import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasAdminAccess } from '../../lib/roleUtils';
+import RequireAuth from './RequireAuth';
 
 interface Props {
   children: ReactNode;
 }
 
 /**
- * Route guard that requires the admin role.
- * Self-contained: handles unauthenticated redirect, loading state, and access denial
- * without wrapping RequireAuth.
- *
- * Access rules:
- *   admin       → render children
- *   non-admin   → 403 message
- *   unauthenticated → redirect to /login with return URL
+ * Route guard that requires admin or owner role.
+ * Unauthenticated users are redirected to /login.
+ * Authenticated non-admin users see a 403 message instead of the page.
  */
 export default function RequireAdmin({ children }: Props) {
   const { user, isLoading } = useAuthStore();
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      const returnUrl = `${location.pathname}${location.search}`;
-      navigate(`/login?next=${encodeURIComponent(returnUrl)}`, { replace: true });
-    }
-  }, [user, isLoading, navigate, location]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800" />
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
-  if (user.isActive !== true) {
-    return <Navigate to="/login?error=account_inactive" replace />;
-  }
-
-  if (!hasAdminAccess(user)) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="rounded-xl p-10 max-w-md w-full text-center" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
-          <p className="text-5xl mb-4">🚫</p>
-          <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
-          <p className="text-slate-400 mb-6">
-            You need admin privileges to view this page.
-          </p>
-          <Link to="/dashboard" className="btn-primary">
-            Go to Dashboard
-          </Link>
+  return (
+    <RequireAuth>
+      {!isLoading && user && !hasAdminAccess(user) ? (
+        <div className="min-h-screen bg-jet flex items-center justify-center px-4">
+          <div className="card-glass max-w-md w-full text-center p-10">
+            <p className="text-5xl mb-4">🚫</p>
+            <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
+            <p className="text-white/60 mb-6">
+              You need admin privileges to view this page.
+            </p>
+            <Link to="/dashboard" className="btn-primary">
+              Go to Dashboard
+            </Link>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
+      ) : (
+        <>{children}</>
+      )}
+    </RequireAuth>
+  );
 }

@@ -1,89 +1,13 @@
-/**
- * send-email.ts — Transactional email dispatcher (SendGrid)
- *
- * ⚠️  TRANSACTIONAL EMAILS ONLY — NOT FOR MARKETING ⚠️
- * -------------------------------------------------------
- * This function sends emails that are directly triggered by user actions on
- * the platform (order confirmations, dispute notifications, welcome emails,
- * onboarding reminders, etc.).
- *
- * It MUST NOT be used for:
- *   - Marketing or promotional campaigns
- *   - Newsletters or bulk emails
- *   - Any unsolicited or opt-in-required communication
- *
- * Transactional emails are exempt from PECR soft opt-in rules, but only when
- * they are genuine service messages. Misusing this endpoint for marketing
- * would violate SendGrid's Acceptable Use Policy, PECR, and GDPR, and would
- * risk our sending domain being blacklisted.
- *
- * All emails are sent exclusively from contact@loadifymarket.co.uk via
- * SendGrid. Gmail or any other fallback address must never be used.
- * See docs/SUPPORT_SLA.md for the full transactional email policy.
- */
 import sgMail from '@sendgrid/mail';
 import { Handler } from '@netlify/functions';
-import { createClient } from '@supabase/supabase-js';
-import { checkRateLimit } from './_shared/rateLimiter';
-import { getClientIp } from './_shared/getClientIp';
-import { verifyCaptchaToken } from './_shared/verifyCaptcha';
 
-const sendgridApiKey = process.env.SENDGRID_API_KEY;
-if (!sendgridApiKey) {
-  console.error('send-email: SENDGRID_API_KEY is not set');
-}
-sgMail.setApiKey(sendgridApiKey!);
-
-// Templates that public (unauthenticated) users may trigger directly.
-// All other templates require the X-Internal-Secret header.
-const PUBLIC_TEMPLATES = new Set(['contact_enquiry']);
-const PUBLIC_SUPPORT_RECIPIENT = (process.env.SUPPORT_INBOX_EMAIL || 'contact@loadifymarket.co.uk').trim().toLowerCase();
-const MIN_CONTACT_SUBMIT_MS = 1_500;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const supabase =
-  process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
-    ? createClient(
-        process.env.VITE_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-        { auth: { autoRefreshToken: false, persistSession: false } },
-      )
-    : null;
-
-type EmailTemplate =
-  | 'order_confirmation'
-  | 'order_shipped'
-  | 'order_delivered'
-  | 'return_requested'
-  | 'dispute_opened'
-  | 'seller_new_order'
-  | 'seller_shipping_reminder'
-  | 'admin_seller_verification'
-  | 'contact_enquiry'
-  | 'admin_new_buyer'
-  | 'admin_new_seller'
-  | 'admin_seller_active'
-  | 'seller_welcome'
-  | 'seller_account_active'
-  | 'buyer_welcome'
-  | 'resend_verification'
-  | 'onboarding_reminder'
-  | 'stripe_connect_reminder'
-  | 'confirm_email'
-  | 'seller_new_message';
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 interface EmailRequest {
   to: string;
   subject: string;
-  template: EmailTemplate;
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification';
   data: Record<string, unknown>;
-  // Public anti-spam fields (optional for internal server-to-server calls)
-  captchaToken?: string;
-  // Honeypot aliases to support multiple form conventions
-  honeypot?: string;
-  botField?: string;
-  ['bot-field']?: string;
-  submittedAt?: number;
 }
 
 export const handler: Handler = async (event) => {
@@ -94,199 +18,16 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (!sendgridApiKey) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Email service not configured' }),
-    };
-  }
-
-  // ── Internal-secret gate ─────────────────────────────────────────────────
-  // Function-to-function calls (stripe-webhook, register, connect-status, etc.)
-  // must include the X-Internal-Secret header.  Public callers may only use
-  // templates listed in PUBLIC_TEMPLATES (e.g. the contact form).
-  let bodyRaw: unknown;
   try {
-    bodyRaw = JSON.parse(event.body || '{}');
-  } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
-  }
-
-  if (!isPlainObject(bodyRaw)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid payload type' }) };
-  }
-  const body = bodyRaw as EmailRequest;
-  const { to, subject, template, data } = body;
-
-  if (!isValidTemplate(template)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid template' }) };
-  }
-  if (!isValidEmail(to)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid recipient email' }) };
-  }
-  if (!isSafeSubject(subject)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid subject' }) };
-  }
-  if (!isPlainObject(data)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid data payload' }) };
-  }
-
-  const internalSecret = process.env.NETLIFY_INTERNAL_SECRET;
-  const providedSecret = event.headers['x-internal-secret'];
-  // NETLIFY_DEV is set to 'true' by `netlify dev` when running locally.
-  // Only fail-open in that context so developers don't need to configure the
-  // secret just to test locally.  In every other environment (staging,
-  // production, deploy-preview) the secret MUST be present and correct.
-  const isLocalDev = process.env.NETLIFY_DEV === 'true';
-
-  if (!internalSecret || internalSecret.length === 0) {
-    if (isLocalDev) {
-      console.warn(
-        'send-email: NETLIFY_INTERNAL_SECRET is not configured – accepting all ' +
-        'server-side calls in local dev. Set this variable before deploying.',
-      );
-    } else {
-      // In production/staging the secret MUST be set.  Return 503 so callers
-      // can distinguish a misconfiguration from an unauthorised request (403).
-      console.error(
-        'send-email: NETLIFY_INTERNAL_SECRET is not configured. ' +
-        'Add this environment variable in the Netlify dashboard.',
-      );
-      if (!PUBLIC_TEMPLATES.has(template)) {
-        return {
-          statusCode: 503,
-          body: JSON.stringify({
-            error: 'Email service misconfigured / NETLIFY_INTERNAL_SECRET is not set on this deploy',
-          }),
-        };
-      }
-    }
-  }
-
-  // A call is considered internal when:
-  //   a) running in local dev with no secret configured (dev convenience), OR
-  //   b) the caller presents the correct x-internal-secret header value.
-  const isInternalCall =
-    (isLocalDev && (!internalSecret || internalSecret.length === 0)) ||
-    (internalSecret && internalSecret.length > 0 && providedSecret === internalSecret);
-
-  if (!isInternalCall && !PUBLIC_TEMPLATES.has(template)) {
-    return {
-      statusCode: 403,
-      body: JSON.stringify({ error: 'Forbidden' }),
-    };
-  }
-
-  if (!isInternalCall && template === 'contact_enquiry') {
-    const honeypotValue = body.honeypot || body.botField || body['bot-field'] || '';
-    if (typeof honeypotValue === 'string' && honeypotValue.trim().length > 0) {
-      return { statusCode: 200, body: JSON.stringify({ success: true }) };
-    }
-
-    if (typeof body.submittedAt === 'number') {
-      const elapsed = Date.now() - body.submittedAt;
-      if (elapsed >= 0 && elapsed < MIN_CONTACT_SUBMIT_MS) {
-        return { statusCode: 429, body: JSON.stringify({ error: 'Spam protection triggered' }) };
-      }
-    }
-
-    const contactEmail = asTrimmed(data.email);
-    const contactName = asTrimmed(data.name);
-    const contactMessage = asTrimmed(data.message);
-    const contactSubject = asTrimmed(data.subject);
-
-    if (!isValidEmail(contactEmail)) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid contact email' }) };
-    }
-    if (!contactName || contactName.length < 2 || contactName.length > 120) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid contact name' }) };
-    }
-    if (!contactMessage || contactMessage.length < 10 || contactMessage.length > 5000) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid contact message length' }) };
-    }
-    if (contactSubject.length > 200) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid contact subject length' }) };
-    }
-
-    const captcha = await verifyCaptchaToken({
-      token: asTrimmed(body.captchaToken),
-      remoteIp: getClientIp(event),
-    });
-    if (!captcha.ok) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Captcha verification failed' }) };
-    }
-  }
-  // ─────────────────────────────────────────────────────────────────────────
-
-  // ── Rate limiting ──────────────────────────────────────────────────────────
-  // Public contact form traffic gets strict quotas by IP + contact email.
-  // Internal server-to-server calls keep a higher threshold.
-  if (supabase) {
-    const ip = getClientIp(event);
-    const isPublicContact = !isInternalCall && template === 'contact_enquiry';
-
-    if (ip) {
-      const rl = await checkRateLimit({
-        supabase,
-        tableName: 'email_rate_limits',
-        identifier: `${isPublicContact ? 'public' : 'internal'}:ip:${ip}`,
-        windowMinutes: 15,
-        maxAttempts: isPublicContact ? 5 : 40,
-        policy: 'fail-soft',
-      });
-      if (rl.exceeded) {
-        return {
-          statusCode: 429,
-          body: JSON.stringify({ error: 'Too many email requests. Please try again later.' }),
-        };
-      }
-    }
-
-    if (isPublicContact) {
-      const contactEmail = asTrimmed(data.email).toLowerCase();
-      if (contactEmail) {
-        const byEmail = await checkRateLimit({
-          supabase,
-          tableName: 'email_rate_limits',
-          identifier: `public:email:${contactEmail}`,
-          windowMinutes: 15,
-          maxAttempts: 3,
-          policy: 'fail-soft',
-        });
-        if (byEmail.exceeded) {
-          return {
-            statusCode: 429,
-            body: JSON.stringify({ error: 'Too many requests from this email. Please try again later.' }),
-          };
-        }
-      }
-    }
-  }
-  // ─────────────────────────────────────────────────────────────────────────
-
-  try {
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
-    if (!fromEmail) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'SENDGRID_FROM_EMAIL is not configured' }),
-      };
-    }
+    const body: EmailRequest = JSON.parse(event.body || '{}');
+    const { to, subject, template, data } = body;
 
     const htmlContent = generateEmailHTML(template, data);
 
-    const isPublicContact = !isInternalCall && template === 'contact_enquiry';
-    const normalizedTo = isPublicContact ? PUBLIC_SUPPORT_RECIPIENT : to.trim();
-    const normalizedSubject = isPublicContact
-      ? `Contact Form: ${asTrimmed(data.subject) || 'New Enquiry'}`
-      : subject.trim();
-    const replyTo = isPublicContact ? asTrimmed(data.email) || fromEmail : fromEmail;
-
     const msg = {
-      to: normalizedTo,
-      from: fromEmail,
-      replyTo,
-      subject: normalizedSubject,
+      to,
+      from: process.env.VITE_SUPPORT_EMAIL || 'support@loadifymarket.co.uk',
+      subject,
       html: htmlContent,
     };
 
@@ -297,67 +38,15 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ success: true, message: 'Email sent' }),
     };
   } catch (error) {
-    // Log full error server-side but never expose internal details to callers.
     console.error('Email sending error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to send email' }),
+      body: JSON.stringify({
+        error: error instanceof Error ? error.message : 'Failed to send email',
+      }),
     };
   }
 };
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function asTrimmed(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function isValidEmail(value: string): boolean {
-  return EMAIL_RE.test(value.trim()) && value.length <= 254;
-}
-
-function isSafeSubject(value: string): boolean {
-  const s = value.trim();
-  if (!s || s.length < 1 || s.length > 200) return false;
-  return !/[\r\n]/.test(s);
-}
-
-function isValidTemplate(value: unknown): value is EmailTemplate {
-  return typeof value === 'string' && [
-    'order_confirmation',
-    'order_shipped',
-    'order_delivered',
-    'return_requested',
-    'dispute_opened',
-    'seller_new_order',
-    'seller_shipping_reminder',
-    'admin_seller_verification',
-    'contact_enquiry',
-    'admin_new_buyer',
-    'admin_new_seller',
-    'admin_seller_active',
-    'seller_welcome',
-    'seller_account_active',
-    'buyer_welcome',
-    'resend_verification',
-    'onboarding_reminder',
-    'stripe_connect_reminder',
-    'confirm_email',
-    'seller_new_message',
-  ].includes(value);
-}
-
-/** Escape a string for safe embedding in HTML to prevent HTML injection. */
-function escapeHtml(value: unknown): string {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 function generateEmailHTML(template: string, data: Record<string, unknown>): string {
   const header = `
@@ -373,7 +62,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
       <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
         <p>Loadify Market - B2B &amp; B2C Marketplace</p>
         <p>XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom</p>
-        <p>VAT: GB375949535 | Email: contact@loadifymarket.co.uk</p>
+        <p>VAT: GB375949535 | Email: support@loadifymarket.co.uk</p>
       </div>
     </div>
   `;
@@ -384,52 +73,48 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
     case 'order_confirmation':
       content = `
         <h2 style="color: #243b53;">Order Confirmation</h2>
-        <p>Hi ${escapeHtml(data.customerName || 'Customer')},</p>
+        <p>Hi ${String(data.customerName || 'Customer')},</p>
         <p>Thank you for your order! Your order has been confirmed and is being processed.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Order Number:</strong> ${escapeHtml(data.orderNumber || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${escapeHtml(data.orderDate || '')}</p>
+          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${String(data.orderDate || '')}</p>
           <p style="margin: 10px 0 0 0;"><strong>Total:</strong> £${typeof data.total === 'number' ? data.total.toFixed(2) : '0.00'}</p>
-          ${data.sellerName ? `<p style="margin: 10px 0 0 0;"><strong>Sold by:</strong> ${escapeHtml(data.sellerName)}</p>` : ''}
         </div>
         <h3 style="color: #243b53;">Order Items:</h3>
         ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
           <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
-            <p style="margin: 0;"><strong>${escapeHtml(item.title || '')}</strong></p>
-            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${escapeHtml(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
+            <p style="margin: 0;"><strong>${String(item.title || '')}</strong></p>
+            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${String(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
           </div>
         `).join('') : ''}
-        <div style="background-color: #f0f9f4; border-left: 4px solid #22c55e; padding: 12px 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
-          <p style="margin: 0; font-size: 13px; color: #374151;"><strong>Marketplace Notice:</strong> Your order is fulfilled by the seller. Loadify Market is the marketplace platform and is not the seller of the products. For any questions about your order, please contact the seller directly or reach us at contact@loadifymarket.co.uk.</p>
-        </div>
         <p style="margin-top: 20px;">We'll send you another email when your order has been shipped.</p>
-        <p>If you have any questions, please contact us at contact@loadifymarket.co.uk</p>
+        <p>If you have any questions, please contact us at support@loadifymarket.co.uk</p>
       `;
       break;
 
     case 'order_shipped':
       content = `
         <h2 style="color: #243b53;">Your Order Has Been Shipped!</h2>
-        <p>Hi ${escapeHtml(data.customerName)},</p>
-        <p>Great news! Your order #${escapeHtml(data.orderNumber)} has been shipped.</p>
+        <p>Hi ${data.customerName},</p>
+        <p>Great news! Your order #${data.orderNumber} has been shipped.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Tracking Number:</strong> ${escapeHtml(data.trackingNumber || 'Not available')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Carrier:</strong> ${escapeHtml(data.carrier || 'Standard Delivery')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Estimated Delivery:</strong> ${escapeHtml(data.estimatedDelivery || '3-5 business days')}</p>
+          <p style="margin: 0;"><strong>Tracking Number:</strong> ${data.trackingNumber || 'Not available'}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Carrier:</strong> ${data.carrier || 'Standard Delivery'}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Estimated Delivery:</strong> ${data.estimatedDelivery || '3-5 business days'}</p>
         </div>
         <p>You can track your order on our website using your order number.</p>
-        <a href="${process.env.URL}/tracking/${escapeHtml(data.orderNumber)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Track Order</a>
+        <a href="${process.env.URL}/tracking/${data.orderNumber}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Track Order</a>
       `;
       break;
 
     case 'order_delivered':
       content = `
         <h2 style="color: #243b53;">Order Delivered!</h2>
-        <p>Hi ${escapeHtml(data.customerName)},</p>
-        <p>Your order #${escapeHtml(data.orderNumber)} has been delivered.</p>
+        <p>Hi ${data.customerName},</p>
+        <p>Your order #${data.orderNumber} has been delivered.</p>
         <p>We hope you're satisfied with your purchase. If you have any issues, please don't hesitate to contact us.</p>
         <p style="margin-top: 20px;">Would you like to leave a review?</p>
-        <a href="${process.env.URL}/orders/${escapeHtml(data.orderId)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Order &amp; Review</a>
+        <a href="${process.env.URL}/orders/${data.orderId}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Order &amp; Review</a>
         <p style="margin-top: 20px; color: #666; font-size: 14px;">Remember: You have 14 days from delivery to request a return if needed.</p>
       `;
       break;
@@ -437,10 +122,10 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
     case 'return_requested':
       content = `
         <h2 style="color: #243b53;">Return Request Received</h2>
-        <p>Hi ${escapeHtml(data.customerName)},</p>
-        <p>We've received your return request for order #${escapeHtml(data.orderNumber)}.</p>
+        <p>Hi ${data.customerName},</p>
+        <p>We've received your return request for order #${data.orderNumber}.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Reason:</strong> ${escapeHtml(data.reason)}</p>
+          <p style="margin: 0;"><strong>Reason:</strong> ${data.reason}</p>
           <p style="margin: 10px 0 0 0;"><strong>Status:</strong> Under Review</p>
         </div>
         <p>The seller will review your request and respond within 2 business days.</p>
@@ -451,14 +136,43 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
     case 'dispute_opened':
       content = `
         <h2 style="color: #243b53;">Dispute Opened</h2>
-        <p>Hi ${escapeHtml(data.customerName)},</p>
-        <p>A dispute has been opened for order #${escapeHtml(data.orderNumber)}.</p>
+        <p>Hi ${data.customerName},</p>
+        <p>A dispute has been opened for order #${data.orderNumber}.</p>
         <div style="background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
-          <p style="margin: 0;"><strong>Subject:</strong> ${escapeHtml(data.subject)}</p>
+          <p style="margin: 0;"><strong>Subject:</strong> ${data.subject}</p>
           <p style="margin: 10px 0 0 0;"><strong>Status:</strong> Open</p>
         </div>
         <p>Our team will review this dispute and work to resolve it as quickly as possible.</p>
         <p>Expected response time: 2-3 business days.</p>
+      `;
+      break;
+
+    case 'transport_quote_request':
+      content = `
+        <h2 style="color: #243b53;">New Transport Quote Request</h2>
+        <p>A new delivery request has been submitted from <strong>Loadify Market</strong>.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Reference:</strong> ${String(data.requestId || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Contact:</strong> ${String(data.fullName || '')} — ${String(data.email || '')} — ${String(data.phone || '')}</p>
+          ${data.companyName ? `<p style="margin: 8px 0 0 0;"><strong>Company:</strong> ${String(data.companyName)}</p>` : ''}
+        </div>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Item:</strong> ${String(data.itemType || '')}</p>
+          ${data.listingTitle ? `<p style="margin: 8px 0 0 0;"><strong>Listing:</strong> ${String(data.listingTitle)} (ID: ${String(data.listingId || '')})</p>` : ''}
+          ${data.sellerName ? `<p style="margin: 8px 0 0 0;"><strong>Seller:</strong> ${String(data.sellerName)} (ID: ${String(data.sellerId || '')})</p>` : ''}
+          <p style="margin: 8px 0 0 0;"><strong>Pallets / Items:</strong> ${String(data.palletCount || '')}</p>
+          ${data.weight ? `<p style="margin: 8px 0 0 0;"><strong>Weight:</strong> ${String(data.weight)}</p>` : ''}
+          ${data.dimensions ? `<p style="margin: 8px 0 0 0;"><strong>Dimensions:</strong> ${String(data.dimensions)}</p>` : ''}
+          ${data.quantity ? `<p style="margin: 8px 0 0 0;"><strong>Quantity:</strong> ${String(data.quantity)}</p>` : ''}
+        </div>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Pickup Postcode:</strong> ${String(data.pickupPostcode || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Dropoff Postcode:</strong> ${String(data.dropoffPostcode || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Collection Date:</strong> ${String(data.collectionDate || '')}</p>
+        </div>
+        ${data.deliveryNotes ? `<p><strong>Delivery Notes:</strong> ${String(data.deliveryNotes)}</p>` : ''}
+        ${data.listingReference ? `<p><strong>Listing Reference:</strong> ${String(data.listingReference)}</p>` : ''}
+        <p style="color: #888; font-size: 12px;">Source: ${String(data.source || 'loadify-market')}</p>
       `;
       break;
 
@@ -467,15 +181,15 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Order Received</h2>
         <p>You have a new order on Loadify Market!</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Order Number:</strong> ${escapeHtml(data.orderNumber || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${escapeHtml(data.orderDate || '')}</p>
+          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${String(data.orderDate || '')}</p>
           <p style="margin: 10px 0 0 0;"><strong>Order Total:</strong> £${typeof data.sellerTotal === 'number' ? data.sellerTotal.toFixed(2) : '0.00'}</p>
         </div>
         <h3 style="color: #243b53;">Items Ordered:</h3>
         ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
           <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
-            <p style="margin: 0;"><strong>${escapeHtml(item.title || '')}</strong></p>
-            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${escapeHtml(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
+            <p style="margin: 0;"><strong>${String(item.title || '')}</strong></p>
+            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${String(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
           </div>
         `).join('') : ''}
         <p style="margin-top: 20px;">Please process this order promptly. Log in to your seller dashboard to view full order details and arrange shipping.</p>
@@ -489,28 +203,11 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">Shipping Reminder</h2>
         <p>You have an order that is awaiting shipment.</p>
         <div style="background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
-          <p style="margin: 0;"><strong>Order Number:</strong> ${escapeHtml(data.orderNumber || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Ordered On:</strong> ${escapeHtml(data.orderDate || '')}</p>
+          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Ordered On:</strong> ${String(data.orderDate || '')}</p>
         </div>
         <p>Please arrange shipment as soon as possible to keep your seller rating high and your customers happy.</p>
         <a href="${process.env.URL}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Ship Now</a>
-      `;
-      break;
-
-    case 'contact_enquiry':
-      content = `
-        <h2 style="color: #243b53;">New Contact Form Submission</h2>
-        <p>A visitor has submitted a message via the Loadify Market contact form.</p>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Name:</strong> ${escapeHtml(data.name || '')}</p>
-          <p style="margin: 8px 0 0 0;"><strong>Email:</strong> ${escapeHtml(data.email || '')}</p>
-          ${data.subject ? `<p style="margin: 8px 0 0 0;"><strong>Subject:</strong> ${escapeHtml(data.subject)}</p>` : ''}
-        </div>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Message:</strong></p>
-          <p style="margin: 8px 0 0 0; white-space: pre-wrap;">${escapeHtml(data.message || '')}</p>
-        </div>
-        <p style="color: #888; font-size: 12px;">Submitted at: ${new Date().toLocaleString('en-GB')}</p>
       `;
       break;
 
@@ -519,174 +216,15 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Seller Verification Request</h2>
         <p>A seller has submitted a verification request and requires review.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Seller:</strong> ${escapeHtml(data.sellerName || 'Unknown')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Email:</strong> ${escapeHtml(data.sellerEmail || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Business:</strong> ${escapeHtml(data.businessName || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Submitted:</strong> ${escapeHtml(data.submittedAt || new Date().toLocaleDateString('en-GB'))}</p>
+          <p style="margin: 0;"><strong>Seller:</strong> ${String(data.sellerName || 'Unknown')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Email:</strong> ${String(data.sellerEmail || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Business:</strong> ${String(data.businessName || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Submitted:</strong> ${String(data.submittedAt || new Date().toLocaleDateString('en-GB'))}</p>
         </div>
         <p>Please log in to the admin dashboard to review the submitted documents and approve or reject the verification.</p>
-        <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Verification</a>
+        <a href="${process.env.URL}/admin/sellers" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Verification</a>
       `;
       break;
-
-    case 'admin_new_buyer':
-      content = `
-        <h2 style="color: #243b53;">New Buyer Registration</h2>
-        <p>A new buyer account has been created on Loadify Market.</p>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Registered:</strong> ${escapeHtml(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
-        </div>
-        <p>No action required. The buyer has direct access to the platform.</p>
-        <a href="${process.env.URL}/admin/users" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Users</a>
-      `;
-      break;
-
-    case 'admin_new_seller':
-      content = `
-        <h2 style="color: #243b53;">New Seller Registration</h2>
-        <p>A new seller account has been created on Loadify Market and is setting up their store.</p>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Email:</strong> ${escapeHtml(data.sellerEmail || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Name:</strong> ${escapeHtml(data.sellerName || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Store:</strong> ${escapeHtml(data.storeName || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Registered:</strong> ${escapeHtml(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
-        </div>
-        <p>The seller must complete their profile and connect a Stripe account before their store is active. No manual approval is required.</p>
-        <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
-      `;
-      break;
-
-    case 'admin_seller_active':
-      content = `
-        <h2 style="color: #243b53;">Seller Account Now Active</h2>
-        <p>A seller account has met all setup requirements and is now active on Loadify Market.</p>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Activated:</strong> ${escapeHtml(data.activatedAt || new Date().toLocaleString('en-GB'))}</p>
-        </div>
-        <p>The seller's account was activated automatically after their profile and Stripe setup were complete.</p>
-        <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
-      `;
-      break;
-
-    case 'seller_welcome':
-      content = `
-        <h2 style="color: #243b53;">Welcome to Loadify Market</h2>
-        <p>Hi ${escapeHtml(data.sellerName || 'there')},</p>
-        <p>Your seller account has been created successfully. To start selling on Loadify Market you need to complete two quick steps:</p>
-        <ol style="line-height: 1.8;">
-          <li><strong>Complete your profile</strong> — add your business name, contact phone number, and business address.</li>
-          <li><strong>Connect your Stripe account</strong> — this is required to receive payouts for your sales.</li>
-        </ol>
-        <p>Once both steps are done your store will go live automatically — no manual approval needed.</p>
-        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/onboarding" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Setup</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
-      `;
-      break;
-
-    case 'seller_account_active':
-      content = `
-        <h2 style="color: #243b53;">Your Store Is Now Live!</h2>
-        <p>Hi ${escapeHtml(data.sellerName || 'there')},</p>
-        <p>Great news — your Loadify Market seller account is now active. Your profile is complete and your Stripe account is connected and ready to accept payments.</p>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Activated:</strong> ${escapeHtml(data.activatedAt || new Date().toLocaleString('en-GB'))}</p>
-        </div>
-        <p>You can now list products and start receiving orders. Head to your seller dashboard to get started.</p>
-        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Go to Seller Dashboard</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
-      `;
-      break;
-
-    case 'buyer_welcome':
-      content = `
-        <h2 style="color: #243b53;">Welcome to Loadify Market</h2>
-        <p>Hi ${escapeHtml((data.buyerName as string) || 'there')},</p>
-        <p>Your Loadify Market account has been created successfully. You can now browse products, place orders, and track your deliveries.</p>
-        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/catalog" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Start Shopping</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
-      `;
-      break;
-
-    case 'resend_verification':
-      content = `
-        <h2 style="color: #243b53;">Sign in to Loadify Market</h2>
-        <p>Hi ${escapeHtml((data.userName as string) || 'there')},</p>
-        <p>An administrator has requested that a sign-in link be sent to your account. Click the button below to access your dashboard.</p>
-        <a href="${escapeHtml((data.actionLink as string) || '#')}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Access My Account</a>
-        <p style="color: #555; font-size: 14px;">This link is valid for 24 hours and can only be used once. If you did not expect this email, please ignore it or contact us at <a href="mailto:contact@loadifymarket.co.uk" style="color: #f59e0b;">contact@loadifymarket.co.uk</a>.</p>
-      `;
-      break;
-
-    case 'confirm_email':
-      content = `
-        <h2 style="color: #243b53;">Confirm your email address</h2>
-        <p>Hi ${escapeHtml((data.userName as string) || 'there')},</p>
-        <p>Thank you for registering with Loadify Market. Please confirm your email address by clicking the button below before signing in.</p>
-        <a href="${escapeHtml((data.actionLink as string) || '#')}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Confirm Email Address</a>
-        <p style="color: #555; font-size: 14px;">This link is valid for 24 hours. If you did not create an account on Loadify Market, please ignore this email.</p>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
-      `;
-      break;
-
-    case 'onboarding_reminder': {
-      const windowLabel = escapeHtml((data.windowLabel as string) || '');
-      const reminderMessage =
-        windowLabel === '24h'
-          ? 'It\'s been 24 hours since you registered — a quick reminder to complete your seller setup.'
-          : windowLabel === '3day'
-          ? 'It\'s been 3 days since you registered. Don\'t miss out — complete your setup to start selling.'
-          : 'It\'s been 7 days since you registered. Your store is almost ready — just a few steps left!';
-      const appBaseUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
-      content = `
-        <h2 style="color: #243b53;">Complete your Loadify Market seller setup</h2>
-        <p>Hi ${escapeHtml((data.sellerName as string) || 'there')},</p>
-        <p>${reminderMessage}</p>
-        <p>Finish setting up your account to start listing products and receiving payments via Stripe.</p>
-        <a href="${escapeHtml((data.onboardingUrl as string) || `${appBaseUrl}/onboarding`)}" style="display: inline-block; background-color: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete My Setup →</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
-      `;
-      break;
-    }
-
-    case 'stripe_connect_reminder': {
-      const windowLabel = escapeHtml((data.windowLabel as string) || '');
-      const stripeMessage =
-        windowLabel === '2day'
-          ? "It's been 2 days since you registered — your store is almost ready, just one step left."
-          : windowLabel === '5day'
-          ? "It's been 5 days since you registered. Don't let your store sit idle — connect Stripe to start receiving payments."
-          : "It's been 10 days since you registered. Your payout account is still not connected — complete this step so your store can go live.";
-      const appBaseUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
-      content = `
-        <h2 style="color: #243b53;">Connect your Stripe account to start selling</h2>
-        <p>Hi ${escapeHtml((data.sellerName as string) || 'there')},</p>
-        <p>${stripeMessage}</p>
-        <div style="background-color: #fff8e1; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
-          <p style="margin: 0; font-size: 14px; color: #374151;"><strong>Why do I need Stripe?</strong></p>
-          <p style="margin: 8px 0 0 0; font-size: 13px; color: #555;">Stripe Connect is how we send you payouts for every sale. Without it, your store cannot accept payments. The setup takes around 5 minutes.</p>
-        </div>
-        <p>Your profile is complete — all that's left is to connect your Stripe account and your store will go live automatically.</p>
-        <a href="${escapeHtml((data.onboardingUrl as string) || `${appBaseUrl}/seller/settings`)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Connect Stripe Now →</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
-      `;
-      break;
-    }
-
-    case 'seller_new_message': {
-      const dashboardUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
-      content = `
-        <h2 style="color: #243b53;">New message from a buyer</h2>
-        <p>Hi ${escapeHtml((data.sellerName as string) || 'there')},</p>
-        <p>You received a new message from ${escapeHtml((data.senderName as string) || 'a buyer')}.</p>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Listing:</strong> ${escapeHtml((data.productTitle as string) || 'Conversation')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Preview:</strong> ${escapeHtml((data.messagePreview as string) || 'Open your inbox to view the full message.')}</p>
-        </div>
-        <a href="${escapeHtml((data.inboxUrl as string) || `${dashboardUrl}/inbox/${escapeHtml(data.conversationId || '')}`)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Open Inbox</a>
-      `;
-      break;
-    }
-
 
     default:
       content = `

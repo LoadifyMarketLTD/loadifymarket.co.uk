@@ -2,14 +2,7 @@
 -- 00_reset.sql
 -- Loadify Market — Database Reset Script
 -- ================================================================
--- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
--- !!!              ⚠️  DANGER — DESTRUCTIVE SCRIPT  ⚠️           !!!
--- !!!  NEVER run on a production database.                       !!!
--- !!!  This script DROPS ALL TABLES, SEQUENCES, FUNCTIONS,      !!!
--- !!!  and POLICIES — ALL DATA WILL BE PERMANENTLY LOST.        !!!
--- !!!  Use ONLY on a local dev or fresh staging database.        !!!
--- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
---
+-- WARNING: Drops ALL Loadify Market tables, sequences, and functions.
 -- Run this ONLY when you need a clean slate before re-running the
 -- full schema. Safe to run on an empty database too.
 --
@@ -73,7 +66,7 @@ DROP SEQUENCE IF EXISTS order_number_seq;
 
 DROP FUNCTION IF EXISTS update_updated_at_column()               CASCADE;
 DROP FUNCTION IF EXISTS update_updated_at_column_snake()         CASCADE;
-DROP FUNCTION IF EXISTS is_admin()                      CASCADE;
+DROP FUNCTION IF EXISTS is_admin_or_owner()                      CASCADE;
 DROP FUNCTION IF EXISTS is_owner()                               CASCADE;
 DROP FUNCTION IF EXISTS is_seller()                              CASCADE;
 DROP FUNCTION IF EXISTS handle_new_user_profile()                CASCADE;

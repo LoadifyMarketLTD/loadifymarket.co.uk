@@ -1,717 +1,534 @@
-import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, lazy, Suspense, useState } from 'react';
-import { useAuthStore } from './store';
-import { hasAdminAccess, hasBuyerAccess, hasSellerAccess } from './lib/roleUtils';
-import { CartProvider } from './contexts/CartContext';
-import CookieConsent from './components/CookieConsent';
-import Header from './components/Header';
-import AmbientLayer from './components/AmbientLayer';
-import { isCapacitorNative } from './lib/capacitorUtils';
-import { usePushTokenRegistration } from './hooks/usePushTokenRegistration';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { useEffect, lazy, Suspense } from 'react';
 import { supabase } from './lib/supabase';
+import { useAuthStore } from './store';
 
-import RequireAdmin from './components/auth/RequireAdmin';
+// Layout
+import Layout from './components/Layout';
 import RequireAuth from './components/auth/RequireAuth';
+import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
-import RequireSellerAny from './components/auth/RequireSellerAny';
-import RequireBuyer from './components/auth/RequireBuyer';
-import RequireEmailVerified from './components/auth/RequireEmailVerified';
-import AuthPromptModal from './components/AuthPromptModal';
-import MobileSellGate from './components/MobileSellGate';
 
-// ─── Auth callback — OAuth redirect landing page ──────────────────────────────
-const AuthCallbackPage    = lazy(() => import('./pages/AuthCallbackPage'));
+// Public pages — lazy-loaded to keep the initial JS bundle small
+const HomePage = lazy(() => import('./pages/HomePage'));
+const CatalogPage = lazy(() => import('./pages/CatalogPage'));
+const ProductPage = lazy(() => import('./pages/ProductPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const ShopPage = lazy(() => import('./pages/ShopPage'));
+const BulkPage = lazy(() => import('./pages/BulkPage'));
 
-// ─── Mobile standalone pages ──────────────────────────────────────────────────
-const MobileInboxPage     = lazy(() => import('./pages/MobileInboxPage'));
-const MobileChatPage      = lazy(() => import('./pages/MobileChatPage'));
-const MobileOrdersPage    = lazy(() => import('./pages/MobileOrdersPage'));
-const MobileCategoriesPage = lazy(() => import('./pages/MobileCategoriesPage'));
-const MobileProfilePage   = lazy(() => import('./pages/MobileProfilePage'));
-const MobileNotificationsPage = lazy(() => import('./pages/MobileNotificationsPage'));
-const MobileSecurityPage  = lazy(() => import('./pages/MobileSecurityPage'));
-const MobileBalancePage   = lazy(() => import('./pages/MobileBalancePage'));
-const MobileFavouritesPage = lazy(() => import('./pages/MobileFavouritesPage'));
-const MobileSettingsPage  = lazy(() => import('./pages/MobileSettingsPage'));
-const MobileSellerPaymentsPage = lazy(() => import('./pages/MobileSellerPaymentsPage'));
-
-// ─── Homepage ─────────────────────────────────────────────────────────────────
-const Home                 = lazy(() => import('./pages/Home'));
-
-// ─── Pixel-perfect pages — standalone (include own Header + Footer) ───────────
-
-const PPCatalog            = lazy(() => import('./pages/pixel-perfect/Catalog'));
-const PPCategoryPage       = lazy(() => import('./pages/pixel-perfect/CategoryPage'));
-const PPProductDetail      = lazy(() => import('./pages/pixel-perfect/ProductDetail'));
-const PPCart               = lazy(() => import('./pages/pixel-perfect/Cart'));
-const PPCheckout           = lazy(() => import('./pages/pixel-perfect/Checkout'));
-const PPAboutUs            = lazy(() => import('./pages/pixel-perfect/AboutUs'));
-const PPContactUs          = lazy(() => import('./pages/pixel-perfect/ContactUs'));
-const PPDeals              = lazy(() => import('./pages/pixel-perfect/Deals'));
-const PPTerms              = lazy(() => import('./pages/pixel-perfect/TermsAndConditions'));
-const PPPrivacy            = lazy(() => import('./pages/pixel-perfect/PrivacyPolicy'));
-const PPCookies            = lazy(() => import('./pages/pixel-perfect/CookiePolicy'));
-const PPReturnsPolicy      = lazy(() => import('./pages/pixel-perfect/ReturnsPolicy'));
-const PPShippingPolicy     = lazy(() => import('./pages/pixel-perfect/ShippingPolicy'));
-const PPBuyerTerms         = lazy(() => import('./pages/pixel-perfect/BuyerTerms'));
-const PPSellerTerms        = lazy(() => import('./pages/pixel-perfect/SellerTerms'));
-const PPDisclaimer         = lazy(() => import('./pages/pixel-perfect/Disclaimer'));
-const PPFAQ                = lazy(() => import('./pages/pixel-perfect/FAQ'));
-const PPWholesaleInfo      = lazy(() => import('./pages/pixel-perfect/WholesaleInfo'));
-const PPCheckoutError      = lazy(() => import('./pages/pixel-perfect/CheckoutError'));
-const PPNotFound           = lazy(() => import('./pages/pixel-perfect/NotFound'));
-
-// ─── Pixel-perfect auth pages — standalone (full-page designs) ───────────────
-const PPLogin              = lazy(() => import('./pages/pixel-perfect/Login'));
-const PPSignup             = lazy(() => import('./pages/pixel-perfect/Signup'));
-const PPTradeAccount       = lazy(() => import('./pages/pixel-perfect/TradeAccount'));
-const PPForgotPassword     = lazy(() => import('./pages/pixel-perfect/ForgotPassword'));
-const PPResetPassword      = lazy(() => import('./pages/pixel-perfect/ResetPassword'));
-
-// ─── Layout wrappers (shadcn sidebar) — used for /seller, /admin, /dashboard ─
-// (layouts kept for potential future use; legacy routes now redirect to /pp/* equivalents)
-
-// ─── Functional pages — no pixel-perfect equivalent yet ──────────────────────
-// OrderSuccessPage: required for Stripe payment redirect
-const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
-// ProductFormPage: seller product create/edit — linked from pixel-perfect seller pages
-const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
-// MobileSellWizard: simplified 4-step sell flow for the mobile APK (/sell)
-const MobileSellWizard = lazy(() => import('./pages/MobileSellWizard'));
-// SellerPublicProfilePage: public-facing seller store — no pixel-perfect equivalent yet
+// Lazy load heavy/secondary pages
+const CartPage = lazy(() => import('./pages/CartPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage'));
+const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
-// AdminSellerDetailPage: admin seller detail view — no pixel-perfect equivalent yet
+const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
+const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
+const SellerReviewsPage = lazy(() => import('./pages/SellerReviewsPage'));
+const SellerRFQPage = lazy(() => import('./pages/SellerRFQPage'));
+const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage'));
+const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
+const SellerApprovalsPage = lazy(() => import('./pages/SellerApprovalsPage'));
 const AdminSellerDetailPage = lazy(() => import('./pages/AdminSellerDetailPage'));
-// TrackOrderPage: public-facing order tracking
+const ReportedListingsPage = lazy(() => import('./pages/ReportedListingsPage'));
+const AdminShipmentsPage = lazy(() => import('./pages/AdminShipmentsPage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
+const TrackingPage = lazy(() => import('./pages/TrackingPage'));
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
-// Legal pages without pixel-perfect equivalents
-const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
-const ProhibitedItemsPolicyPage = lazy(() => import('./pages/legal/ProhibitedItemsPolicyPage'));
-const SellerVerificationPolicyPage = lazy(() => import('./pages/legal/SellerVerificationPolicyPage'));
-const IntellectualPropertyComplaintsPage = lazy(() => import('./pages/legal/IntellectualPropertyComplaintsPage'));
-const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
-// Onboarding pages
-const RoleSelection     = lazy(() => import('./pages/onboarding/RoleSelection'));
-const SellerOnboarding  = lazy(() => import('./pages/onboarding/SellerOnboarding'));
-const SellerSetupPage   = lazy(() => import('./pages/pixel-perfect/seller/SellerSetupPage'));
-const AppOnboarding     = lazy(() => import('./pages/AppOnboarding'));
-
-// ─── Pixel-perfect dashboard shells ──────────────────────────────────────────
-const PPSellerShell         = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
-const PPSellerDashboard     = lazy(() => import('./pages/pixel-perfect/seller/SellerDashboard'));
-const PPSellerProducts      = lazy(() => import('./pages/pixel-perfect/seller/SellerProducts'));
-const PPSellerOrders        = lazy(() => import('./pages/pixel-perfect/seller/SellerOrders'));
-const PPSellerShipments     = lazy(() => import('./pages/pixel-perfect/seller/SellerShipments'));
-const PPSellerReturns       = lazy(() => import('./pages/pixel-perfect/seller/SellerReturns'));
-const PPSellerProfile       = lazy(() => import('./pages/pixel-perfect/seller/SellerProfile'));
-const PPSellerSettings      = lazy(() => import('./pages/pixel-perfect/seller/SellerSettings'));
-const PPSellerReviews       = lazy(() => import('./pages/pixel-perfect/seller/SellerReviewsPage'));
-const PPSellerNotifications = lazy(() => import('./pages/pixel-perfect/seller/SellerNotifications'));
-const PPSellerMessages      = lazy(() => import('./pages/pixel-perfect/seller/SellerMessages'));
-
-const PPBuyerShell     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerShell'));
-const PPBuyerDashboard     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDashboard'));
-const PPBuyerOrders        = lazy(() => import('./pages/pixel-perfect/buyer/BuyerOrders'));
-const PPBuyerAddresses     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerAddresses'));
-const PPBuyerPayments      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerPayments'));
-const PPBuyerReviews       = lazy(() => import('./pages/pixel-perfect/buyer/BuyerReviews'));
-const PPBuyerProfile       = lazy(() => import('./pages/pixel-perfect/buyer/BuyerProfile'));
-const PPBuyerSettings      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerSettings'));
-const PPBuyerWishlist      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerWishlist'));
-const PPBuyerNotifications = lazy(() => import('./pages/pixel-perfect/buyer/BuyerNotifications'));
-const PPBuyerMessages      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerMessages'));
-const PPBuyerDisputes      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDisputes'));
-
-const PPAdminShell          = lazy(() => import('./pages/pixel-perfect/admin/AdminShell'));
-const PPAdminDashboard      = lazy(() => import('./pages/pixel-perfect/admin/AdminDashboard'));
-const PPAdminUsers          = lazy(() => import('./pages/pixel-perfect/admin/AdminUsers'));
-const PPAdminBuyers         = lazy(() => import('./pages/pixel-perfect/admin/AdminBuyers'));
-const PPAdminApprovals      = lazy(() => import('./pages/pixel-perfect/admin/AdminApprovals'));
-const PPAdminProducts       = lazy(() => import('./pages/pixel-perfect/admin/AdminProducts'));
-const PPAdminOrders         = lazy(() => import('./pages/pixel-perfect/admin/AdminOrders'));
-const PPAdminFlagged        = lazy(() => import('./pages/pixel-perfect/admin/AdminFlagged'));
-const PPAdminReports        = lazy(() => import('./pages/pixel-perfect/admin/AdminReports'));
-const PPAdminSupport        = lazy(() => import('./pages/pixel-perfect/admin/AdminSupport'));
-const PPAdminSettings       = lazy(() => import('./pages/pixel-perfect/admin/AdminSettings'));
-const PPAdminNotifications  = lazy(() => import('./pages/pixel-perfect/admin/AdminNotifications'));
-const PPAdminPayouts        = lazy(() => import('./pages/pixel-perfect/admin/AdminPayouts'));
-const PPAdminStripeEvents   = lazy(() => import('./pages/pixel-perfect/admin/AdminStripeEvents'));
-const PPAdminDisputes       = lazy(() => import('./pages/pixel-perfect/admin/AdminDisputes'));
+const ReturnsPage = lazy(() => import('./pages/ReturnsPage'));
+const DisputesPage = lazy(() => import('./pages/DisputesPage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const MessagesPage = lazy(() => import('./pages/MessagesPage'));
+const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
+const HelpPage = lazy(() => import('./pages/HelpPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const BuyerProtectionPage = lazy(() => import('./pages/BuyerProtectionPage'));
+const SearchPage = lazy(() => import('./pages/SearchPage'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
+const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
+const CookiePage = lazy(() => import('./pages/legal/CookiePage'));
+const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
+const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
+const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
+const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
+const RFQPage = lazy(() => import('./pages/RFQPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
 
 // Loading component
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="mt-4 text-slate-400">Loading...</p>
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
       </div>
     </div>
   );
 }
 
-
-/**
- * Role-aware /dashboard redirect.
- * admins  → /admin
- * sellers → /seller
- * buyers  → /buyer
- * While auth is still loading, wait before redirecting to avoid a flash to the
- * wrong dashboard. Unauthenticated users are sent to /login.
- */
-function DashboardRedirect() {
-  const { user, isLoading } = useAuthStore();
-
-  if (isLoading) return <PageLoader />;
-  if (!user) return <Navigate to="/login" replace />;
-
-  // Account-level activity is authoritative. Do not route a blocked or
-  // incompletely hydrated identity into a commerce workspace.
-  if (user.isActive !== true) {
-    return <Navigate to="/login?error=account_inactive" replace />;
-  }
-
-  if (hasAdminAccess(user)) {
-    return <Navigate to="/admin" replace />;
-  }
-
-  // Delegate Seller onboarding/readiness truth to RequireSeller instead of
-  // trusting the historical users.onboardingCompleted projection here.
-  if (hasSellerAccess(user)) {
-    return <Navigate to="/seller" replace />;
-  }
-
-  if (hasBuyerAccess(user)) {
-    return <Navigate to="/buyer" replace />;
-  }
-
-  return <Navigate to="/login" replace />;
-}
-
-/** Redirects legacy /tracking/:orderNumber to /track-order?orderNumber=:orderNumber */
-function TrackingRedirect() {
-  const { orderNumber } = useParams<{ orderNumber: string }>();
-  return <Navigate to={`/track-order${orderNumber ? `?orderNumber=${encodeURIComponent(orderNumber)}` : ''}`} replace />;
-}
-
+/** Redirects /categories/:slug → /shop?category=:slug */
 function CategoryRedirect() {
   const { slug } = useParams<{ slug: string }>();
-  return <Navigate to={`/category/${slug ?? ''}`} replace />;
-}
-
-function isTrustedNativeDeepLink(parsed: URL): boolean {
-  if (parsed.protocol === 'loadifymarket:') {
-    return (
-      parsed.hostname === 'app' &&
-      parsed.pathname.startsWith('/auth/callback')
-    );
-  }
-
-  return (
-    parsed.protocol === 'https:' &&
-    parsed.hostname === 'loadifymarket.co.uk'
-  );
-}
-
-
-/**
- * Renders a maintenance-mode page for non-admin visitors.
- * Reads `platform_settings.maintenance_mode` once on mount.
- * Admins always bypass so they can access the admin hub.
- */
-function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuthStore();
-  const [maintenanceMode, setMaintenanceMode] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    supabase
-      .from('platform_settings')
-      .select('value')
-      .eq('key', 'maintenance_mode')
-      .maybeSingle()
-      .then(({ data }) => {
-        const val = data?.value;
-        setMaintenanceMode(val === true || val === 'true');
-      }, () => setMaintenanceMode(false));
-  }, []);
-
-  // While loading auth or the maintenance flag, render normally (avoids flash)
-  if (isLoading || maintenanceMode === null) return <>{children}</>;
-  // Admins always bypass maintenance mode
-  if (maintenanceMode && user && hasAdminAccess(user)) return <>{children}</>;
-  // If maintenance is on and user is not admin, show maintenance screen
-  if (maintenanceMode) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-6">
-        <div className="text-center max-w-lg">
-          <div className="text-6xl mb-6">🔧</div>
-          <h1 className="text-3xl font-bold text-white mb-3">We're under maintenance</h1>
-          <p className="text-slate-400 text-base mb-6">
-            Loadify Market is currently undergoing scheduled maintenance. We'll be back shortly.
-            Thank you for your patience.
-          </p>
-          <p className="text-slate-500 text-sm">
-            If you are an admin, please{' '}
-            <a href="/login" className="text-blue-600 underline">sign in</a> to access the platform.
-          </p>
-        </div>
-      </div>
-    );
-  }
-  return <>{children}</>;
+  return <Navigate to={`/shop?category=${slug ?? ''}`} replace />;
 }
 
 function App() {
-  const { user, setUser, setLoading } = useAuthStore();
-  const navigate = useNavigate();
-  const location = useLocation();
-  usePushTokenRegistration(user?.id);
-
-  // ── Accessibility: move keyboard focus to #main-content on every route change ─
-  // Satisfies WCAG 2.1 SC 2.4.3 (Focus Order) for SPA navigation.
-  // Non-interactive elements like <main> are not in the tab order by default, so
-  // we temporarily mark the target with tabIndex="-1" (programmatic-focus only)
-  // before calling focus(). This lets screen-reader / keyboard users start at the
-  // top of the new page rather than continuing from wherever focus was left.
-  useEffect(() => {
-    const el = document.getElementById('main-content');
-    if (el) {
-      if (!el.hasAttribute('tabindex')) {
-        el.setAttribute('tabindex', '-1');
-      }
-      el.focus({ preventScroll: false });
-    }
-  }, [location.pathname]);
-
-  // ── Deep-link handler (Capacitor APK only) ─────────────────────────────────
-  // @capacitor/app fires 'appUrlOpen' when the APK is resumed via a URL —
-  // this covers OAuth callbacks from Chrome Custom Tabs and any future
-  // Android App Link that opens loadifymarket.co.uk URLs in the APK.
-  useEffect(() => {
-    if (!isCapacitorNative()) return;
-
-    let removeListener: (() => void) | undefined;
-
-    import('@capacitor/app').then(({ App: CapApp }) => {
-      CapApp.addListener('appUrlOpen', async ({ url }) => {
-        try {
-          const parsed = new URL(url);
-
-          // Never route arbitrary external origins through the native app.
-          // OAuth uses the dedicated custom scheme; normal app links must be
-          // HTTPS links from the production Loadify Market host.
-          if (!isTrustedNativeDeepLink(parsed)) {
-            console.warn('[DeepLink] Ignored untrusted URL origin');
-            return;
-          }
-
-          // OAuth callback — exchange the code/token with Supabase and
-          // let onAuthStateChange update the store automatically.
-          if (parsed.pathname.startsWith('/auth/callback')) {
-            await supabase.auth.getSession();
-            navigate('/auth/callback' + parsed.search + parsed.hash, { replace: true });
-            return;
-          }
-
-          // For all other deep links (e.g. /order-success, /seller/setup)
-          // navigate to the in-app path so the React Router renders the right page.
-          const inAppPath = parsed.pathname + parsed.search + parsed.hash;
-          navigate(inAppPath, { replace: true });
-        } catch {
-          // Malformed URL — ignore
-        }
-      }).then((handle) => {
-        removeListener = () => handle.remove();
-      });
-    }).catch(() => { /* @capacitor/app not available — no-op */ });
-
-    return () => removeListener?.();
-  }, [navigate]);
+  const { setUser, setLoading } = useAuthStore();
 
   useEffect(() => {
-    // Lift the joined seller_profiles row (if any) into a flat sellerStatus field
-    // on the user object, and remove the raw join array.  This is called after
-    // every users query so RequireSeller can use the cached value immediately
-    // without an extra DB round-trip on every seller-page navigation.
-    function normalizeSellerStatus(data: Record<string, unknown>): void {
-      const sp = data['seller_profiles'];
-      if (Array.isArray(sp) && sp.length > 0) {
-        const status = (sp[0] as Record<string, unknown>)['sellerStatus'];
-        if (typeof status === 'string') {
-          data['sellerStatus'] = status;
-        }
-      }
-      // Always remove the raw join array — it is a Supabase query artefact and
-      // must not appear on the User object regardless of whether a row was found
-      // (e.g. buyers/admins have no seller_profiles row so the array is empty).
-      delete data['seller_profiles'];
+    // Build a minimal User object from Supabase auth session metadata when the
+    // public.users table query fails or returns no row (e.g. the live database
+    // hasn't had the 20_fix_users_table.sql migration applied yet).
+    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }): import('./types').User {
+      const meta = authUser.user_metadata || {};
+      const strVal = (key: string) => (typeof meta[key] === 'string' ? (meta[key] as string) : undefined);
+      return {
+        id: authUser.id,
+        email: authUser.email ?? '',
+        role: (strVal('role') as import('./types').UserRole) || 'buyer',
+        firstName: strVal('first_name'),
+        lastName: strVal('last_name'),
+        isEmailVerified: false,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
     }
 
-    // Defer supabase import so vendor-supabase.js is not in the critical-path
-    // bundle — it loads after the initial render, shaving ~37 KiB from the
-    // bytes parsed before first paint.
-    let cleanup: (() => void) | undefined;
-
-    {
-      // Supabase JS v2 fires onAuthStateChange with an INITIAL_SESSION event
-      // synchronously when the subscription is created — this covers the
-      // page-load / existing-session path without needing a separate
-      // getSession() call.  Running both in parallel caused a last-write-wins
-      // race condition: if getSession()'s DB query returned null/error AFTER
-      // onAuthStateChange already wrote the correct role, it overwrote it with
-      // the userFromSession fallback (defaulting to role='buyer'), which is how
-      // an admin could end up seeing Buyer Hub on a page reload.
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) {
-          // Signal loading before the async round-trip so route guards always
-          // see isLoading=true while the DB query is in flight.  Without this
-          // a guard can briefly observe isLoading=false + user=null during the
-          // SIGNED_IN event (e.g. right after login) and redirect to /login.
-          setLoading(true);
-          void Promise.resolve(
-            supabase
-              .from('users')
-              .select('*, seller_profiles(sellerStatus)')
-              .eq('id', session.user.id)
-              .maybeSingle()
-          ).then(({ data, error }) => {
-              if (data) {
-                // Blocked users must not be rehydrated — sign them out immediately.
-                if (data.isActive === false) {
-                  supabase.auth.signOut();
-                  setUser(null);
-                  return;
-                }
-                normalizeSellerStatus(data as unknown as Record<string, unknown>);
-                // Always derive isEmailVerified from Supabase Auth (source of truth).
-                (data as Record<string, unknown>).isEmailVerified =
-                  session.user.email_confirmed_at != null;
-                // Derive isAdmin from role so components can use user.isAdmin
-                // independently of the role field (which may later become roles[]).
-                (data as Record<string, unknown>).isAdmin =
-                  (data as Record<string, unknown>).role === 'admin';
-                setUser(data);
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        // Fetch user profile with role
+        supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+          .then(({ data, error }) => {
+            if (data) {
+              setUser(data);
+            } else {
+              if (error) {
+                // Table missing or row not found — still treat as logged in
+                // using auth session metadata so the user isn't stuck logged-out.
+                console.warn('users table query failed, falling back to auth session:', error.message);
+                setUser(userFromSession(session.user));
               } else {
-                // Stage 7 fail-closed boundary: an authenticated Supabase
-                // session is not sufficient proof that the platform account is
-                // active. If the authoritative public.users row cannot be read,
-                // do not invent role/activity truth from session metadata.
-                if (error) {
-                  console.warn(
-                    '[Auth] Authoritative user profile lookup failed; denying protected access:',
-                    error.message,
-                  );
-                } else {
-                  console.warn(
-                    '[Auth] Authoritative user profile is missing; denying protected access',
-                  );
-                }
+                setLoading(false);
+              }
+            }
+          });
+      } else {
+        setLoading(false);
+      }
+    });
 
-                void supabase.auth
-                  .signOut({ scope: 'local' })
-                  .catch((signOutError) => {
-                    console.warn(
-                      '[Auth] Local fail-closed sign-out failed',
-                      signOutError,
-                    );
-                  });
-
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+          .then(({ data, error }) => {
+            if (data) {
+              setUser(data);
+            } else {
+              if (error) {
+                console.warn('users table query failed, falling back to auth session:', error.message);
+                setUser(userFromSession(session.user));
+              } else {
                 setUser(null);
               }
-            })
-            .catch((err: unknown) => {
-              // An unexpected profile-hydration failure must also fail closed.
-              // Never preserve a stale or session-derived commerce identity.
-              console.error('[Auth] Profile fetch threw unexpectedly:', err);
+            }
+          });
+      } else {
+        setUser(null);
+      }
+    });
 
-              void supabase.auth
-                .signOut({ scope: 'local' })
-                .catch((signOutError) => {
-                  console.warn(
-                    '[Auth] Local fail-closed sign-out failed',
-                    signOutError,
-                  );
-                });
-
-              setUser(null);
-            });
-        } else {
-          setUser(null);
-        }
-      });
-
-      cleanup = () => subscription.unsubscribe();
-    }
-
-    return () => cleanup?.();
+    return () => subscription.unsubscribe();
   }, [setUser, setLoading]);
 
   return (
-    <CartProvider>
-      <AmbientLayer />
-      <Header />
-      <AuthPromptModal />
-      <MaintenanceModeGate>
-        <Routes>
-          {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}
-          <Route path="/" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
-        <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
-        <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
-        {/* /categories/:slug → 301-style redirect to canonical /category/:slug */}
-        <Route path="categories/:slug" element={<CategoryRedirect />} />
-        <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><PPProductDetail /></Suspense>} />
-        <Route path="cart" element={<Suspense fallback={<PageLoader />}><PPCart /></Suspense>} />
-        <Route path="checkout" element={<RequireEmailVerified><Suspense fallback={<PageLoader />}><PPCheckout /></Suspense></RequireEmailVerified>} />
-        <Route path="about" element={<Suspense fallback={<PageLoader />}><PPAboutUs /></Suspense>} />
-        <Route path="contact" element={<Suspense fallback={<PageLoader />}><PPContactUs /></Suspense>} />
-        <Route path="deals" element={<Suspense fallback={<PageLoader />}><PPDeals /></Suspense>} />
-        {/* /clearance — legacy redirect to /deals */}
-        <Route path="clearance" element={<Navigate to="/deals" replace />} />
-        <Route path="terms" element={<Suspense fallback={<PageLoader />}><PPTerms /></Suspense>} />
-        <Route path="privacy" element={<Suspense fallback={<PageLoader />}><PPPrivacy /></Suspense>} />
-        <Route path="cookies" element={<Suspense fallback={<PageLoader />}><PPCookies /></Suspense>} />
-        <Route path="returns-policy" element={<Suspense fallback={<PageLoader />}><PPReturnsPolicy /></Suspense>} />
-        {/* /returns — alias expected by Lovable checklist */}
-        <Route path="returns" element={<Suspense fallback={<PageLoader />}><PPReturnsPolicy /></Suspense>} />
-        <Route path="shipping-policy" element={<Suspense fallback={<PageLoader />}><PPShippingPolicy /></Suspense>} />
-        {/* /shipping — alias expected by Lovable checklist */}
-        <Route path="shipping" element={<Suspense fallback={<PageLoader />}><PPShippingPolicy /></Suspense>} />
-        <Route path="buyer-terms" element={<Suspense fallback={<PageLoader />}><PPBuyerTerms /></Suspense>} />
-        <Route path="seller-terms" element={<Suspense fallback={<PageLoader />}><PPSellerTerms /></Suspense>} />
-        <Route path="disclaimer" element={<Suspense fallback={<PageLoader />}><PPDisclaimer /></Suspense>} />
-        <Route path="faq" element={<Suspense fallback={<PageLoader />}><PPFAQ /></Suspense>} />
-        {/* /help — redirect to FAQ (header nav link target) */}
-        <Route path="help" element={<Navigate to="/faq" replace />} />
-        <Route path="wholesale-info" element={<Suspense fallback={<PageLoader />}><PPWholesaleInfo /></Suspense>} />
+    <Routes>
+      <Route path="/" element={<Layout />}>
+          <Route index element={<Suspense fallback={<PageLoader />}><HomePage /></Suspense>} />
+          <Route path="shop" element={<Suspense fallback={<PageLoader />}><ShopPage /></Suspense>} />
+          <Route path="bulk" element={<Suspense fallback={<PageLoader />}><BulkPage /></Suspense>} />
+          <Route path="catalog" element={<Suspense fallback={<PageLoader />}><CatalogPage /></Suspense>} />
+          <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><ProductPage /></Suspense>} />
+          <Route path="login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
+          <Route path="register" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
+          
+          {/* Forgot Password */}
+          <Route path="forgot-password" element={
+            <Suspense fallback={<PageLoader />}>
+              <ForgotPasswordPage />
+            </Suspense>
+          } />
+          {/* Reset Password — Supabase redirects here after email link */}
+          <Route path="reset-password" element={
+            <Suspense fallback={<PageLoader />}>
+              <ResetPasswordPage />
+            </Suspense>
+          } />
+          {/* Order Success — Stripe redirects here after payment */}
+          <Route path="orders/success" element={
+            <Suspense fallback={<PageLoader />}>
+              <OrderSuccessPage />
+            </Suspense>
+          } />
+          
+          {/* Lazy loaded routes with Suspense */}
+          {/* Protected: Cart */}
+          <Route path="cart" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <CartPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Checkout */}
+          <Route path="checkout" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <CheckoutPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Dashboard */}
+          <Route path="dashboard" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <DashboardPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Account Settings */}
+          <Route path="account-settings" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <AccountSettingsPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Seller Dashboard */}
+          <Route path="seller" element={
+            <RequireSeller>
+              <Suspense fallback={<PageLoader />}>
+                <SellerDashboardPage />
+              </Suspense>
+            </RequireSeller>
+          } />
+          {/* Protected: Seller Profile */}
+          <Route path="seller/profile" element={
+            <RequireSeller>
+              <Suspense fallback={<PageLoader />}>
+                <SellerProfilePage />
+              </Suspense>
+            </RequireSeller>
+          } />
+          {/* Public: Seller Public Profile */}
+          <Route path="seller/:slug" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerPublicProfilePage />
+            </Suspense>
+          } />
+          {/* Protected: Seller Returns */}
+          <Route path="seller/returns" element={
+            <RequireSeller>
+              <Suspense fallback={<PageLoader />}>
+                <SellerReturnsPage />
+              </Suspense>
+            </RequireSeller>
+          } />
+          {/* Protected: Seller Shipments */}
+          <Route path="seller/shipments" element={
+            <RequireSeller>
+              <Suspense fallback={<PageLoader />}>
+                <SellerShipmentsPage />
+              </Suspense>
+            </RequireSeller>
+          } />
+          {/* Protected: Create Product */}
+          <Route path="seller/products/new" element={
+            <RequireSeller>
+              <Suspense fallback={<PageLoader />}>
+                <ProductFormPage />
+              </Suspense>
+            </RequireSeller>
+          } />
+          {/* Protected: Edit Product */}
+          <Route path="seller/products/:id/edit" element={
+            <RequireSeller>
+              <Suspense fallback={<PageLoader />}>
+                <ProductFormPage />
+              </Suspense>
+            </RequireSeller>
+          } />
+          {/* Protected: Admin Dashboard */}
+          <Route path="admin" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <AdminDashboardPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
+          {/* Protected: Admin Categories */}
+          <Route path="admin/categories" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <CategoryManagementPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
+          {/* Protected: Admin Sellers */}
+          <Route path="admin/sellers" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <SellerApprovalsPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
+          {/* Protected: Admin Seller Detail */}
+          <Route path="admin/sellers/:id" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <AdminSellerDetailPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
+          {/* Protected: Admin Reported Listings */}
+          <Route path="admin/reported-listings" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <ReportedListingsPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
+          {/* Protected: Admin Shipments */}
+          <Route path="admin/shipments" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <AdminShipmentsPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
+          {/* Protected: Orders */}
+          <Route path="orders" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <OrdersPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Order Detail */}
+          <Route path="orders/:id" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <OrderDetailPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Public: Tracking */}
+          <Route path="tracking/:orderNumber" element={
+            <Suspense fallback={<PageLoader />}>
+              <TrackingPage />
+            </Suspense>
+          } />
+          {/* Public: Track Order */}
+          <Route path="track-order" element={
+            <Suspense fallback={<PageLoader />}>
+              <TrackOrderPage />
+            </Suspense>
+          } />
+          {/* Protected: Returns */}
+          <Route path="returns" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <ReturnsPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Disputes */}
+          <Route path="disputes" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <DisputesPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Wishlist */}
+          <Route path="wishlist" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <WishlistPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Messages */}
+          <Route path="messages" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <MessagesPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Notifications */}
+          <Route path="notifications" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <NotificationSettingsPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Public: Help */}
+          <Route path="help" element={
+            <Suspense fallback={<PageLoader />}>
+              <HelpPage />
+            </Suspense>
+          } />
+          {/* Public: Contact - Allow potential customers to reach out */}
+          <Route path="contact" element={
+            <Suspense fallback={<PageLoader />}>
+              <ContactPage />
+            </Suspense>
+          } />
+          
+          {/* Info Pages */}
+          <Route path="pricing" element={
+            <Suspense fallback={<PageLoader />}>
+              <PricingPage />
+            </Suspense>
+          } />
+          <Route path="how-it-works" element={
+            <Suspense fallback={<PageLoader />}>
+              <HowItWorksPage />
+            </Suspense>
+          } />
+          <Route path="about" element={
+            <Suspense fallback={<PageLoader />}>
+              <AboutPage />
+            </Suspense>
+          } />
 
-        {/* ── Pixel-perfect auth pages (standalone full-page designs) ──────────── */}
-        <Route path="login" element={<Suspense fallback={<PageLoader />}><PPLogin /></Suspense>} />
-        <Route path="register" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
-        <Route path="signup" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
-        <Route path="trade-account" element={<Suspense fallback={<PageLoader />}><PPTradeAccount /></Suspense>} />
-        <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><PPForgotPassword /></Suspense>} />
-        <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
+          {/* Public: Search */}
+          <Route path="search" element={
+            <Suspense fallback={<PageLoader />}>
+              <SearchPage />
+            </Suspense>
+          } />
 
-        {/* OAuth callback — Supabase redirects here after Google / social login */}
-        <Route path="auth/callback" element={<Suspense fallback={<PageLoader />}><AuthCallbackPage /></Suspense>} />
+          {/* Public: Buyer Protection */}
+          <Route path="buyer-protection" element={
+            <Suspense fallback={<PageLoader />}>
+              <BuyerProtectionPage />
+            </Suspense>
+          } />
 
-        {/* /pp — pixel-perfect homepage (preview/alternate root) */}
-        <Route path="pp" element={<Navigate to="/" replace />} />
+          {/* Protected: Seller Reviews */}
+          <Route path="seller/reviews" element={
+            <RequireSeller>
+              <Suspense fallback={<PageLoader />}>
+                <SellerReviewsPage />
+              </Suspense>
+            </RequireSeller>
+          } />
 
-        {/* ── App onboarding — first-launch screens (APK) ─────────────────────── */}
-        <Route path="welcome" element={<Suspense fallback={<PageLoader />}><AppOnboarding /></Suspense>} />
+          {/* Protected: Seller RFQ Inbox */}
+          <Route path="seller/rfq" element={
+            <RequireSeller>
+              <Suspense fallback={<PageLoader />}>
+                <SellerRFQPage />
+              </Suspense>
+            </RequireSeller>
+          } />
 
-        {/* ── Onboarding flow ─────────────────────────────────────────────────── */}
-        {/* Role selection — public (uid passed as query param after signup) */}
-        <Route path="onboarding/role-selection" element={
-          <Suspense fallback={<PageLoader />}><RoleSelection /></Suspense>
-        } />
-        {/* Seller onboarding wizard — accessible by any authenticated seller */}
-        <Route path="onboarding" element={
-          <RequireSellerAny>
-            <RequireEmailVerified>
-              <Suspense fallback={<PageLoader />}><SellerOnboarding /></Suspense>
-            </RequireEmailVerified>
-          </RequireSellerAny>
-        } />
+          {/* Protected: Admin Reviews Moderation */}
+          <Route path="admin/reviews" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <AdminReviewsPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
 
-        {/* ── Seller onboarding standalones — defined BEFORE seller shell so they
-            take priority when the same sub-path is reached from the browser ──── */}
-        {/* Seller: Product Create/Edit — linked from pixel-perfect seller pages */}
-        <Route path="seller/products/new" element={
-          <RequireSeller>
-            <RequireEmailVerified>
-              <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
-            </RequireEmailVerified>
-          </RequireSeller>
-        } />
-        <Route path="seller/products/:id/edit" element={
-          <RequireSeller>
-            <RequireEmailVerified>
-              <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
-            </RequireEmailVerified>
-          </RequireSeller>
-        } />
+          {/* SEO: Logistics Loads UK */}
+          <Route path="logistics-loads" element={
+            <Suspense fallback={<PageLoader />}>
+              <LogisticsLoadsPage />
+            </Suspense>
+          } />
 
-        {/* Seller: legacy setup bridge — historical Stripe return URLs forward to canonical /onboarding */}
-        <Route path="seller/setup" element={
-          <RequireSellerAny>
-            <RequireEmailVerified>
-              <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
-            </RequireEmailVerified>
-          </RequireSellerAny>
-        } />
-        {/* Seller: Analytics — redirected to seller dashboard (analytics shown there) */}
-        <Route path="seller/analytics" element={<Navigate to="/seller" replace />} />
-        {/* Seller: Payouts — redirected to seller settings (payout config shown there) */}
-        <Route path="seller/payouts" element={<Navigate to="/seller/settings" replace />} />
+          {/* Public: Transport Quote — XDrive Logistics integration */}
+          <Route path="transport-quote" element={
+            <Suspense fallback={<PageLoader />}>
+              <TransportQuotePage />
+            </Suspense>
+          } />
 
-        {/* Seller: Profile edit — accessible by any seller (any status) and admins */}
-        <Route path="seller/profile" element={
-          <RequireSellerAny>
-            <RequireEmailVerified>
-              <Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>
-            </RequireEmailVerified>
-          </RequireSellerAny>
-        } />
+          {/* Public: RFQ — B2B wholesale quote requests */}
+          <Route path="rfq" element={
+            <Suspense fallback={<PageLoader />}>
+              <RFQPage />
+            </Suspense>
+          } />
+          
+          {/* Legal Pages */}
+          <Route path="terms" element={
+            <Suspense fallback={<PageLoader />}>
+              <TermsPage />
+            </Suspense>
+          } />
+          <Route path="privacy" element={
+            <Suspense fallback={<PageLoader />}>
+              <PrivacyPage />
+            </Suspense>
+          } />
+          <Route path="cookies" element={
+            <Suspense fallback={<PageLoader />}>
+              <CookiePage />
+            </Suspense>
+          } />
+          <Route path="returns-policy" element={
+            <Suspense fallback={<PageLoader />}>
+              <ReturnsPolicy />
+            </Suspense>
+          } />
+          <Route path="shipping-policy" element={
+            <Suspense fallback={<PageLoader />}>
+              <ShippingPolicy />
+            </Suspense>
+          } />
+          
+          {/* Route aliases for expected URLs */}
+          <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
+          <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
+          <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
 
-        {/* ── Dashboard shells ────────────────────────────────────────────────── */}
-        {/* /seller – RequireSeller */}
-        <Route path="seller" element={
-          <RequireSeller>
-            <RequireEmailVerified>
-              <Suspense fallback={<PageLoader />}><PPSellerShell /></Suspense>
-            </RequireEmailVerified>
-          </RequireSeller>
-        }>
-          <Route index element={<Suspense fallback={<PageLoader />}><PPSellerDashboard /></Suspense>} />
-          <Route path="products" element={<Suspense fallback={<PageLoader />}><PPSellerProducts /></Suspense>} />
-          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPSellerOrders /></Suspense>} />
-          <Route path="shipments" element={<Suspense fallback={<PageLoader />}><PPSellerShipments /></Suspense>} />
-          <Route path="returns" element={<Suspense fallback={<PageLoader />}><PPSellerReturns /></Suspense>} />
-          <Route path="rfq" element={<Navigate to="/seller" replace />} />
-          <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPSellerReviews /></Suspense>} />
-          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPSellerSettings /></Suspense>} />
-          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPSellerNotifications /></Suspense>} />
-          <Route path="messages" element={<Suspense fallback={<PageLoader />}><PPSellerMessages /></Suspense>} />
+          {/* Public: Category pages — redirect to Shop filtered by category slug */}
+          <Route path="categories/:slug" element={<CategoryRedirect />} />
+
+          <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
         </Route>
-
-        {/* /buyer – RequireBuyer (Buyer capability includes ordinary Marketplace Sellers; Admin remains isolated) */}
-        <Route path="buyer" element={
-          <RequireBuyer>
-            <RequireEmailVerified>
-              <Suspense fallback={<PageLoader />}><PPBuyerShell /></Suspense>
-            </RequireEmailVerified>
-          </RequireBuyer>
-        }>
-          <Route index element={<Suspense fallback={<PageLoader />}><PPBuyerDashboard /></Suspense>} />
-          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPBuyerOrders /></Suspense>} />
-          <Route path="wishlist" element={<Suspense fallback={<PageLoader />}><PPBuyerWishlist /></Suspense>} />
-          <Route path="addresses" element={<Suspense fallback={<PageLoader />}><PPBuyerAddresses /></Suspense>} />
-          <Route path="payments" element={<Suspense fallback={<PageLoader />}><PPBuyerPayments /></Suspense>} />
-          <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPBuyerReviews /></Suspense>} />
-          <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPBuyerProfile /></Suspense>} />
-          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPBuyerSettings /></Suspense>} />
-          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPBuyerNotifications /></Suspense>} />
-          <Route path="messages" element={<Suspense fallback={<PageLoader />}><PPBuyerMessages /></Suspense>} />
-          <Route path="rfq" element={<Navigate to="/buyer" replace />} />
-          <Route path="disputes" element={<Suspense fallback={<PageLoader />}><PPBuyerDisputes /></Suspense>} />
-        </Route>
-
-        {/* /admin – RequireAdmin */}
-        <Route path="admin" element={
-          <RequireAdmin>
-            <Suspense fallback={<PageLoader />}><PPAdminShell /></Suspense>
-          </RequireAdmin>
-        }>
-          <Route index element={<Suspense fallback={<PageLoader />}><PPAdminDashboard /></Suspense>} />
-          <Route path="users" element={<Suspense fallback={<PageLoader />}><PPAdminUsers /></Suspense>} />
-          <Route path="buyers" element={<Suspense fallback={<PageLoader />}><PPAdminBuyers /></Suspense>} />
-          <Route path="approvals" element={<Suspense fallback={<PageLoader />}><PPAdminApprovals /></Suspense>} />
-          <Route path="products" element={<Suspense fallback={<PageLoader />}><PPAdminProducts /></Suspense>} />
-          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPAdminOrders /></Suspense>} />
-          <Route path="flagged" element={<Suspense fallback={<PageLoader />}><PPAdminFlagged /></Suspense>} />
-          <Route path="reports" element={<Suspense fallback={<PageLoader />}><PPAdminReports /></Suspense>} />
-          <Route path="support" element={<Suspense fallback={<PageLoader />}><PPAdminSupport /></Suspense>} />
-          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPAdminSettings /></Suspense>} />
-          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPAdminNotifications /></Suspense>} />
-          <Route path="payouts" element={<Suspense fallback={<PageLoader />}><PPAdminPayouts /></Suspense>} />
-          <Route path="stripe-events" element={<Suspense fallback={<PageLoader />}><PPAdminStripeEvents /></Suspense>} />
-          <Route path="disputes" element={<Suspense fallback={<PageLoader />}><PPAdminDisputes /></Suspense>} />
-        </Route>
-
-        {/* ── Mobile inbox + chat ─────────────────────────────────────────────── */}
-        <Route path="inbox" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense></RequireAuth>} />
-        <Route path="inbox/:conversationId" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense></RequireAuth>} />
-
-        {/* ── Mobile orders (buyer) — also handles push notification deep-links ── */}
-        <Route path="orders" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense></RequireAuth>} />
-
-        {/* ── Mobile categories list — public browsing, no auth required ──────── */}
-        <Route path="categories" element={<Suspense fallback={<PageLoader />}><MobileCategoriesPage /></Suspense>} />
-
-        {/* ── Mobile profile / account hub — public, shows login CTA for guests ─ */}
-        <Route path="profile" element={<Suspense fallback={<PageLoader />}><MobileProfilePage /></Suspense>} />
-        <Route path="profile/notifications" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileNotificationsPage /></Suspense></RequireAuth>} />
-        <Route path="profile/security" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileSecurityPage /></Suspense></RequireAuth>} />
-        <Route path="profile/balance" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileBalancePage /></Suspense></RequireAuth>} />
-        <Route path="profile/favourites" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileFavouritesPage /></Suspense></RequireAuth>} />
-        <Route path="profile/settings" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileSettingsPage /></Suspense></RequireAuth>} />
-        <Route path="seller/promote" element={<Navigate to="/seller" replace />} />
-        <Route path="seller/mobile-payments" element={
-          <RequireSellerAny>
-            <Suspense fallback={<PageLoader />}><MobileSellerPaymentsPage /></Suspense>
-          </RequireSellerAny>
-        } />
-
-        {/* ── Mobile sell wizard — guest-friendly gate (no hard redirect to /login) ─ */}
-        {/* MobileSellGate: unauthenticated → friendly auth screen + AuthPromptModal  */}
-        {/* authenticated → RequireSeller + RequireEmailVerified + MobileSellWizard   */}
-        <Route path="sell" element={
-          <MobileSellGate>
-            <Suspense fallback={<PageLoader />}><MobileSellWizard /></Suspense>
-          </MobileSellGate>
-        } />
-
-        {/* ── Standalone functional pages ──────────────────────────────────────── */}
-
-        {/* Order Success — Stripe redirects here after payment */}
-        {/* NOTE: create-checkout.ts uses /order-success — keep this route matching that */}
-        <Route path="order-success" element={<Suspense fallback={<PageLoader />}><OrderSuccessPage /></Suspense>} />
-        {/* Alias for any old links using /orders/success */}
-        <Route path="orders/success" element={<Navigate to="/order-success" replace />} />
-
-        {/* Checkout Error — Stripe redirects here on payment failure */}
-        <Route path="checkout/error" element={<Suspense fallback={<PageLoader />}><PPCheckoutError /></Suspense>} />
-
-        {/* Public: Seller Public Profile — no pixel-perfect equivalent yet */}
-        <Route path="seller/:slug" element={<Suspense fallback={<PageLoader />}><SellerPublicProfilePage /></Suspense>} />
-
-        {/* Admin: Seller Detail — no pixel-perfect equivalent yet */}
-        <Route path="admin/sellers/:id" element={
-          <RequireAdmin>
-            <Suspense fallback={<PageLoader />}><AdminSellerDetailPage /></Suspense>
-          </RequireAdmin>
-        } />
-
-        {/* Public: Order Tracking — no pixel-perfect equivalent yet */}
-        <Route path="tracking/:orderNumber" element={<TrackingRedirect />} />
-        <Route path="track-order" element={<Suspense fallback={<PageLoader />}><TrackOrderPage /></Suspense>} />
-        <Route path="track" element={<Navigate to="/track-order" replace />} />
-
-        {/* Legal pages without pixel-perfect equivalents */}
-        <Route path="acceptable-use-policy" element={<Suspense fallback={<PageLoader />}><AcceptableUsePolicyPage /></Suspense>} />
-        <Route path="prohibited-items-policy" element={<Suspense fallback={<PageLoader />}><ProhibitedItemsPolicyPage /></Suspense>} />
-        <Route path="seller-verification-policy" element={<Suspense fallback={<PageLoader />}><SellerVerificationPolicyPage /></Suspense>} />
-        <Route path="ip-trademark-complaints" element={<Suspense fallback={<PageLoader />}><IntellectualPropertyComplaintsPage /></Suspense>} />
-        <Route path="intellectual-property-complaints" element={<Navigate to="/ip-trademark-complaints" replace />} />
-        <Route path="seller-guidelines" element={<Suspense fallback={<PageLoader />}><SellerGuidelinesPage /></Suspense>} />
-
-        {/* ── Aliases: /pp/* → clean routes (backward compat for bookmarks / old links) */}
-        <Route path="pp/admin/*" element={<Navigate to="/admin" replace />} />
-        <Route path="pp/seller/*" element={<Navigate to="/seller" replace />} />
-        <Route path="pp/buyer/*" element={<Navigate to="/buyer" replace />} />
-
-        {/* ── Other legacy aliases ─────────────────────────────────────────────── */}
-        <Route path="dashboard" element={<DashboardRedirect />} />
-        <Route path="shop" element={<Navigate to="/catalog" replace />} />
-        <Route path="products" element={<Navigate to="/catalog" replace />} />
-        <Route path="blog" element={<Navigate to="/deals" replace />} />
-        <Route path="pricing" element={<Navigate to="/seller-terms" replace />} />
-        <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
-        <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
-        <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
-
-        {/* ── Wildcard — pixel-perfect 404 ─────────────────────────────────────── */}
-        <Route path="*" element={<Suspense fallback={<PageLoader />}><PPNotFound /></Suspense>} />
-        </Routes>
-      </MaintenanceModeGate>
-      {/* Cookie consent banner — self-manages visibility via localStorage
-          (key: loadify_cookie_consent). */}
-      <CookieConsent />
-    </CartProvider>
+      </Routes>
   );
 }
 

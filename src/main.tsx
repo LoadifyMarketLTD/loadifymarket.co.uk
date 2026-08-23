@@ -1,40 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
-import { initErrorTracking } from "./lib/errorTracking.ts";
-import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
-import { isCapacitorContext } from "./lib/capacitorUtils.ts";
 import "./index.css";
-import "./native.css";
-
-// Initialise global error tracking (unhandled errors + unhandled rejections).
-// Must be called before the React tree mounts so no early errors are missed.
-initErrorTracking();
-
-// Mark the native WebView once at bootstrap so native-only layout fixes can be
-// scoped without changing the regular website or mobile browser experience.
-if (isCapacitorContext()) {
-  document.documentElement.classList.add('capacitor-native');
-}
-
-// On Capacitor APK, relative /.netlify/functions/ URLs resolve to
-// https://localhost (the local WebView file server) instead of the Netlify
-// backend.  This patch rewrites them to absolute URLs so every component
-// fetch call reaches the live deployment without any per-file changes.
-patchCapacitorFetch();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <HelmetProvider>
-      <BrowserRouter>
-        <ErrorBoundary>
-          <App />
-        </ErrorBoundary>
-      </BrowserRouter>
-    </HelmetProvider>
+    <BrowserRouter>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </BrowserRouter>
   </React.StrictMode>
 );
 
@@ -85,33 +62,18 @@ if (import.meta.env.DEV) {
   });
 }
 
-// The service worker is a web/PWA concern, not part of the Capacitor runtime.
-// Native builds already ship versioned web assets inside the APK; layering the
-// PWA cache over those assets can keep stale bundles alive across app updates.
-// Unregister any service worker left by an older APK, and remove only Loadify's
-// own PWA caches. Regular web/PWA visitors continue to register /sw.js normally.
+// Register service worker for PWA support
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    if (isCapacitorContext()) {
-      void navigator.serviceWorker.getRegistrations()
-        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
-        .then(async () => {
-          if (!('caches' in window)) return;
-          const cacheNames = await window.caches.keys();
-          await Promise.all(
-            cacheNames
-              .filter((name) => name.startsWith('loadify-'))
-              .map((name) => window.caches.delete(name)),
-          );
-        })
-        .catch(() => {
-          // Cleanup is best-effort; a failure must not block native startup.
-        });
-      return;
-    }
-
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Non-fatal — the website remains functional without offline caching.
-    });
+    navigator.serviceWorker.register('/sw.js').then(
+      () => {
+        // ServiceWorker registered successfully — silent in production
+      },
+      (err) => {
+        // ServiceWorker registration is non-fatal; use warn so public pages
+        // are not flagged for console errors by auditing tools.
+        console.warn('ServiceWorker registration failed:', err);
+      }
+    );
   });
 }

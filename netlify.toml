@@ -2,105 +2,11 @@
   command = "npm ci && npm run build"
   publish = "dist"
 
-# ─── Image CDN — allowed remote sources ──────────────────────────────────────
-# Netlify Image CDN only proxies/transforms images from explicitly allowed
-# remote origins.  Without this, requests to /.netlify/images?url=<supabase>
-# fail with HTTP 400.  The pattern matches all objects in the Supabase project
-# storage bucket (product-images, avatars, etc.).
-[images]
-  remote_images = ["https://fwdfpmfvgygvqciecesx\\.supabase\\.co/.*"]
-
-# ─── Force HTTPS ──────────────────────────────────────────────────────────────
-[[redirects]]
-  from = "http://loadifymarket.co.uk/*"
-  to = "https://loadifymarket.co.uk/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "http://www.loadifymarket.co.uk/*"
-  to = "https://loadifymarket.co.uk/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "https://www.loadifymarket.co.uk/*"
-  to = "https://loadifymarket.co.uk/:splat"
-  status = 301
-  force = true
-
 [build.environment]
-  NODE_VERSION = "22"
-
-# ── Social Commerce Product Feed ─────────────────────────────────────────────
-# Routes /product-feed.xml to the Netlify Function that generates a live
-# Google Merchant Center / Meta / TikTok compatible RSS 2.0 product feed.
-# Accepts an optional ?page=N query parameter for pagination.
-[[redirects]]
-  from   = "/product-feed.xml"
-  to     = "/.netlify/functions/product-feed"
-  status = 200
-  force  = true
-
-# ── Dynamic sitemap (includes product pages) ──────────────────────────────────
-# The static public/sitemap.xml only covers static pages.  This redirect
-# routes /sitemap.xml to a Netlify Function that appends every active product
-# URL fetched live from the database.  force=true overrides the static file.
-[[redirects]]
-  from   = "/sitemap.xml"
-  to     = "/.netlify/functions/sitemap"
-  status = 200
-  force  = true
-
-# ─── API proxy — routes /api/* calls to Netlify Functions ─────────────────────
-# Ensures any request to /api/<name> is served by the matching Netlify Function
-# so the frontend always receives JSON and never gets an HTML 404/redirect.
-[[redirects]]
-  from   = "/api/*"
-  to     = "/.netlify/functions/:splat"
-  status = 200
-  force  = true
+  NODE_VERSION = "20"
 
 [functions]
-  directory = "netlify/functions-modern"
   node_bundler = "esbuild"
-
-
-[functions."onboarding-reminder"]
-  schedule = "0 9 * * *"
-
-[functions."escrow-release"]
-  schedule = "0 2 * * *"
-
-# ─── Edge Functions ───────────────────────────────────────────────────────────
-# EXECUTION ORDER matters: Netlify runs edge functions in the order declared
-# here.  For /product/:id requests:
-#
-#   request → product-meta → context.next()
-#                             → security-headers → context.next() → CDN (index.html)
-#                             ← security-headers adds HTTP security headers
-#           ← product-meta patches product-specific OG/Twitter meta tags
-#   response → client / crawler
-#
-# product-meta must be declared FIRST so it receives the response LAST (after
-# security-headers has already added its HTTP headers) and can safely read +
-# rewrite the HTML body.
-
-# Injects product-specific Open Graph / Twitter Card / canonical tags into
-# /product/:id HTML so social-media crawlers (Facebook, WhatsApp, etc.) see
-# real product metadata instead of the generic index.html shell tags.
-[[edge_functions]]
-  function = "product-meta"
-  path = "/product/*"
-
-# security-headers runs at the Netlify edge (Deno runtime) and adds
-# Strict-Transport-Security and Permissions-Policy to every HTML response.
-# The edge function also has in-source config (config.path = '/*'), but the
-# explicit registration below ensures it is always active regardless of
-# Netlify CLI version.
-[[edge_functions]]
-  function = "security-headers"
-  path = "/*"
 
 # ─── Security Headers (applied to all responses) ─────────────────────────────
 [[headers]]
@@ -114,96 +20,37 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     # Restrict browser feature access
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(self)"
-    # Content-Security-Policy: enforced policy.
-    # 'unsafe-inline' is retained for script-src (JSON-LD <script> blocks) and
-    # style-src (Tailwind-generated inline styles). These are deliberate trade-offs
-    # documented in the security review; the policy still blocks all non-allowlisted
-    # origins, providing meaningful cross-site injection protection.
-    # The report-uri directive sends violation reports to the csp-report function
-    # so they can be monitored without disrupting users.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://api.postcodes.io https://fonts.googleapis.com https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com https://app.netlify.com; object-src 'none'; base-uri 'self'; form-action 'self'; report-uri /.netlify/functions/csp-report"
+    # CSP in report-only mode: observe violations without breaking functionality.
+    # NOTE: 'unsafe-inline' is included because the app uses inline JSON-LD <script>
+    # blocks and Tailwind-generated inline styles. Before promoting this to an enforced
+    # Content-Security-Policy header, replace inline scripts with nonces or hashes and
+    # audit inline style usage to remove 'unsafe-inline' from both script-src and style-src.
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'"
 
-# ─── Cache headers ────────────────────────────────────────────────────────────
-# Vite outputs content-hashed filenames in /assets/ (e.g. index-bPeGMmBf.js).
-# These never change for the same content, so we can cache them aggressively.
+# ─── Cache: static assets (immutable hashed filenames from Vite) ──────────────
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# HTML entry point must always be revalidated (SPA root, changes on deploy)
+# ─── Cache: HTML — short duration, must revalidate ───────────────────────────
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
-# SPA routes (/, /catalog, /product/*, etc.) are all served as index.html via
-# the /* → /index.html 200 rewrite.  The /*.html rule above only matches
-# literal .html URLs so we need an explicit rule here to prevent browsers from
-# heuristically caching the SPA shell for these paths.
-[[headers]]
-  for = "/"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
-# Root-level static assets (images, icons) are NOT content-hashed, so we use a
-# 7-day cache with stale-while-revalidate so browsers serve the cached copy
-# instantly and revalidate in the background.  This is safe because these files
-# rarely change and any replacement is typically a new deploy (which bumps the
-# ETag at the origin).  This matches the "increase image cache" requirement.
-[[headers]]
-  for = "/images/*"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-[[headers]]
-  for = "/images/**"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
+# ─── Cache: images ────────────────────────────────────────────────────────────
 [[headers]]
   for = "/*.jpg"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-[[headers]]
-  for = "/*.jpeg"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=86400"
 
 [[headers]]
   for = "/*.png"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=86400"
 
 [[headers]]
   for = "/*.webp"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-[[headers]]
-  for = "/*.svg"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-[[headers]]
-  for = "/payment-icons/*"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-[[headers]]
-  for = "/manifest.webmanifest"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
-    Content-Type = "application/manifest+json"
-
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
-    Service-Worker-Allowed = "/"
-
-[[headers]]
-  for = "/branding/*"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=86400"
