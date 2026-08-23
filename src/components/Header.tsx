@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
@@ -19,6 +19,7 @@ const Header = () => {
   const { cartCount } = useCart();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const { categories } = useCategories();
   const { liveCategoryIds, liveRootCategoryIds } = useLiveCategoryAvailability();
 
@@ -52,9 +53,6 @@ const Header = () => {
     navigate("/login", { replace: true });
   };
 
-  // Public nav only promotes root categories that currently contain sellable,
-  // approved marketplace inventory. The full taxonomy remains available via
-  // Shop All / More so the header never advertises empty categories as featured.
   const displayCategories = categories
     .filter((category) => liveRootCategoryIdSet.has(category.id))
     .slice(0, 6);
@@ -69,6 +67,34 @@ const Header = () => {
     })),
     { to: "/catalog", label: "MORE →", catSlug: null as string | null },
   ];
+
+  const focusedPublicPrefixes = [
+    "/catalog",
+    "/category/",
+    "/categories/",
+    "/product/",
+    "/cart",
+    "/deals",
+    "/clearance",
+    "/about",
+    "/contact",
+    "/terms",
+    "/privacy",
+    "/cookies",
+    "/disclaimer",
+    "/returns",
+    "/shipping",
+    "/buyer-terms",
+    "/seller-terms",
+    "/faq",
+    "/help",
+    "/wholesale-info",
+  ];
+  const hideForFocusedPublicRoute =
+    location.pathname === "/" ||
+    focusedPublicPrefixes.some((prefix) => location.pathname === prefix || location.pathname.startsWith(prefix));
+
+  if (hideForFocusedPublicRoute) return null;
 
   const ghostButtonClass = "text-white/70 hover:text-[#F5A300] hover:bg-white/[0.07] font-medium rounded-xl transition-all";
 
