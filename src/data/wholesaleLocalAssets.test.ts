@@ -33,7 +33,8 @@ describe('wholesale local subcategory assets release gate', () => {
       );
       expect(staged, `Missing staging entry for ${entry.categoryLabel} -> ${entry.subcategoryLabel}`).toBeDefined();
       expect(staged?.targetPath.replace(/^public/, '')).toBe(entry.assetPath);
-      expect(staged?.sourcePage).toBe(entry.sourcePage);
+      expect(entry.sourcePage).toContain(staged?.sourceId);
+      expect(entry.sourceImage).toContain(staged?.sourceId);
     }
   });
 
