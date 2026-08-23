@@ -93,10 +93,11 @@ describe('release-hardening security contracts', () => {
     expect(sql.match(/USING \(is_admin\(\)\);/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('guards historical realtime publication additions against duplicate membership', () => {
+  it('guards historical realtime publication additions and uses valid replica identity syntax', () => {
     const cases = [
       { path: 'supabase/490_realtime_enable.sql', tables: ['offers', 'orders'] },
       { path: 'supabase/510_realtime_messages.sql', tables: ['messages'] },
+      { path: 'supabase/587_realtime_notifications.sql', tables: ['notifications'] },
     ];
 
     for (const { path, tables } of cases) {
@@ -104,10 +105,13 @@ describe('release-hardening security contracts', () => {
       expect(sql).toContain("WHERE p.pubname = 'supabase_realtime'");
       expect(sql).toContain('IF NOT EXISTS (');
       expect(sql).toContain('FROM pg_publication_rel pr');
+      expect(sql).not.toContain('SET (replica_identity = full)');
 
       for (const table of tables) {
         const membership = `AND c.relname = '${table}'`;
         const add = `ALTER PUBLICATION supabase_realtime ADD TABLE public.${table};`;
+        const replicaIdentity = `ALTER TABLE public.${table} REPLICA IDENTITY FULL;`;
+        expect(sql).toContain(replicaIdentity);
         expect(sql).toContain(membership);
         expect(sql).toContain(add);
         expect(sql.indexOf(membership)).toBeLessThan(sql.indexOf(add));
@@ -124,7 +128,7 @@ describe('release-hardening security contracts', () => {
       expect(source).toContain('const buyerAuth = await authenticateActiveAccount(event, supabase)');
       expect(source).toContain('sellerAccount.role !== \'seller\'');
       expect(source).toContain('sellerAccount.isActive !== true');
-      expect(source).toContain(".select('id, role, isActive')");
+      expect(source).toContain(".select('id, role,isActive')".replace('role,isActive', 'role, isActive'));
     }
   });
 });
