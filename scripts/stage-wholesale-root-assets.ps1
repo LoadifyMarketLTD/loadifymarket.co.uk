@@ -16,7 +16,6 @@ if ($currentBranch -ne $expectedBranch) {
   throw "Wrong branch: $currentBranch. Expected $expectedBranch."
 }
 
-$sourceBase = 'https://raw.githubusercontent.com/LoadifyMarketLTD/focused-image-craft/main/src/assets/categories'
 $targetRoot = Join-Path $repo 'public\category-visuals\wholesale'
 New-Item -ItemType Directory -Force -Path $targetRoot | Out-Null
 
@@ -40,6 +39,7 @@ $map = [ordered]@{
 }
 
 function Assert-Jpeg([string]$Path) {
+  if (-not (Test-Path -LiteralPath $Path)) { throw "Wholesale root image is missing: $Path" }
   $info = Get-Item -LiteralPath $Path
   if ($info.Length -lt 20000) { throw "Wholesale root image is unexpectedly small: $Path ($($info.Length) bytes)." }
   $stream = [System.IO.File]::OpenRead($Path)
@@ -53,29 +53,67 @@ function Assert-Jpeg([string]$Path) {
   }
 }
 
-$completed = 0
-foreach ($slug in $map.Keys) {
-  $sourceName = $map[$slug]
-  $target = Join-Path $targetRoot "$slug.jpg"
-
-  if ((Test-Path -LiteralPath $target) -and -not $Force) {
-    Assert-Jpeg $target
-    $completed++
-    Write-Host "[$completed/16] EXISTS  public/category-visuals/wholesale/$slug.jpg"
-    continue
+$needsSource = $Force
+if (-not $needsSource) {
+  foreach ($slug in $map.Keys) {
+    $candidate = Join-Path $targetRoot "$slug.jpg"
+    if (-not (Test-Path -LiteralPath $candidate)) {
+      $needsSource = $true
+      break
+    }
   }
-
-  $url = "$sourceBase/$sourceName"
-  Invoke-WebRequest -Uri $url -OutFile $target -MaximumRedirection 10 -Headers @{ 'User-Agent' = 'LoadifyMarketVisualStager/1.0' }
-  Assert-Jpeg $target
-  $completed++
-  Write-Host "[$completed/16] STAGED  public/category-visuals/wholesale/$slug.jpg"
 }
 
-$files = Get-ChildItem $targetRoot -File -Filter '*.jpg'
-if ($files.Count -ne 16) { throw "Expected 16 wholesale root JPGs, found $($files.Count)." }
+$tempClone = Join-Path $env:TEMP 'loadify-focused-image-craft-root-assets'
+if ($needsSource) {
+  if (Test-Path -LiteralPath $tempClone) { Remove-Item -LiteralPath $tempClone -Recurse -Force }
 
-Write-Host "`n=== WHOLESALE ROOT VISUAL STAGING COMPLETE ===" -ForegroundColor Green
-Write-Host 'Root images validated: 16 / 16'
-Write-Host 'Source: LoadifyMarketLTD/focused-image-craft'
-Write-Host 'No database, migration, Android or production changes were made.'
+  Write-Host 'Cloning focused-image-craft temporarily using Git authentication...' -ForegroundColor Cyan
+  git clone --depth 1 --filter=blob:none --sparse https://github.com/LoadifyMarketLTD/focused-image-craft.git $tempClone
+  if ($LASTEXITCODE -ne 0) { throw 'Could not clone LoadifyMarketLTD/focused-image-craft with local Git credentials.' }
+
+  Push-Location $tempClone
+  try {
+    git sparse-checkout set src/assets/categories
+    if ($LASTEXITCODE -ne 0) { throw 'Could not sparse-checkout src/assets/categories from focused-image-craft.' }
+  } finally {
+    Pop-Location
+  }
+}
+
+try {
+  $completed = 0
+  foreach ($slug in $map.Keys) {
+    $sourceName = $map[$slug]
+    $target = Join-Path $targetRoot "$slug.jpg"
+
+    if ((Test-Path -LiteralPath $target) -and -not $Force) {
+      Assert-Jpeg $target
+      $completed++
+      Write-Host "[$completed/16] EXISTS  public/category-visuals/wholesale/$slug.jpg"
+      continue
+    }
+
+    $source = Join-Path $tempClone "src\assets\categories\$sourceName"
+    if (-not (Test-Path -LiteralPath $source)) {
+      throw "Missing source root asset in focused-image-craft: src/assets/categories/$sourceName"
+    }
+
+    Copy-Item -LiteralPath $source -Destination $target -Force
+    Assert-Jpeg $target
+    $completed++
+    Write-Host "[$completed/16] STAGED  public/category-visuals/wholesale/$slug.jpg"
+  }
+
+  $files = @(Get-ChildItem $targetRoot -File -Filter '*.jpg')
+  if ($files.Count -ne 16) { throw "Expected 16 wholesale root JPGs, found $($files.Count)." }
+
+  Write-Host "`n=== WHOLESALE ROOT VISUAL STAGING COMPLETE ===" -ForegroundColor Green
+  Write-Host 'Root images validated: 16 / 16'
+  Write-Host 'Source: authenticated temporary Git checkout of LoadifyMarketLTD/focused-image-craft'
+  Write-Host 'No database, migration, Android or production changes were made.'
+} finally {
+  if (Test-Path -LiteralPath $tempClone) {
+    Remove-Item -LiteralPath $tempClone -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
