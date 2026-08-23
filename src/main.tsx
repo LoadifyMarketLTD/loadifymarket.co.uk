@@ -85,28 +85,28 @@ if (import.meta.env.DEV) {
   });
 }
 
-// The service worker is a web/PWA concern, not part of the Capacitor runtime.
-// Native builds already ship versioned web assets inside the APK; layering the
-// PWA cache over those assets can keep stale bundles alive across app updates.
-// Unregister any service worker left by an older APK, and remove only Loadify's
-// own PWA caches. Regular web/PWA visitors continue to register /sw.js normally.
+async function clearLoadifyServiceWorkerCaches(): Promise<void> {
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(registrations.map((registration) => registration.unregister()));
+
+  if (!('caches' in window)) return;
+  const cacheNames = await window.caches.keys();
+  await Promise.all(
+    cacheNames
+      .filter((name) => name.startsWith('loadify-'))
+      .map((name) => window.caches.delete(name)),
+  );
+}
+
+// The service worker is a web/PWA concern, not part of Capacitor or Vite dev.
+// Development must never be served from an old PWA cache because that makes
+// branch previews appear unchanged even when the source has moved forward.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    if (isCapacitorContext()) {
-      void navigator.serviceWorker.getRegistrations()
-        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
-        .then(async () => {
-          if (!('caches' in window)) return;
-          const cacheNames = await window.caches.keys();
-          await Promise.all(
-            cacheNames
-              .filter((name) => name.startsWith('loadify-'))
-              .map((name) => window.caches.delete(name)),
-          );
-        })
-        .catch(() => {
-          // Cleanup is best-effort; a failure must not block native startup.
-        });
+    if (isCapacitorContext() || import.meta.env.DEV) {
+      void clearLoadifyServiceWorkerCaches().catch(() => {
+        // Best-effort cleanup only; local/native startup must not be blocked.
+      });
       return;
     }
 
