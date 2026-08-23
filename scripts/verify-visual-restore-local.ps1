@@ -26,17 +26,32 @@ Write-Host 'Existing unrelated working-tree changes are preserved; this script n
 
 if (-not $SkipRootAssets) {
   $originalAssetsStaged = $false
+  $resolvedArchive = $null
 
   if ($ArchivePath) {
-    & powershell -ExecutionPolicy Bypass -File '.\scripts\stage-user-visual-assets.ps1' -ArchivePath $ArchivePath
-    $originalAssetsStaged = ($LASTEXITCODE -eq 0)
+    if (-not (Test-Path -LiteralPath $ArchivePath)) {
+      throw "ArchivePath does not exist: $ArchivePath"
+    }
+    $resolvedArchive = (Resolve-Path -LiteralPath $ArchivePath).Path
   } else {
-    & powershell -ExecutionPolicy Bypass -File '.\scripts\stage-user-visual-assets.ps1'
-    $originalAssetsStaged = ($LASTEXITCODE -eq 0)
+    $archiveCandidates = @(
+      "$HOME\Downloads\loadify-homepage-restore (1)(1).zip",
+      "$HOME\Downloads\loadify-homepage-restore.zip",
+      "$HOME\Desktop\loadify-homepage-restore (1)(1).zip",
+      "$HOME\Desktop\loadify-homepage-restore.zip"
+    ) | Where-Object { Test-Path -LiteralPath $_ }
+
+    if ($archiveCandidates.Count -gt 0) {
+      $resolvedArchive = (Resolve-Path -LiteralPath $archiveCandidates[0]).Path
+    }
   }
 
-  if (-not $originalAssetsStaged) {
-    Write-Warning 'Original restore archive was not available. Staging the 16 wholesale root visuals directly from focused-image-craft instead.'
+  if ($resolvedArchive) {
+    & powershell -ExecutionPolicy Bypass -File '.\scripts\stage-user-visual-assets.ps1' -ArchivePath $resolvedArchive
+    if ($LASTEXITCODE -ne 0) { throw 'User-provided root visual staging failed.' }
+    $originalAssetsStaged = $true
+  } else {
+    Write-Warning 'Original restore archive was not found locally. Using the authenticated focused-image-craft fallback for the 16 wholesale root visuals.'
   }
 
   $rootDir = '.\public\category-visuals\wholesale'
@@ -44,6 +59,8 @@ if (-not $SkipRootAssets) {
   if ($rootCount -ne 16) {
     & powershell -ExecutionPolicy Bypass -File '.\scripts\stage-wholesale-root-assets.ps1'
     if ($LASTEXITCODE -ne 0) { throw 'Wholesale root visual staging failed.' }
+  } elseif (-not $originalAssetsStaged) {
+    Write-Host 'Wholesale root visuals already present: 16/16' -ForegroundColor Green
   }
 }
 
