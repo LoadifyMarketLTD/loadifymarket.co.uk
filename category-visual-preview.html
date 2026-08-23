@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loadify Market — 16×96 Visual Approval Preview</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #07152f; color: #fff; }
+      header { position: sticky; top: 0; z-index: 10; background: rgba(7,21,47,.96); border-bottom: 1px solid rgba(255,255,255,.10); backdrop-filter: blur(14px); }
+      .header-inner { max-width: 1440px; margin: 0 auto; padding: 18px 28px; display: flex; gap: 20px; align-items: center; justify-content: space-between; }
+      .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; }
+      .mark { width: 36px; height: 36px; border: 2px solid #f5a300; border-radius: 9px; display: grid; place-items: center; color: #f5a300; }
+      .meta { color: #b9c4d8; font-size: 13px; }
+      main { max-width: 1440px; margin: 0 auto; padding: 28px; }
+      .intro { padding: 28px 0 14px; }
+      .eyebrow { color: #f5a300; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; }
+      h1 { margin: 8px 0 10px; font-size: clamp(30px, 4vw, 54px); line-height: 1.05; }
+      .lead { max-width: 900px; color: #bac6d9; line-height: 1.65; }
+      .family { margin: 32px 0 42px; }
+      .family-head { display: grid; grid-template-columns: minmax(280px, 430px) 1fr; gap: 24px; align-items: stretch; margin-bottom: 18px; }
+      .parent-card, .family-copy { background: #0d2146; border: 1px solid rgba(255,255,255,.09); border-radius: 20px; overflow: hidden; }
+      .parent-card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+      .parent-title { padding: 14px 16px 16px; font-size: 22px; font-weight: 800; }
+      .family-copy { padding: 24px; display: flex; flex-direction: column; justify-content: center; }
+      .family-copy h2 { margin: 0 0 9px; font-size: 28px; }
+      .family-copy p { margin: 0; color: #b9c4d8; line-height: 1.6; }
+      .subgrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+      .subcard { min-width: 0; background: #0d2146; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; overflow: hidden; transition: transform .18s ease, border-color .18s ease; }
+      .subcard:hover { transform: translateY(-3px); border-color: rgba(245,163,0,.65); }
+      .subcard img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #132c59; }
+      .subbody { padding: 11px 12px 13px; }
+      .subname { font-size: 13px; font-weight: 800; line-height: 1.25; }
+      .status { margin-top: 6px; color: #8ee6bc; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+      .summary { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+      .pill { padding: 8px 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,.10); background: #0d2146; color: #d7dfec; font-size: 12px; }
+      .warning { margin: 18px 0 0; color: #ffd88a; font-size: 13px; }
+      @media (max-width: 1180px) { .subgrid { grid-template-columns: repeat(3, 1fr); } }
+      @media (max-width: 760px) { main { padding: 16px; } .header-inner { padding: 14px 16px; } .family-head { grid-template-columns: 1fr; } .subgrid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <div class="brand"><div class="mark">LM</div><span>Loadify Market</span></div>
+        <div class="meta" id="summaryTop">Visual approval preview</div>
+      </div>
+    </header>
+    <main>
+      <section class="intro">
+        <div class="eyebrow">PR #582 — visual approval</div>
+        <h1>16 categories. 96 dedicated subcategory visuals.</h1>
+        <p class="lead">This page is intentionally independent of Supabase and live inventory. It exists only so the proposed category visual system can be reviewed before any production migration or merge. Editorial images represent product ranges; they are not product listings.</p>
+        <div class="summary" id="summary"></div>
+        <p class="warning">Nothing on this page changes production data.</p>
+      </section>
+      <div id="app"></div>
+    </main>
+    <script type="module">
+      import { categoryVisuals, visualReadiness } from '/src/data/categoryVisuals.ts';
+
+      const app = document.querySelector('#app');
+      const summary = document.querySelector('#summary');
+      const summaryTop = document.querySelector('#summaryTop');
+      summaryTop.textContent = `${visualReadiness.categories} categories • ${visualReadiness.subcategories} subcategories`;
+      summary.innerHTML = `
+        <span class="pill">${visualReadiness.categories} categories</span>
+        <span class="pill">${visualReadiness.subcategories} subcategories</span>
+        <span class="pill">${visualReadiness.readySubcategories} dedicated images ready</span>
+      `;
+
+      for (const category of categoryVisuals) {
+        const section = document.createElement('section');
+        section.className = 'family';
+        section.innerHTML = `
+          <div class="family-head">
+            <article class="parent-card">
+              <img src="${category.coverImage}" alt="${category.altText}" loading="lazy" />
+              <div class="parent-title">${category.title}</div>
+            </article>
+            <div class="family-copy">
+              <div class="eyebrow">Category family</div>
+              <h2>${category.title}</h2>
+              <p>${category.visualBrief}</p>
+            </div>
+          </div>
+          <div class="subgrid">
+            ${category.subcategories.map((sub) => `
+              <article class="subcard">
+                <img src="${sub.image}" alt="${sub.altText}" loading="lazy" />
+                <div class="subbody">
+                  <div class="subname">${sub.title}</div>
+                  <div class="status">${sub.assetStatus.replaceAll('-', ' ')}</div>
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        `;
+        app.appendChild(section);
+      }
+    </script>
+  </body>
+</html>
