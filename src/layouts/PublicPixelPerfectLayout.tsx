@@ -1,5 +1,7 @@
 import { useEffect, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import Footer from "@/components/Footer";
+import CategoryBrowseSection from "@/components/catalog/CategoryBrowseSection";
 import CategoryRouteVisualBanner from "@/components/catalog/CategoryRouteVisualBanner";
 import "@/styles/visual-restore-homepage.css";
 
@@ -9,6 +11,8 @@ interface PublicPixelPerfectLayoutProps {
 }
 
 export default function PublicPixelPerfectLayout({ children, navbar }: PublicPixelPerfectLayoutProps) {
+  const location = useLocation();
+
   useEffect(() => {
     document.body.classList.add("pixel-perfect-public-active");
     return () => document.body.classList.remove("pixel-perfect-public-active");
@@ -24,6 +28,11 @@ export default function PublicPixelPerfectLayout({ children, navbar }: PublicPix
         Skip to main content
       </a>
       <CategoryRouteVisualBanner />
+      {location.pathname === "/catalog" ? (
+        <div className="pt-16">
+          <CategoryBrowseSection compact />
+        </div>
+      ) : null}
       {children}
       <Footer />
     </div>
