@@ -128,7 +128,7 @@ describe('release-hardening security contracts', () => {
       expect(source).toContain('const buyerAuth = await authenticateActiveAccount(event, supabase)');
       expect(source).toContain('sellerAccount.role !== \'seller\'');
       expect(source).toContain('sellerAccount.isActive !== true');
-      expect(source).toContain(".select('id, role,isActive')".replace('role,isActive', 'role, isActive'));
+      expect(source).toContain(".select('id, role, isActive')");
     }
   });
 });
