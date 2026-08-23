@@ -6,6 +6,8 @@ export type WholesaleSubcategoryVisualManifestEntry = {
   subcategoryLabel: string;
   subcategorySlug: string;
   assetPath: string;
+  displayImage: string;
+  sourcePage?: string;
   status: 'subcategory-pending' | 'dedicated';
   alt: string;
   ratio: '4:3';
@@ -46,6 +48,8 @@ export const WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST: WholesaleSubcategoryVisualMa
       subcategoryLabel: subcategory.label,
       subcategorySlug: subcategory.slug,
       assetPath: subcategory.imagePath,
+      displayImage: subcategory.displayImage,
+      sourcePage: subcategory.sourcePage,
       status: subcategory.status,
       alt: `${subcategory.label} products in the ${category.label} category`,
       ratio: '4:3' as const,
@@ -60,6 +64,9 @@ export const WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST_COUNT =
 
 export const PENDING_WHOLESALE_SUBCATEGORY_VISUALS =
   WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST.filter((entry) => entry.status === 'subcategory-pending');
+
+export const DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS =
+  WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST.filter((entry) => entry.status === 'dedicated');
 
 export function findWholesaleSubcategoryVisual(
   categorySlug: string,
