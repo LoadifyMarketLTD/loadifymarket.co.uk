@@ -78,6 +78,11 @@ export default function MobileCategoriesPage() {
                         src={visual.image}
                         alt={visual.altText}
                         loading="lazy"
+                        onError={(event) => {
+                          if (event.currentTarget.dataset.fallbackApplied === 'true') return;
+                          event.currentTarget.dataset.fallbackApplied = 'true';
+                          event.currentTarget.src = '/hero-marketplace.jpg';
+                        }}
                         className="h-full w-full object-cover"
                       />
                     ) : (
