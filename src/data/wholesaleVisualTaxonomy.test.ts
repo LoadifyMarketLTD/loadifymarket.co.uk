@@ -18,7 +18,7 @@ describe('wholesale visual taxonomy contract', () => {
     }
   });
 
-  it('assigns deterministic dedicated asset paths to every subcategory', () => {
+  it('assigns globally unique namespaced local asset paths to every subcategory', () => {
     const paths = WHOLESALE_VISUAL_TAXONOMY.flatMap((category) =>
       category.subcategories.map((subcategory) => subcategory.imagePath),
     );
@@ -26,16 +26,16 @@ describe('wholesale visual taxonomy contract', () => {
     expect(paths).toHaveLength(96);
     expect(new Set(paths).size).toBe(96);
     for (const path of paths) {
-      expect(path).toMatch(/^\/category-visuals\/subcategories\/[a-z0-9-]+\.jpg$/);
+      expect(path).toMatch(/^\/category-visuals\/subcategories\/[a-z0-9-]+\/[a-z0-9-]+\.jpg$/);
     }
   });
 
-  it('keeps all subcategory visuals pending until dedicated assets are staged', () => {
-    expect(allWholesaleSubcategoriesPending()).toBe(true);
-    for (const category of WHOLESALE_VISUAL_TAXONOMY) {
-      for (const subcategory of category.subcategories) {
-        expect(subcategory.status).toBe('subcategory-pending');
-      }
-    }
+  it('has a dedicated visual source selected for every subcategory', () => {
+    expect(allWholesaleSubcategoriesPending()).toBe(false);
+    const subcategories = WHOLESALE_VISUAL_TAXONOMY.flatMap((category) => category.subcategories);
+    expect(subcategories).toHaveLength(96);
+    expect(subcategories.every((subcategory) => subcategory.status === 'dedicated')).toBe(true);
+    expect(subcategories.every((subcategory) => Boolean(subcategory.sourcePage))).toBe(true);
+    expect(new Set(subcategories.map((subcategory) => subcategory.displayImage)).size).toBe(96);
   });
 });
