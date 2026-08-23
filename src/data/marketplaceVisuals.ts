@@ -25,6 +25,9 @@ const rootImages: Record<string, string> = {
   clearance: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1600&h=1200&q=82",
 };
 
+const netlifyImage = (remoteUrl: string) =>
+  `/.netlify/images?url=${encodeURIComponent(remoteUrl)}&w=1600&h=1200&fit=cover&q=82`;
+
 export type MarketplaceVisual = {
   title: string;
   slug: string;
@@ -34,7 +37,8 @@ export type MarketplaceVisual = {
 };
 
 export const marketplaceVisuals: MarketplaceVisual[] = marketplaceTaxonomy.map((category) => {
-  const parentImage = rootImages[category.imageKey] || rootImages["mixed-pallets"];
+  const parentRemoteImage = rootImages[category.imageKey] || rootImages["mixed-pallets"];
+  const parentImage = netlifyImage(parentRemoteImage);
   const duplicateImages = duplicateDedicatedImagesWithinCategory(category.label);
   if (import.meta.env.DEV && duplicateImages.length > 0) {
     throw new Error(`Duplicate subcategory images in ${category.label}`);
@@ -42,13 +46,13 @@ export const marketplaceVisuals: MarketplaceVisual[] = marketplaceTaxonomy.map((
 
   const subcategories = category.subcategories.map((title) => {
     const dedicated = hasDedicatedSubcategoryImage(category.label, title);
-    const subImage = imageForSubcategory(category.label, title, parentImage);
-    if (import.meta.env.DEV && (!dedicated || subImage === parentImage)) {
+    const subRemoteImage = imageForSubcategory(category.label, title, parentRemoteImage);
+    if (import.meta.env.DEV && (!dedicated || subRemoteImage === parentRemoteImage)) {
       throw new Error(`Missing dedicated image for ${category.label} / ${title}`);
     }
     return {
       title,
-      image: subImage,
+      image: netlifyImage(subRemoteImage),
       altText: `${title} — representative products from ${category.label}`,
     };
   });
