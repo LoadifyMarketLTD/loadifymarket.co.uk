@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import Footer from "@/components/Footer";
+import CategoryRouteVisualBanner from "@/components/catalog/CategoryRouteVisualBanner";
 import "@/styles/visual-restore-homepage.css";
 
 interface PublicPixelPerfectLayoutProps {
@@ -22,6 +23,7 @@ export default function PublicPixelPerfectLayout({ children, navbar }: PublicPix
       >
         Skip to main content
       </a>
+      <CategoryRouteVisualBanner />
       {children}
       <Footer />
     </div>
