@@ -9,6 +9,14 @@ describe("canonical marketplace visual taxonomy", () => {
     expect(marketplaceTaxonomy.reduce((total, category) => total + category.subcategories.length, 0)).toBe(96);
   });
 
+  it("keeps every root category image same-origin", () => {
+    expect(marketplaceVisuals).toHaveLength(16);
+    for (const category of marketplaceVisuals) {
+      expect(category.image).toMatch(/^\/images\/categories\//);
+      expect(category.image).not.toMatch(/^https?:\/\//);
+    }
+  });
+
   it("gives every subcategory a dedicated non-parent image", () => {
     expect(marketplaceVisuals).toHaveLength(16);
     for (const category of marketplaceVisuals) {
