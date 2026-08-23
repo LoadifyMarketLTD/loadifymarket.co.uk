@@ -1,104 +1,42 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Loadify Market — 16×96 Visual Approval Preview</title>
-    <style>
-      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      * { box-sizing: border-box; }
-      body { margin: 0; background: #07152f; color: #fff; }
-      header { position: sticky; top: 0; z-index: 10; background: rgba(7,21,47,.96); border-bottom: 1px solid rgba(255,255,255,.10); backdrop-filter: blur(14px); }
-      .header-inner { max-width: 1440px; margin: 0 auto; padding: 18px 28px; display: flex; gap: 20px; align-items: center; justify-content: space-between; }
-      .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; }
-      .mark { width: 36px; height: 36px; border: 2px solid #f5a300; border-radius: 9px; display: grid; place-items: center; color: #f5a300; }
-      .meta { color: #b9c4d8; font-size: 13px; }
-      main { max-width: 1440px; margin: 0 auto; padding: 28px; }
-      .intro { padding: 28px 0 14px; }
-      .eyebrow { color: #f5a300; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; }
-      h1 { margin: 8px 0 10px; font-size: clamp(30px, 4vw, 54px); line-height: 1.05; }
-      .lead { max-width: 900px; color: #bac6d9; line-height: 1.65; }
-      .family { margin: 32px 0 42px; }
-      .family-head { display: grid; grid-template-columns: minmax(280px, 430px) 1fr; gap: 24px; align-items: stretch; margin-bottom: 18px; }
-      .parent-card, .family-copy { background: #0d2146; border: 1px solid rgba(255,255,255,.09); border-radius: 20px; overflow: hidden; }
-      .parent-card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
-      .parent-title { padding: 14px 16px 16px; font-size: 22px; font-weight: 800; }
-      .family-copy { padding: 24px; display: flex; flex-direction: column; justify-content: center; }
-      .family-copy h2 { margin: 0 0 9px; font-size: 28px; }
-      .family-copy p { margin: 0; color: #b9c4d8; line-height: 1.6; }
-      .subgrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-      .subcard { min-width: 0; background: #0d2146; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; overflow: hidden; transition: transform .18s ease, border-color .18s ease; }
-      .subcard:hover { transform: translateY(-3px); border-color: rgba(245,163,0,.65); }
-      .subcard img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #132c59; }
-      .subbody { padding: 11px 12px 13px; }
-      .subname { font-size: 13px; font-weight: 800; line-height: 1.25; }
-      .status { margin-top: 6px; color: #8ee6bc; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-      .summary { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-      .pill { padding: 8px 11px; border-radius: 999px; border: 1px solid rgba(255,255,255,.10); background: #0d2146; color: #d7dfec; font-size: 12px; }
-      .warning { margin: 18px 0 0; color: #ffd88a; font-size: 13px; }
-      @media (max-width: 1180px) { .subgrid { grid-template-columns: repeat(3, 1fr); } }
-      @media (max-width: 760px) { main { padding: 16px; } .header-inner { padding: 14px 16px; } .family-head { grid-template-columns: 1fr; } .subgrid { grid-template-columns: repeat(2, 1fr); } }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div class="header-inner">
-        <div class="brand"><div class="mark">LM</div><span>Loadify Market</span></div>
-        <div class="meta" id="summaryTop">Visual approval preview</div>
-      </div>
-    </header>
-    <main>
-      <section class="intro">
-        <div class="eyebrow">PR #582 — visual approval</div>
-        <h1>16 categories. 96 dedicated subcategory visuals.</h1>
-        <p class="lead">This page is intentionally independent of Supabase and live inventory. It exists only so the proposed category visual system can be reviewed before any production migration or merge. Editorial images represent product ranges; they are not product listings.</p>
-        <div class="summary" id="summary"></div>
-        <p class="warning">Nothing on this page changes production data.</p>
-      </section>
-      <div id="app"></div>
-    </main>
-    <script type="module">
-      import { categoryVisuals, visualReadiness } from '/src/data/categoryVisuals.ts';
-
-      const app = document.querySelector('#app');
-      const summary = document.querySelector('#summary');
-      const summaryTop = document.querySelector('#summaryTop');
-      summaryTop.textContent = `${visualReadiness.categories} categories • ${visualReadiness.subcategories} subcategories`;
-      summary.innerHTML = `
-        <span class="pill">${visualReadiness.categories} categories</span>
-        <span class="pill">${visualReadiness.subcategories} subcategories</span>
-        <span class="pill">${visualReadiness.readySubcategories} dedicated images ready</span>
-      `;
-
-      for (const category of categoryVisuals) {
-        const section = document.createElement('section');
-        section.className = 'family';
-        section.innerHTML = `
-          <div class="family-head">
-            <article class="parent-card">
-              <img src="${category.coverImage}" alt="${category.altText}" loading="lazy" />
-              <div class="parent-title">${category.title}</div>
-            </article>
-            <div class="family-copy">
-              <div class="eyebrow">Category family</div>
-              <h2>${category.title}</h2>
-              <p>${category.visualBrief}</p>
-            </div>
-          </div>
-          <div class="subgrid">
-            ${category.subcategories.map((sub) => `
-              <article class="subcard">
-                <img src="${sub.image}" alt="${sub.altText}" loading="lazy" />
-                <div class="subbody">
-                  <div class="subname">${sub.title}</div>
-                  <div class="status">${sub.assetStatus.replaceAll('-', ' ')}</div>
-                </div>
-              </article>
-            `).join('')}
-          </div>
-        `;
-        app.appendChild(section);
-      }
-    </script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Loadify Market — 16×96 Visual Approval Preview</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}body{margin:0;background:#07152f;color:#fff}header{position:sticky;top:0;z-index:10;background:rgba(7,21,47,.96);border-bottom:1px solid rgba(255,255,255,.10);backdrop-filter:blur(14px)}.header-inner{max-width:1440px;margin:0 auto;padding:18px 28px;display:flex;gap:20px;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px}.mark{width:36px;height:36px;border:2px solid #f5a300;border-radius:9px;display:grid;place-items:center;color:#f5a300}.meta{color:#b9c4d8;font-size:13px}main{max-width:1440px;margin:0 auto;padding:28px}.intro{padding:28px 0 14px}.eyebrow{color:#f5a300;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.16em}h1{margin:8px 0 10px;font-size:clamp(30px,4vw,54px);line-height:1.05}.lead{max-width:900px;color:#bac6d9;line-height:1.65}.family{margin:32px 0 42px}.family-head{display:grid;grid-template-columns:minmax(280px,430px) 1fr;gap:24px;align-items:stretch;margin-bottom:18px}.parent-card,.family-copy{background:#0d2146;border:1px solid rgba(255,255,255,.09);border-radius:20px;overflow:hidden}.parent-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}.parent-title{padding:14px 16px 16px;font-size:22px;font-weight:800}.family-copy{padding:24px;display:flex;flex-direction:column;justify-content:center}.family-copy h2{margin:0 0 9px;font-size:28px}.family-copy p{margin:0;color:#b9c4d8;line-height:1.6}.subgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.subcard{min-width:0;background:#0d2146;border:1px solid rgba(255,255,255,.09);border-radius:14px;overflow:hidden;transition:transform .18s ease,border-color .18s ease}.subcard:hover{transform:translateY(-3px);border-color:rgba(245,163,0,.65)}.subcard img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#132c59}.subbody{padding:11px 12px 13px}.subname{font-size:13px;font-weight:800;line-height:1.25}.status{margin-top:6px;color:#8ee6bc;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.summary{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.pill{padding:8px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:#0d2146;color:#d7dfec;font-size:12px}.warning{margin:18px 0 0;color:#ffd88a;font-size:13px}.error{margin:28px 0;padding:18px;border:1px solid #e66;background:#3a1520;border-radius:14px;color:#ffd8df}.loading{margin:36px 0;color:#b9c4d8;font-size:16px}@media(max-width:1180px){.subgrid{grid-template-columns:repeat(3,1fr)}}@media(max-width:760px){main{padding:16px}.header-inner{padding:14px 16px}.family-head{grid-template-columns:1fr}.subgrid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="header-inner"><div class="brand"><div class="mark">LM</div><span>Loadify Market</span></div><div class="meta" id="summaryTop">Loading visual preview…</div></div></header>
+<main>
+<section class="intro"><div class="eyebrow">PR #582 — visual approval</div><h1>16 categories. 96 dedicated subcategory visuals.</h1><p class="lead">Independent visual review of the proposed category system. Editorial images represent product ranges; they are not product listings. No production data is changed by this page.</p><div class="summary" id="summary"></div><p class="warning">Nothing on this page changes production data.</p></section>
+<div id="app"><div class="loading">Loading the 16×96 visual contract directly from the PR branch…</div></div>
+</main>
+<script>
+(function(){
+  const BRANCH='feature/category-visual-parity-20260823';
+  const RAW='https://raw.githubusercontent.com/LoadifyMarketLTD/loadifymarket.co.uk/'+BRANCH+'/src/data/';
+  const rootImages={electronics:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1600&h=1200&q=82',clothing:'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&h=1200&q=82',home:'https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=1600&h=1200&q=82','health-beauty':'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1600&h=1200&q=82',toys:'https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=1600&h=1200&q=82','food-drink':'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&h=1200&q=82',tools:'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=1600&h=1200&q=82',sports:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1600&h=1200&q=82',automotive:'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1600&h=1200&q=82',office:'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&h=1200&q=82',baby:'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=1600&h=1200&q=82',jewellery:'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1600&h=1200&q=82','mixed-pallets':'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1600&h=1200&q=82',returns:'https://images.unsplash.com/photo-1586528116493-da8b9e33eea5?auto=format&fit=crop&w=1600&h=1200&q=82',overstock:'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1600&h=1200&q=82',clearance:'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1600&h=1200&q=82'};
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const imgUrl=(kind,id)=>kind==='unsplashDownload'?'https://unsplash.com/photos/'+id+'/download?force=true&w=1600':'https://images.unsplash.com/'+id+'?auto=format&fit=crop&fm=jpg&q=82&w=1600&h=1200';
+  Promise.all([fetch(RAW+'marketplaceTaxonomy.ts').then(r=>{if(!r.ok)throw new Error('taxonomy '+r.status);return r.text()}),fetch(RAW+'subcategoryImages.ts').then(r=>{if(!r.ok)throw new Error('images '+r.status);return r.text()})]).then(([taxSrc,imgSrc])=>{
+    const taxonomy=[];
+    const taxRe=/\{ label: "([^"]+)", imageKey: "([^"]+)", subcategories: \[([^\]]+)\] \}/g; let m;
+    while((m=taxRe.exec(taxSrc))){const subs=[...m[3].matchAll(/"([^"]+)"/g)].map(x=>x[1]);taxonomy.push({label:m[1],imageKey:m[2],subcategories:subs});}
+    const images=new Map();
+    const imgRe=/\[visualKey\("([^"]+)", "([^"]+)"\)\]: \{\s*image: (unsplashDownload|unsplash)\("([^"]+)"\)/g;
+    while((m=imgRe.exec(imgSrc))){images.set(m[1]+'::'+m[2],imgUrl(m[3],m[4]));}
+    if(taxonomy.length!==16)throw new Error('Expected 16 categories, parsed '+taxonomy.length);
+    const expected=taxonomy.reduce((n,c)=>n+c.subcategories.length,0); if(expected!==96)throw new Error('Expected 96 subcategories, parsed '+expected);
+    const missing=[]; taxonomy.forEach(c=>c.subcategories.forEach(s=>{if(!images.has(c.label+'::'+s))missing.push(c.label+' / '+s)})); if(missing.length)throw new Error('Missing dedicated images: '+missing.join(', '));
+    document.getElementById('summaryTop').textContent='16 categories • 96 subcategories';
+    document.getElementById('summary').innerHTML='<span class="pill">16 categories</span><span class="pill">96 subcategories</span><span class="pill">96 dedicated image mappings</span>';
+    const app=document.getElementById('app');app.innerHTML='';
+    taxonomy.forEach(c=>{const parent=rootImages[c.imageKey]||rootImages['mixed-pallets'];const section=document.createElement('section');section.className='family';section.innerHTML='<div class="family-head"><article class="parent-card"><img src="'+parent+'" alt="'+esc(c.label)+' category" loading="lazy"><div class="parent-title">'+esc(c.label)+'</div></article><div class="family-copy"><div class="eyebrow">Category family</div><h2>'+esc(c.label)+'</h2><p>Six dedicated editorial visuals below. Each image is representative navigation imagery, not a live listing.</p></div></div><div class="subgrid">'+c.subcategories.map(s=>'<article class="subcard"><img src="'+images.get(c.label+'::'+s)+'" alt="'+esc(s)+' — '+esc(c.label)+'" loading="lazy"><div class="subbody"><div class="subname">'+esc(s)+'</div><div class="status">dedicated visual</div></div></article>').join('')+'</div>';app.appendChild(section);});
+  }).catch(err=>{document.getElementById('summaryTop').textContent='Preview load error';document.getElementById('app').innerHTML='<div class="error"><strong>Preview failed to load.</strong><br>'+esc(String(err.message||err))+'</div>';});
+})();
+</script>
+</body>
 </html>
