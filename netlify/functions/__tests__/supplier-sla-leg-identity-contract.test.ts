@@ -9,7 +9,7 @@ function read(path: string): string {
 }
 
 describe('supplier SLA breach canonical leg identity', () => {
-  it('validates order and supplier through orchestration and supplier-offer relations', () => {
+  it('validates order and supplier through canonical relations under an empty search path', () => {
     const sql = read('supabase/659_zz_supplier_sla_leg_identity_fix.sql');
 
     expect(sql).toContain('FROM private.supplier_fulfilment_legs l');
@@ -21,5 +21,7 @@ describe('supplier SLA breach canonical leg identity', () => {
     expect(sql).not.toContain('l.supplier_id=p_supplier_id');
     expect(sql).toContain("RAISE EXCEPTION 'SLA breach order/leg/supplier identity mismatch'");
     expect(sql).toContain("SECURITY DEFINER SET search_path TO ''");
+    expect(sql).toContain('v_key:=encode(extensions.digest(');
+    expect(sql).not.toContain('v_key:=encode(digest(');
   });
 });
