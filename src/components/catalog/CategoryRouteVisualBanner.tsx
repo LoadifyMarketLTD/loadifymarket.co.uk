@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCategoryVisualTree, type CategoryVisualNode } from '@/hooks/useCategoryVisualTree';
 import CategoryVisualCard from './CategoryVisualCard';
-import { getCategoryVisual, getRootCategoryFallback } from '@/data/categoryVisualContract';
+import { resolveCategoryVisual } from '@/data/categoryVisualContract';
 
 function findNode(nodes: CategoryVisualNode[], slug: string, parent?: CategoryVisualNode): { node: CategoryVisualNode; parent?: CategoryVisualNode } | null {
   for (const node of nodes) {
@@ -21,6 +21,17 @@ export default function CategoryRouteVisualBanner() {
     : '';
 
   const resolved = useMemo(() => slug ? findNode(categories, slug) : null, [categories, slug]);
+  const node = resolved?.node;
+  const parent = resolved?.parent;
+  const visual = node ? resolveCategoryVisual(node.slug, node.name, parent?.slug) : null;
+  const [imageFailed, setImageFailed] = useState(false);
+  const [imageSrc, setImageSrc] = useState('');
+
+  useEffect(() => {
+    if (!visual) return;
+    setImageSrc(visual.image);
+    setImageFailed(false);
+  }, [visual?.image]);
 
   useEffect(() => {
     if (!slug) return;
@@ -28,11 +39,7 @@ export default function CategoryRouteVisualBanner() {
     return () => document.body.classList.remove('visual-category-route');
   }, [slug]);
 
-  if (!slug || loading || !resolved) return null;
-
-  const { node, parent } = resolved;
-  const visual = getCategoryVisual(node.slug, parent?.slug, node.name);
-  const fallback = getRootCategoryFallback(parent?.slug ?? node.slug);
+  if (!slug || loading || !node || !visual) return null;
 
   return (
     <section className="visual-category-banner bg-[#F7F9FC] px-4 pb-8 pt-20 sm:px-6 lg:px-10" aria-label={`${node.name} category overview`}>
@@ -52,17 +59,25 @@ export default function CategoryRouteVisualBanner() {
           </div>
 
           <div className="aspect-[4/3] bg-slate-100 md:aspect-auto md:min-h-[300px]">
-            <img
-              src={visual.image}
-              alt={visual.alt}
-              className="h-full w-full object-cover"
-              style={{ objectPosition: visual.objectPosition ?? 'center' }}
-              onError={(event) => {
-                if (fallback?.image && event.currentTarget.src !== new URL(fallback.image, window.location.origin).href) {
-                  event.currentTarget.src = fallback.image;
-                }
-              }}
-            />
+            {imageFailed ? (
+              <div role="img" aria-label={visual.alt} className="flex h-full min-h-[260px] w-full items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-slate-200 px-6 text-center">
+                <span className="font-display text-2xl font-extrabold text-slate-600">{node.name}</span>
+              </div>
+            ) : (
+              <img
+                src={imageSrc || visual.image}
+                alt={visual.alt}
+                className="h-full w-full object-cover"
+                style={{ objectPosition: visual.focalPoint }}
+                onError={() => {
+                  if (visual.fallbackImage && imageSrc !== visual.fallbackImage) {
+                    setImageSrc(visual.fallbackImage);
+                    return;
+                  }
+                  setImageFailed(true);
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
