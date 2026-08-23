@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useCategories } from '@/hooks/useCategories';
+import { useCategoryVisualTree } from '@/hooks/useCategoryVisualTree';
 import CategoryVisualCard from './CategoryVisualCard';
 
 interface CategoryBrowseSectionProps {
@@ -7,7 +7,7 @@ interface CategoryBrowseSectionProps {
 }
 
 export default function CategoryBrowseSection({ compact = false }: CategoryBrowseSectionProps) {
-  const { categories, loading } = useCategories();
+  const { categories, loading } = useCategoryVisualTree();
 
   if (loading) {
     return (
@@ -55,7 +55,10 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
             category.children.length > 0 ? (
               <div key={`${category.id}-children`}>
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="font-display text-lg font-bold text-[#0A234F]">{category.name}</h3>
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-[#0A234F]">{category.name}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">Select an area to explore its specialist subcategories.</p>
+                  </div>
                   <Link to={`/category/${category.slug}`} className="text-xs font-bold text-[#1D57D8] hover:underline">View category</Link>
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
