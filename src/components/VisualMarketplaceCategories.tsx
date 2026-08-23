@@ -1,6 +1,36 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { marketplaceVisuals } from "@/data/marketplaceVisuals";
 import { marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
+
+function MarketplaceImage({ src, alt, compact = false }: { src: string; alt: string; compact?: boolean }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <div
+        role="img"
+        aria-label={alt}
+        className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#E8EEF8] via-[#F7F9FC] to-[#EAF0FA] px-3 text-center"
+      >
+        <span className={compact ? "text-[9px] font-bold leading-3 text-[#60708D]" : "text-xs font-bold text-[#52627E]"}>
+          {alt.replace(/ — representative.*$/, "").replace(/ category — representative.*$/, "")}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 /**
  * Image-led marketplace taxonomy explorer.
@@ -30,12 +60,7 @@ export default function VisualMarketplaceCategories() {
             <article key={category.slug} className="overflow-hidden rounded-2xl border border-[#0A234F]/10 bg-white shadow-[0_10px_28px_rgba(10,35,79,0.06)]">
               <Link to={`/category/${category.slug}`} className="group block">
                 <div className="aspect-[4/3] overflow-hidden bg-[#E9EEF7]">
-                  <img
-                    src={category.image}
-                    alt={category.altText}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                  />
+                  <MarketplaceImage src={category.image} alt={category.altText} />
                 </div>
                 <div className="px-4 pb-3 pt-4">
                   <h3 className="text-base font-black text-[#0A234F]">{category.title}</h3>
@@ -52,12 +77,7 @@ export default function VisualMarketplaceCategories() {
                     title={sub.title}
                   >
                     <div className="aspect-[4/3] overflow-hidden bg-[#EEF2F7]">
-                      <img
-                        src={sub.image}
-                        alt={sub.altText}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition duration-300 group-hover/sub:scale-[1.04]"
-                      />
+                      <MarketplaceImage src={sub.image} alt={sub.altText} compact />
                     </div>
                     <div className="min-h-[44px] px-2 py-2 text-[10px] font-bold leading-3 text-[#334155]">
                       {sub.title}
