@@ -1,0 +1,1 @@
+Preview-only historical visual snapshot based on the March 15, 2026 light marketplace redesign. Never merge to production.
