@@ -1,5 +1,4 @@
 const exactPublicRoutes = new Set([
-  "/",
   "/catalog",
   "/cart",
   "/checkout",
