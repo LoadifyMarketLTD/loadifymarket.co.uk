@@ -34,12 +34,12 @@ if (-not $SkipRootAssets) {
     }
     $resolvedArchive = (Resolve-Path -LiteralPath $ArchivePath).Path
   } else {
-    $archiveCandidates = @(
+    $archiveCandidates = @(@(
       "$HOME\Downloads\loadify-homepage-restore (1)(1).zip",
       "$HOME\Downloads\loadify-homepage-restore.zip",
       "$HOME\Desktop\loadify-homepage-restore (1)(1).zip",
       "$HOME\Desktop\loadify-homepage-restore.zip"
-    ) | Where-Object { Test-Path -LiteralPath $_ }
+    ) | Where-Object { Test-Path -LiteralPath $_ })
 
     if ($archiveCandidates.Count -gt 0) {
       $resolvedArchive = (Resolve-Path -LiteralPath $archiveCandidates[0]).Path
@@ -71,8 +71,8 @@ if ($ForceSubcategoryDownload) {
 }
 if ($LASTEXITCODE -ne 0) { throw 'Wholesale subcategory visual staging failed.' }
 
-$rootImages = Get-ChildItem '.\public\category-visuals\wholesale' -File -Filter '*.jpg' -ErrorAction Stop
-$subcategoryImages = Get-ChildItem '.\public\category-visuals\subcategories' -File -Filter '*.jpg' -Recurse -ErrorAction Stop
+$rootImages = @(Get-ChildItem '.\public\category-visuals\wholesale' -File -Filter '*.jpg' -ErrorAction Stop)
+$subcategoryImages = @(Get-ChildItem '.\public\category-visuals\subcategories' -File -Filter '*.jpg' -Recurse -ErrorAction Stop)
 if ($rootImages.Count -ne 16) { throw "Expected 16 wholesale root JPGs, found $($rootImages.Count)." }
 if ($subcategoryImages.Count -ne 96) { throw "Expected 96 wholesale subcategory JPGs, found $($subcategoryImages.Count)." }
 
