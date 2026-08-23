@@ -1,0 +1,1 @@
+Historical visual inspection snapshot. Do not merge. Source visual tree: afa86954221546835d971b438d31d5964b9f1a27 (2026-03-15 light marketplace redesign).
