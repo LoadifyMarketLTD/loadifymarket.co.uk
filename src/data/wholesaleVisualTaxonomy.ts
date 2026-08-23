@@ -12,7 +12,8 @@ import { ADDITIONAL_DEDICATED_VISUALS_BY_CATEGORY } from './wholesaleDedicatedVi
  * - 16 wholesale categories
  * - exactly 6 subcategories per category (96 total)
  * - root images are served from /category-visuals/wholesale/<slug>.jpg
- * - each subcategory has its own final visual; parent fallback is work-branch-only
+ * - subcategory display always targets a local namespaced JPG
+ * - remote source URLs are retained only for staging/audit
  */
 
 export type SubcategoryVisualStatus = 'subcategory-pending' | 'dedicated';
@@ -22,6 +23,7 @@ export interface WholesaleVisualSubcategory {
   slug: string;
   imagePath: string;
   displayImage: string;
+  sourceImage?: string;
   sourcePage?: string;
   status: SubcategoryVisualStatus;
 }
@@ -67,11 +69,13 @@ const defineCategory = (
     subcategories: subcategories.map((subcategory) => {
       const subcategorySlug = slugify(subcategory);
       const dedicated = dedicatedBySubcategory?.[subcategory];
+      const imagePath = `/category-visuals/subcategories/${slug}/${subcategorySlug}.jpg`;
       return {
         label: subcategory,
         slug: subcategorySlug,
-        imagePath: `/category-visuals/subcategories/${slug}/${subcategorySlug}.jpg`,
-        displayImage: dedicated?.displayImage ?? `/category-visuals/subcategories/${slug}/${subcategorySlug}.jpg`,
+        imagePath,
+        displayImage: imagePath,
+        sourceImage: dedicated?.displayImage,
         sourcePage: dedicated?.sourcePage,
         status: dedicated ? ('dedicated' as const) : ('subcategory-pending' as const),
       };
