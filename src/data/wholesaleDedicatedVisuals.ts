@@ -55,10 +55,60 @@ export const TOYS_GAMES_DEDICATED_VISUALS: DedicatedVisualMap = {
   Puzzles: photo('MCDKghXIbNY', 'https://unsplash.com/photos/pile-of-scattered-jigsaw-puzzle-pieces-MCDKghXIbNY'),
 };
 
+export const FOOD_DRINK_DEDICATED_VISUALS: DedicatedVisualMap = {
+  'Snacks & Confectionery': photo('ZouNrDx0JaU', 'https://unsplash.com/photos/shelves-filled-with-various-chocolate-bars-and-snacks-ZouNrDx0JaU'),
+  Beverages: photo('vkf9RGhYbEk', 'https://unsplash.com/photos/four-iced-drinks-with-tea-coffee-and-orange-juice-vkf9RGhYbEk'),
+  'Canned & Dry Goods': photo('tuj7KHG2l_0', 'https://unsplash.com/photos/shelves-stocked-with-packaged-food-items-and-jars-tuj7KHG2l_0'),
+  'Health Foods': photo('SqfOiQ9BAIg', 'https://unsplash.com/photos/assortment-of-nuts-and-dried-fruits-at-a-market-stall-SqfOiQ9BAIg'),
+  'Specialty & Gourmet': photo('PuTuY_TDM7g', 'https://unsplash.com/photos/jars-of-preserves-and-condiments-displayed-on-supermarket-shelves-PuTuY_TDM7g'),
+  Seasonal: photo('Pn-kJ9Bj-EU', 'https://unsplash.com/photos/a-table-topped-with-cookies-and-other-treats-Pn-kJ9Bj-EU'),
+};
+
+export const TOOLS_DIY_DEDICATED_VISUALS: DedicatedVisualMap = {
+  'Power Tools': photo('QvEXI1xquRY', 'https://unsplash.com/photos/yellow-and-black-cordless-power-drill-on-a-workbench-QvEXI1xquRY'),
+  'Hand Tools': photo('Z3vFp7szCAY', 'https://unsplash.com/photos/yellow-and-black-handle-hammer-and-screw-driver-Z3vFp7szCAY'),
+  Plumbing: photo('fR47SivxkSM', 'https://unsplash.com/photos/pile-of-gray-and-brown-water-pipes-fR47SivxkSM'),
+  Electrical: photo('vT9zeLCOpps', 'https://unsplash.com/photos/white-usb-cable-plugged-in-white-electric-socket-vT9zeLCOpps'),
+  'Paint & Decorating': photo('wgaV2vE5kp8', 'https://unsplash.com/photos/a-paint-can-with-a-brush-inside-of-it-wgaV2vE5kp8'),
+  'Fixings & Hardware': photo('T-0cyGZHj6E', 'https://unsplash.com/photos/a-pile-of-assorted-screws-and-hardware-on-rusty-surface-T-0cyGZHj6E'),
+};
+
+export const SPORTS_LEISURE_DEDICATED_VISUALS: DedicatedVisualMap = {
+  'Fitness Equipment': photo('zBYG9kzN-8s', 'https://unsplash.com/photos/yoga-mat-weights-and-a-towel-ready-for-a-workout-zBYG9kzN-8s'),
+  Cycling: photo('WL6CUTIGVpY', 'https://unsplash.com/photos/a-folded-bicycle-with-a-helmet-is-ready-WL6CUTIGVpY'),
+  'Camping & Hiking': photo('QmzAMakD5Ro', 'https://unsplash.com/photos/tent-and-backpack-at-a-campsite-with-rocky-mountains-QmzAMakD5Ro'),
+  'Water Sports': photo('rHRbxESCXac', 'https://unsplash.com/photos/a-man-on-a-paddle-board-rHRbxESCXac'),
+  'Team Sports': photo('FzAyjb2_Hys', 'https://unsplash.com/photos/football-field-with-white-lines-numbers-hurdles-and-yellow-cones-FzAyjb2_Hys'),
+  'Leisure & Travel': photo('TVllFyGaLEA', 'https://unsplash.com/photos/open-suitcase-with-travel-essentials-and-hat-TVllFyGaLEA'),
+};
+
+export const AUTOMOTIVE_DEDICATED_VISUALS: DedicatedVisualMap = {
+  'Car Parts': photo('J_Ymm6zw3Rg', 'https://unsplash.com/photos/close-up-of-car-engine-components-under-sunlight-J_Ymm6zw3Rg'),
+  'Car Accessories': photo('R8P8iZ9nRko', 'https://unsplash.com/photos/smartphone-mount-inside-car-R8P8iZ9nRko'),
+  'Cleaning & Valeting': photo('qy20XW0tSlw', 'https://unsplash.com/photos/a-microfiber-cloth-rests-on-a-shiny-blue-car-qy20XW0tSlw'),
+  'Tools & Equipment': photo('aAMmjC4myFA', 'https://unsplash.com/photos/man-working-in-a-workshop-with-tools-and-a-van-aAMmjC4myFA'),
+  'Oils & Fluids': photo('FHR7aqLxBgQ', 'https://unsplash.com/photos/a-bottle-of-motor-oil-sits-on-a-cardboard-box-FHR7aqLxBgQ'),
+  'Tyres & Wheels': photo('2OaUmmRWlg8', 'https://unsplash.com/photos/pile-of-various-tires-and-wheels-stacked-together-2OaUmmRWlg8'),
+};
+
+export const OFFICE_STATIONERY_DEDICATED_VISUALS: DedicatedVisualMap = {
+  'Office Furniture': photo('PB5-pTZE9H4', 'https://unsplash.com/photos/modern-office-interior-with-plants-and-filing-cabinets-PB5-pTZE9H4'),
+  'Printers & Ink': photo('CGnoRQZGWmw', 'https://unsplash.com/photos/a-white-and-black-printer-sitting-on-top-of-a-counter-CGnoRQZGWmw'),
+  'Paper & Supplies': photo('n9AaeihA9HI', 'https://unsplash.com/photos/open-notebook-with-pen-and-pencils-on-desk-n9AaeihA9HI'),
+  'Office Tech': photo('T2afNvgK6vg', 'https://unsplash.com/photos/a-desk-with-a-keyboard-mouse-and-headphones-T2afNvgK6vg'),
+  'Filing & Storage': photo('Q9y3LRuuxmg', 'https://unsplash.com/photos/file-cabinet-Q9y3LRuuxmg'),
+  'Pens & Writing': photo('Iyt6vtvLDGA', 'https://unsplash.com/photos/pen-holder-filled-with-colored-markers-Iyt6vtvLDGA'),
+};
+
 export const DEDICATED_VISUALS_BY_CATEGORY: Record<string, DedicatedVisualMap> = {
   'Electronics & Technology': ELECTRONICS_DEDICATED_VISUALS,
   'Clothing & Apparel': CLOTHING_DEDICATED_VISUALS,
   'Home & Garden': HOME_GARDEN_DEDICATED_VISUALS,
   'Health & Beauty': HEALTH_BEAUTY_DEDICATED_VISUALS,
   'Toys & Games': TOYS_GAMES_DEDICATED_VISUALS,
+  'Food & Drink': FOOD_DRINK_DEDICATED_VISUALS,
+  'Tools & DIY': TOOLS_DIY_DEDICATED_VISUALS,
+  'Sports & Leisure': SPORTS_LEISURE_DEDICATED_VISUALS,
+  Automotive: AUTOMOTIVE_DEDICATED_VISUALS,
+  'Office & Stationery': OFFICE_STATIONERY_DEDICATED_VISUALS,
 };
