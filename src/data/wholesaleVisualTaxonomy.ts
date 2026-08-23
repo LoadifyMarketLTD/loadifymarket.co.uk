@@ -1,4 +1,5 @@
-import { DEDICATED_VISUALS_BY_CATEGORY } from './wholesaleDedicatedVisuals';
+import { DEDICATED_VISUALS_BY_CATEGORY as CORE_DEDICATED_VISUALS } from './wholesaleDedicatedVisuals';
+import { ADDITIONAL_DEDICATED_VISUALS_BY_CATEGORY } from './wholesaleDedicatedVisualsAdditional';
 
 /**
  * Imported from LoadifyMarketLTD/focused-image-craft/src/data/taxonomy.ts
@@ -36,6 +37,11 @@ export interface WholesaleVisualCategory {
 
 const FOCUSED_IMAGE_CRAFT_RAW =
   'https://raw.githubusercontent.com/LoadifyMarketLTD/focused-image-craft/main/src/assets/categories';
+
+const DEDICATED_VISUALS_BY_CATEGORY = {
+  ...CORE_DEDICATED_VISUALS,
+  ...ADDITIONAL_DEDICATED_VISUALS_BY_CATEGORY,
+};
 
 const slugify = (value: string) =>
   value
