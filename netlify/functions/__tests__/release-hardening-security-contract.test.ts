@@ -130,7 +130,10 @@ describe('release-hardening security contracts', () => {
     expect(preLive).toContain("'city', \"businessAddress\" ->> 'city'");
     expect(preLive).toContain("'country', \"businessAddress\" ->> 'country'");
 
+    expect(privateCutover).toContain('CREATE SCHEMA IF NOT EXISTS private;');
     expect(privateCutover).toContain('CREATE TABLE IF NOT EXISTS private.seller_profiles_public_data');
+    expect(privateCutover).toContain('rating numeric(3,2)');
+    expect(privateCutover).toContain('"deliverySuccessRate" numeric(5,4)');
     expect(privateCutover).toContain('FROM public.seller_profiles sp');
     expect(privateCutover).toContain('DROP TABLE IF EXISTS public.seller_profiles_public_data;');
   });
