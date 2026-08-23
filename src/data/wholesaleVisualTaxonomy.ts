@@ -71,6 +71,33 @@ const ELECTRONICS_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
   },
 };
 
+const CLOTHING_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
+  "Men's Clothing": {
+    displayImage: 'https://images.unsplash.com/photo-1603400521630-9f2de124b33b?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/mwa_nzFpnJw',
+  },
+  "Women's Clothing": {
+    displayImage: 'https://unsplash.com/photos/dlxLGIy-2VU/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/dlxLGIy-2VU',
+  },
+  "Children's Clothing": {
+    displayImage: 'https://images.unsplash.com/photo-1566454544259-f4b94c3d758c?auto=format&fit=crop&fm=jpg&q=82&w=1400',
+    sourcePage: 'https://unsplash.com/photos/GCDjllzoKLo',
+  },
+  Footwear: {
+    displayImage: 'https://unsplash.com/photos/bdCdXvEgWIQ/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/bdCdXvEgWIQ',
+  },
+  'Accessories & Bags': {
+    displayImage: 'https://unsplash.com/photos/tcVH_BwHtrc/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/tcVH_BwHtrc',
+  },
+  Sportswear: {
+    displayImage: 'https://unsplash.com/photos/d3bYmnZ0ank/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/d3bYmnZ0ank',
+  },
+};
+
 const HOME_GARDEN_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
   Furniture: {
     displayImage: 'https://images.unsplash.com/photo-1741288340498-d78d59a33675?auto=format&fit=crop&fm=jpg&q=82&w=1400',
@@ -100,6 +127,7 @@ const HOME_GARDEN_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
 
 const DEDICATED_VISUALS_BY_CATEGORY: Record<string, Record<string, DedicatedVisual>> = {
   'Electronics & Technology': ELECTRONICS_DEDICATED_VISUALS,
+  'Clothing & Apparel': CLOTHING_DEDICATED_VISUALS,
   'Home & Garden': HOME_GARDEN_DEDICATED_VISUALS,
 };
 
