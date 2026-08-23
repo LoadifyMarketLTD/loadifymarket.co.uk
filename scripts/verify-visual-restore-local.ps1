@@ -25,10 +25,25 @@ Write-Host "Branch: $currentBranch"
 Write-Host 'Existing unrelated working-tree changes are preserved; this script never resets or stashes them.'
 
 if (-not $SkipRootAssets) {
+  $originalAssetsStaged = $false
+
   if ($ArchivePath) {
     & powershell -ExecutionPolicy Bypass -File '.\scripts\stage-user-visual-assets.ps1' -ArchivePath $ArchivePath
+    $originalAssetsStaged = ($LASTEXITCODE -eq 0)
   } else {
     & powershell -ExecutionPolicy Bypass -File '.\scripts\stage-user-visual-assets.ps1'
+    $originalAssetsStaged = ($LASTEXITCODE -eq 0)
+  }
+
+  if (-not $originalAssetsStaged) {
+    Write-Warning 'Original restore archive was not available. Staging the 16 wholesale root visuals directly from focused-image-craft instead.'
+  }
+
+  $rootDir = '.\public\category-visuals\wholesale'
+  $rootCount = if (Test-Path $rootDir) { @(Get-ChildItem $rootDir -File -Filter '*.jpg').Count } else { 0 }
+  if ($rootCount -ne 16) {
+    & powershell -ExecutionPolicy Bypass -File '.\scripts\stage-wholesale-root-assets.ps1'
+    if ($LASTEXITCODE -ne 0) { throw 'Wholesale root visual staging failed.' }
   }
 }
 
@@ -37,6 +52,7 @@ if ($ForceSubcategoryDownload) {
 } else {
   & powershell -ExecutionPolicy Bypass -File '.\scripts\stage-wholesale-subcategory-assets.ps1'
 }
+if ($LASTEXITCODE -ne 0) { throw 'Wholesale subcategory visual staging failed.' }
 
 $rootImages = Get-ChildItem '.\public\category-visuals\wholesale' -File -Filter '*.jpg' -ErrorAction Stop
 $subcategoryImages = Get-ChildItem '.\public\category-visuals\subcategories' -File -Filter '*.jpg' -Recurse -ErrorAction Stop
