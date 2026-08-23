@@ -44,8 +44,12 @@ CREATE POLICY "order_items_insert" ON order_items
   );
 
 -- ── 2. Tighten payment_sessions writes ───────────────────────────────────────
--- Remove the blanket "everyone can write" policy.
+-- Remove both the historical blanket write policy and any already-hardened
+-- admin-only policy created earlier in the modular bootstrap. Recreating the
+-- same fail-closed policy makes this historical corrective migration replay-safe
+-- without broadening access.
 DROP POLICY IF EXISTS "payment_sessions_write" ON payment_sessions;
+DROP POLICY IF EXISTS "payment_sessions_admin_write" ON payment_sessions;
 
 -- Admin/owner access (needed for back-office operations)
 CREATE POLICY "payment_sessions_admin_write" ON payment_sessions
