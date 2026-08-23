@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { getCategoryVisual, getRootCategoryFallback } from '@/lib/categoryVisuals';
+import { resolveCategoryVisual } from '@/data/categoryVisualContract';
 
 interface CategoryVisualCardProps {
   name: string;
@@ -17,8 +17,7 @@ export default function CategoryVisualCard({
   description,
   compact = false,
 }: CategoryVisualCardProps) {
-  const visual = getCategoryVisual(slug, parentSlug, name);
-  const fallback = getRootCategoryFallback(parentSlug ?? slug);
+  const visual = resolveCategoryVisual(slug, name, parentSlug);
   const [src, setSrc] = useState(visual.image);
   const [failed, setFailed] = useState(false);
 
@@ -42,10 +41,10 @@ export default function CategoryVisualCard({
             alt={visual.alt}
             loading="lazy"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
-            style={{ objectPosition: visual.objectPosition ?? 'center' }}
+            style={{ objectPosition: visual.focalPoint }}
             onError={() => {
-              if (fallback?.image && src !== fallback.image) {
-                setSrc(fallback.image);
+              if (visual.fallbackImage && src !== visual.fallbackImage) {
+                setSrc(visual.fallbackImage);
                 return;
               }
               setFailed(true);
