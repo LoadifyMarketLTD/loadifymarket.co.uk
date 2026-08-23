@@ -1,122 +1,137 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, ShieldCheck, Store, Truck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, ShoppingBag, Store, Truck } from 'lucide-react';
 import { useMobileGrid } from '@/hooks/useMobileGrid';
 
 const HeroSection = () => {
   const { products, loading } = useMobileGrid();
-  const liveProducts = products.slice(0, 3);
+  const leadProduct = products[0];
+  const secondaryProducts = products.slice(1, 3);
 
   return (
-    <section aria-label="Loadify Market UK marketplace" className="relative overflow-hidden bg-[#F7F9FC] text-[#0A234F]">
-      <div
-        className="absolute inset-0 pointer-events-none opacity-65"
-        aria-hidden="true"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(10,35,79,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(10,35,79,0.04) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-          maskImage: 'linear-gradient(to bottom, black 0%, black 70%, transparent 100%)',
-        }}
-      />
-      <div className="absolute -right-20 top-12 h-80 w-80 rounded-full bg-[#1D57D8]/[0.08] blur-3xl" aria-hidden="true" />
-      <div className="absolute -left-16 bottom-8 h-64 w-64 rounded-full bg-[#F5A300]/[0.10] blur-3xl" aria-hidden="true" />
+    <section aria-label="Loadify Market UK marketplace" className="relative overflow-hidden bg-white text-[#0A234F]">
+      <div className="pointer-events-none absolute -right-24 top-24 h-80 w-80 rounded-full bg-[#1D57D8]/[0.08] blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-[#F5A300]/[0.10] blur-3xl" aria-hidden="true" />
 
-      <div className="relative mx-auto grid min-h-[760px] w-full max-w-[1280px] grid-cols-1 items-center gap-12 px-4 pb-16 pt-[164px] sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14 lg:px-10 lg:pb-20 lg:pt-[184px]">
-        <div className="max-w-[650px]">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-white px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#1D57D8] shadow-sm">
+      <div className="relative mx-auto grid min-h-[700px] w-full max-w-[1280px] grid-cols-1 items-center gap-12 px-4 pb-16 pt-[154px] sm:px-6 lg:grid-cols-[0.96fr_1.04fr] lg:gap-16 lg:px-10 lg:pb-20 lg:pt-[174px]">
+        <div className="max-w-[620px]">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-[#F7F9FC] px-3.5 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-[#1D57D8]">
             <span className="h-2 w-2 rounded-full bg-[#F5A300]" aria-hidden="true" />
             UK marketplace for buyers & sellers
           </div>
 
-          <h1 className="max-w-[660px] text-[3rem] font-black leading-[0.98] tracking-[-0.048em] text-[#0A234F] sm:text-[4rem] lg:text-[4.5rem]">
-            Find something worth buying.
-            <span className="block text-[#1D57D8]">Bring something worth selling.</span>
+          <h1 className="text-[3rem] font-black leading-[1.02] tracking-[-0.045em] text-[#0A234F] sm:text-[4rem] lg:text-[4.35rem]">
+            The UK marketplace for
+            <span className="block text-[#1D57D8]">products worth discovering.</span>
           </h1>
 
-          <p className="mt-7 max-w-[610px] text-base font-medium leading-7 text-[#334155] sm:text-lg sm:leading-8">
-            Loadify is a UK-operated marketplace where buyers discover real products and sellers manage listings, marketplace orders and eligible payouts from one connected environment.
+          <p className="mt-6 max-w-[570px] text-base font-medium leading-7 text-slate-600 sm:text-lg sm:leading-8">
+            Buy from current marketplace listings or build your seller presence on one connected Loadify Market platform.
           </p>
 
+          <ul className="mt-7 space-y-3 text-sm font-bold text-[#0A234F] sm:text-base">
+            <li className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
+              Live marketplace listings
+            </li>
+            <li className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
+              Dedicated buyer and seller journeys
+            </li>
+            <li className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
+              Stripe-powered checkout
+            </li>
+          </ul>
+
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link to="/register?type=seller" data-magnetic className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-6 py-3 text-sm font-extrabold text-[#0A234F] shadow-[0_12px_30px_rgba(245,163,0,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#E69500]">
-              Start selling on Loadify
+            <Link to="/catalog" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#1D57D8] px-6 py-3 text-sm font-black text-white shadow-[0_12px_28px_rgba(29,87,216,0.20)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#1747B8]">
+              Browse marketplace
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <Link to="/catalog" data-magnetic className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#0A234F]/20 bg-white px-6 py-3 text-sm font-bold text-[#0A234F] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1D57D8]/40 hover:text-[#1D57D8]">
-              Shop live products
+            <Link to="/register?type=seller" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-6 py-3 text-sm font-black text-[#0A234F] shadow-[0_12px_28px_rgba(245,163,0,0.20)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#E69500]">
+              Start selling
+              <Store className="h-4 w-4" aria-hidden="true" />
             </Link>
+          </div>
+
+          <div className="mt-7 flex flex-wrap gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-white px-3.5 py-2 text-xs font-extrabold text-slate-700 shadow-sm">
+              <ShieldCheck className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" /> Secure checkout
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-white px-3.5 py-2 text-xs font-extrabold text-slate-700 shadow-sm">
+              <Truck className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" /> Order tracking
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-white px-3.5 py-2 text-xs font-extrabold text-slate-700 shadow-sm">
+              <ShoppingBag className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" /> UK operated
+            </span>
           </div>
 
           <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#FFF5DF] px-3.5 py-2 text-xs font-extrabold text-[#8A5A00]">
             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             0% seller commission until 31 December 2026
           </div>
-
-          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 border-t border-[#0A234F]/10 pt-5 text-sm font-semibold text-[#334155]">
-            <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />Stripe-powered checkout</span>
-            <span className="inline-flex items-center gap-2"><Truck className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />Order tracking</span>
-            <span className="inline-flex items-center gap-2"><Store className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />UK operated</span>
-          </div>
         </div>
 
         <div className="relative mx-auto w-full max-w-[620px] lg:mx-0">
-          <div className="absolute -inset-4 rounded-[38px] border border-[#1D57D8]/10" aria-hidden="true" />
-          <div className="relative overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-white p-3 shadow-[0_30px_80px_rgba(10,35,79,0.16)] sm:p-4">
-            <div className="mb-3 flex items-center justify-between px-1 sm:mb-4">
+          <div className="absolute -inset-4 rounded-[34px] border border-[#1D57D8]/10" aria-hidden="true" />
+          <div className="relative overflow-hidden rounded-[28px] border border-[#0A234F]/10 bg-[#F8FAFD] p-4 shadow-[0_30px_80px_rgba(10,35,79,0.14)]">
+            <div className="mb-4 flex items-center justify-between gap-4 px-1">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#1D57D8]">Live on Loadify</p>
-                <p className="mt-1 text-sm font-extrabold text-[#0A234F]">Real listings from the marketplace</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#1D57D8]">Live on Loadify</p>
+                <p className="mt-1 text-sm font-black text-[#0A234F]">Current marketplace products</p>
               </div>
-              <Link to="/catalog" className="text-xs font-extrabold text-[#1D57D8] hover:text-[#0A234F]">Browse all</Link>
+              <Link to="/catalog" className="shrink-0 text-xs font-black text-[#1D57D8] hover:text-[#0A234F]">View all</Link>
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-[1.12fr_0.88fr] gap-3">
-                <div className="h-[390px] animate-pulse rounded-[22px] bg-slate-200" />
-                <div className="grid gap-3"><div className="h-[188px] animate-pulse rounded-[22px] bg-slate-200" /><div className="h-[188px] animate-pulse rounded-[22px] bg-slate-200" /></div>
-              </div>
-            ) : liveProducts.length > 0 ? (
-              <div className="grid grid-cols-[1.12fr_0.88fr] gap-3">
-                {liveProducts[0] && (
-                  <Link to={`/product/${liveProducts[0].id}`} className="group relative flex h-[390px] flex-col overflow-hidden rounded-[22px] bg-[#F1F4F8]">
-                    <img src={liveProducts[0].image} alt={liveProducts[0].title} className="min-h-0 flex-1 object-cover transition-transform duration-700 group-hover:scale-[1.03]" loading="eager" fetchPriority="high" decoding="async" />
-                    <div className="bg-white p-4">
-                      <p className="line-clamp-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#1D57D8]">{liveProducts[0].category}</p>
-                      <p className="mt-1 line-clamp-2 text-sm font-extrabold leading-5 text-[#0A234F]">{liveProducts[0].title}</p>
-                      <p className="mt-2 text-lg font-black text-[#0A234F]">£{liveProducts[0].price.toFixed(2)}</p>
+              <div className="aspect-[16/10] animate-pulse rounded-[22px] bg-slate-200" />
+            ) : leadProduct ? (
+              <>
+                <Link to={`/product/${leadProduct.id}`} className="group relative block overflow-hidden rounded-[22px] bg-white">
+                  <div className="aspect-[16/10] overflow-hidden bg-slate-100">
+                    <img
+                      src={leadProduct.image}
+                      alt={leadProduct.title}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.025]"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                    />
+                  </div>
+                  <div className="flex items-end justify-between gap-4 p-5">
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#1D57D8]">{leadProduct.category}</p>
+                      <p className="mt-1 line-clamp-2 text-base font-black leading-6 text-[#0A234F]">{leadProduct.title}</p>
                     </div>
-                  </Link>
+                    <p className="shrink-0 text-xl font-black text-[#0A234F]">£{leadProduct.price.toFixed(2)}</p>
+                  </div>
+                </Link>
+
+                {secondaryProducts.length > 0 && (
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    {secondaryProducts.map((product) => (
+                      <Link key={product.id} to={`/product/${product.id}`} className="group flex min-h-[112px] items-center gap-3 rounded-[18px] border border-[#0A234F]/8 bg-white p-3 transition-all hover:border-[#1D57D8]/25 hover:shadow-sm">
+                        <img src={product.image} alt="" className="h-20 w-20 shrink-0 rounded-[14px] object-cover" loading="lazy" decoding="async" />
+                        <div className="min-w-0">
+                          <p className="line-clamp-2 text-xs font-extrabold leading-4 text-[#0A234F]">{product.title}</p>
+                          <p className="mt-2 text-sm font-black text-[#1D57D8]">£{product.price.toFixed(2)}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 )}
-                <div className="grid gap-3">
-                  {liveProducts.slice(1, 3).map((product) => (
-                    <Link key={product.id} to={`/product/${product.id}`} className="group relative flex h-[188px] overflow-hidden rounded-[22px] bg-[#F1F4F8]">
-                      <img src={product.image} alt={product.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" loading="lazy" decoding="async" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A234F]/88 via-[#0A234F]/10 to-transparent" aria-hidden="true" />
-                      <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                        <p className="line-clamp-1 text-[8px] font-black uppercase tracking-[0.13em] text-white/75">{product.category}</p>
-                        <p className="mt-1 line-clamp-2 text-xs font-extrabold leading-4">{product.title}</p>
-                        <p className="mt-1 text-sm font-black text-[#FFD77A]">£{product.price.toFixed(2)}</p>
-                      </div>
-                    </Link>
-                  ))}
+              </>
+            ) : (
+              <div className="flex aspect-[16/10] items-center justify-center rounded-[22px] bg-[#0A234F] px-8 text-center text-white">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#F5A300]">Loadify Market</p>
+                  <p className="mt-3 text-2xl font-black">Your marketplace starts with the next great listing.</p>
+                  <Link to="/register?type=seller" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#F5A300] px-4 py-2.5 text-sm font-black text-[#0A234F]">
+                    Start selling <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
                 </div>
               </div>
-            ) : (
-              <div className="rounded-[22px] bg-[#0A234F] px-6 py-10 text-white">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#F5A300]">For serious sellers</p>
-                <p className="mt-2 text-2xl font-black leading-tight">Bring your products to a marketplace built for serious sellers.</p>
-              </div>
             )}
-
-            <div className="mt-3 flex flex-col gap-3 rounded-[22px] bg-[#0A234F] px-5 py-5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#F5A300]">For serious sellers</p>
-                <p className="mt-1 text-lg font-extrabold">Your products deserve more than a listing.</p>
-                <p className="mt-1.5 text-xs leading-5 text-white/70">Bring your catalogue to a marketplace built for serious sellers.</p>
-              </div>
-              <Link to="/register?type=seller" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-4 py-2.5 text-xs font-extrabold text-[#0A234F] transition-colors hover:bg-[#E69500]">
-                Sell on Loadify <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </Link>
-            </div>
           </div>
         </div>
       </div>
