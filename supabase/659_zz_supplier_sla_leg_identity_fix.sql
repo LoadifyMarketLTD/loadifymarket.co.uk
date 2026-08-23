@@ -35,7 +35,7 @@ BEGIN
        AND so.supplier_id=p_supplier_id
   ) THEN RAISE EXCEPTION 'SLA breach order/leg/supplier identity mismatch'; END IF;
 
-  v_key:=encode(digest(concat_ws('|',p_supplier_id::text,p_sla_version_id::text,COALESCE(p_order_id::text,''),COALESCE(p_fulfilment_leg_id::text,''),lower(BTRIM(p_breach_type)),p_occurred_at::text),'sha256'),'hex');
+  v_key:=encode(extensions.digest(concat_ws('|',p_supplier_id::text,p_sla_version_id::text,COALESCE(p_order_id::text,''),COALESCE(p_fulfilment_leg_id::text,''),lower(BTRIM(p_breach_type)),p_occurred_at::text),'sha256'),'hex');
   SELECT * INTO v_existing FROM private.supplier_sla_breach_events WHERE breach_key=v_key;
   IF FOUND THEN
     IF v_existing.supplier_id IS DISTINCT FROM p_supplier_id OR v_existing.sla_version_id IS DISTINCT FROM p_sla_version_id
