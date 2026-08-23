@@ -123,18 +123,10 @@ describe('register handler – Stage 2 boundary', () => {
   it('returns 429 when rate limit is exceeded', async () => {
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
-        from: vi.fn(() => ({
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn().mockResolvedValue({
-                  data: { id: 'rl-row', attempts: 10 },
-                  error: null,
-                }),
-              })),
-            })),
-          })),
-        })),
+        rpc: vi.fn().mockResolvedValue({
+          data: 11,
+          error: null,
+        }),
       })),
     }));
     const eventWithIp = makeEvent({
