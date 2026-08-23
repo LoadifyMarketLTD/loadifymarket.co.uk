@@ -93,6 +93,28 @@ describe('release-hardening security contracts', () => {
     expect(sql.match(/USING \(is_admin\(\)\);/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('guards historical realtime publication additions against duplicate membership', () => {
+    const cases = [
+      { path: 'supabase/490_realtime_enable.sql', tables: ['offers', 'orders'] },
+      { path: 'supabase/510_realtime_messages.sql', tables: ['messages'] },
+    ];
+
+    for (const { path, tables } of cases) {
+      const sql = read(path);
+      expect(sql).toContain("WHERE p.pubname = 'supabase_realtime'");
+      expect(sql).toContain('IF NOT EXISTS (');
+      expect(sql).toContain('FROM pg_publication_rel pr');
+
+      for (const table of tables) {
+        const membership = `AND c.relname = '${table}'`;
+        const add = `ALTER PUBLICATION supabase_realtime ADD TABLE public.${table};`;
+        expect(sql).toContain(membership);
+        expect(sql).toContain(add);
+        expect(sql.indexOf(membership)).toBeLessThan(sql.indexOf(add));
+      }
+    }
+  });
+
   it('revalidates buyer and seller live account state before service-role checkout side effects', () => {
     for (const source of [
       read('netlify/functions/create-checkout.ts'),
