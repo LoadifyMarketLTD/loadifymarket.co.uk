@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import Footer from "@/components/Footer";
 import CategoryBrowseSection from "@/components/catalog/CategoryBrowseSection";
 import CategoryRouteVisualBanner from "@/components/catalog/CategoryRouteVisualBanner";
+import WholesaleTrustBand from "@/components/catalog/WholesaleTrustBand";
 import "@/styles/visual-restore-homepage.css";
 
 interface PublicPixelPerfectLayoutProps {
@@ -29,8 +30,9 @@ export default function PublicPixelPerfectLayout({ children, navbar }: PublicPix
       </a>
       <CategoryRouteVisualBanner />
       {location.pathname === "/catalog" ? (
-        <div className="pt-16">
+        <div className="pt-16 pb-10">
           <CategoryBrowseSection compact />
+          <WholesaleTrustBand />
         </div>
       ) : null}
       {children}
