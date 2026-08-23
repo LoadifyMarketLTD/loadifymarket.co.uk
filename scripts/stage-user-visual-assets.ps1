@@ -84,7 +84,6 @@ foreach ($relative in $files) {
   Copy-Item -LiteralPath $src -Destination $dst -Force
 }
 
-# Canonical 10-root navigation assets used by the existing category contract.
 $categoryVisualTarget = Join-Path $repo "public\category-visuals"
 if (-not (Test-Path $categoryVisualTarget)) {
   New-Item -ItemType Directory -Path $categoryVisualTarget -Force | Out-Null
@@ -108,7 +107,6 @@ foreach ($slug in $canonicalMap.Keys) {
   Copy-Item -LiteralPath $src -Destination $dst -Force
 }
 
-# Wholesale storefront 16-root visual contract imported from focused-image-craft.
 $wholesaleTarget = Join-Path $categoryVisualTarget "wholesale"
 if (-not (Test-Path $wholesaleTarget)) {
   New-Item -ItemType Directory -Path $wholesaleTarget -Force | Out-Null
@@ -148,7 +146,7 @@ Write-Host "`nStaged 24 user-provided source assets." -ForegroundColor Green
 Write-Host "Staged 9 canonical root category navigation images." -ForegroundColor Green
 Write-Host "Staged all 16 wholesale root category images." -ForegroundColor Green
 Write-Host "Prepared public/category-visuals/subcategories for the 96 dedicated subcategory assets." -ForegroundColor Green
-Write-Host "Dedicated subcategory images remain pending until each real asset is added." -ForegroundColor Yellow
+Write-Host "Run scripts\stage-wholesale-subcategory-assets.ps1 next to stage and validate all 96 local 4:3 subcategory JPGs." -ForegroundColor Yellow
 Write-Host "No commit was created automatically." -ForegroundColor Yellow
 Write-Host "`n=== GIT STATUS ===" -ForegroundColor Cyan
 git status --short -- src/assets public/category-visuals
