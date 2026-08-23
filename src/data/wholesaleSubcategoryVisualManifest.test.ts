@@ -6,6 +6,13 @@ import {
   WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST_COUNT,
 } from './wholesaleSubcategoryVisualManifest';
 
+const FORBIDDEN_LEGACY_FEATURED_ASSETS = [
+  '/images/featured/toolbox.jpeg',
+  '/images/featured/skincare2.jpeg',
+  '/images/featured/chair.jpeg',
+  '/images/featured/earbuds.jpeg',
+];
+
 describe('wholesale subcategory visual manifest', () => {
   it('contains exactly 96 entries', () => {
     expect(WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST_COUNT).toBe(96);
@@ -50,6 +57,14 @@ describe('wholesale subcategory visual manifest', () => {
     for (const entry of DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS) {
       expect(entry.displayImage).not.toMatch(/^\/category-visuals\/wholesale\//);
       expect(entry.assetPath).not.toMatch(/^\/category-visuals\/wholesale\//);
+    }
+  });
+
+  it('forbids legacy featured placeholder/text-overlay assets from the wholesale visual contract', () => {
+    for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
+      expect(FORBIDDEN_LEGACY_FEATURED_ASSETS).not.toContain(entry.displayImage);
+      expect(FORBIDDEN_LEGACY_FEATURED_ASSETS).not.toContain(entry.assetPath);
+      expect(entry.displayImage).not.toMatch(/^\/images\/featured\//);
     }
   });
 
