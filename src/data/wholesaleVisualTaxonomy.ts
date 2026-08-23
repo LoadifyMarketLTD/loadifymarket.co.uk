@@ -125,10 +125,38 @@ const HOME_GARDEN_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
   },
 };
 
+const HEALTH_BEAUTY_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
+  Skincare: {
+    displayImage: 'https://unsplash.com/photos/0nH1XIq5rqw/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/retinol-serum-bottles-and-facial-cleanser-tube-0nH1XIq5rqw',
+  },
+  Haircare: {
+    displayImage: 'https://unsplash.com/photos/YVuPA2D-VpA/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/hair-care-products-are-neatly-displayed-on-a-stand-YVuPA2D-VpA',
+  },
+  'Makeup & Cosmetics': {
+    displayImage: 'https://unsplash.com/photos/RS49PbJ3st4/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/assortment-of-makeup-brushes-and-cosmetics-on-a-table-RS49PbJ3st4',
+  },
+  Fragrances: {
+    displayImage: 'https://unsplash.com/photos/So4eFi-d1nc/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/clear-perfume-bottle-So4eFi-d1nc',
+  },
+  'Health & Wellness': {
+    displayImage: 'https://unsplash.com/photos/Pay1UKAf_-g/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/a-candle-nestled-among-dried-lavender-flowers-Pay1UKAf_-g',
+  },
+  'Personal Care': {
+    displayImage: 'https://unsplash.com/photos/QY13zZlNyf0/download?force=true',
+    sourcePage: 'https://unsplash.com/photos/double-edge-razor-shaving-cream-and-brush-QY13zZlNyf0',
+  },
+};
+
 const DEDICATED_VISUALS_BY_CATEGORY: Record<string, Record<string, DedicatedVisual>> = {
   'Electronics & Technology': ELECTRONICS_DEDICATED_VISUALS,
   'Clothing & Apparel': CLOTHING_DEDICATED_VISUALS,
   'Home & Garden': HOME_GARDEN_DEDICATED_VISUALS,
+  'Health & Beauty': HEALTH_BEAUTY_DEDICATED_VISUALS,
 };
 
 const defineCategory = (
