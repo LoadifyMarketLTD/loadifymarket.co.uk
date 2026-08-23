@@ -119,6 +119,22 @@ describe('release-hardening security contracts', () => {
     }
   });
 
+  it('keeps migration 594 seller projection replay-safe before the private-cache cutover', () => {
+    const preLive = read('supabase/594_pre_live_security_hardening.sql');
+    const privateCutover = read('supabase/598_move_public_seller_profile_cache_private.sql');
+
+    expect(preLive).toContain('CREATE OR REPLACE VIEW public.seller_profiles_public AS');
+    expect(preLive).toContain('FROM public.seller_profiles;');
+    expect(preLive).not.toContain('FROM public.seller_profiles_public_data;');
+    expect(preLive).toContain('NULL::text AS "contactPhone"');
+    expect(preLive).toContain("'city', \"businessAddress\" ->> 'city'");
+    expect(preLive).toContain("'country', \"businessAddress\" ->> 'country'");
+
+    expect(privateCutover).toContain('CREATE TABLE IF NOT EXISTS private.seller_profiles_public_data');
+    expect(privateCutover).toContain('FROM public.seller_profiles sp');
+    expect(privateCutover).toContain('DROP TABLE IF EXISTS public.seller_profiles_public_data;');
+  });
+
   it('revalidates buyer and seller live account state before service-role checkout side effects', () => {
     for (const source of [
       read('netlify/functions/create-checkout.ts'),
