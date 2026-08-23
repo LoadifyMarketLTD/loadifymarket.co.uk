@@ -1,3 +1,5 @@
+import { DEDICATED_VISUALS_BY_CATEGORY } from './wholesaleDedicatedVisuals';
+
 /**
  * Imported from LoadifyMarketLTD/focused-image-craft/src/data/taxonomy.ts
  * as the wholesale visual taxonomy contract for storefront/category imagery.
@@ -32,8 +34,6 @@ export interface WholesaleVisualCategory {
   subcategories: WholesaleVisualSubcategory[];
 }
 
-type DedicatedVisual = { displayImage: string; sourcePage: string };
-
 const FOCUSED_IMAGE_CRAFT_RAW =
   'https://raw.githubusercontent.com/LoadifyMarketLTD/focused-image-craft/main/src/assets/categories';
 
@@ -44,121 +44,6 @@ const slugify = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-const ELECTRONICS_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
-  'Phones & Tablets': {
-    displayImage: 'https://images.unsplash.com/photo-1750744788280-aa47aba79a57?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/devices-like-laptops-tablets-and-phones-are-on-a-desk-TK0kQP476cU',
-  },
-  'Laptops & PCs': {
-    displayImage: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/turned-on-gray-laptop-computer-XJXWbfSo2f0',
-  },
-  'TV & Audio': {
-    displayImage: 'https://images.unsplash.com/photo-1567466062001-5d3ad19e8418?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/white-and-gray-google-smart-speaker-beside-black-flat-screen-tv-o9KZozGAKQo',
-  },
-  'Gaming Consoles': {
-    displayImage: 'https://images.unsplash.com/photo-1754006126024-f8b0c002877b?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/close-up-view-of-a-gaming-controller-lit-in-green--dNlbaqOZJU',
-  },
-  Accessories: {
-    displayImage: 'https://images.unsplash.com/photo-1706290134049-c5c72d24146a?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/a-close-up-of-a-power-cord-and-a-charger-Fhyt8se0E50',
-  },
-  'Smart Home': {
-    displayImage: 'https://images.unsplash.com/photo-1761384409444-2f8359d67a69?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/a-white-smart-speaker-on-a-white-surface-kDCIBGqU0_0',
-  },
-};
-
-const CLOTHING_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
-  "Men's Clothing": {
-    displayImage: 'https://images.unsplash.com/photo-1603400521630-9f2de124b33b?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/mwa_nzFpnJw',
-  },
-  "Women's Clothing": {
-    displayImage: 'https://unsplash.com/photos/dlxLGIy-2VU/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/dlxLGIy-2VU',
-  },
-  "Children's Clothing": {
-    displayImage: 'https://images.unsplash.com/photo-1566454544259-f4b94c3d758c?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/GCDjllzoKLo',
-  },
-  Footwear: {
-    displayImage: 'https://unsplash.com/photos/bdCdXvEgWIQ/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/bdCdXvEgWIQ',
-  },
-  'Accessories & Bags': {
-    displayImage: 'https://unsplash.com/photos/tcVH_BwHtrc/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/tcVH_BwHtrc',
-  },
-  Sportswear: {
-    displayImage: 'https://unsplash.com/photos/d3bYmnZ0ank/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/d3bYmnZ0ank',
-  },
-};
-
-const HOME_GARDEN_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
-  Furniture: {
-    displayImage: 'https://images.unsplash.com/photo-1741288340498-d78d59a33675?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/a-bright-modern-living-room-with-comfortable-furniture-jw_Y7R3NabQ',
-  },
-  'Kitchen & Dining': {
-    displayImage: 'https://images.unsplash.com/photo-1771003936708-bfeb23b5d082?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/bright-kitchen-with-dining-table-and-stainless-steel-refrigerator-alXdbCZoQZI',
-  },
-  'Bedding & Linen': {
-    displayImage: 'https://images.unsplash.com/photo-1750271334785-4f6008035021?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/a-clean-bright-bedroom-with-a-large-bed-L9GsIbPCXKU',
-  },
-  'Garden & Outdoor': {
-    displayImage: 'https://images.unsplash.com/photo-1782033799503-ef0687f7ce57?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/garden-patio-with-two-chairs-lush-plants-and-warm-lighting-fVRSm1R5U_Q',
-  },
-  Lighting: {
-    displayImage: 'https://images.unsplash.com/photo-1768578927267-d589f8a294b8?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/three-modern-pendant-lights-hang-over-a-kitchen-island-Vhtg2xwr6rc',
-  },
-  'Décor & Accessories': {
-    displayImage: 'https://images.unsplash.com/photo-1770513649192-c59f4e17df59?auto=format&fit=crop&fm=jpg&q=82&w=1400',
-    sourcePage: 'https://unsplash.com/photos/three-lit-candles-reflect-in-a-mirror-qwA42l83ylg',
-  },
-};
-
-const HEALTH_BEAUTY_DEDICATED_VISUALS: Record<string, DedicatedVisual> = {
-  Skincare: {
-    displayImage: 'https://unsplash.com/photos/0nH1XIq5rqw/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/retinol-serum-bottles-and-facial-cleanser-tube-0nH1XIq5rqw',
-  },
-  Haircare: {
-    displayImage: 'https://unsplash.com/photos/YVuPA2D-VpA/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/hair-care-products-are-neatly-displayed-on-a-stand-YVuPA2D-VpA',
-  },
-  'Makeup & Cosmetics': {
-    displayImage: 'https://unsplash.com/photos/RS49PbJ3st4/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/assortment-of-makeup-brushes-and-cosmetics-on-a-table-RS49PbJ3st4',
-  },
-  Fragrances: {
-    displayImage: 'https://unsplash.com/photos/So4eFi-d1nc/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/clear-perfume-bottle-So4eFi-d1nc',
-  },
-  'Health & Wellness': {
-    displayImage: 'https://unsplash.com/photos/Pay1UKAf_-g/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/a-candle-nestled-among-dried-lavender-flowers-Pay1UKAf_-g',
-  },
-  'Personal Care': {
-    displayImage: 'https://unsplash.com/photos/QY13zZlNyf0/download?force=true',
-    sourcePage: 'https://unsplash.com/photos/double-edge-razor-shaving-cream-and-brush-QY13zZlNyf0',
-  },
-};
-
-const DEDICATED_VISUALS_BY_CATEGORY: Record<string, Record<string, DedicatedVisual>> = {
-  'Electronics & Technology': ELECTRONICS_DEDICATED_VISUALS,
-  'Clothing & Apparel': CLOTHING_DEDICATED_VISUALS,
-  'Home & Garden': HOME_GARDEN_DEDICATED_VISUALS,
-  'Health & Beauty': HEALTH_BEAUTY_DEDICATED_VISUALS,
-};
-
 const defineCategory = (
   label: string,
   imageKey: string,
@@ -166,6 +51,7 @@ const defineCategory = (
 ): WholesaleVisualCategory => {
   const slug = slugify(label);
   const dedicatedBySubcategory = DEDICATED_VISUALS_BY_CATEGORY[label];
+
   return {
     label,
     slug,
@@ -178,8 +64,8 @@ const defineCategory = (
       return {
         label: subcategory,
         slug: subcategorySlug,
-        imagePath: `/category-visuals/subcategories/${subcategorySlug}.jpg`,
-        displayImage: dedicated?.displayImage ?? `/category-visuals/subcategories/${subcategorySlug}.jpg`,
+        imagePath: `/category-visuals/subcategories/${slug}/${subcategorySlug}.jpg`,
+        displayImage: dedicated?.displayImage ?? `/category-visuals/subcategories/${slug}/${subcategorySlug}.jpg`,
         sourcePage: dedicated?.sourcePage,
         status: dedicated ? ('dedicated' as const) : ('subcategory-pending' as const),
       };
