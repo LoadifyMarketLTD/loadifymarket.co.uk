@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "source": "Unsplash",
+  "categories": [
+    {
+      "category": "Electronics & Technology",
+      "categorySlug": "electronics-and-technology",
+      "subcategories": [
+        {"title":"Phones & Tablets","slug":"phones-and-tablets","sourceId":"TK0kQP476cU","sourceUrl":"https://unsplash.com/photos/TK0kQP476cU/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/TK0kQP476cU","targetPath":"public/category-visuals/subcategories/electronics-and-technology/phones-and-tablets.jpg"},
+        {"title":"Laptops & PCs","slug":"laptops-and-pcs","sourceId":"XJXWbfSo2f0","sourceUrl":"https://unsplash.com/photos/XJXWbfSo2f0/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/XJXWbfSo2f0","targetPath":"public/category-visuals/subcategories/electronics-and-technology/laptops-and-pcs.jpg"},
+        {"title":"TV & Audio","slug":"tv-and-audio","sourceId":"o9KZozGAKQo","sourceUrl":"https://unsplash.com/photos/o9KZozGAKQo/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/o9KZozGAKQo","targetPath":"public/category-visuals/subcategories/electronics-and-technology/tv-and-audio.jpg"},
+        {"title":"Gaming Consoles","slug":"gaming-consoles","sourceId":"-dNlbaqOZJU","sourceUrl":"https://unsplash.com/photos/-dNlbaqOZJU/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/-dNlbaqOZJU","targetPath":"public/category-visuals/subcategories/electronics-and-technology/gaming-consoles.jpg"},
+        {"title":"Accessories","slug":"accessories","sourceId":"Fhyt8se0E50","sourceUrl":"https://unsplash.com/photos/Fhyt8se0E50/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Fhyt8se0E50","targetPath":"public/category-visuals/subcategories/electronics-and-technology/accessories.jpg"},
+        {"title":"Smart Home","slug":"smart-home","sourceId":"kDCIBGqU0_0","sourceUrl":"https://unsplash.com/photos/kDCIBGqU0_0/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/kDCIBGqU0_0","targetPath":"public/category-visuals/subcategories/electronics-and-technology/smart-home.jpg"}
+      ]
+    },
+    {
+      "category": "Clothing & Apparel",
+      "categorySlug": "clothing-and-apparel",
+      "subcategories": [
+        {"title":"Men's Clothing","slug":"men-s-clothing","sourceId":"mwa_nzFpnJw","sourceUrl":"https://unsplash.com/photos/mwa_nzFpnJw/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/mwa_nzFpnJw","targetPath":"public/category-visuals/subcategories/clothing-and-apparel/men-s-clothing.jpg"},
+        {"title":"Women's Clothing","slug":"women-s-clothing","sourceId":"dlxLGIy-2VU","sourceUrl":"https://unsplash.com/photos/dlxLGIy-2VU/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/dlxLGIy-2VU","targetPath":"public/category-visuals/subcategories/clothing-and-apparel/women-s-clothing.jpg"},
+        {"title":"Children's Clothing","slug":"children-s-clothing","sourceId":"GCDjllzoKLo","sourceUrl":"https://unsplash.com/photos/GCDjllzoKLo/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/GCDjllzoKLo","targetPath":"public/category-visuals/subcategories/clothing-and-apparel/children-s-clothing.jpg"},
+        {"title":"Footwear","slug":"footwear","sourceId":"bdCdXvEgWIQ","sourceUrl":"https://unsplash.com/photos/bdCdXvEgWIQ/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/bdCdXvEgWIQ","targetPath":"public/category-visuals/subcategories/clothing-and-apparel/footwear.jpg"},
+        {"title":"Accessories & Bags","slug":"accessories-and-bags","sourceId":"tcVH_BwHtrc","sourceUrl":"https://unsplash.com/photos/tcVH_BwHtrc/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/tcVH_BwHtrc","targetPath":"public/category-visuals/subcategories/clothing-and-apparel/accessories-and-bags.jpg"},
+        {"title":"Sportswear","slug":"sportswear","sourceId":"d3bYmnZ0ank","sourceUrl":"https://unsplash.com/photos/d3bYmnZ0ank/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/d3bYmnZ0ank","targetPath":"public/category-visuals/subcategories/clothing-and-apparel/sportswear.jpg"}
+      ]
+    },
+    {
+      "category": "Home & Garden",
+      "categorySlug": "home-and-garden",
+      "subcategories": [
+        {"title":"Furniture","slug":"furniture","sourceId":"jw_Y7R3NabQ","sourceUrl":"https://unsplash.com/photos/jw_Y7R3NabQ/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/jw_Y7R3NabQ","targetPath":"public/category-visuals/subcategories/home-and-garden/furniture.jpg"},
+        {"title":"Kitchen & Dining","slug":"kitchen-and-dining","sourceId":"alXdbCZoQZI","sourceUrl":"https://unsplash.com/photos/alXdbCZoQZI/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/alXdbCZoQZI","targetPath":"public/category-visuals/subcategories/home-and-garden/kitchen-and-dining.jpg"},
+        {"title":"Bedding & Linen","slug":"bedding-and-linen","sourceId":"L9GsIbPCXKU","sourceUrl":"https://unsplash.com/photos/L9GsIbPCXKU/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/L9GsIbPCXKU","targetPath":"public/category-visuals/subcategories/home-and-garden/bedding-and-linen.jpg"},
+        {"title":"Garden & Outdoor","slug":"garden-and-outdoor","sourceId":"fVRSm1R5U_Q","sourceUrl":"https://unsplash.com/photos/fVRSm1R5U_Q/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/fVRSm1R5U_Q","targetPath":"public/category-visuals/subcategories/home-and-garden/garden-and-outdoor.jpg"},
+        {"title":"Lighting","slug":"lighting","sourceId":"Vhtg2xwr6rc","sourceUrl":"https://unsplash.com/photos/Vhtg2xwr6rc/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Vhtg2xwr6rc","targetPath":"public/category-visuals/subcategories/home-and-garden/lighting.jpg"},
+        {"title":"Décor & Accessories","slug":"d-cor-and-accessories","sourceId":"qwA42l83ylg","sourceUrl":"https://unsplash.com/photos/qwA42l83ylg/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/qwA42l83ylg","targetPath":"public/category-visuals/subcategories/home-and-garden/d-cor-and-accessories.jpg"}
+      ]
+    },
+    {
+      "category": "Health & Beauty",
+      "categorySlug": "health-and-beauty",
+      "subcategories": [
+        {"title":"Skincare","slug":"skincare","sourceId":"0nH1XIq5rqw","sourceUrl":"https://unsplash.com/photos/0nH1XIq5rqw/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/0nH1XIq5rqw","targetPath":"public/category-visuals/subcategories/health-and-beauty/skincare.jpg"},
+        {"title":"Haircare","slug":"haircare","sourceId":"YVuPA2D-VpA","sourceUrl":"https://unsplash.com/photos/YVuPA2D-VpA/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/YVuPA2D-VpA","targetPath":"public/category-visuals/subcategories/health-and-beauty/haircare.jpg"},
+        {"title":"Makeup & Cosmetics","slug":"makeup-and-cosmetics","sourceId":"RS49PbJ3st4","sourceUrl":"https://unsplash.com/photos/RS49PbJ3st4/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/RS49PbJ3st4","targetPath":"public/category-visuals/subcategories/health-and-beauty/makeup-and-cosmetics.jpg"},
+        {"title":"Fragrances","slug":"fragrances","sourceId":"So4eFi-d1nc","sourceUrl":"https://unsplash.com/photos/So4eFi-d1nc/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/So4eFi-d1nc","targetPath":"public/category-visuals/subcategories/health-and-beauty/fragrances.jpg"},
+        {"title":"Health & Wellness","slug":"health-and-wellness","sourceId":"Pay1UKAf_-g","sourceUrl":"https://unsplash.com/photos/Pay1UKAf_-g/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Pay1UKAf_-g","targetPath":"public/category-visuals/subcategories/health-and-beauty/health-and-wellness.jpg"},
+        {"title":"Personal Care","slug":"personal-care","sourceId":"QY13zZlNyf0","sourceUrl":"https://unsplash.com/photos/QY13zZlNyf0/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/QY13zZlNyf0","targetPath":"public/category-visuals/subcategories/health-and-beauty/personal-care.jpg"}
+      ]
+    },
+    {
+      "category":"Toys & Games","categorySlug":"toys-and-games","subcategories":[
+        {"title":"Action Figures","slug":"action-figures","sourceId":"Tlg4g66hJ18","sourceUrl":"https://unsplash.com/photos/Tlg4g66hJ18/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Tlg4g66hJ18","targetPath":"public/category-visuals/subcategories/toys-and-games/action-figures.jpg"},
+        {"title":"Board Games","slug":"board-games","sourceId":"mWcSBg1zb8o","sourceUrl":"https://unsplash.com/photos/mWcSBg1zb8o/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/mWcSBg1zb8o","targetPath":"public/category-visuals/subcategories/toys-and-games/board-games.jpg"},
+        {"title":"Educational Toys","slug":"educational-toys","sourceId":"DJSJVSTOHp0","sourceUrl":"https://unsplash.com/photos/DJSJVSTOHp0/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/DJSJVSTOHp0","targetPath":"public/category-visuals/subcategories/toys-and-games/educational-toys.jpg"},
+        {"title":"Outdoor Toys","slug":"outdoor-toys","sourceId":"ibPFDW1iVBY","sourceUrl":"https://unsplash.com/photos/ibPFDW1iVBY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/ibPFDW1iVBY","targetPath":"public/category-visuals/subcategories/toys-and-games/outdoor-toys.jpg"},
+        {"title":"Dolls & Playsets","slug":"dolls-and-playsets","sourceId":"yz1CcmUZLQg","sourceUrl":"https://unsplash.com/photos/yz1CcmUZLQg/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/yz1CcmUZLQg","targetPath":"public/category-visuals/subcategories/toys-and-games/dolls-and-playsets.jpg"},
+        {"title":"Puzzles","slug":"puzzles","sourceId":"MCDKghXIbNY","sourceUrl":"https://unsplash.com/photos/MCDKghXIbNY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/MCDKghXIbNY","targetPath":"public/category-visuals/subcategories/toys-and-games/puzzles.jpg"}
+      ]
+    },
+    {
+      "category":"Food & Drink","categorySlug":"food-and-drink","subcategories":[
+        {"title":"Snacks & Confectionery","slug":"snacks-and-confectionery","sourceId":"ZouNrDx0JaU","sourceUrl":"https://unsplash.com/photos/ZouNrDx0JaU/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/ZouNrDx0JaU","targetPath":"public/category-visuals/subcategories/food-and-drink/snacks-and-confectionery.jpg"},
+        {"title":"Beverages","slug":"beverages","sourceId":"vkf9RGhYbEk","sourceUrl":"https://unsplash.com/photos/vkf9RGhYbEk/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/vkf9RGhYbEk","targetPath":"public/category-visuals/subcategories/food-and-drink/beverages.jpg"},
+        {"title":"Canned & Dry Goods","slug":"canned-and-dry-goods","sourceId":"tuj7KHG2l_0","sourceUrl":"https://unsplash.com/photos/tuj7KHG2l_0/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/tuj7KHG2l_0","targetPath":"public/category-visuals/subcategories/food-and-drink/canned-and-dry-goods.jpg"},
+        {"title":"Health Foods","slug":"health-foods","sourceId":"SqfOiQ9BAIg","sourceUrl":"https://unsplash.com/photos/SqfOiQ9BAIg/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/SqfOiQ9BAIg","targetPath":"public/category-visuals/subcategories/food-and-drink/health-foods.jpg"},
+        {"title":"Specialty & Gourmet","slug":"specialty-and-gourmet","sourceId":"PuTuY_TDM7g","sourceUrl":"https://unsplash.com/photos/PuTuY_TDM7g/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/PuTuY_TDM7g","targetPath":"public/category-visuals/subcategories/food-and-drink/specialty-and-gourmet.jpg"},
+        {"title":"Seasonal","slug":"seasonal","sourceId":"Pn-kJ9Bj-EU","sourceUrl":"https://unsplash.com/photos/Pn-kJ9Bj-EU/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Pn-kJ9Bj-EU","targetPath":"public/category-visuals/subcategories/food-and-drink/seasonal.jpg"}
+      ]
+    },
+    {
+      "category":"Tools & DIY","categorySlug":"tools-and-diy","subcategories":[
+        {"title":"Power Tools","slug":"power-tools","sourceId":"QvEXI1xquRY","sourceUrl":"https://unsplash.com/photos/QvEXI1xquRY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/QvEXI1xquRY","targetPath":"public/category-visuals/subcategories/tools-and-diy/power-tools.jpg"},
+        {"title":"Hand Tools","slug":"hand-tools","sourceId":"Z3vFp7szCAY","sourceUrl":"https://unsplash.com/photos/Z3vFp7szCAY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Z3vFp7szCAY","targetPath":"public/category-visuals/subcategories/tools-and-diy/hand-tools.jpg"},
+        {"title":"Plumbing","slug":"plumbing","sourceId":"fR47SivxkSM","sourceUrl":"https://unsplash.com/photos/fR47SivxkSM/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/fR47SivxkSM","targetPath":"public/category-visuals/subcategories/tools-and-diy/plumbing.jpg"},
+        {"title":"Electrical","slug":"electrical","sourceId":"vT9zeLCOpps","sourceUrl":"https://unsplash.com/photos/vT9zeLCOpps/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/vT9zeLCOpps","targetPath":"public/category-visuals/subcategories/tools-and-diy/electrical.jpg"},
+        {"title":"Paint & Decorating","slug":"paint-and-decorating","sourceId":"wgaV2vE5kp8","sourceUrl":"https://unsplash.com/photos/wgaV2vE5kp8/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/wgaV2vE5kp8","targetPath":"public/category-visuals/subcategories/tools-and-diy/paint-and-decorating.jpg"},
+        {"title":"Fixings & Hardware","slug":"fixings-and-hardware","sourceId":"T-0cyGZHj6E","sourceUrl":"https://unsplash.com/photos/T-0cyGZHj6E/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/T-0cyGZHj6E","targetPath":"public/category-visuals/subcategories/tools-and-diy/fixings-and-hardware.jpg"}
+      ]
+    },
+    {
+      "category":"Sports & Leisure","categorySlug":"sports-and-leisure","subcategories":[
+        {"title":"Fitness Equipment","slug":"fitness-equipment","sourceId":"zBYG9kzN-8s","sourceUrl":"https://unsplash.com/photos/zBYG9kzN-8s/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/zBYG9kzN-8s","targetPath":"public/category-visuals/subcategories/sports-and-leisure/fitness-equipment.jpg"},
+        {"title":"Cycling","slug":"cycling","sourceId":"WL6CUTIGVpY","sourceUrl":"https://unsplash.com/photos/WL6CUTIGVpY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/WL6CUTIGVpY","targetPath":"public/category-visuals/subcategories/sports-and-leisure/cycling.jpg"},
+        {"title":"Camping & Hiking","slug":"camping-and-hiking","sourceId":"QmzAMakD5Ro","sourceUrl":"https://unsplash.com/photos/QmzAMakD5Ro/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/QmzAMakD5Ro","targetPath":"public/category-visuals/subcategories/sports-and-leisure/camping-and-hiking.jpg"},
+        {"title":"Water Sports","slug":"water-sports","sourceId":"rHRbxESCXac","sourceUrl":"https://unsplash.com/photos/rHRbxESCXac/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/rHRbxESCXac","targetPath":"public/category-visuals/subcategories/sports-and-leisure/water-sports.jpg"},
+        {"title":"Team Sports","slug":"team-sports","sourceId":"FzAyjb2_Hys","sourceUrl":"https://unsplash.com/photos/FzAyjb2_Hys/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/FzAyjb2_Hys","targetPath":"public/category-visuals/subcategories/sports-and-leisure/team-sports.jpg"},
+        {"title":"Leisure & Travel","slug":"leisure-and-travel","sourceId":"TVllFyGaLEA","sourceUrl":"https://unsplash.com/photos/TVllFyGaLEA/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/TVllFyGaLEA","targetPath":"public/category-visuals/subcategories/sports-and-leisure/leisure-and-travel.jpg"}
+      ]
+    },
+    {
+      "category":"Automotive","categorySlug":"automotive","subcategories":[
+        {"title":"Car Parts","slug":"car-parts","sourceId":"J_Ymm6zw3Rg","sourceUrl":"https://unsplash.com/photos/J_Ymm6zw3Rg/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/J_Ymm6zw3Rg","targetPath":"public/category-visuals/subcategories/automotive/car-parts.jpg"},
+        {"title":"Car Accessories","slug":"car-accessories","sourceId":"R8P8iZ9nRko","sourceUrl":"https://unsplash.com/photos/R8P8iZ9nRko/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/R8P8iZ9nRko","targetPath":"public/category-visuals/subcategories/automotive/car-accessories.jpg"},
+        {"title":"Cleaning & Valeting","slug":"cleaning-and-valeting","sourceId":"qy20XW0tSlw","sourceUrl":"https://unsplash.com/photos/qy20XW0tSlw/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/qy20XW0tSlw","targetPath":"public/category-visuals/subcategories/automotive/cleaning-and-valeting.jpg"},
+        {"title":"Tools & Equipment","slug":"tools-and-equipment","sourceId":"aAMmjC4myFA","sourceUrl":"https://unsplash.com/photos/aAMmjC4myFA/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/aAMmjC4myFA","targetPath":"public/category-visuals/subcategories/automotive/tools-and-equipment.jpg"},
+        {"title":"Oils & Fluids","slug":"oils-and-fluids","sourceId":"FHR7aqLxBgQ","sourceUrl":"https://unsplash.com/photos/FHR7aqLxBgQ/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/FHR7aqLxBgQ","targetPath":"public/category-visuals/subcategories/automotive/oils-and-fluids.jpg"},
+        {"title":"Tyres & Wheels","slug":"tyres-and-wheels","sourceId":"2OaUmmRWlg8","sourceUrl":"https://unsplash.com/photos/2OaUmmRWlg8/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/2OaUmmRWlg8","targetPath":"public/category-visuals/subcategories/automotive/tyres-and-wheels.jpg"}
+      ]
+    },
+    {
+      "category":"Office & Stationery","categorySlug":"office-and-stationery","subcategories":[
+        {"title":"Office Furniture","slug":"office-furniture","sourceId":"PB5-pTZE9H4","sourceUrl":"https://unsplash.com/photos/PB5-pTZE9H4/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/PB5-pTZE9H4","targetPath":"public/category-visuals/subcategories/office-and-stationery/office-furniture.jpg"},
+        {"title":"Printers & Ink","slug":"printers-and-ink","sourceId":"CGnoRQZGWmw","sourceUrl":"https://unsplash.com/photos/CGnoRQZGWmw/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/CGnoRQZGWmw","targetPath":"public/category-visuals/subcategories/office-and-stationery/printers-and-ink.jpg"},
+        {"title":"Paper & Supplies","slug":"paper-and-supplies","sourceId":"n9AaeihA9HI","sourceUrl":"https://unsplash.com/photos/n9AaeihA9HI/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/n9AaeihA9HI","targetPath":"public/category-visuals/subcategories/office-and-stationery/paper-and-supplies.jpg"},
+        {"title":"Office Tech","slug":"office-tech","sourceId":"T2afNvgK6vg","sourceUrl":"https://unsplash.com/photos/T2afNvgK6vg/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/T2afNvgK6vg","targetPath":"public/category-visuals/subcategories/office-and-stationery/office-tech.jpg"},
+        {"title":"Filing & Storage","slug":"filing-and-storage","sourceId":"Q9y3LRuuxmg","sourceUrl":"https://unsplash.com/photos/Q9y3LRuuxmg/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Q9y3LRuuxmg","targetPath":"public/category-visuals/subcategories/office-and-stationery/filing-and-storage.jpg"},
+        {"title":"Pens & Writing","slug":"pens-and-writing","sourceId":"Iyt6vtvLDGA","sourceUrl":"https://unsplash.com/photos/Iyt6vtvLDGA/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Iyt6vtvLDGA","targetPath":"public/category-visuals/subcategories/office-and-stationery/pens-and-writing.jpg"}
+      ]
+    },
+    {
+      "category":"Baby & Nursery","categorySlug":"baby-and-nursery","subcategories":[
+        {"title":"Prams & Pushchairs","slug":"prams-and-pushchairs","sourceId":"Qnqvy_GqV5Q","sourceUrl":"https://unsplash.com/photos/Qnqvy_GqV5Q/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Qnqvy_GqV5Q","targetPath":"public/category-visuals/subcategories/baby-and-nursery/prams-and-pushchairs.jpg"},
+        {"title":"Baby Clothing","slug":"baby-clothing","sourceId":"72l_I4s-hss","sourceUrl":"https://unsplash.com/photos/72l_I4s-hss/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/72l_I4s-hss","targetPath":"public/category-visuals/subcategories/baby-and-nursery/baby-clothing.jpg"},
+        {"title":"Feeding","slug":"feeding","sourceId":"TCYj_UxoIUY","sourceUrl":"https://unsplash.com/photos/TCYj_UxoIUY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/TCYj_UxoIUY","targetPath":"public/category-visuals/subcategories/baby-and-nursery/feeding.jpg"},
+        {"title":"Nursery Furniture","slug":"nursery-furniture","sourceId":"ITAFnjCEWWw","sourceUrl":"https://unsplash.com/photos/ITAFnjCEWWw/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/ITAFnjCEWWw","targetPath":"public/category-visuals/subcategories/baby-and-nursery/nursery-furniture.jpg"},
+        {"title":"Toys (0-3 yrs)","slug":"toys-0-3-yrs","sourceId":"Ukp07LmMi-k","sourceUrl":"https://unsplash.com/photos/Ukp07LmMi-k/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Ukp07LmMi-k","targetPath":"public/category-visuals/subcategories/baby-and-nursery/toys-0-3-yrs.jpg"},
+        {"title":"Safety & Care","slug":"safety-and-care","sourceId":"ewnuZbyZLUg","sourceUrl":"https://unsplash.com/photos/ewnuZbyZLUg/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/ewnuZbyZLUg","targetPath":"public/category-visuals/subcategories/baby-and-nursery/safety-and-care.jpg"}
+      ]
+    },
+    {
+      "category":"Jewellery & Watches","categorySlug":"jewellery-and-watches","subcategories":[
+        {"title":"Necklaces & Pendants","slug":"necklaces-and-pendants","sourceId":"7_xFgeApJh8","sourceUrl":"https://unsplash.com/photos/7_xFgeApJh8/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/7_xFgeApJh8","targetPath":"public/category-visuals/subcategories/jewellery-and-watches/necklaces-and-pendants.jpg"},
+        {"title":"Rings & Earrings","slug":"rings-and-earrings","sourceId":"s6cKGUOy0OE","sourceUrl":"https://unsplash.com/photos/s6cKGUOy0OE/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/s6cKGUOy0OE","targetPath":"public/category-visuals/subcategories/jewellery-and-watches/rings-and-earrings.jpg"},
+        {"title":"Bracelets","slug":"bracelets","sourceId":"El81kewBUgc","sourceUrl":"https://unsplash.com/photos/El81kewBUgc/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/El81kewBUgc","targetPath":"public/category-visuals/subcategories/jewellery-and-watches/bracelets.jpg"},
+        {"title":"Watches","slug":"watches","sourceId":"78h-B5zVsWI","sourceUrl":"https://unsplash.com/photos/78h-B5zVsWI/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/78h-B5zVsWI","targetPath":"public/category-visuals/subcategories/jewellery-and-watches/watches.jpg"},
+        {"title":"Fashion Jewellery","slug":"fashion-jewellery","sourceId":"rW0X4xa_hpw","sourceUrl":"https://unsplash.com/photos/rW0X4xa_hpw/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/rW0X4xa_hpw","targetPath":"public/category-visuals/subcategories/jewellery-and-watches/fashion-jewellery.jpg"},
+        {"title":"Accessories","slug":"accessories","sourceId":"R5Cgy-aAIxc","sourceUrl":"https://unsplash.com/photos/R5Cgy-aAIxc/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/R5Cgy-aAIxc","targetPath":"public/category-visuals/subcategories/jewellery-and-watches/accessories.jpg"}
+      ]
+    },
+    {
+      "category":"Mixed Lots","categorySlug":"mixed-lots","subcategories":[
+        {"title":"General Mixed","slug":"general-mixed","sourceId":"RVP3wAw9gJY","sourceUrl":"https://unsplash.com/photos/RVP3wAw9gJY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/RVP3wAw9gJY","targetPath":"public/category-visuals/subcategories/mixed-lots/general-mixed.jpg"},
+        {"title":"Department Store Returns","slug":"department-store-returns","sourceId":"RI_VrbUngcA","sourceUrl":"https://unsplash.com/photos/RI_VrbUngcA/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/RI_VrbUngcA","targetPath":"public/category-visuals/subcategories/mixed-lots/department-store-returns.jpg"},
+        {"title":"Amazon Returns","slug":"amazon-returns","sourceId":"jcav1COVvOc","sourceUrl":"https://unsplash.com/photos/jcav1COVvOc/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/jcav1COVvOc","targetPath":"public/category-visuals/subcategories/mixed-lots/amazon-returns.jpg"},
+        {"title":"Seasonal Mixed","slug":"seasonal-mixed","sourceId":"UmsKC3s10yM","sourceUrl":"https://unsplash.com/photos/UmsKC3s10yM/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/UmsKC3s10yM","targetPath":"public/category-visuals/subcategories/mixed-lots/seasonal-mixed.jpg"},
+        {"title":"High Value Mixed","slug":"high-value-mixed","sourceId":"mFUIel9hWos","sourceUrl":"https://unsplash.com/photos/mFUIel9hWos/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/mFUIel9hWos","targetPath":"public/category-visuals/subcategories/mixed-lots/high-value-mixed.jpg"},
+        {"title":"Liquidation Lots","slug":"liquidation-lots","sourceId":"I-_wYj9yOzw","sourceUrl":"https://unsplash.com/photos/I-_wYj9yOzw/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/I-_wYj9yOzw","targetPath":"public/category-visuals/subcategories/mixed-lots/liquidation-lots.jpg"}
+      ]
+    },
+    {
+      "category":"Customer Returns","categorySlug":"customer-returns","subcategories":[
+        {"title":"Electronics Returns","slug":"electronics-returns","sourceId":"6eP7GIpOlAM","sourceUrl":"https://unsplash.com/photos/6eP7GIpOlAM/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/6eP7GIpOlAM","targetPath":"public/category-visuals/subcategories/customer-returns/electronics-returns.jpg"},
+        {"title":"Clothing Returns","slug":"clothing-returns","sourceId":"eM1t2kX2Dz4","sourceUrl":"https://unsplash.com/photos/eM1t2kX2Dz4/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/eM1t2kX2Dz4","targetPath":"public/category-visuals/subcategories/customer-returns/clothing-returns.jpg"},
+        {"title":"Home Returns","slug":"home-returns","sourceId":"32xlFAZ1gk8","sourceUrl":"https://unsplash.com/photos/32xlFAZ1gk8/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/32xlFAZ1gk8","targetPath":"public/category-visuals/subcategories/customer-returns/home-returns.jpg"},
+        {"title":"Appliance Returns","slug":"appliance-returns","sourceId":"NEqZ6Ox7Eyo","sourceUrl":"https://unsplash.com/photos/NEqZ6Ox7Eyo/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/NEqZ6Ox7Eyo","targetPath":"public/category-visuals/subcategories/customer-returns/appliance-returns.jpg"},
+        {"title":"Graded Returns","slug":"graded-returns","sourceId":"l9__1iNeDfc","sourceUrl":"https://unsplash.com/photos/l9__1iNeDfc/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/l9__1iNeDfc","targetPath":"public/category-visuals/subcategories/customer-returns/graded-returns.jpg"},
+        {"title":"Unchecked Returns","slug":"unchecked-returns","sourceId":"RqZ-xGRnCYI","sourceUrl":"https://unsplash.com/photos/RqZ-xGRnCYI/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/RqZ-xGRnCYI","targetPath":"public/category-visuals/subcategories/customer-returns/unchecked-returns.jpg"}
+      ]
+    },
+    {
+      "category":"Overstock","categorySlug":"overstock","subcategories":[
+        {"title":"Brand Overstock","slug":"brand-overstock","sourceId":"Wpf8uWNiu3o","sourceUrl":"https://unsplash.com/photos/Wpf8uWNiu3o/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/Wpf8uWNiu3o","targetPath":"public/category-visuals/subcategories/overstock/brand-overstock.jpg"},
+        {"title":"Seasonal Overstock","slug":"seasonal-overstock","sourceId":"0AKPfr-xlCU","sourceUrl":"https://unsplash.com/photos/0AKPfr-xlCU/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/0AKPfr-xlCU","targetPath":"public/category-visuals/subcategories/overstock/seasonal-overstock.jpg"},
+        {"title":"End of Line","slug":"end-of-line","sourceId":"M7G_m5XJ-go","sourceUrl":"https://unsplash.com/photos/M7G_m5XJ-go/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/M7G_m5XJ-go","targetPath":"public/category-visuals/subcategories/overstock/end-of-line.jpg"},
+        {"title":"Excess Inventory","slug":"excess-inventory","sourceId":"-aCrA9FmT8Y","sourceUrl":"https://unsplash.com/photos/-aCrA9FmT8Y/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/-aCrA9FmT8Y","targetPath":"public/category-visuals/subcategories/overstock/excess-inventory.jpg"},
+        {"title":"Wholesale Lots","slug":"wholesale-lots","sourceId":"K2YghSroNsY","sourceUrl":"https://unsplash.com/photos/K2YghSroNsY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/K2YghSroNsY","targetPath":"public/category-visuals/subcategories/overstock/wholesale-lots.jpg"},
+        {"title":"Bulk Deals","slug":"bulk-deals","sourceId":"2mH3hbrYMac","sourceUrl":"https://unsplash.com/photos/2mH3hbrYMac/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/2mH3hbrYMac","targetPath":"public/category-visuals/subcategories/overstock/bulk-deals.jpg"}
+      ]
+    },
+    {
+      "category":"Clearance Deals","categorySlug":"clearance-deals","subcategories":[
+        {"title":"Flash Sales","slug":"flash-sales","sourceId":"SwJEXHvuJkg","sourceUrl":"https://unsplash.com/photos/SwJEXHvuJkg/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/SwJEXHvuJkg","targetPath":"public/category-visuals/subcategories/clearance-deals/flash-sales.jpg"},
+        {"title":"Closing Down Stock","slug":"closing-down-stock","sourceId":"mqYZWUG8T1U","sourceUrl":"https://unsplash.com/photos/mqYZWUG8T1U/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/mqYZWUG8T1U","targetPath":"public/category-visuals/subcategories/clearance-deals/closing-down-stock.jpg"},
+        {"title":"Damaged Packaging","slug":"damaged-packaging","sourceId":"gh6uXXV9a5I","sourceUrl":"https://unsplash.com/photos/gh6uXXV9a5I/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/gh6uXXV9a5I","targetPath":"public/category-visuals/subcategories/clearance-deals/damaged-packaging.jpg"},
+        {"title":"Short Dated","slug":"short-dated","sourceId":"rWMIbqmOxrY","sourceUrl":"https://unsplash.com/photos/rWMIbqmOxrY/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/rWMIbqmOxrY","targetPath":"public/category-visuals/subcategories/clearance-deals/short-dated.jpg"},
+        {"title":"Sample Stock","slug":"sample-stock","sourceId":"3eM-RLzpe3A","sourceUrl":"https://unsplash.com/photos/3eM-RLzpe3A/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/3eM-RLzpe3A","targetPath":"public/category-visuals/subcategories/clearance-deals/sample-stock.jpg"},
+        {"title":"One-Off Deals","slug":"one-off-deals","sourceId":"tKpb2pP7-Bc","sourceUrl":"https://unsplash.com/photos/tKpb2pP7-Bc/download?force=true&w=1400&h=1050&fit=crop","sourcePage":"https://unsplash.com/photos/tKpb2pP7-Bc","targetPath":"public/category-visuals/subcategories/clearance-deals/one-off-deals.jpg"}
+      ]
+    }
+  ]
+}
