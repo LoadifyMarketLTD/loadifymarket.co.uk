@@ -18,6 +18,12 @@ import SecurityTrust from "@/components/SecurityTrust";
 import SellerCTA from "@/components/SellerCTA";
 import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
+import {
+  HomepageCategoriesSection,
+  HomepageFinalCTA,
+  HomepagePlatformStrip,
+  HomepageWhySection,
+} from "@/components/HomepageBlueprintSections";
 import { trackViewHome } from "@/lib/analytics";
 
 function SkeletonGridCard() {
@@ -161,30 +167,26 @@ function DesktopHome() {
     <>
       <HeroSection />
 
-      <section className="bg-[#F7F9FC] pb-10" aria-label="Loadify Market trust signals">
+      <section className="bg-white pb-2" aria-label="Loadify Market trust signals">
         <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
           <TrustStrip />
         </div>
       </section>
 
       <FeaturedProducts />
+      <HomepageWhySection />
+      <HomepagePlatformStrip />
 
-      <section className="bg-[#F7F9FC] py-12" aria-label="Why Loadify is different">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-          <FeaturesGrid />
-        </div>
-
-        <LazySection rootMargin="320px">
-          <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+      <LazySection rootMargin="320px">
+        <section className="bg-[#F7F9FC] py-16" aria-label="How Loadify works">
+          <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
             <HowItWorksSection />
           </div>
-          <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
-            <SecurityTrust />
-          </div>
-        </LazySection>
-      </section>
+        </section>
+        <HomepageCategoriesSection />
+      </LazySection>
 
-      <SellerCTA />
+      <HomepageFinalCTA />
     </>
   );
 }
