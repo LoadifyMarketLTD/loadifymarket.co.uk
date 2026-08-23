@@ -29,4 +29,29 @@ describe('wholesale subcategory visual manifest', () => {
       expect(entry.alt.length).toBeGreaterThan(10);
     }
   });
+
+  it('forbids duplicate final image paths inside the same parent category', () => {
+    const byCategory = new Map<string, string[]>();
+
+    for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
+      if (entry.status !== 'dedicated') continue;
+      const paths = byCategory.get(entry.categorySlug) ?? [];
+      paths.push(entry.assetPath);
+      byCategory.set(entry.categorySlug, paths);
+    }
+
+    for (const [categorySlug, paths] of byCategory) {
+      expect(
+        new Set(paths).size,
+        `Duplicate dedicated subcategory imagery detected in ${categorySlug}`,
+      ).toBe(paths.length);
+    }
+  });
+
+  it('never treats a parent-category image as a dedicated subcategory image', () => {
+    for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
+      if (entry.status !== 'dedicated') continue;
+      expect(entry.assetPath).not.toMatch(/^\/category-visuals\/wholesale\//);
+    }
+  });
 });
