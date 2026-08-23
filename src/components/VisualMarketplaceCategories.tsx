@@ -2,9 +2,18 @@ import { Link } from "react-router-dom";
 import { marketplaceVisuals } from "@/data/marketplaceVisuals";
 import { marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
 
+const useFallback = (fallback: string) => (event: React.SyntheticEvent<HTMLImageElement>) => {
+  const image = event.currentTarget;
+  if (image.dataset.fallbackApplied === "true") return;
+  image.dataset.fallbackApplied = "true";
+  image.src = fallback;
+};
+
 /**
  * Image-led marketplace taxonomy explorer.
  * Editorial category/subcategory imagery is navigation content only — never a fake listing.
+ * Root images are same-origin/local. Remote subcategory editorial images fail closed to
+ * the local parent visual so the marketplace never renders broken image chrome.
  */
 export default function VisualMarketplaceCategories() {
   return (
@@ -34,6 +43,7 @@ export default function VisualMarketplaceCategories() {
                     src={category.image}
                     alt={category.altText}
                     loading="lazy"
+                    onError={useFallback("/hero-marketplace.jpg")}
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                   />
                 </div>
@@ -56,6 +66,7 @@ export default function VisualMarketplaceCategories() {
                         src={sub.image}
                         alt={sub.altText}
                         loading="lazy"
+                        onError={useFallback(category.image)}
                         className="h-full w-full object-cover transition duration-300 group-hover/sub:scale-[1.04]"
                       />
                     </div>
