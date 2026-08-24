@@ -266,7 +266,7 @@ const Catalog = () => {
         canonical="/catalog"
       />
 
-      <main id="main-content" className="pt-4 md:pt-28 pb-16">
+      <main id="main-content" className="min-h-screen bg-[#F7F9FC] pt-4 md:pt-28 pb-16 text-[#0A234F]">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[
@@ -286,16 +286,17 @@ const Catalog = () => {
               setViewMode={setViewMode}
               onToggleFilters={() => setFiltersVisible(!filtersVisible)}
               filtersVisible={filtersVisible}
+              theme="light"
             />
             {queryParam.trim() && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Showing results for: <span className="font-medium text-foreground">"{queryParam}"</span>
+              <p className="text-sm text-slate-600 mt-2">
+                Showing results for: <span className="font-medium text-[#0A234F]">"{queryParam}"</span>
               </p>
             )}
             {filterParam && !queryParam.trim() && (
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm text-slate-600 mt-2">
                 Showing:{" "}
-                <span className="font-medium text-foreground capitalize">
+                <span className="font-medium text-[#0A234F] capitalize">
                   {filterParam.replace(/-/g, " ")}
                 </span>
               </p>
@@ -309,7 +310,7 @@ const Catalog = () => {
                 <Badge
                   key={filter}
                   variant="secondary"
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer hover:bg-destructive/10 transition-colors"
+                  className="flex items-center gap-1.5 border border-slate-200 bg-white px-3 py-1.5 text-xs text-[#0A234F] cursor-pointer hover:bg-red-50 transition-colors"
                   onClick={() => removeFilter(filter)}
                 >
                   {filter}
@@ -322,7 +323,7 @@ const Catalog = () => {
           <div className="flex gap-8">
             {/* Sidebar filters - desktop */}
             <aside className="hidden lg:block w-64 shrink-0">
-              <div className="sticky top-24 bg-card rounded-xl border border-border p-5">
+              <div className="sticky top-24 rounded-xl border border-slate-200 bg-white p-5 shadow-[0_8px_24px_rgba(15,35,70,0.06)]">
                 <CatalogFilters
                   selectedCategories={selectedCategories}
                   setSelectedCategories={setSelectedCategories}
@@ -334,6 +335,7 @@ const Catalog = () => {
                   setPriceRange={setPriceRange}
                   onClearAll={clearAll}
                   availableCategories={dbCategories}
+                  theme="light"
                 />
               </div>
             </aside>
@@ -342,10 +344,10 @@ const Catalog = () => {
             {filtersVisible && (
               <div className="fixed inset-0 z-50 lg:hidden">
                 <div className="absolute inset-0 bg-black/50" onClick={() => setFiltersVisible(false)} />
-                <div className="absolute bottom-0 inset-x-0 max-h-[85vh] rounded-t-2xl bg-card p-6 overflow-y-auto animate-in slide-in-from-bottom duration-300">
+                <div className="absolute bottom-0 inset-x-0 max-h-[85vh] rounded-t-2xl bg-white p-6 overflow-y-auto animate-in slide-in-from-bottom duration-300">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-display text-lg font-bold text-foreground">Filters</h3>
-                    <button onClick={() => setFiltersVisible(false)} className="text-muted-foreground hover:text-foreground p-1">
+                    <h3 className="font-display text-lg font-bold text-[#0A234F]">Filters</h3>
+                    <button onClick={() => setFiltersVisible(false)} className="text-slate-500 hover:text-[#0A234F] p-1">
                       <X className="h-5 w-5" />
                     </button>
                   </div>
@@ -360,10 +362,11 @@ const Catalog = () => {
                     setPriceRange={setPriceRange}
                     onClearAll={clearAll}
                     availableCategories={dbCategories}
+                    theme="light"
                   />
                   {/* Apply button to close the sheet */}
                   <div className="mt-6 pb-2">
-                    <Button className="w-full h-11 bg-primary hover:bg-primary-hover text-black font-semibold" onClick={() => setFiltersVisible(false)}>
+                    <Button className="w-full h-11 bg-[#F5A300] hover:bg-[#E59600] text-[#0A234F] font-semibold" onClick={() => setFiltersVisible(false)}>
                       Apply Filters
                     </Button>
                   </div>
@@ -384,14 +387,14 @@ const Catalog = () => {
                   {Array.from({ length: 9 }).map((_, i) => (
                     <div
                       key={i}
-                      className="bg-card rounded-xl border border-border aspect-[4/5] animate-pulse"
+                      className="rounded-xl border border-slate-200 bg-white aspect-[4/5] animate-pulse"
                     />
                   ))}
                 </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20">
-                  <p className="text-lg font-display font-semibold text-foreground mb-2">No listings found</p>
-                  <p className="text-sm text-muted-foreground">Try adjusting your filters to see more results.</p>
+                  <p className="text-lg font-display font-semibold text-[#0A234F] mb-2">No listings found</p>
+                  <p className="text-sm text-slate-600">Try adjusting your filters to see more results.</p>
                 </div>
               ) : (
                 <div
@@ -402,7 +405,7 @@ const Catalog = () => {
                   }
                 >
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} linkState={{ flow: "marketplace" }} />
+                    <ProductCard key={product.id} product={product} linkState={{ flow: "marketplace" }} theme="light" />
                   ))}
                 </div>
               )}
@@ -410,7 +413,7 @@ const Catalog = () => {
                 <div className="flex justify-center mt-8">
                   <Button
                     variant="outline"
-                    className="gap-2 px-8"
+                    className="gap-2 border-slate-200 bg-white px-8 text-[#0A234F] hover:bg-slate-50"
                     onClick={() => fetchProducts(pageRef.current + 1)}
                     disabled={loadingMore}
                   >
