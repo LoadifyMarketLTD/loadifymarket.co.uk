@@ -15,6 +15,15 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
   </li>
 );
 
+const TrustLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
+  <Link
+    to={to}
+    className="inline-flex items-center gap-1.5 transition-colors duration-150 hover:text-white focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5A300]"
+  >
+    {children}
+  </Link>
+);
+
 const legalLinks = [
   { to: "/terms", label: "Terms" },
   { to: "/privacy", label: "Privacy" },
@@ -33,7 +42,7 @@ const legalLinks = [
 const SocialLinks = () => (
   <div className="flex items-center gap-2.5">
     <SocialCard href="https://www.facebook.com/profile.php?id=61583570176707" label="Loadify Market on Facebook" Icon={Facebook} platform="facebook" size="footer" />
-    <SocialCard href="https://www.twitter.com/loadifymarket" label="Loadify Market on X / Twitter" Icon={Twitter} platform="twitter" size="footer" />
+    <SocialCard href="https://x.com/loadifymarket" label="Loadify Market on X" Icon={Twitter} platform="twitter" size="footer" />
     <SocialCard href="https://www.instagram.com/loadifymarket" label="Loadify Market on Instagram" Icon={Instagram} platform="instagram" size="footer" />
     <SocialCard href="https://www.tiktok.com/@loadifymarket" label="Loadify Market on TikTok" Icon={TikTokIcon} platform="tiktok" size="footer" />
     <SocialCard href="https://www.linkedin.com/company/loadify-market" label="Loadify Market on LinkedIn" Icon={Linkedin} platform="linkedin" size="footer" />
@@ -41,17 +50,17 @@ const SocialLinks = () => (
 );
 
 const Footer = () => (
-  <footer className="bg-[#F7F9FC] px-4 pb-4 sm:px-6 sm:pb-10 lg:px-10">
-    <div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] text-white shadow-[0_22px_60px_rgba(10,35,79,0.17)]">
+  <footer className="bg-[#F7F9FC] px-6 pb-4 sm:pb-10">
+    <div className="relative w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] text-white shadow-[0_22px_60px_rgba(10,35,79,0.17)]">
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]" aria-hidden="true" />
       <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
 
       <div className="relative sm:hidden">
         <div className="border-b border-white/10 bg-white/[0.045] px-5 pb-5 pt-5">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-semibold text-white/72">
-            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-[#F5A300]" aria-hidden="true" />Stripe-powered checkout</span>
-            <span className="inline-flex items-center gap-1.5"><Truck className="h-3.5 w-3.5 text-[#F5A300]" aria-hidden="true" />Order tracking</span>
-            <span className="inline-flex items-center gap-1.5"><Store className="h-3.5 w-3.5 text-[#F5A300]" aria-hidden="true" />UK operated</span>
+            <TrustLink to="/buyer-terms"><ShieldCheck className="h-3.5 w-3.5 text-[#F5A300]" aria-hidden="true" />Stripe-powered checkout</TrustLink>
+            <TrustLink to="/track-order"><Truck className="h-3.5 w-3.5 text-[#F5A300]" aria-hidden="true" />Order tracking</TrustLink>
+            <TrustLink to="/about"><Store className="h-3.5 w-3.5 text-[#F5A300]" aria-hidden="true" />UK operated</TrustLink>
           </div>
           <div className="mt-4 overflow-x-auto pb-1">
             <SocialLinks />
@@ -78,9 +87,9 @@ const Footer = () => (
               <ColHeading>Shop</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/catalog">Browse Marketplace</FooterLink>
-                <FooterLink to="/catalog">All Categories</FooterLink>
+                <FooterLink to="/categories">All Categories</FooterLink>
                 <FooterLink to="/track-order">Track Order</FooterLink>
-                <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
+                <FooterLink to="/returns-policy">Returns &amp; Refunds</FooterLink>
                 <FooterLink to="/faq">Help &amp; FAQ</FooterLink>
               </ul>
             </div>
@@ -101,9 +110,9 @@ const Footer = () => (
               <ul className="space-y-2.5">
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/contact">Contact Us</FooterLink>
-                <FooterLink to="/contact">Partner With Us</FooterLink>
-                <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
-                <FooterLink to="/contact">Report a Problem</FooterLink>
+                <FooterLink to="/contact?topic=partnership">Partner With Us</FooterLink>
+                <FooterLink to="/shipping-policy">Shipping &amp; Delivery</FooterLink>
+                <FooterLink to="/contact?topic=problem">Report a Problem</FooterLink>
               </ul>
             </div>
           </div>
@@ -128,9 +137,9 @@ const Footer = () => (
         <div className="border-b border-white/10 bg-white/[0.045]">
           <div className="mx-auto flex flex-col items-start justify-between gap-4 px-6 py-5 lg:flex-row lg:items-center lg:px-8">
             <div className="flex flex-wrap gap-x-6 gap-y-3 text-[12px] font-semibold text-white/72">
-              <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />Stripe-powered checkout</span>
-              <span className="inline-flex items-center gap-2"><Truck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />Order tracking</span>
-              <span className="inline-flex items-center gap-2"><Store className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />UK operated</span>
+              <TrustLink to="/buyer-terms"><ShieldCheck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />Stripe-powered checkout</TrustLink>
+              <TrustLink to="/track-order"><Truck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />Order tracking</TrustLink>
+              <TrustLink to="/about"><Store className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />UK operated</TrustLink>
             </div>
             <SocialLinks />
           </div>
@@ -155,9 +164,9 @@ const Footer = () => (
               <ColHeading>Shop</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/catalog">Browse Marketplace</FooterLink>
-                <FooterLink to="/catalog">All Categories</FooterLink>
+                <FooterLink to="/categories">All Categories</FooterLink>
                 <FooterLink to="/track-order">Track Order</FooterLink>
-                <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
+                <FooterLink to="/returns-policy">Returns &amp; Refunds</FooterLink>
                 <FooterLink to="/faq">Help &amp; FAQ</FooterLink>
               </ul>
             </div>
@@ -178,9 +187,9 @@ const Footer = () => (
               <ul className="space-y-2.5">
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/contact">Contact Us</FooterLink>
-                <FooterLink to="/contact">Partner With Us</FooterLink>
-                <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
-                <FooterLink to="/contact">Report a Problem</FooterLink>
+                <FooterLink to="/contact?topic=partnership">Partner With Us</FooterLink>
+                <FooterLink to="/shipping-policy">Shipping &amp; Delivery</FooterLink>
+                <FooterLink to="/contact?topic=problem">Report a Problem</FooterLink>
               </ul>
             </div>
           </div>

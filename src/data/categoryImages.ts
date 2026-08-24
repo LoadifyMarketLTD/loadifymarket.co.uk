@@ -1,65 +1,75 @@
 /**
- * src/data/categoryImages.ts
+ * SINGLE SOURCE OF TRUTH for root/category imagery.
  *
- * SINGLE SOURCE OF TRUTH for all category images used by product cards and adapters.
- *
- * • categoryImages  — keyed by category slug (used in section components)
- * • categoryImageById — keyed by database category ID (used in ProductCard)
- *
- * To add or change a category image, update this file only.
+ * The canonical 16 root images below are copied byte-for-byte from the
+ * focused-image-craft Reserve and served same-origin from /public.
  */
 
-/** Category images keyed by URL slug — real product photos from Unsplash CDN */
 export const categoryImages: Record<string, string> = {
-  // ── Wholesale marketplace categories (current taxonomy) ──────────────────
-  "large-letter-items":   "https://images.unsplash.com/photo-1586769852044-692d6e3703f0?auto=format&fit=crop&w=800&q=80",
-  "garden":               "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=800&q=80",
-  "diy":                  "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
-  "cleaning":             "https://images.unsplash.com/photo-1563453392212-326f5e854473?auto=format&fit=crop&w=800&q=80",
-  "party-gift":           "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80",
-  "wholesale-pound-lines":"https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=800&q=80",
-  "toys":                 "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
-  "leisure-hobbies":      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
-  "baby-supplies":        "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=800&q=80",
-  "kitchenware":          "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
-  "health-beauty":        "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
-  "homeware":             "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=800&q=80",
-  "electrical":           "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
-  "pet-supplies":         "https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=800&q=80",
-  "stationery":           "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
-  "seasonal":             "https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=800&q=80",
-  "wholesale-clothing":   "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
+  // Canonical 16x96 taxonomy — exact Reserve root assets
+  electronics: "/images/categories/electronics.jpg",
+  clothing: "/images/categories/clothing.jpg",
+  home: "/images/categories/home.jpg",
+  "health-beauty": "/images/categories/health-beauty.jpg",
+  toys: "/images/categories/toys.jpg",
+  "food-drink": "/images/categories/food-drink.jpg",
+  tools: "/images/categories/tools.jpg",
+  sports: "/images/categories/sports.jpg",
+  automotive: "/images/categories/automotive.jpg",
+  office: "/images/categories/office.jpg",
+  baby: "/images/categories/baby.jpg",
+  jewellery: "/images/categories/jewellery.jpg",
+  "mixed-pallets": "/images/categories/mixed-pallets.jpg",
+  returns: "/images/categories/returns.jpg",
+  overstock: "/images/categories/overstock.jpg",
+  // The promotional CLEARANCE artwork is reserved for /deals only.
+  // General category surfaces use clean editorial imagery without sale text.
+  clearance: "/images/categories/clearance-editorial.webp",
 
-  // ── Legacy slugs (kept for backward compat with any existing DB records) ─
-  electronics:            "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
-  fashion:                "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
-  "home-kitchen":         "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
-  beauty:                 "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
-  "tools-diy":            "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
-  "toys-games":           "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
-  "health-wellness":      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
-  automotive:             "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
-  "office-supplies":      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
+  // Existing/legacy taxonomy aliases resolve into the same local library.
+  "large-letter-items": "/images/categories/office.jpg",
+  garden: "/images/categories/home.jpg",
+  diy: "/images/categories/tools.jpg",
+  cleaning: "/images/categories/home.jpg",
+  "party-gift": "/images/categories/clearance-editorial.webp",
+  "wholesale-pound-lines": "/images/categories/mixed-pallets.jpg",
+  "leisure-hobbies": "/images/categories/sports.jpg",
+  "baby-supplies": "/images/categories/baby.jpg",
+  kitchenware: "/images/categories/home.jpg",
+  homeware: "/images/categories/home.jpg",
+  electrical: "/images/categories/electronics.jpg",
+  "pet-supplies": "/images/categories/home.jpg",
+  stationery: "/images/categories/office.jpg",
+  seasonal: "/images/categories/clearance-editorial.webp",
+  "wholesale-clothing": "/images/categories/clothing.jpg",
+  fashion: "/images/categories/clothing.jpg",
+  "home-kitchen": "/images/categories/home.jpg",
+  beauty: "/images/categories/health-beauty.jpg",
+  "tools-diy": "/images/categories/tools.jpg",
+  "toys-games": "/images/categories/toys.jpg",
+  "health-wellness": "/images/categories/health-beauty.jpg",
+  "office-supplies": "/images/categories/office.jpg",
 };
 
-/** Category images keyed by database category ID */
 export const categoryImageById: Record<string, string> = {
-  "cat-electronics":      categoryImages.electrical,
-  "cat-clothing":         categoryImages["wholesale-clothing"],
-  "cat-shoes":            categoryImages["wholesale-clothing"],
-  "cat-jewellery":        categoryImages["wholesale-clothing"],
-  "cat-accessories":      categoryImages["wholesale-clothing"],
-  "cat-toys":             categoryImages.toys,
-  "cat-health-beauty":    categoryImages["health-beauty"],
-  "cat-pets":             categoryImages["pet-supplies"],
-  "cat-memorabilia":      categoryImages.electrical,
-  "cat-mixed-lots":       categoryImages["wholesale-pound-lines"],
-  "cat-food-drink":       categoryImages["wholesale-pound-lines"],
-  "cat-office":           categoryImages.stationery,
-  "cat-home-garden":      categoryImages.homeware,
-  "cat-sports-outdoors":  categoryImages["leisure-hobbies"],
-  "cat-adult":            categoryImages["wholesale-clothing"],
+  "cat-electronics": categoryImages.electronics,
+  "cat-clothing": categoryImages.clothing,
+  "cat-shoes": categoryImages.clothing,
+  "cat-jewellery": categoryImages.jewellery,
+  "cat-accessories": categoryImages.clothing,
+  "cat-toys": categoryImages.toys,
+  "cat-health-beauty": categoryImages["health-beauty"],
+  "cat-pets": categoryImages["pet-supplies"],
+  "cat-memorabilia": categoryImages.electronics,
+  "cat-mixed-lots": categoryImages["mixed-pallets"],
+  "cat-food-drink": categoryImages["food-drink"],
+  "cat-office": categoryImages.office,
+  "cat-home-garden": categoryImages.home,
+  "cat-sports-outdoors": categoryImages.sports,
+  "cat-adult": categoryImages.clothing,
 };
 
-/** Fallback image when no category match is found */
-export const DEFAULT_CATEGORY_IMAGE = categoryImages["wholesale-pound-lines"];
+export const DEFAULT_CATEGORY_IMAGE = categoryImages["mixed-pallets"];
+
+export const imageForCategoryKey = (key?: string | null) =>
+  (key && categoryImages[key]) || DEFAULT_CATEGORY_IMAGE;

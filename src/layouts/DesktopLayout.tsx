@@ -23,7 +23,7 @@ interface DesktopLayoutProps {
 
 export default function DesktopLayout({ children }: DesktopLayoutProps) {
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="min-h-screen bg-background">
       {/* Skip-to-content link — visible only on keyboard focus (WCAG 2.1 SC 2.4.1) */}
       <a
         href="#main-content"

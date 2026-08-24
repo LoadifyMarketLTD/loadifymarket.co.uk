@@ -40,10 +40,11 @@ const conditionColor: Record<string, string> = {
   Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
 };
 
-const ProductCard = ({ product, linkState }: { product: Product; linkState?: Record<string, unknown> }) => {
+const ProductCard = ({ product, linkState, theme = "light" }: { product: Product; linkState?: Record<string, unknown>; theme?: "default" | "light" }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
+  const light = theme === "light";
 
   const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     const target = e.target instanceof Element ? e.target : null;
@@ -60,11 +61,11 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
     <div
       role="button"
       tabIndex={0}
-      className="group bg-card rounded-xl border border-border hover:border-primary/40 hover:shadow-[0_0_22px_rgba(212,175,55,0.14),0_12px_28px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
+      className={`group rounded-xl border hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer ${light ? "bg-white border-slate-200 shadow-[0_8px_24px_rgba(15,35,70,0.06)] hover:border-[#1F5BD8]/35 hover:shadow-[0_16px_34px_rgba(15,35,70,0.12)]" : "bg-card border-border hover:border-primary/40 hover:shadow-[0_0_22px_rgba(212,175,55,0.14),0_12px_28px_rgba(0,0,0,0.12)]"}`}
       onClick={handleCardClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCardClick(e); } }}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+      <div className={`relative aspect-[4/3] overflow-hidden ${light ? "bg-slate-100" : "bg-muted"}`}>
         <NativeImg
           src={productThumbnail(product.image)}
           alt={product.title}
@@ -90,18 +91,18 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
 
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-primary">{product.category}</span>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span className={`text-xs font-semibold ${light ? "text-[#1F5BD8]" : "text-primary"}`}>{product.category}</span>
+          <div className={`flex items-center gap-1 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
             <Eye className="h-3 w-3" />
             {product.views}
           </div>
         </div>
 
-        <h3 className="font-display text-sm font-semibold text-foreground line-clamp-2 leading-snug">
+        <h3 className={`font-display text-sm font-semibold line-clamp-2 leading-snug ${light ? "text-[#0A234F]" : "text-foreground"}`}>
           {product.title}
         </h3>
 
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className={`flex items-center gap-3 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
           <div className="flex items-center gap-1">
             <Package className="h-3 w-3" />
             {product.unitCount} {product.unitCount === 1 ? "lot" : "lots"}
@@ -112,9 +113,9 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-border">
+        <div className={`flex items-center justify-between pt-2 border-t ${light ? "border-slate-200" : "border-border"}`}>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-foreground">{product.seller}</span>
+            <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.seller}</span>
             {product.sellerVerified ? (
               <span
                 className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-success bg-success/10 border border-emerald-500/30 rounded-full px-1.5 py-0.5"
@@ -141,7 +142,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           </div>
           <div className="flex items-center gap-0.5">
             <Star className="h-3 w-3 fill-accent text-accent" />
-            <span className="text-xs font-medium text-foreground">{product.rating}</span>
+            <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.rating}</span>
           </div>
         </div>
 
@@ -153,7 +154,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           </Link>
         ) : (
           <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
-            <Button className="w-full bg-primary hover:bg-primary-hover text-black font-bold hover:shadow-[0_0_18px_rgba(212,175,55,0.28)] hover:opacity-90 transition-all duration-250 text-sm" size="sm">
+            <Button className={`w-full font-bold transition-all duration-250 text-sm ${light ? "bg-[#F5A300] text-[#0A234F] hover:bg-[#E59600] hover:shadow-[0_8px_18px_rgba(245,163,0,0.22)]" : "bg-primary hover:bg-primary-hover text-black hover:shadow-[0_0_18px_rgba(212,175,55,0.28)] hover:opacity-90"}`} size="sm">
               View Details
             </Button>
           </Link>

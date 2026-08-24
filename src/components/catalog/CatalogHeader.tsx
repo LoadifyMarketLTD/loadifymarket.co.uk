@@ -16,6 +16,7 @@ interface CatalogHeaderProps {
   setViewMode: (v: "grid" | "list") => void;
   onToggleFilters: () => void;
   filtersVisible: boolean;
+  theme?: "default" | "light";
 }
 
 const CatalogHeader = ({
@@ -26,14 +27,16 @@ const CatalogHeader = ({
   setViewMode,
   onToggleFilters,
   filtersVisible: _filtersVisible,
+  theme = "light",
 }: CatalogHeaderProps) => {
+  const light = theme === "light";
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
+        <h1 className={`text-2xl sm:text-3xl font-display font-bold ${light ? "text-[#0A234F]" : "text-foreground"}`}>
           Browse Listings
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className={`text-sm mt-1 ${light ? "text-slate-600" : "text-muted-foreground"}`}>
           {totalResults.toLocaleString()} {totalResults === 1 ? "result" : "results"} found
         </p>
       </div>
@@ -43,14 +46,14 @@ const CatalogHeader = ({
           variant="outline"
           size="sm"
           onClick={onToggleFilters}
-          className="lg:hidden"
+          className={light ? "lg:hidden border-slate-200 bg-white text-[#0A234F] hover:bg-slate-50" : "lg:hidden"}
         >
           <SlidersHorizontal className="h-4 w-4 mr-2" />
           Filters
         </Button>
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[180px] text-sm">
+          <SelectTrigger className={`w-[180px] text-sm ${light ? "border-slate-200 bg-white text-[#0A234F]" : ""}`}>
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
@@ -62,16 +65,16 @@ const CatalogHeader = ({
           </SelectContent>
         </Select>
 
-        <div className="hidden sm:flex items-center border border-border rounded-lg overflow-hidden">
+        <div className={`hidden sm:flex items-center rounded-lg overflow-hidden ${light ? "border border-slate-200 bg-white" : "border border-border"}`}>
           <button
             onClick={() => setViewMode("grid")}
-            className={`p-2 transition-colors ${viewMode === "grid" ? "bg-primary text-black" : "bg-card text-muted-foreground hover:text-foreground"}`}
+            className={`p-2 transition-colors ${viewMode === "grid" ? (light ? "bg-[#F5A300] text-[#0A234F]" : "bg-primary text-black") : (light ? "bg-white text-slate-500 hover:text-[#0A234F]" : "bg-card text-muted-foreground hover:text-foreground")}`}
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode("list")}
-            className={`p-2 transition-colors ${viewMode === "list" ? "bg-primary text-black" : "bg-card text-muted-foreground hover:text-foreground"}`}
+            className={`p-2 transition-colors ${viewMode === "list" ? (light ? "bg-[#F5A300] text-[#0A234F]" : "bg-primary text-black") : (light ? "bg-white text-slate-500 hover:text-[#0A234F]" : "bg-card text-muted-foreground hover:text-foreground")}`}
           >
             <List className="h-4 w-4" />
           </button>

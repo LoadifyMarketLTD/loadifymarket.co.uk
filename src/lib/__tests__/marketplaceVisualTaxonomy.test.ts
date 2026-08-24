@@ -9,6 +9,23 @@ describe("canonical marketplace visual taxonomy", () => {
     expect(marketplaceTaxonomy.reduce((total, category) => total + category.subcategories.length, 0)).toBe(96);
   });
 
+  it("keeps every root category image same-origin", () => {
+    expect(marketplaceVisuals).toHaveLength(16);
+    for (const category of marketplaceVisuals) {
+      expect(category.image).toMatch(/^\/images\/categories\//);
+      expect(category.image).not.toMatch(/^https?:\/\//);
+    }
+  });
+
+  it("serves every dedicated subcategory image through a Loadify same-origin path", () => {
+    for (const category of marketplaceVisuals) {
+      for (const subcategory of category.subcategories) {
+        expect(subcategory.image).toMatch(/^\/(?:api\/category-editorial-image\?|images\/subcategories\/)/);
+        expect(subcategory.image).not.toMatch(/^https?:\/\//);
+      }
+    }
+  });
+
   it("gives every subcategory a dedicated non-parent image", () => {
     expect(marketplaceVisuals).toHaveLength(16);
     for (const category of marketplaceVisuals) {

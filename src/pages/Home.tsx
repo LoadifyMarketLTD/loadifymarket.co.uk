@@ -160,27 +160,28 @@ function MobileHome() {
 function DesktopHome() {
   return (
     <>
+      <VisualMarketplaceCategories />
+
       <HeroSection />
 
-      <section className="bg-[#F7F9FC] pb-10" aria-label="Loadify Market trust signals">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+      <section className="bg-[#F7F9FC] pb-6" aria-label="Loadify Market trust signals">
+        <div className="w-full px-6">
           <TrustStrip />
         </div>
       </section>
 
       <FeaturedProducts />
-      <VisualMarketplaceCategories />
 
-      <section className="bg-[#F7F9FC] py-12" aria-label="Why Loadify is different">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+      <section className="bg-[#F7F9FC] pb-6 pt-12" aria-label="Why Loadify is different">
+        <div className="w-full px-6">
           <FeaturesGrid />
         </div>
 
         <LazySection rootMargin="320px">
-          <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+          <div className="mt-6 w-full px-6">
             <HowItWorksSection />
           </div>
-          <div className="mx-auto mt-8 w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+          <div className="mt-6 w-full px-6">
             <SecurityTrust />
           </div>
         </LazySection>

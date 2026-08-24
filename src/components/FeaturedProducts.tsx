@@ -32,8 +32,8 @@ const FeaturedProducts = () => {
   }, []);
 
   return (
-    <section className="bg-[#F7F9FC] px-4 py-8 sm:px-6 lg:px-10" aria-label="Marketplace products">
-      <div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] px-6 pb-8 pt-7 text-white shadow-[0_22px_60px_rgba(10,35,79,0.17)] sm:px-8 sm:pb-10 lg:px-10">
+    <section className="bg-[#F7F9FC] px-6" aria-label="Marketplace products">
+      <div className="relative w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] px-6 pb-8 pt-7 text-white shadow-[0_22px_60px_rgba(10,35,79,0.17)] sm:px-8 sm:pb-10 lg:px-10">
         <div className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]" aria-hidden="true" />
         <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
 
@@ -55,7 +55,7 @@ const FeaturedProducts = () => {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="overflow-hidden rounded-[18px] bg-white/95">
                   <div className="aspect-square animate-pulse bg-slate-200" />
@@ -68,7 +68,7 @@ const FeaturedProducts = () => {
               ))}
             </div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
               {products.map((item) => {
                 const img = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
                 return (

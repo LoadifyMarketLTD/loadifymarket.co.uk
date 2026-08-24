@@ -14,7 +14,8 @@ import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
-const heroWarehouse = "/images/deals.jpeg";
+// Promotional clearance artwork is intentionally scoped to /deals.
+const heroWarehouse = "/images/categories/clearance.jpg";
 
 // Deal types shown on this page (maps to DB product `type` column)
 const DEALS_TYPES = ["lot", "clearance", "pallet", "wholesale"];

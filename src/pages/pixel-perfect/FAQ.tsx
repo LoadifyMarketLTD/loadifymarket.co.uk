@@ -294,16 +294,16 @@ const FAQ = () => {
   return (
     <MainLayout>
       <SEO title="FAQ | Loadify Market" description="Answers to the most common questions about buying and selling on Loadify Market." canonical="/faq" />
-      <main id="main-content" className="pt-4 md:pt-28 pb-20">
+      <main id="main-content" className="min-h-screen bg-[#F7F9FC] pt-4 pb-20 text-[#0A234F] md:pt-28">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav
             items={[{ label: "Home", to: "/" }, { label: "FAQ" }]}
             backTo="/"
           />
-          <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground mb-4">
+          <h1 className="mb-4 font-display text-3xl font-bold text-[#0A234F] sm:text-4xl">
             Frequently Asked Questions
           </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed mb-10">
+          <p className="mb-10 text-lg leading-relaxed text-slate-600">
             Everything you need to know about using Loadify Market. Can't find an answer?{" "}
             <Link to="/contact" className="text-primary underline">
               Get in touch
@@ -314,14 +314,14 @@ const FAQ = () => {
           <div className="space-y-10">
             {FAQS.map((section) => (
               <section key={section.section}>
-                <h2 className="text-xl font-display font-semibold text-foreground mb-4 pb-2 border-b border-border">
+                <h2 className="mb-4 border-b border-slate-200 pb-2 font-display text-xl font-semibold text-[#0A234F]">
                   {section.section}
                 </h2>
                 <dl className="space-y-6">
                   {section.items.map((item) => (
                     <div key={item.question}>
-                      <dt className="font-semibold text-foreground mb-1">{item.question}</dt>
-                      <dd className="text-muted-foreground leading-relaxed">{item.answer}</dd>
+                      <dt className="mb-1 font-semibold text-[#0A234F]">{item.question}</dt>
+                      <dd className="leading-relaxed text-slate-600">{item.answer}</dd>
                     </div>
                   ))}
                 </dl>
@@ -329,9 +329,9 @@ const FAQ = () => {
             ))}
           </div>
 
-          <div className="mt-12 p-6 rounded-xl bg-muted/50 border border-border">
-            <p className="text-sm text-muted-foreground">
-              <strong className="text-foreground">Still have a question?</strong> Our support
+          <div className="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-sm text-slate-600">
+              <strong className="text-[#0A234F]">Still have a question?</strong> Our support
               team is available Monday to Friday, 09:00–17:00 (GMT).{" "}
               <Link to="/contact" className="text-primary underline">
                 Contact us
