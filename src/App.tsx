@@ -267,6 +267,14 @@ function App() {
   const location = useLocation();
   usePushTokenRegistration(user?.id);
 
+  // The marketplace now uses one light visual identity across public, auth and
+  // workspace routes. Keeping this at the application root also covers route
+  // loaders, dialogs and portalled UI that render outside individual layouts.
+  useEffect(() => {
+    document.documentElement.classList.add('market-light-root');
+    return () => document.documentElement.classList.remove('market-light-root');
+  }, []);
+
   // ── Accessibility: move keyboard focus to #main-content on every route change ─
   // Satisfies WCAG 2.1 SC 2.4.3 (Focus Order) for SPA navigation.
   // Non-interactive elements like <main> are not in the tab order by default, so

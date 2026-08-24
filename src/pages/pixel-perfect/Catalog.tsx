@@ -62,11 +62,6 @@ const Catalog = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filtersVisible, setFiltersVisible] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.classList.add("market-light-root");
-    return () => document.documentElement.classList.remove("market-light-root");
-  }, []);
-
   // Sync category param from URL into filter state on mount / param change
   useEffect(() => {
     if (categoryParam) {

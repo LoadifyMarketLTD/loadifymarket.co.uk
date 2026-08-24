@@ -30,7 +30,7 @@ const DrawerAccountBlock = ({
           <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold text-sm shrink-0">
             {initial}
           </div>
-          <span className="text-sm font-semibold text-white">
+          <span className="text-sm font-semibold text-[#0A234F]">
             Hi, {user.firstName ?? "there"}
           </span>
         </div>
@@ -40,33 +40,33 @@ const DrawerAccountBlock = ({
           <Link
             to={dashboardPath}
             onClick={onClose}
-            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-primary hover:bg-white/[0.07] transition-colors"
+            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 transition-colors"
           >
-            <LayoutDashboard className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            <LayoutDashboard className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
             {user.role === "admin" ? "Admin Hub" : "My Account"}
           </Link>
           <Link
             to={ordersHref}
             onClick={onClose}
-            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-primary hover:bg-white/[0.07] transition-colors"
+            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 transition-colors"
           >
-            <ShoppingBag className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            <ShoppingBag className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
             Orders
           </Link>
           <Link
             to="/inbox"
             onClick={onClose}
-            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-primary hover:bg-white/[0.07] transition-colors"
+            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 transition-colors"
           >
-            <MessageSquare className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            <MessageSquare className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
             Messages
           </Link>
           <Link
             to="/contact"
             onClick={onClose}
-            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-primary hover:bg-white/[0.07] transition-colors"
+            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 transition-colors"
           >
-            <LifeBuoy className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            <LifeBuoy className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
             Support
           </Link>
         </div>
@@ -107,7 +107,7 @@ const DrawerAccountBlock = ({
         <Button
           variant="ghost"
           size="sm"
-          className="flex-1 h-11 text-white/80 hover:text-primary hover:bg-white/10 font-medium"
+          className="flex-1 h-11 text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 font-medium"
           asChild
         >
           <Link to="/login" onClick={onClose}>

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Package, ShoppingBag, Flag, BarChart3,
   MessageSquare, Settings, ShieldCheck, ChevronRight, LogOut, Menu, Bell, UserCheck, Banknote, Zap, ShieldAlert,
 } from "lucide-react";
-import { useEffect, useState, memo } from "react";
+import { useState, memo } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -102,11 +102,6 @@ const AdminShell = () => {
   const { user, logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    document.documentElement.classList.add("market-light-root");
-    return () => document.documentElement.classList.remove("market-light-root");
-  }, []);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     logout();
@@ -124,7 +119,7 @@ const AdminShell = () => {
   const headerHeight = "calc(var(--shell-offset-h, 0px) + env(safe-area-inset-top, 0px))";
 
   return (
-    <div className="flex bg-transparent overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>
+    <div className="market-workspace-light flex bg-[#F7F9FC] overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>
       <aside className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
         <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
       </aside>
