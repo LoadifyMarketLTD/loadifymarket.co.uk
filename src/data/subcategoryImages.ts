@@ -25,12 +25,12 @@ export const subcategoryImages: Record<string, SubcategoryImageSource> = {
   [key("Clothing & Apparel", "Accessories & Bags")]: { image: local("clothing-apparel", "accessories-bags"), source: "loadify-generated", license: "Loadify Market editorial asset" },
   [key("Clothing & Apparel", "Sportswear")]: { image: local("clothing-apparel", "sportswear"), source: "loadify-generated", license: "Loadify Market editorial asset" },
 
-  [key("Home & Garden", "Furniture")]: { image: download("sbxnE6Cc-qs"), source: "unsplash", license: "Unsplash License" },
-  [key("Home & Garden", "Kitchen & Dining")]: { image: download("QgTxCskZXBU"), source: "unsplash", license: "Unsplash License" },
-  [key("Home & Garden", "Bedding & Linen")]: { image: download("WhzOTzx6R-0"), source: "unsplash", license: "Unsplash License" },
-  [key("Home & Garden", "Garden & Outdoor")]: { image: download("UQXMWJHusQs"), source: "unsplash", license: "Unsplash License" },
-  [key("Home & Garden", "Lighting")]: { image: download("hF_hN4TRGas"), source: "unsplash", license: "Unsplash License" },
-  [key("Home & Garden", "Décor & Accessories")]: { image: download("qwdCMprHWKg"), source: "unsplash", license: "Unsplash License" },
+  [key("Home & Garden", "Furniture")]: { image: local("home-garden", "furniture"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Home & Garden", "Kitchen & Dining")]: { image: local("home-garden", "kitchen-dining"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Home & Garden", "Bedding & Linen")]: { image: local("home-garden", "bedding-linen"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Home & Garden", "Garden & Outdoor")]: { image: local("home-garden", "garden-outdoor"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Home & Garden", "Lighting")]: { image: local("home-garden", "lighting"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Home & Garden", "Décor & Accessories")]: { image: local("home-garden", "decor-accessories"), source: "loadify-generated", license: "Loadify Market editorial asset" },
 
   [key("Health & Beauty", "Skincare")]: { image: download("RJ0v-mj0Yxs"), source: "unsplash", license: "Unsplash License" },
   [key("Health & Beauty", "Haircare")]: { image: download("hJNMWEZ-Wtc"), source: "unsplash", license: "Unsplash License" },
