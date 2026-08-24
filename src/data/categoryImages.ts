@@ -22,14 +22,16 @@ export const categoryImages: Record<string, string> = {
   "mixed-pallets": "/images/categories/mixed-pallets.jpg",
   returns: "/images/categories/returns.jpg",
   overstock: "/images/categories/overstock.jpg",
-  clearance: "/images/categories/clearance.jpg",
+  // The promotional CLEARANCE artwork is reserved for /deals only.
+  // General category surfaces use clean editorial imagery without sale text.
+  clearance: "/images/categories/clearance-editorial.webp",
 
   // Existing/legacy taxonomy aliases resolve into the same local library.
   "large-letter-items": "/images/categories/office.jpg",
   garden: "/images/categories/home.jpg",
   diy: "/images/categories/tools.jpg",
   cleaning: "/images/categories/home.jpg",
-  "party-gift": "/images/categories/clearance.jpg",
+  "party-gift": "/images/categories/clearance-editorial.webp",
   "wholesale-pound-lines": "/images/categories/mixed-pallets.jpg",
   "leisure-hobbies": "/images/categories/sports.jpg",
   "baby-supplies": "/images/categories/baby.jpg",
@@ -38,7 +40,7 @@ export const categoryImages: Record<string, string> = {
   electrical: "/images/categories/electronics.jpg",
   "pet-supplies": "/images/categories/home.jpg",
   stationery: "/images/categories/office.jpg",
-  seasonal: "/images/categories/clearance.jpg",
+  seasonal: "/images/categories/clearance-editorial.webp",
   "wholesale-clothing": "/images/categories/clothing.jpg",
   fashion: "/images/categories/clothing.jpg",
   "home-kitchen": "/images/categories/home.jpg",
