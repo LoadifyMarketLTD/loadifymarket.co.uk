@@ -20,7 +20,7 @@ const applyFallback = (fallback: string) => (event: SyntheticEvent<HTMLImageElem
 export default function VisualMarketplaceCategories() {
   return (
     <section className="bg-[#F7F9FC] py-12 sm:py-16" aria-labelledby="visual-marketplace-categories-heading">
-      <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+      <div className="w-full px-6">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#1D57D8]">Explore the marketplace</p>
@@ -36,7 +36,7 @@ export default function VisualMarketplaceCategories() {
           </Link>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {marketplaceVisuals.map((category) => (
             <article key={category.slug} className="overflow-hidden rounded-2xl border border-[#0A234F]/10 bg-white shadow-[0_10px_28px_rgba(10,35,79,0.06)]">
               <Link to={`/category/${category.slug}`} className="group block">
