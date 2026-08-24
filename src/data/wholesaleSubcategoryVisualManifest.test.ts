@@ -24,13 +24,19 @@ describe('wholesale subcategory visual manifest', () => {
     expect(new Set(paths).size).toBe(96);
     for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
       expect(entry.assetPath).toMatch(/^\/category-visuals\/subcategories\/[a-z0-9-]+\/[a-z0-9-]+\.jpg$/);
-      expect(entry.displayImage).toBe(entry.assetPath);
     }
   });
 
   it('has all 96 visual sources selected and no pending subcategory', () => {
     expect(DEDICATED_WHOLESALE_SUBCATEGORY_VISUALS).toHaveLength(96);
     expect(PENDING_WHOLESALE_SUBCATEGORY_VISUALS).toHaveLength(0);
+  });
+
+  it('uses the selected audited source at runtime until local binaries are committed', () => {
+    for (const entry of WHOLESALE_SUBCATEGORY_VISUAL_MANIFEST) {
+      expect(entry.displayImage).toBe(entry.sourceImage);
+      expect(entry.displayImage).toMatch(/^https:\/\/unsplash\.com\/photos\//);
+    }
   });
 
   it('locks the shared visual standard and explicit blueprint focus', () => {
