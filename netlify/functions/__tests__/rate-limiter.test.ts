@@ -6,7 +6,7 @@ import { checkRateLimit } from '../_shared/rateLimiter';
 describe('atomic shared rate limiter', () => {
   it('keeps the RPC atomic and restricted to service_role in its migration', () => {
     const sql = readFileSync(
-      resolve(process.cwd(), 'supabase/migrations/20260824120000_atomic_rate_limit_consume.sql'),
+      resolve(process.cwd(), 'supabase/migrations/20260824081413_atomic_rate_limit_consume.sql'),
       'utf8',
     );
 
