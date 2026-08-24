@@ -78,7 +78,7 @@ const Footer = () => (
               <ColHeading>Shop</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/catalog">Browse Marketplace</FooterLink>
-                <FooterLink to="/catalog">All Categories</FooterLink>
+                <FooterLink to="/categories">All Categories</FooterLink>
                 <FooterLink to="/track-order">Track Order</FooterLink>
                 <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
                 <FooterLink to="/faq">Help &amp; FAQ</FooterLink>
@@ -101,9 +101,9 @@ const Footer = () => (
               <ul className="space-y-2.5">
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/contact">Contact Us</FooterLink>
-                <FooterLink to="/contact">Partner With Us</FooterLink>
+                <FooterLink to="/contact?topic=partnership">Partner With Us</FooterLink>
                 <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
-                <FooterLink to="/contact">Report a Problem</FooterLink>
+                <FooterLink to="/contact?topic=problem">Report a Problem</FooterLink>
               </ul>
             </div>
           </div>
@@ -155,7 +155,7 @@ const Footer = () => (
               <ColHeading>Shop</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/catalog">Browse Marketplace</FooterLink>
-                <FooterLink to="/catalog">All Categories</FooterLink>
+                <FooterLink to="/categories">All Categories</FooterLink>
                 <FooterLink to="/track-order">Track Order</FooterLink>
                 <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
                 <FooterLink to="/faq">Help &amp; FAQ</FooterLink>
@@ -178,9 +178,9 @@ const Footer = () => (
               <ul className="space-y-2.5">
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/contact">Contact Us</FooterLink>
-                <FooterLink to="/contact">Partner With Us</FooterLink>
+                <FooterLink to="/contact?topic=partnership">Partner With Us</FooterLink>
                 <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
-                <FooterLink to="/contact">Report a Problem</FooterLink>
+                <FooterLink to="/contact?topic=problem">Report a Problem</FooterLink>
               </ul>
             </div>
           </div>

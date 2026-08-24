@@ -9,6 +9,7 @@ import { ArrowLeft, ChevronRight, LayoutGrid } from 'lucide-react';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { useCategories } from '@/hooks/useCategories';
 import { visualForCategory } from '@/data/marketplaceVisuals';
+import { marketplaceCategorySlug } from '@/data/marketplaceTaxonomy';
 
 export default function MobileCategoriesPage() {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ export default function MobileCategoriesPage() {
               return (
                 <Link
                   key={cat.id}
-                  to={`/category/${cat.slug}`}
+                  to={`/category/${marketplaceCategorySlug(cat.name)}`}
                   className="overflow-hidden rounded-2xl border border-[#0A234F]/10 bg-white shadow-sm active:scale-[0.99] transition-transform"
                 >
                   <div className="aspect-[4/3] overflow-hidden bg-[#E8EEF7]">

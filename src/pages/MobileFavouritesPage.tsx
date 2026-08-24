@@ -187,7 +187,7 @@ export default function MobileFavouritesPage() {
           {items.map((item) => (
             <Link
               key={item.id}
-              to={`/products/${item.id}`}
+              to={`/product/${item.id}`}
               style={{ textDecoration: 'none', display: 'block' }}
             >
               <div

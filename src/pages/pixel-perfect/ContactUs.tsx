@@ -10,15 +10,23 @@ import { Label } from "@/components/ui/label";
 import { BRAND } from "@/constants/brand";
 import { formatPhoneNumber } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { useSearchParams } from "react-router-dom";
 
 const SUPPORT_EMAIL = BRAND.supportEmail;
 
 const ContactUs = () => {
+  const [searchParams] = useSearchParams();
+  const requestedTopic = searchParams.get("topic");
+  const initialSubject = requestedTopic === "partnership"
+    ? "Partnership enquiry"
+    : requestedTopic === "problem"
+      ? "Report a problem"
+      : "";
   const formOpenedAt = useMemo(() => Date.now(), []);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    subject: "",
+    subject: initialSubject,
     message: "",
     "bot-field": "",
   });

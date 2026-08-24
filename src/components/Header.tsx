@@ -10,6 +10,7 @@ import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
 import { useLiveCategoryAvailability } from "@/hooks/useLiveCategoryAvailability";
 import { supabase } from "@/lib/supabase";
+import { marketplaceCategorySlug, marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
 
 const Header = () => {
   const [query, setQuery] = useState("");
@@ -63,7 +64,7 @@ const Header = () => {
     { to: "/", label: "HOME", catSlug: null as string | null },
     { to: "/catalog", label: "SHOP ALL", catSlug: null as string | null },
     ...displayCategories.map((cat) => ({
-      to: `/catalog?category=${encodeURIComponent(cat.name)}`,
+      to: `/category/${marketplaceCategorySlug(cat.name)}`,
       label: cat.name,
       catSlug: cat.slug,
     })),
@@ -221,7 +222,7 @@ const Header = () => {
                         {liveChildren.map((child) => (
                           <Link
                             key={child.id}
-                            to={`/category/${child.slug}`}
+                            to={`/category/${marketplaceCategorySlug(catNode!.name)}?sub=${encodeURIComponent(marketplaceSubcategorySlug(catNode!.name, child.name))}`}
                             className="flex items-center justify-between px-4 py-2.5 text-[13px] font-medium text-white/80 hover:text-white hover:bg-white/[0.07] transition-colors"
                             onClick={() => setHoveredCat(null)}
                           >

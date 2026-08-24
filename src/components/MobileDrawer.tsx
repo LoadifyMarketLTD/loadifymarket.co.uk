@@ -23,6 +23,7 @@ import logo from "@/assets/loadify-logo.svg";
 import type { User } from "@/types";
 import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
+import { marketplaceCategorySlug, marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -117,7 +118,7 @@ const MainScreen = ({
           {visibleCategories.map((cat) => {
             const Icon = ICON_MAP[cat.slug] ?? DEFAULT_ICON;
             const isOpen = expandedSlug === cat.slug;
-            const categoryUrl = `/catalog?category=${encodeURIComponent(cat.name)}`;
+            const categoryUrl = `/category/${marketplaceCategorySlug(cat.name)}`;
             const liveChildren = cat.children.filter((child) => liveCategoryIdSet.has(child.id));
             const hasChildren = liveChildren.length > 0;
 
@@ -146,7 +147,7 @@ const MainScreen = ({
                     {liveChildren.slice(0, 6).map((sub) => (
                       <Link
                         key={sub.slug}
-                        to={`/catalog?category=${encodeURIComponent(cat.name)}&q=${encodeURIComponent(sub.name)}`}
+                        to={`${categoryUrl}?sub=${encodeURIComponent(marketplaceSubcategorySlug(cat.name, sub.name))}`}
                         onClick={onClose}
                         className="flex items-center px-8 h-[42px] hover:bg-blue-50 transition-colors border-b border-slate-100 last:border-b-0"
                       >

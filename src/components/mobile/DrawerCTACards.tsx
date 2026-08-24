@@ -6,14 +6,14 @@ interface DrawerCTACardsProps {
 }
 
 const CTA_CARDS = [
-  { icon: Tag, label: "Insights", route: "/catalog?filter=price-crunch" },
+  { icon: Tag, label: "Price Deals", route: "/catalog?filter=price-crunch" },
   { icon: RefreshCw, label: "Back in Stock", route: "/catalog?filter=back-in-stock" },
   { icon: TrendingUp, label: "Best Sellers", route: "/catalog?filter=best-sellers" },
   { icon: Clock, label: "Latest Products", route: "/catalog?filter=latest" },
-  { icon: Package, label: "Add Products", route: "/catalog?filter=pallet-deals" },
-  { icon: XCircle, label: "Inactive Products", route: "/catalog?filter=delisted" },
+  { icon: Package, label: "Pallet Deals", route: "/catalog?filter=pallet-deals" },
+  { icon: XCircle, label: "Seller Products", route: "/seller/products" },
   { icon: ShoppingBag, label: "Multi Buy", route: "/catalog?filter=multi-buy" },
-  { icon: Store, label: "Shop by Brand", route: "/catalog?filter=brand" },
+  { icon: Store, label: "Browse All", route: "/catalog" },
 ] as const;
 
 const DrawerCTACards = ({ onClose }: DrawerCTACardsProps) => (
