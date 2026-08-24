@@ -51,8 +51,8 @@ const Signup = () => {
 
   const title = isSeller ? "Create your seller account" : "Create your Loadify account";
   const description = isSeller
-    ? "Start with one secure Loadify identity, then complete your business, verification, store and payout setup step by step."
-    : "Create one account for shopping, orders, tracking, returns and account management.";
+    ? "Start with one secure Loadify identity, then complete your legal details, verification, store and eligible payout setup step by step."
+    : "Create one account to shop approved listings, save favourites, manage orders, follow delivery progress and request returns.";
 
   const destination = useMemo(() => {
     if (!user) return null;
@@ -170,7 +170,7 @@ const Signup = () => {
         title={isSeller ? "Start Selling | Loadify Market" : "Create an Account | Loadify Market"}
         description={isSeller
           ? "Create a Marketplace Seller account on Loadify and continue through business, verification, store and payout setup."
-          : "Create a Loadify Market account for shopping, orders, tracking and returns."}
+          : "Create a Loadify Market account for approved listings, favourites, orders, delivery progress, returns and account tools."}
         robots="noindex, nofollow"
       />
 
@@ -191,13 +191,13 @@ const Signup = () => {
                     {(isSeller
                       ? [
                           "Your Buyer access stays on the same identity",
-                          "Seller readiness is completed progressively",
-                          "Stripe payouts are connected during Seller setup",
+                          "Manage catalogue, orders, shipping and returns after approval",
+                          "Connect Stripe payouts during Seller setup when eligible",
                         ]
                       : [
-                          "Shop current marketplace listings",
-                          "Keep orders, tracking and returns together",
-                          "Add Seller access later without another login",
+                          "Shop approved listings and save favourites",
+                          "Manage orders, delivery progress and return requests",
+                          "Add Marketplace Seller access later on the same identity",
                         ]
                     ).map((item) => (
                       <div key={item} className="flex items-start gap-2.5">
@@ -210,11 +210,14 @@ const Signup = () => {
                   <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
                     <div className="flex items-center gap-2 text-xs font-extrabold text-white">
                       <ShieldCheck className="h-4 w-4 text-[#F5A300]" aria-hidden="true" />
-                      One identity. Separate responsibilities.
+                      Access that matches each responsibility.
                     </div>
-                    <p className="mt-2 text-xs leading-5 text-white/65">
-                      Marketplace Seller access is separate from Supplier Partner relationships and is subject to Loadify Seller readiness controls.
-                    </p>
+                    <div className="mt-3 space-y-2.5 text-[11px] leading-4 text-white/70">
+                      <p><strong className="text-white">Buyer</strong> — public account for shopping, favourites, orders, delivery progress, returns and account tools.</p>
+                      <p><strong className="text-white">Marketplace Seller</strong> — public application on the same identity; listings, store and payouts remain subject to readiness controls.</p>
+                      <p><strong className="text-white">Supplier Partner</strong> — separate commercial relationship; it is not created by this registration form.</p>
+                      <p><strong className="text-white">Platform Admin</strong> — internal authorised access only; it cannot be selected or granted through public registration.</p>
+                    </div>
                   </div>
                 </div>
               </aside>
@@ -367,7 +370,7 @@ const Signup = () => {
 
                       <label className="flex items-start gap-3 text-xs font-medium leading-5 text-[#475569]">
                         <input type="checkbox" className="mt-1 h-4 w-4" checked={form.newsletter} onChange={(e) => setField("newsletter", e.target.checked)} />
-                        <span>Send me useful Loadify marketplace updates. Optional.</span>
+                        <span>Save my preference for optional Loadify marketplace updates.</span>
                       </label>
                     </div>
 
