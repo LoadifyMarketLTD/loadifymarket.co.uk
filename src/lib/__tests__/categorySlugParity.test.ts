@@ -2,7 +2,9 @@
  * categorySlugParity.test.ts
  *
  * Regression guard: every slug defined in category-config.ts MUST be present
- * in the canonical DB seed (supabase/420_seed_wholesale_categories.sql).
+ * in the ordered category migrations. Migration 420 contains the historical
+ * wholesale roots; the canonical 16x96 taxonomy is defined by the later parity
+ * migration and deliberately deactivates those legacy roots.
  *
  * This prevents the following classes of environment drift:
  *  • A new static slug being added to the UI config without a matching DB row.
@@ -36,8 +38,11 @@ function extractSqlSlugs(sql: string): Set<string> {
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const seedPath = resolve(__dirname, '../../../supabase/420_seed_wholesale_categories.sql');
-const seedSql = readFileSync(seedPath, 'utf-8');
+const seedPaths = [
+  resolve(__dirname, '../../../supabase/420_seed_wholesale_categories.sql'),
+  resolve(__dirname, '../../../supabase/20260823195000_marketplace_visual_taxonomy_parity.sql'),
+];
+const seedSql = seedPaths.map((path) => readFileSync(path, 'utf-8')).join('\n');
 const dbSlugs = extractSqlSlugs(seedSql);
 
 /** All parent-level slugs defined in the UI config (excludes type-level slugs). */
@@ -51,7 +56,7 @@ describe('Category slug parity — UI config vs DB seed', () => {
     expect(
       missing,
       `Config slugs missing from DB seed: ${missing.join(', ')}\n` +
-        `Add them to supabase/420_seed_wholesale_categories.sql`,
+        `Add them to the canonical ordered category migration chain`,
     ).toHaveLength(0);
   });
 

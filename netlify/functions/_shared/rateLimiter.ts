@@ -1,13 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * Shared in-process rate limiter for Netlify serverless functions.
+ * Shared rate limiter for Netlify serverless functions.
  *
  * Uses a Supabase table as the backing store so limits are shared across
  * concurrent function invocations and survive cold starts.
  *
  * Each call family (register, email, connect-onboard, etc.) should use a
  * distinct `tableName` so their quotas are tracked independently.
+ *
+ * Counters are consumed through the `consume_rate_limit` RPC. The database
+ * performs the insert/increment in one `INSERT ... ON CONFLICT DO UPDATE`
+ * statement, so concurrent cold starts cannot race on SELECT-then-INSERT.
  *
  * Table schema (create once via SQL migration):
  *
@@ -79,7 +83,7 @@ function handlePolicyFailure(
   identifier: string,
   windowEnd: string,
   maxAttempts: number,
-  stage: 'select' | 'update' | 'insert' | 'exception',
+  stage: 'rpc' | 'response' | 'exception',
   error: unknown,
 ): RateLimitResult {
   console.error('rate-limiter-backend-unavailable', {
@@ -125,63 +129,46 @@ export async function checkRateLimit(
   ).toISOString();
 
   try {
-    const { data: rl, error: selectError } = await supabase
-      .from(tableName)
-      .select('id, attempts')
-      .eq('identifier', identifier)
-      .eq('windowEnd', windowEnd)
-      .maybeSingle<{ id: string; attempts: number }>();
+    const { data, error: rpcError } = await supabase.rpc('consume_rate_limit', {
+      p_table_name: tableName,
+      p_identifier: identifier,
+      p_window_end: windowEnd,
+      p_max_attempts: maxAttempts,
+    });
 
-    if (selectError) {
+    if (rpcError) {
       return handlePolicyFailure(
         policy,
         tableName,
         identifier,
         windowEnd,
         maxAttempts,
-        'select',
-        selectError,
+        'rpc',
+        rpcError,
       );
     }
 
-    if (rl && rl.attempts >= maxAttempts) {
-      return { exceeded: true, attempts: rl.attempts };
-    }
-
-    if (rl) {
-      const { error: updateError } = await supabase
-        .from(tableName)
-        .update({ attempts: rl.attempts + 1 })
-        .eq('id', rl.id);
-      if (updateError) {
-        return handlePolicyFailure(
-          policy,
-          tableName,
-          identifier,
-          windowEnd,
-          maxAttempts,
-          'update',
-          updateError,
-        );
-      }
-      return { exceeded: false, attempts: rl.attempts + 1 };
-    }
-
-    const { error: insertError } = await supabase
-      .from(tableName)
-      .insert({ identifier, windowEnd, attempts: 1 });
-    if (insertError) {
+    const result = data as { attempts?: unknown; exceeded?: unknown } | null;
+    if (
+      !result ||
+      !Number.isInteger(result.attempts) ||
+      typeof result.exceeded !== 'boolean'
+    ) {
       return handlePolicyFailure(
         policy,
         tableName,
         identifier,
         windowEnd,
         maxAttempts,
-        'insert',
-        insertError,
+        'response',
+        'consume_rate_limit returned an invalid response',
       );
     }
-    return { exceeded: false, attempts: 1 };
+
+    return {
+      exceeded: result.exceeded,
+      attempts: result.attempts as number,
+    };
   } catch (error) {
     return handlePolicyFailure(
       policy,

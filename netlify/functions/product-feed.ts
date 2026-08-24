@@ -86,6 +86,18 @@ interface ProductRow {
   categorySlug?: string;
 }
 
+function unavailableFeed(reason: string): ReturnType<Handler> {
+  console.error(`product-feed: ${reason}`);
+  return {
+    statusCode: 503,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+    body: 'Product feed temporarily unavailable',
+  };
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Escape characters that are unsafe inside XML text / attribute values. */
@@ -184,52 +196,61 @@ export const handler: Handler = async (event) => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return unavailableFeed('Supabase public configuration is missing');
+  }
+
   let products: ProductRow[] = [];
 
-  if (supabaseUrl && supabaseAnonKey) {
-    try {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
+  try {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-      // Match the same sellability rules enforced by checkout. Reserved/sold
-      // listings are excluded, and physical products must have positive stock.
-      // Services are allowed with stockQuantity=0 because stock does not apply.
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
+    // Match the same sellability rules enforced by checkout. Reserved/sold
+    // listings are excluded, and physical products must have positive stock.
+    // Services are allowed with stockQuantity=0 because stock does not apply.
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
           id,
           title,
           description,
           price,
           condition,
           images,
-          categories ( slug )
+          category:categories!categoryId ( slug )
         `)
-        .eq('isActive', true)
-        .eq('isApproved', true)
-        .eq('listingStatus', 'active')
-        .or('listingContext.eq.service,stockQuantity.gt.0')
-        .range(offset, offset + PAGE_SIZE - 1)
-        .order('id');
+      .eq('isActive', true)
+      .eq('isApproved', true)
+      .eq('listingStatus', 'active')
+      .or('listingContext.eq.service,stockQuantity.gt.0')
+      .range(offset, offset + PAGE_SIZE - 1)
+      .order('id');
 
-      if (!error && Array.isArray(data)) {
-        products = (data as Array<Record<string, unknown>>).map((row) => {
-          const cat = row.categories as { slug?: string } | null;
-          return {
-            id: String(row.id ?? ''),
-            title: String(row.title ?? ''),
-            description: String(row.description ?? ''),
-            price: Number(row.price ?? 0),
-            condition: String(row.condition ?? 'new'),
-            images: Array.isArray(row.images) ? (row.images as string[]) : [],
-            categorySlug: cat?.slug,
-          };
-        });
-      }
-    } catch {
-      // Non-fatal: return empty feed rather than error.
+    if (error) {
+      return unavailableFeed(`Supabase product query failed (${error.code ?? 'unknown'})`);
     }
+
+    if (!Array.isArray(data)) {
+      return unavailableFeed('Supabase product query returned an invalid payload');
+    }
+
+    products = (data as Array<Record<string, unknown>>).map((row) => {
+      const category = row.category as { slug?: string } | null;
+      return {
+        id: String(row.id ?? ''),
+        title: String(row.title ?? ''),
+        description: String(row.description ?? ''),
+        price: Number(row.price ?? 0),
+        condition: String(row.condition ?? 'new'),
+        images: Array.isArray(row.images) ? (row.images as string[]) : [],
+        categorySlug: category?.slug,
+      };
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.name : 'unknown';
+    return unavailableFeed(`unexpected Supabase failure (${reason})`);
   }
 
   // ── Build XML ─────────────────────────────────────────────────────────────
