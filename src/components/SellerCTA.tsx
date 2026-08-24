@@ -5,7 +5,7 @@ const sellerProof = ["Build your catalogue", "Manage marketplace orders", "Eligi
 
 export default function SellerCTA() {
   return (
-    <section className="bg-[#F7F9FC] px-4 pb-6 sm:px-6 lg:px-10" aria-label="Sell on Loadify Market">
+    <section className="bg-[#F7F9FC] px-6 pb-6" aria-label="Sell on Loadify Market">
       <div className="relative mx-auto max-w-[1280px] overflow-hidden rounded-[30px] bg-[#0A234F] px-6 py-8 text-white shadow-[0_28px_70px_rgba(10,35,79,0.20)] sm:px-8 sm:py-10 lg:px-11 lg:py-12">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]" aria-hidden="true" />
         <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
