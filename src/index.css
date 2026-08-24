@@ -132,21 +132,16 @@
   background: #F7F9FC;
 }
 
-/* Compatibility layer for legacy pixel-perfect surfaces that still carry
-   literal dark-era utility classes. These selectors are deliberately scoped:
-   the branded desktop header keeps its navy identity while footers and
-   authenticated workspaces render on the new light system. */
-.market-light-footer [class*="text-white"],
+/* Compatibility layer for legacy authenticated workspace surfaces that still
+   carry literal dark-era utility classes. */
 .market-workspace-light [class*="text-white"] {
   color: #0A234F !important;
 }
 
-.market-light-footer [class*="border-white"],
 .market-workspace-light [class*="border-white"] {
   border-color: #DCE3ED !important;
 }
 
-.market-light-footer [class*="bg-white/"],
 .market-workspace-light [class*="bg-white/"] {
   background-color: #F7F9FC !important;
 }
