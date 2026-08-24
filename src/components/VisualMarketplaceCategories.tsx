@@ -37,14 +37,15 @@ export default function VisualMarketplaceCategories() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {marketplaceVisuals.map((category) => (
+          {marketplaceVisuals.map((category, categoryIndex) => (
             <article key={category.slug} className="overflow-hidden rounded-2xl border border-[#0A234F]/10 bg-white shadow-[0_10px_28px_rgba(10,35,79,0.06)]">
               <Link to={`/category/${category.slug}`} className="group block">
                 <div className="aspect-[4/3] overflow-hidden bg-[#E9EEF7]">
                   <img
                     src={category.image}
                     alt={category.altText}
-                    loading="lazy"
+                    loading={categoryIndex < 4 ? "eager" : "lazy"}
+                    fetchPriority={categoryIndex < 4 ? "high" : "auto"}
                     onError={applyFallback("/hero-marketplace.jpg")}
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                   />

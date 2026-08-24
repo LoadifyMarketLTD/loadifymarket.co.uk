@@ -160,6 +160,8 @@ function MobileHome() {
 function DesktopHome() {
   return (
     <>
+      <VisualMarketplaceCategories />
+
       <HeroSection />
 
       <section className="bg-[#F7F9FC] pb-6" aria-label="Loadify Market trust signals">
@@ -169,7 +171,6 @@ function DesktopHome() {
       </section>
 
       <FeaturedProducts />
-      <VisualMarketplaceCategories />
 
       <section className="bg-[#F7F9FC] pb-6 pt-12" aria-label="Why Loadify is different">
         <div className="w-full px-6">
