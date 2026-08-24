@@ -24,37 +24,37 @@ const HeroSection = () => {
         <div className="max-w-[650px]">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-white px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#1D57D8] shadow-sm">
             <span className="h-2 w-2 rounded-full bg-[#F5A300]" aria-hidden="true" />
-            UK marketplace for buyers & sellers
+            Built for UK sellers, brands &amp; wholesalers
           </div>
 
           <h1 className="max-w-[660px] text-[3rem] font-black leading-[0.98] tracking-[-0.048em] text-[#0A234F] sm:text-[4rem] lg:text-[4.5rem]">
-            Find something worth buying.
-            <span className="block text-[#1D57D8]">Bring something worth selling.</span>
+            Your products deserve more than a listing.
+            <span className="block text-[#1D57D8]">Build your next sales channel.</span>
           </h1>
 
           <p className="mt-7 max-w-[610px] text-base font-medium leading-7 text-[#334155] sm:text-lg sm:leading-8">
-            Loadify is a UK-operated marketplace where buyers discover real products and sellers manage listings, marketplace orders and eligible payouts from one connected environment.
+            Bring your catalogue to a UK-operated marketplace built for serious sellers. Put products in front of marketplace shoppers, manage orders and follow eligible payouts from one connected seller environment.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link to="/register?type=seller" data-magnetic className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-6 py-3 text-sm font-extrabold text-[#0A234F] shadow-[0_12px_30px_rgba(245,163,0,0.24)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#E69500]">
-              Start selling on Loadify
+              Start selling — 0% commission
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <Link to="/catalog" data-magnetic className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#0A234F]/20 bg-white px-6 py-3 text-sm font-bold text-[#0A234F] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1D57D8]/40 hover:text-[#1D57D8]">
-              Shop live products
+            <Link to="/seller-guidelines" data-magnetic className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#0A234F]/20 bg-white px-6 py-3 text-sm font-bold text-[#0A234F] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1D57D8]/40 hover:text-[#1D57D8]">
+              See seller benefits
             </Link>
           </div>
 
           <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#FFF5DF] px-3.5 py-2 text-xs font-extrabold text-[#8A5A00]">
             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-            0% seller commission until 31 December 2026
+            Founding seller offer · 0% commission until 31 December 2026
           </div>
 
           <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 border-t border-[#0A234F]/10 pt-5 text-sm font-semibold text-[#334155]">
-            <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />Stripe-powered checkout</span>
-            <span className="inline-flex items-center gap-2"><Truck className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />Order tracking</span>
-            <span className="inline-flex items-center gap-2"><Store className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />UK operated</span>
+            <span className="inline-flex items-center gap-2"><Store className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />Build your catalogue</span>
+            <span className="inline-flex items-center gap-2"><Truck className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />Manage marketplace orders</span>
+            <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#1D57D8]" aria-hidden="true" />Eligible payouts via Stripe Connect</span>
           </div>
         </div>
 
@@ -63,10 +63,10 @@ const HeroSection = () => {
           <div className="relative overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-white p-3 shadow-[0_30px_80px_rgba(10,35,79,0.16)] sm:p-4">
             <div className="mb-3 flex items-center justify-between px-1 sm:mb-4">
               <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#1D57D8]">Live on Loadify</p>
-                <p className="mt-1 text-sm font-extrabold text-[#0A234F]">Real listings from the marketplace</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#1D57D8]">Your storefront on Loadify</p>
+                <p className="mt-1 text-sm font-extrabold text-[#0A234F]">See how seller listings appear to shoppers</p>
               </div>
-              <Link to="/catalog" className="text-xs font-extrabold text-[#1D57D8] hover:text-[#0A234F]">Browse all</Link>
+              <Link to="/catalog" className="text-xs font-extrabold text-[#1D57D8] hover:text-[#0A234F]">View marketplace</Link>
             </div>
 
             {loading ? (
@@ -110,11 +110,11 @@ const HeroSection = () => {
             <div className="mt-3 flex flex-col gap-3 rounded-[22px] bg-[#0A234F] px-5 py-5 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#F5A300]">For serious sellers</p>
-                <p className="mt-1 text-lg font-extrabold">Your products deserve more than a listing.</p>
-                <p className="mt-1.5 text-xs leading-5 text-white/70">Bring your catalogue to a marketplace built for serious sellers.</p>
+                <p className="mt-1 text-lg font-extrabold">Ready to bring your catalogue?</p>
+                <p className="mt-1.5 text-xs leading-5 text-white/70">Join early, build your storefront and start growing with Loadify.</p>
               </div>
               <Link to="/register?type=seller" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#F5A300] px-4 py-2.5 text-xs font-extrabold text-[#0A234F] transition-colors hover:bg-[#E69500]">
-                Sell on Loadify <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                Create seller account <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
             </div>
           </div>
