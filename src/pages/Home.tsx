@@ -172,15 +172,15 @@ function DesktopHome() {
       <VisualMarketplaceCategories />
 
       <section className="bg-[#F7F9FC] pb-6 pt-12" aria-label="Why Loadify is different">
-        <div className="mx-auto w-full max-w-[1280px] px-6">
+        <div className="w-full px-6">
           <FeaturesGrid />
         </div>
 
         <LazySection rootMargin="320px">
-          <div className="mx-auto mt-6 w-full max-w-[1280px] px-6">
+          <div className="mt-6 w-full px-6">
             <HowItWorksSection />
           </div>
-          <div className="mx-auto mt-6 w-full max-w-[1280px] px-6">
+          <div className="mt-6 w-full px-6">
             <SecurityTrust />
           </div>
         </LazySection>
