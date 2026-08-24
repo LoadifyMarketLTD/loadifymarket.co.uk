@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Package, ShoppingBag, Flag, BarChart3,
   MessageSquare, Settings, ShieldCheck, ChevronRight, LogOut, Menu, Bell, UserCheck, Banknote, Zap, ShieldAlert,
 } from "lucide-react";
-import { useState, memo } from "react";
+import { useEffect, useState, memo } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -101,6 +101,11 @@ const AdminShell = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.add("market-light-root");
+    return () => document.documentElement.classList.remove("market-light-root");
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

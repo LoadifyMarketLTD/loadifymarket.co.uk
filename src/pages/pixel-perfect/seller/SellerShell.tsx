@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";import {
   RotateCcw, Star, Settings, UserCircle, ChevronRight, Store,
   LogOut, Menu, Bell, MessageSquare,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -111,6 +111,11 @@ const SellerShell = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.add("market-light-root");
+    return () => document.documentElement.classList.remove("market-light-root");
+  }, []);
   const unreadNotifications = useUnreadNotificationsCount(user?.id);
 
   const handleLogout = async () => {

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, ShoppingBag, Heart, MapPin, CreditCard,
   Star, Settings, UserCircle, ChevronRight, LogOut, Menu, Bell, MessageSquare, ShieldAlert, Store,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -109,6 +109,11 @@ const BuyerShell = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.add("market-light-root");
+    return () => document.documentElement.classList.remove("market-light-root");
+  }, []);
   const sellerCapable = hasSellerAccess(user);
 
   const handleLogout = async () => {
