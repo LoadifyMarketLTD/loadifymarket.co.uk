@@ -98,6 +98,10 @@ describe('create-checkout handler – request validation', () => {
             error: null,
           }),
         },
+        rpc: vi.fn().mockResolvedValue({
+          data: { attempts: 1, exceeded: false },
+          error: null,
+        }),
         from: vi.fn((table: string) => {
           if (table === 'users') {
             return {
@@ -147,6 +151,10 @@ describe('create-checkout handler – request validation', () => {
             error: null,
           }),
         },
+        rpc: vi.fn().mockResolvedValue({
+          data: { attempts: 1, exceeded: false },
+          error: null,
+        }),
         from: vi.fn((table: string) => {
           if (table === 'users') return activeBuyerQuery();
           if (table === 'products') {
