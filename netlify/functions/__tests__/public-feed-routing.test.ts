@@ -24,7 +24,7 @@ describe('public XML route precedence', () => {
     expect(redirects.findIndex((line) => line.startsWith('/api/*'))).toBeLessThan(spaFallback);
   });
 
-  it('returns valid RSS XML with the correct content type', async () => {
+  it('fails visibly instead of publishing a successful empty feed without Supabase configuration', async () => {
     const previousUrl = process.env.VITE_SUPABASE_URL;
     const previousKey = process.env.VITE_SUPABASE_ANON_KEY;
     delete process.env.VITE_SUPABASE_URL;
@@ -36,16 +36,21 @@ describe('public XML route precedence', () => {
         queryStringParameters: null,
       } as never, {} as never);
 
-      expect(response.statusCode).toBe(200);
-      expect(response.headers?.['Content-Type']).toBe('application/rss+xml; charset=utf-8');
-      expect(response.body).toMatch(/^<\?xml version="1\.0" encoding="UTF-8"\?>/);
-      expect(response.body).toContain('<rss version="2.0"');
-      expect(response.body).toContain('</rss>');
+      expect(response.statusCode).toBe(503);
+      expect(response.headers?.['Content-Type']).toBe('text/plain; charset=utf-8');
+      expect(response.headers?.['Cache-Control']).toBe('no-store');
+      expect(response.body).toBe('Product feed temporarily unavailable');
     } finally {
       if (previousUrl === undefined) delete process.env.VITE_SUPABASE_URL;
       else process.env.VITE_SUPABASE_URL = previousUrl;
       if (previousKey === undefined) delete process.env.VITE_SUPABASE_ANON_KEY;
       else process.env.VITE_SUPABASE_ANON_KEY = previousKey;
     }
+  });
+
+  it('selects the unambiguous primary category relationship', () => {
+    const source = readFileSync('netlify/functions/product-feed.ts', 'utf8');
+    expect(source).toContain('category:categories!categoryId ( slug )');
+    expect(source).not.toContain('categories ( slug )');
   });
 });
