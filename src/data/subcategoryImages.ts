@@ -1,11 +1,12 @@
 export type SubcategoryImageSource = {
   image: string;
-  source: "unsplash";
-  license: "Unsplash License";
+  source: "unsplash" | "loadify-generated";
+  license: "Unsplash License" | "Loadify Market editorial asset";
 };
 
 const image = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&fm=jpg&q=82&w=1600&h=1200`;
 const download = (id: string) => `https://unsplash.com/photos/${id}/download?force=true&w=1600`;
+const local = (category: string, filename: string) => `/images/subcategories/${category}/${filename}.webp`;
 const key = (category: string, subcategory: string) => `${category}::${subcategory}`;
 
 /** Representative editorial navigation imagery only; never product listings. */
@@ -17,12 +18,12 @@ export const subcategoryImages: Record<string, SubcategoryImageSource> = {
   [key("Electronics & Technology", "Accessories")]: { image: image("photo-1683738100989-907877fcce67"), source: "unsplash", license: "Unsplash License" },
   [key("Electronics & Technology", "Smart Home")]: { image: image("photo-1730967844913-29eb5cae5f34"), source: "unsplash", license: "Unsplash License" },
 
-  [key("Clothing & Apparel", "Men's Clothing")]: { image: download("EZKoA4cyUyo"), source: "unsplash", license: "Unsplash License" },
-  [key("Clothing & Apparel", "Women's Clothing")]: { image: download("O8lxsc1RwCQ"), source: "unsplash", license: "Unsplash License" },
-  [key("Clothing & Apparel", "Children's Clothing")]: { image: download("eJ3PKaEEtDk"), source: "unsplash", license: "Unsplash License" },
-  [key("Clothing & Apparel", "Footwear")]: { image: download("JuTTrDggKvg"), source: "unsplash", license: "Unsplash License" },
-  [key("Clothing & Apparel", "Accessories & Bags")]: { image: download("cjUxiJoVzc0"), source: "unsplash", license: "Unsplash License" },
-  [key("Clothing & Apparel", "Sportswear")]: { image: download("p_Fjw6Yq4VA"), source: "unsplash", license: "Unsplash License" },
+  [key("Clothing & Apparel", "Men's Clothing")]: { image: local("clothing-apparel", "mens-clothing"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Clothing & Apparel", "Women's Clothing")]: { image: local("clothing-apparel", "womens-clothing"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Clothing & Apparel", "Children's Clothing")]: { image: local("clothing-apparel", "childrens-clothing"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Clothing & Apparel", "Footwear")]: { image: local("clothing-apparel", "footwear"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Clothing & Apparel", "Accessories & Bags")]: { image: local("clothing-apparel", "accessories-bags"), source: "loadify-generated", license: "Loadify Market editorial asset" },
+  [key("Clothing & Apparel", "Sportswear")]: { image: local("clothing-apparel", "sportswear"), source: "loadify-generated", license: "Loadify Market editorial asset" },
 
   [key("Home & Garden", "Furniture")]: { image: download("sbxnE6Cc-qs"), source: "unsplash", license: "Unsplash License" },
   [key("Home & Garden", "Kitchen & Dining")]: { image: download("QgTxCskZXBU"), source: "unsplash", license: "Unsplash License" },

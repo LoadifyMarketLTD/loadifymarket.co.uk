@@ -17,10 +17,10 @@ describe("canonical marketplace visual taxonomy", () => {
     }
   });
 
-  it("serves every dedicated subcategory image through the Loadify same-origin boundary", () => {
+  it("serves every dedicated subcategory image through a Loadify same-origin path", () => {
     for (const category of marketplaceVisuals) {
       for (const subcategory of category.subcategories) {
-        expect(subcategory.image).toMatch(/^\/api\/category-editorial-image\?/);
+        expect(subcategory.image).toMatch(/^\/(?:api\/category-editorial-image\?|images\/subcategories\/)/);
         expect(subcategory.image).not.toMatch(/^https?:\/\//);
       }
     }
