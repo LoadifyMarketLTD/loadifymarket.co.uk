@@ -19,7 +19,7 @@ const applyFallback = (fallback: string) => (event: SyntheticEvent<HTMLImageElem
  */
 export default function VisualMarketplaceCategories() {
   return (
-    <section className="bg-[#F7F9FC] py-12 sm:py-16" aria-labelledby="visual-marketplace-categories-heading">
+    <section className="bg-[#F7F9FC] pb-12 pt-6 sm:pb-16 sm:pt-6" aria-labelledby="visual-marketplace-categories-heading">
       <div className="w-full px-6">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">

@@ -162,8 +162,8 @@ function DesktopHome() {
     <>
       <HeroSection />
 
-      <section className="bg-[#F7F9FC] pb-10" aria-label="Loadify Market trust signals">
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-10">
+      <section className="bg-[#F7F9FC] pb-6" aria-label="Loadify Market trust signals">
+        <div className="w-full px-6">
           <TrustStrip />
         </div>
       </section>

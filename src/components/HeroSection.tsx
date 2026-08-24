@@ -20,7 +20,7 @@ const HeroSection = () => {
       <div className="absolute -right-20 top-12 h-80 w-80 rounded-full bg-[#1D57D8]/[0.08] blur-3xl" aria-hidden="true" />
       <div className="absolute -left-16 bottom-8 h-64 w-64 rounded-full bg-[#F5A300]/[0.10] blur-3xl" aria-hidden="true" />
 
-      <div className="relative mx-auto grid min-h-[760px] w-full max-w-[1280px] grid-cols-1 items-center gap-12 px-4 pb-16 pt-[164px] sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14 lg:px-10 lg:pb-20 lg:pt-[184px]">
+      <div className="relative grid min-h-[760px] w-full grid-cols-1 items-center gap-6 px-6 pb-16 pt-[164px] lg:grid-cols-[0.92fr_1.08fr] lg:pb-20 lg:pt-[184px]">
         <div className="max-w-[650px]">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#0A234F]/10 bg-white px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#1D57D8] shadow-sm">
             <span className="h-2 w-2 rounded-full bg-[#F5A300]" aria-hidden="true" />
@@ -58,7 +58,7 @@ const HeroSection = () => {
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[620px] lg:mx-0">
+        <div className="relative w-full">
           <div className="absolute -inset-4 rounded-[38px] border border-[#1D57D8]/10" aria-hidden="true" />
           <div className="relative overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-white p-3 shadow-[0_30px_80px_rgba(10,35,79,0.16)] sm:p-4">
             <div className="mb-3 flex items-center justify-between px-1 sm:mb-4">
