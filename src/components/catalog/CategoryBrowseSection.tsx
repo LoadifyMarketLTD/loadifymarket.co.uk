@@ -78,16 +78,25 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
                 className="group overflow-hidden rounded-xl border border-[#DCE2ED] bg-white shadow-[0_1px_2px_rgba(10,35,79,0.03)] transition duration-200 hover:-translate-y-0.5 hover:border-[#1D57D8]/30 hover:shadow-[0_10px_28px_rgba(10,35,79,0.08)]"
               >
                 <Link to={catalogSearchUrl(category.label)} className="block overflow-hidden bg-slate-100">
-                  <div className="aspect-[16/5.6] overflow-hidden">
+                  <div className="relative aspect-[16/5.6] overflow-hidden bg-[linear-gradient(135deg,#0A234F,#145CEB)]">
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 text-white/95" aria-hidden="true">
+                      <Icon className="h-7 w-7" strokeWidth={1.7} />
+                      <span className="text-sm font-bold">{category.label}</span>
+                    </div>
                     <img
                       src={category.imagePath}
                       alt={`${category.label} products`}
                       loading="lazy"
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+                      className="relative h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
                       onError={(event) => {
-                        if (event.currentTarget.src !== category.fallbackImage) {
-                          event.currentTarget.src = category.fallbackImage;
+                        const image = event.currentTarget;
+                        const stage = image.dataset.fallbackStage;
+                        if (!stage && category.fallbackImage) {
+                          image.dataset.fallbackStage = 'external';
+                          image.src = category.fallbackImage;
+                          return;
                         }
+                        image.style.display = 'none';
                       }}
                     />
                   </div>
@@ -122,7 +131,7 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
                     aria-expanded={isExpanded}
                     aria-controls={`subcategory-gallery-${category.slug}`}
                   >
-                    {isExpanded ? 'Hide visuals' : 'View All'}
+                    {isExpanded ? 'Hide subcategories' : 'View All'}
                     {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                   </button>
                 </div>
@@ -138,11 +147,8 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
           >
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#145CEB]">Explore visually</p>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#145CEB]">Explore category</p>
                 <h3 className="mt-1 font-display text-xl font-extrabold text-[#071039]">{expandedCategory.label}</h3>
-                <p className="mt-1 text-sm text-[#65708A]">
-                  Each approved subcategory uses its own dedicated image. Parent imagery is only a temporary work-branch fallback.
-                </p>
               </div>
               <Link to={catalogSearchUrl(expandedCategory.label)} className="text-sm font-bold text-[#0057E7] hover:underline">
                 Browse matching listings
@@ -157,33 +163,31 @@ export default function CategoryBrowseSection({ compact = false }: CategoryBrows
                   className="group/sub overflow-hidden rounded-xl border border-[#E0E6EF] bg-[#FBFCFE] transition hover:-translate-y-0.5 hover:border-[#145CEB]/30 hover:shadow-md"
                   data-visual-status={subcategory.status}
                 >
-                  <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-[linear-gradient(135deg,#EEF3FA,#DDE7F5)]">
+                    <div className="absolute inset-0 flex items-center justify-center px-3 text-center text-xs font-bold text-[#41506E]" aria-hidden="true">
+                      {subcategory.label}
+                    </div>
                     <img
                       src={subcategory.displayImage}
                       alt={`${subcategory.label} products`}
                       loading="lazy"
-                      className="h-full w-full object-cover transition duration-500 group-hover/sub:scale-[1.035]"
+                      className="relative h-full w-full object-cover transition duration-500 group-hover/sub:scale-[1.035]"
                       onError={(event) => {
-                        if (subcategory.status === 'dedicated') return;
                         const image = event.currentTarget;
                         const stage = image.dataset.fallbackStage;
-                        if (!stage) {
-                          image.dataset.fallbackStage = 'root';
-                          image.src = expandedCategory.imagePath;
+
+                        if (!stage && subcategory.sourceImage) {
+                          image.dataset.fallbackStage = 'source';
+                          image.src = subcategory.sourceImage;
                           return;
                         }
-                        if (stage === 'root' && image.src !== expandedCategory.fallbackImage) {
-                          image.dataset.fallbackStage = 'external';
-                          image.src = expandedCategory.fallbackImage;
-                        }
+
+                        image.style.display = 'none';
                       }}
                     />
                   </div>
                   <div className="p-3">
                     <p className="text-sm font-bold leading-tight text-[#071039]">{subcategory.label}</p>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#7B859B]">
-                      {subcategory.status === 'dedicated' ? 'Dedicated visual' : 'Visual pending'}
-                    </p>
                   </div>
                 </Link>
               ))}
