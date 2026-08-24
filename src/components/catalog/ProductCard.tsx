@@ -40,7 +40,7 @@ const conditionColor: Record<string, string> = {
   Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
 };
 
-const ProductCard = ({ product, linkState, theme = "default" }: { product: Product; linkState?: Record<string, unknown>; theme?: "default" | "light" }) => {
+const ProductCard = ({ product, linkState, theme = "light" }: { product: Product; linkState?: Record<string, unknown>; theme?: "default" | "light" }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;

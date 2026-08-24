@@ -68,7 +68,7 @@ const CatalogFilters = ({
   setPriceRange,
   onClearAll,
   availableCategories,
-  theme = "default",
+  theme = "light",
 }: CatalogFiltersProps) => {
   const light = theme === "light";
   // Use DB-sourced category names when provided; show empty list otherwise

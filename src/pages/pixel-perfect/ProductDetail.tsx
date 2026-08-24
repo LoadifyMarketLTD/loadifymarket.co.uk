@@ -282,7 +282,7 @@ const ProductDetail = () => {
   if (loading) {
     return (
       <MainLayout>
-        <main id="main-content" className="pt-4 md:pt-28 pb-16">
+        <main id="main-content" className="market-public-light min-h-screen pt-4 md:pt-28 pb-16">
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-[1fr_420px] gap-8 animate-pulse">
               <div className="space-y-8">
@@ -303,12 +303,12 @@ const ProductDetail = () => {
   if (notFound || !product) {
     return (
       <MainLayout>
-        <div className="pt-4 md:pt-28 text-center">
+        <main id="main-content" className="market-public-light min-h-screen pt-4 md:pt-28 text-center">
           <h1 className="text-2xl font-display font-bold text-foreground">Product Not Found</h1>
           <Link to="/catalog" className="text-primary hover:underline mt-4 inline-block">
             Back to Catalog
           </Link>
-        </div>
+        </main>
       </MainLayout>
     );
   }
@@ -593,40 +593,40 @@ const ProductDetail = () => {
         style={{
           paddingTop: "calc(0.625rem + env(safe-area-inset-top, 0px))",
           paddingBottom: "0.625rem",
-          background: "rgba(7,8,11,0.85)",
+          background: "rgba(255,255,255,0.94)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
         }}
       >
         <button
           onClick={() => navigate(-1)}
-          className="p-2 rounded-xl active:bg-white/10 transition-colors"
-          style={{ background: "rgba(255,255,255,0.10)" }}
+          className="p-2 rounded-xl active:bg-slate-100 transition-colors"
+          style={{ background: "rgba(239,243,248,0.96)" }}
           aria-label="Back"
         >
-          <ArrowLeft style={{ width: "20px", height: "20px", color: "rgba(255,255,255,1)" }} />
+          <ArrowLeft style={{ width: "20px", height: "20px", color: "#0A234F" }} />
         </button>
         <div style={{ display: "flex", gap: "8px" }}>
           <button
             onClick={handleNativeShare}
-            className="p-2 rounded-xl active:bg-white/10 transition-colors"
-            style={{ background: "rgba(255,255,255,0.10)" }}
+            className="p-2 rounded-xl active:bg-slate-100 transition-colors"
+            style={{ background: "rgba(239,243,248,0.96)" }}
             aria-label="Share"
           >
-            <Share2 style={{ width: "20px", height: "20px", color: "rgba(255,255,255,1)" }} />
+            <Share2 style={{ width: "20px", height: "20px", color: "#0A234F" }} />
           </button>
           <button
             onClick={() => void handleMobileToggleWishlist()}
             disabled={mobileWishlistLoading}
-            className="p-2 rounded-xl active:bg-white/10 transition-colors"
-            style={{ background: "rgba(255,255,255,0.10)" }}
+            className="p-2 rounded-xl active:bg-slate-100 transition-colors"
+            style={{ background: "rgba(239,243,248,0.96)" }}
             aria-label={mobileWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Heart
               style={{
                 width: "20px",
                 height: "20px",
-                color: mobileWishlisted ? "rgba(239,68,68,1)" : "rgba(255,255,255,1)",
+                color: mobileWishlisted ? "rgba(239,68,68,1)" : "#0A234F",
                 fill: mobileWishlisted ? "rgba(239,68,68,1)" : "none",
               }}
             />
@@ -634,7 +634,7 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      <main id="main-content" className="pt-0 md:pt-28 pb-16">
+      <main id="main-content" className="market-public-light min-h-screen pt-0 md:pt-28 pb-16">
         <div className="container mx-auto px-4">
           {/* Breadcrumb — desktop only */}
           <div className="hidden md:block">
@@ -683,28 +683,28 @@ const ProductDetail = () => {
               <div
                 className="order-2 md:hidden"
                 style={{
-                  background: "rgba(18,18,26,1)",
+                  background: "#FFFFFF",
                   borderRadius: "16px",
                   margin: "0 -16px",
                   padding: "20px 16px",
-                  borderTop: "1px solid rgba(255,255,255,0.07)",
+                  border: "1px solid #DCE3ED",
                 }}
               >
-                <h1 style={{ fontSize: "20px", fontWeight: 800, color: "rgba(255,255,255,1)", lineHeight: 1.3, marginBottom: "8px" }}>
+                <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#0A234F", lineHeight: 1.3, marginBottom: "8px" }}>
                   {product.title}
                 </h1>
 
-                <p style={{ fontSize: "26px", fontWeight: 800, color: "rgba(255,255,255,1)", marginBottom: "4px" }}>
+                <p style={{ fontSize: "26px", fontWeight: 800, color: "#0A234F", marginBottom: "4px" }}>
                   £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                 </p>
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: "4px" }}>
+                <p style={{ fontSize: "13px", color: "#64748B", fontWeight: 500, marginBottom: "4px" }}>
                   Shipping calculated at checkout
                 </p>
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.30)", marginBottom: "16px" }}>
+                <p style={{ fontSize: "12px", color: "#64748B", marginBottom: "16px" }}>
                   Secure payments via Stripe
                 </p>
 
-                <div style={{ height: "1px", background: "rgba(255,255,255,0.07)" }} />
+                <div style={{ height: "1px", background: "#DCE3ED" }} />
 
                 <div
                   style={{
@@ -712,13 +712,13 @@ const ProductDetail = () => {
                     alignItems: "center",
                     justifyContent: "space-between",
                     padding: "14px 0",
-                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    borderBottom: "1px solid #DCE3ED",
                   }}
                 >
-                  <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Condition</span>
+                  <span style={{ fontSize: "14px", color: "#64748B" }}>Condition</span>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,1)" }}>{product.condition}</span>
-                    <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.30)" }} />
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#0A234F" }}>{product.condition}</span>
+                    <ChevronRight style={{ width: "16px", height: "16px", color: "#94A3B8" }} />
                   </div>
                 </div>
 
@@ -729,11 +729,11 @@ const ProductDetail = () => {
                       alignItems: "center",
                       justifyContent: "space-between",
                       padding: "14px 0",
-                      borderBottom: "1px solid rgba(255,255,255,0.07)",
+                      borderBottom: "1px solid #DCE3ED",
                     }}
                   >
-                    <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Location</span>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,1)" }}>{product.location}</span>
+                    <span style={{ fontSize: "14px", color: "#64748B" }}>Location</span>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#0A234F" }}>{product.location}</span>
                   </div>
                 ) : null}
 
@@ -743,11 +743,11 @@ const ProductDetail = () => {
                     alignItems: "center",
                     justifyContent: "space-between",
                     padding: "14px 0",
-                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    borderBottom: "1px solid #DCE3ED",
                   }}
                 >
-                  <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Seller</span>
-                  <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,1)" }}>{product.seller}</span>
+                  <span style={{ fontSize: "14px", color: "#64748B" }}>Seller</span>
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#0A234F" }}>{product.seller}</span>
                 </div>
 
                 <div
@@ -756,20 +756,20 @@ const ProductDetail = () => {
                     alignItems: "center",
                     justifyContent: "space-between",
                     padding: "14px 0",
-                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    borderBottom: "1px solid #DCE3ED",
                     marginBottom: "20px",
                   }}
                 >
-                  <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Quantity</span>
+                  <span style={{ fontSize: "14px", color: "#64748B" }}>Quantity</span>
                   <select
                     value={mobileQty}
                     onChange={(e) => setMobileQty(Number(e.target.value))}
                     disabled={product.isAvailable === false}
                     style={{
-                      background: "rgba(255,255,255,0.08)",
-                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "#FFFFFF",
+                      border: "1px solid #CBD5E1",
                       borderRadius: "8px",
-                      color: "rgba(255,255,255,1)",
+                      color: "#0A234F",
                       fontSize: "14px",
                       fontWeight: 600,
                       padding: "6px 10px",
@@ -787,7 +787,7 @@ const ProductDetail = () => {
 
                 {(product.views ?? 0) > 0 && (
                   <p
-                    style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "5px" }}
+                    style={{ fontSize: "12px", color: "#64748B", marginBottom: "12px", display: "flex", alignItems: "center", gap: "5px" }}
                     aria-label={`${product.views.toLocaleString()} ${product.views === 1 ? "view" : "views"}`}
                   >
                     <span aria-hidden="true">👁️</span>
@@ -861,7 +861,7 @@ const ProductDetail = () => {
                     <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
                     <button
                       className="md:hidden text-xs font-medium"
-                      style={{ color: "rgba(255,255,255,0.50)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      style={{ color: "#64748B", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                       onClick={() => setDescExpanded((d) => !d)}
                     >
                       {descExpanded ? "Show less" : "Show more"}
@@ -892,7 +892,7 @@ const ProductDetail = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {related.map((p) => (
                   <Link key={p.id} to={`/product/${p.id}`}>
-                    <ProductCard product={p} />
+                    <ProductCard product={p} theme="light" />
                   </Link>
                 ))}
               </div>
@@ -954,10 +954,10 @@ const ProductDetail = () => {
           className="md:hidden fixed left-0 right-0 z-[9998]"
           style={{
             bottom: mobileBottomNavOffset,
-            background: "rgba(7,8,11,0.97)",
+            background: "rgba(255,255,255,0.97)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
-            borderTop: "1px solid rgba(255,255,255,0.08)",
+            borderTop: "1px solid #DCE3ED",
             padding: "12px 16px",
             pointerEvents: "auto",
           }}
@@ -988,11 +988,11 @@ const ProductDetail = () => {
                   flex: 1,
                   padding: "14px 8px",
                   borderRadius: "12px",
-                  background: "rgba(255,255,255,0.07)",
-                  color: "rgba(255,255,255,1)",
+                  background: "#FFFFFF",
+                  color: "#0A234F",
                   fontSize: "13px",
                   fontWeight: 700,
-                  border: "1px solid rgba(255,255,255,0.15)",
+                  border: "1px solid #CBD5E1",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",

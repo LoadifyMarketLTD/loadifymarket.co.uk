@@ -250,7 +250,7 @@ const CategoryPage = () => {
   if (!config && dbCategoryLoading) {
     return (
       <MainLayout>
-        <main id="main-content" className="pt-4 md:pt-28 pb-16">
+        <main id="main-content" className="market-public-light min-h-screen pt-4 md:pt-28 pb-16">
           <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading…</div>
         </main>
       </MainLayout>
@@ -264,7 +264,7 @@ const CategoryPage = () => {
           title="Category Not Found | Loadify Market"
           description="The category you're looking for doesn't exist. Browse all categories on Loadify Market."
         />
-        <main id="main-content" className="pt-4 md:pt-28 pb-16">
+        <main id="main-content" className="market-public-light min-h-screen pt-4 md:pt-28 pb-16">
           <div className="container mx-auto px-4 py-20 text-center">
             <p className="mb-4 text-2xl font-display font-bold text-foreground">Category Not Found</p>
             <p className="mb-8 text-muted-foreground">The category you're looking for doesn't exist.</p>
@@ -283,7 +283,7 @@ const CategoryPage = () => {
         canonical={`/category/${slug}`}
       />
 
-      <main id="main-content" className="pt-4 md:pt-28 pb-16">
+      <main id="main-content" className="market-public-light min-h-screen pt-4 md:pt-28 pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[
@@ -412,6 +412,7 @@ const CategoryPage = () => {
 
           <div className="pb-4">
             <CatalogHeader
+              theme="light"
               totalResults={filteredProducts.length}
               sortBy={sortBy}
               setSortBy={setSortBy}
@@ -441,6 +442,7 @@ const CategoryPage = () => {
             <aside className="hidden w-64 shrink-0 lg:block">
               <div className="sticky top-24 rounded-xl border border-border bg-card p-5">
                 <CatalogFilters
+                  theme="light"
                   selectedCategories={[]}
                   setSelectedCategories={() => {}}
                   selectedConditions={selectedConditions}
@@ -466,6 +468,7 @@ const CategoryPage = () => {
                     </button>
                   </div>
                   <CatalogFilters
+                    theme="light"
                     selectedCategories={[]}
                     setSelectedCategories={() => {}}
                     selectedConditions={selectedConditions}
@@ -507,6 +510,7 @@ const CategoryPage = () => {
                 <div className={viewMode === "grid" ? "grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-4"}>
                   {filteredProducts.map((product) => (
                     <ProductCard
+                      theme="light"
                       key={product.id}
                       product={product}
                       linkState={{ flow: "marketplace", categorySlug: slug, categoryLabel: config?.label }}

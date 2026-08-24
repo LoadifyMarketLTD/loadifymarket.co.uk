@@ -132,6 +132,37 @@
   background: #F7F9FC;
 }
 
+/* Public marketplace light identity. Keep the navy navigation chrome, while
+   catalog, category and listing-detail content uses the same bright surface
+   language as the homepage. */
+.market-public-light {
+  --background: 216 33% 97%;
+  --foreground: 218 76% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 218 76% 18%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 218 76% 18%;
+  --primary: 217 76% 48%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 217 76% 42%;
+  --primary-soft: 217 76% 95%;
+  --secondary: 214 40% 96%;
+  --secondary-foreground: 218 76% 18%;
+  --muted: 214 32% 95%;
+  --muted-foreground: 215 16% 42%;
+  --accent: 40 100% 48%;
+  --accent-foreground: 218 76% 18%;
+  --border: 214 25% 88%;
+  --input: 214 25% 84%;
+  --ring: 217 76% 48%;
+  --surface: 0 0% 100%;
+  --surface-raised: 216 33% 97%;
+  --shadow-card: 0 8px 24px rgba(15, 35, 70, 0.07);
+  --shadow-elevated: 0 18px 44px rgba(15, 35, 70, 0.12);
+  background: #F7F9FC;
+  color: #0A234F;
+}
+
 /* Compatibility layer for legacy authenticated workspace surfaces that still
    carry literal dark-era utility classes. */
 .market-workspace-light [class*="text-white"] {

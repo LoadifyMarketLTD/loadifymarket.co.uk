@@ -27,7 +27,7 @@ const CatalogHeader = ({
   setViewMode,
   onToggleFilters,
   filtersVisible: _filtersVisible,
-  theme = "default",
+  theme = "light",
 }: CatalogHeaderProps) => {
   const light = theme === "light";
   return (
