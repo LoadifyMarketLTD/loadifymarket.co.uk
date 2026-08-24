@@ -32,7 +32,7 @@ const FeaturedProducts = () => {
   }, []);
 
   return (
-    <section className="bg-[#F7F9FC] px-6 pb-6" aria-label="Marketplace products">
+    <section className="bg-[#F7F9FC] px-6" aria-label="Marketplace products">
       <div className="relative w-full overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] px-6 pb-8 pt-7 text-white shadow-[0_22px_60px_rgba(10,35,79,0.17)] sm:px-8 sm:pb-10 lg:px-10">
         <div className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-[#F5A300]" aria-hidden="true" />
         <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
