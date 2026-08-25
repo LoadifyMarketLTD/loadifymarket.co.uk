@@ -9,6 +9,7 @@ import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
 import { isCapacitorContext } from "./lib/capacitorUtils.ts";
 import "./index.css";
 import "./light-compat.css";
+import "./mobile-drawer-identity.css";
 import "./native.css";
 
 // Initialise global error tracking (unhandled errors + unhandled rejections).
