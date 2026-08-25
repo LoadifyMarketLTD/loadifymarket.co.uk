@@ -9,6 +9,7 @@ import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
 import { isCapacitorContext } from "./lib/capacitorUtils.ts";
 import "./index.css";
 import "./light-compat.css";
+import "./light-semantic-compat.css";
 import "./mobile-drawer-identity.css";
 import "./native.css";
 
@@ -112,7 +113,7 @@ if ('serviceWorker' in navigator) {
       return;
     }
 
-    navigator.serviceWorker.register('/sw.js').catch(() => {
+    window.navigator.serviceWorker.register('/sw.js').catch(() => {
       // Non-fatal — the website remains functional without offline caching.
     });
   });
