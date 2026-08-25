@@ -2,7 +2,7 @@
  * PR #592 — semantic light compatibility.
  *
  * Tailwind's custom semantic colours are currently hard-coded to the historical
- * dark palette.  That means classes such as text-foreground and border-border
+ * dark palette. That means classes such as text-foreground and border-border
  * do not follow the light CSS variables already defined by market-public-light.
  * Repair those utilities here without touching preserved chrome.
  *
@@ -27,6 +27,32 @@
 :root.market-light-root body:not(:has(#login-email))
   :not(header):not(header *):not(footer):not(footer *).text-muted-foreground {
   color: #64748B !important;
+}
+
+/* Legacy light-surface copy that still carries dark-theme literals. */
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).text-slate-400 {
+  color: #64748B !important;
+}
+
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).text-slate-500 {
+  color: #475569 !important;
+}
+
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *)h1.text-white,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *)h2.text-white,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *)h3.text-white,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *)h4.text-white,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *)p.text-white,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *)td .text-white {
+  color: #0A234F !important;
 }
 
 /* Semantic surfaces and hairlines. */
@@ -54,6 +80,17 @@
   border-color: #DCE3ED !important;
 }
 
+/* Tables inherited several dark-era white hairlines and white row hover states. */
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *) table tr {
+  border-color: #E2E8F0 !important;
+}
+
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *) tr[class*="hover:bg-white/"]:hover {
+  background-color: #F8FAFC !important;
+}
+
 /* Inputs/selects that use hard-coded semantic utilities. */
 :root.market-light-root body:not(:has(#login-email))
   :not(header):not(header *):not(footer):not(footer *) input.bg-background,
@@ -67,7 +104,7 @@
 }
 
 /*
- * Functional backdrops are not page surfaces.  The earlier compatibility rule
+ * Functional backdrops are not page surfaces. The earlier compatibility rule
  * intentionally lightens legacy panels, but fixed full-screen backdrops must
  * continue to dim the page rather than turning 96% opaque white.
  */
