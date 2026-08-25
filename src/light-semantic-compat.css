@@ -1,0 +1,83 @@
+/*
+ * PR #592 — semantic light compatibility.
+ *
+ * Tailwind's custom semantic colours are currently hard-coded to the historical
+ * dark palette.  That means classes such as text-foreground and border-border
+ * do not follow the light CSS variables already defined by market-public-light.
+ * Repair those utilities here without touching preserved chrome.
+ *
+ * Preserved by contract:
+ * - /login (detected by #login-email)
+ * - marketplace header/navbar
+ * - footer
+ */
+
+/* Core semantic text contrast on light surfaces. */
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).text-foreground,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).text-card-foreground,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).text-popover-foreground,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).text-secondary-foreground {
+  color: #0A234F !important;
+}
+
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).text-muted-foreground {
+  color: #64748B !important;
+}
+
+/* Semantic surfaces and hairlines. */
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).bg-background {
+  background-color: #F7F9FC !important;
+}
+
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).bg-card,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).bg-popover {
+  background-color: #FFFFFF !important;
+}
+
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).bg-muted {
+  background-color: #F1F5F9 !important;
+}
+
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).border-border,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *).border-input {
+  border-color: #DCE3ED !important;
+}
+
+/* Inputs/selects that use hard-coded semantic utilities. */
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *) input.bg-background,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *) textarea.bg-background,
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *) select.bg-background {
+  background-color: #FFFFFF !important;
+  color: #0A234F !important;
+  border-color: #CBD5E1 !important;
+}
+
+/*
+ * Functional backdrops are not page surfaces.  The earlier compatibility rule
+ * intentionally lightens legacy panels, but fixed full-screen backdrops must
+ * continue to dim the page rather than turning 96% opaque white.
+ */
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *)[class*="fixed"][class*="inset-0"][class*="bg-black/"] {
+  background-color: rgba(10, 35, 79, 0.42) !important;
+}
+
+/* Preserve readable hover/focus surfaces without creating new dark panels. */
+:root.market-light-root body:not(:has(#login-email))
+  :not(header):not(header *):not(footer):not(footer *)[class*="hover:bg-muted"]:hover {
+  background-color: #EEF3F8 !important;
+}
