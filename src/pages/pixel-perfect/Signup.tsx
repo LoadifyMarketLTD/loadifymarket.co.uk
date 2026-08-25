@@ -136,27 +136,70 @@ const Signup = () => {
 
     setLoading(true);
     try {
-      const response = await fetch("/.netlify/functions/register", {
+      // Stage 1: create a short-lived server-owned registration intent.
+      // Password is intentionally NOT sent to Netlify or stored in the intent.
+      const intentResponse = await fetch("/.netlify/functions/register-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           email: form.email.trim(),
-          password: form.password,
-          role,
-          newsletter: form.newsletter,
+          requestedRole: role,
           ...(isSeller ? { sellerType: form.sellerType } : {}),
         }),
       });
-      const payload = (await response.json()) as { error?: string; message?: string };
-      if (!response.ok) throw new Error(payload.error || "Registration failed");
+
+      const intentPayload = (await intentResponse.json().catch(() => ({}))) as {
+        intentId?: string;
+        expiresAt?: string;
+        error?: string;
+      };
+
+      if (!intentResponse.ok || !intentPayload.intentId) {
+        throw new Error(
+          intentPayload.error || "Registration could not be initialized. Please try again.",
+        );
+      }
+
+      // Stage 2: Supabase Auth owns password handling and confirmation delivery.
+      // Only the opaque signup intent id crosses into Auth metadata.
+      const emailRedirectTo =
+        `${window.location.origin}/login?confirmed=1${
+          isSeller ? "&next=%2Fonboarding" : ""
+        }`;
+
+      const { data: signupData, error: signupError } =
+        await supabase.auth.signUp({
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+          options: {
+            data: {
+              intent_id: intentPayload.intentId,
+            },
+            emailRedirectTo,
+          },
+        });
+
+      if (signupError) {
+        throw new Error(signupError.message || "Registration failed");
+      }
+
+      if (!signupData.user) {
+        throw new Error(
+          "Registration could not be completed. Please try again.",
+        );
+      }
 
       toast({
         title: "Account created",
         description: "Check your email to confirm your address, then sign in.",
       });
-      navigate(`/login?registered=1${isSeller ? "&next=%2Fonboarding" : ""}`, { replace: true });
+
+      navigate(
+        `/login?registered=1${isSeller ? "&next=%2Fonboarding" : ""}`,
+        { replace: true },
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
