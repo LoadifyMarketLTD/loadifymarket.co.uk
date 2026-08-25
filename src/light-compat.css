@@ -6,7 +6,8 @@
  * - neutralise old dark-theme Tailwind utility classes that still appear in
  *   functional/mobile/auth/account surfaces;
  * - preserve the Footer exactly as authored;
- * - preserve the Login page exactly as authored.
+ * - preserve the Login page exactly as authored;
+ * - keep the marketplace navbar in the canonical Seller identity: navy + blue depth + gold accents.
  *
  * Login opt-out is detected by its canonical #login-email control. This avoids
  * editing Login.tsx while ensuring no compatibility override reaches that route.
@@ -17,134 +18,126 @@
   color: #0a234f;
 }
 
-/* Marketplace header / category shell: remove the remaining dark chrome. */
+/*
+ * Marketplace navbar identity.
+ * Mirrors the Seller Signup identity panel without changing navbar structure:
+ * #0A234F navy base, #1D57D8 blue depth, white copy and #F5A300 gold accents.
+ * Login is excluded so /login remains visually identical to pre-PR #592.
+ */
 :root.market-light-root body:not(:has(#login-email)) > div header {
-  background: #ffffff !important;
-  border-color: #dce3ed !important;
-  box-shadow: 0 8px 25px rgba(10, 35, 79, 0.10) !important;
-  color: #0a234f !important;
+  background:
+    radial-gradient(circle at 22% -90%, rgba(29, 87, 216, 0.30), transparent 44%),
+    #0A234F !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 0 8px 25px rgba(10, 35, 79, 0.28) !important;
+  color: #ffffff !important;
 }
 
 :root.market-light-root body:not(:has(#login-email)) header nav {
-  border-color: #e2e8f0 !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) header [class*="text-white"] {
-  color: #0a234f !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) header [class*="bg-white/"] {
-  background-color: #f4f6f8 !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) header [class*="border-white"],
-:root.market-light-root body:not(:has(#login-email)) header [class*="ring-white"] {
-  border-color: #d7e0ea !important;
-  --tw-ring-color: #d7e0ea !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
 }
 
 :root.market-light-root body:not(:has(#login-email)) header input[type="search"] {
-  background: #f7f9fc !important;
-  border-color: #cfd8e5 !important;
-  color: #0a234f !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
 }
 
 :root.market-light-root body:not(:has(#login-email)) header input[type="search"]::placeholder {
-  color: #64748b !important;
+  color: rgba(255, 255, 255, 0.55) !important;
   opacity: 1;
 }
 
 :root.market-light-root body:not(:has(#login-email)) header [class*="bg-[#0A234F]"] {
-  background-color: #ffffff !important;
+  background-color: #0A234F !important;
 }
 
 :root.market-light-root body:not(:has(#login-email)) header .nav-cat-link:hover,
 :root.market-light-root body:not(:has(#login-email)) header a[class*="text-white"]:hover,
 :root.market-light-root body:not(:has(#login-email)) header button[class*="text-white"]:hover {
-  color: #f5a300 !important;
+  color: #F5A300 !important;
 }
 
 /* Legacy full-surface dark backgrounds. */
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-slate-950"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-slate-900"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-gray-950"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-gray-900"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-zinc-950"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-zinc-900"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-neutral-950"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-neutral-900"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-black"] {
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-slate-950"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-slate-900"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-gray-950"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-gray-900"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-zinc-950"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-zinc-900"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-neutral-950"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-neutral-900"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-black"] {
   background-color: #ffffff !important;
   color: #0a234f;
 }
 
 /* Historical Loadify dark palette literals used by older mobile/auth screens. */
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#0A0E1A]"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#0a0e1a]"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#07080B]"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#07080b]"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#12121A]"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#12121a]"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#121A2B]"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#121a2b]"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#182235]"] {
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#0A0E1A]"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#0a0e1a]"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#07080B]"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#07080b]"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#12121A]"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#12121a]"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#121A2B]"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#121a2b]"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#182235]"] {
   background-color: #ffffff !important;
   color: #0a234f;
 }
 
 /* Dark translucent panels which become muddy on the light identity. */
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-black/"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-slate-950/"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-slate-900/"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-gray-950/"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-gray-900/"] {
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-black/"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-slate-950/"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-slate-900/"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-gray-950/"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-gray-900/"] {
   background-color: rgba(255, 255, 255, 0.96) !important;
 }
 
-/* Legacy dark-era hairlines. Do not touch coloured status borders. */
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="border-white/"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="border-slate-700"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="border-slate-800"] {
+/* Legacy dark-era hairlines. Header and Footer preserve their own identity. */
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="border-white/"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="border-slate-700"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="border-slate-800"] {
   border-color: #dce3ed !important;
 }
 
 /*
  * Text repair is deliberately scoped to elements that themselves carried a
- * dark surface. We do NOT globally rewrite text-white because white text is
- * correct on primary buttons, badges and other intentional brand accents.
+ * dark surface. Header/Footer remain intentional navy surfaces and keep white copy.
  */
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-slate-950"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-slate-900"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-gray-950"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-gray-900"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-zinc-950"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-zinc-900"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-neutral-950"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-neutral-900"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-black"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#0A0E1A]"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#121A2B]"][class*="text-white"],
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *)[class*="bg-[#182235]"][class*="text-white"] {
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-slate-950"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-slate-900"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-gray-950"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-gray-900"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-zinc-950"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-zinc-900"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-neutral-950"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-neutral-900"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-black"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#0A0E1A]"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#121A2B]"][class*="text-white"],
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *)[class*="bg-[#182235]"][class*="text-white"] {
   color: #0a234f !important;
 }
 
 /* Ensure generic semantic surfaces remain bright even on old routes. */
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *).bg-background {
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *).bg-background {
   background-color: #f7f9fc !important;
 }
 
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *).bg-card,
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *).bg-popover {
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *).bg-card,
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *).bg-popover {
   background-color: #ffffff !important;
 }
 
-/* Accessible placeholder/disabled contrast on light inputs. */
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *) input::placeholder,
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *) textarea::placeholder {
+/* Accessible placeholder/disabled contrast on light inputs outside preserved chrome. */
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *) input::placeholder,
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *) textarea::placeholder {
   color: #64748b;
   opacity: 1;
 }
 
-:root.market-light-root body:not(:has(#login-email)) :not(footer):not(footer *) :disabled {
+:root.market-light-root body:not(:has(#login-email)) :not(header):not(header *):not(footer):not(footer *) :disabled {
   opacity: 0.62;
 }
