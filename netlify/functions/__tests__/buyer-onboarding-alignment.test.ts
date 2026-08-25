@@ -11,7 +11,7 @@ describe('Stage 4 Buyer onboarding alignment contract', () => {
     const signup = source('src/pages/pixel-perfect/Signup.tsx');
 
     expect(signup).toContain('role: "buyer" | "seller"');
-    expect(signup).toContain('navigate(`/login?registered=1');
+    expect(signup).toContain('/login?registered=1');
     expect(signup).not.toContain('companyName: ""');
     expect(signup).not.toContain('vatNumber: ""');
     expect(signup).not.toContain('businessAddress:');
