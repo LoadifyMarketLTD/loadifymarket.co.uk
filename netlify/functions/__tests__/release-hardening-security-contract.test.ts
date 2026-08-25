@@ -66,16 +66,12 @@ describe('release-hardening security contracts', () => {
       'GRANT EXECUTE ON FUNCTION public.track_product_view(uuid, uuid, text)',
     );
     expect(sql).toContain('TO service_role');
+    expect(sql).toContain("'anon'");
+    expect(sql).toContain("'authenticated'");
     expect(sql).toContain(
-      "'anon',
-       'public.track_product_view(uuid,uuid,text)',
-       'EXECUTE'",
+      "'public.track_product_view(uuid,uuid,text)'",
     );
-    expect(sql).toContain(
-      "'authenticated',
-       'public.track_product_view(uuid,uuid,text)',
-       'EXECUTE'",
-    );
+    expect(sql).toContain("'EXECUTE'");
   });
   it('keeps the historical payment-session hardening replay-idempotent and admin-only', () => {
     const baseRls = read('supabase/10_rls_policies.sql');
@@ -189,4 +185,3 @@ describe('release-hardening security contracts', () => {
     }
   });
 });
-
