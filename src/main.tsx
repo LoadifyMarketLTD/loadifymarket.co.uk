@@ -21,6 +21,29 @@ if (isCapacitorContext()) {
   document.documentElement.classList.add('capacitor-native');
 }
 
+// PR #592 visual cleanup must never affect the pre-existing /login design.
+// Keep the global compatibility class disabled on /login and restore it on all
+// other SPA routes. Header/Login.tsx themselves remain untouched.
+const syncMarketLightScope = () => {
+  const isLoginRoute = window.location.pathname === '/login';
+  document.documentElement.classList.toggle('market-light-root', !isLoginRoute);
+};
+
+syncMarketLightScope();
+window.addEventListener('popstate', syncMarketLightScope);
+
+const originalPushState = window.history.pushState.bind(window.history);
+window.history.pushState = (...args) => {
+  originalPushState(...args);
+  syncMarketLightScope();
+};
+
+const originalReplaceState = window.history.replaceState.bind(window.history);
+window.history.replaceState = (...args) => {
+  originalReplaceState(...args);
+  syncMarketLightScope();
+};
+
 // On Capacitor APK, relative /.netlify/functions/ URLs resolve to
 // https://localhost (the local WebView file server) instead of the Netlify
 // backend.  This patch rewrites them to absolute URLs so every component
@@ -38,6 +61,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </HelmetProvider>
   </React.StrictMode>
 );
+
+// App.tsx currently adds the compatibility class once at mount. Re-assert the
+// route exclusion after React effects run so /login stays byte-for-byte styled
+// by the pre-592 CSS/classes rather than by the compatibility layer.
+queueMicrotask(syncMarketLightScope);
+requestAnimationFrame(syncMarketLightScope);
 
 // DEV-ONLY: Overflow detector to identify elements causing horizontal overflow
 if (import.meta.env.DEV) {
