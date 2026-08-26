@@ -30,6 +30,9 @@ declare
   v_intent_id uuid;
 
   v_intent private.signup_intents%rowtype;
+  v_feature_flags jsonb;
+  v_buyer_registration boolean;
+  v_seller_registration boolean;
 begin
   if event is null
      or jsonb_typeof(event) <> 'object'
@@ -71,6 +74,30 @@ begin
     );
   end if;
 
+  select ps.value
+  into v_feature_flags
+  from public.platform_settings as ps
+  where ps.key = 'feature_flags';
+
+  if not found
+     or jsonb_typeof(v_feature_flags) <> 'object'
+     or jsonb_typeof(v_feature_flags->'buyerRegistration') <> 'boolean'
+     or jsonb_typeof(v_feature_flags->'sellerRegistration') <> 'boolean' then
+    return jsonb_build_object(
+      'error',
+      jsonb_build_object(
+        'http_code', 503,
+        'message', 'registration availability could not be verified'
+      )
+    );
+  end if;
+
+  v_buyer_registration :=
+    (v_feature_flags->>'buyerRegistration')::boolean;
+
+  v_seller_registration :=
+    (v_feature_flags->>'sellerRegistration')::boolean;
+
   -- Role selection is server-governed. Neither user_metadata nor
   -- app_metadata may be used by a public client to authorize Buyer,
   -- Seller or Admin access.
@@ -88,6 +115,16 @@ begin
   -- Fresh social identities supported by Loadify remain Buyer-only.
   -- Seller access is added later through the canonical activation path.
   if v_provider in ('google', 'facebook') then
+    if not v_buyer_registration then
+      return jsonb_build_object(
+        'error',
+        jsonb_build_object(
+          'http_code', 403,
+          'message', 'buyer registration is temporarily disabled'
+        )
+      );
+    end if;
+
     return '{}'::jsonb;
   end if;
 
@@ -169,6 +206,28 @@ begin
       jsonb_build_object(
         'http_code', 403,
         'message', 'unsupported signup role'
+      )
+    );
+  end if;
+
+  if v_intent.requested_role = 'buyer'
+     and not v_buyer_registration then
+    return jsonb_build_object(
+      'error',
+      jsonb_build_object(
+        'http_code', 403,
+        'message', 'buyer registration is temporarily disabled'
+      )
+    );
+  end if;
+
+  if v_intent.requested_role = 'seller'
+     and not v_seller_registration then
+    return jsonb_build_object(
+      'error',
+      jsonb_build_object(
+        'http_code', 403,
+        'message', 'seller registration is temporarily disabled'
       )
     );
   end if;
