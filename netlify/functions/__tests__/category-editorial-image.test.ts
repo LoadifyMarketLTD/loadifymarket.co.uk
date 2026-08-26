@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handler } from '../category-editorial-image';
 
+type HandlerArgs = Parameters<typeof handler>;
+type HandlerEvent = HandlerArgs[0];
+type HandlerContext = HandlerArgs[1];
+type HandlerCallback = HandlerArgs[2];
+
+const context = {} as HandlerContext;
+const callback: HandlerCallback = () => undefined;
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -17,11 +25,11 @@ const event = (query: Record<string, string> = {}, method = 'GET') =>
     path: '/.netlify/functions/category-editorial-image',
     rawQuery: '',
     rawUrl: 'https://loadifymarket.co.uk/.netlify/functions/category-editorial-image',
-  }) as any;
+  }) as HandlerEvent;
 
 describe('category-editorial-image', () => {
   it('rejects non-GET requests', async () => {
-    const result = await handler(event({}, 'POST'), {} as any, () => undefined);
+    const result = await handler(event({}, 'POST'), context, callback);
     expect(result).toMatchObject({ statusCode: 405 });
   });
 
@@ -29,8 +37,8 @@ describe('category-editorial-image', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const result = await handler(
       event({ kind: 'download', id: 'https://evil.example/image.jpg' }),
-      {} as any,
-      () => undefined,
+      context,
+      callback,
     );
     expect(result).toMatchObject({ statusCode: 400 });
     expect(fetchSpy).not.toHaveBeenCalled();
@@ -41,13 +49,13 @@ describe('category-editorial-image', () => {
       ok: true,
       url: 'https://images.unsplash.com/photo-test',
       arrayBuffer: async () => new Uint8Array([1, 2, 3, 4]).buffer,
-    } as any;
+    } as Response;
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(upstream);
 
     const result = await handler(
       event({ kind: 'image', id: 'photo-1637414165749-9b3cd88b8271' }),
-      {} as any,
-      () => undefined,
+      context,
+      callback,
     );
 
     expect(result).toMatchObject({
@@ -64,13 +72,13 @@ describe('category-editorial-image', () => {
       ok: true,
       url: 'https://cdn.evil.example/image.jpg',
       arrayBuffer: async () => new Uint8Array([1]).buffer,
-    } as any;
+    } as Response;
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(upstream);
 
     const result = await handler(
       event({ kind: 'download', id: 'EZKoA4cyUyo' }),
-      {} as any,
-      () => undefined,
+      context,
+      callback,
     );
     expect(result).toMatchObject({ statusCode: 502 });
   });
@@ -80,13 +88,13 @@ describe('category-editorial-image', () => {
       ok: true,
       url: 'https://images.unsplash.com/photo-test',
       arrayBuffer: async () => new Uint8Array(8 * 1024 * 1024 + 1).buffer,
-    } as any;
+    } as Response;
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(upstream);
 
     const result = await handler(
       event({ kind: 'download', id: 'EZKoA4cyUyo' }),
-      {} as any,
-      () => undefined,
+      context,
+      callback,
     );
     expect(result).toMatchObject({ statusCode: 502 });
   });
