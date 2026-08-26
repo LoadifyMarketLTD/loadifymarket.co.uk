@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -55,6 +55,24 @@ describe('release-hardening security contracts', () => {
     expect(sql).toContain('server-only rate-limit tables still expose client CRUD privileges');
   });
 
+  it('removes direct client execution from product-view analytics RPC', () => {
+    const sql = read('supabase/675_track_product_view_rpc_privilege_closure.sql');
+
+    expect(sql).toContain(
+      'REVOKE ALL ON FUNCTION public.track_product_view(uuid, uuid, text)',
+    );
+    expect(sql).toContain('FROM PUBLIC, anon, authenticated');
+    expect(sql).toContain(
+      'GRANT EXECUTE ON FUNCTION public.track_product_view(uuid, uuid, text)',
+    );
+    expect(sql).toContain('TO service_role');
+    expect(sql).toContain("'anon'");
+    expect(sql).toContain("'authenticated'");
+    expect(sql).toContain(
+      "'public.track_product_view(uuid,uuid,text)'",
+    );
+    expect(sql).toContain("'EXECUTE'");
+  });
   it('keeps the historical payment-session hardening replay-idempotent and admin-only', () => {
     const baseRls = read('supabase/10_rls_policies.sql');
     const correctiveRls = read('supabase/80_fix_rls_security_gaps.sql');
