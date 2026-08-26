@@ -80,9 +80,9 @@ begin
   where ps.key = 'feature_flags';
 
   if not found
-     or jsonb_typeof(v_feature_flags) <> 'object'
-     or jsonb_typeof(v_feature_flags->'buyerRegistration') <> 'boolean'
-     or jsonb_typeof(v_feature_flags->'sellerRegistration') <> 'boolean' then
+     or coalesce(jsonb_typeof(v_feature_flags), '') <> 'object'
+     or coalesce(jsonb_typeof(v_feature_flags->'buyerRegistration'), '') <> 'boolean'
+     or coalesce(jsonb_typeof(v_feature_flags->'sellerRegistration'), '') <> 'boolean' then
     return jsonb_build_object(
       'error',
       jsonb_build_object(

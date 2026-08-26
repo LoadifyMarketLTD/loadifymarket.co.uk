@@ -116,12 +116,15 @@ describe("Before User Created signup-intent hook contract", () => {
 
   it("fails closed when registration availability cannot be trusted", () => {
     expect(sql).toContain("public.platform_settings");
+    expect(sql).toContain(
+      "coalesce(jsonb_typeof(v_feature_flags), '') <> 'object'",
+    );
     expect(sql).toContain("ps.key = 'feature_flags'");
     expect(sql).toContain(
-      "jsonb_typeof(v_feature_flags->'buyerRegistration') <> 'boolean'",
+      "coalesce(jsonb_typeof(v_feature_flags->'buyerRegistration'), '') <> 'boolean'",
     );
     expect(sql).toContain(
-      "jsonb_typeof(v_feature_flags->'sellerRegistration') <> 'boolean'",
+      "coalesce(jsonb_typeof(v_feature_flags->'sellerRegistration'), '') <> 'boolean'",
     );
     expect(sql).toContain(
       "registration availability could not be verified",
