@@ -176,6 +176,7 @@ const Signup = () => {
           options: {
             data: {
               intent_id: intentPayload.intentId,
+          newsletter: form.newsletter,
             },
             emailRedirectTo,
           },
