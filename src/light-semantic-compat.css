@@ -41,17 +41,17 @@
 }
 
 :root.market-light-root body:not(:has(#login-email))
-  :not(header):not(header *):not(footer):not(footer *)h1.text-white,
+  h1.text-white:not(header):not(header *):not(footer):not(footer *),
 :root.market-light-root body:not(:has(#login-email))
-  :not(header):not(header *):not(footer):not(footer *)h2.text-white,
+  h2.text-white:not(header):not(header *):not(footer):not(footer *),
 :root.market-light-root body:not(:has(#login-email))
-  :not(header):not(header *):not(footer):not(footer *)h3.text-white,
+  h3.text-white:not(header):not(header *):not(footer):not(footer *),
 :root.market-light-root body:not(:has(#login-email))
-  :not(header):not(header *):not(footer):not(footer *)h4.text-white,
+  h4.text-white:not(header):not(header *):not(footer):not(footer *),
 :root.market-light-root body:not(:has(#login-email))
-  :not(header):not(header *):not(footer):not(footer *)p.text-white,
+  p.text-white:not(header):not(header *):not(footer):not(footer *),
 :root.market-light-root body:not(:has(#login-email))
-  :not(header):not(header *):not(footer):not(footer *)td .text-white {
+  td:not(header):not(header *):not(footer):not(footer *) .text-white {
   color: #0A234F !important;
 }
 
