@@ -1,0 +1,122 @@
+import fs from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+
+const root = process.cwd();
+
+const numericPath = path.join(
+  root,
+  "supabase",
+  "678_auth_before_user_created_hook.sql",
+);
+
+const timestampedPath = path.join(
+  root,
+  "supabase",
+  "migrations",
+  "20260826070000_auth_before_user_created_hook.sql",
+);
+
+const sql = fs.readFileSync(numericPath, "utf8");
+const timestampedSql = fs.readFileSync(timestampedPath, "utf8");
+
+describe("Before User Created signup-intent hook contract", () => {
+  it("keeps the numeric and timestamped migration copies identical", () => {
+    expect(timestampedSql).toBe(sql);
+  });
+
+  it("uses the official Postgres Auth hook function shape", () => {
+    expect(sql).toContain(
+      "public.before_user_created_validate_signup_intent(event jsonb)",
+    );
+    expect(sql).toContain("returns jsonb");
+    expect(sql).toContain("security definer");
+    expect(sql).toContain("set search_path = ''");
+  });
+
+  it("grants execution only to supabase_auth_admin", () => {
+    expect(sql).toContain("to supabase_auth_admin");
+    expect(sql).toContain(
+      "from public, anon, authenticated, service_role",
+    );
+
+    expect(sql).toContain(
+      "'supabase_auth_admin must execute before_user_created_validate_signup_intent'",
+    );
+  });
+
+  it("does not expose the private schema to clients", () => {
+    expect(sql).toContain(
+      "has_schema_privilege('anon', 'private', 'USAGE')",
+    );
+    expect(sql).toContain(
+      "has_schema_privilege('authenticated', 'private', 'USAGE')",
+    );
+
+    expect(sql).not.toMatch(
+      /grant\s+usage\s+on\s+schema\s+private\s+to\s+(anon|authenticated)/i,
+    );
+  });
+
+  it("rejects client-controlled role metadata", () => {
+    expect(sql).toContain("v_user_metadata ? 'role'");
+    expect(sql).toContain("v_app_metadata ? 'role'");
+    expect(sql).toContain("client role metadata is forbidden");
+  });
+
+  it("allows only supported fresh OAuth providers without an intent", () => {
+    expect(sql).toContain("v_provider in ('google', 'facebook')");
+    expect(sql).toContain("unsupported auth provider");
+  });
+
+  it("requires an intent for email signup", () => {
+    expect(sql).toContain("v_provider <> 'email'");
+    expect(sql).toContain("v_user_metadata->>'intent_id'");
+    expect(sql).toContain("signup intent is required");
+    expect(sql).toContain("signup intent not found");
+  });
+
+  it("validates single-use and expiry state", () => {
+    expect(sql).toContain("v_intent.consumed_at is not null");
+    expect(sql).toContain("signup intent already consumed");
+    expect(sql).toContain("v_intent.expires_at <= now()");
+    expect(sql).toContain("signup intent expired");
+  });
+
+  it("binds the intent to the normalized email", () => {
+    expect(sql).toContain("lower(trim(v_intent.email)) <> v_email");
+    expect(sql).toContain("signup intent email mismatch");
+  });
+
+  it("accepts only Buyer or Seller signup intents", () => {
+    expect(sql).toContain(
+      "v_intent.requested_role not in ('buyer', 'seller')",
+    );
+    expect(sql).toContain("unsupported signup role");
+  });
+
+  it("validates seller type invariants", () => {
+    expect(sql).toContain(
+      "('individual', 'sole_trader', 'company')",
+    );
+    expect(sql).toContain("seller signup intent is incomplete");
+    expect(sql).toContain("buyer signup intent is invalid");
+  });
+
+  it("does not consume the intent in the before-user-created hook", () => {
+    expect(sql).not.toMatch(
+      /update\s+private\.signup_intents[\s\S]*set\s+consumed_at/i,
+    );
+  });
+
+  it("contains no fail-open catch-all exception path", () => {
+    expect(sql).not.toContain("EXCEPTION WHEN OTHERS");
+    expect(sql).not.toContain("RAISE WARNING");
+  });
+
+  it("does not activate hosted Auth hook configuration in SQL", () => {
+    expect(sql).not.toContain("hook_uri");
+    expect(sql).not.toContain("hook_enabled");
+    expect(sql).not.toContain("pg_net");
+  });
+});
