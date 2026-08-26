@@ -1,4 +1,4 @@
-﻿-- 677_auth_signup_intent_consumption.sql
+-- 677_auth_signup_intent_consumption.sql
 -- Fail-closed Auth identity provisioning.
 --
 -- EMAIL/PASSWORD PUBLIC SIGNUP
@@ -6,8 +6,8 @@
 --   Buyer/Seller relationship is derived only from private.signup_intents.
 --
 -- OAUTH
---   Google/Facebook first-time identities are provisioned Buyer-only.
---   OAuth can never self-provision Seller or Admin.
+--   Generic Google/Facebook sign-in cannot create a new Loadify account.
+--   Fresh social registration requires dedicated registration authorization.
 --
 -- UNKNOWN PROVIDERS
 --   Fail closed.
@@ -52,52 +52,13 @@ BEGIN
   -- -------------------------------------------------------------------------
   -- OAuth identity creation.
   --
-  -- Google/Facebook identities are Buyer-only. Seller activation, if desired
-  -- later, must pass through the canonical authenticated Seller activation
-  -- boundary rather than OAuth metadata.
+  -- Generic Google/Facebook sign-in may authenticate an EXISTING identity,
+  -- but it may not create a new Loadify account. Fresh social registration
+  -- must first pass through the dedicated Buyer/Seller registration boundary.
   -- -------------------------------------------------------------------------
   IF v_provider IN ('google', 'facebook') THEN
-
-    v_first_name := NULLIF(
-      btrim(
-        COALESCE(
-          NEW.raw_user_meta_data ->> 'given_name',
-          NEW.raw_user_meta_data ->> 'first_name',
-          ''
-        )
-      ),
-      ''
-    );
-
-    v_last_name := NULLIF(
-      btrim(
-        COALESCE(
-          NEW.raw_user_meta_data ->> 'family_name',
-          NEW.raw_user_meta_data ->> 'last_name',
-          ''
-        )
-      ),
-      ''
-    );
-
-    INSERT INTO public.users (
-      id,
-      email,
-      "firstName",
-      "lastName",
-      role,
-      "isEmailVerified"
-    )
-    VALUES (
-      NEW.id,
-      v_email,
-      v_first_name,
-      v_last_name,
-      'buyer',
-      (NEW.email_confirmed_at IS NOT NULL)
-    );
-
-    RETURN NEW;
+    RAISE EXCEPTION
+      'signup rejected: social signup requires registration authorization';
   END IF;
 
   -- -------------------------------------------------------------------------

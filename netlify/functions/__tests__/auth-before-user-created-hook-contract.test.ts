@@ -64,8 +64,11 @@ describe("Before User Created signup-intent hook contract", () => {
     expect(sql).toContain("client role metadata is forbidden");
   });
 
-  it("allows only supported fresh OAuth providers without an intent", () => {
+  it("rejects fresh OAuth creation from generic sign-in", () => {
     expect(sql).toContain("v_provider in ('google', 'facebook')");
+    expect(sql).toContain(
+      "social signup requires registration authorization",
+    );
     expect(sql).toContain("unsupported auth provider");
   });
 
@@ -131,12 +134,21 @@ describe("Before User Created signup-intent hook contract", () => {
     );
   });
 
-  it("applies Buyer registration policy to fresh OAuth creation", () => {
+  it("does not default fresh OAuth creation to Buyer", () => {
     expect(sql).toContain("v_provider in ('google', 'facebook')");
-    expect(sql).toContain("if not v_buyer_registration then");
     expect(sql).toContain(
+      "social signup requires registration authorization",
+    );
+
+    const oauthSection =
+      sql.split("if v_provider in ('google', 'facebook') then")[1]
+        ?.split("if v_provider <> 'email' then")[0] ?? "";
+
+    expect(oauthSection).not.toContain("v_buyer_registration");
+    expect(oauthSection).not.toContain(
       "buyer registration is temporarily disabled",
     );
+    expect(oauthSection).not.toContain("return '{}'::jsonb");
   });
 
   it("rechecks current Buyer and Seller policy after intent creation", () => {

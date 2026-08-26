@@ -147,19 +147,24 @@ describe('Auth signup intent SQL contract', () => {
     );
   });
 
-  it('provisions supported OAuth identities Buyer-only', () => {
+  it('rejects fresh Google/Facebook identities from generic sign-in', () => {
     expect(migration677).toContain(
       "v_provider IN ('google', 'facebook')",
+    );
+
+    expect(migration677).toContain(
+      'signup rejected: social signup requires registration authorization',
     );
 
     const oauthSection =
       migration677.split(
         "IF v_provider IN ('google', 'facebook') THEN",
       )[1]?.split(
-        /-- -------------------------------------------------------------------------\r?\n[ ]{2}-- Public email\/password signup\./,
+        "IF v_provider <> 'email' THEN",
       )[0] ?? '';
 
-    expect(oauthSection).toContain("'buyer'");
+    expect(oauthSection).not.toContain('INSERT INTO public.users');
+    expect(oauthSection).not.toContain("'buyer'");
     expect(oauthSection).not.toContain("'seller'");
     expect(oauthSection).not.toContain("'admin'");
   });

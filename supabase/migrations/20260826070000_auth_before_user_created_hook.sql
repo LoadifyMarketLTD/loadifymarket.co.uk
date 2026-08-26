@@ -10,7 +10,7 @@
 --   * It does NOT activate/configure the hosted Auth hook.
 --   * Email signup intents are validated here but NOT consumed here.
 --   * Consumption remains atomic in handle_new_auth_user() migration 677.
---   * OAuth Google/Facebook account creation remains Buyer-only downstream.
+--   * Fresh Google/Facebook creation requires dedicated registration authorization.
 --   * Client-supplied role metadata is forbidden.
 
 create or replace function public.before_user_created_validate_signup_intent(event jsonb)
@@ -112,22 +112,19 @@ begin
     );
   end if;
 
-  -- Fresh social identities supported by Loadify remain Buyer-only.
-  -- Seller access is added later through the canonical activation path.
+  -- Generic social sign-in remains valid for EXISTING identities.
+  -- Fresh Google/Facebook account creation is not allowed through
+  -- the generic sign-in path. It must use dedicated Buyer/Seller
+  -- social-registration authorization.
   if v_provider in ('google', 'facebook') then
-    if not v_buyer_registration then
-      return jsonb_build_object(
-        'error',
-        jsonb_build_object(
-          'http_code', 403,
-          'message', 'buyer registration is temporarily disabled'
-        )
-      );
-    end if;
-
-    return '{}'::jsonb;
+    return jsonb_build_object(
+      'error',
+      jsonb_build_object(
+        'http_code', 403,
+        'message', 'social signup requires registration authorization'
+      )
+    );
   end if;
-
   -- Public email/password signup must be backed by a short-lived
   -- server-created signup intent.
   if v_provider <> 'email' then
