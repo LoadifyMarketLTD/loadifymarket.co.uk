@@ -20,7 +20,13 @@ describe('Stage 4 Buyer onboarding alignment contract', () => {
   it('keeps Trade Account as an optional Buyer path but still requires email confirmation', () => {
     const trade = source('src/pages/pixel-perfect/TradeAccount.tsx');
 
-    expect(trade).toContain('role: "buyer" as const');
+    expect(trade).toContain('fetch("/.netlify/functions/register-intent"');
+    expect(trade).toContain('requestedRole: "buyer"');
+    expect(trade).toContain('supabase.auth.signUp');
+    expect(trade).toContain('intent_id: intentPayload.intentId');
+    expect(trade).toContain('newsletter: form.newsletter');
+    expect(trade).not.toContain('fetch("/.netlify/functions/register",');
+    expect(trade).not.toContain('role: "buyer" as const');
     expect(trade).toContain('navigate("/login?registered=1"');
     expect(trade).toContain(
       'Check your email to confirm your address, then sign in to Buyer Space.',

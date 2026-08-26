@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCategories } from "@/hooks/useCategories";
+import { supabase } from "@/lib/supabase";
 import logo from "@/assets/loadify-logo.svg";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -199,39 +200,71 @@ export default function TradeAccount() {
 
     setLoading(true);
     try {
-      const body = {
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        role: "buyer" as const,
-        companyName: form.companyName.trim() || undefined,
-        phone: form.phone.trim(),
-        vatNumber: form.vatNumber.trim() || undefined,
-        customerType: form.customerType || undefined,
-        areasOfInterest: form.areasOfInterest || undefined,
-        businessAddress: (form.streetAddress || form.city || form.postcode)
-          ? {
-              line1: form.streetAddress.trim(),
-              city: form.city.trim(),
-              postcode: form.postcode.trim(),
-              country: form.country.trim(),
-            }
-          : undefined,
-      };
-
-      const res = await fetch("/.netlify/functions/register", {
+      const intentResponse = await fetch("/.netlify/functions/register-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          requestedRole: "buyer",
+          companyName: form.companyName.trim() || undefined,
+          phone: form.phone.trim(),
+          vatNumber: form.vatNumber.trim() || undefined,
+          customerType: form.customerType || undefined,
+          businessAddress: (form.streetAddress || form.city || form.postcode)
+            ? {
+                line1: form.streetAddress.trim(),
+                city: form.city.trim(),
+                postcode: form.postcode.trim(),
+                country: form.country.trim(),
+              }
+            : undefined,
+        }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Registration failed");
+
+      const intentPayload = (await intentResponse.json().catch(() => ({}))) as {
+        intentId?: string;
+        expiresAt?: string;
+        error?: string;
+      };
+
+      if (!intentResponse.ok || !intentPayload.intentId) {
+        throw new Error(
+          intentPayload.error ||
+            "Registration could not be initialized. Please try again.",
+        );
+      }
+
+      const { data: signupData, error: signupError } =
+        await supabase.auth.signUp({
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+          options: {
+            data: {
+              intent_id: intentPayload.intentId,
+              newsletter: form.newsletter,
+            },
+            emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
+          },
+        });
+
+      if (signupError) {
+        throw new Error(signupError.message || "Registration failed");
+      }
+
+      if (!signupData.user) {
+        throw new Error(
+          "Registration could not be completed. Please try again.",
+        );
+      }
 
       toast({
         title: "Trade account created",
-        description: "Check your email to confirm your address, then sign in to Buyer Space.",
+        description:
+          "Check your email to confirm your address, then sign in to Buyer Space.",
       });
+
       navigate("/login?registered=1", { replace: true });
     } catch (err) {
       toast({
