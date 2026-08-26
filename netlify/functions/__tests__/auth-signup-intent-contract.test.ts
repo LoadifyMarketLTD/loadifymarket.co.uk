@@ -1,4 +1,4 @@
-﻿import fs from 'node:fs';
+import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -156,7 +156,7 @@ describe('Auth signup intent SQL contract', () => {
       migration677.split(
         "IF v_provider IN ('google', 'facebook') THEN",
       )[1]?.split(
-        '-- -------------------------------------------------------------------------\n  -- Public email/password signup.',
+        /-- -------------------------------------------------------------------------\r?\n[ ]{2}-- Public email\/password signup\./,
       )[0] ?? '';
 
     expect(oauthSection).toContain("'buyer'");
