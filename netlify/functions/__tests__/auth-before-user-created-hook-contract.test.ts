@@ -114,6 +114,42 @@ describe("Before User Created signup-intent hook contract", () => {
     expect(sql).not.toContain("RAISE WARNING");
   });
 
+  it("fails closed when registration availability cannot be trusted", () => {
+    expect(sql).toContain("public.platform_settings");
+    expect(sql).toContain("ps.key = 'feature_flags'");
+    expect(sql).toContain(
+      "jsonb_typeof(v_feature_flags->'buyerRegistration') <> 'boolean'",
+    );
+    expect(sql).toContain(
+      "jsonb_typeof(v_feature_flags->'sellerRegistration') <> 'boolean'",
+    );
+    expect(sql).toContain(
+      "registration availability could not be verified",
+    );
+  });
+
+  it("applies Buyer registration policy to fresh OAuth creation", () => {
+    expect(sql).toContain("v_provider in ('google', 'facebook')");
+    expect(sql).toContain("if not v_buyer_registration then");
+    expect(sql).toContain(
+      "buyer registration is temporarily disabled",
+    );
+  });
+
+  it("rechecks current Buyer and Seller policy after intent creation", () => {
+    expect(sql).toContain(
+      "v_intent.requested_role = 'buyer'",
+    );
+    expect(sql).toContain(
+      "v_intent.requested_role = 'seller'",
+    );
+    expect(sql).toContain("not v_buyer_registration");
+    expect(sql).toContain("not v_seller_registration");
+    expect(sql).toContain(
+      "seller registration is temporarily disabled",
+    );
+  });
+
   it("does not activate hosted Auth hook configuration in SQL", () => {
     expect(sql).not.toContain("hook_uri");
     expect(sql).not.toContain("hook_enabled");
