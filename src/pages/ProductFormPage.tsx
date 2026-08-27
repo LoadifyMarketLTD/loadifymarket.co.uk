@@ -396,6 +396,10 @@ export default function ProductFormPage() {
         isActive: publishMode,
       };
 
+      let recoveredTaxDraftId: string | null = null;
+      const taxDraftMessage =
+        'Product saved as draft because your seller tax setup is not yet ready for live publication. Complete or refresh your tax setup before publishing it live.';
+
       if (id && hasActiveOrders && !isAdmin) {
         // Locked product — only allow non-critical fields via update-product
         const { description, images, specifications, weight, dimensions, palletInfo } = productData;
@@ -424,52 +428,148 @@ export default function ProductFormPage() {
         );
       } else if (id) {
         // Full update via update-product
+        const updateBody = {
+          id,
+          ...productData,
+          shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
+          dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
+        };
+
         const res = await authorizedFetch('/.netlify/functions/update-product', {
           method: 'POST',
-          body: JSON.stringify({
-            id,
-            ...productData,
-            shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
-          }),
+          body: JSON.stringify(updateBody),
         });
+
         if (!res.ok) {
           const payload = await extractUpdateError(res);
-          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+
+          // Keep the live tax gate fail-closed, but never discard seller work.
+          // A tax-blocked publication is retried exactly once as an inactive draft.
+          if (
+            publishMode &&
+            res.status === 409 &&
+            payload.code === 'TAX_EVIDENCE_REQUIRED'
+          ) {
+            const draftRes = await authorizedFetch('/.netlify/functions/update-product', {
+              method: 'POST',
+              body: JSON.stringify({ ...updateBody, isActive: false }),
+            });
+
+            if (!draftRes.ok) {
+              const draftPayload = await extractUpdateError(draftRes);
+              throw new Error(
+                draftPayload.error ??
+                payload.error ??
+                `Server returned ${draftRes.status}`
+              );
+            }
+
+            recoveredTaxDraftId = id;
+            setPublishedProductId(null);
+            setSuccessMessage(taxDraftMessage);
+          } else {
+            throw new Error(payload.error ?? `Server returned ${res.status}`);
+          }
+        } else {
+          setSuccessMessage(
+            publishMode
+              ? 'Product updated and published.'
+              : 'Draft saved successfully.'
+          );
         }
-        setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
       } else {
         // Create new product via create-product (backend sets isApproved)
+        const createBody = {
+          ...productData,
+          listingContext,
+          shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
+          dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
+        };
+
         const res = await authorizedFetch('/.netlify/functions/create-product', {
           method: 'POST',
-          body: JSON.stringify({
-            ...productData,
-            listingContext,
-            shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
-          }),
+          body: JSON.stringify(createBody),
         });
-        if (!res.ok) {
-          const payload = await res.json().catch(() => ({}));
-          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
-        }
-        const created = await res.json() as { id: string; isApproved: boolean };
 
-        setSuccessMessage(
-          publishMode
-            ? (created.isApproved
-                ? 'Product created and is now live!'
-                : 'Product created! It will be visible after admin approval.')
-            : 'Draft saved. You can continue editing and publish when ready.'
-        );
-        if (publishMode && created.id) {
-          setPublishedProductId(created.id);
-          trackPublishListing(created.id, formData.title);
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({})) as {
+            error?: string;
+            code?: string;
+          };
+
+          // P1 currently supports only a narrow class of live tax evidence.
+          // Preserve the listing as an inactive draft instead of losing the form.
+          if (
+            publishMode &&
+            res.status === 409 &&
+            payload.code === 'TAX_EVIDENCE_REQUIRED'
+          ) {
+            const draftRes = await authorizedFetch('/.netlify/functions/create-product', {
+              method: 'POST',
+              body: JSON.stringify({ ...createBody, isActive: false }),
+            });
+
+            const draftPayload = await draftRes.json().catch(() => ({})) as {
+              id?: string;
+              isActive?: boolean;
+              error?: string;
+            };
+
+            if (!draftRes.ok) {
+              throw new Error(
+                draftPayload.error ??
+                payload.error ??
+                `Server returned ${draftRes.status}`
+              );
+            }
+
+            if (!draftPayload.id) {
+              throw new Error('Draft save succeeded without a product id.');
+            }
+
+            recoveredTaxDraftId = draftPayload.id;
+            setPublishedProductId(null);
+            setSuccessMessage(taxDraftMessage);
+          } else {
+            throw new Error(payload.error ?? `Server returned ${res.status}`);
+          }
+        } else {
+          const created = await res.json() as {
+            id: string;
+            isApproved: boolean;
+            isActive?: boolean;
+          };
+
+          const createdAsDraft =
+            publishMode && created.isActive === false;
+
+          if (createdAsDraft) {
+            recoveredTaxDraftId = created.id;
+            setPublishedProductId(null);
+            setSuccessMessage(taxDraftMessage);
+          } else {
+            setSuccessMessage(
+              publishMode
+                ? (created.isApproved
+                    ? 'Product created and is now live!'
+                    : 'Product created! It will be visible after admin approval.')
+                : 'Draft saved. You can continue editing and publish when ready.'
+            );
+
+            if (publishMode && created.id) {
+              setPublishedProductId(created.id);
+              trackPublishListing(created.id, formData.title);
+            }
+          }
         }
       }
 
-      // Brief success feedback, then navigate back
-      setTimeout(() => navigate(publishMode ? '/seller' : '/onboarding'), SUCCESS_REDIRECT_DELAY_MS);
+      // Brief success feedback, then navigate to the correct result.
+      const nextRoute = recoveredTaxDraftId
+        ? `/seller/products/${recoveredTaxDraftId}/edit`
+        : (publishMode ? '/seller' : '/onboarding');
+
+      setTimeout(() => navigate(nextRoute), SUCCESS_REDIRECT_DELAY_MS);
     } catch (error) {
       console.error('Error saving product:', error);
       const msg =

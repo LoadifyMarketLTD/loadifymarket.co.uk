@@ -6,7 +6,7 @@
  * Required fields: at least 1 photo, title, price.
  * Optional (collapsible "More details"): description, category, condition.
  *
- * Desktop product form (/seller/products/new) is untouched.
+ * Desktop product form has an equivalent tax-gate draft recovery path.
  * Backend: calls /.netlify/functions/create-product unchanged.
  * Defaults: listingContext=product, stockQuantity=1, seller-selected shipping methods.
  */
