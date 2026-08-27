@@ -10,7 +10,8 @@
 --   * It does NOT activate/configure the hosted Auth hook.
 --   * Email signup intents are validated here but NOT consumed here.
 --   * Consumption remains atomic in handle_new_auth_user() migration 677.
---   * Fresh Google/Facebook creation requires dedicated registration authorization.
+--   * Fresh Google creation requires provider-bound registration authorization.
+--   * Fresh Facebook creation remains fail-closed.
 --   * Client-supplied role metadata is forbidden.
 
 create or replace function public.before_user_created_validate_signup_intent(event jsonb)
@@ -26,6 +27,7 @@ declare
 
   v_email text;
   v_provider text;
+  v_provider_subject text;
   v_intent_id_text text;
   v_intent_id uuid;
 
@@ -98,9 +100,6 @@ begin
   v_seller_registration :=
     (v_feature_flags->>'sellerRegistration')::boolean;
 
-  -- Role selection is server-governed. Neither user_metadata nor
-  -- app_metadata may be used by a public client to authorize Buyer,
-  -- Seller or Admin access.
   if v_user_metadata ? 'role'
      or v_app_metadata ? 'role' then
     return jsonb_build_object(
@@ -112,57 +111,91 @@ begin
     );
   end if;
 
-  -- Generic social sign-in remains valid for EXISTING identities.
-  -- Fresh Google/Facebook account creation is not allowed through
-  -- the generic sign-in path. It must use dedicated Buyer/Seller
-  -- social-registration authorization.
-  if v_provider in ('google', 'facebook') then
+  if v_provider = 'google' then
+    v_provider_subject :=
+      btrim(coalesce(v_user_metadata->>'sub', ''));
+
+    if v_provider_subject = '' then
+      return jsonb_build_object(
+        'error',
+        jsonb_build_object(
+          'http_code', 403,
+          'message', 'verified Google subject is missing'
+        )
+      );
+    end if;
+
+    select si.*
+    into v_intent
+    from private.signup_intents as si
+    where si.auth_provider = 'google'
+      and si.provider_subject = v_provider_subject
+      and lower(trim(si.email)) = v_email
+      and si.consumed_at is null
+      and si.expires_at > now()
+    order by si.created_at desc
+    limit 1;
+
+    if not found then
+      return jsonb_build_object(
+        'error',
+        jsonb_build_object(
+          'http_code', 403,
+          'message', 'Google registration authorization not found'
+        )
+      );
+    end if;
+
+    v_intent_id := v_intent.id;
+
+  elsif v_provider = 'facebook' then
     return jsonb_build_object(
       'error',
       jsonb_build_object(
         'http_code', 403,
-        'message', 'social signup requires registration authorization'
+        'message', 'Facebook signup requires registration authorization'
       )
     );
-  end if;
-  -- Public email/password signup must be backed by a short-lived
-  -- server-created signup intent.
-  if v_provider <> 'email' then
+
+  elsif v_provider = 'email' then
+    v_intent_id_text := trim(coalesce(v_user_metadata->>'intent_id', ''));
+
+    if v_intent_id_text = ''
+       or v_intent_id_text !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' then
+      return jsonb_build_object(
+        'error',
+        jsonb_build_object(
+          'http_code', 400,
+          'message', 'signup intent is required'
+        )
+      );
+    end if;
+
+    v_intent_id := v_intent_id_text::uuid;
+
+    select si.*
+    into v_intent
+    from private.signup_intents as si
+    where si.id = v_intent_id
+      and si.auth_provider = 'email'
+      and si.provider_subject is null;
+
+    if not found then
+      return jsonb_build_object(
+        'error',
+        jsonb_build_object(
+          'http_code', 400,
+          'message', 'signup intent not found'
+        )
+      );
+    end if;
+
+  else
     return jsonb_build_object(
       'error',
       jsonb_build_object(
         'http_code', 403,
         'message', 'unsupported auth provider'
-      )
-    );
-  end if;
-
-  v_intent_id_text := trim(coalesce(v_user_metadata->>'intent_id', ''));
-
-  if v_intent_id_text = ''
-     or v_intent_id_text !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' then
-    return jsonb_build_object(
-      'error',
-      jsonb_build_object(
-        'http_code', 400,
-        'message', 'signup intent is required'
-      )
-    );
-  end if;
-
-  v_intent_id := v_intent_id_text::uuid;
-
-  select si.*
-  into v_intent
-  from private.signup_intents as si
-  where si.id = v_intent_id;
-
-  if not found then
-    return jsonb_build_object(
-      'error',
-      jsonb_build_object(
-        'http_code', 400,
-        'message', 'signup intent not found'
       )
     );
   end if;
@@ -251,9 +284,6 @@ begin
     );
   end if;
 
-  -- Validation only.
-  -- DO NOT mark consumed_at here. The AFTER INSERT provisioning trigger
-  -- owns atomic intent consumption in the auth.users insert transaction.
   return '{}'::jsonb;
 end;
 $function$;
