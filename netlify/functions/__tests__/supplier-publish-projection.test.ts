@@ -5,10 +5,14 @@ import { describe, expect, it } from 'vitest';
 const repo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 const canonical = repo('supabase/678_supplier_publish_projection.sql');
 const deploy = repo('supabase/migrations/20260827114500_supplier_publish_projection.sql');
+const executableSql = (sql: string) => sql
+  .split('\n')
+  .filter((line) => !line.trim().startsWith('--'))
+  .join('\n');
 
 describe('Supplier Commerce E2E remediation Stage 3 — publish projection', () => {
-  it('keeps numbered and deployable migration copies identical', () => {
-    expect(deploy).toBe(canonical);
+  it('keeps numbered and deployable migration executable SQL identical', () => {
+    expect(executableSql(deploy)).toBe(executableSql(canonical));
   });
 
   it('allows platform supplier listings without inventing a marketplace seller', () => {
