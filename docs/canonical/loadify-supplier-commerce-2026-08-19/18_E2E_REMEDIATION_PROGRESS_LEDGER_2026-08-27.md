@@ -53,8 +53,56 @@ Implemented:
 - supplier route snapshot is bound back to the Stage 1 public-product/canonical-product bridge;
 - historical paid commercial truth cannot be reconstructed after the fact.
 
+### Stage 3 — Supplier Publish + Buyer Listing Projection
+
+Status: **IMPLEMENTED IN BRANCH — VALIDATION PENDING**
+
+Files:
+- `supabase/678_supplier_publish_projection.sql`
+- `supabase/migrations/20260827114500_supplier_publish_projection.sql`
+- `netlify/functions/__tests__/supplier-publish-projection.test.ts`
+
+Implemented:
+- `public.products.sellerId` becomes nullable for Loadify-sale listings without inventing a marketplace seller;
+- explicit buyer-facing product `commercialMode` and supplier publication state/version;
+- existing marketplace RLS visibility preserved, plus an explicit buyer-visible `loadify_supplier_fulfilled` branch;
+- supplier-managed listings are server-managed and cannot be converted into marketplace seller listings;
+- one provider-neutral current projection per canonical product/variant;
+- append-only publication event evidence with idempotent event keys;
+- publish/refresh requires the canonical `publish` control plus current stock/price/economics readiness;
+- buyer-facing unit price is projected from the approved pricing snapshot, never raw supplier price;
+- new listings are bound to the Stage 1 canonical identity bridge;
+- hold/unpublish remains available as a safety action even while publish/global Supplier Commerce are OFF.
+
+No Supplier Commerce control was enabled and no Supplier Commerce production DDL was applied.
+
+### Stage 4 — Web + Mobile Checkout Consolidation
+
+Status: **IN PROGRESS — STAGE 4A IMPLEMENTED IN BRANCH**
+
+Stage 4A files:
+- `supabase/679_supplier_checkout_consolidation.sql`
+- `supabase/migrations/20260827120500_supplier_checkout_consolidation.sql`
+- `netlify/functions/_shared/supplierCheckout.ts`
+- `netlify/functions/__tests__/supplier-checkout-consolidation.test.ts`
+
+Stage 4A implemented:
+- repaired the existing Supplier Commerce checkout guard so `supplierRef` is propagated into the canonical control decision, which is required by controlled-pilot scope enforcement;
+- added one fail-closed checkout decision from buyer-facing `public.products` to the exact current supplier projection/offer/canonical product;
+- checkout decision requires active supplier publication, exact Stage 1 identity, canonical checkout control, fresh stock/price/economics evidence and known sufficient sellable quantity;
+- checkout rejects stale buyer listing pricing if the current approved pricing snapshot differs from the projected snapshot or public unit price;
+- returns route/evidence IDs required by reservation/payment stages without creating a reservation, payment or supplier side effect;
+- added a typed fail-closed server helper for web/mobile integration.
+
+Still required before Stage 4 can be marked complete:
+- version the payment-session commercial snapshot for `loadify_supplier_fulfilled` without weakening marketplace v1;
+- materialise supplier-fulfilled paid orders into the same `public.orders` / `public.order_items` truth with Stage 2 immutable snapshots;
+- integrate the decision into both `create-checkout.ts` and `create-payment-intent.ts`;
+- remove marketplace seller/Stripe Connect/tax assumptions from the supplier branch while preserving them unchanged for marketplace checkout;
+- coordinate the supplier branch with Stage 5 atomic reservation and shipping runtime before any payment can be created.
+
 ## Next execution target
 
-**Stage 3 — Supplier Publish + Buyer Listing Projection.**
+**Stage 4B — supplier-fulfilled payment-session/order materialisation contract, then Stage 5 reservation/shipping/cancellation closure and web/mobile wiring.**
 
 Do not proceed to provider activation or Phase O pilot while Stages 1–10 are not fully validated and PASS.
