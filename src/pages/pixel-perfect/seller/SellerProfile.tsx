@@ -266,6 +266,26 @@ const SellerProfile = () => {
 
     setSaving(true);
     try {
+      const requestedTaxConfirmation = isStoredGbCountry(sellerCountry) && taxDeclarationConfirmed;
+
+      // P1 binds a seller declaration to server-only Stripe Connect tax-location
+      // evidence. Refresh that authoritative evidence before the seller profile
+      // write so an existing seller is not left permanently behind the cutover.
+      // This refresh is best-effort: profile editing remains available even when
+      // Stripe is incomplete, while the DB trigger continues to fail closed.
+      if (requestedTaxConfirmation) {
+        try {
+          const taxSyncRes = await authorizedFetch("/.netlify/functions/connect-status", {
+            method: "POST",
+          });
+          if (!taxSyncRes.ok) {
+            console.warn("SellerProfile: Stripe tax-location refresh was not successful", taxSyncRes.status);
+          }
+        } catch (taxSyncError) {
+          console.warn("SellerProfile: Stripe tax-location refresh failed", taxSyncError);
+        }
+      }
+
       const nameParts = form.contactName.trim().split(" ");
       const firstName = nameParts[0] ?? "";
       const lastName = nameParts.slice(1).join(" ");
@@ -289,7 +309,7 @@ const SellerProfile = () => {
             isVatRegistered,
             contactPhone: form.phone,
             country: sellerCountry,
-            taxDeclarationConfirmed: isStoredGbCountry(sellerCountry) ? taxDeclarationConfirmed : false,
+            taxDeclarationConfirmed: requestedTaxConfirmation,
             businessAddress: {
               address: form.address,
               city: form.city,
@@ -309,7 +329,33 @@ const SellerProfile = () => {
       if (usersRes.error) throw usersRes.error;
       if (sellerRes.error) throw sellerRes.error;
       if (storeRes.error) throw storeRes.error;
-      toast({ title: "Profile saved", description: "Your seller profile has been updated." });
+
+      // Read back the authoritative persisted result. Migration 615 may reject
+      // a requested declaration by resetting it to false if Stripe tax-location
+      // evidence is not ready. Never tell the seller it succeeded when it did not.
+      const persistedTaxRes = await supabase
+        .from("seller_profiles")
+        .select("taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt, taxCountry, taxPostcode, taxCountrySource, taxCountryCapturedAt")
+        .eq("userId", user.id)
+        .maybeSingle();
+
+      const persistedTaxConfirmed = Boolean(persistedTaxRes.data?.taxDeclarationConfirmed);
+      setTaxDeclarationConfirmed(persistedTaxConfirmed);
+
+      if (requestedTaxConfirmation && !persistedTaxConfirmed) {
+        toast({
+          title: "Profile saved — tax setup still required",
+          description: "Your profile was saved, but the tax declaration could not be activated because Stripe tax-location evidence is not ready. Complete or refresh Seller setup before publishing live.",
+          variant: "destructive",
+        });
+      } else if (isVatRegistered) {
+        toast({
+          title: "Profile saved",
+          description: "Your VAT status has been recorded. The current live checkout tax boundary does not yet support VAT-registered seller listings, but products can still be saved as drafts.",
+        });
+      } else {
+        toast({ title: "Profile saved", description: "Your seller profile has been updated." });
+      }
 
       // Re-evaluate activation using persisted DB data (no Stripe API call needed).
       // If stripeConnectStatus is already 'active' and the profile is now complete,
