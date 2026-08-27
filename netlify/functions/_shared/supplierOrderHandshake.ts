@@ -9,7 +9,7 @@ import type {
 import { adapterSupports } from './supplierAdapter';
 import { recordSupplierCommerceOperation } from './supplierCommerceControl';
 
-export const SUPPLIER_ORDER_HANDSHAKE_INTERFACE_VERSION = 1 as const;
+export const SUPPLIER_ORDER_HANDSHAKE_INTERFACE_VERSION = 2 as const;
 
 export interface SupplierHandshakePrepareInput {
   orderId: string;
@@ -20,7 +20,7 @@ export interface SupplierHandshakePrepareInput {
 
 export interface SupplierHandshakePrepared {
   eligible: true;
-  reason: 'supplier_order_handshake_ready';
+  reason: 'supplier_order_handshake_shipping_ready';
   handshakeId: string;
   orderId: string;
   fulfilmentLegId: string;
@@ -33,17 +33,20 @@ export interface SupplierHandshakePrepared {
   adapterVersion: string;
   quantity: number;
   destinationCountry: string;
+  shippingDecisionId: string;
+  shippingServiceRef: string;
+  shippingBindingFingerprint: string;
   idempotencyKey: string;
   correlationId: string;
   state: string;
   externalSupplierOrderRef?: string | null;
-  interfaceVersion: 1;
+  interfaceVersion: 2;
 }
 
 export interface SupplierHandshakeBlocked {
   eligible: false;
   reason: string;
-  interfaceVersion: 1;
+  interfaceVersion: number;
   [key: string]: unknown;
 }
 
@@ -63,13 +66,16 @@ function isPrepared(value: unknown): value is SupplierHandshakePrepared {
   if (!value || typeof value !== 'object') return false;
   const row = value as Record<string, unknown>;
   return row.eligible === true
-    && row.reason === 'supplier_order_handshake_ready'
+    && row.reason === 'supplier_order_handshake_shipping_ready'
     && typeof row.handshakeId === 'string'
     && typeof row.externalOfferRef === 'string'
     && typeof row.providerKey === 'string'
     && typeof row.adapterVersion === 'string'
     && typeof row.quantity === 'number'
     && typeof row.destinationCountry === 'string'
+    && typeof row.shippingDecisionId === 'string'
+    && typeof row.shippingServiceRef === 'string'
+    && typeof row.shippingBindingFingerprint === 'string'
     && typeof row.supplierKey === 'string'
     && typeof row.idempotencyKey === 'string'
     && typeof row.correlationId === 'string'
@@ -150,7 +156,7 @@ export async function submitPaidSupplierOrder(
   input: SupplierHandshakePrepareInput,
 ): Promise<SupplierHandshakeRuntimeResult> {
   const startedAt = new Date().toISOString();
-  const { data: rawPrepared, error: prepareError } = await client.rpc('server_prepare_supplier_order_handshake_v1', {
+  const { data: rawPrepared, error: prepareError } = await client.rpc('server_prepare_supplier_order_handshake_v2', {
     p_order_id: input.orderId,
     p_fulfilment_leg_id: input.fulfilmentLegId,
     p_idempotency_key: input.idempotencyKey,
@@ -166,7 +172,7 @@ export async function submitPaidSupplierOrder(
   const prepared = rawPrepared;
 
   if (
-    adapter.interfaceVersion !== SUPPLIER_ORDER_HANDSHAKE_INTERFACE_VERSION
+    adapter.interfaceVersion !== 1
     || adapter.providerKey !== prepared.providerKey
     || adapter.adapterVersion !== prepared.adapterVersion
     || !adapterSupports(adapter, 'order_submission')
@@ -201,6 +207,7 @@ export async function submitPaidSupplierOrder(
     result = await adapter.submitOrder(context, {
       externalOfferRef: prepared.externalOfferRef,
       quantity: prepared.quantity,
+      shippingServiceRef: prepared.shippingServiceRef,
       destinationCountry: prepared.destinationCountry,
     });
   } catch (error) {
