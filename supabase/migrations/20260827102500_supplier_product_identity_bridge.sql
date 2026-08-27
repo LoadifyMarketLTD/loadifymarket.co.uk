@@ -68,6 +68,25 @@ BEGIN
     RETURN jsonb_build_object('ok',false,'reason','invalid_supplier_product_listing_link','interfaceVersion',1);
   END IF;
 
+  -- Existing identity links are replayable even after the canonical product is
+  -- retired or customer order history exists. Identity history is immutable,
+  -- while creating a new link remains subject to current readiness checks.
+  SELECT * INTO v_existing
+    FROM private.supplier_product_listing_links
+   WHERE public_product_id=p_public_product_id;
+  IF FOUND THEN
+    IF v_existing.canonical_product_id<>p_canonical_product_id
+       OR v_existing.link_source<>v_source
+       OR v_existing.evidence<>v_evidence THEN
+      RAISE EXCEPTION 'supplier product listing identity collision';
+    END IF;
+    RETURN jsonb_build_object(
+      'ok',true,'reason','supplier_product_listing_link_replayed','linkId',v_existing.id,
+      'publicProductId',v_existing.public_product_id,'canonicalProductId',v_existing.canonical_product_id,
+      'interfaceVersion',1
+    );
+  END IF;
+
   SELECT * INTO v_public_product FROM public.products WHERE id=p_public_product_id;
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok',false,'reason','public_product_not_found','interfaceVersion',1);
@@ -87,28 +106,24 @@ BEGIN
     RETURN jsonb_build_object('ok',false,'reason','ordered_public_product_cannot_be_rebound','publicProductId',p_public_product_id,'interfaceVersion',1);
   END IF;
 
-  SELECT * INTO v_existing
-    FROM private.supplier_product_listing_links
-   WHERE public_product_id=p_public_product_id;
-  IF FOUND THEN
-    IF v_existing.canonical_product_id<>p_canonical_product_id
-       OR v_existing.link_source<>v_source
-       OR v_existing.evidence<>v_evidence THEN
-      RAISE EXCEPTION 'supplier product listing identity collision';
-    END IF;
-    RETURN jsonb_build_object(
-      'ok',true,'reason','supplier_product_listing_link_replayed','linkId',v_existing.id,
-      'publicProductId',v_existing.public_product_id,'canonicalProductId',v_existing.canonical_product_id,
-      'interfaceVersion',1
-    );
-  END IF;
-
   INSERT INTO private.supplier_product_listing_links(
     public_product_id,canonical_product_id,link_source,evidence
   ) VALUES(
     p_public_product_id,p_canonical_product_id,v_source,v_evidence
   )
+  ON CONFLICT(public_product_id) DO NOTHING
   RETURNING * INTO v_existing;
+
+  IF v_existing.id IS NULL THEN
+    SELECT * INTO v_existing
+      FROM private.supplier_product_listing_links
+     WHERE public_product_id=p_public_product_id;
+    IF NOT FOUND OR v_existing.canonical_product_id<>p_canonical_product_id
+       OR v_existing.link_source<>v_source
+       OR v_existing.evidence<>v_evidence THEN
+      RAISE EXCEPTION 'supplier product listing identity collision';
+    END IF;
+  END IF;
 
   RETURN jsonb_build_object(
     'ok',true,'reason','supplier_product_listing_link_created','linkId',v_existing.id,
