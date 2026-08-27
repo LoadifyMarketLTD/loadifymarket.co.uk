@@ -8,6 +8,7 @@ export type SupplierCommerceOperation =
   | 'checkout'
   | 'reservation'
   | 'supplier_order'
+  | 'cancellation'
   | 'tracking_ingest'
   | 'return_recovery'
   | 'stock_sync'
