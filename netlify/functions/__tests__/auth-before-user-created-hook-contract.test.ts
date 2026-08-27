@@ -36,23 +36,17 @@ describe("Before User Created signup-intent hook contract", () => {
 
   it("grants execution only to supabase_auth_admin", () => {
     expect(sql).toContain("to supabase_auth_admin");
-    expect(sql).toContain(
-      "from public, anon, authenticated, service_role",
-    );
-
+    expect(sql).toContain("from public, anon, authenticated, service_role");
     expect(sql).toContain(
       "'supabase_auth_admin must execute before_user_created_validate_signup_intent'",
     );
   });
 
   it("does not expose the private schema to clients", () => {
-    expect(sql).toContain(
-      "has_schema_privilege('anon', 'private', 'USAGE')",
-    );
+    expect(sql).toContain("has_schema_privilege('anon', 'private', 'USAGE')");
     expect(sql).toContain(
       "has_schema_privilege('authenticated', 'private', 'USAGE')",
     );
-
     expect(sql).not.toMatch(
       /grant\s+usage\s+on\s+schema\s+private\s+to\s+(anon|authenticated)/i,
     );
@@ -64,17 +58,27 @@ describe("Before User Created signup-intent hook contract", () => {
     expect(sql).toContain("client role metadata is forbidden");
   });
 
-  it("rejects fresh OAuth creation from generic sign-in", () => {
-    expect(sql).toContain("v_provider in ('google', 'facebook')");
-    expect(sql).toContain(
-      "social signup requires registration authorization",
-    );
-    expect(sql).toContain("unsupported auth provider");
+  it("requires provider-bound authorization for fresh Google creation", () => {
+    expect(sql).toContain("if v_provider = 'google' then");
+    expect(sql).toContain("v_user_metadata->>'sub'");
+    expect(sql).toContain("si.auth_provider = 'google'");
+    expect(sql).toContain("si.provider_subject = v_provider_subject");
+    expect(sql).toContain("lower(trim(si.email)) = v_email");
+    expect(sql).toContain("Google registration authorization not found");
   });
 
-  it("requires an intent for email signup", () => {
-    expect(sql).toContain("v_provider <> 'email'");
+  it("keeps fresh Facebook account creation fail-closed", () => {
+    expect(sql).toContain("elsif v_provider = 'facebook' then");
+    expect(sql).toContain(
+      "Facebook signup requires registration authorization",
+    );
+  });
+
+  it("requires an email-only intent for email signup", () => {
+    expect(sql).toContain("elsif v_provider = 'email' then");
     expect(sql).toContain("v_user_metadata->>'intent_id'");
+    expect(sql).toContain("si.auth_provider = 'email'");
+    expect(sql).toContain("si.provider_subject is null");
     expect(sql).toContain("signup intent is required");
     expect(sql).toContain("signup intent not found");
   });
@@ -92,16 +96,12 @@ describe("Before User Created signup-intent hook contract", () => {
   });
 
   it("accepts only Buyer or Seller signup intents", () => {
-    expect(sql).toContain(
-      "v_intent.requested_role not in ('buyer', 'seller')",
-    );
+    expect(sql).toContain("v_intent.requested_role not in ('buyer', 'seller')");
     expect(sql).toContain("unsupported signup role");
   });
 
   it("validates seller type invariants", () => {
-    expect(sql).toContain(
-      "('individual', 'sole_trader', 'company')",
-    );
+    expect(sql).toContain("('individual', 'sole_trader', 'company')");
     expect(sql).toContain("seller signup intent is incomplete");
     expect(sql).toContain("buyer signup intent is invalid");
   });
@@ -129,40 +129,27 @@ describe("Before User Created signup-intent hook contract", () => {
     expect(sql).toContain(
       "coalesce(jsonb_typeof(v_feature_flags->'sellerRegistration'), '') <> 'boolean'",
     );
-    expect(sql).toContain(
-      "registration availability could not be verified",
-    );
+    expect(sql).toContain("registration availability could not be verified");
   });
 
-  it("does not default fresh OAuth creation to Buyer", () => {
-    expect(sql).toContain("v_provider in ('google', 'facebook')");
-    expect(sql).toContain(
-      "social signup requires registration authorization",
-    );
+  it("does not derive Google Buyer or Seller authority from client metadata", () => {
+    const googleSection =
+      sql.split("if v_provider = 'google' then")[1]
+        ?.split("elsif v_provider = 'facebook' then")[0] ?? "";
 
-    const oauthSection =
-      sql.split("if v_provider in ('google', 'facebook') then")[1]
-        ?.split("if v_provider <> 'email' then")[0] ?? "";
-
-    expect(oauthSection).not.toContain("v_buyer_registration");
-    expect(oauthSection).not.toContain(
-      "buyer registration is temporarily disabled",
-    );
-    expect(oauthSection).not.toContain("return '{}'::jsonb");
+    expect(googleSection).toContain("private.signup_intents");
+    expect(googleSection).toContain("v_user_metadata->>'sub'");
+    expect(googleSection).not.toContain("requested_role := 'buyer'");
+    expect(googleSection).not.toContain("requested_role := 'seller'");
+    expect(googleSection).not.toContain("return '{}'::jsonb");
   });
 
   it("rechecks current Buyer and Seller policy after intent creation", () => {
-    expect(sql).toContain(
-      "v_intent.requested_role = 'buyer'",
-    );
-    expect(sql).toContain(
-      "v_intent.requested_role = 'seller'",
-    );
+    expect(sql).toContain("v_intent.requested_role = 'buyer'");
+    expect(sql).toContain("v_intent.requested_role = 'seller'");
     expect(sql).toContain("not v_buyer_registration");
     expect(sql).toContain("not v_seller_registration");
-    expect(sql).toContain(
-      "seller registration is temporarily disabled",
-    );
+    expect(sql).toContain("seller registration is temporarily disabled");
   });
 
   it("does not activate hosted Auth hook configuration in SQL", () => {
