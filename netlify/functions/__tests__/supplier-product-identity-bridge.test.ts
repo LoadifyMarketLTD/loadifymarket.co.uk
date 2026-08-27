@@ -27,8 +27,13 @@ describe('Supplier Commerce E2E remediation Stage 1 — product identity bridge'
     expect(canonical).toContain('REVOKE ALL ON FUNCTION public.server_link_supplier_product_listing_v1(uuid,uuid,text,jsonb)');
   });
 
-  it('prevents historical marketplace products from being rebound after they have order history', () => {
-    expect(canonical).toContain('ordered_public_product_cannot_be_rebound');
+  it('keeps exact identity-link replay valid after order history while blocking new retroactive binding', () => {
+    const replayLookup = canonical.indexOf('WHERE public_product_id=p_public_product_id;');
+    const historyGuard = canonical.indexOf('ordered_public_product_cannot_be_rebound');
+    expect(replayLookup).toBeGreaterThan(-1);
+    expect(historyGuard).toBeGreaterThan(replayLookup);
+    expect(canonical).toContain('supplier_product_listing_link_replayed');
+    expect(canonical).toContain('ON CONFLICT(public_product_id) DO NOTHING');
     expect(canonical).toContain('public.order_items oi WHERE oi."productId"=p_public_product_id');
   });
 
