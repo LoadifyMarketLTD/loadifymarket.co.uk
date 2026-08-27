@@ -5,9 +5,12 @@
 --   Requires a valid server-owned signup intent.
 --   Buyer/Seller relationship is derived only from private.signup_intents.
 --
--- OAUTH
---   Generic Google/Facebook sign-in cannot create a new Loadify account.
---   Fresh social registration requires dedicated registration authorization.
+-- GOOGLE
+--   Fresh account creation requires a provider-bound social signup intent.
+--
+-- FACEBOOK
+--   Fresh creation remains fail-closed until its dedicated registration
+--   boundary is implemented and verified independently.
 --
 -- UNKNOWN PROVIDERS
 --   Fail closed.
@@ -22,6 +25,7 @@ SET search_path = ''
 AS $$
 DECLARE
   v_provider text;
+  v_provider_subject text;
   v_intent_id uuid;
   v_intent private.signup_intents%ROWTYPE;
   v_email text;
@@ -43,64 +47,82 @@ BEGIN
       'signup rejected: auth email is missing';
   END IF;
 
-  -- No public identity may choose its authorization role through metadata.
   IF NEW.raw_user_meta_data ? 'role' THEN
     RAISE EXCEPTION
       'signup rejected: client role metadata is forbidden';
   END IF;
 
-  -- -------------------------------------------------------------------------
-  -- OAuth identity creation.
-  --
-  -- Generic Google/Facebook sign-in may authenticate an EXISTING identity,
-  -- but it may not create a new Loadify account. Fresh social registration
-  -- must first pass through the dedicated Buyer/Seller registration boundary.
-  -- -------------------------------------------------------------------------
-  IF v_provider IN ('google', 'facebook') THEN
-    RAISE EXCEPTION
-      'signup rejected: social signup requires registration authorization';
-  END IF;
+  IF v_provider = 'google' THEN
+    v_provider_subject :=
+      btrim(COALESCE(NEW.raw_user_meta_data ->> 'sub', ''));
 
-  -- -------------------------------------------------------------------------
-  -- Public email/password signup.
-  -- -------------------------------------------------------------------------
-  IF v_provider <> 'email' THEN
+    IF v_provider_subject = '' THEN
+      RAISE EXCEPTION
+        'signup rejected: verified Google subject is missing';
+    END IF;
+
+    SELECT *
+    INTO v_intent
+    FROM private.signup_intents
+    WHERE auth_provider = 'google'
+      AND provider_subject = v_provider_subject
+      AND email = v_email
+      AND consumed_at IS NULL
+      AND expires_at > now()
+    ORDER BY created_at DESC
+    LIMIT 1
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION
+        'signup rejected: Google registration authorization not found';
+    END IF;
+
+    v_intent_id := v_intent.id;
+
+  ELSIF v_provider = 'facebook' THEN
+    RAISE EXCEPTION
+      'signup rejected: Facebook signup requires registration authorization';
+
+  ELSIF v_provider = 'email' THEN
+    IF NEW.raw_app_meta_data ? 'role' THEN
+      RAISE EXCEPTION
+        'signup rejected: public email signup cannot carry app role metadata';
+    END IF;
+
+    BEGIN
+      v_intent_id :=
+        NULLIF(
+          NEW.raw_user_meta_data ->> 'intent_id',
+          ''
+        )::uuid;
+    EXCEPTION
+      WHEN invalid_text_representation THEN
+        RAISE EXCEPTION
+          'signup rejected: invalid signup intent';
+    END;
+
+    IF v_intent_id IS NULL THEN
+      RAISE EXCEPTION
+        'signup rejected: signup intent is required';
+    END IF;
+
+    SELECT *
+    INTO v_intent
+    FROM private.signup_intents
+    WHERE id = v_intent_id
+      AND auth_provider = 'email'
+      AND provider_subject IS NULL
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION
+        'signup rejected: signup intent not found';
+    END IF;
+
+  ELSE
     RAISE EXCEPTION
       'signup rejected: unsupported auth provider';
-  END IF;
-
-  -- app_metadata role is also forbidden on public email signup.
-  IF NEW.raw_app_meta_data ? 'role' THEN
-    RAISE EXCEPTION
-      'signup rejected: public email signup cannot carry app role metadata';
-  END IF;
-
-  BEGIN
-    v_intent_id :=
-      NULLIF(
-        NEW.raw_user_meta_data ->> 'intent_id',
-        ''
-      )::uuid;
-  EXCEPTION
-    WHEN invalid_text_representation THEN
-      RAISE EXCEPTION
-        'signup rejected: invalid signup intent';
-  END;
-
-  IF v_intent_id IS NULL THEN
-    RAISE EXCEPTION
-      'signup rejected: signup intent is required';
-  END IF;
-
-  SELECT *
-  INTO v_intent
-  FROM private.signup_intents
-  WHERE id = v_intent_id
-  FOR UPDATE;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION
-      'signup rejected: signup intent not found';
   END IF;
 
   IF v_intent.consumed_at IS NOT NULL THEN
@@ -142,11 +164,7 @@ BEGIN
     v_intent.phone
   );
 
-  -- public.users AFTER INSERT provisioning is synchronous, so the canonical
-  -- buyer/seller profile rows exist before execution continues here.
-
   IF v_intent.requested_role = 'buyer' THEN
-
     UPDATE public.buyer_profiles
     SET
       "customerType" = COALESCE(
@@ -165,7 +183,6 @@ BEGIN
     END IF;
 
   ELSIF v_intent.requested_role = 'seller' THEN
-
     UPDATE public.seller_profiles
     SET
       "sellerType" = v_intent.seller_type,
@@ -220,7 +237,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.handle_new_auth_user() IS
-  'Fail-closed Auth provisioning: email signup requires a valid single-use private intent; Google/Facebook provision Buyer-only; client role metadata is never authorization.';
+  'Fail-closed Auth provisioning: email signup requires a private intent; Google requires provider-bound authorization; Facebook remains fail-closed; client role metadata is never authorization.';
 
 REVOKE ALL ON FUNCTION public.handle_new_auth_user()
 FROM PUBLIC, anon, authenticated;
