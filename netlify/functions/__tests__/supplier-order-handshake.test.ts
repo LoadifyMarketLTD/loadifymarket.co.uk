@@ -13,6 +13,7 @@ const repo = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 const foundation = repo('supabase/640_supplier_payment_handshake_foundation.sql');
 const runtime = repo('supabase/641_supplier_payment_handshake_runtime_guards.sql');
 const reconciliation = repo('supabase/642_supplier_payment_handshake_reconciliation.sql');
+const shippingClosure = repo('supabase/685_supplier_payment_handshake_shipping_closure.sql');
 const helper = repo('netlify/functions/_shared/supplierOrderHandshake.ts');
 const adminApi = repo('netlify/functions/admin-supplier-order-handshake.ts');
 
@@ -21,11 +22,12 @@ const LEG = '22222222-2222-4222-8222-222222222222';
 const HANDSHAKE = '33333333-3333-4333-8333-333333333333';
 const RESERVATION = '44444444-4444-4444-8444-444444444444';
 const PAYMENT = '55555555-5555-4555-8555-555555555555';
+const SHIPPING = '88888888-8888-4888-8888-888888888888';
 
 function prepared() {
   return {
     eligible: true,
-    reason: 'supplier_order_handshake_ready',
+    reason: 'supplier_order_handshake_shipping_ready',
     handshakeId: HANDSHAKE,
     orderId: UUID,
     fulfilmentLegId: LEG,
@@ -38,11 +40,14 @@ function prepared() {
     adapterVersion: '2026-08-21',
     quantity: 2,
     destinationCountry: 'GB',
+    shippingDecisionId: SHIPPING,
+    shippingServiceRef: 'standard-gb',
+    shippingBindingFingerprint: '0123456789abcdef0123456789abcdef',
     idempotencyKey: 'idem-1',
     correlationId: '77777777-7777-4777-8777-777777777777',
     state: 'prepared',
     externalSupplierOrderRef: null,
-    interfaceVersion: 1,
+    interfaceVersion: 2,
   } as const;
 }
 
@@ -90,7 +95,7 @@ describe('Phase J payment → supplier handshake', () => {
     expect(runtime).toContain("server_supplier_commerce_control_decision_v1('supplier_order'");
     expect(runtime).toContain("'supplier_order_control_disabled'");
     expect(foundation).toContain('No Supplier Commerce control is enabled here');
-    expect(foundation).not.toContain("enabled = true");
+    expect(foundation).not.toContain('enabled = true');
   });
 
   it('requires an active adapter with order submission and acknowledgement capabilities', () => {
@@ -98,6 +103,16 @@ describe('Phase J payment → supplier handshake', () => {
     expect(runtime).toContain("ARRAY['order_submission','acknowledgement']::text[]");
     expect(helper).toContain("adapterSupports(adapter, 'order_submission')");
     expect(helper).toContain("adapterSupports(adapter, 'acknowledgement')");
+  });
+
+  it('binds the exact selected shipping service before provider submission', () => {
+    expect(shippingClosure).toContain('server_prepare_supplier_order_handshake_v2');
+    expect(shippingClosure).toContain('shipping_decision_id');
+    expect(shippingClosure).toContain('shipping_service_ref');
+    expect(shippingClosure).toContain('shipping_binding_fingerprint');
+    expect(shippingClosure).toContain('REVOKE EXECUTE ON FUNCTION public.server_prepare_supplier_order_handshake_v1');
+    expect(helper).toContain('server_prepare_supplier_order_handshake_v2');
+    expect(helper).toContain('shippingServiceRef: prepared.shippingServiceRef');
   });
 
   it('makes payment evidence immutable and handshake events append-only', () => {
@@ -165,9 +180,9 @@ describe('Phase J payment → supplier handshake', () => {
     expect(adminApi).toContain("authenticateActiveAccount(event, admin, ['admin'])");
   });
 
-  it('submits through SupplierAdapterV1 and reconciles an accepted acknowledgement', async () => {
+  it('submits through SupplierAdapterV1 with exact shipping service and reconciles an accepted acknowledgement', async () => {
     const rpc = vi.fn(async (name: string) => {
-      if (name === 'server_prepare_supplier_order_handshake_v1') return { data: prepared(), error: null };
+      if (name === 'server_prepare_supplier_order_handshake_v2') return { data: prepared(), error: null };
       if (name === 'server_mark_supplier_order_submission_started_v1') return { data: { ok: true, reason: 'submission_started', interfaceVersion: 1 }, error: null };
       if (name === 'server_record_supplier_order_submission_result_v1') return { data: { ok: true, state: 'accepted', recoveryState: 'reconcile' }, error: null };
       if (name === 'server_record_supplier_order_acknowledgement_v1') return { data: { ok: true }, error: null };
@@ -185,11 +200,15 @@ describe('Phase J payment → supplier handshake', () => {
     });
     expect(result).toMatchObject({ ok: true, state: 'reconciled', handshakeId: HANDSHAKE, externalSupplierOrderRef: 'SUP-1' });
     expect(a.submitOrder).toHaveBeenCalledTimes(1);
+    expect(a.submitOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ idempotencyKey: 'idem-1', territory: 'GB' }),
+      expect.objectContaining({ externalOfferRef: 'offer-42', quantity: 2, destinationCountry: 'GB', shippingServiceRef: 'standard-gb' }),
+    );
   });
 
   it('fails closed on adapter identity mismatch before provider submission', async () => {
     const rpc = vi.fn(async (name: string) => {
-      if (name === 'server_prepare_supplier_order_handshake_v1') return { data: prepared(), error: null };
+      if (name === 'server_prepare_supplier_order_handshake_v2') return { data: prepared(), error: null };
       if (name === 'server_record_supplier_order_submission_result_v1') return { data: { ok: true, state: 'reconciliation_required' }, error: null };
       return { data: null, error: null };
     });
@@ -205,7 +224,7 @@ describe('Phase J payment → supplier handshake', () => {
 
   it('classifies thrown provider submission as UNKNOWN_OUTCOME instead of blind retry', async () => {
     const rpc = vi.fn(async (name: string) => {
-      if (name === 'server_prepare_supplier_order_handshake_v1') return { data: prepared(), error: null };
+      if (name === 'server_prepare_supplier_order_handshake_v2') return { data: prepared(), error: null };
       if (name === 'server_mark_supplier_order_submission_started_v1') return { data: { ok: true }, error: null };
       if (name === 'server_record_supplier_order_submission_result_v1') return { data: { ok: true, state: 'unknown', recoveryState: 'query_before_retry' }, error: null };
       if (name === 'server_record_supplier_commerce_operation_v1') return { data: UUID, error: null };
@@ -240,7 +259,7 @@ describe('Phase J payment → supplier handshake', () => {
     expect(a.submitOrder).not.toHaveBeenCalled();
   });
 
-  it('exposes the expected interface version', () => {
-    expect(SUPPLIER_ORDER_HANDSHAKE_INTERFACE_VERSION).toBe(1);
+  it('exposes the shipping-bound handshake evidence interface version', () => {
+    expect(SUPPLIER_ORDER_HANDSHAKE_INTERFACE_VERSION).toBe(2);
   });
 });
