@@ -81,6 +81,8 @@ BEGIN
     RETURN jsonb_build_object('ok',false,'reason','canonical_product_not_active','canonicalProductId',v_canonical.id,'interfaceVersion',1);
   END IF;
 
+  -- Never reinterpret a product that already has customer order history as a
+  -- Supplier Commerce listing. Historical public product identity is immutable.
   IF EXISTS (SELECT 1 FROM public.order_items oi WHERE oi."productId"=p_public_product_id) THEN
     RETURN jsonb_build_object('ok',false,'reason','ordered_public_product_cannot_be_rebound','publicProductId',p_public_product_id,'interfaceVersion',1);
   END IF;
@@ -185,6 +187,8 @@ ALTER TABLE private.supplier_fulfilment_leg_items
   REFERENCES private.canonical_products(id)
   ON DELETE RESTRICT;
 
+-- Replace the Phase I identity guard with the complete E2E invariant:
+-- supplier offer -> canonical product -> public listing -> canonical order item.
 CREATE OR REPLACE FUNCTION private.guard_supplier_fulfilment_item_identity_v1()
 RETURNS trigger
 LANGUAGE plpgsql
