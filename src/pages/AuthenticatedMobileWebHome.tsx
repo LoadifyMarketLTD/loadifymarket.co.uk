@@ -8,6 +8,7 @@ import AppGridCard from '@/mobile-web-clone/AppGridCard';
 import AppBottomNav from '@/mobile-web-clone/AppBottomNav';
 import MobileWebCategoriesPage from '@/mobile-web-clone/CategoriesPage';
 import MobileWebInboxPage from '@/mobile-web-clone/InboxPage';
+import MobileWebProfilePage from '@/mobile-web-clone/ProfilePage';
 
 function SkeletonGridCard() {
   return (
@@ -44,6 +45,7 @@ export default function AuthenticatedMobileWebHome() {
 
   if (view === 'search') return <MobileWebCategoriesPage />;
   if (view === 'inbox') return <MobileWebInboxPage />;
+  if (view === 'profile') return <MobileWebProfilePage />;
 
   return (
     <div data-mobile-web-app-home="true" style={{ minHeight: '100dvh', background: '#07080B', color: '#FFFFFF' }}>
