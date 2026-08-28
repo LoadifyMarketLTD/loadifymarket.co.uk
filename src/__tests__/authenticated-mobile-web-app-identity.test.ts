@@ -25,11 +25,20 @@ describe('authenticated mobile website app visual clone', () => {
     expect(home).toContain('isMobile && Boolean(user) && !isCapacitorContext()');
   });
 
-  it('does not apply a global mobile theme approximation anymore', () => {
-    expect(identityCss).toContain('data-mobile-web-app-home');
-    expect(identityCss).not.toContain('--background:');
-    expect(identityCss).not.toContain('.market-workspace-light');
-    expect(identityCss).not.toContain('.market-public-light');
+  it('restores the original app semantic palette only inside authenticated non-native mobile web', () => {
+    expect(identityCss).toContain('@media (max-width: 767px)');
+    expect(identityCss).toContain('html.market-light-root.mobile-web-app-identity');
+    expect(identityCss).toContain('.market-workspace-light');
+    expect(identityCss).toContain('.market-public-light');
+    expect(identityCss).toContain('--background: 225 44% 7%');
+    expect(identityCss).toContain('background: #07080B !important');
+    expect(identityCss).not.toContain('html.capacitor-native');
+  });
+
+  it('suppresses the legacy MainLayout bottom bar whenever the cloned app bar is mounted', () => {
+    expect(identityCss).toContain('body:has(nav[aria-label="Mobile web app navigation"])');
+    expect(identityCss).toContain('nav[aria-label="Main navigation"]');
+    expect(identityCss).toContain('display: none !important');
   });
 
   it('clones the installed app Home visual primitives into browser-only components', () => {
