@@ -25,6 +25,7 @@ interface GoogleHeader {
 interface GoogleClaims {
   iss?: string;
   aud?: string | string[];
+  azp?: string;
   sub?: string;
   email?: string;
   email_verified?: boolean | string;
@@ -158,6 +159,16 @@ const verifyGoogleCredential = async (
 
   if (!audienceMatches(claims.aud, expectedAudience)) {
     throw new Error('Invalid Google credential audience');
+  }
+
+  // OIDC requires the authorized party to identify this client whenever azp
+  // is present (notably when a token has more than one audience).
+  if (claims.azp && claims.azp !== expectedAudience) {
+    throw new Error('Invalid Google credential authorized party');
+  }
+
+  if (Array.isArray(claims.aud) && claims.aud.length > 1 && claims.azp !== expectedAudience) {
+    throw new Error('Google credential authorized party is required');
   }
 
   if (!claims.exp || claims.exp <= now) {
