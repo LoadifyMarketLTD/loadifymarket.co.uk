@@ -273,15 +273,32 @@ const SellerProfile = () => {
       // write so an existing seller is not left permanently behind the cutover.
       // This refresh is best-effort: profile editing remains available even when
       // Stripe is incomplete, while the DB trigger continues to fail closed.
+      let taxSyncReady: boolean | null = null;
+      let taxSyncReason: string | null = null;
+
       if (requestedTaxConfirmation) {
         try {
           const taxSyncRes = await authorizedFetch("/.netlify/functions/connect-status", {
             method: "POST",
           });
-          if (!taxSyncRes.ok) {
-            console.warn("SellerProfile: Stripe tax-location refresh was not successful", taxSyncRes.status);
+          const taxSyncPayload = await taxSyncRes.json().catch(() => ({})) as {
+            taxEvidenceReady?: boolean;
+            taxEvidenceReason?: string | null;
+          };
+
+          taxSyncReady = taxSyncPayload.taxEvidenceReady === true;
+          taxSyncReason = taxSyncPayload.taxEvidenceReason ?? null;
+
+          if (!taxSyncRes.ok || !taxSyncReady) {
+            console.warn(
+              "SellerProfile: Stripe tax-location evidence is not ready",
+              taxSyncRes.status,
+              taxSyncReason,
+            );
           }
         } catch (taxSyncError) {
+          taxSyncReady = false;
+          taxSyncReason = "request_failed";
           console.warn("SellerProfile: Stripe tax-location refresh failed", taxSyncError);
         }
       }
@@ -342,10 +359,20 @@ const SellerProfile = () => {
       const persistedTaxConfirmed = Boolean(persistedTaxRes.data?.taxDeclarationConfirmed);
       setTaxDeclarationConfirmed(persistedTaxConfirmed);
 
-      if (requestedTaxConfirmation && !persistedTaxConfirmed) {
+      if (
+        requestedTaxConfirmation
+        && (!persistedTaxConfirmed || taxSyncReady !== true)
+      ) {
+        const taxEvidenceMessage =
+          taxSyncReason === "stripe_postcode_missing"
+            ? "Stripe Connect did not return a usable GB postcode to Loadify. Your profile was saved, but live publication remains blocked."
+            : taxSyncReason === "persist_failed" || taxSyncReason === "readback_failed"
+              ? "Loadify could not persist or verify the Stripe tax-location evidence. Your profile was saved, but live publication remains blocked."
+              : "Your profile was saved, but authoritative Stripe tax-location evidence is still not ready for live publication.";
+
         toast({
           title: "Profile saved — tax setup still required",
-          description: "Your profile was saved, but the tax declaration could not be activated because Stripe tax-location evidence is not ready. Complete or refresh Seller setup before publishing live.",
+          description: taxEvidenceMessage,
           variant: "destructive",
         });
       } else if (isVatRegistered) {

@@ -147,8 +147,12 @@ describe('marketplace tax evidence P1', () => {
     expect(locationEvidenceMigration).toContain("v_tax_postcode !~ '^(BT|GY|JE|IM|GX|BF)'");
     expect(connectOnboard).toContain("country: 'GB'");
     expect(connectOnboard).toContain("taxCountrySource: 'stripe_connect_account_v1'");
-    expect(connectStatus).toContain("stripeUpdate.taxCountrySource = 'stripe_connect_account_v1'");
-    expect(connectStatus).toContain('stripeUpdate.taxPostcode = stripeTaxPostcode');
+    expect(connectStatus).toContain("taxCountrySource: stripeTaxCountry ? 'stripe_connect_account_v1' : null");
+    expect(connectStatus).toContain('taxPostcode: stripeTaxCountry ? stripeTaxPostcode : null');
+    expect(connectStatus).toContain(".select('taxCountry, taxPostcode, taxCountrySource, taxCountryCapturedAt')");
+    expect(connectStatus).toContain('taxEvidenceReady');
+    expect(connectStatus).toContain("taxEvidenceReason: 'persist_failed'");
+    expect(connectStatus).toContain("taxEvidenceReason: 'readback_failed'");
   });
 
   it('blocks tax materializer cutover while pre-P1 payments are in flight', () => {
