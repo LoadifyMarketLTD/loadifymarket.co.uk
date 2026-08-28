@@ -1,93 +1,15 @@
 /*
- * Authenticated mobile WEBSITE identity.
+ * Authenticated mobile website clone boundary.
  *
- * IMPORTANT: this scope is added only by MobileWebIdentityClass when all three
- * conditions are true:
- *   1) an authenticated Loadify user exists,
- *   2) viewport is below 768px,
- *   3) runtime is NOT Capacitor/native.
- *
- * The downloadable Android application must never receive this class. Keep all
- * rules under html.mobile-web-app-identity so native/APK and desktop remain
- * visually unchanged.
+ * Visual pages under src/mobile-web-clone carry their own app-identical styles.
+ * Do not recolour semantic tokens globally: doing so caused light/dark route
+ * collisions in Inbox, Categories and Seller Hub. The only global rule needed
+ * is to suppress MainLayout's legacy mobile nav when the cloned Home supplies
+ * its own app bottom navigation.
  */
 
 @media (max-width: 767px) {
-  html.mobile-web-app-identity {
-    --background: 228 22% 4%;
-    --foreground: 210 20% 98%;
-    --card: 225 18% 8%;
-    --card-foreground: 210 20% 98%;
-    --popover: 225 18% 9%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 43 89% 61%;
-    --primary-foreground: 228 22% 4%;
-    --primary-hover: 40 79% 53%;
-    --primary-soft: 43 89% 61%;
-    --secondary: 222 20% 13%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 222 20% 12%;
-    --muted-foreground: 218 10% 63%;
-    --border: 220 14% 21%;
-    --input: 220 14% 21%;
-    --ring: 43 89% 61%;
-    --surface: 225 18% 8%;
-    --surface-raised: 225 18% 10%;
-    color-scheme: dark;
-    background: #07080b !important;
-  }
-
-  html.mobile-web-app-identity body,
-  html.mobile-web-app-identity #root {
-    background: #07080b !important;
-    color: #f5f7fa;
-  }
-
-  /* A number of public/workspace wrappers set their own light semantic tokens.
-     Browser-mobile auth must win over those wrappers without changing them for
-     desktop, guests or Capacitor. */
-  html.mobile-web-app-identity .market-public-light,
-  html.mobile-web-app-identity .market-workspace-light {
-    --background: 228 22% 4%;
-    --foreground: 210 20% 98%;
-    --card: 225 18% 8%;
-    --card-foreground: 210 20% 98%;
-    --popover: 225 18% 9%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 43 89% 61%;
-    --primary-foreground: 228 22% 4%;
-    --muted: 222 20% 12%;
-    --muted-foreground: 218 10% 63%;
-    --border: 220 14% 21%;
-    --input: 220 14% 21%;
-    --surface: 225 18% 8%;
-    --surface-raised: 225 18% 10%;
-  }
-
-  /* Match the installed app navigation chrome. The component itself remains
-     untouched, so a future native build keeps its existing implementation. */
-  html.mobile-web-app-identity nav[aria-label="Main navigation"] {
-    background: rgba(11, 11, 15, 0.97) !important;
-    border-top-color: rgba(255, 255, 255, 0.07) !important;
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.28) !important;
-  }
-
-  html.mobile-web-app-identity nav[aria-label="Main navigation"] a:not([aria-current="page"]) svg,
-  html.mobile-web-app-identity nav[aria-label="Main navigation"] button:not([aria-current="page"]) svg {
-    color: rgba(255, 255, 255, 0.45) !important;
-  }
-
-  html.mobile-web-app-identity nav[aria-label="Main navigation"] a:not([aria-current="page"]) span,
-  html.mobile-web-app-identity nav[aria-label="Main navigation"] button:not([aria-current="page"]) > span {
-    color: rgba(255, 255, 255, 0.42) !important;
-  }
-
-  html.mobile-web-app-identity nav[aria-label="Main navigation"] a[aria-current="page"] svg,
-  html.mobile-web-app-identity nav[aria-label="Main navigation"] a[aria-current="page"] span {
-    color: #f5b942 !important;
-  }
-
-  html.mobile-web-app-identity nav[aria-label="Main navigation"] button[aria-label="Sell an item"] > span {
-    color: #ffffff !important;
+  html:has([data-mobile-web-app-home="true"]) nav[aria-label="Main navigation"] {
+    display: none !important;
   }
 }
