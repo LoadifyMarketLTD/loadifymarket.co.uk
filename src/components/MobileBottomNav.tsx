@@ -17,6 +17,9 @@ import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import { supabase } from '@/lib/supabase';
 
+const INACTIVE_ICON = '#C3CCDA';
+const INACTIVE_LABEL = '#AEB9C9';
+
 function NavItem({
   to,
   icon: Icon,
@@ -39,12 +42,14 @@ function NavItem({
       aria-current={isActive ? 'page' : undefined}
     >
       <Icon
-        className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F5A300]' : 'text-white/58'}`}
+        className="h-[22px] w-[22px] transition-colors"
+        style={{ color: isActive ? '#F5A300' : INACTIVE_ICON }}
         strokeWidth={isActive ? 2.2 : 1.8}
         aria-hidden="true"
       />
       <span
-        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none transition-colors ${isActive ? 'font-bold text-[#F5A300]' : 'font-normal text-white/52'}`}
+        className="max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none transition-colors"
+        style={{ color: isActive ? '#F5A300' : INACTIVE_LABEL, fontWeight: isActive ? 700 : 500 }}
       >
         {label}
       </span>
@@ -87,7 +92,8 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
     >
       <div className="relative">
         <Mail
-          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F5A300]' : 'text-white/58'}`}
+          className="h-[22px] w-[22px] transition-colors"
+          style={{ color: isActive ? '#F5A300' : INACTIVE_ICON }}
           strokeWidth={isActive ? 2.2 : 1.8}
           aria-hidden="true"
         />
@@ -112,7 +118,8 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
         )}
       </div>
       <span
-        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none ${isActive ? 'font-bold text-[#F5A300]' : 'font-normal text-white/52'}`}
+        className="max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none"
+        style={{ color: isActive ? '#F5A300' : INACTIVE_LABEL, fontWeight: isActive ? 700 : 500 }}
       >
         Inbox
       </span>
