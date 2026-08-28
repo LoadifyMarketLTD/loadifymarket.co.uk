@@ -9,7 +9,7 @@ import MobileGridCard from "@/components/MobileGridCard";
 import { useMobileGrid } from "@/hooks/useMobileGrid";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuthStore } from "@/store";
-import { isCapacitorNative } from "@/lib/capacitorUtils";
+import { isCapacitorContext } from "@/lib/capacitorUtils";
 import AuthenticatedMobileWebHome from "@/pages/AuthenticatedMobileWebHome";
 
 import HeroSection from "@/components/HeroSection";
@@ -199,7 +199,7 @@ function DesktopHome() {
 export default function Home() {
   const isMobile = useIsMobile();
   const { user } = useAuthStore();
-  const useAuthenticatedMobileWeb = isMobile && Boolean(user) && !isCapacitorNative();
+  const useAuthenticatedMobileWeb = isMobile && Boolean(user) && !isCapacitorContext();
 
   useEffect(() => { trackViewHome(); }, []);
 
