@@ -1,10 +1,13 @@
 import { useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMobileGrid } from '@/hooks/useMobileGrid';
 import AppHeader from '@/mobile-web-clone/AppHeader';
 import AppCategoryShortcuts from '@/mobile-web-clone/AppCategoryShortcuts';
 import AppSellerBanner from '@/mobile-web-clone/AppSellerBanner';
 import AppGridCard from '@/mobile-web-clone/AppGridCard';
 import AppBottomNav from '@/mobile-web-clone/AppBottomNav';
+import MobileWebCategoriesPage from '@/mobile-web-clone/CategoriesPage';
+import MobileWebInboxPage from '@/mobile-web-clone/InboxPage';
 
 function SkeletonGridCard() {
   return (
@@ -17,15 +20,18 @@ function SkeletonGridCard() {
 }
 
 /**
- * Authenticated mobile WEBSITE home.
- * Visual source of truth: the installed Loadify app UI. This page is browser-only;
- * Capacitor/native is excluded by Home.tsx before this component is selected.
+ * Authenticated mobile WEBSITE shell.
+ * Visual source of truth: the installed Loadify app UI. This component is
+ * browser-only; Capacitor/native is excluded by Home.tsx before selection.
  */
 export default function AuthenticatedMobileWebHome() {
+  const [searchParams] = useSearchParams();
+  const view = searchParams.get('app') ?? 'home';
   const { products, loading, loadingMore, hasMore, loadMore } = useMobileGrid();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (view !== 'home') return;
     const node = sentinelRef.current;
     if (!node) return;
     const observer = new IntersectionObserver(
@@ -34,7 +40,10 @@ export default function AuthenticatedMobileWebHome() {
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [loadMore, view]);
+
+  if (view === 'search') return <MobileWebCategoriesPage />;
+  if (view === 'inbox') return <MobileWebInboxPage />;
 
   return (
     <div data-mobile-web-app-home="true" style={{ minHeight: '100dvh', background: '#07080B', color: '#FFFFFF' }}>
