@@ -5,6 +5,7 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import RouteSurfaceClass from "./components/RouteSurfaceClass.tsx";
+import MobileWebIdentityClass from "./components/MobileWebIdentityClass.tsx";
 import { initErrorTracking } from "./lib/errorTracking.ts";
 import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
 import { isCapacitorContext } from "./lib/capacitorUtils.ts";
@@ -37,6 +38,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <HelmetProvider>
       <BrowserRouter>
         <RouteSurfaceClass />
+        <MobileWebIdentityClass />
         <ErrorBoundary>
           <App />
         </ErrorBoundary>
