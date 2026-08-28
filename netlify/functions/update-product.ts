@@ -168,7 +168,6 @@ export const handler: Handler = async (event) => {
   if (!nextContext) {
     return { statusCode: 400, body: JSON.stringify({ error: 'listingContext must be either "product" or "service"' }) };
   }
-  // Never persist the legacy "goods" alias into a DB constrained to product/service.
   if (hasOwn(updateData, 'listingContext')) updateData.listingContext = nextContext;
 
   let nextPrice = existingProduct.price;
@@ -201,6 +200,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller tax profile. Please try again.' }) };
   }
 
+  // Materialise tax evidence when available, but do not use it as a catalogue
+  // publication gate. Checkout/payment remains the authoritative fail-closed boundary.
   const taxEvidence =
     nextContext === 'product' &&
     normaliseMarketplaceCountry(taxProfile.country) === 'GB' &&
@@ -235,15 +236,6 @@ export const handler: Handler = async (event) => {
   const wantsPublished = updateData.isActive === true || (!hasOwn(updateData, 'isActive') && existingProduct.isActive);
   if (wantsPublished && !sellerCanPublish) {
     return { statusCode: 409, body: JSON.stringify({ error: 'Complete seller setup and activate Stripe payments before publishing.' }) };
-  }
-  if (wantsPublished && nextContext === 'product' && !taxEvidence) {
-    return {
-      statusCode: 409,
-      body: JSON.stringify({
-        error: 'This listing cannot be published until the seller has explicitly confirmed a supported tax status and UK tax location.',
-        code: 'TAX_EVIDENCE_REQUIRED',
-      }),
-    };
   }
 
   if (wantsPublished && nextContext === 'product') {
@@ -314,7 +306,6 @@ export const handler: Handler = async (event) => {
     });
   }
 
-  // Save shipping first. If that fails, the listing itself remains unchanged.
   if (Array.isArray(shippingMethodIds)) {
     const { data: previousShipping, error: previousError } = await supabase
       .from('product_shipping')
