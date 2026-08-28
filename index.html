@@ -172,6 +172,43 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Mobile image-picker compatibility.
+         Android browsers treat capture="environment" as a request to open the camera
+         directly. The mobile seller flow must let sellers choose existing gallery/files
+         as well, so release only the multi-image product picker from forced capture. -->
+    <script>
+      (() => {
+        const selector = 'input[type="file"][accept="image/*"][multiple][capture]';
+        const releaseForcedCamera = (root) => {
+          if (root instanceof Element && root.matches(selector)) {
+            root.removeAttribute('capture');
+          }
+          if (root && typeof root.querySelectorAll === 'function') {
+            root.querySelectorAll(selector).forEach((input) => input.removeAttribute('capture'));
+          }
+        };
+
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes') {
+              releaseForcedCamera(mutation.target);
+            } else {
+              mutation.addedNodes.forEach((node) => releaseForcedCamera(node));
+            }
+          });
+        });
+
+        releaseForcedCamera(document);
+        observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['capture'],
+        });
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
 
     <!-- Netlify Forms static detection — required for SPA/Vite builds -->
