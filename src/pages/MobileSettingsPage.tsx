@@ -1,14 +1,14 @@
 /**
  * MobileSettingsPage — /profile/settings
  *
- * Simple mobile settings hub accessible to all logged-in users.
- * Links to profile sub-pages without forcing role-based redirects.
+ * Shared mobile settings hub. Commerce destinations follow the same Buyer,
+ * Seller and Admin separation as the canonical workspaces.
  */
 
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '@/store';
-import { hasSellerAccess } from '@/lib/roleUtils';
+import { hasAdminAccess, hasSellerAccess } from '@/lib/roleUtils';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
 interface SettingsRow {
@@ -16,33 +16,40 @@ interface SettingsRow {
   to: string;
 }
 
+function settingsRowsForUser(user: ReturnType<typeof useAuthStore.getState>['user']): SettingsRow[] {
+  if (user && hasAdminAccess(user)) {
+    return [
+      { label: 'Admin settings', to: '/admin/settings' },
+      { label: 'Admin notifications', to: '/admin/notifications' },
+      { label: 'Security', to: '/profile/security' },
+    ];
+  }
+
+  const isSeller = hasSellerAccess(user);
+
+  if (isSeller) {
+    return [
+      { label: 'Seller profile', to: '/seller/profile' },
+      { label: 'Seller settings', to: '/seller/settings' },
+      { label: 'Payments & payouts', to: '/seller/mobile-payments' },
+      { label: 'Shipments', to: '/seller/shipments' },
+      { label: 'Security', to: '/profile/security' },
+    ];
+  }
+
+  return [
+    { label: 'Profile details', to: '/buyer/profile' },
+    { label: 'Account settings', to: '/buyer/settings' },
+    { label: 'Payments', to: '/buyer/payments' },
+    { label: 'Orders & delivery', to: '/buyer/orders' },
+    { label: 'Security', to: '/profile/security' },
+  ];
+}
+
 export default function MobileSettingsPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const isSeller = hasSellerAccess(user);
-
-  const rows: SettingsRow[] = [
-    {
-      label: 'Profile details',
-      to: isSeller ? '/seller/profile' : '/buyer/profile',
-    },
-    {
-      label: 'Account settings',
-      to: isSeller ? '/seller/settings' : '/buyer/settings',
-    },
-    {
-      label: 'Payments',
-      to: isSeller ? '/seller/mobile-payments' : '/buyer/payments',
-    },
-    {
-      label: 'Postage',
-      to: isSeller ? '/seller/shipments' : '/buyer/orders',
-    },
-    {
-      label: 'Security',
-      to: '/profile/security',
-    },
-  ];
+  const rows = settingsRowsForUser(user);
 
   return (
     <div
@@ -52,7 +59,6 @@ export default function MobileSettingsPage() {
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: 'flex',
@@ -107,12 +113,9 @@ export default function MobileSettingsPage() {
             marginTop: 8,
           }}
         >
-          {rows.map((row, i) => (
-            <div key={row.label}>
-              <Link
-                to={row.to}
-                style={{ display: 'block', textDecoration: 'none' }}
-              >
+          {rows.map((row, index) => (
+            <div key={`${row.to}:${row.label}`}>
+              <Link to={row.to} style={{ display: 'block', textDecoration: 'none' }}>
                 <div
                   style={{
                     display: 'flex',
@@ -124,9 +127,7 @@ export default function MobileSettingsPage() {
                     cursor: 'pointer',
                   }}
                 >
-                  <span className="text-[15px] font-medium text-foreground/90">
-                    {row.label}
-                  </span>
+                  <span className="text-[15px] font-medium text-foreground/90">{row.label}</span>
                   <ChevronRight
                     className="text-foreground/30"
                     style={{ width: 18, height: 18, flexShrink: 0 }}
@@ -134,14 +135,11 @@ export default function MobileSettingsPage() {
                   />
                 </div>
               </Link>
-              {i < rows.length - 1 && (
+              {index < rows.length - 1 && (
                 <div
                   aria-hidden="true"
                   className="bg-white/[0.05]"
-                  style={{
-                    height: 1,
-                    marginInlineStart: 'var(--mob-side, 16px)',
-                  }}
+                  style={{ height: 1, marginInlineStart: 'var(--mob-side, 16px)' }}
                 />
               )}
             </div>
