@@ -8,6 +8,9 @@ import MobileHeroBanner from "@/components/MobileHeroBanner";
 import MobileGridCard from "@/components/MobileGridCard";
 import { useMobileGrid } from "@/hooks/useMobileGrid";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuthStore } from "@/store";
+import { isCapacitorNative } from "@/lib/capacitorUtils";
+import AuthenticatedMobileWebHome from "@/pages/AuthenticatedMobileWebHome";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
@@ -49,6 +52,7 @@ function MobileProductGrid({ products, startIndex = 0 }: { products: ReturnType<
   );
 }
 
+/** Existing public/mobile website homepage for guests. */
 function MobileHome() {
   const { products, loading, loadingMore, hasMore, loadMore } = useMobileGrid();
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -194,6 +198,8 @@ function DesktopHome() {
 
 export default function Home() {
   const isMobile = useIsMobile();
+  const { user } = useAuthStore();
+  const useAuthenticatedMobileWeb = isMobile && Boolean(user) && !isCapacitorNative();
 
   useEffect(() => { trackViewHome(); }, []);
 
@@ -206,7 +212,9 @@ export default function Home() {
       />
 
       <main id="main-content">
-        {isMobile ? <MobileHome /> : <DesktopHome />}
+        {isMobile
+          ? (useAuthenticatedMobileWeb ? <AuthenticatedMobileWebHome /> : <MobileHome />)
+          : <DesktopHome />}
       </main>
     </MainLayout>
   );
