@@ -39,7 +39,7 @@ describe('role-first Google web registration contract', () => {
 
   it('uses a cryptographic nonce and Supabase signInWithIdToken after server verification', () => {
     expect(googleButton).toContain('crypto.getRandomValues');
-    expect(googleButton).toContain("crypto.subtle.digest('SHA-256'");
+    expect(googleButton).toMatch(/crypto\.subtle\.digest\(\s*['"]SHA-256['"]/);
     expect(googleButton).toContain('nonce: hashedNonce');
     expect(googleButton).toContain('supabase.auth.signInWithIdToken');
     expect(googleButton).toContain("provider: 'google'");
