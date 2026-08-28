@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { isCapacitorNative } from '@/lib/capacitorUtils';
+import { isCapacitorContext } from '@/lib/capacitorUtils';
 import '@/authenticated-mobile-web.css';
 
 /**
@@ -14,17 +14,17 @@ import '@/authenticated-mobile-web.css';
 export default function MobileWebIdentityClass() {
   const { user, isLoading } = useAuthStore();
   const isMobile = useIsMobile();
-  const isNative = isCapacitorNative();
+  const isNativeContext = isCapacitorContext();
 
   useEffect(() => {
     const root = document.documentElement;
-    const enabled = !isLoading && Boolean(user) && isMobile && !isNative;
+    const enabled = !isLoading && Boolean(user) && isMobile && !isNativeContext;
     root.classList.toggle('mobile-web-app-identity', enabled);
 
     return () => {
       root.classList.remove('mobile-web-app-identity');
     };
-  }, [isLoading, isMobile, isNative, user]);
+  }, [isLoading, isMobile, isNativeContext, user]);
 
   return null;
 }
