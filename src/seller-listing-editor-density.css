@@ -1,0 +1,132 @@
+/*
+ * Desktop density layer for the Seller listing editor.
+ *
+ * The light visual repair fixed colour/contrast. This layer uses the available
+ * desktop viewport so sellers do not have to scroll through a narrow single
+ * column when there is plenty of horizontal room.
+ */
+
+@media (min-width: 1280px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen > .container {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: clamp(1.25rem, 2vw, 2.5rem) !important;
+    padding-right: clamp(1.25rem, 2vw, 2.5rem) !important;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* New listing: 12-column desktop composition. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    gap: 1rem 1.25rem !important;
+    align-items: start !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > * {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div {
+    margin-bottom: 0 !important;
+  }
+
+  /*
+   * 1 = Listing Type
+   * 2 = Basic Information
+   * 3 = Category
+   * 4 = Pricing
+   * 5 = Inventory (physical product only)
+   * 6 = Product Images (physical product)
+   * 7 = Dimensions & Shipping (physical product)
+   * 8 = Specifications (physical product)
+   */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:nth-of-type(1) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  /* Use the large left area for the longer Basic Information section. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:nth-of-type(2) {
+    grid-column: 1 / span 8;
+    grid-row: 2 / span 3;
+    align-self: stretch;
+  }
+
+  /* Stack the three short commercial sections in the right rail. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:nth-of-type(3) {
+    grid-column: 9 / span 4;
+    grid-row: 2;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:nth-of-type(4) {
+    grid-column: 9 / span 4;
+    grid-row: 3;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(5) {
+    grid-column: 9 / span 4;
+    grid-row: 4;
+  }
+
+  /* Media and logistics share one row instead of consuming two full screens. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(6) {
+    grid-column: 1 / span 5;
+    grid-row: 5;
+    align-self: stretch;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(7) {
+    grid-column: 6 / span 7;
+    grid-row: 5;
+    align-self: stretch;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(8) {
+    grid-column: 1 / -1;
+    grid-row: 6;
+  }
+
+  /* Service listings have no inventory/logistics block: media + specs share a row. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="service"]:checked) > div:nth-of-type(5) {
+    grid-column: 1 / span 6;
+    grid-row: 4;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="service"]:checked) > div:nth-of-type(6) {
+    grid-column: 7 / span 6;
+    grid-row: 4;
+  }
+
+  /* Publish / Save always occupies the full final row. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:last-of-type {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Use the wider media card efficiently. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) .grid.grid-cols-2.sm\:grid-cols-3.lg\:grid-cols-5.xl\:grid-cols-6 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) .aspect-square {
+    max-width: 10.5rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen > .container {
+    padding-left: 2.75rem !important;
+    padding-right: 2.75rem !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) {
+    gap: 1rem 1.5rem !important;
+  }
+}
