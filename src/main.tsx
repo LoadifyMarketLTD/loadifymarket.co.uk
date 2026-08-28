@@ -13,6 +13,7 @@ import "./light-compat.css";
 import "./light-semantic-compat.css";
 import "./mobile-drawer-identity.css";
 import "./seller-listing-editor-light.css";
+import "./seller-listing-editor-density.css";
 import "./native.css";
 
 // Initialise global error tracking (unhandled errors + unhandled rejections).
