@@ -1,15 +1,176 @@
 /*
- * Authenticated mobile website clone boundary.
+ * Authenticated mobile WEBSITE identity.
  *
- * Visual pages under src/mobile-web-clone carry their own app-identical styles.
- * Do not recolour semantic tokens globally: doing so caused light/dark route
- * collisions in Inbox, Categories and Seller Hub. The only global rule needed
- * is to suppress MainLayout's legacy mobile nav when the cloned Home supplies
- * its own app bottom navigation.
+ * Hard boundary:
+ * - activated only when MobileWebIdentityClass adds html.mobile-web-app-identity
+ * - that class is never added in Capacitor/native
+ * - desktop and signed-out mobile website keep the normal website identity
+ *
+ * The installed app was built against the original dark semantic theme. Later
+ * website work introduced market-light-root / market-workspace-light /
+ * market-public-light, which is why authenticated browser-mobile routes such as
+ * Seller Hub, Balance, Notifications and Category suddenly turned light. On an
+ * authenticated phone browser we restore the app semantic palette instead of
+ * rewriting those functional pages.
  */
 
 @media (max-width: 767px) {
-  html:has([data-mobile-web-app-home="true"]) nav[aria-label="Main navigation"] {
+  html.mobile-web-app-identity,
+  html.mobile-web-app-identity body,
+  html.mobile-web-app-identity #root {
+    background: #07080B !important;
+    color-scheme: dark;
+  }
+
+  /* When the browser-only clone supplies its own bottom bar, suppress the
+     legacy MainLayout bar underneath it. This prevents two fixed navs from
+     overlapping and sending taps to different routes. */
+  html.mobile-web-app-identity body:has(nav[aria-label="Mobile web app navigation"])
+    nav[aria-label="Main navigation"] {
     display: none !important;
+  }
+
+  /* Restore the app's dark semantic tokens on every authenticated mobile-web
+     route. These values mirror the original :root app palette in index.css. */
+  html.market-light-root.mobile-web-app-identity {
+    --background: 225 44% 7%;
+    --foreground: 213 27% 97%;
+    --card: 220 40% 12%;
+    --card-foreground: 213 27% 97%;
+    --popover: 220 32% 16%;
+    --popover-foreground: 213 27% 97%;
+    --primary: 45 64% 52%;
+    --primary-foreground: 0 0% 5%;
+    --primary-hover: 39 63% 48%;
+    --primary-soft: 45 64% 52%;
+    --secondary: 220 54% 40%;
+    --secondary-foreground: 213 27% 97%;
+    --muted: 220 40% 12%;
+    --muted-foreground: 217 18% 70%;
+    --border: 221 28% 23%;
+    --input: 221 28% 23%;
+    --ring: 45 64% 52%;
+    --surface: 220 40% 12%;
+    --surface-raised: 220 32% 16%;
+    --sidebar-background: 225 44% 7%;
+    --sidebar-foreground: 217 18% 70%;
+    --sidebar-primary: 45 64% 52%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 220 40% 12%;
+    --sidebar-accent-foreground: 213 27% 97%;
+    --sidebar-border: 221 28% 23%;
+    --sidebar-ring: 45 64% 52%;
+  }
+
+  /* Workspace/public wrappers set light tokens and sometimes literal light
+     backgrounds. Browser-mobile auth must restore the installed-app surface. */
+  html.market-light-root.mobile-web-app-identity .market-workspace-light,
+  html.market-light-root.mobile-web-app-identity .market-public-light {
+    --background: 225 44% 7%;
+    --foreground: 213 27% 97%;
+    --card: 220 40% 12%;
+    --card-foreground: 213 27% 97%;
+    --popover: 220 32% 16%;
+    --popover-foreground: 213 27% 97%;
+    --primary: 45 64% 52%;
+    --primary-foreground: 0 0% 5%;
+    --primary-hover: 39 63% 48%;
+    --primary-soft: 45 64% 52%;
+    --secondary: 220 54% 40%;
+    --secondary-foreground: 213 27% 97%;
+    --muted: 220 40% 12%;
+    --muted-foreground: 217 18% 70%;
+    --border: 221 28% 23%;
+    --input: 221 28% 23%;
+    --ring: 45 64% 52%;
+    --surface: 220 40% 12%;
+    --surface-raised: 220 32% 16%;
+    background: #07080B !important;
+    color: #F5F7FA !important;
+  }
+
+  /* Counter the website-only semantic compatibility layer. It intentionally
+     forces these utilities light on market-light-root, so authenticated mobile
+     web needs a more specific dark-app override. */
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).text-foreground,
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).text-card-foreground,
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).text-popover-foreground,
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).text-secondary-foreground {
+    color: #F5F7FA !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).text-muted-foreground,
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).text-slate-400 {
+    color: #A7B0C0 !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).text-slate-500 {
+    color: #8C96A8 !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    h1.text-white:not(header):not(header *):not(footer):not(footer *),
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    h2.text-white:not(header):not(header *):not(footer):not(footer *),
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    h3.text-white:not(header):not(header *):not(footer):not(footer *),
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    h4.text-white:not(header):not(header *):not(footer):not(footer *),
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    p.text-white:not(header):not(header *):not(footer):not(footer *),
+  html.market-light-root.mobile-web-app-identity .market-workspace-light [class*="text-white"] {
+    color: #F5F7FA !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).bg-background {
+    background-color: #07080B !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).bg-card,
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).bg-popover {
+    background-color: #121A2B !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).bg-muted {
+    background-color: #121A2B !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).border-border,
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *).border-input,
+  html.market-light-root.mobile-web-app-identity .market-workspace-light [class*="border-white"] {
+    border-color: #2A344A !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity .market-workspace-light [class*="bg-white/"] {
+    background-color: rgba(255,255,255,0.04) !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity .market-workspace-light [class*="bg-slate-950"],
+  html.market-light-root.mobile-web-app-identity .market-workspace-light [class*="bg-slate-900"] {
+    background-color: #07080B !important;
+  }
+
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *) input.bg-background,
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *) textarea.bg-background,
+  html.market-light-root.mobile-web-app-identity body:not(:has(#login-email))
+    :not(header):not(header *):not(footer):not(footer *) select.bg-background {
+    background-color: #121A2B !important;
+    color: #F5F7FA !important;
+    border-color: #2A344A !important;
   }
 }
