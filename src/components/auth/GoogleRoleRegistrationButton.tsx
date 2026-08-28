@@ -113,6 +113,7 @@ async function sha256Hex(value: string): Promise<string> {
 export default function GoogleRoleRegistrationButton({ role, sellerType, disabled, onError }: Props) {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const busyRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -127,6 +128,11 @@ export default function GoogleRoleRegistrationButton({ role, sellerType, disable
 
     let cancelled = false;
     const container = containerRef.current;
+
+    const setBusyState = (value: boolean) => {
+      busyRef.current = value;
+      setBusy(value);
+    };
 
     const initialize = async () => {
       try {
@@ -145,8 +151,8 @@ export default function GoogleRoleRegistrationButton({ role, sellerType, disable
           use_fedcm_for_prompt: true,
           callback: (response) => {
             void (async () => {
-              if (!response.credential || busy) return;
-              setBusy(true);
+              if (!response.credential || busyRef.current) return;
+              setBusyState(true);
               onError('');
 
               try {
@@ -177,7 +183,7 @@ export default function GoogleRoleRegistrationButton({ role, sellerType, disable
                 navigate('/dashboard', { replace: true });
               } catch (error) {
                 onError(error instanceof Error ? error.message : 'Google registration failed. Please try again.');
-                setBusy(false);
+                setBusyState(false);
                 if (!cancelled) void initialize();
               }
             })();
@@ -202,7 +208,7 @@ export default function GoogleRoleRegistrationButton({ role, sellerType, disable
 
     void initialize();
     return () => { cancelled = true; };
-  }, [clientId, disabled, nativeContext, onError, role, sellerType]);
+  }, [clientId, disabled, nativeContext, navigate, onError, role, sellerType]);
 
   if (nativeContext || !clientId) return null;
 
