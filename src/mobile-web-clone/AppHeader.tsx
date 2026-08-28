@@ -38,7 +38,7 @@ export default function AppHeader() {
           </div>
 
           <button
-            onClick={() => navigate('/inbox')}
+            onClick={() => navigate('/?app=inbox')}
             aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
             style={{ position: 'relative', width: 44, height: 44, padding: 0, background: 'transparent', border: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
