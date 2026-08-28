@@ -1,7 +1,9 @@
 /**
  * MobileSecurityPage — /profile/security
  *
- * Simple security hub: Email · Password · 2FA (placeholder) · Login activity.
+ * Mobile account-security controls aligned with the canonical web settings.
+ * Password changes require the current password to be re-authenticated before
+ * Supabase Auth accepts the new password.
  */
 
 import { useState } from 'react';
@@ -11,7 +13,6 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
-// ── Change-email inline form ───────────────────────────────────────────────────
 function EmailSection({ currentEmail }: { currentEmail: string }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -19,21 +20,25 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSave = async () => {
-    if (!value || value === currentEmail) return;
+    const nextEmail = value.trim();
+    if (!nextEmail || nextEmail === currentEmail) return;
+
     setStatus('saving');
-    const { error } = await supabase.auth.updateUser({ email: value });
+    setErrorMsg('');
+    const { error } = await supabase.auth.updateUser({ email: nextEmail });
     if (error) {
       setErrorMsg(error.message);
       setStatus('error');
     } else {
       setStatus('done');
+      setValue('');
     }
   };
 
   return (
     <div>
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((value) => !value)}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -67,8 +72,9 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
               <input
                 type="email"
                 value={value}
-                onChange={(e) => setValue(e.target.value)}
+                onChange={(event) => value !== event.target.value && setValue(event.target.value)}
                 placeholder="New email address"
+                autoComplete="email"
                 className="text-foreground text-sm bg-white/[0.05]"
                 style={{
                   width: '100%',
@@ -85,7 +91,7 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                 <p className="text-xs text-danger" style={{ margin: '0 0 8px' }}>{errorMsg}</p>
               )}
               <button
-                onClick={handleSave}
+                onClick={() => { void handleSave(); }}
                 disabled={status === 'saving'}
                 className="text-sm font-bold"
                 style={{
@@ -93,7 +99,7 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                   paddingInline: 20,
                   borderRadius: 9999,
                   border: 'none',
-                  cursor: 'pointer',
+                  cursor: status === 'saving' ? 'wait' : 'pointer',
                   opacity: status === 'saving' ? 0.6 : 1,
                 }}
               >
@@ -107,33 +113,68 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
   );
 }
 
-// ── Change-password inline form ────────────────────────────────────────────────
-function PasswordSection() {
+function PasswordSection({ currentEmail }: { currentEmail: string }) {
   const [open, setOpen] = useState(false);
-  const [pw, setPw] = useState('');
-  const [confirm, setConfirm] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSave = async () => {
-    if (pw.length < 8) { setErrorMsg('Password must be at least 8 characters.'); setStatus('error'); return; }
-    if (pw !== confirm) { setErrorMsg('Passwords do not match.'); setStatus('error'); return; }
-    setStatus('saving');
-    const { error } = await supabase.auth.updateUser({ password: pw });
-    if (error) {
-      setErrorMsg(error.message);
+    setErrorMsg('');
+
+    if (!currentEmail) {
+      setErrorMsg('Your account email is unavailable. Please refresh and try again.');
       setStatus('error');
-    } else {
-      setStatus('done');
-      setPw('');
-      setConfirm('');
+      return;
     }
+    if (!currentPassword) {
+      setErrorMsg('Enter your current password to confirm this change.');
+      setStatus('error');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setErrorMsg('New password must be at least 8 characters.');
+      setStatus('error');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMsg('New password and confirmation do not match.');
+      setStatus('error');
+      return;
+    }
+
+    setStatus('saving');
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: currentEmail,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      setErrorMsg('Current password is incorrect. Please try again.');
+      setStatus('error');
+      return;
+    }
+
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    if (updateError) {
+      setErrorMsg(updateError.message);
+      setStatus('error');
+      return;
+    }
+
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setStatus('done');
   };
 
   return (
     <div>
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((value) => !value)}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -161,17 +202,28 @@ function PasswordSection() {
             <>
               <input
                 type="password"
-                value={pw}
-                onChange={(e) => setPw(e.target.value)}
-                placeholder="New password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                placeholder="Current password"
+                autoComplete="current-password"
                 className="text-foreground text-sm bg-white/[0.05]"
                 style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
               />
               <input
                 type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                placeholder="New password"
+                autoComplete="new-password"
+                className="text-foreground text-sm bg-white/[0.05]"
+                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
+              />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 placeholder="Confirm new password"
+                autoComplete="new-password"
                 className="text-foreground text-sm bg-white/[0.05]"
                 style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
               />
@@ -179,10 +231,10 @@ function PasswordSection() {
                 <p className="text-xs text-danger" style={{ margin: '0 0 8px' }}>{errorMsg}</p>
               )}
               <button
-                onClick={handleSave}
+                onClick={() => { void handleSave(); }}
                 disabled={status === 'saving'}
                 className="text-sm font-bold"
-                style={{ height: 40, paddingInline: 20, borderRadius: 9999, border: 'none', cursor: 'pointer', opacity: status === 'saving' ? 0.6 : 1 }}
+                style={{ height: 40, paddingInline: 20, borderRadius: 9999, border: 'none', cursor: status === 'saving' ? 'wait' : 'pointer', opacity: status === 'saving' ? 0.6 : 1 }}
               >
                 {status === 'saving' ? 'Saving…' : 'Update password'}
               </button>
@@ -194,7 +246,6 @@ function PasswordSection() {
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────────
 export default function MobileSecurityPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -213,7 +264,6 @@ export default function MobileSecurityPage() {
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
     >
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingInline: 'var(--mob-side, 16px)', paddingTop: 16, paddingBottom: 12 }}>
         <button
           onClick={() => navigate('/profile')}
@@ -232,13 +282,9 @@ export default function MobileSecurityPage() {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        {/* Email */}
         <EmailSection currentEmail={email} />
-
         <div aria-hidden="true" className="bg-white/[0.05]" style={dividerStyle} />
-
-        {/* Password */}
-        <PasswordSection />
+        <PasswordSection currentEmail={email} />
       </div>
 
       <MobileBottomNav />
