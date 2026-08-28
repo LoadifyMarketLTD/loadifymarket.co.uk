@@ -10,13 +10,14 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { hasAdminAccess, hasSellerAccess } from '@/lib/roleUtils';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import type { User } from '@/types';
 
 interface SettingsRow {
   label: string;
   to: string;
 }
 
-function settingsRowsForUser(user: ReturnType<typeof useAuthStore.getState>['user']): SettingsRow[] {
+function settingsRowsForUser(user: User | null | undefined): SettingsRow[] {
   if (user && hasAdminAccess(user)) {
     return [
       { label: 'Admin settings', to: '/admin/settings' },
@@ -25,9 +26,7 @@ function settingsRowsForUser(user: ReturnType<typeof useAuthStore.getState>['use
     ];
   }
 
-  const isSeller = hasSellerAccess(user);
-
-  if (isSeller) {
+  if (hasSellerAccess(user)) {
     return [
       { label: 'Seller profile', to: '/seller/profile' },
       { label: 'Seller settings', to: '/seller/settings' },
