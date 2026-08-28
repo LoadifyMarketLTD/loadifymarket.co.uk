@@ -24,6 +24,11 @@ export interface FeatureFlags {
   buyerRegistration: boolean;
   rfqSystem: boolean;
   reviewSystem: boolean;
+  /**
+   * Legacy compatibility field. Marketplace Seller listings are now
+   * auto-approved at publication; operator moderation happens after publication
+   * by deactivating a listing or suspending the seller, not by pre-approval.
+   */
   autoApproveProducts: boolean;
   /**
    * When true, newly registered company sellers are flagged as requiring an
@@ -39,7 +44,7 @@ const FLAG_DEFAULTS: FeatureFlags = {
   buyerRegistration: true,
   rfqSystem: false,
   reviewSystem: true,
-  autoApproveProducts: false,
+  autoApproveProducts: true,
   requireCompanyApproval: false,
 };
 
@@ -63,6 +68,10 @@ function mergeFeatureFlags(value: unknown): FeatureFlags | null {
 
   const merged: FeatureFlags = { ...FLAG_DEFAULTS };
   for (const key of KNOWN_FLAG_KEYS) {
+    // Product pre-approval is intentionally retired. Keep accepting the stored
+    // key for backwards compatibility, but never let a historical false value
+    // reintroduce the owner-approval gate.
+    if (key === 'autoApproveProducts') continue;
     if (typeof record[key] === 'boolean') {
       merged[key] = record[key] as boolean;
     }
@@ -95,6 +104,8 @@ function mergeFeatureFlagsStrict(value: unknown): FeatureFlags | null {
   return {
     ...FLAG_DEFAULTS,
     ...(record as Partial<FeatureFlags>),
+    // Marketplace Seller publication no longer waits for owner approval.
+    autoApproveProducts: true,
   };
 }
 
