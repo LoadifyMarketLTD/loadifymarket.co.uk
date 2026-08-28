@@ -11,6 +11,9 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_ANON_KEY: string;
   readonly VITE_STRIPE_PUBLISHABLE_KEY: string;
+  // Public Google OAuth client identifier used by the web-only GIS signup flow.
+  // This is not a client secret and is safe to expose in the browser bundle.
+  readonly VITE_GOOGLE_CLIENT_ID?: string;
 }
 
 interface ImportMeta {
