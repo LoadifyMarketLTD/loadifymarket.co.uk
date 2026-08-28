@@ -13,12 +13,20 @@
 }
 
 .loadify-seller-listing-route .bg-background.min-h-screen > .container {
+  width: 100% !important;
+  max-width: 100rem !important;
   padding-top: 8.75rem !important;
-  padding-bottom: 4rem !important;
+  padding-bottom: 3rem !important;
+  padding-left: clamp(1rem, 2.6vw, 2.75rem) !important;
+  padding-right: clamp(1rem, 2.6vw, 2.75rem) !important;
 }
 
 .loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl {
-  max-width: 68rem !important;
+  max-width: 94rem !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl > .mb-6 {
+  margin-bottom: 1rem !important;
 }
 
 .loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl > .mb-6 h1 {
@@ -39,7 +47,9 @@
   background: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 16px !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.055) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
+  padding: 1.25rem 1.5rem !important;
+  margin-bottom: 1rem !important;
 }
 
 .loadify-seller-listing-route .bg-background.min-h-screen form > .bg-surface:hover,
@@ -53,6 +63,8 @@
   border-color: #e2e8f0 !important;
   font-weight: 750 !important;
   letter-spacing: -0.01em;
+  margin-bottom: 0.9rem !important;
+  padding-bottom: 0.7rem !important;
 }
 
 /* Readable body copy on white cards. */
@@ -71,6 +83,12 @@
 }
 
 /* Inputs/selects */
+.loadify-seller-listing-route .bg-background.min-h-screen form input:not([type="radio"]):not([type="checkbox"]),
+.loadify-seller-listing-route .bg-background.min-h-screen form select {
+  min-height: 2.75rem !important;
+  height: 2.75rem !important;
+}
+
 .loadify-seller-listing-route .bg-background.min-h-screen form input:not([type="radio"]):not([type="checkbox"]),
 .loadify-seller-listing-route .bg-background.min-h-screen form textarea,
 .loadify-seller-listing-route .bg-background.min-h-screen form select {
@@ -199,6 +217,47 @@
   background: #fff1f2 !important;
 }
 
+/*
+ * Desktop density: new listing screens have enough horizontal room to place
+ * Category + Pricing and Inventory + Product Images beside each other. This
+ * shortens the page materially without cramming the form or changing mobile.
+ */
+@media (min-width: 1200px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    gap: 1rem 1.25rem;
+    align-items: start;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > * {
+    grid-column: 1 / -1;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > .bg-surface,
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > div[class*="bg-surface"] {
+    margin-bottom: 0 !important;
+  }
+
+  /* Listing type = 1, Basic information = 2, Category = 3, Pricing = 4. */
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > div:nth-of-type(3) {
+    grid-column: 1;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > div:nth-of-type(4) {
+    grid-column: 2;
+  }
+
+  /* Physical product: Inventory = 5, Product Images = 6. */
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(5) {
+    grid-column: 1;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(6) {
+    grid-column: 2;
+  }
+}
+
 /* Remove the retired manual-approval controls from operator/seller UI while
  * the legacy data columns remain for backwards-compatible schema reads. */
 .loadify-admin-products-route table th:nth-child(6),
@@ -219,15 +278,24 @@
   display: none !important;
 }
 
+@media (max-width: 1199px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen > .container {
+    max-width: 76rem !important;
+  }
+}
+
 @media (max-width: 767px) {
   .loadify-seller-listing-route .bg-background.min-h-screen > .container {
     padding-top: 7.5rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 
   .loadify-seller-listing-route .bg-background.min-h-screen form > .bg-surface,
   .loadify-seller-listing-route .bg-background.min-h-screen form > div[class*="bg-surface"] {
     padding: 1.1rem !important;
     border-radius: 14px !important;
+    margin-bottom: 0.9rem !important;
   }
 
   .loadify-seller-listing-route .bg-background.min-h-screen form .flex.gap-4 {
