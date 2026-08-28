@@ -1,17 +1,19 @@
 /**
  * MobileProfilePage — mobile profile / account hub.
  *
- * Sections: TOP (user card) / MAIN / TOOLS / SETTINGS / SUPPORT
- * Unauthenticated users see a login/register CTA.
- * Simple list rows with chevron — no descriptions or clutter.
+ * Navigation is derived through the same compatibility helpers used by the
+ * canonical web workspaces. Seller sales and buyer purchases are intentionally
+ * separate; admin remains isolated from ordinary commerce workspaces.
  */
 
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronRight, LogOut, User } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
+import { hasAdminAccess, hasBuyerAccess, hasSellerAccess } from '@/lib/roleUtils';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { useUnreadNotificationsCount } from '@/hooks/useUnreadNotificationsCount';
+import type { User as AppUser } from '@/types';
 
 interface SectionItem {
   label: string;
@@ -25,21 +27,54 @@ interface Section {
   items: SectionItem[];
 }
 
-function buildSections(role: string | undefined): Section[] {
-  const isSellerOrAdmin = role === 'seller' || role === 'admin';
+function buildSections(user: AppUser | null | undefined): Section[] {
+  if (!user) return [];
+
+  if (hasAdminAccess(user)) {
+    return [
+      {
+        title: 'Administration',
+        items: [
+          { label: 'Admin dashboard', to: '/admin' },
+          { label: 'Products & moderation', to: '/admin/products' },
+          { label: 'Orders', to: '/admin/orders' },
+        ],
+      },
+      {
+        title: 'Settings',
+        items: [
+          { label: 'Security', to: '/profile/security' },
+          { label: 'Activity', to: '/profile/notifications' },
+        ],
+      },
+      {
+        title: 'Support',
+        items: [{ label: 'Help Centre', to: '/faq' }],
+      },
+    ];
+  }
+
+  const mainItems: SectionItem[] = [];
+
+  if (hasSellerAccess(user)) {
+    mainItems.push(
+      { label: 'My listings', to: '/seller/products' },
+      { label: 'Sales orders', to: '/seller/orders' },
+      { label: 'Balance', to: '/profile/balance' },
+    );
+  }
+
+  if (hasBuyerAccess(user)) {
+    mainItems.push(
+      { label: hasSellerAccess(user) ? 'My purchases' : 'Orders', to: '/orders' },
+      { label: 'Favourite items', to: '/profile/favourites' },
+    );
+  }
 
   return [
     {
       title: 'Main',
-      items: [
-        // "My listings" is only meaningful for sellers and admins — hide for buyers
-        ...(isSellerOrAdmin
-          ? [{ label: 'My listings', to: '/seller/products' }]
-          : []),
-        { label: 'Favourite items', to: '/profile/favourites' },
-        { label: 'Orders', to: '/orders' },
-        { label: 'Balance', to: '/profile/balance' },
-      ],
+      items: mainItems,
     },
     {
       title: 'Settings',
@@ -51,14 +86,11 @@ function buildSections(role: string | undefined): Section[] {
     },
     {
       title: 'Support',
-      items: [
-        { label: 'Help Centre', to: '/faq' },
-      ],
+      items: [{ label: 'Help Centre', to: '/faq' }],
     },
   ];
 }
 
-// ── Row component ──────────────────────────────────────────────────────────────
 function MenuRow({ label, to, external, badgeCount }: SectionItem) {
   const inner = (
     <div
@@ -72,19 +104,12 @@ function MenuRow({ label, to, external, badgeCount }: SectionItem) {
         cursor: 'pointer',
       }}
     >
-      <span className="text-[15px] font-medium text-foreground/90">
-        {label}
-      </span>
+      <span className="text-[15px] font-medium text-foreground/90">{label}</span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {badgeCount && badgeCount > 0 ? (
           <span
             className="bg-primary text-background text-[11px] font-bold inline-flex items-center justify-center"
-            style={{
-              minWidth: 20,
-              height: 20,
-              borderRadius: 999,
-              paddingInline: 6,
-            }}
+            style={{ minWidth: 20, height: 20, borderRadius: 999, paddingInline: 6 }}
           >
             {badgeCount > 99 ? '99+' : badgeCount}
           </span>
@@ -102,24 +127,17 @@ function MenuRow({ label, to, external, badgeCount }: SectionItem) {
     );
   }
 
-  return (
-    <Link to={to} style={{ display: 'block', textDecoration: 'none' }}>
-      {inner}
-    </Link>
-  );
+  return <Link to={to} style={{ display: 'block', textDecoration: 'none' }}>{inner}</Link>;
 }
 
-// ── Section component ──────────────────────────────────────────────────────────
 function MenuSection({ title, items }: Section) {
+  if (items.length === 0) return null;
+
   return (
     <div style={{ marginBottom: 8 }}>
       <p
         className="text-xs font-semibold text-foreground/35 uppercase tracking-[0.07em] m-0"
-        style={{
-          paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 20,
-          paddingBottom: 4,
-        }}
+        style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: 20, paddingBottom: 4 }}
       >
         {title}
       </p>
@@ -130,15 +148,11 @@ function MenuSection({ title, items }: Section) {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        {items.map((item, i) => (
-          <div key={item.to}>
+        {items.map((item, index) => (
+          <div key={`${item.to}:${item.label}`}>
             <MenuRow {...item} />
-            {i < items.length - 1 && (
-              <div
-                aria-hidden="true"
-                className="bg-white/[0.05]"
-                style={{ height: 1, marginInlineStart: 'var(--mob-side, 16px)' }}
-              />
+            {index < items.length - 1 && (
+              <div aria-hidden="true" className="bg-white/[0.05]" style={{ height: 1, marginInlineStart: 'var(--mob-side, 16px)' }} />
             )}
           </div>
         ))}
@@ -147,7 +161,6 @@ function MenuSection({ title, items }: Section) {
   );
 }
 
-// ── Guest CTA ──────────────────────────────────────────────────────────────────
 function GuestView() {
   const navigate = useNavigate();
   return (
@@ -162,15 +175,10 @@ function GuestView() {
         textAlign: 'center',
       }}
     >
-      <div
-        className="bg-white/[0.06] flex items-center justify-center"
-        style={{ width: 72, height: 72, borderRadius: '50%' }}
-      >
+      <div className="bg-white/[0.06] flex items-center justify-center" style={{ width: 72, height: 72, borderRadius: '50%' }}>
         <User className="text-foreground/40" style={{ width: 32, height: 32 }} aria-hidden="true" />
       </div>
-      <h2 className="text-xl font-bold text-foreground m-0">
-        Sign in to your account
-      </h2>
+      <h2 className="text-xl font-bold text-foreground m-0">Sign in to your account</h2>
       <p className="text-sm text-foreground/50 m-0" style={{ maxWidth: 280 }}>
         Access your listings, orders, messages and more.
       </p>
@@ -207,7 +215,6 @@ function GuestView() {
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────────
 export default function MobileProfilePage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -221,8 +228,20 @@ export default function MobileProfilePage() {
        ((user as { lastName?: string }).lastName?.[0] ?? '')).toUpperCase() || displayName?.[0]?.toUpperCase() || '?'
     : null;
 
-  const sections = buildSections(user?.role as string | undefined);
+  const sections = buildSections(user);
   const unreadNotifications = useUnreadNotificationsCount(user?.id);
+
+  const profileTarget = user && hasAdminAccess(user)
+    ? '/admin'
+    : user && hasSellerAccess(user)
+      ? '/seller/products'
+      : '/catalog';
+
+  const profileTargetLabel = user && hasAdminAccess(user)
+    ? 'Open Admin Hub →'
+    : user && hasSellerAccess(user)
+      ? 'View my listings →'
+      : 'Browse marketplace →';
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -237,14 +256,7 @@ export default function MobileProfilePage() {
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
     >
-      {/* ── Page title ──────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 20,
-          paddingBottom: 8,
-        }}
-      >
+      <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: 20, paddingBottom: 8 }}>
         <h1 className="text-[22px] font-extrabold text-foreground m-0">Profile</h1>
       </div>
 
@@ -252,7 +264,6 @@ export default function MobileProfilePage() {
         <GuestView />
       ) : (
         <>
-          {/* ── Profile header ──────────────────────────────────────────────── */}
           <div
             style={{
               paddingInline: 'var(--mob-side, 16px)',
@@ -263,7 +274,6 @@ export default function MobileProfilePage() {
               gap: 14,
             }}
           >
-            {/* Avatar */}
             <div
               style={{
                 width: 60,
@@ -276,27 +286,17 @@ export default function MobileProfilePage() {
               }}
               className="bg-primary"
             >
-              <span style={{ fontSize: 22, fontWeight: 700 }} className="text-surface">
-                {initials}
-              </span>
+              <span style={{ fontSize: 22, fontWeight: 700 }} className="text-surface">{initials}</span>
             </div>
 
-            {/* Name + listings link */}
             <div style={{ minWidth: 0 }}>
-              <p className="text-[18px] font-bold text-foreground m-0" style={{ lineHeight: 1.2 }}>
-                {displayName}
-              </p>
-              <Link
-                to={user.role === 'seller' || user.role === 'admin' ? '/seller/products' : '/catalog'}
-                style={{ fontSize: 13, textDecoration: 'none', fontWeight: 600 }}
-                className="text-primary"
-              >
-                View my listings →
+              <p className="text-[18px] font-bold text-foreground m-0" style={{ lineHeight: 1.2 }}>{displayName}</p>
+              <Link to={profileTarget} style={{ fontSize: 13, textDecoration: 'none', fontWeight: 600 }} className="text-primary">
+                {profileTargetLabel}
               </Link>
             </div>
           </div>
 
-          {/* ── Sections ────────────────────────────────────────────────────── */}
           {sections.map((section) => (
             <MenuSection
               key={section.title}
@@ -309,7 +309,6 @@ export default function MobileProfilePage() {
             />
           ))}
 
-          {/* ── Sign out ────────────────────────────────────────────────────── */}
           <div style={{ marginTop: 8, marginBottom: 8 }}>
             <button
               onClick={handleSignOut}
