@@ -1,21 +1,21 @@
 /**
- * MobileSellGate — wraps the /sell route.
+ * MobileSellGate — entry gate for the /sell shortcut.
  *
- * For guest users:
- *   - fires AuthPromptModal with 'sell' context
- *   - shows a friendly full-screen CTA (Create account / Log in / Continue browsing)
- *   - NO hard redirect to /login
+ * Guests keep a mobile-friendly seller CTA. Authenticated Marketplace Sellers
+ * are redirected to the canonical seller product editor so mobile and desktop
+ * use one publication, image, stock, shipping and validation contract.
  *
- * For authenticated sellers: delegates to RequireSeller + RequireEmailVerified
- * (unchanged security behaviour — role/status checks remain intact).
+ * The canonical /seller/products/new route remains protected by RequireSeller
+ * + RequireEmailVerified, so suspension/onboarding/catalogue guards continue to
+ * be enforced in one place instead of being reimplemented here.
  */
 
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
-import RequireSeller from './auth/RequireSeller';
+import { hasAdminAccess, hasSellerAccess } from '@/lib/roleUtils';
 import RequireEmailVerified from './auth/RequireEmailVerified';
 
 function GuestSellScreen() {
@@ -27,7 +27,6 @@ function GuestSellScreen() {
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
-      {/* Icon */}
       <div
         className="bg-primary/10 flex items-center justify-center"
         style={{
@@ -42,10 +41,10 @@ function GuestSellScreen() {
       </div>
 
       <div style={{ maxWidth: 300 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 10px' }} className="text-white">
+        <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 10px' }} className="text-foreground">
           Create an account to sell
         </h2>
-        <p style={{ fontSize: 14, margin: 0, lineHeight: 1.6 }} className="text-white/50">
+        <p style={{ fontSize: 14, margin: 0, lineHeight: 1.6 }} className="text-foreground/55">
           List your items and reach buyers across the UK — 0% commission on Loadify Market.
         </p>
       </div>
@@ -60,7 +59,6 @@ function GuestSellScreen() {
           marginTop: 8,
         }}
       >
-        {/* Primary CTA */}
         <Link
           to="/register?type=seller"
           className="text-surface bg-primary"
@@ -75,10 +73,9 @@ function GuestSellScreen() {
             textDecoration: 'none',
           }}
         >
-          Create account
+          Create seller account
         </Link>
 
-        {/* Secondary CTA */}
         <Link
           to="/login"
           className="text-foreground/80"
@@ -89,7 +86,7 @@ function GuestSellScreen() {
             textAlign: 'center',
             borderRadius: 9999,
             background: 'transparent',
-            border: '1.5px solid rgba(255,255,255,0.18)',
+            border: '1.5px solid rgba(10,35,79,0.18)',
             fontSize: 15,
             fontWeight: 600,
             textDecoration: 'none',
@@ -98,10 +95,9 @@ function GuestSellScreen() {
           Log in
         </Link>
 
-        {/* Tertiary: continue browsing */}
         <Link
           to="/"
-          className="text-foreground/35"
+          className="text-foreground/45"
           style={{
             display: 'block',
             paddingTop: 8,
@@ -117,31 +113,76 @@ function GuestSellScreen() {
   );
 }
 
+function SellerAccessRequiredScreen() {
+  return (
+    <div
+      className="md:hidden min-h-screen flex flex-col items-center justify-center gap-5 px-6 text-center bg-background"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
+      <div
+        className="bg-primary/10 flex items-center justify-center"
+        style={{ width: 80, height: 80, borderRadius: '50%', fontSize: 36 }}
+        aria-hidden="true"
+      >
+        🏪
+      </div>
+      <div style={{ maxWidth: 320 }}>
+        <h2 className="text-foreground" style={{ fontSize: 22, fontWeight: 800, margin: '0 0 10px' }}>
+          Seller access required
+        </h2>
+        <p className="text-foreground/55" style={{ fontSize: 14, margin: 0, lineHeight: 1.6 }}>
+          Add Marketplace Seller access to this account before creating listings.
+        </p>
+      </div>
+      <Link
+        to="/register?type=seller"
+        className="text-surface bg-primary"
+        style={{
+          display: 'block',
+          width: '100%',
+          maxWidth: 320,
+          height: 50,
+          lineHeight: '50px',
+          textAlign: 'center',
+          borderRadius: 9999,
+          fontSize: 15,
+          fontWeight: 700,
+          textDecoration: 'none',
+        }}
+      >
+        Become a seller
+      </Link>
+      <Link to="/profile" className="text-foreground/55" style={{ fontSize: 14, textDecoration: 'none' }}>
+        Back to profile
+      </Link>
+    </div>
+  );
+}
+
 export default function MobileSellGate({ children }: { children: ReactNode }) {
+  void children;
   const { user, isLoading } = useAuthStore();
   const { open: promptAuth } = useAuthPromptStore();
 
-  // Fire the auth modal as soon as we confirm the user is a guest —
-  // this ensures the modal is visible even if the user navigated here directly.
   useEffect(() => {
     if (!isLoading && !user) {
       promptAuth('sell');
     }
   }, [isLoading, user, promptAuth]);
 
-  // While auth state is resolving, show a neutral spinner
   if (isLoading) {
     return (
-      <div
-        className="md:hidden flex items-center justify-center min-h-screen bg-background"
-      >
+      <div className="md:hidden flex items-center justify-center min-h-screen bg-background">
         <div
           style={{
             width: 40,
             height: 40,
             borderRadius: '50%',
-            border: '3px solid rgba(255,255,255,0.10)',
-            borderTopColor: 'rgba(212,175,55,1)',
+            border: '3px solid rgba(10,35,79,0.10)',
+            borderTopColor: 'rgba(245,163,0,1)',
             animation: 'spin 0.8s linear infinite',
           }}
         />
@@ -149,18 +190,24 @@ export default function MobileSellGate({ children }: { children: ReactNode }) {
     );
   }
 
-  // Guest — show friendly gate; AuthPromptModal is already triggered above
   if (!user) {
     return <GuestSellScreen />;
   }
 
-  // Authenticated user — delegate to RequireSeller + RequireEmailVerified
-  // (role/status checks, suspension checks, etc. remain fully intact)
+  if (user.isActive !== true) {
+    return <Navigate to="/login?error=account_inactive" replace />;
+  }
+
+  if (!hasSellerAccess(user) && !hasAdminAccess(user)) {
+    return <SellerAccessRequiredScreen />;
+  }
+
+  // The canonical editor route owns Seller status, onboarding/catalogue
+  // exceptions, listing locks, image optimisation, publication and tax/payment
+  // separation. Do not duplicate those contracts in a mobile-only wizard.
   return (
-    <RequireSeller>
-      <RequireEmailVerified>
-        {children}
-      </RequireEmailVerified>
-    </RequireSeller>
+    <RequireEmailVerified>
+      <Navigate to="/seller/products/new" replace />
+    </RequireEmailVerified>
   );
 }
