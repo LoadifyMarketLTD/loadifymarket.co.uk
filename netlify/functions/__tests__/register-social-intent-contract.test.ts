@@ -11,8 +11,10 @@ const modern = read('netlify/functions-modern/register-social-intent.ts');
 const signupEntry = read('src/pages/pixel-perfect/SignupEntry.tsx');
 
 describe('verified social registration contract', () => {
-  it('keeps the modern function as a thin wrapper', () => {
-    expect(modern).toContain("export { handler } from '../functions/register-social-intent'");
+  it('keeps the modern function adapted to the repository runtime wrapper', () => {
+    expect(modern).toContain("import { handler } from '../functions/register-social-intent'");
+    expect(modern).toContain("import { withLambda } from '../function-runtime/lambdaCompat'");
+    expect(modern).toContain('export default withLambda(handler)');
   });
 
   it('supports Google only and rejects other social providers', () => {
