@@ -6,7 +6,10 @@ import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import { supabase } from "@/lib/supabase";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import { isCapacitorContext } from "@/lib/capacitorUtils";
 import { useAuthStore } from "@/store";
+import GoogleRoleRegistrationButton from "@/components/auth/GoogleRoleRegistrationButton";
+import SignupEntry from "./SignupEntry";
 
 const inputClass =
   "mt-1.5 block h-11 w-full rounded-xl border border-[#0A234F]/15 bg-white px-3.5 text-sm text-[#0A234F] outline-none transition focus:border-[#0E3FA9]/60 focus:ring-2 focus:ring-[#0E3FA9]/10";
@@ -16,7 +19,9 @@ const Signup = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const isSeller = searchParams.get("type") === "seller";
+  const requestedType = searchParams.get("type");
+  const nativeContext = isCapacitorContext();
+  const isSeller = requestedType === "seller";
   const role: "buyer" | "seller" = isSeller ? "seller" : "buyer";
 
   const [loading, setLoading] = useState(false);
@@ -176,7 +181,7 @@ const Signup = () => {
           options: {
             data: {
               intent_id: intentPayload.intentId,
-          newsletter: form.newsletter,
+              newsletter: form.newsletter,
             },
             emailRedirectTo,
           },
@@ -207,6 +212,18 @@ const Signup = () => {
       setLoading(false);
     }
   };
+
+  const googleRegistrationDisabled =
+    registrationDisabled ||
+    loading ||
+    !form.agreeTerms ||
+    (isSeller && (!form.agreeSellerCompliance || !form.sellerType));
+
+  // Web registration is role-first. Native/Capacitor keeps the existing
+  // registration screen and behaviour so this Auth repair does not redesign APK UI.
+  if (!nativeContext && requestedType !== "buyer" && requestedType !== "seller") {
+    return <SignupEntry />;
+  }
 
   return (
     <MainLayout>
@@ -418,6 +435,13 @@ const Signup = () => {
                       </label>
                     </div>
 
+                    <GoogleRoleRegistrationButton
+                      role={role}
+                      sellerType={form.sellerType}
+                      disabled={googleRegistrationDisabled}
+                      onError={setError}
+                    />
+
                     <button
                       type="submit"
                       disabled={loading || registrationDisabled}
@@ -430,7 +454,7 @@ const Signup = () => {
 
                     <div className="mt-5 text-center text-xs text-[#64748B]">
                       {isSeller ? (
-                        <>Here to shop? <Link to="/register" className="font-extrabold text-[#0E3FA9] hover:underline">Create a Buyer account</Link></>
+                        <>Here to shop? <Link to="/register?type=buyer" className="font-extrabold text-[#0E3FA9] hover:underline">Create a Buyer account</Link></>
                       ) : (
                         <>Want to sell? <Link to="/register?type=seller" className="font-extrabold text-[#0E3FA9] hover:underline">Start as a Marketplace Seller</Link></>
                       )}
