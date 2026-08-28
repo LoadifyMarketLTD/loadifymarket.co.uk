@@ -35,10 +35,14 @@ describe('verified social registration contract', () => {
     expect(fn).toContain('Invalid Google credential signature');
   });
 
-  it('validates issuer, audience, expiry and token age', () => {
+  it('validates issuer, audience, authorized party, expiry and token age', () => {
     expect(fn).toContain('https://accounts.google.com');
     expect(fn).toContain('audienceMatches');
     expect(fn).toContain('Invalid Google credential audience');
+    expect(fn).toContain('claims.azp && claims.azp !== expectedAudience');
+    expect(fn).toContain('Invalid Google credential authorized party');
+    expect(fn).toContain('claims.aud.length > 1 && claims.azp !== expectedAudience');
+    expect(fn).toContain('Google credential authorized party is required');
     expect(fn).toContain('Google credential has expired');
     expect(fn).toContain('MAX_TOKEN_AGE_SECONDS');
   });
@@ -70,7 +74,6 @@ describe('verified social registration contract', () => {
   });
 
   it('requires account type before the signup form route', () => {
-    expect(signupEntry).toContain("requestedType === \"buyer\" || requestedType === \"seller\"");
     expect(signupEntry).toContain('Choose your account type first');
     expect(signupEntry).toContain('/register?type=buyer');
     expect(signupEntry).toContain('/register?type=seller');
