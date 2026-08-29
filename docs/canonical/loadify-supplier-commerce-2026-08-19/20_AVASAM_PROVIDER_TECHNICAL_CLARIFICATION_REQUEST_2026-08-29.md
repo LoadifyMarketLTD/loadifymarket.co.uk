@@ -12,6 +12,12 @@ It is intentionally limited to gaps that are not resolved by the current Avasam 
 
 Do not include Consumer Key, Secret Key, access tokens, customer PII, order data, Netlify secrets or Supabase secrets in any support request.
 
+## Recommended support channel
+
+Use the support ticket system inside the authenticated Avasam seller account as the preferred channel because it keeps the technical request associated with the correct account without disclosing API credentials.
+
+Avasam also publicly offers seller support by live chat, email and telephone. If the ticket system is unavailable, use the official seller-support contact route from Avasam's current contact page. Do not send API secrets through any support channel.
+
 ## Already verified — do not ask Avasam to reconfirm unless needed for a contradiction
 
 - `POST /api/auth/request-token` works with `consumer_key` + `secret_key`.
