@@ -1,18 +1,18 @@
 /**
- * MobileAppHeader — mobile-only top header bar.
+ * MobileAppHeader — mobile-only top header bar shared by mobile web and Capacitor.
  *
- * Shows: logo + branding (left) | notifications (right)
+ * Shows: premium light Loadify identity (left) | notifications (right)
  *        marketplace search + catalogue filter (second row)
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Filter } from 'lucide-react';
+import { Bell, Search, SlidersHorizontal } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import { MOBILE_NOTIFICATION_QUERY_TYPES } from '@/lib/notificationUtils';
 import MobileSearchOverlay from '@/components/MobileSearchOverlay';
-import logo from '@/assets/loadify-logo.svg';
+import logo from '@/assets/loadify-logo-light.svg';
 
 export default function MobileAppHeader() {
   const navigate = useNavigate();
@@ -74,67 +74,47 @@ export default function MobileAppHeader() {
     <>
       <header
         style={{
-          paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
+          paddingTop: 'calc(0.7rem + env(safe-area-inset-top, 0px))',
           paddingBottom: '0.75rem',
           paddingLeft: 16,
           paddingRight: 16,
         }}
-        className="bg-[#0A234F] text-white"
+        className="border-b border-[#0A234F]/[0.07] bg-[#F8F7F4] text-[#0A234F]"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            aria-label="Loadify Market home"
+            className="flex min-w-0 flex-1 items-center gap-2.5 border-0 bg-transparent p-0 text-left"
+          >
             <img
               src={logo}
               alt=""
               aria-hidden="true"
-              width={38}
-              height={38}
-              style={{ width: 38, height: 38, flexShrink: 0 }}
+              width={36}
+              height={36}
+              style={{ width: 36, height: 36, flexShrink: 0 }}
             />
-
-            <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>
-              <span
-                className="text-white"
-                style={{
-                  fontSize: 'clamp(14px, 4.2vw, 19px)',
-                  fontWeight: 800,
-                  letterSpacing: 'clamp(0.5px, 0.2vw, 1px)',
-                  lineHeight: 1,
-                  fontFamily: 'var(--font-display)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Loadify
-              </span>
-              <span
-                style={{
-                  fontSize: 'clamp(10px, 2.8vw, 13px)',
-                  fontWeight: 800,
-                  letterSpacing: 'clamp(0.5px, 0.3vw, 1.5px)',
-                  lineHeight: 1,
-                  fontFamily: 'var(--font-display)',
-                  whiteSpace: 'nowrap',
-                }}
-                className="text-[#F5A300]"
-              >
-                MARKET
-              </span>
-            </div>
-          </div>
+            <span className="min-w-0 truncate font-serif text-[19px] font-medium tracking-[-0.025em] text-[#0A234F]">
+              Loadify <span className="text-[#8A7351]">Market</span>
+            </span>
+          </button>
 
           <button
             onClick={() => navigate('/profile/notifications')}
             aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
-            className="relative h-11 w-11 shrink-0 cursor-pointer border-0 bg-transparent p-0 flex items-center justify-center"
+            className="relative flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-[#0A234F]/[0.08] bg-white p-0 text-[#334155]"
           >
-            <Bell style={{ width: 22, height: 22 }} className="text-white" aria-hidden="true" />
+            <Bell style={{ width: 20, height: 20 }} aria-hidden="true" />
             {unread > 0 && (
               <span
                 aria-hidden="true"
+                className="bg-[#0A234F] text-white"
                 style={{
                   position: 'absolute',
-                  top: 4,
-                  right: 4,
+                  top: 3,
+                  right: 3,
                   minWidth: 17,
                   height: 17,
                   borderRadius: 9999,
@@ -146,7 +126,6 @@ export default function MobileAppHeader() {
                   paddingLeft: 2,
                   paddingRight: 2,
                 }}
-                className="bg-[#F5A300] text-[#0A234F]"
               >
                 {unread > 9 ? '9+' : unread}
               </span>
@@ -154,17 +133,17 @@ export default function MobileAppHeader() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2" style={{ marginTop: 10 }}>
+        <div className="mt-3 flex items-center gap-2">
           <button
             onClick={() => setSearchOpen(true)}
             aria-label="Search products and categories"
-            className="h-11 flex-1 rounded-xl border border-white/15 bg-white/[0.07] px-3.5 text-left flex items-center gap-2.5 cursor-pointer"
+            className="flex h-11 flex-1 cursor-pointer items-center gap-2.5 rounded-lg border border-[#0A234F]/10 bg-white px-3.5 text-left shadow-[0_2px_8px_rgba(15,23,42,0.025)]"
           >
-            <Search style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/65" aria-hidden="true" />
+            <Search style={{ width: 18, height: 18, flexShrink: 0 }} className="text-[#64748B]" aria-hidden="true" />
             <span
-              className="text-white/70"
+              className="text-[#7A8492]"
               style={{
-                fontSize: 14,
+                fontSize: 13.5,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -178,9 +157,9 @@ export default function MobileAppHeader() {
           <button
             aria-label="Browse and filter catalogue"
             onClick={() => navigate('/catalog')}
-            className="h-11 w-11 shrink-0 rounded-xl border border-white/15 bg-white/[0.07] flex items-center justify-center cursor-pointer"
+            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#0A234F]/10 bg-white text-[#475569] shadow-[0_2px_8px_rgba(15,23,42,0.025)]"
           >
-            <Filter style={{ width: 18, height: 18 }} className="text-[#F5A300]" aria-hidden="true" />
+            <SlidersHorizontal style={{ width: 18, height: 18 }} aria-hidden="true" />
           </button>
         </div>
       </header>
