@@ -10,9 +10,12 @@
 --   * It does NOT activate/configure the hosted Auth hook.
 --   * Email signup intents are validated here but NOT consumed here.
 --   * Consumption remains atomic in handle_new_auth_user() migration 677.
---   * Fresh Google creation requires provider-bound registration authorization.
+--   * Fresh Google creation always requires provider-bound registration authorization.
 --   * Fresh Facebook creation remains fail-closed.
---   * Client-supplied role metadata is forbidden.
+--   * Client-supplied user_metadata role authority is forbidden.
+--   * A private overlap flag may temporarily allow ONLY the trusted legacy
+--     server-created email flow carrying Auth app_metadata buyer/seller role.
+--     The flag defaults OFF and must be OFF after the production cutover.
 
 create or replace function public.before_user_created_validate_signup_intent(event jsonb)
 returns jsonb
@@ -30,6 +33,8 @@ declare
   v_provider_subject text;
   v_intent_id_text text;
   v_intent_id uuid;
+  v_legacy_role text;
+  v_allow_legacy_server_registration boolean := false;
 
   v_intent private.signup_intents%rowtype;
   v_feature_flags jsonb;
@@ -66,6 +71,15 @@ begin
   v_email := lower(trim(coalesce(v_user->>'email', '')));
   v_provider := lower(trim(coalesce(v_app_metadata->>'provider', '')));
 
+  select c.allow_legacy_server_registration
+  into v_allow_legacy_server_registration
+  from private.auth_signup_cutover_control as c
+  where c.singleton = true;
+
+  if not found then
+    v_allow_legacy_server_registration := false;
+  end if;
+
   if v_email = '' then
     return jsonb_build_object(
       'error',
@@ -100,8 +114,26 @@ begin
   v_seller_registration :=
     (v_feature_flags->>'sellerRegistration')::boolean;
 
-  if v_user_metadata ? 'role'
-     or v_app_metadata ? 'role' then
+  if v_user_metadata ? 'role' then
+    return jsonb_build_object(
+      'error',
+      jsonb_build_object(
+        'http_code', 403,
+        'message', 'client role metadata is forbidden'
+      )
+    );
+  end if;
+
+  -- app_metadata role is accepted only during the short blue/green overlap,
+  -- only for provider=email, and only for buyer/seller. Public browser signup
+  -- cannot assign app_metadata; the legacy Netlify Auth Admin path can.
+  if v_app_metadata ? 'role'
+     and not (
+       v_allow_legacy_server_registration
+       and v_provider = 'email'
+       and trim(coalesce(v_user_metadata->>'intent_id', '')) = ''
+       and lower(trim(coalesce(v_app_metadata->>'role', ''))) in ('buyer', 'seller')
+     ) then
     return jsonb_build_object(
       'error',
       jsonb_build_object(
@@ -160,8 +192,45 @@ begin
   elsif v_provider = 'email' then
     v_intent_id_text := trim(coalesce(v_user_metadata->>'intent_id', ''));
 
-    if v_intent_id_text = ''
-       or v_intent_id_text !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' then
+    if v_intent_id_text = '' then
+      if v_allow_legacy_server_registration
+         and v_app_metadata ? 'role'
+         and lower(trim(coalesce(v_app_metadata->>'role', ''))) in ('buyer', 'seller') then
+        v_legacy_role := lower(trim(coalesce(v_app_metadata->>'role', '')));
+
+        if v_legacy_role = 'buyer' and not v_buyer_registration then
+          return jsonb_build_object(
+            'error',
+            jsonb_build_object(
+              'http_code', 403,
+              'message', 'buyer registration is temporarily disabled'
+            )
+          );
+        end if;
+
+        if v_legacy_role = 'seller' and not v_seller_registration then
+          return jsonb_build_object(
+            'error',
+            jsonb_build_object(
+              'http_code', 403,
+              'message', 'seller registration is temporarily disabled'
+            )
+          );
+        end if;
+
+        return '{}'::jsonb;
+      end if;
+
+      return jsonb_build_object(
+        'error',
+        jsonb_build_object(
+          'http_code', 400,
+          'message', 'signup intent is required'
+        )
+      );
+    end if;
+
+    if v_intent_id_text !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' then
       return jsonb_build_object(
         'error',
         jsonb_build_object(
@@ -292,6 +361,8 @@ revoke all
   on function public.before_user_created_validate_signup_intent(jsonb)
   from public, anon, authenticated, service_role;
 
+grant usage on schema public to supabase_auth_admin;
+
 grant execute
   on function public.before_user_created_validate_signup_intent(jsonb)
   to supabase_auth_admin;
@@ -332,6 +403,11 @@ begin
      ) then
     raise exception
       'supabase_auth_admin must execute before_user_created_validate_signup_intent';
+  end if;
+
+  if not has_schema_privilege('supabase_auth_admin', 'public', 'USAGE') then
+    raise exception
+      'supabase_auth_admin must have USAGE on public schema for Auth hook dispatch';
   end if;
 
   if has_schema_privilege('anon', 'private', 'USAGE')
