@@ -40,9 +40,17 @@ function validTokenPayload(value) {
     && typeof value.expires_at === 'string' && Number.isFinite(Date.parse(value.expires_at)));
 }
 
+function inventoryShapeFacts(value) {
+  const record = Boolean(value && typeof value === 'object' && !Array.isArray(value));
+  const dataArray = record && Array.isArray(value.data);
+  const totalNumber = record && typeof value.total === 'number' && Number.isFinite(value.total) && value.total >= 0;
+  const totalNumericString = record && typeof value.total === 'string' && value.total.trim() !== '' && Number.isFinite(Number(value.total));
+  return { record, dataArray, totalNumber, totalNumericString, topLevelArray: Array.isArray(value) };
+}
+
 function validInventoryEnvelope(value) {
-  return Boolean(value && typeof value === 'object' && Array.isArray(value.data)
-    && typeof value.total === 'number' && Number.isFinite(value.total) && value.total >= 0);
+  const facts = inventoryShapeFacts(value);
+  return facts.dataArray && facts.totalNumber;
 }
 
 function validStockResponse(value) {
@@ -75,12 +83,13 @@ async function postJson(baseUrl, path, body, providerHeaders = {}) {
 
 async function postInventory(baseUrl, body, providerHeaders) {
   const { response, payload } = await postJson(baseUrl, INVENTORY_PATH, body, providerHeaders);
+  const facts = inventoryShapeFacts(payload);
   const shapeOk = validInventoryEnvelope(payload);
   return {
-    status: response.status, ok: response.ok, shapeOk,
-    count: shapeOk ? payload.data.length : null,
-    total: shapeOk ? payload.total : null,
-    skuMatched: shapeOk ? payload.data.some(item => item && typeof item === 'object' && typeof item.SKU === 'string' && item.SKU.trim() === body.Supplier) : false,
+    status: response.status, ok: response.ok, shapeOk, ...facts,
+    count: facts.dataArray ? payload.data.length : null,
+    total: facts.totalNumber ? payload.total : null,
+    skuMatched: facts.dataArray ? payload.data.some(item => item && typeof item === 'object' && typeof item.SKU === 'string' && item.SKU.trim() === body.Supplier) : false,
   };
 }
 
@@ -145,14 +154,35 @@ export async function runAvasamBearerReadOnlyProbe() {
   const evidence = {
     gate: 'avasam-readonly-token-transport', endpoint: INVENTORY_PATH, transport: transport.mode, sku,
     unauthenticated: { status: unauthenticated.status, shapeOk: unauthenticated.shapeOk },
-    authenticated: { status: authenticated.status, shapeOk: authenticated.shapeOk, count: authenticated.count, total: authenticated.total, skuMatched: authenticated.skuMatched },
+    authenticated: {
+      status: authenticated.status, shapeOk: authenticated.shapeOk,
+      record: authenticated.record, dataArray: authenticated.dataArray,
+      totalNumber: authenticated.totalNumber, totalNumericString: authenticated.totalNumericString,
+      topLevelArray: authenticated.topLevelArray, count: authenticated.count,
+      total: authenticated.total, skuMatched: authenticated.skuMatched,
+    },
   };
   console.log(JSON.stringify(evidence));
 
-  if (process.env.AVASAM_PROBE_GATE === 'http-only') {
-    if (unauthenticated.ok || !authenticated.ok) {
-      throw new Error('Avasam authenticated Inventory HTTP gate did not pass');
-    }
+  const gate = process.env.AVASAM_PROBE_GATE;
+  if (gate === 'http-only') {
+    if (unauthenticated.ok || !authenticated.ok) throw new Error('Avasam authenticated Inventory HTTP gate did not pass');
+    return evidence;
+  }
+  if (gate === 'data-array') {
+    if (!authenticated.ok || !authenticated.dataArray) throw new Error('Avasam Inventory data-array gate did not pass');
+    return evidence;
+  }
+  if (gate === 'total-number') {
+    if (!authenticated.ok || !authenticated.totalNumber) throw new Error('Avasam Inventory total-number gate did not pass');
+    return evidence;
+  }
+  if (gate === 'total-numeric-string') {
+    if (!authenticated.ok || !authenticated.totalNumericString) throw new Error('Avasam Inventory total-numeric-string gate did not pass');
+    return evidence;
+  }
+  if (gate === 'top-level-array') {
+    if (!authenticated.ok || !authenticated.topLevelArray) throw new Error('Avasam Inventory top-level-array gate did not pass');
     return evidence;
   }
 
