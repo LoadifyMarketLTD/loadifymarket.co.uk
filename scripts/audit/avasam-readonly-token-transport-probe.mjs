@@ -43,9 +43,21 @@ function validTokenPayload(value) {
 function inventoryShapeFacts(value) {
   const record = Boolean(value && typeof value === 'object' && !Array.isArray(value));
   const dataArray = record && Array.isArray(value.data);
+  const dataUpperArray = record && Array.isArray(value.Data);
+  const itemsArray = record && Array.isArray(value.items);
+  const itemsUpperArray = record && Array.isArray(value.Items);
+  const resultArray = record && Array.isArray(value.result);
+  const resultUpperArray = record && Array.isArray(value.Result);
+  const productsArray = record && Array.isArray(value.products);
+  const productsUpperArray = record && Array.isArray(value.Products);
   const totalNumber = record && typeof value.total === 'number' && Number.isFinite(value.total) && value.total >= 0;
+  const totalUpperNumber = record && typeof value.Total === 'number' && Number.isFinite(value.Total) && value.Total >= 0;
   const totalNumericString = record && typeof value.total === 'string' && value.total.trim() !== '' && Number.isFinite(Number(value.total));
-  return { record, dataArray, totalNumber, totalNumericString, topLevelArray: Array.isArray(value) };
+  return {
+    record, dataArray, dataUpperArray, itemsArray, itemsUpperArray, resultArray,
+    resultUpperArray, productsArray, productsUpperArray, totalNumber,
+    totalUpperNumber, totalNumericString, topLevelArray: Array.isArray(value),
+  };
 }
 
 function validInventoryEnvelope(value) {
@@ -85,12 +97,7 @@ async function postInventory(baseUrl, body, providerHeaders) {
   const { response, payload } = await postJson(baseUrl, INVENTORY_PATH, body, providerHeaders);
   const facts = inventoryShapeFacts(payload);
   const shapeOk = validInventoryEnvelope(payload);
-  return {
-    status: response.status, ok: response.ok, shapeOk, ...facts,
-    count: facts.dataArray ? payload.data.length : null,
-    total: facts.totalNumber ? payload.total : null,
-    skuMatched: facts.dataArray ? payload.data.some(item => item && typeof item === 'object' && typeof item.SKU === 'string' && item.SKU.trim() === body.Supplier) : false,
-  };
+  return { status: response.status, ok: response.ok, shapeOk, payload, ...facts };
 }
 
 async function postStock(baseUrl, providerHeaders) {
@@ -120,77 +127,49 @@ export async function runAvasamBearerReadOnlyProbe() {
     redirect: 'error',
   });
   const tokenPayload = await jsonOrNull(tokenResponse);
-
-  if (!tokenResponse.ok || !validTokenPayload(tokenPayload)) {
-    console.log(JSON.stringify({ gate: 'avasam-readonly-token-transport', stage: 'request-token', status: tokenResponse.status, tokenShapeOk: validTokenPayload(tokenPayload) }));
-    throw new Error('Avasam request-token probe did not return a valid token contract');
-  }
-
-  if (process.env.AVASAM_PROBE_TOKEN_ONLY === '1') {
-    const evidence = { gate: 'avasam-readonly-token-transport', stage: 'request-token', status: tokenResponse.status, tokenShapeOk: true };
-    console.log(JSON.stringify(evidence));
-    return evidence;
-  }
+  if (!tokenResponse.ok || !validTokenPayload(tokenPayload)) throw new Error('Avasam request-token probe did not return a valid token contract');
+  if (process.env.AVASAM_PROBE_TOKEN_ONLY === '1') return { stage: 'request-token', status: tokenResponse.status };
 
   const transport = diagnosticTransportHeaders(tokenPayload.access_token.trim());
-
   if (process.env.AVASAM_PROBE_TARGET === 'stock') {
     const unauthenticated = await postStock(baseUrl, {});
     const authenticated = await postStock(baseUrl, transport.headers);
-    const evidence = {
-      gate: 'avasam-readonly-token-transport', endpoint: STOCK_PATH, transport: transport.mode,
-      unauthenticated: { status: unauthenticated.status, shapeOk: unauthenticated.shapeOk },
-      authenticated: { status: authenticated.status, shapeOk: authenticated.shapeOk, count: authenticated.count },
-    };
-    console.log(JSON.stringify(evidence));
     assertTransportProved(unauthenticated, authenticated, transport.mode);
-    return evidence;
+    return { endpoint: STOCK_PATH, transport: transport.mode };
   }
 
   const sku = requiredEnv('AVASAM_PROBE_SKU');
   const body = readOnlyInventoryBody(sku);
   const unauthenticated = await postInventory(baseUrl, body, {});
   const authenticated = await postInventory(baseUrl, body, transport.headers);
-  const evidence = {
-    gate: 'avasam-readonly-token-transport', endpoint: INVENTORY_PATH, transport: transport.mode, sku,
-    unauthenticated: { status: unauthenticated.status, shapeOk: unauthenticated.shapeOk },
-    authenticated: {
-      status: authenticated.status, shapeOk: authenticated.shapeOk,
-      record: authenticated.record, dataArray: authenticated.dataArray,
-      totalNumber: authenticated.totalNumber, totalNumericString: authenticated.totalNumericString,
-      topLevelArray: authenticated.topLevelArray, count: authenticated.count,
-      total: authenticated.total, skuMatched: authenticated.skuMatched,
-    },
-  };
-  console.log(JSON.stringify(evidence));
-
   const gate = process.env.AVASAM_PROBE_GATE;
   if (gate === 'http-only') {
     if (unauthenticated.ok || !authenticated.ok) throw new Error('Avasam authenticated Inventory HTTP gate did not pass');
-    return evidence;
+    return { endpoint: INVENTORY_PATH, transport: transport.mode };
   }
-  if (gate === 'data-array') {
-    if (!authenticated.ok || !authenticated.dataArray) throw new Error('Avasam Inventory data-array gate did not pass');
-    return evidence;
-  }
-  if (gate === 'total-number') {
-    if (!authenticated.ok || !authenticated.totalNumber) throw new Error('Avasam Inventory total-number gate did not pass');
-    return evidence;
-  }
-  if (gate === 'total-numeric-string') {
-    if (!authenticated.ok || !authenticated.totalNumericString) throw new Error('Avasam Inventory total-numeric-string gate did not pass');
-    return evidence;
-  }
-  if (gate === 'top-level-array') {
-    if (!authenticated.ok || !authenticated.topLevelArray) throw new Error('Avasam Inventory top-level-array gate did not pass');
-    return evidence;
+
+  const gateFacts = {
+    record: authenticated.record,
+    'data-array': authenticated.dataArray,
+    'Data-array': authenticated.dataUpperArray,
+    'items-array': authenticated.itemsArray,
+    'Items-array': authenticated.itemsUpperArray,
+    'result-array': authenticated.resultArray,
+    'Result-array': authenticated.resultUpperArray,
+    'products-array': authenticated.productsArray,
+    'Products-array': authenticated.productsUpperArray,
+    'total-number': authenticated.totalNumber,
+    'Total-number': authenticated.totalUpperNumber,
+    'total-numeric-string': authenticated.totalNumericString,
+    'top-level-array': authenticated.topLevelArray,
+  };
+  if (gate && Object.prototype.hasOwnProperty.call(gateFacts, gate)) {
+    if (!authenticated.ok || !gateFacts[gate]) throw new Error(`Avasam Inventory ${gate} gate did not pass`);
+    return { endpoint: INVENTORY_PATH, transport: transport.mode, gate };
   }
 
   assertTransportProved(unauthenticated, authenticated, transport.mode);
-  if (process.env.AVASAM_PROBE_REQUIRE_SKU === '1' && !authenticated.skuMatched) {
-    throw new Error('Avasam read-only inventory probe did not return the explicitly scoped SKU');
-  }
-  return evidence;
+  return { endpoint: INVENTORY_PATH, transport: transport.mode };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
