@@ -1,12 +1,10 @@
 import type { SupplierAdapterErrorClass, SupplierAdapterResult } from './supplierAdapter';
+import { AVASAM_VERIFIED_ENDPOINTS } from './avasamContracts';
 
 export interface AvasamClientConfig {
   baseUrl?: string;
   consumerKey?: string;
   secretKey?: string;
-  apiToken?: string;
-  apiKey?: string;
-  apiKeyHeader?: string;
 }
 
 export interface AvasamRequestContext {
@@ -66,13 +64,29 @@ function isValidTokenResponse(value: unknown): value is AvasamTokenResponse {
     && Number.isFinite(Date.parse(candidate.expires_at));
 }
 
-const RESERVED_TRUSTED_HEADERS = new Set([
+const UNVERIFIED_PROVIDER_AUTH_HEADERS = new Set([
   'authorization',
-  'x-correlation-id',
-  'idempotency-key',
-  'accept',
-  'content-type',
+  'authkey',
+  'token',
+  'x-api-key',
+  'api-key',
+  'clientid',
+  'client-id',
+  'consumer_key',
+  'secret_key',
 ]);
+
+function assertNoUnverifiedProviderAuthHeaders(headersInit: HeadersInit | undefined): void {
+  if (!headersInit) return;
+  const headers = new Headers(headersInit);
+  for (const [name] of headers.entries()) {
+    if (UNVERIFIED_PROVIDER_AUTH_HEADERS.has(name.toLowerCase())) {
+      throw new AvasamClientConfigurationError(
+        `Avasam provider auth header '${name}' is blocked until the token transport contract is verified`,
+      );
+    }
+  }
+}
 
 export class AvasamClient {
   private readonly config: AvasamClientConfig;
@@ -94,7 +108,7 @@ export class AvasamClient {
       const baseUrl = required(this.config.baseUrl, 'AVASAM_API_BASE_URL');
       const consumerKey = required(this.config.consumerKey, 'AVASAM_CONSUMER_KEY');
       const secretKey = required(this.config.secretKey, 'AVASAM_SECRET_KEY');
-      const response = await fetch(buildUrl(baseUrl, '/api/auth/request-token'), {
+      const response = await fetch(buildUrl(baseUrl, AVASAM_VERIFIED_ENDPOINTS.requestToken), {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -144,25 +158,23 @@ export class AvasamClient {
       'X-Correlation-Id': required(context.correlationId, 'correlationId'),
     };
     if (context.idempotencyKey?.trim()) headers['Idempotency-Key'] = context.idempotencyKey.trim();
-    if (this.config.apiToken?.trim()) headers.Authorization = `Bearer ${this.config.apiToken.trim()}`;
-    if (this.config.apiKey?.trim()) {
-      const headerName = this.config.apiKeyHeader?.trim() || 'X-API-Key';
-      if (RESERVED_TRUSTED_HEADERS.has(headerName.toLowerCase())) {
-        throw new AvasamClientConfigurationError(`AVASAM_API_KEY_HEADER cannot override trusted header '${headerName}'`);
-      }
-      headers[headerName] = this.config.apiKey.trim();
-    }
     return headers;
   }
 
+  /**
+   * Generic transport remains intentionally unauthenticated. It may be used for
+   * contract/unit testing, but any attempt by a caller to inject a guessed
+   * provider auth header is rejected before network access. Once Avasam's exact
+   * token transport is verified, that transport must be implemented inside this
+   * trusted boundary rather than supplied by callers.
+   */
   async request<T>(context: AvasamRequestContext, path: string | undefined, init: RequestInit = {}): Promise<SupplierAdapterResult<T>> {
     try {
       const baseUrl = required(this.config.baseUrl, 'AVASAM_API_BASE_URL');
       const resolvedPath = requiredRelativePath(path, 'Avasam endpoint path configuration');
+      assertNoUnverifiedProviderAuthHeaders(init.headers);
       const response = await fetch(buildUrl(baseUrl, resolvedPath), {
         ...init,
-        // Provider authentication and correlation/idempotency headers are owned
-        // by this boundary and cannot be replaced by provider-callers.
         headers: { ...(init.headers || {}), ...this.headers(context) },
       });
       const body = parseJson(await response.text());
@@ -183,9 +195,9 @@ export class AvasamClient {
 }
 
 /**
- * Creates only the server-side Avasam transport/auth boundary.
+ * Creates only the verified server-side Avasam authentication boundary.
  * Consumer/secret credentials are used only by requestToken(). Concrete
- * catalog/order token transport remains fail-closed until the documented
+ * catalog/stock/price token transport remains fail-closed until the documented
  * provider token header/transport contract is verified.
  */
 export function avasamClientFromEnvironment(): AvasamClient {
@@ -193,8 +205,5 @@ export function avasamClientFromEnvironment(): AvasamClient {
     baseUrl: process.env.AVASAM_API_BASE_URL,
     consumerKey: process.env.AVASAM_CONSUMER_KEY,
     secretKey: process.env.AVASAM_SECRET_KEY,
-    apiToken: process.env.AVASAM_API_TOKEN,
-    apiKey: process.env.AVASAM_API_KEY,
-    apiKeyHeader: process.env.AVASAM_API_KEY_HEADER,
   });
 }
