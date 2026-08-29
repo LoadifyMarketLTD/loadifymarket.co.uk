@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Star, ThumbsUp, MessageSquare, User, Loader2 } from "lucide-react";
+import { Star, ThumbsUp, MessageSquare, User, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -33,7 +33,7 @@ const StarRating = ({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`${s} ${i <= rating ? "fill-amber-400 text-primary" : "text-muted-foreground/30"}`}
+          className={`${s} ${i <= rating ? "fill-[#F5A300] text-[#F5A300]" : "text-slate-300"}`}
         />
       ))}
     </div>
@@ -60,7 +60,7 @@ const InteractiveStarRating = ({ value, onChange }: InteractiveStarRatingProps) 
         >
           <Star
             className={`h-6 w-6 transition-colors ${
-              i <= (hover || value) ? "fill-amber-400 text-primary" : "text-muted-foreground/30"
+              i <= (hover || value) ? "fill-[#F5A300] text-[#F5A300]" : "text-slate-300"
             }`}
           />
         </button>
@@ -108,7 +108,6 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
       const rows = (data ?? []) as unknown as DBReview[];
       setReviews(rows);
 
-      // Build rating distribution from real data
       const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
       rows.forEach((r) => { if (r.rating >= 1 && r.rating <= 5) counts[r.rating]++; });
       const total = rows.length;
@@ -120,7 +119,6 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
       setRatingDistribution(dist);
     } catch (err) {
       console.error("Failed to load reviews:", err);
-      // silently fall back to empty state
     } finally {
       setLoadingReviews(false);
     }
@@ -171,8 +169,6 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
 
     setSubmitting(true);
     try {
-      // Find a completed order where this user purchased this specific product
-      // Check single-product orders (orders.productId) and multi-item orders (order_items)
       const [singleOrderRes, multiOrderRes] = await Promise.all([
         supabase
           .from("orders")
@@ -190,7 +186,6 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
           .maybeSingle(),
       ]);
 
-      // Accept from single-product orders; for multi-item orders verify ownership + status
       const orderData =
         singleOrderRes.data ??
         (() => {
@@ -249,47 +244,37 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
 
   const displayRating = productRating > 0 ? productRating.toFixed(1) : "—";
   const displayCount = reviewCount > 0 ? reviewCount : reviews.length;
+  const hasReviews = reviews.length > 0 || displayCount > 0;
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-semibold text-foreground">
-          Reviews & Ratings
-        </h2>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+    <div className="rounded-2xl border border-[#DCE3ED] bg-white p-6 shadow-[0_12px_30px_rgba(15,35,70,0.05)] space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1F5BD8]">Buyer feedback</p>
+          <h2 className="mt-1 font-display text-lg font-bold text-[#0A234F]">Customer reviews</h2>
+        </div>
+        <Button
+          size="sm"
+          onClick={() => setShowForm(!showForm)}
+          className="bg-[#F5A300] font-semibold text-[#0A234F] hover:bg-[#E59600]"
+        >
           <MessageSquare className="h-4 w-4 mr-1" />
-          Write a Review
+          Write a review
         </Button>
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6">
-        <div className="flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-bold text-foreground">{displayRating}</span>
-          <StarRating rating={Math.round(productRating)} size="md" />
-          <p className="text-xs text-muted-foreground mt-1">{displayCount} review{displayCount !== 1 ? "s" : ""}</p>
-        </div>
-        <div className="space-y-2">
-          {ratingDistribution.map((r) => (
-            <div key={r.stars} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-12">{r.stars} star{r.stars !== 1 && "s"}</span>
-              <Progress value={r.pct} className="h-2 flex-1" />
-              <span className="text-xs text-muted-foreground w-8 text-right">{r.count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Write Review Form */}
       {showForm && (
-        <form onSubmit={handleSubmitReview} className="border border-border rounded-lg p-4 space-y-4 bg-muted/20">
-          <h3 className="text-sm font-semibold text-foreground">Write Your Review</h3>
+        <form onSubmit={handleSubmitReview} className="rounded-xl border border-[#DCE3ED] bg-[#F8FAFC] p-4 space-y-4">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+            <ShieldCheck className="h-4 w-4 text-[#1F5BD8]" />
+            Reviews are available to confirmed purchasers after delivery.
+          </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Your Rating</p>
+            <p className="text-xs text-slate-500 mb-1">Your rating</p>
             <InteractiveStarRating value={newRating} onChange={setNewRating} />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Review Title</p>
+            <p className="text-xs text-slate-500 mb-1">Review title</p>
             <input
               className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               placeholder="Summarize your experience"
@@ -299,7 +284,7 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
             />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Your Review</p>
+            <p className="text-xs text-slate-500 mb-1">Your review</p>
             <Textarea
               placeholder="Share your experience with this product..."
               rows={3}
@@ -311,7 +296,7 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={submitting}>
               {submitting && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
-              Submit Review
+              Submit review
             </Button>
             <Button
               type="button"
@@ -326,68 +311,97 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
         </form>
       )}
 
-      {/* Reviews List */}
       {loadingReviews ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
         </div>
-      ) : reviews.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6">
-          No reviews yet. Be the first to review this product.
-        </p>
+      ) : !hasReviews ? (
+        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-[#D6DFEB] bg-[#F8FAFC] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-display text-sm font-bold text-[#0A234F]">No reviews yet</p>
+            <p className="mt-1 text-sm text-slate-500">Be the first confirmed purchaser to review this product.</p>
+          </div>
+          <div className="flex items-center gap-1" aria-label="No rating yet">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Star key={i} className="h-4 w-4 text-slate-300" />
+            ))}
+          </div>
+        </div>
       ) : (
-        <div className="space-y-4">
-          {reviews.map((review) => {
-            const firstName = review.users?.firstName ?? "";
-            const lastName = review.users?.lastName ?? "";
-            const authorName = [firstName, lastName].filter(Boolean).join(" ") || "Buyer";
-            const alreadyVoted = user ? review.helpfulVoters.includes(user.id) : false;
-            return (
-              <div key={review.id} className="border border-border rounded-lg p-4 space-y-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{authorName}</span>
-                        {review.isVerifiedPurchase && (
-                          <Badge variant="outline" className="text-[10px] bg-success/10 text-success border-success/40">
-                            Confirmed Purchase
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(review.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                      </p>
-                    </div>
-                  </div>
-                  <StarRating rating={review.rating} />
-                </div>
-                {review.title && (
-                  <h4 className="text-sm font-semibold text-foreground">{review.title}</h4>
-                )}
-                {review.comment && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleHelpful(review)}
-                  disabled={alreadyVoted || helpfulVoting.has(review.id)}
-                  className={`flex items-center gap-1.5 text-xs transition-colors ${
-                    alreadyVoted
-                      ? "text-primary cursor-default"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <ThumbsUp className="h-3.5 w-3.5" />
-                  Helpful ({review.helpfulCount})
-                </button>
+        <>
+          <div className="grid grid-cols-1 gap-6 rounded-xl bg-[#F8FAFC] p-5 sm:grid-cols-[160px_1fr]">
+            <div className="flex flex-col justify-center">
+              <div className="flex items-end gap-2">
+                <span className="font-display text-4xl font-extrabold text-[#0A234F]">{displayRating}</span>
+                <span className="pb-1 text-xs text-slate-500">/ 5</span>
               </div>
-            );
-          })}
-        </div>
+              <StarRating rating={Math.round(productRating)} size="md" />
+              <p className="mt-1 text-xs text-slate-500">{displayCount} review{displayCount !== 1 ? "s" : ""}</p>
+            </div>
+            <div className="space-y-2">
+              {ratingDistribution.map((r) => (
+                <div key={r.stars} className="flex items-center gap-2">
+                  <span className="w-12 text-xs text-slate-500">{r.stars} star{r.stars !== 1 && "s"}</span>
+                  <Progress value={r.pct} className="h-2 flex-1" />
+                  <span className="w-8 text-right text-xs text-slate-500">{r.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {reviews.map((review) => {
+              const firstName = review.users?.firstName ?? "";
+              const lastName = review.users?.lastName ?? "";
+              const authorName = [firstName, lastName].filter(Boolean).join(" ") || "Buyer";
+              const alreadyVoted = user ? review.helpfulVoters.includes(user.id) : false;
+              return (
+                <div key={review.id} className="rounded-xl border border-[#E3E9F1] p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F8FAFC]">
+                        <User className="h-4 w-4 text-slate-500" />
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-[#0A234F]">{authorName}</span>
+                          {review.isVerifiedPurchase && (
+                            <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-[10px] text-emerald-700">
+                              Confirmed purchase
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          {new Date(review.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                        </p>
+                      </div>
+                    </div>
+                    <StarRating rating={review.rating} />
+                  </div>
+                  {review.title && (
+                    <h4 className="text-sm font-semibold text-[#0A234F]">{review.title}</h4>
+                  )}
+                  {review.comment && (
+                    <p className="text-sm leading-relaxed text-slate-600">{review.comment}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleHelpful(review)}
+                    disabled={alreadyVoted || helpfulVoting.has(review.id)}
+                    className={`flex items-center gap-1.5 text-xs transition-colors ${
+                      alreadyVoted
+                        ? "text-[#1F5BD8] cursor-default"
+                        : "text-slate-500 hover:text-[#0A234F]"
+                    }`}
+                  >
+                    <ThumbsUp className="h-3.5 w-3.5" />
+                    Helpful ({review.helpfulCount})
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
