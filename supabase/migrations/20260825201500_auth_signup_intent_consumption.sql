@@ -1,12 +1,19 @@
 -- 677_auth_signup_intent_consumption.sql
--- Fail-closed Auth identity provisioning.
+-- Fail-closed Auth identity provisioning with a controlled cutover overlap.
 --
--- EMAIL/PASSWORD PUBLIC SIGNUP
---   Requires a valid server-owned signup intent.
---   Buyer/Seller relationship is derived only from private.signup_intents.
+-- FINAL/DEFAULT STATE
+--   private.auth_signup_cutover_control.allow_legacy_server_registration = false
+--   Public email/password signup requires a valid server-owned signup intent.
+--
+-- TEMPORARY CUTOVER OVERLAP
+--   Operators may temporarily enable the private overlap flag while the old
+--   Netlify registration endpoint and the new signup-intent client coexist.
+--   In that mode ONLY provider=email identities carrying a trusted Auth
+--   app_metadata role of buyer/seller are accepted without an intent.
+--   Browsers cannot assign app_metadata through public Supabase signup.
 --
 -- GOOGLE
---   Fresh account creation requires a provider-bound social signup intent.
+--   Fresh account creation always requires a provider-bound social signup intent.
 --
 -- FACEBOOK
 --   Fresh creation remains fail-closed until its dedicated registration
@@ -15,7 +22,7 @@
 -- UNKNOWN PROVIDERS
 --   Fail closed.
 --
--- Client-controlled role metadata is never authorization.
+-- Client-controlled user_metadata role authority is never accepted.
 
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
 RETURNS trigger
@@ -27,10 +34,17 @@ DECLARE
   v_provider text;
   v_provider_subject text;
   v_intent_id uuid;
+  v_intent_id_text text;
   v_intent private.signup_intents%ROWTYPE;
   v_email text;
+  v_effective_role text;
   v_first_name text;
   v_last_name text;
+  v_phone text;
+  v_allow_legacy_server_registration boolean := false;
+  v_feature_flags jsonb;
+  v_buyer_registration boolean;
+  v_seller_registration boolean;
 BEGIN
   v_email := lower(btrim(COALESCE(NEW.email, '')));
   v_provider := lower(
@@ -41,6 +55,15 @@ BEGIN
       )
     )
   );
+
+  SELECT c.allow_legacy_server_registration
+  INTO v_allow_legacy_server_registration
+  FROM private.auth_signup_cutover_control AS c
+  WHERE c.singleton = true;
+
+  IF NOT FOUND THEN
+    v_allow_legacy_server_registration := false;
+  END IF;
 
   IF v_email = '' THEN
     RAISE EXCEPTION
@@ -85,39 +108,69 @@ BEGIN
       'signup rejected: Facebook signup requires registration authorization';
 
   ELSIF v_provider = 'email' THEN
-    IF NEW.raw_app_meta_data ? 'role' THEN
-      RAISE EXCEPTION
-        'signup rejected: public email signup cannot carry app role metadata';
-    END IF;
+    v_intent_id_text :=
+      btrim(COALESCE(NEW.raw_user_meta_data ->> 'intent_id', ''));
 
-    BEGIN
-      v_intent_id :=
-        NULLIF(
-          NEW.raw_user_meta_data ->> 'intent_id',
-          ''
-        )::uuid;
-    EXCEPTION
-      WHEN invalid_text_representation THEN
+    IF v_intent_id_text <> '' THEN
+      BEGIN
+        v_intent_id := v_intent_id_text::uuid;
+      EXCEPTION
+        WHEN invalid_text_representation THEN
+          RAISE EXCEPTION
+            'signup rejected: invalid signup intent';
+      END;
+
+      SELECT *
+      INTO v_intent
+      FROM private.signup_intents
+      WHERE id = v_intent_id
+        AND auth_provider = 'email'
+        AND provider_subject IS NULL
+      FOR UPDATE;
+
+      IF NOT FOUND THEN
         RAISE EXCEPTION
-          'signup rejected: invalid signup intent';
-    END;
+          'signup rejected: signup intent not found';
+      END IF;
 
-    IF v_intent_id IS NULL THEN
+    ELSIF v_allow_legacy_server_registration
+          AND NEW.raw_app_meta_data ? 'role'
+          AND lower(
+                btrim(
+                  COALESCE(NEW.raw_app_meta_data ->> 'role', '')
+                )
+              ) IN ('buyer', 'seller')
+    THEN
+      -- Temporary blue/green compatibility path. The current production
+      -- register function creates users with Auth Admin/service-role authority,
+      -- which is the only supported source of this app_metadata role.
+      v_effective_role := lower(
+        btrim(COALESCE(NEW.raw_app_meta_data ->> 'role', ''))
+      );
+      v_first_name := btrim(
+        COALESCE(NEW.raw_user_meta_data ->> 'first_name', '')
+      );
+      v_last_name := btrim(
+        COALESCE(NEW.raw_user_meta_data ->> 'last_name', '')
+      );
+      v_phone := NULLIF(
+        btrim(COALESCE(NEW.raw_user_meta_data ->> 'phone', '')),
+        ''
+      );
+
+      IF v_first_name = '' OR v_last_name = '' THEN
+        RAISE EXCEPTION
+          'signup rejected: legacy server registration identity is incomplete';
+      END IF;
+
+    ELSE
+      IF NEW.raw_app_meta_data ? 'role' THEN
+        RAISE EXCEPTION
+          'signup rejected: public email signup cannot carry app role metadata';
+      END IF;
+
       RAISE EXCEPTION
         'signup rejected: signup intent is required';
-    END IF;
-
-    SELECT *
-    INTO v_intent
-    FROM private.signup_intents
-    WHERE id = v_intent_id
-      AND auth_provider = 'email'
-      AND provider_subject IS NULL
-    FOR UPDATE;
-
-    IF NOT FOUND THEN
-      RAISE EXCEPTION
-        'signup rejected: signup intent not found';
     END IF;
 
   ELSE
@@ -125,24 +178,68 @@ BEGIN
       'signup rejected: unsupported auth provider';
   END IF;
 
-  IF v_intent.consumed_at IS NOT NULL THEN
-    RAISE EXCEPTION
-      'signup rejected: signup intent already consumed';
+  IF v_intent_id IS NOT NULL THEN
+    IF v_intent.consumed_at IS NOT NULL THEN
+      RAISE EXCEPTION
+        'signup rejected: signup intent already consumed';
+    END IF;
+
+    IF v_intent.expires_at <= now() THEN
+      RAISE EXCEPTION
+        'signup rejected: signup intent expired';
+    END IF;
+
+    IF v_intent.email IS DISTINCT FROM v_email THEN
+      RAISE EXCEPTION
+        'signup rejected: signup intent email mismatch';
+    END IF;
+
+    IF v_intent.requested_role NOT IN ('buyer', 'seller') THEN
+      RAISE EXCEPTION
+        'signup rejected: unsupported signup relationship';
+    END IF;
+
+    v_effective_role := v_intent.requested_role;
+    v_first_name := v_intent.first_name;
+    v_last_name := v_intent.last_name;
+    v_phone := v_intent.phone;
   END IF;
 
-  IF v_intent.expires_at <= now() THEN
+  IF v_effective_role NOT IN ('buyer', 'seller') THEN
     RAISE EXCEPTION
-      'signup rejected: signup intent expired';
+      'signup rejected: signup relationship could not be derived';
   END IF;
 
-  IF v_intent.email IS DISTINCT FROM v_email THEN
+  -- Recheck current operator registration policy at the final provisioning
+  -- boundary. This protects the 15-minute intent lifetime even if the Auth hook
+  -- is temporarily unavailable or configuration is being switched.
+  SELECT ps.value
+  INTO v_feature_flags
+  FROM public.platform_settings AS ps
+  WHERE ps.key = 'feature_flags';
+
+  IF NOT FOUND
+     OR COALESCE(jsonb_typeof(v_feature_flags), '') <> 'object'
+     OR COALESCE(jsonb_typeof(v_feature_flags -> 'buyerRegistration'), '') <> 'boolean'
+     OR COALESCE(jsonb_typeof(v_feature_flags -> 'sellerRegistration'), '') <> 'boolean'
+  THEN
     RAISE EXCEPTION
-      'signup rejected: signup intent email mismatch';
+      'signup rejected: registration availability could not be verified';
   END IF;
 
-  IF v_intent.requested_role NOT IN ('buyer', 'seller') THEN
+  v_buyer_registration :=
+    (v_feature_flags ->> 'buyerRegistration')::boolean;
+  v_seller_registration :=
+    (v_feature_flags ->> 'sellerRegistration')::boolean;
+
+  IF v_effective_role = 'buyer' AND NOT v_buyer_registration THEN
     RAISE EXCEPTION
-      'signup rejected: unsupported signup relationship';
+      'signup rejected: buyer registration is temporarily disabled';
+  END IF;
+
+  IF v_effective_role = 'seller' AND NOT v_seller_registration THEN
+    RAISE EXCEPTION
+      'signup rejected: seller registration is temporarily disabled';
   END IF;
 
   INSERT INTO public.users (
@@ -157,14 +254,14 @@ BEGIN
   VALUES (
     NEW.id,
     v_email,
-    v_intent.first_name,
-    v_intent.last_name,
-    v_intent.requested_role,
+    v_first_name,
+    v_last_name,
+    v_effective_role,
     (NEW.email_confirmed_at IS NOT NULL),
-    v_intent.phone
+    v_phone
   );
 
-  IF v_intent.requested_role = 'buyer' THEN
+  IF v_intent_id IS NOT NULL AND v_intent.requested_role = 'buyer' THEN
     UPDATE public.buyer_profiles
     SET
       "customerType" = COALESCE(
@@ -182,7 +279,7 @@ BEGIN
         'signup rejected: Buyer profile provisioning failed';
     END IF;
 
-  ELSIF v_intent.requested_role = 'seller' THEN
+  ELSIF v_intent_id IS NOT NULL AND v_intent.requested_role = 'seller' THEN
     UPDATE public.seller_profiles
     SET
       "sellerType" = v_intent.seller_type,
@@ -222,14 +319,16 @@ BEGIN
     END IF;
   END IF;
 
-  UPDATE private.signup_intents
-  SET consumed_at = now()
-  WHERE id = v_intent_id
-    AND consumed_at IS NULL;
+  IF v_intent_id IS NOT NULL THEN
+    UPDATE private.signup_intents
+    SET consumed_at = now()
+    WHERE id = v_intent_id
+      AND consumed_at IS NULL;
 
-  IF NOT FOUND THEN
-    RAISE EXCEPTION
-      'signup rejected: signup intent replay detected';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION
+        'signup rejected: signup intent replay detected';
+    END IF;
   END IF;
 
   RETURN NEW;
@@ -237,7 +336,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.handle_new_auth_user() IS
-  'Fail-closed Auth provisioning: email signup requires a private intent; Google requires provider-bound authorization; Facebook remains fail-closed; client role metadata is never authorization.';
+  'Fail-closed Auth provisioning with a private blue/green overlap control. Final state is intent-only email signup; Google is always provider-bound; fresh Facebook remains fail-closed.';
 
 REVOKE ALL ON FUNCTION public.handle_new_auth_user()
 FROM PUBLIC, anon, authenticated;
