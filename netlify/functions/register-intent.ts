@@ -6,6 +6,13 @@ import { getFeatureFlagsStrict } from './_shared/platformFlags';
 
 type RequestedRole = 'buyer' | 'seller';
 type SellerType = 'individual' | 'sole_trader' | 'company';
+type BuyerAccountType =
+  | 'individual'
+  | 'sole_trader'
+  | 'limited_company'
+  | 'partnership'
+  | 'charity'
+  | 'other';
 
 interface RegisterIntentRequest {
   email: string;
@@ -17,7 +24,7 @@ interface RegisterIntentRequest {
   phone?: string;
   companyName?: string;
   vatNumber?: string;
-  customerType?: string;
+  customerType?: BuyerAccountType;
   businessAddress?: Record<string, string>;
 }
 
@@ -105,11 +112,13 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const validBuyerAccountTypes = new Set([
+  const validBuyerAccountTypes = new Set<BuyerAccountType>([
     'individual',
-    'business',
-    'reseller',
-    'distributor',
+    'sole_trader',
+    'limited_company',
+    'partnership',
+    'charity',
+    'other',
   ]);
 
   if (
