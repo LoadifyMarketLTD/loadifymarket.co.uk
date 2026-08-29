@@ -22,12 +22,17 @@ function safeBaseUrl() {
 }
 
 function readOnlyInventoryBody(sku) {
-  return {
+  const body = {
     ProductType: [], Supplier: sku, Sortby: 'SKU', SortStatus: 'down', limit: 1,
     PriceDelimeter: '0', PriceValue: 0, StockValue: '0', Stock: 0,
     Category: '', CategoryName: '', IsMapped: '', PriceMaxValue: 0,
     PriceMaxDelimeter: '0', page: 0,
   };
+  if (process.env.AVASAM_PROBE_VARIATION_CHILDREN === '1') {
+    body.Variation = 'true';
+    body.Showchild = 'true';
+  }
+  return body;
 }
 
 async function jsonOrNull(response) {
@@ -74,6 +79,14 @@ function validStockResponse(value) {
     && typeof item.SKU === 'string' && item.SKU.trim().length > 0
     && Number.isInteger(item.Stock)
   ));
+}
+
+function containsExactSku(value, sku, depth = 0) {
+  if (depth > 8 || value === null || value === undefined) return false;
+  if (Array.isArray(value)) return value.some(item => containsExactSku(item, sku, depth + 1));
+  if (typeof value !== 'object') return false;
+  if (typeof value.SKU === 'string' && value.SKU.trim() === sku) return true;
+  return Object.values(value).some(child => containsExactSku(child, sku, depth + 1));
 }
 
 function diagnosticTransportHeaders(token) {
@@ -196,6 +209,7 @@ export async function runAvasamBearerReadOnlyProbe() {
 
   const gateFacts = {
     record: authenticated.record,
+    'sku-present': containsExactSku(authenticated.payload, sku),
     'data-array': authenticated.dataArray,
     'data-null-total-number': authenticated.dataNull && authenticated.totalNumber,
     'Data-array': authenticated.dataUpperArray,
