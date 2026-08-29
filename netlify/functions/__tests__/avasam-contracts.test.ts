@@ -47,7 +47,7 @@ describe('Avasam verified Seller API contracts', () => {
     expect(malformed && !malformed.ok ? malformed.errorClass : null).toBe('MALFORMED_RESPONSE');
   });
 
-  it('builds the documented inventory filter envelope without forcing variation-only mode', () => {
+  it('keeps parent/single and variation-child inventory views explicit', () => {
     expect(createInventoryFilterRequest(0, 1000)).toEqual({
       ProductType: [],
       Supplier: '',
@@ -65,9 +65,31 @@ describe('Avasam verified Seller API contracts', () => {
       PriceMaxDelimeter: '0',
       page: 0,
     });
+
+    expect(createInventoryFilterRequest(1, 1000, 'variation_children')).toEqual({
+      ProductType: [],
+      Supplier: '',
+      Sortby: 'SKU',
+      SortStatus: 'down',
+      limit: 1000,
+      PriceDelimeter: '0',
+      PriceValue: 0,
+      StockValue: '0',
+      Stock: 0,
+      Category: '',
+      CategoryName: '',
+      IsMapped: '',
+      PriceMaxValue: 0,
+      PriceMaxDelimeter: '0',
+      page: 1,
+      Variation: 'true',
+      Showchild: 'true',
+    });
+
+    expect(() => createInventoryFilterRequest(0, 10, 'bad-scope' as never)).toThrow();
   });
 
-  it('accepts inventory rows only when SKU, price and stock are explicit numbers', () => {
+  it('accepts inventory rows only when SKU, price and integer stock are explicit', () => {
     const ok = parseInventoryListResponse({
       data: [{
         SKU: '2358Green',
@@ -85,17 +107,21 @@ describe('Avasam verified Seller API contracts', () => {
     });
     expect(ok.ok).toBe(true);
 
-    const malformed = parseInventoryListResponse({ data: [{ SKU: '2358Green', Price: 4.68 }], total: 1 });
-    expect(malformed.ok).toBe(false);
-    expect(malformed && !malformed.ok ? malformed.errorClass : null).toBe('MALFORMED_RESPONSE');
+    const missingStock = parseInventoryListResponse({ data: [{ SKU: '2358Green', Price: 4.68 }], total: 1 });
+    expect(missingStock.ok).toBe(false);
+    expect(missingStock && !missingStock.ok ? missingStock.errorClass : null).toBe('MALFORMED_RESPONSE');
+
+    expect(parseInventoryListResponse({ data: [{ SKU: '2358Green', Price: 4.68, Stock: 1.5 }], total: 1 }).ok).toBe(false);
+    expect(parseInventoryListResponse({ data: [], total: 1.5 }).ok).toBe(false);
   });
 
-  it('parses SellerStockList without converting missing stock into zero', () => {
+  it('parses SellerStockList without converting missing or fractional stock into a commercial value', () => {
     expect(parseSellerStockResponse([{ SKU: 'K314CP', Stock: 12 }])).toEqual({
       ok: true,
       data: [{ SKU: 'K314CP', Stock: 12 }],
     });
     expect(parseSellerStockResponse([{ SKU: 'K314CP' }]).ok).toBe(false);
+    expect(parseSellerStockResponse([{ SKU: 'K314CP', Stock: 1.5 }]).ok).toBe(false);
     expect(createSellerStockRequest(0, 10)).toEqual({ limit: 10, page: 0 });
   });
 
@@ -108,5 +134,17 @@ describe('Avasam verified Seller API contracts', () => {
     });
     expect(result.ok).toBe(true);
     expect(parseStockWebhookEnvelope({ requestId: 'request-1', data: [] }).ok).toBe(false);
+    expect(parseStockWebhookEnvelope({
+      requestId: 'request-1',
+      on: 'not-a-date',
+      token: 'signed-provider-token',
+      data: [],
+    }).ok).toBe(false);
+    expect(parseStockWebhookEnvelope({
+      requestId: 'request-1',
+      on: '2026-08-29T14:00:00Z',
+      token: 'signed-provider-token',
+      data: [{ sku: 'K314CP', quantity: 1.25, updatedOn: '2026-08-29T14:00:00Z' }],
+    }).ok).toBe(false);
   });
 });
