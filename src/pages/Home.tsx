@@ -24,9 +24,9 @@ import { trackViewHome } from "@/lib/analytics";
 function SkeletonGridCard() {
   return (
     <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div className="rounded-xl animate-pulse flex flex-col gap-2 w-full aspect-square bg-white/[0.08]" />
-      <div className="h-3 rounded-md bg-white/[0.08] w-[80%]" />
-      <div className="h-3.5 rounded-md bg-white/[0.08] w-[50%]" />
+      <div className="rounded-xl animate-pulse flex flex-col gap-2 w-full aspect-square bg-[#E9E6DF]" />
+      <div className="h-3 rounded-md bg-[#E9E6DF] w-[80%]" />
+      <div className="h-3.5 rounded-md bg-[#E9E6DF] w-[50%]" />
     </div>
   );
 }
@@ -67,7 +67,7 @@ function MobileHome() {
   }, [loadMore]);
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC]">
+    <div className="min-h-screen bg-[#F8F7F4]">
       <MobileAppHeader />
       <MobileHeroBanner products={leadProducts} loading={loading} />
 
@@ -75,31 +75,39 @@ function MobileHome() {
         <TrustStrip />
       </div>
 
-      <div className="px-[var(--mob-side,16px)] pb-7 pt-1">
-        <section aria-label="Marketplace products" className="relative overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] px-4 py-5 text-white shadow-[0_20px_50px_rgba(10,35,79,0.16)]">
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-[#F5A300]" aria-hidden="true" />
-          <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
-          <div className="relative">
-            <div style={{ marginBottom: 14 }}>
-              <p className="text-[#F5A300]" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
-                Live on Loadify
-              </p>
-              <h2 className="text-white" style={{ fontSize: 20, fontWeight: 820, lineHeight: 1.2 }}>
-                Products you can explore now
-              </h2>
-              <p className="text-white/68" style={{ fontSize: 12, marginTop: 4, lineHeight: 1.45 }}>
-                Current approved marketplace listings.
-              </p>
-            </div>
-
-            {loading ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)' }}>
-                {Array.from({ length: 6 }).map((_, i) => <SkeletonGridCard key={i} />)}
-              </div>
-            ) : (
-              <MobileProductGrid products={leadProducts} />
-            )}
+      <div className="px-[var(--mob-side,16px)] pb-8 pt-2">
+        <section aria-label="Marketplace products" className="bg-[#F8F7F4]">
+          <div className="mb-5">
+            <p
+              className="text-[#6B7280]"
+              style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 7 }}
+            >
+              Live on Loadify
+            </p>
+            <h2
+              className="text-[#0A234F]"
+              style={{
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                fontSize: 25,
+                fontWeight: 600,
+                letterSpacing: '-0.025em',
+                lineHeight: 1.08,
+              }}
+            >
+              Products you can explore now
+            </h2>
+            <p className="text-[#667085]" style={{ fontSize: 12.5, marginTop: 7, lineHeight: 1.5 }}>
+              Current approved marketplace listings.
+            </p>
           </div>
+
+          {loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)' }}>
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonGridCard key={i} />)}
+            </div>
+          ) : (
+            <MobileProductGrid products={leadProducts} />
+          )}
         </section>
       </div>
 
@@ -115,37 +123,45 @@ function MobileHome() {
 
       <section
         aria-label="More marketplace products"
-        className="bg-[#F7F9FC] px-[var(--mob-side,16px)]"
+        className="bg-[#F8F7F4] px-[var(--mob-side,16px)]"
         style={{
-          paddingTop: remainingProducts.length > 0 ? 4 : 0,
-          paddingBottom: remainingProducts.length > 0 || loadingMore ? 24 : 0,
+          paddingTop: remainingProducts.length > 0 ? 8 : 0,
+          paddingBottom: remainingProducts.length > 0 || loadingMore ? 28 : 0,
         }}
       >
         {(remainingProducts.length > 0 || loadingMore) && (
-          <div className="relative overflow-hidden rounded-[30px] border border-[#0A234F]/10 bg-[#0A234F] px-4 py-5 text-white shadow-[0_20px_50px_rgba(10,35,79,0.16)]">
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-[#F5A300]" aria-hidden="true" />
-            <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#1D57D8]/25 blur-3xl" aria-hidden="true" />
-            <div className="relative">
-              {remainingProducts.length > 0 && (
-                <>
-                  <div style={{ marginBottom: 14 }}>
-                    <p className="text-[#F5A300]" style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
-                      Keep exploring
-                    </p>
-                    <h2 className="text-white" style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.2 }}>
-                      More from the marketplace
-                    </h2>
-                  </div>
-                  <MobileProductGrid products={remainingProducts} startIndex={6} />
-                </>
-              )}
-
-              {loadingMore && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)', marginTop: 12 }}>
-                  {Array.from({ length: 4 }).map((_, i) => <SkeletonGridCard key={`more-${i}`} />)}
+          <div>
+            {remainingProducts.length > 0 && (
+              <>
+                <div className="mb-5">
+                  <p
+                    className="text-[#6B7280]"
+                    style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', marginBottom: 7 }}
+                  >
+                    Keep exploring
+                  </p>
+                  <h2
+                    className="text-[#0A234F]"
+                    style={{
+                      fontFamily: 'Georgia, "Times New Roman", serif',
+                      fontSize: 23,
+                      fontWeight: 600,
+                      letterSpacing: '-0.025em',
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    More from the marketplace
+                  </h2>
                 </div>
-              )}
-            </div>
+                <MobileProductGrid products={remainingProducts} startIndex={6} />
+              </>
+            )}
+
+            {loadingMore && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)', marginTop: 12 }}>
+                {Array.from({ length: 4 }).map((_, i) => <SkeletonGridCard key={`more-${i}`} />)}
+              </div>
+            )}
           </div>
         )}
 
