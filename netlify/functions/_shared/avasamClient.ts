@@ -2,6 +2,8 @@ import type { SupplierAdapterErrorClass, SupplierAdapterResult } from './supplie
 
 export interface AvasamClientConfig {
   baseUrl?: string;
+  consumerKey?: string;
+  secretKey?: string;
   apiToken?: string;
   apiKey?: string;
   apiKeyHeader?: string;
@@ -10,6 +12,11 @@ export interface AvasamClientConfig {
 export interface AvasamRequestContext {
   correlationId: string;
   idempotencyKey?: string;
+}
+
+export interface AvasamTokenResponse {
+  access_token: string;
+  expires_at: string;
 }
 
 export class AvasamClientConfigurationError extends Error {
@@ -40,6 +47,25 @@ function buildUrl(baseUrl: string, path: string): string {
   return new URL(path, base).toString();
 }
 
+function parseJson(text: string): unknown {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
+function isValidTokenResponse(value: unknown): value is AvasamTokenResponse {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<AvasamTokenResponse>;
+  return typeof candidate.access_token === 'string'
+    && candidate.access_token.trim().length > 0
+    && typeof candidate.expires_at === 'string'
+    && candidate.expires_at.trim().length > 0
+    && Number.isFinite(Date.parse(candidate.expires_at));
+}
+
 const RESERVED_TRUSTED_HEADERS = new Set([
   'authorization',
   'x-correlation-id',
@@ -53,6 +79,62 @@ export class AvasamClient {
 
   constructor(config: AvasamClientConfig = {}) {
     this.config = { ...config };
+  }
+
+  /**
+   * Verified Avasam Seller API authentication contract.
+   *
+   * Source: Avasam Seller API -> Request-token.
+   * POST /api/auth/request-token with JSON consumer_key + secret_key and receive
+   * access_token + expires_at. The credentials are never placed in headers,
+   * URLs, logs, or provider-facing error messages.
+   */
+  async requestToken(): Promise<SupplierAdapterResult<AvasamTokenResponse>> {
+    try {
+      const baseUrl = required(this.config.baseUrl, 'AVASAM_API_BASE_URL');
+      const consumerKey = required(this.config.consumerKey, 'AVASAM_CONSUMER_KEY');
+      const secretKey = required(this.config.secretKey, 'AVASAM_SECRET_KEY');
+      const response = await fetch(buildUrl(baseUrl, '/api/auth/request-token'), {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          consumer_key: consumerKey,
+          secret_key: secretKey,
+        }),
+      });
+
+      const body = parseJson(await response.text());
+      if (response.status === 401 || response.status === 403) {
+        return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: `Avasam authentication rejected (${response.status})` };
+      }
+      if (response.status === 429) {
+        const retryAfter = Number(response.headers.get('retry-after'));
+        return { ok: false, errorClass: 'RATE_LIMITED', message: 'Avasam authentication rate limited', retryAfterMs: Number.isFinite(retryAfter) ? retryAfter * 1000 : undefined };
+      }
+      if (response.status >= 500) {
+        return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: `Avasam authentication server failure (${response.status})` };
+      }
+      if (!response.ok) {
+        return { ok: false, errorClass: 'PERMANENT_REJECTION', message: `Avasam authentication request rejected (${response.status})` };
+      }
+      if (!isValidTokenResponse(body)) {
+        return { ok: false, errorClass: 'MALFORMED_RESPONSE', message: 'Avasam authentication returned an invalid token response' };
+      }
+
+      return {
+        ok: true,
+        data: {
+          access_token: body.access_token.trim(),
+          expires_at: body.expires_at.trim(),
+        },
+      };
+    } catch (error) {
+      if (error instanceof AvasamClientConfigurationError) return { ok: false, errorClass: error.errorClass, message: error.message };
+      return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: error instanceof Error ? error.message : 'Avasam authentication request failed' };
+    }
   }
 
   private headers(context: AvasamRequestContext): Record<string, string> {
@@ -83,11 +165,7 @@ export class AvasamClient {
         // by this boundary and cannot be replaced by provider-callers.
         headers: { ...(init.headers || {}), ...this.headers(context) },
       });
-      const text = await response.text();
-      let body: unknown = null;
-      if (text) {
-        try { body = JSON.parse(text); } catch { body = text; }
-      }
+      const body = parseJson(await response.text());
       if (response.ok) return { ok: true, data: body as T };
       if (response.status === 401 || response.status === 403) return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: `Avasam authentication rejected (${response.status})` };
       if (response.status === 429) {
@@ -105,12 +183,16 @@ export class AvasamClient {
 }
 
 /**
- * Creates only the transport/auth boundary. Concrete catalog/order/etc. paths
- * are deliberately excluded until verified against Avasam's provider contract.
+ * Creates only the server-side Avasam transport/auth boundary.
+ * Consumer/secret credentials are used only by requestToken(). Concrete
+ * catalog/order token transport remains fail-closed until the documented
+ * provider token header/transport contract is verified.
  */
 export function avasamClientFromEnvironment(): AvasamClient {
   return new AvasamClient({
     baseUrl: process.env.AVASAM_API_BASE_URL,
+    consumerKey: process.env.AVASAM_CONSUMER_KEY,
+    secretKey: process.env.AVASAM_SECRET_KEY,
     apiToken: process.env.AVASAM_API_TOKEN,
     apiKey: process.env.AVASAM_API_KEY,
     apiKeyHeader: process.env.AVASAM_API_KEY_HEADER,
