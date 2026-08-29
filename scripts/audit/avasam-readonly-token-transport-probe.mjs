@@ -42,7 +42,13 @@ function validTokenPayload(value) {
 
 function validInventoryEnvelope(value) {
   return Boolean(value && typeof value === 'object' && Array.isArray(value.data)
-    && typeof value.total === 'number' && Number.isFinite(value.total) && value.total >= 0);
+    && typeof value.total === 'number' && Number.isFinite(value.total) && value.total >= 0
+    && value.data.every(item => (
+      item && typeof item === 'object'
+      && typeof item.SKU === 'string' && item.SKU.trim().length > 0
+      && typeof item.Price === 'number' && Number.isFinite(item.Price)
+      && typeof item.Stock === 'number' && Number.isFinite(item.Stock)
+    )));
 }
 
 function validStockResponse(value) {
@@ -66,11 +72,7 @@ function diagnosticTransportHeaders(token) {
 async function postJson(baseUrl, path, body, providerHeaders = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
     method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...providerHeaders,
-    },
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...providerHeaders },
     body: JSON.stringify(body),
     redirect: 'error',
   });
@@ -79,22 +81,19 @@ async function postJson(baseUrl, path, body, providerHeaders = {}) {
 
 async function postInventory(baseUrl, body, providerHeaders) {
   const { response, payload } = await postJson(baseUrl, INVENTORY_PATH, body, providerHeaders);
+  const shapeOk = validInventoryEnvelope(payload);
   return {
-    status: response.status, ok: response.ok, shapeOk: validInventoryEnvelope(payload),
-    count: validInventoryEnvelope(payload) ? payload.data.length : null,
-    total: validInventoryEnvelope(payload) ? payload.total : null,
-    skuMatched: validInventoryEnvelope(payload)
-      ? payload.data.some(item => item && typeof item === 'object' && item.SKU === body.Supplier)
-      : false,
+    status: response.status, ok: response.ok, shapeOk,
+    count: shapeOk ? payload.data.length : null,
+    total: shapeOk ? payload.total : null,
+    skuMatched: shapeOk ? payload.data.some(item => item.SKU.trim() === body.Supplier) : false,
   };
 }
 
 async function postStock(baseUrl, providerHeaders) {
   const { response, payload } = await postJson(baseUrl, STOCK_PATH, { limit: 1, page: 0 }, providerHeaders);
-  return {
-    status: response.status, ok: response.ok, shapeOk: validStockResponse(payload),
-    count: validStockResponse(payload) ? payload.length : null,
-  };
+  const shapeOk = validStockResponse(payload);
+  return { status: response.status, ok: response.ok, shapeOk, count: shapeOk ? payload.length : null };
 }
 
 function assertTransportProved(unauthenticated, authenticated, label) {
@@ -156,6 +155,9 @@ export async function runAvasamBearerReadOnlyProbe() {
   };
   console.log(JSON.stringify(evidence));
   assertTransportProved(unauthenticated, authenticated, transport.mode);
+  if (process.env.AVASAM_PROBE_REQUIRE_SKU === '1' && !authenticated.skuMatched) {
+    throw new Error('Avasam read-only inventory probe did not return the explicitly scoped SKU');
+  }
   return evidence;
 }
 
