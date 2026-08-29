@@ -1,12 +1,8 @@
 /**
- * MobileBottomNav — mobile bottom navigation bar.
+ * MobileBottomNav — premium light mobile bottom navigation bar shared by mobile
+ * web and the Capacitor app.
  *
- * Items (left → right):
- *   Home | Search | Sell (gold circle) | Inbox (with unread badge) | Profile
- *
- * "Home" links to "/" (exact active match).
- * "Sell" is elevated above the bar with a large gold circle.
- * Safe-area-inset-bottom applied via inline padding.
+ * Items (left → right): Home | Search | Sell | Inbox | Profile.
  */
 
 import { useEffect, useState } from 'react';
@@ -39,12 +35,12 @@ function NavItem({
       aria-current={isActive ? 'page' : undefined}
     >
       <Icon
-        className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F5A300]' : 'text-white/58'}`}
-        strokeWidth={isActive ? 2.2 : 1.8}
+        className={`h-[21px] w-[21px] transition-colors ${isActive ? 'text-[#0A234F]' : 'text-[#8A94A3]'}`}
+        strokeWidth={isActive ? 2.1 : 1.7}
         aria-hidden="true"
       />
       <span
-        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none transition-colors ${isActive ? 'font-bold text-[#F5A300]' : 'font-normal text-white/52'}`}
+        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none transition-colors ${isActive ? 'font-semibold text-[#0A234F]' : 'font-normal text-[#7A8492]'}`}
       >
         {label}
       </span>
@@ -61,7 +57,10 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      if (!user?.id) { if (!cancelled) setUnread(0); return; }
+      if (!user?.id) {
+        if (!cancelled) setUnread(0);
+        return;
+      }
       const { count } = await supabase
         .from('messages')
         .select('id', { count: 'exact', head: true })
@@ -70,11 +69,16 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
       if (!cancelled) setUnread(count ?? 0);
     };
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
   const handleInbox = () => {
-    if (!user) { promptAuth('message'); return; }
+    if (!user) {
+      promptAuth('message');
+      return;
+    }
     navigate('/inbox');
   };
 
@@ -87,22 +91,22 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
     >
       <div className="relative">
         <Mail
-          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F5A300]' : 'text-white/58'}`}
-          strokeWidth={isActive ? 2.2 : 1.8}
+          className={`h-[21px] w-[21px] transition-colors ${isActive ? 'text-[#0A234F]' : 'text-[#8A94A3]'}`}
+          strokeWidth={isActive ? 2.1 : 1.7}
           aria-hidden="true"
         />
         {unread > 0 && (
           <span
             aria-hidden="true"
-            className="flex items-center justify-center bg-[#F5A300] text-[#0A234F]"
+            className="flex items-center justify-center bg-[#0A234F] text-white"
             style={{
               position: 'absolute',
-              top: '-4px',
-              right: '-6px',
+              top: '-5px',
+              right: '-7px',
               minWidth: '16px',
               height: '16px',
               fontSize: '9px',
-              fontWeight: 800,
+              fontWeight: 700,
               borderRadius: '8px',
               padding: '0 2px',
             }}
@@ -112,7 +116,7 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
         )}
       </div>
       <span
-        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none ${isActive ? 'font-bold text-[#F5A300]' : 'font-normal text-white/52'}`}
+        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none ${isActive ? 'font-semibold text-[#0A234F]' : 'font-normal text-[#7A8492]'}`}
       >
         Inbox
       </span>
@@ -129,7 +133,10 @@ export default function MobileBottomNav() {
   const profilePath = '/profile';
 
   const handleSell = () => {
-    if (!user) { promptAuth('sell'); return; }
+    if (!user) {
+      promptAuth('sell');
+      return;
+    }
     navigate('/sell');
   };
 
@@ -140,12 +147,11 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-[9997] bg-[#0A234F]/[0.98] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-[9997] border-t border-[#0A234F]/[0.08] bg-[#FCFBF9]/[0.98] md:hidden"
       style={{
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
-        borderTop: '1px solid rgba(245,163,0,0.20)',
-        boxShadow: '0 -10px 28px rgba(10,35,79,0.18)',
+        boxShadow: '0 -5px 18px rgba(15,23,42,0.055)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
@@ -159,18 +165,19 @@ export default function MobileBottomNav() {
           aria-label="Sell an item"
         >
           <div
-            className="flex items-center justify-center bg-[#F5A300] text-[#0A234F]"
+            className="flex items-center justify-center bg-[#0A234F] text-white"
             style={{
-              width: '52px',
-              height: '52px',
+              width: '50px',
+              height: '50px',
               borderRadius: '50%',
-              marginTop: '-26px',
-              boxShadow: '0 0 24px rgba(245,163,0,0.38), 0 6px 16px rgba(10,35,79,0.36)',
+              marginTop: '-24px',
+              border: '4px solid #FCFBF9',
+              boxShadow: '0 7px 18px rgba(10,35,79,0.18)',
             }}
           >
-            <Plus className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
+            <Plus className="h-6 w-6" strokeWidth={2.2} aria-hidden="true" />
           </div>
-          <span className="text-white" style={{ fontSize: '10px', fontWeight: 700, lineHeight: 1, marginTop: '1px' }}>
+          <span className="text-[#0A234F]" style={{ fontSize: '10px', fontWeight: 600, lineHeight: 1, marginTop: '1px' }}>
             Sell
           </span>
         </button>
