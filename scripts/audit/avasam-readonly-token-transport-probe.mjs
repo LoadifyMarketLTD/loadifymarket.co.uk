@@ -148,6 +148,14 @@ export async function runAvasamBearerReadOnlyProbe() {
     authenticated: { status: authenticated.status, shapeOk: authenticated.shapeOk, count: authenticated.count, total: authenticated.total, skuMatched: authenticated.skuMatched },
   };
   console.log(JSON.stringify(evidence));
+
+  if (process.env.AVASAM_PROBE_GATE === 'http-only') {
+    if (unauthenticated.ok || !authenticated.ok) {
+      throw new Error('Avasam authenticated Inventory HTTP gate did not pass');
+    }
+    return evidence;
+  }
+
   assertTransportProved(unauthenticated, authenticated, transport.mode);
   if (process.env.AVASAM_PROBE_REQUIRE_SKU === '1' && !authenticated.skuMatched) {
     throw new Error('Avasam read-only inventory probe did not return the explicitly scoped SKU');
