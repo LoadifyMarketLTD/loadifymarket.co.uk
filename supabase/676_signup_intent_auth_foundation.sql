@@ -61,6 +61,29 @@ CREATE TABLE IF NOT EXISTS private.signup_intents (
       (requested_role = 'buyer' AND seller_type IS NULL)
     ),
 
+  CONSTRAINT signup_intents_customer_type_contract
+    CHECK (
+      (
+        requested_role = 'seller'
+        AND customer_type IS NULL
+      )
+      OR
+      (
+        requested_role = 'buyer'
+        AND (
+          customer_type IS NULL
+          OR customer_type IN (
+            'individual',
+            'sole_trader',
+            'limited_company',
+            'partnership',
+            'charity',
+            'other'
+          )
+        )
+      )
+    ),
+
   CONSTRAINT signup_intents_provider_subject_contract
     CHECK (
       (
@@ -161,6 +184,26 @@ BEGIN
      AND p_seller_type IS NOT NULL
   THEN
     RAISE EXCEPTION 'buyer intent cannot carry seller type';
+  END IF;
+
+  IF p_requested_role = 'seller'
+     AND p_customer_type IS NOT NULL
+  THEN
+    RAISE EXCEPTION 'seller intent cannot carry buyer account type';
+  END IF;
+
+  IF p_requested_role = 'buyer'
+     AND p_customer_type IS NOT NULL
+     AND p_customer_type NOT IN (
+       'individual',
+       'sole_trader',
+       'limited_company',
+       'partnership',
+       'charity',
+       'other'
+     )
+  THEN
+    RAISE EXCEPTION 'invalid buyer account type';
   END IF;
 
   IF v_expires_at <= now() THEN
@@ -484,7 +527,7 @@ BEGIN
      )
   THEN
     RAISE EXCEPTION
-      '676 social signup intent security failure: service role cannot execute RPC';
+      '676 social signup intent RPC security failure: service role cannot execute RPC';
   END IF;
 
   IF has_function_privilege(
