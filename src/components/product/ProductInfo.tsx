@@ -12,7 +12,6 @@ import {
   Loader2,
   MessageSquare,
   Store,
-  CheckCircle2,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
@@ -47,10 +46,10 @@ interface ProductInfoProps {
 }
 
 const conditionColor: Record<string, string> = {
-  New: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "Like New": "bg-violet-50 text-violet-700 border-violet-200",
-  Mixed: "bg-blue-50 text-[#1F5BD8] border-blue-200",
-  Unchecked: "bg-purple-50 text-purple-700 border-purple-200",
+  New: "bg-[#F4F6F8] text-[#35516F] border-[#DCE3EA]",
+  "Like New": "bg-[#F6F4F1] text-[#62584E] border-[#E5DED5]",
+  Mixed: "bg-[#F4F4F5] text-[#52525B] border-[#E4E4E7]",
+  Unchecked: "bg-[#F7F4F0] text-[#6B5F54] border-[#E9E1D8]",
 };
 
 const ProductInfo = ({
@@ -202,38 +201,38 @@ const ProductInfo = ({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.08em] text-[#1F5BD8] uppercase">
-          <Link to="/catalog" className="hover:text-[#0A234F] transition-colors">Catalog</Link>
-          <span className="text-slate-300">/</span>
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#64748B]">
+          <Link to="/catalog" className="transition-colors hover:text-[#0A234F]">Catalog</Link>
+          <span className="text-[#CBD3DD]">/</span>
           <span>{category}</span>
           {hasDistinctSubcategory && (
             <>
-              <span className="text-slate-300">/</span>
+              <span className="text-[#CBD3DD]">/</span>
               <span>{subcategory}</span>
             </>
           )}
         </div>
-        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${conditionColor[condition] || "bg-slate-50 text-slate-700 border-slate-200"}`}>
+        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-wide ${conditionColor[condition] || "bg-[#F4F6F8] text-[#526171] border-[#DCE3EA]"}`}>
           {condition}
         </span>
       </div>
 
       <div className="space-y-3">
-        <h1 className="text-2xl sm:text-[2rem] font-display font-bold text-[#0A234F] leading-[1.15]">
+        <h1 className="font-display text-2xl font-bold leading-[1.15] text-[#0A234F] sm:text-[2rem]">
           {title}
         </h1>
 
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-3xl sm:text-4xl font-display font-extrabold tracking-tight text-[#0A234F]">
+            <p className="font-display text-3xl font-extrabold tracking-[-0.03em] text-[#0A234F] sm:text-4xl">
               {formattedPrice}
             </p>
-            <p className="mt-1 text-xs text-slate-500">Secure checkout on Loadify Market</p>
+            <p className="mt-1 text-xs text-[#6F7B8A]">Secure checkout on Loadify Market</p>
           </div>
 
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <CheckCircle2 className={`h-4 w-4 ${isAvailable ? "text-emerald-600" : "text-slate-400"}`} />
-            <span className={isAvailable ? "text-emerald-700" : "text-slate-500"}>
+          <div className="flex items-center gap-2 text-xs font-medium text-[#5B6777]">
+            <span className={`h-2 w-2 rounded-full ${isAvailable ? "bg-emerald-500" : "bg-slate-400"}`} aria-hidden="true" />
+            <span>
               {isAvailable
                 ? availableQuantity != null
                   ? `${availableQuantity} available`
@@ -245,36 +244,36 @@ const ProductInfo = ({
       </div>
 
       {location && (
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <MapPin className="h-4 w-4 text-[#F5A300]" />
+        <div className="flex items-center gap-2 text-sm text-[#687587]">
+          <MapPin className="h-4 w-4 text-[#8B6B26]" />
           <span>{location}</span>
         </div>
       )}
 
-      <div className="grid gap-2 border-y border-[#DCE3ED] py-4 sm:grid-cols-3">
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-          <ShieldCheck className="h-4 w-4 text-[#F5A300]" />
+      <div className="grid gap-2 border-y border-[#E3E7EC] py-4 sm:grid-cols-3">
+        <div className="flex items-center gap-2 text-xs font-medium text-[#667384]">
+          <ShieldCheck className="h-4 w-4 text-[#8B6B26]" />
           Dispute support
         </div>
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-          <Truck className="h-4 w-4 text-[#F5A300]" />
+        <div className="flex items-center gap-2 text-xs font-medium text-[#667384]">
+          <Truck className="h-4 w-4 text-[#8B6B26]" />
           Seller-fulfilled delivery
         </div>
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
-          <ShieldCheck className="h-4 w-4 text-[#F5A300]" />
+        <div className="flex items-center gap-2 text-xs font-medium text-[#667384]">
+          <ShieldCheck className="h-4 w-4 text-[#8B6B26]" />
           Seller terms apply
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[#DCE3ED] bg-[#F8FAFC] p-4">
+      <div className="rounded-2xl border border-[#E1E6EC] bg-[#F8F9FB] p-4">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A234F] text-white">
             <Store className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1F5BD8]">Sold & fulfilled by</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-[#6C7A8B]">Sold & fulfilled by</p>
             <p className="mt-0.5 font-display text-sm font-bold text-[#0A234F]">{product.seller}</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            <p className="mt-1 text-xs leading-relaxed text-[#6F7B8A]">
               The seller supplies and fulfils this listing. Loadify provides the marketplace and secure checkout experience.
             </p>
           </div>
@@ -282,30 +281,30 @@ const ProductInfo = ({
       </div>
 
       {!isOwner && !isAvailable && (
-        <div className="rounded-xl border border-[#F5A300]/40 bg-[#FFF8E6] px-4 py-3 text-sm font-semibold text-[#0A234F]" role="status">
+        <div className="rounded-xl border border-[#D9C99C] bg-[#FCF9F1] px-4 py-3 text-sm font-semibold text-[#0A234F]" role="status">
           {availabilityMessage}
         </div>
       )}
 
       {isOwner ? (
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Link to={`/seller/products/${product.id}/edit`} className="flex-1">
             <Button
               size="lg"
-              className="w-full bg-[#F5A300] hover:bg-[#E59600] text-[#0A234F] font-bold text-base"
+              className="w-full bg-[#0A234F] text-base font-bold text-white shadow-[0_10px_24px_rgba(10,35,79,0.12)] hover:bg-[#12386F]"
             >
               <Settings className="mr-2 h-5 w-5" /> Manage This Listing
             </Button>
           </Link>
           <Link to="/seller/products" className="shrink-0">
-            <Button size="lg" variant="outline" className="w-full text-base">
+            <Button size="lg" variant="outline" className="w-full text-base text-[#0A234F]">
               All My Listings
             </Button>
           </Link>
           <Button
             size="lg"
             variant="outline"
-            className="shrink-0"
+            className="shrink-0 text-[#0A234F]"
             onClick={handleShare}
             aria-label="Share listing"
           >
@@ -316,7 +315,7 @@ const ProductInfo = ({
         <div className="space-y-3">
           <Button
             size="lg"
-            className="w-full bg-[#F5A300] hover:bg-[#E59600] text-[#0A234F] font-bold text-base shadow-[0_10px_24px_rgba(245,163,0,0.18)] disabled:opacity-50"
+            className="w-full bg-[#0A234F] text-base font-bold text-white shadow-[0_12px_26px_rgba(10,35,79,0.14)] hover:bg-[#12386F] disabled:opacity-50"
             onClick={handleAddToCart}
             disabled={!isAvailable}
           >
@@ -328,11 +327,11 @@ const ProductInfo = ({
             <Button
               size="lg"
               variant="outline"
-              className="font-semibold text-[#0A234F]"
+              className="border-[#D7DEE7] font-semibold text-[#0A234F] hover:bg-[#F5F7FA]"
               onClick={handleBuyNow}
               disabled={!isAvailable}
             >
-              Buy now <ArrowRight className="ml-2 h-4 w-4" />
+              Buy now <ArrowRight className="ml-2 h-4 w-4 text-[#8B6B26]" />
             </Button>
             <Button
               size="lg"
@@ -340,7 +339,7 @@ const ProductInfo = ({
               onClick={handleToggleWishlist}
               disabled={wishlistLoading}
               aria-label={isWishlisted ? "Remove from wishlist" : "Save product"}
-              className={isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : "text-[#0A234F]"}
+              className={isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : "border-[#D7DEE7] text-[#0A234F] hover:bg-[#F5F7FA]"}
             >
               <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
             </Button>
@@ -349,7 +348,7 @@ const ProductInfo = ({
               variant="outline"
               onClick={handleShare}
               aria-label="Share product"
-              className="text-[#0A234F]"
+              className="border-[#D7DEE7] text-[#0A234F] hover:bg-[#F5F7FA]"
             >
               <Share2 className="h-5 w-5" />
             </Button>
@@ -359,7 +358,7 @@ const ProductInfo = ({
             <Button
               size="lg"
               variant="outline"
-              className="w-full text-base font-semibold text-[#0A234F]"
+              className="w-full border-[#D7DEE7] text-base font-semibold text-[#0A234F] hover:bg-[#F5F7FA]"
               onClick={onMessageSeller}
               disabled={contactActionLoading !== null}
               aria-busy={contactActionLoading === "message"}
@@ -382,11 +381,11 @@ const ProductInfo = ({
 
       <PaymentMethodBadges size="sm" />
 
-      <details className="group rounded-xl border border-[#DCE3ED] bg-white px-4 py-3">
-        <summary className="cursor-pointer list-none text-xs font-semibold text-slate-600 hover:text-[#0A234F]">
+      <details className="group rounded-xl border border-[#E1E6EC] bg-[#FEFEFD] px-4 py-3">
+        <summary className="cursor-pointer list-none text-xs font-semibold text-[#667384] hover:text-[#0A234F]">
           More sharing options
         </summary>
-        <div className="mt-3 flex flex-wrap gap-2 border-t border-[#EEF2F7] pt-3">
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-[#EEF1F4] pt-3">
           {supportsNativeShare && onNativeShare && (
             <Button size="sm" variant="outline" onClick={onNativeShare}>Share</Button>
           )}
