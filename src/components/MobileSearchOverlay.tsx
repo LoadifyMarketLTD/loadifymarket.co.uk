@@ -1,11 +1,6 @@
 /**
- * MobileSearchOverlay — full-screen dark search modal.
- *
- * Shown when the user taps the Search icon in MobileAppHeader.
- * Includes:
- *   • text input with auto-focus
- *   • close (✕) button
- *   • quick-category chips that navigate to /catalog?category=X
+ * MobileSearchOverlay — full-screen premium light search modal shared by mobile
+ * web and the Capacitor app.
  */
 
 import { useRef, useEffect } from 'react';
@@ -19,14 +14,14 @@ interface Category {
 }
 
 const QUICK_CATEGORIES: Category[] = [
-  { label: 'Electronics',  value: 'electronics' },
-  { label: 'Clothing',     value: 'clothing' },
-  { label: 'Automotive',   value: 'automotive' },
-  { label: 'Home',         value: 'home-garden' },
-  { label: 'Sports',       value: 'sports' },
-  { label: 'Toys',         value: 'toys-games' },
-  { label: 'Tools',        value: 'diy-tools' },
-  { label: 'All',          value: '' },
+  { label: 'Electronics', value: 'electronics' },
+  { label: 'Clothing', value: 'clothing' },
+  { label: 'Automotive', value: 'automotive' },
+  { label: 'Home', value: 'home-garden' },
+  { label: 'Sports', value: 'sports' },
+  { label: 'Toys', value: 'toys-games' },
+  { label: 'Tools', value: 'diy-tools' },
+  { label: 'All', value: '' },
 ];
 
 interface Props {
@@ -37,13 +32,11 @@ export default function MobileSearchOverlay({ onClose }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Auto-focus the input when the overlay opens.
   useEffect(() => {
     const t = setTimeout(() => inputRef.current?.focus(), 80);
     return () => clearTimeout(t);
   }, []);
 
-  // Close on Escape key.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -65,32 +58,38 @@ export default function MobileSearchOverlay({ onClose }: Props) {
   };
 
   return (
-    /* Full-screen backdrop */
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Search marketplace"
-      className="bg-background/[0.97]"
+      className="bg-[#F8F7F4] text-[#0A234F]"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
-      {/* ── Top bar: input + close ──────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0 16px 14px' }}>
         <form
           onSubmit={handleSubmit}
-          style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px',
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: '14px', padding: '13px 16px' }}
+          className="bg-white shadow-[0_3px_12px_rgba(15,23,42,0.035)]"
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            border: '1px solid rgba(10,35,79,0.10)',
+            borderRadius: '10px',
+            padding: '13px 14px',
+          }}
         >
           <Search
-            style={{ width: '18px', height: '18px', flexShrink: 0 }} className="text-white/40"
+            style={{ width: '18px', height: '18px', flexShrink: 0 }}
+            className="text-[#64748B]"
             aria-hidden="true"
           />
           <input
@@ -98,7 +97,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
             type="search"
             placeholder="Search items, brands, keywords…"
             aria-label="Search items, brands, keywords"
-            className="text-foreground"
+            className="text-[#0A234F] placeholder:text-[#8A94A3]"
             style={{
               flex: 1,
               background: 'transparent',
@@ -115,23 +114,28 @@ export default function MobileSearchOverlay({ onClose }: Props) {
           type="button"
           onClick={onClose}
           aria-label="Close search"
-          className="bg-white/[0.06]"
+          className="bg-white text-[#475569]"
           style={{
-            width: '44px', height: '44px', flexShrink: 0,
-            border: '1px solid rgba(255,255,255,0.10)',
+            width: '44px',
+            height: '44px',
+            flexShrink: 0,
+            border: '1px solid rgba(10,35,79,0.10)',
             borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             cursor: 'pointer',
           }}
         >
-          <X style={{ width: '18px', height: '18px' }} className="text-white/70" aria-hidden="true" />
+          <X style={{ width: '18px', height: '18px' }} aria-hidden="true" />
         </button>
       </div>
 
-      {/* ── Quick category chips ────────────────────────────── */}
-      <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: '8px' }}>
-        <p className="text-foreground/40" style={{ fontSize: '11px', fontWeight: 600,
-          letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
+      <div className="border-t border-[#0A234F]/[0.06]" style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: '22px' }}>
+        <p
+          className="text-[#6B7280]"
+          style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '12px' }}
+        >
           Browse categories
         </p>
         <div
@@ -145,14 +149,14 @@ export default function MobileSearchOverlay({ onClose }: Props) {
               type="button"
               role="listitem"
               onClick={() => handleCategory(value)}
-              className="bg-primary/[0.08] text-primary"
+              className="bg-white text-[#334155]"
               style={{
-                minHeight: '44px',
-                padding: '0 16px',
-                borderRadius: '22px',
-                border: '1px solid rgba(200,134,10,0.35)',
+                minHeight: '42px',
+                padding: '0 15px',
+                borderRadius: '8px',
+                border: '1px solid rgba(10,35,79,0.10)',
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 display: 'flex',
