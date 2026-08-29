@@ -32,6 +32,8 @@ export interface AvasamSellerProduct {
   IsVariation?: boolean;
 }
 
+export type AvasamInventoryScope = 'parents_and_singles' | 'variation_children';
+
 export interface AvasamInventoryFilterRequest {
   ProductType: unknown[];
   Supplier: string;
@@ -48,8 +50,8 @@ export interface AvasamInventoryFilterRequest {
   PriceMaxValue: number;
   PriceMaxDelimeter: string;
   page: number;
-  Variation?: string;
-  Showchild?: string;
+  Variation?: 'true';
+  Showchild?: 'true';
 }
 
 export interface AvasamInventoryItem {
@@ -114,6 +116,14 @@ function finiteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function integerNumber(value: unknown): value is number {
+  return finiteNumber(value) && Number.isInteger(value);
+}
+
+function dateTimeString(value: unknown): value is string {
+  return nonEmptyString(value) && Number.isFinite(Date.parse(value));
+}
+
 function optionalString(value: unknown): value is string | null | undefined {
   return value === undefined || value === null || typeof value === 'string';
 }
@@ -155,10 +165,25 @@ export function parseSellerProductListResponse(value: unknown): SupplierAdapterR
   return { ok: true, data: items };
 }
 
-export function createInventoryFilterRequest(page: number, limit: number): AvasamInventoryFilterRequest {
+/**
+ * Avasam documents two distinct inventory views:
+ * - omit Variation + Showchild => single products and variation parents;
+ * - set both to "true" => variation child SKUs only.
+ *
+ * Keep the choice explicit so a caller cannot silently switch catalogue shape.
+ */
+export function createInventoryFilterRequest(
+  page: number,
+  limit: number,
+  scope: AvasamInventoryScope = 'parents_and_singles',
+): AvasamInventoryFilterRequest {
   if (!Number.isInteger(page) || page < 0) throw new Error('Avasam inventory page must be a non-negative integer');
   if (!Number.isInteger(limit) || limit <= 0) throw new Error('Avasam inventory limit must be a positive integer');
-  return {
+  if (scope !== 'parents_and_singles' && scope !== 'variation_children') {
+    throw new Error('Unsupported Avasam inventory scope');
+  }
+
+  const request: AvasamInventoryFilterRequest = {
     ProductType: [],
     Supplier: '',
     Sortby: 'SKU',
@@ -175,15 +200,22 @@ export function createInventoryFilterRequest(page: number, limit: number): Avasa
     PriceMaxDelimeter: '0',
     page,
   };
+
+  if (scope === 'variation_children') {
+    request.Variation = 'true';
+    request.Showchild = 'true';
+  }
+
+  return request;
 }
 
 export function parseInventoryListResponse(value: unknown): SupplierAdapterResult<AvasamInventoryListResponse> {
-  if (!isRecord(value) || !Array.isArray(value.data) || !finiteNumber(value.total) || value.total < 0) {
+  if (!isRecord(value) || !Array.isArray(value.data) || !integerNumber(value.total) || value.total < 0) {
     return malformed('Avasam GetInventoryListWithFilter response has invalid envelope fields');
   }
   const data: AvasamInventoryItem[] = [];
   for (const raw of value.data) {
-    if (!isRecord(raw) || !nonEmptyString(raw.SKU) || !finiteNumber(raw.Price) || !finiteNumber(raw.Stock)) {
+    if (!isRecord(raw) || !nonEmptyString(raw.SKU) || !finiteNumber(raw.Price) || !integerNumber(raw.Stock)) {
       return malformed('Avasam GetInventoryListWithFilter returned an invalid inventory row');
     }
     if (!optionalString(raw.Number) || !optionalNumber(raw.RetailPrice) || !optionalNumber(raw.PriceIncVat)
@@ -207,7 +239,7 @@ export function parseSellerStockResponse(value: unknown): SupplierAdapterResult<
   if (!Array.isArray(value)) return malformed('Avasam SellerStockList response must be an array');
   const rows: AvasamSellerStockItem[] = [];
   for (const raw of value) {
-    if (!isRecord(raw) || !nonEmptyString(raw.SKU) || !finiteNumber(raw.Stock)) {
+    if (!isRecord(raw) || !nonEmptyString(raw.SKU) || !integerNumber(raw.Stock)) {
       return malformed('Avasam SellerStockList returned an invalid stock row');
     }
     rows.push({ SKU: raw.SKU.trim(), Stock: raw.Stock });
@@ -220,13 +252,13 @@ export function parseSellerStockResponse(value: unknown): SupplierAdapterResult<
  * separate gate and must be implemented before any webhook endpoint is exposed.
  */
 export function parseStockWebhookEnvelope(value: unknown): SupplierAdapterResult<AvasamWebhookEnvelope<AvasamStockUpdate>> {
-  if (!isRecord(value) || !nonEmptyString(value.requestId) || !nonEmptyString(value.on)
+  if (!isRecord(value) || !nonEmptyString(value.requestId) || !dateTimeString(value.on)
     || !nonEmptyString(value.token) || !Array.isArray(value.data)) {
     return malformed('Avasam stock webhook envelope is malformed');
   }
   const data: AvasamStockUpdate[] = [];
   for (const raw of value.data) {
-    if (!isRecord(raw) || !nonEmptyString(raw.sku) || !finiteNumber(raw.quantity) || !nonEmptyString(raw.updatedOn)) {
+    if (!isRecord(raw) || !nonEmptyString(raw.sku) || !integerNumber(raw.quantity) || !dateTimeString(raw.updatedOn)) {
       return malformed('Avasam stock webhook contains an invalid stock update row');
     }
     data.push({ sku: raw.sku.trim(), quantity: raw.quantity, updatedOn: raw.updatedOn.trim() });
