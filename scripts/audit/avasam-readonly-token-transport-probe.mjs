@@ -100,7 +100,6 @@ export async function runAvasamBearerReadOnlyProbe() {
   for (const name of REQUIRED_ENV) requiredEnv(name);
   const consumerKey = requiredEnv('AVASAM_CONSUMER_KEY');
   const secretKey = requiredEnv('AVASAM_SECRET_KEY');
-  const sku = requiredEnv('AVASAM_PROBE_SKU');
   const baseUrl = safeBaseUrl();
 
   const tokenResponse = await fetch(`${baseUrl}${TOKEN_PATH}`, {
@@ -124,6 +123,18 @@ export async function runAvasamBearerReadOnlyProbe() {
     throw new Error('Avasam request-token probe did not return a valid token contract');
   }
 
+  if (process.env.AVASAM_PROBE_TOKEN_ONLY === '1') {
+    const evidence = {
+      gate: 'avasam-readonly-token-transport',
+      stage: 'request-token',
+      status: tokenResponse.status,
+      tokenShapeOk: true,
+    };
+    console.log(JSON.stringify(evidence));
+    return evidence;
+  }
+
+  const sku = requiredEnv('AVASAM_PROBE_SKU');
   const body = readOnlyInventoryBody(sku);
 
   // Negative control: the same read-only request without any provider token.
