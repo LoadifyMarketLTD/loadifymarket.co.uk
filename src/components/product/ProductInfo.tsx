@@ -1,8 +1,18 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRight, Package, MapPin, Clock, Eye, Tag,
-  Truck, ShieldCheck, ShoppingCart, Heart, Settings, Share2, Loader2, MessageSquare
+  ArrowRight,
+  MapPin,
+  Truck,
+  ShieldCheck,
+  ShoppingCart,
+  Heart,
+  Settings,
+  Share2,
+  Loader2,
+  MessageSquare,
+  Store,
+  CheckCircle2,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
@@ -37,10 +47,10 @@ interface ProductInfoProps {
 }
 
 const conditionColor: Record<string, string> = {
-  New: "bg-success/10 text-success border-success/40",
-  "Like New": "bg-violet-500/10 text-violet-700 border-violet-200",
-  Mixed: "bg-primary/10 text-primary border-primary/40",
-  Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
+  New: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "Like New": "bg-violet-50 text-violet-700 border-violet-200",
+  Mixed: "bg-blue-50 text-[#1F5BD8] border-blue-200",
+  Unchecked: "bg-purple-50 text-purple-700 border-purple-200",
 };
 
 const ProductInfo = ({
@@ -49,9 +59,6 @@ const ProductInfo = ({
   subcategory,
   condition,
   location,
-  unitCount,
-  views,
-  listed,
   product,
   sellerId,
   onShareFacebook,
@@ -78,6 +85,11 @@ const ProductInfo = ({
   const isOwner = !!(user && sellerId && user.id === sellerId);
   const isAvailable = product.isAvailable !== false;
   const availabilityMessage = product.availabilityMessage || "This listing is not currently available for purchase.";
+  const availableQuantity = product.maxPurchaseQuantity;
+  const formattedPrice = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+  }).format(product.price);
 
   useEffect(() => {
     if (!user || !product.id) return;
@@ -155,8 +167,8 @@ const ProductInfo = ({
     }
     addToCart(product);
     toast({
-      title: "Added to cart",
-      description: `${title} has been added to your cart.`,
+      title: "Added to basket",
+      description: `${title} has been added to your basket.`,
     });
   };
 
@@ -188,76 +200,89 @@ const ProductInfo = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <a href="/catalog" className="hover:text-foreground transition-colors">Catalog</a>
-        <span>/</span>
-        <span>{category}</span>
-        {hasDistinctSubcategory && (
-          <>
-            <span>/</span>
-            <span className="text-foreground">{subcategory}</span>
-          </>
-        )}
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.08em] text-[#1F5BD8] uppercase">
+          <Link to="/catalog" className="hover:text-[#0A234F] transition-colors">Catalog</Link>
+          <span className="text-slate-300">/</span>
+          <span>{category}</span>
+          {hasDistinctSubcategory && (
+            <>
+              <span className="text-slate-300">/</span>
+              <span>{subcategory}</span>
+            </>
+          )}
+        </div>
+        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${conditionColor[condition] || "bg-slate-50 text-slate-700 border-slate-200"}`}>
+          {condition}
+        </span>
       </div>
 
       <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${conditionColor[condition] || ""}`}>
-            {condition}
-          </span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground leading-tight">
+        <h1 className="text-2xl sm:text-[2rem] font-display font-bold text-[#0A234F] leading-[1.15]">
           {title}
         </h1>
-      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Package className="h-4 w-4 text-primary" />
-          {unitCount} {unitCount === 1 ? "lot" : "lots"}
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4 text-primary" />
-          {location}
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4 text-primary" />
-          Listed {listed}
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Eye className="h-4 w-4 text-primary" />
-          {views} views
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Tag className="h-4 w-4 text-primary" />
-          {category}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-3xl sm:text-4xl font-display font-extrabold tracking-tight text-[#0A234F]">
+              {formattedPrice}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">Secure checkout on Loadify Market</p>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <CheckCircle2 className={`h-4 w-4 ${isAvailable ? "text-emerald-600" : "text-slate-400"}`} />
+            <span className={isAvailable ? "text-emerald-700" : "text-slate-500"}>
+              {isAvailable
+                ? availableQuantity != null
+                  ? `${availableQuantity} available`
+                  : "Available"
+                : "Unavailable"}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 py-3 border-t border-border">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          Dispute Support Available
+      {location && (
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <MapPin className="h-4 w-4 text-[#F5A300]" />
+          <span>{location}</span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Truck className="h-4 w-4 text-primary" />
-          Seller-Fulfilled Delivery
+      )}
+
+      <div className="grid gap-2 border-y border-[#DCE3ED] py-4 sm:grid-cols-3">
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+          <ShieldCheck className="h-4 w-4 text-[#F5A300]" />
+          Dispute support
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          Transparent Seller Terms
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+          <Truck className="h-4 w-4 text-[#F5A300]" />
+          Seller-fulfilled delivery
+        </div>
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-600">
+          <ShieldCheck className="h-4 w-4 text-[#F5A300]" />
+          Seller terms apply
         </div>
       </div>
 
-      <div className="rounded-lg bg-muted/50 border border-border px-4 py-3 text-xs text-muted-foreground leading-relaxed">
-        <span className="font-semibold text-foreground">Sold by: {product.seller}</span>
-        {" — "}
-        This product is listed, supplied, fulfilled, and delivered by the seller. Loadify Market provides the marketplace platform only.
+      <div className="rounded-2xl border border-[#DCE3ED] bg-[#F8FAFC] p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0A234F] text-white">
+            <Store className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1F5BD8]">Sold & fulfilled by</p>
+            <p className="mt-0.5 font-display text-sm font-bold text-[#0A234F]">{product.seller}</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              The seller supplies and fulfils this listing. Loadify provides the marketplace and secure checkout experience.
+            </p>
+          </div>
+        </div>
       </div>
 
       {!isOwner && !isAvailable && (
-        <div className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-foreground" role="status">
+        <div className="rounded-xl border border-[#F5A300]/40 bg-[#FFF8E6] px-4 py-3 text-sm font-semibold text-[#0A234F]" role="status">
           {availabilityMessage}
         </div>
       )}
@@ -267,7 +292,7 @@ const ProductInfo = ({
           <Link to={`/seller/products/${product.id}/edit`} className="flex-1">
             <Button
               size="lg"
-              className="w-full bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity"
+              className="w-full bg-[#F5A300] hover:bg-[#E59600] text-[#0A234F] font-bold text-base"
             >
               <Settings className="mr-2 h-5 w-5" /> Manage This Listing
             </Button>
@@ -289,109 +314,96 @@ const ProductInfo = ({
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            size="lg"
+            className="w-full bg-[#F5A300] hover:bg-[#E59600] text-[#0A234F] font-bold text-base shadow-[0_10px_24px_rgba(245,163,0,0.18)] disabled:opacity-50"
+            onClick={handleAddToCart}
+            disabled={!isAvailable}
+          >
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            Add to basket
+          </Button>
+
+          <div className="grid grid-cols-[1fr_auto_auto] gap-2">
             <Button
               size="lg"
-              className="flex-1 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity disabled:opacity-50"
+              variant="outline"
+              className="font-semibold text-[#0A234F]"
               onClick={handleBuyNow}
               disabled={!isAvailable}
             >
-              Buy from Seller <ArrowRight className="ml-2 h-5 w-5" />
+              Buy now <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="flex-1 text-base"
-              onClick={handleAddToCart}
-              disabled={!isAvailable}
-            >
-              <ShoppingCart className="mr-2 h-5 w-5" />
-              Add to Cart
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
               onClick={handleToggleWishlist}
               disabled={wishlistLoading}
-              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              aria-label={isWishlisted ? "Remove from wishlist" : "Save product"}
+              className={isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : "text-[#0A234F]"}
             >
               <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="shrink-0"
               onClick={handleShare}
-              aria-label="Share listing"
+              aria-label="Share product"
+              className="text-[#0A234F]"
             >
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
 
           {onMessageSeller && (
-            <div className="grid grid-cols-1 gap-3">
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-base"
-                onClick={onMessageSeller}
-                disabled={contactActionLoading !== null}
-                aria-busy={contactActionLoading === "message"}
-              >
-                {contactActionLoading === "message" ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Opening…
-                  </>
-                ) : (
-                  <>
-                    <MessageSquare className="mr-2 h-5 w-5" />
-                    Message
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full text-base font-semibold text-[#0A234F]"
+              onClick={onMessageSeller}
+              disabled={contactActionLoading !== null}
+              aria-busy={contactActionLoading === "message"}
+            >
+              {contactActionLoading === "message" ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Opening…
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="mr-2 h-5 w-5" />
+                  Message seller
+                </>
+              )}
+            </Button>
           )}
         </div>
       )}
 
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted-foreground">Share</p>
-        <div className="flex flex-wrap gap-2">
+      <PaymentMethodBadges size="sm" />
+
+      <details className="group rounded-xl border border-[#DCE3ED] bg-white px-4 py-3">
+        <summary className="cursor-pointer list-none text-xs font-semibold text-slate-600 hover:text-[#0A234F]">
+          More sharing options
+        </summary>
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-[#EEF2F7] pt-3">
           {supportsNativeShare && onNativeShare && (
-            <Button size="sm" variant="outline" onClick={onNativeShare}>
-              Share
-            </Button>
+            <Button size="sm" variant="outline" onClick={onNativeShare}>Share</Button>
           )}
-          <Button size="sm" variant="outline" onClick={onShareFacebook}>
-            Facebook
-          </Button>
+          <Button size="sm" variant="outline" onClick={onShareFacebook}>Facebook</Button>
           {onShareMessenger && (
-            <Button size="sm" variant="outline" onClick={onShareMessenger}>
-              Messenger
-            </Button>
+            <Button size="sm" variant="outline" onClick={onShareMessenger}>Messenger</Button>
           )}
-          <Button size="sm" variant="outline" onClick={onShareWhatsApp}>
-            WhatsApp
-          </Button>
+          <Button size="sm" variant="outline" onClick={onShareWhatsApp}>WhatsApp</Button>
           {onShareInstagram && (
-            <Button size="sm" variant="outline" onClick={onShareInstagram}>
-              Instagram
-            </Button>
+            <Button size="sm" variant="outline" onClick={onShareInstagram}>Instagram</Button>
           )}
           {onShareTikTok && (
-            <Button size="sm" variant="outline" onClick={onShareTikTok}>
-              TikTok
-            </Button>
+            <Button size="sm" variant="outline" onClick={onShareTikTok}>TikTok</Button>
           )}
-          <Button size="sm" variant="outline" onClick={onCopyLink}>
-            Copy Link
-          </Button>
+          <Button size="sm" variant="outline" onClick={onCopyLink}>Copy link</Button>
         </div>
-      </div>
-
-      <PaymentMethodBadges size="sm" />
+      </details>
     </div>
   );
 };
