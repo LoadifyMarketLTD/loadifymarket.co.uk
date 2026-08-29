@@ -264,9 +264,17 @@ BEGIN
   IF v_intent_id IS NOT NULL AND v_intent.requested_role = 'buyer' THEN
     UPDATE public.buyer_profiles
     SET
-      "customerType" = COALESCE(
+      "accountType" = COALESCE(
         NULLIF(v_intent.customer_type, ''),
-        "customerType"
+        "accountType"
+      ),
+      "companyName" = COALESCE(
+        NULLIF(v_intent.company_name, ''),
+        "companyName"
+      ),
+      "vatNumber" = COALESCE(
+        NULLIF(v_intent.vat_number, ''),
+        "vatNumber"
       ),
       "businessAddress" = COALESCE(
         v_intent.business_address,
