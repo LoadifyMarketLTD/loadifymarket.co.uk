@@ -25,6 +25,74 @@ describe('AvasamAdapterV1 foundation', () => {
   });
 });
 
+describe('AvasamClient verified Seller API authentication', () => {
+  it('requests a token using only the documented consumer and secret JSON fields', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({
+        access_token: 'provider-access-token',
+        expires_at: '2026-08-29T16:00:00.000Z',
+      }), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+
+    const client = new AvasamClient({
+      baseUrl: 'https://app.avasam.com',
+      consumerKey: 'consumer-key',
+      secretKey: 'secret-key',
+    });
+    const result = await client.requestToken();
+
+    expect(result).toEqual({
+      ok: true,
+      data: {
+        access_token: 'provider-access-token',
+        expires_at: '2026-08-29T16:00:00.000Z',
+      },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://app.avasam.com/api/auth/request-token');
+    expect(init?.method).toBe('POST');
+    expect(JSON.parse(String(init?.body))).toEqual({
+      consumer_key: 'consumer-key',
+      secret_key: 'secret-key',
+    });
+    const headers = new Headers(init?.headers);
+    expect(headers.get('Content-Type')).toBe('application/json');
+    expect(headers.get('Authorization')).toBeNull();
+    expect(headers.get('X-Correlation-Id')).toBeNull();
+    expect(headers.get('Idempotency-Key')).toBeNull();
+    fetchMock.mockRestore();
+  });
+
+  it('fails closed before network access when Seller API credentials are missing', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const client = new AvasamClient({ baseUrl: 'https://app.avasam.com' });
+    const result = await client.requestToken();
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('rejects malformed successful token responses instead of accepting ambiguous auth state', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ access_token: '', expires_at: 'not-a-date' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const client = new AvasamClient({
+      baseUrl: 'https://app.avasam.com',
+      consumerKey: 'consumer-key',
+      secretKey: 'secret-key',
+    });
+    const result = await client.requestToken();
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('MALFORMED_RESPONSE');
+    fetchMock.mockRestore();
+  });
+});
+
 describe('AvasamClient security boundary', () => {
   it('does not send an idempotency header unless explicitly supplied', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
