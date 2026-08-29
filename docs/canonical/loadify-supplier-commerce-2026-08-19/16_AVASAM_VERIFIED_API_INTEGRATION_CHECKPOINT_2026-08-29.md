@@ -6,7 +6,7 @@
 - Branch: `feat/avasam-verified-api-integration-20260829`
 - Base: `main@f830c5bb2f31b10338ade8d0524bb3cf15ab53df`
 - Pull request: `#608`
-- Last code-only HEAD before this checkpoint update: `25ebb3809e65e5c24619c85189c00b9b51c01dff`
+- Latest code-only HEAD before this checkpoint update: `d13eeaaefb0a179aac7ba0398d8955076bf332c0`
 - Status: OPEN / DRAFT / NOT MERGED
 
 ## Provider evidence supplied from live Avasam Help Centre
@@ -31,16 +31,20 @@ Seller API documentation supplied by the account owner on 2026-08-29 confirms:
   - supports pagination and filtering
   - response envelope: `data` + `total`
   - rows include SKU, price, RRP, stock, VAT, price including VAT, mapping/listing fields and provider identifiers
+  - Avasam documents two distinct inventory views:
+    - omit `Variation` and `Showchild` => single products + variation parents;
+    - set both to string `"true"` => variation child SKUs only
 
 - `POST /apiseeker/Products/SellerStockList`
   - body: `limit`, `page`
   - response rows: `SKU`, `Stock`
+  - stock is documented as Integer
 
 ### Webhook contract evidence
 
 Avasam API Keys UI supports Verification Token, Stock Update Endpoint and Price Update Endpoint.
 
-The documented stock update envelope contains `requestId`, `on`, `token`, and `data[]` with `sku`, `quantity`, `updatedOn`.
+The documented stock update envelope contains `requestId`, `on`, `token`, and `data[]` with `sku`, `quantity`, `updatedOn`. Quantity is documented as int and timestamps as DateTime.
 
 Stock notifications must be acknowledged via `/api-seller/Product/AcknowledgeStockUpdate`.
 
@@ -71,9 +75,14 @@ Implemented:
 3. in-memory access token lifecycle until `expires_at`, refresh after expiry and explicit invalidation;
 4. exact verified endpoint constants for catalogue, inventory, stock and stock-update acknowledgement;
 5. typed request builders and strict parsers for GetSellerProductList, GetInventoryListWithFilter, SellerStockList and the stock webhook envelope structure;
-6. branch guards keep `AvasamAdapterV1.capabilities = []`;
-7. old guessed `Authorization: Bearer` behavior removed from the verified branch;
-8. caller-supplied guessed provider auth headers such as `Authorization` or `Authkey` are rejected before network access.
+6. explicit inventory scope contract:
+   - `parents_and_singles` => omit `Variation` + `Showchild`;
+   - `variation_children` => send both as `"true"`;
+7. documented integer stock/quantity fields are validated as integers rather than accepting fractional commercial truth;
+8. documented webhook DateTime fields must be parseable timestamps;
+9. branch guards keep `AvasamAdapterV1.capabilities = []`;
+10. old guessed `Authorization: Bearer` behavior removed from the verified branch;
+11. caller-supplied guessed provider auth headers such as `Authorization` or `Authkey` are rejected before network access.
 
 ## Remaining blocker
 
@@ -91,16 +100,15 @@ Therefore:
 
 GitHub Actions continue to fail before runner allocation (`runner_id=0`, empty `steps=[]`). This is infrastructure evidence, not a code-test failure.
 
-### Exact #608 normal preview
+### Exact #608 normal previews
 
-Code-only HEAD `25ebb3809e65e5c24619c85189c00b9b51c01dff`:
-
-- Netlify Deploy Preview: **SUCCESS**
+- earlier code-only HEAD `25ebb3809e65e5c24619c85189c00b9b51c01dff`: Netlify SUCCESS
+- hardened code-only HEAD `d13eeaaefb0a179aac7ba0398d8955076bf332c0`: Netlify SUCCESS
 - preview: `https://deploy-preview-608--loadifymarketcouk.netlify.app`
 
-### Diagnostic #609 — PR #608 code gates
+### Diagnostic #609 — initial PR #608 code gates
 
-Diagnostic branch started from exact #608 code-only HEAD.
+Diagnostic branch started from exact earlier #608 code-only HEAD.
 
 First diagnostic with `prebuild = npm test && npm run lint`:
 
@@ -130,7 +138,23 @@ Exact `main@f830c5bb2f31b10338ade8d0524bb3cf15ab53df` plus only `prebuild = npm 
 - Netlify: **FAILURE**
 - PR #610 CLOSED / NOT MERGED
 
-This proves the aggregate full-suite prebuild gate is also failing on exact main, independently of PR #608. Without Netlify build logs this does not prove the exact failing test set is identical; therefore do not claim that. The available evidence does establish that all PR-specific Avasam suites and the full lint/type/build path pass, while the repository-wide full-suite gate already fails on main.
+This proves the aggregate full-suite prebuild gate is also failing on exact main, independently of PR #608. Without Netlify build logs this does not prove the exact failing test set is identical; therefore do not claim that. The available evidence establishes that all PR-specific Avasam suites and the full lint/type/build path pass, while the repository-wide full-suite gate already fails on main.
+
+### Diagnostic #611 — hardened contract revalidation
+
+Exact hardened #608 code-only HEAD `d13eeaaefb0a179aac7ba0398d8955076bf332c0` plus only the targeted diagnostic prebuild:
+
+- diagnostic HEAD `202fc173982413a398f08cfdcfbc5947092304e4`
+- Netlify: **SUCCESS**
+- `avasam-adapter.test.ts`: PASS
+- `avasam-branch-guard.test.ts`: PASS
+- `avasam-contracts.test.ts`: PASS
+- `avasam-token-manager.test.ts`: PASS
+- full ESLint: PASS
+- TypeScript `tsc -b`: PASS
+- Vite production build: PASS
+- Netlify packaging/deploy preview: PASS
+- PR #611 CLOSED / NOT MERGED
 
 ## Next gate
 
