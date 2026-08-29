@@ -33,6 +33,10 @@ async function post(path, body, headers = {}) {
   return { response, payload: await readJson(response) };
 }
 
+function isRecord(value) {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
 function findSkuRecord(value, sku, depth = 0) {
   if (depth > 8 || value === null || value === undefined) return null;
   if (Array.isArray(value)) {
@@ -75,18 +79,39 @@ async function main() {
   }
 
   const payload = live.payload;
-  const record = Boolean(payload && typeof payload === 'object' && !Array.isArray(payload));
-  const dataArray = record && Array.isArray(payload.data);
+  const record = isRecord(payload);
+  const data = record ? payload.data : undefined;
+  const result = record ? payload.result : undefined;
+  const value = record ? payload.value : undefined;
+  const dataRecord = isRecord(data);
+  const resultRecord = isRecord(result);
+  const dataArray = record && Array.isArray(data);
   const totalNumber = record && typeof payload.total === 'number' && Number.isFinite(payload.total) && payload.total >= 0;
   const totalInteger = totalNumber && Number.isInteger(payload.total);
   const totalNumericString = record && numericString(payload.total) && Number(payload.total) >= 0;
   const rowAnywhere = findSkuRecord(payload, sku);
-  const rowInData = dataArray ? payload.data.find(item => item && typeof item === 'object'
+  const rowInData = dataArray ? data.find(item => item && typeof item === 'object'
     && typeof item.SKU === 'string' && item.SKU.trim() === sku) : null;
 
   const facts = {
     'envelope-record': record,
     'data-array': dataArray,
+    'data-object': dataRecord,
+    'sku-under-data': Boolean(findSkuRecord(data, sku)),
+    'data-data-array': dataRecord && Array.isArray(data.data),
+    'data-Data-array': dataRecord && Array.isArray(data.Data),
+    'data-items-array': dataRecord && Array.isArray(data.items),
+    'data-Items-array': dataRecord && Array.isArray(data.Items),
+    'data-result-array': dataRecord && Array.isArray(data.result),
+    'data-Result-array': dataRecord && Array.isArray(data.Result),
+    'data-products-array': dataRecord && Array.isArray(data.products),
+    'data-Products-array': dataRecord && Array.isArray(data.Products),
+    'result-object': resultRecord,
+    'sku-under-result': Boolean(findSkuRecord(result, sku)),
+    'result-data-array': resultRecord && Array.isArray(result.data),
+    'result-items-array': resultRecord && Array.isArray(result.items),
+    'value-array': Array.isArray(value),
+    'sku-under-value': Boolean(findSkuRecord(value, sku)),
     'total-number': totalNumber,
     'total-integer': totalInteger,
     'total-numeric-string': totalNumericString,
