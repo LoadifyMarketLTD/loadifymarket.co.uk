@@ -160,15 +160,15 @@ function MobileHome() {
 function DesktopHome() {
   return (
     <>
-      <VisualMarketplaceCategories />
-
       <HeroSection />
 
-      <section className="bg-[#F7F9FC] pb-6" aria-label="Loadify Market trust signals">
-        <div className="w-full px-6">
+      <section className="bg-[#F8F7F4] pb-10" aria-label="Loadify Market trust signals">
+        <div className="mx-auto w-full max-w-[1480px] px-6 lg:px-10">
           <TrustStrip />
         </div>
       </section>
+
+      <VisualMarketplaceCategories />
 
       <FeaturedProducts />
 
