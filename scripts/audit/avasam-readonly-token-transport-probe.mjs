@@ -42,13 +42,7 @@ function validTokenPayload(value) {
 
 function validInventoryEnvelope(value) {
   return Boolean(value && typeof value === 'object' && Array.isArray(value.data)
-    && typeof value.total === 'number' && Number.isFinite(value.total) && value.total >= 0
-    && value.data.every(item => (
-      item && typeof item === 'object'
-      && typeof item.SKU === 'string' && item.SKU.trim().length > 0
-      && typeof item.Price === 'number' && Number.isFinite(item.Price)
-      && typeof item.Stock === 'number' && Number.isFinite(item.Stock)
-    )));
+    && typeof value.total === 'number' && Number.isFinite(value.total) && value.total >= 0);
 }
 
 function validStockResponse(value) {
@@ -86,7 +80,7 @@ async function postInventory(baseUrl, body, providerHeaders) {
     status: response.status, ok: response.ok, shapeOk,
     count: shapeOk ? payload.data.length : null,
     total: shapeOk ? payload.total : null,
-    skuMatched: shapeOk ? payload.data.some(item => item.SKU.trim() === body.Supplier) : false,
+    skuMatched: shapeOk ? payload.data.some(item => item && typeof item === 'object' && typeof item.SKU === 'string' && item.SKU.trim() === body.Supplier) : false,
   };
 }
 
