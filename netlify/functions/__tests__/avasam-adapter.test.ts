@@ -107,19 +107,46 @@ describe('AvasamClient security boundary', () => {
     fetchMock.mockRestore();
   });
 
-  it('prevents provider callers from overriding trusted authentication or correlation headers', async () => {
+  it('prevents provider callers from injecting an unverified Authorization token transport', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const client = new AvasamClient({ baseUrl: 'https://example.invalid' });
+    const result = await client.request(
+      { correlationId: 'trusted-correlation', idempotencyKey: 'trusted-idempotency' },
+      '/health',
+      { headers: { Authorization: 'Bearer guessed-token' } },
+    );
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('prevents provider callers from injecting an unverified Authkey token transport', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const client = new AvasamClient({ baseUrl: 'https://example.invalid' });
+    const result = await client.request(
+      { correlationId: 'trusted-correlation' },
+      '/health',
+      { headers: { Authkey: 'guessed-token' } },
+    );
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('owns correlation and idempotency headers even when callers try to override them', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } }),
     );
-    const client = new AvasamClient({ baseUrl: 'https://example.invalid', apiToken: 'trusted-token' });
+    const client = new AvasamClient({ baseUrl: 'https://example.invalid' });
     await client.request(
       { correlationId: 'trusted-correlation', idempotencyKey: 'trusted-idempotency' },
       '/health',
-      { headers: { Authorization: 'Bearer attacker-token', 'X-Correlation-Id': 'attacker-correlation', 'Idempotency-Key': 'attacker-idempotency' } },
+      { headers: { 'X-Correlation-Id': 'caller-correlation', 'Idempotency-Key': 'caller-idempotency' } },
     );
     const [, init] = fetchMock.mock.calls[0];
     const headers = new Headers(init?.headers);
-    expect(headers.get('Authorization')).toBe('Bearer trusted-token');
     expect(headers.get('X-Correlation-Id')).toBe('trusted-correlation');
     expect(headers.get('Idempotency-Key')).toBe('trusted-idempotency');
     fetchMock.mockRestore();
@@ -168,20 +195,6 @@ describe('AvasamClient security boundary', () => {
   it('rejects embedded credentials in the provider base URL', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch');
     const client = new AvasamClient({ baseUrl: 'https://user:password@example.invalid' });
-    const result = await client.request({ correlationId: 'correlation-only' }, '/health');
-    expect(result.ok).toBe(false);
-    expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
-    expect(fetchMock).not.toHaveBeenCalled();
-    fetchMock.mockRestore();
-  });
-
-  it('rejects API-key header configuration that can override trusted headers', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch');
-    const client = new AvasamClient({
-      baseUrl: 'https://example.invalid',
-      apiKey: 'attacker-key',
-      apiKeyHeader: 'Authorization',
-    });
     const result = await client.request({ correlationId: 'correlation-only' }, '/health');
     expect(result.ok).toBe(false);
     expect(result && !result.ok ? result.errorClass : null).toBe('AUTH_CONFIGURATION_FAILURE');
