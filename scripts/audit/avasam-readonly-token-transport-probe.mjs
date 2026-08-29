@@ -45,6 +45,7 @@ function validTokenPayload(value) {
 function inventoryShapeFacts(value) {
   const record = Boolean(value && typeof value === 'object' && !Array.isArray(value));
   const dataArray = record && Array.isArray(value.data);
+  const dataNull = record && value.data === null;
   const dataUpperArray = record && Array.isArray(value.Data);
   const itemsArray = record && Array.isArray(value.items);
   const itemsUpperArray = record && Array.isArray(value.Items);
@@ -56,7 +57,7 @@ function inventoryShapeFacts(value) {
   const totalUpperNumber = record && typeof value.Total === 'number' && Number.isFinite(value.Total) && value.Total >= 0;
   const totalNumericString = record && typeof value.total === 'string' && value.total.trim() !== '' && Number.isFinite(Number(value.total));
   return {
-    record, dataArray, dataUpperArray, itemsArray, itemsUpperArray, resultArray,
+    record, dataArray, dataNull, dataUpperArray, itemsArray, itemsUpperArray, resultArray,
     resultUpperArray, productsArray, productsUpperArray, totalNumber,
     totalUpperNumber, totalNumericString, topLevelArray: Array.isArray(value),
   };
@@ -196,6 +197,7 @@ export async function runAvasamBearerReadOnlyProbe() {
   const gateFacts = {
     record: authenticated.record,
     'data-array': authenticated.dataArray,
+    'data-null-total-number': authenticated.dataNull && authenticated.totalNumber,
     'Data-array': authenticated.dataUpperArray,
     'items-array': authenticated.itemsArray,
     'Items-array': authenticated.itemsUpperArray,
