@@ -1,213 +1,192 @@
 # Avasam Verified API Integration Checkpoint — 2026-08-29
 
-## Branch / base
+## Canonical state
 
 - Repository: `LoadifyMarketLTD/loadifymarket.co.uk`
 - Branch: `feat/avasam-verified-api-integration-20260829`
+- PR: `#608`
 - Base: `main@f830c5bb2f31b10338ade8d0524bb3cf15ab53df`
-- Pull request: `#608`
-- Latest working HEAD before this checkpoint-only update: `81f933e7f70b325ddff1a7cdd7820e594be16a49`
-- Status: OPEN / DRAFT / NOT MERGED
+- Clean implementation HEAD before this checkpoint update: `b8c995bb2b998f8ad18e6797216e9529af6309fe`
+- PR state: OPEN / DRAFT / MERGEABLE / NOT MERGED
+- `main` remained unchanged during all Avasam diagnostics.
 
-## Provider evidence supplied from live Avasam Help Centre
+## Hard safety state
 
-Seller API documentation supplied by the account owner on 2026-08-29 confirms:
+- Supplier Commerce hosted controls remain OFF.
+- `AvasamAdapterV1.capabilities = []` remains unchanged.
+- Orders permission remains OFF.
+- PII view remains OFF.
+- Invoice remains OFF.
+- Our suppliers remains OFF.
+- Listing Manager and Payment Settings remain OFF.
+- No order endpoint was called.
+- No Avasam credential or access token was committed to GitHub or exposed in logs.
+- No Workspace, Super Admin, footer, or other visual changes are part of this work.
+
+## Verified provider documentation
+
+The supplied official Avasam Seller API documentation confirms:
 
 ### Authentication
 
 - `POST https://app.avasam.com/api/auth/request-token`
-- JSON request body fields: `consumer_key`, `secret_key`
-- response fields: `access_token`, `expires_at`
-- `access_token` is described as essential for Seller API calls to the account
-- retain the token for repeated calls until it expires, then request a new token
-- authentication calls are documented as not counting against the API rate limit
+- JSON body: `consumer_key`, `secret_key`
+- response: `access_token`, `expires_at`
+- retain `access_token` until expiry, then request a new token
 
-The documentation does not explicitly state the HTTP transport/header syntax for sending `access_token` to the subsequent Seller API endpoints.
+The public article does not state the exact HTTP header syntax used to send `access_token` to subsequent Seller API calls.
 
-### Read-only catalogue / inventory contracts
+### Read-only endpoints
 
 - `POST /apiseeker/Products/GetSellerProductList`
-  - body: `Page`, `Limit`
-  - response includes SKU, seller cost price, title, barcode, VAT, category, description, RRP, dimensions, weight, images, variations and category ID
-
 - `POST /apiseeker/ProductModule/GetInventoryListWithFilter`
-  - supports pagination and filtering, including SKU/title filtering through `Supplier`
-  - response envelope: `data` + `total`
-  - rows include SKU, price, RRP, stock, VAT, price including VAT, mapping/listing fields and provider identifiers
-  - Avasam documents two distinct inventory views:
-    - omit `Variation` and `Showchild` => single products + variation parents;
-    - set both to string `"true"` => variation child SKUs only
-
 - `POST /apiseeker/Products/SellerStockList`
-  - body: `limit`, `page`
-  - response rows: `SKU`, `Stock`
-  - stock is documented as Integer
 
-### Webhook contract evidence
+For `GetInventoryListWithFilter`, Avasam documents:
 
-Avasam API Keys UI supports Verification Token, Stock Update Endpoint and Price Update Endpoint.
+- `Supplier` as a SKU/title search field;
+- omitting `Variation` + `Showchild` for single products and variation parents;
+- sending both as string `"true"` for variation child SKUs;
+- the endpoint as returning **sourced products**.
 
-The documented stock update envelope contains `requestId`, `on`, `token`, and `data[]` with `sku`, `quantity`, `updatedOn`. Quantity is documented as int and timestamps as DateTime.
+The supplied seller-group documentation also confirms that seller-group product restrictions can hide products from a seller.
 
-Stock notifications must be acknowledged via `/api-seller/Product/AcknowledgeStockUpdate`.
+## Live account-scoped evidence — completed
 
-JWT verification semantics remain a separate gate before exposing a webhook endpoint.
+Real controlled Deploy Preview probes were executed with the Avasam Consumer Key + Secret Key stored as Netlify secrets in the Deploy Preview context.
 
-### Order contracts are documented but deliberately disabled
+### 1. Token exchange — PASS
 
-Avasam documentation includes `CreateSellerOrder` and `AddNewOrder`, but the Loadify Avasam API account currently keeps Orders permission OFF. No order capability is activated by PR #608.
+A real call to `/api/auth/request-token` succeeded.
 
-`CreateSellerOrder` documents an `Authkey` order field, while inventory/order response models also expose `authkey` as a supplier unique code. This is not accepted as evidence that Seller API `access_token` should be transported as `Authkey`.
+Verified live:
 
-## Seller-management / seller-group evidence
+- Consumer Key + Secret Key are accepted;
+- response contains a non-empty `access_token`;
+- response contains a parseable `expires_at`.
 
-Additional Avasam supplier-account documentation supplied on 2026-08-29 confirms that Avasam seller groups can:
+### 2. Seller API token transport — RESOLVED
 
-- apply price discounts;
-- restrict which supplier products are visible to a seller;
-- be activated/deactivated;
-- assign sellers to a restricted product group.
+Controlled read-only probes tested multiple transport hypotheses while unauthenticated requests were used as negative controls.
 
-It also documents seller account settings such as VAT status, surcharges, invoice cadence, credit limits and payment terms.
+Results:
 
-Implication for the token-transport probe: a valid authenticated response can legitimately contain zero matching rows for the chosen SKU if the account/product visibility configuration excludes that SKU. Therefore **SKU presence is recorded as evidence but is not required to prove token transport**. The authentication proof requires a valid documented inventory envelope, not a particular commercial product result.
+- `Authorization: Bearer <access_token>` -> REJECTED
+- `Token: <access_token>` -> REJECTED
+- `Authorization: <access_token>` -> **PASS**
 
-These seller-management features are not implemented or activated by PR #608; they are evidence for later Supplier Commerce commercial-policy mapping.
+The raw Authorization form was accepted by:
 
-## Important Seller API vs Supplier API distinction
+- `SellerStockList` with a valid documented stock response;
+- `GetInventoryListWithFilter` at HTTP level.
 
-The Seller API documentation links the word `Login` from its endpoint tips to `https://help.avasam.com/login`.
+Therefore the verified Avasam Seller API transport for this account is:
 
-That link currently redirects to the **Supplier API** documentation, not to a Seller API authentication section. The Supplier API uses provider-side fields such as `SessionToken` / `AuthorizationToken` in request bodies for supplier flows.
+```text
+Authorization: <access_token>
+```
 
-Those Supplier API fields are **not** treated as evidence for Seller API token transport. They belong to a different relationship/API surface and must not be copied into Loadify's seller-account integration.
+There is **no `Bearer ` prefix**.
 
-Third-party Patchworks documentation independently identifies Avasam authentication as OAuth 2 client credentials and identifies `access_token` as the response token field. It does not expose enough Avasam-specific request configuration to prove the exact HTTP transport/header syntax used for subsequent Seller API calls.
+### 3. Pilot SKU visibility — NOT PRESENT IN INVENTORY
 
-Therefore exact Seller API token transport still requires direct provider evidence or an account-scoped empirical read-only proof.
+Pilot SKU: `S0671779793`.
 
-## Current implementation in PR #608
+The exact SKU was searched recursively in the authenticated Inventory response under both documented inventory scopes:
 
-Implemented:
+1. single products + variation parents (omit `Variation` / `Showchild`) -> SKU NOT PRESENT;
+2. variation children (`Variation="true"`, `Showchild="true"`) -> SKU NOT PRESENT.
 
-1. exact request-token contract using Consumer Key + Secret Key server-side only;
-2. strict successful token response validation;
-3. in-memory access token lifecycle until `expires_at`, refresh after expiry and explicit invalidation;
-4. exact verified endpoint constants for catalogue, inventory, stock and stock-update acknowledgement;
-5. typed request builders and strict parsers for GetSellerProductList, GetInventoryListWithFilter, SellerStockList and the stock webhook envelope structure;
-6. explicit inventory scope contract:
-   - `parents_and_singles` => omit `Variation` + `Showchild`;
-   - `variation_children` => send both as `"true"`;
-7. documented integer stock/quantity fields are validated as integers;
-8. documented webhook DateTime fields must be parseable timestamps;
-9. branch guards keep `AvasamAdapterV1.capabilities = []`;
-10. old guessed automatic `Authorization: Bearer` behavior removed from the production client boundary;
-11. caller-supplied guessed provider auth headers such as `Authorization` or `Authkey` are rejected before network access;
-12. a dedicated controlled live-probe script exists at `scripts/audit/avasam-readonly-token-transport-probe.mjs`;
-13. its safety/causality tests exist at `scripts/audit/avasam-readonly-token-transport-probe.test.mjs`.
+This is no longer an authentication problem. The API accepts the authenticated requests.
 
-## Controlled live token-transport probe contract
+Because Avasam describes this endpoint as returning sourced products, and because seller-group restrictions can affect visibility, the next gate is account/product visibility or sourcing for `S0671779793`. Do not claim which specific configuration is responsible until it is verified in the Avasam account.
 
-The probe is **diagnostic only**. It does not activate a capability and does not change hosted Supplier Commerce state.
+## Implementation now in PR #608
 
-Required environment variables:
+### `AvasamClient`
 
-- `AVASAM_CONSUMER_KEY`
-- `AVASAM_SECRET_KEY`
-- `AVASAM_PROBE_SKU`
+Implemented and locked:
 
-Execution sequence:
+- verified request-token contract;
+- server-memory token lifecycle through `expires_at`;
+- new authenticated request boundary that internally sends:
 
-1. request a real Avasam `access_token` through the verified `request-token` endpoint;
-2. POST one SKU-scoped, `limit: 1`, read-only `GetInventoryListWithFilter` request **without** provider authentication as a negative control;
-3. POST the exact same read-only request with diagnostic OAuth-standard hypothesis `Authorization: Bearer <access_token>`;
-4. treat Bearer as empirically proven only if:
-   - the negative control is rejected / does not return the documented inventory envelope; and
-   - the Bearer request succeeds and returns the documented `{ data: [], total: number }` envelope;
-5. otherwise fail closed and do not promote Bearer into `AvasamClient`.
+```text
+Authorization: <access_token>
+```
 
-The probe deliberately does **not** require the selected SKU to be present because Avasam seller-group/product restrictions can legitimately hide products. `skuMatched` is captured only as additional evidence.
+- callers cannot supply or override provider authentication headers;
+- empty tokens fail closed before network access;
+- access tokens are not echoed into provider rejection results;
+- HTTPS-only trusted base URL and relative endpoint paths remain enforced.
 
-The probe never logs:
+### Read-only contracts
 
-- Consumer Key;
-- Secret Key;
-- access token;
-- token expiry payload;
-- returned product rows;
-- prices;
-- stock values;
-- supplier identifiers.
+Still codified and fail-closed:
 
-It logs only the gate name, endpoint, requested SKU, response status/shape, result count/total and whether the SKU matched.
+- catalog request/response models;
+- inventory parent/single vs child scope builders;
+- stock response validation;
+- stock webhook envelope contract;
+- acknowledgement endpoint constant.
 
-## Quality-gate evidence
+No adapter capability is advertised yet because the exact pilot SKU cannot yet be observed through the Inventory API.
 
-GitHub Actions continue to fail before runner allocation (`runner_id=0`, empty `steps=[]`). This is infrastructure evidence, not a code-test failure.
+## Quality gates
 
-### Diagnostic #609 — initial PR #608 gates
+### Earlier diagnostics
 
-- narrowed diagnostic HEAD `433aaa816eb591347a03055bff958393373ee918`: Netlify SUCCESS
-- four Avasam suites PASS
-- ESLint PASS
-- TypeScript `tsc -b` PASS
-- Vite production build PASS
-- Netlify packaging/deploy preview PASS
-- CLOSED / NOT MERGED
+- #609 targeted Avasam suites + lint/type/build: PASS, CLOSED / NOT MERGED.
+- #610 repository-wide full-suite baseline from exact main: FAILURE; therefore aggregate full-suite is not a #608-specific green gate.
+- #611 hardened Avasam contract validation: PASS, CLOSED / NOT MERGED.
+- #612 live-probe safety tests: PASS, CLOSED / NOT MERGED.
 
-### Diagnostic #610 — exact main full-suite baseline
+### #613 final verified-auth implementation gate
 
-Exact `main@f830c5bb2f31b10338ade8d0524bb3cf15ab53df` plus only `prebuild = npm test && npm run lint`:
+Diagnostic #613 started from exact clean #608 HEAD `b8c995bb2b998f8ad18e6797216e9529af6309fe` and added only a package prebuild gate.
 
-- diagnostic HEAD `e5573323be6720ae883ee9695f4643f716234a63`
-- Netlify FAILURE
-- CLOSED / NOT MERGED
+Diagnostic HEAD:
+`3ff03b02076870a65a4f385c6e0c69fc8211924e`
 
-This proves only that the aggregate repository-wide test gate is already not green on exact main independently of #608; it does not prove the exact failing tests are identical.
+Result: **Netlify SUCCESS**.
 
-### Diagnostic #611 — hardened contract revalidation
+Verified PASS:
 
-- exact hardened #608 code-only HEAD `d13eeaaefb0a179aac7ba0398d8955076bf332c0`
-- diagnostic HEAD `202fc173982413a398f08cfdcfbc5947092304e4`
-- Netlify SUCCESS
-- four Avasam suites + ESLint + TypeScript + Vite build + Netlify PASS
-- CLOSED / NOT MERGED
+- `avasam-adapter.test.ts`
+- `avasam-branch-guard.test.ts`
+- `avasam-contracts.test.ts`
+- `avasam-token-manager.test.ts`
+- `avasam-authenticated-transport.test.ts`
+- full ESLint
+- TypeScript `tsc -b`
+- Vite production build
+- Netlify packaging/deploy preview
 
-### Diagnostic #612 — live-probe safety contract
+#613 was CLOSED / NOT MERGED.
 
-Exact #608 working HEAD `81f933e7f70b325ddff1a7cdd7820e594be16a49` plus only a targeted diagnostic prebuild:
+The clean #608 `package.json` was restored to the exact main blob `bf28760411196bfd00ff5eb2d4da4756a1bf2204`; no live-probe `prebuild` remains.
 
-- diagnostic HEAD `8b31344b1f52be69b05121f2b537dcb497f702b7`
-- Netlify Deploy Preview: **SUCCESS**
-- existing four Avasam suites: PASS
-- `avasam-readonly-token-transport-probe.test.mjs`: PASS
-- full ESLint: PASS
-- TypeScript `tsc -b`: PASS
-- Vite production build: PASS
-- Netlify packaging/deploy preview: PASS
-- the real Avasam network probe was **not** executed in #612; `fetch` was mocked
-- no real credential was present
-- PR #612 CLOSED / NOT MERGED
+## Remaining gate — Avasam product visibility/sourcing
 
-## Current blocker / next gate
+The authentication blocker is CLOSED.
 
-Code-side preparation for a safe empirical token-transport test is complete.
+Do **not** change the verified token transport again unless Avasam changes its live contract.
 
-The remaining gate is to provide the real Avasam Consumer Key and Secret Key to a **temporary, server-side build-only Deploy Preview context**, never to GitHub or chat, then run the diagnostic read-only probe.
+The next work item is only to establish why `S0671779793` is not visible in the authenticated sourced-product Inventory response.
 
-Until that empirical gate passes:
+Safe verification order:
 
-- PR #608 remains DRAFT / NOT MERGED;
-- no live Avasam capability is advertised;
-- `AvasamAdapterV1.capabilities = []`;
-- no catalogue/stock/price synchronization is activated;
-- Supplier Commerce hosted controls remain OFF;
-- Orders remain OFF.
+1. In Avasam, verify whether `S0671779793` appears under **Search Product**.
+2. Verify whether it is already present/sourced under **Inventory / My products** for this seller account.
+3. Verify seller-group/product restriction state if the SKU is searchable but not visible to this seller.
+4. Do not enable Orders, Invoice, PII, Our suppliers, Listing Manager, or Payment Settings.
+5. Once the SKU becomes visible/sourced, rerun the exact read-only probe for `S0671779793` only.
+6. Validate live SKU, price and stock response fields against the strict Loadify parsers.
+7. Only after that consider advertising read-only `catalog`, `stock`, and `price` in the adapter.
+8. Hosted Supplier Commerce controls, provider registrations/capabilities and pilot activation remain separate readiness gates and stay OFF until their canonical prerequisites pass.
 
-After a Bearer proof succeeds:
+## Netlify secrets
 
-1. implement verified Bearer token transport inside the trusted `AvasamClient` boundary;
-2. keep callers unable to inject provider-auth headers;
-3. run controlled real product/inventory/stock reads and validate actual provider shapes;
-4. only then advertise read-only `catalog`, `stock` and `price` capabilities;
-5. keep `order_submission` disabled until a separate permission + controlled-order gate.
+`AVASAM_CONSUMER_KEY` and `AVASAM_SECRET_KEY` are stored as Netlify secret values for one Deploy Preview context. Netlify's UI automatically exposes the selected secret scope group as Builds / Functions / Runtime; no production value is configured from this work.
+
+Keep the secrets unchanged until the exact-SKU visibility probe is completed. Never paste them into chat or GitHub.
