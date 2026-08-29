@@ -1,4 +1,4 @@
-import { MapPin, Package, Star, Eye, Settings } from "lucide-react";
+import { MapPin, Package, Star, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
@@ -45,6 +45,8 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
   const navigate = useNavigate();
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
   const light = theme === "light";
+  const hasAuthoritativeStock = typeof product.maxPurchaseQuantity === "number";
+  const hasRating = typeof product.rating === "number" && product.rating > 0;
 
   const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     const target = e.target instanceof Element ? e.target : null;
@@ -90,35 +92,37 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
       </div>
 
       <div className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className={`text-xs font-semibold ${light ? "text-[#1F5BD8]" : "text-primary"}`}>{product.category}</span>
-          <div className={`flex items-center gap-1 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
-            <Eye className="h-3 w-3" />
-            {product.views}
-          </div>
-        </div>
+        <span className={`text-xs font-semibold ${light ? "text-[#1F5BD8]" : "text-primary"}`}>{product.category}</span>
 
-        <h3 className={`font-display text-sm font-semibold line-clamp-2 leading-snug ${light ? "text-[#0A234F]" : "text-foreground"}`}>
+        <h3 className={`font-display text-sm font-semibold line-clamp-2 leading-snug min-h-[2.5rem] ${light ? "text-[#0A234F]" : "text-foreground"}`}>
           {product.title}
         </h3>
 
-        <div className={`flex items-center gap-3 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
-          <div className="flex items-center gap-1">
-            <Package className="h-3 w-3" />
-            {product.unitCount} {product.unitCount === 1 ? "lot" : "lots"}
-          </div>
-          <div className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            {product.location}
-          </div>
+        <div className="flex items-end justify-between gap-3">
+          <span className={`text-xl font-extrabold tracking-tight ${light ? "text-[#0A234F]" : "text-foreground"}`}>
+            £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+          {hasAuthoritativeStock && product.maxPurchaseQuantity! > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-1 whitespace-nowrap">
+              <Package className="h-3 w-3" />
+              {product.maxPurchaseQuantity} available
+            </span>
+          )}
         </div>
 
-        <div className={`flex items-center justify-between pt-2 border-t ${light ? "border-slate-200" : "border-border"}`}>
-          <div className="flex items-center gap-1.5">
-            <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.seller}</span>
+        {product.location && (
+          <div className={`flex items-center gap-1.5 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
+            <MapPin className="h-3.5 w-3.5" />
+            <span className="truncate">{product.location}</span>
+          </div>
+        )}
+
+        <div className={`flex items-center justify-between gap-3 pt-2 border-t ${light ? "border-slate-200" : "border-border"}`}>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className={`truncate text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.seller}</span>
             {product.sellerVerified ? (
               <span
-                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-success bg-success/10 border border-emerald-500/30 rounded-full px-1.5 py-0.5"
+                className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-semibold text-success bg-success/10 border border-emerald-500/30 rounded-full px-1.5 py-0.5"
                 title="Verified Seller"
                 aria-label="Verified Seller"
               >
@@ -129,21 +133,25 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
               </span>
             ) : (
               <span
-                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 border border-primary/40 rounded-full px-1.5 py-0.5"
+                className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 border border-primary/40 rounded-full px-1.5 py-0.5"
                 title="Unverified seller"
                 aria-label="Unverified seller"
               >
-                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>Unverified</span>
+                <span>Seller</span>
               </span>
             )}
           </div>
-          <div className="flex items-center gap-0.5">
-            <Star className="h-3 w-3 fill-accent text-accent" />
-            <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.rating}</span>
-          </div>
+          {hasRating ? (
+            <div className="flex shrink-0 items-center gap-1">
+              <Star className="h-3.5 w-3.5 fill-[#F5A300] text-[#F5A300]" />
+              <span className={`text-xs font-semibold ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.rating.toFixed(1)}</span>
+              {(product.reviewCount ?? 0) > 0 && (
+                <span className={`text-[11px] ${light ? "text-slate-400" : "text-muted-foreground"}`}>({product.reviewCount})</span>
+              )}
+            </div>
+          ) : (
+            <span className={`shrink-0 text-[11px] ${light ? "text-slate-400" : "text-muted-foreground"}`}>No reviews</span>
+          )}
         </div>
 
         {isOwner ? (
@@ -155,7 +163,7 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
         ) : (
           <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
             <Button className={`w-full font-bold transition-all duration-250 text-sm ${light ? "bg-[#F5A300] text-[#0A234F] hover:bg-[#E59600] hover:shadow-[0_8px_18px_rgba(245,163,0,0.22)]" : "bg-primary hover:bg-primary-hover text-black hover:shadow-[0_0_18px_rgba(212,175,55,0.28)] hover:opacity-90"}`} size="sm">
-              View Details
+              View product
             </Button>
           </Link>
         )}
