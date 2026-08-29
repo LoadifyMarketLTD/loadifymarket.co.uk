@@ -2,6 +2,7 @@ const REQUIRED_ENV = ['AVASAM_CONSUMER_KEY', 'AVASAM_SECRET_KEY'];
 const DEFAULT_BASE_URL = 'https://app.avasam.com';
 const TOKEN_PATH = '/api/auth/request-token';
 const INVENTORY_PATH = '/apiseeker/ProductModule/GetInventoryListWithFilter';
+const STOCK_PATH = '/apiseeker/Products/SellerStockList';
 
 function requiredEnv(name) {
   const value = process.env[name]?.trim();
@@ -70,20 +71,35 @@ function validInventoryEnvelope(value) {
   );
 }
 
-async function postInventory(baseUrl, body, authorization) {
+function validStockResponse(value) {
+  return Array.isArray(value) && value.every(item => (
+    item
+    && typeof item === 'object'
+    && typeof item.SKU === 'string'
+    && item.SKU.trim().length > 0
+    && Number.isInteger(item.Stock)
+  ));
+}
+
+async function postJson(baseUrl, path, body, authorization) {
   const headers = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   };
   if (authorization) headers.Authorization = authorization;
 
-  const response = await fetch(`${baseUrl}${INVENTORY_PATH}`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
     redirect: 'error',
   });
   const payload = await jsonOrNull(response);
+  return { response, payload };
+}
+
+async function postInventory(baseUrl, body, authorization) {
+  const { response, payload } = await postJson(baseUrl, INVENTORY_PATH, body, authorization);
   return {
     status: response.status,
     ok: response.ok,
@@ -94,6 +110,24 @@ async function postInventory(baseUrl, body, authorization) {
       ? payload.data.some(item => item && typeof item === 'object' && item.SKU === body.Supplier)
       : false,
   };
+}
+
+async function postStock(baseUrl, authorization) {
+  const { response, payload } = await postJson(baseUrl, STOCK_PATH, { limit: 1, page: 0 }, authorization);
+  return {
+    status: response.status,
+    ok: response.ok,
+    shapeOk: validStockResponse(payload),
+    count: validStockResponse(payload) ? payload.length : null,
+  };
+}
+
+function assertTransportProved(unauthenticated, authenticated, label) {
+  const negativeControlRejected = !unauthenticated.ok && !unauthenticated.shapeOk;
+  const authenticatedProved = authenticated.ok && authenticated.shapeOk;
+  if (!negativeControlRejected || !authenticatedProved) {
+    throw new Error(`Avasam ${label} transport was not proven by the controlled read-only probe`);
+  }
 }
 
 export async function runAvasamBearerReadOnlyProbe() {
@@ -134,14 +168,23 @@ export async function runAvasamBearerReadOnlyProbe() {
     return evidence;
   }
 
+  if (process.env.AVASAM_PROBE_TARGET === 'stock') {
+    const unauthenticated = await postStock(baseUrl, null);
+    const bearer = await postStock(baseUrl, `Bearer ${tokenPayload.access_token.trim()}`);
+    const evidence = {
+      gate: 'avasam-readonly-token-transport',
+      endpoint: STOCK_PATH,
+      unauthenticated: { status: unauthenticated.status, shapeOk: unauthenticated.shapeOk },
+      bearer: { status: bearer.status, shapeOk: bearer.shapeOk, count: bearer.count },
+    };
+    console.log(JSON.stringify(evidence));
+    assertTransportProved(unauthenticated, bearer, 'Bearer');
+    return evidence;
+  }
+
   const sku = requiredEnv('AVASAM_PROBE_SKU');
   const body = readOnlyInventoryBody(sku);
-
-  // Negative control: the same read-only request without any provider token.
   const unauthenticated = await postInventory(baseUrl, body, null);
-
-  // Diagnostic hypothesis only: standard OAuth access-token transport.
-  // This is not promoted into AvasamClient unless this controlled probe proves it.
   const bearer = await postInventory(baseUrl, body, `Bearer ${tokenPayload.access_token.trim()}`);
 
   const evidence = {
@@ -161,15 +204,8 @@ export async function runAvasamBearerReadOnlyProbe() {
     },
   };
 
-  // Never print credentials, access_token, expiry payload, response rows, prices, stock, or supplier identifiers.
   console.log(JSON.stringify(evidence));
-
-  const negativeControlRejected = !unauthenticated.ok && !unauthenticated.shapeOk;
-  const bearerProved = bearer.ok && bearer.shapeOk;
-  if (!negativeControlRejected || !bearerProved) {
-    throw new Error('Avasam Bearer transport was not proven by the controlled read-only probe');
-  }
-
+  assertTransportProved(unauthenticated, bearer, 'Bearer');
   return evidence;
 }
 
