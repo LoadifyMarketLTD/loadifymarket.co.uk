@@ -12,9 +12,9 @@ const HeroSection = () => (
           Built for UK sellers, brands &amp; wholesalers
         </p>
 
-        <h1 className="max-w-[610px] font-serif text-[3.05rem] font-normal leading-[1.02] tracking-[-0.035em] text-[#0A234F] sm:text-[3.7rem] lg:text-[4.05rem]">
-          <span className="block">The marketplace built for</span>
-          <span className="block">UK independent sellers</span>
+        <h1 className="max-w-[610px] font-serif text-[3.05rem] font-normal leading-[1.02] tracking-[-0.035em] text-[#0A234F] sm:text-[3.55rem] lg:text-[3.75rem]">
+          <span className="block">The UK marketplace for</span>
+          <span className="block">independent sellers</span>
         </h1>
 
         <p className="mt-7 max-w-[570px] text-[16px] font-normal leading-7 text-[#5A6578] sm:text-[17px] sm:leading-8">
