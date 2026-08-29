@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+
 const REQUIRED_ENV = ['AVASAM_CONSUMER_KEY', 'AVASAM_SECRET_KEY'];
 const DEFAULT_BASE_URL = 'https://app.avasam.com';
 const TOKEN_PATH = '/api/auth/request-token';
@@ -114,6 +116,40 @@ function assertTransportProved(unauthenticated, authenticated, label) {
   }
 }
 
+function describeShape(value, depth = 0) {
+  if (value === null) return { kind: 'null' };
+  if (Array.isArray(value)) {
+    return {
+      kind: 'array',
+      length: value.length,
+      item: value.length > 0 && depth < 3 ? describeShape(value[0], depth + 1) : null,
+    };
+  }
+  if (typeof value === 'object') {
+    const keys = Object.keys(value).sort();
+    return {
+      kind: 'object',
+      keys,
+      fields: depth < 3
+        ? Object.fromEntries(keys.map(key => [key, describeShape(value[key], depth + 1)]))
+        : undefined,
+    };
+  }
+  if (typeof value === 'number') return { kind: Number.isInteger(value) ? 'integer' : 'number' };
+  return { kind: typeof value };
+}
+
+async function writeSanitizedShapeArtifact(payload, transportMode) {
+  await mkdir('public', { recursive: true });
+  const evidence = {
+    gate: 'avasam-inventory-live-shape',
+    endpoint: INVENTORY_PATH,
+    transport: transportMode,
+    shape: describeShape(payload),
+  };
+  await writeFile('public/avasam-probe-shape.json', `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
+}
+
 export async function runAvasamBearerReadOnlyProbe() {
   for (const name of REQUIRED_ENV) requiredEnv(name);
   const consumerKey = requiredEnv('AVASAM_CONSUMER_KEY');
@@ -142,6 +178,15 @@ export async function runAvasamBearerReadOnlyProbe() {
   const body = readOnlyInventoryBody(sku);
   const unauthenticated = await postInventory(baseUrl, body, {});
   const authenticated = await postInventory(baseUrl, body, transport.headers);
+
+  if (process.env.AVASAM_PROBE_SHAPE_ARTIFACT === '1') {
+    if (unauthenticated.ok || !authenticated.ok) {
+      throw new Error('Avasam authenticated Inventory HTTP gate did not pass');
+    }
+    await writeSanitizedShapeArtifact(authenticated.payload, transport.mode);
+    return { endpoint: INVENTORY_PATH, transport: transport.mode, gate: 'sanitized-shape-artifact' };
+  }
+
   const gate = process.env.AVASAM_PROBE_GATE;
   if (gate === 'http-only') {
     if (unauthenticated.ok || !authenticated.ok) throw new Error('Avasam authenticated Inventory HTTP gate did not pass');
