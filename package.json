@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npx vitest run netlify/functions/__tests__/register.test.ts netlify/functions/__tests__/signup-native-auth-contract.test.ts netlify/functions/__tests__/signup-newsletter-preference-contract.test.ts netlify/functions/__tests__/signup-role-first-google-web-contract.test.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
