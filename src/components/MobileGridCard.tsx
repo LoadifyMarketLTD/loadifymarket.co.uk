@@ -1,6 +1,6 @@
 /**
- * MobileGridCard — minimal 2-column grid card for the mobile home feed.
- * Shows: image (square) + title + price + optional location. No badges/ratings.
+ * MobileGridCard — premium light 2-column grid card for the mobile home feed.
+ * Shows: image + title + price + optional location. No badges/ratings.
  */
 
 import { Link } from 'react-router-dom';
@@ -19,7 +19,7 @@ interface MobileGridCardProps {
   priority?: boolean;
 }
 
-const darkPlaceholder = (
+const lightPlaceholder = (
   <div
     aria-hidden="true"
     style={{
@@ -28,9 +28,10 @@ const darkPlaceholder = (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      background: '#F1EFEA',
     }}
   >
-    <ProductImagePlaceholder theme="dark" />
+    <ProductImagePlaceholder theme="light" />
   </div>
 );
 
@@ -38,16 +39,15 @@ export default function MobileGridCard({ id, title, price, image, location, prio
   return (
     <Link
       to={`/product/${id}`}
-      style={{ display: 'block', textDecoration: 'none' }}
+      className="block overflow-hidden rounded-[12px] border border-[#0A234F]/[0.08] bg-white shadow-[0_5px_16px_rgba(15,23,42,0.035)]"
+      style={{ textDecoration: 'none' }}
       aria-label={title}
     >
-      {/* Image */}
       <div
-        className="bg-white/[0.05]"
+        className="bg-[#F1EFEA]"
         style={{
           width: '100%',
           aspectRatio: '1 / 1',
-          borderRadius: 12,
           overflow: 'hidden',
           position: 'relative',
         }}
@@ -59,43 +59,45 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           fetchPriority={priority ? 'high' : undefined}
           decoding={priority ? 'auto' : 'async'}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          fallback={darkPlaceholder}
+          fallback={lightPlaceholder}
         />
       </div>
 
-      {/* Info */}
-      <div style={{ paddingTop: 8, paddingBottom: 4 }}>
+      <div style={{ padding: '10px 11px 11px' }}>
         <p
-          className="text-foreground/90"
+          className="text-[#24364F]"
           style={{
             fontSize: 'clamp(12px, 3.2vw, 13px)',
             fontWeight: 500,
             margin: 0,
-            lineHeight: 1.35,
+            lineHeight: 1.4,
             overflow: 'hidden',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
+            minHeight: '2.8em',
           }}
         >
           {title}
         </p>
         <p
-          className="text-foreground"
+          className="text-[#0A234F]"
           style={{
-            fontSize: 'clamp(13px, 3.8vw, 15px)',
+            fontSize: 'clamp(14px, 3.8vw, 16px)',
             fontWeight: 700,
-            margin: '4px 0 0',
+            margin: '8px 0 0',
+            paddingTop: 8,
+            borderTop: '1px solid rgba(10,35,79,0.07)',
           }}
         >
           {formatPrice(price)}
         </p>
         {location && (
           <p
-            className="text-foreground/50"
+            className="text-[#7A8492]"
             style={{
-              fontSize: 11,
-              margin: '3px 0 0',
+              fontSize: 10.5,
+              margin: '4px 0 0',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
