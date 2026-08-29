@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npx vitest run netlify/functions/__tests__/avasam-adapter.test.ts netlify/functions/__tests__/avasam-branch-guard.test.ts netlify/functions/__tests__/avasam-contracts.test.ts netlify/functions/__tests__/avasam-token-manager.test.ts netlify/functions/__tests__/avasam-authenticated-transport.test.ts && npm run lint",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
