@@ -64,7 +64,7 @@ function isValidTokenResponse(value: unknown): value is AvasamTokenResponse {
     && Number.isFinite(Date.parse(candidate.expires_at));
 }
 
-const UNVERIFIED_PROVIDER_AUTH_HEADERS = new Set([
+const CALLER_BLOCKED_PROVIDER_AUTH_HEADERS = new Set([
   'authorization',
   'authkey',
   'token',
@@ -76,16 +76,39 @@ const UNVERIFIED_PROVIDER_AUTH_HEADERS = new Set([
   'secret_key',
 ]);
 
-function assertNoUnverifiedProviderAuthHeaders(headersInit: HeadersInit | undefined): void {
+function assertNoCallerProviderAuthHeaders(headersInit: HeadersInit | undefined): void {
   if (!headersInit) return;
   const headers = new Headers(headersInit);
   for (const [name] of headers.entries()) {
-    if (UNVERIFIED_PROVIDER_AUTH_HEADERS.has(name.toLowerCase())) {
+    if (CALLER_BLOCKED_PROVIDER_AUTH_HEADERS.has(name.toLowerCase())) {
       throw new AvasamClientConfigurationError(
-        `Avasam provider auth header '${name}' is blocked until the token transport contract is verified`,
+        `Avasam provider auth header '${name}' is controlled by the trusted client boundary`,
       );
     }
   }
+}
+
+function mapProviderResponse<T>(response: Response, body: unknown): SupplierAdapterResult<T> {
+  if (response.ok) return { ok: true, data: body as T };
+  if (response.status === 401 || response.status === 403) {
+    return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: `Avasam authentication rejected (${response.status})` };
+  }
+  if (response.status === 429) {
+    const retryAfter = Number(response.headers.get('retry-after'));
+    return {
+      ok: false,
+      errorClass: 'RATE_LIMITED',
+      message: 'Avasam rate limit reached',
+      retryAfterMs: Number.isFinite(retryAfter) ? retryAfter * 1000 : undefined,
+    };
+  }
+  if (response.status >= 400 && response.status < 500) {
+    return { ok: false, errorClass: 'PERMANENT_REJECTION', message: `Avasam request rejected (${response.status})` };
+  }
+  if (response.status >= 500) {
+    return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: `Avasam server failure (${response.status})` };
+  }
+  return { ok: false, errorClass: 'UNKNOWN_OUTCOME', message: 'Avasam returned an unclassified response' };
 }
 
 export class AvasamClient {
@@ -151,54 +174,85 @@ export class AvasamClient {
     }
   }
 
-  private headers(context: AvasamRequestContext): Record<string, string> {
+  private headers(context: AvasamRequestContext, accessToken?: string): Record<string, string> {
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       'X-Correlation-Id': required(context.correlationId, 'correlationId'),
     };
     if (context.idempotencyKey?.trim()) headers['Idempotency-Key'] = context.idempotencyKey.trim();
+    if (accessToken !== undefined) {
+      // Empirically verified against live Seller API read-only endpoints on 2026-08-29:
+      // Avasam expects the access token as the raw Authorization header value,
+      // without an OAuth "Bearer " prefix.
+      headers.Authorization = required(accessToken, 'Avasam access_token');
+    }
     return headers;
   }
 
-  /**
-   * Generic transport remains intentionally unauthenticated. It may be used for
-   * contract/unit testing, but any attempt by a caller to inject a guessed
-   * provider auth header is rejected before network access. Once Avasam's exact
-   * token transport is verified, that transport must be implemented inside this
-   * trusted boundary rather than supplied by callers.
-   */
-  async request<T>(context: AvasamRequestContext, path: string | undefined, init: RequestInit = {}): Promise<SupplierAdapterResult<T>> {
+  private async execute<T>(
+    context: AvasamRequestContext,
+    path: string | undefined,
+    init: RequestInit,
+    accessToken?: string,
+  ): Promise<SupplierAdapterResult<T>> {
     try {
       const baseUrl = required(this.config.baseUrl, 'AVASAM_API_BASE_URL');
       const resolvedPath = requiredRelativePath(path, 'Avasam endpoint path configuration');
-      assertNoUnverifiedProviderAuthHeaders(init.headers);
+      assertNoCallerProviderAuthHeaders(init.headers);
+
+      const headers = new Headers(init.headers);
+      for (const [name, value] of Object.entries(this.headers(context, accessToken))) {
+        headers.set(name, value);
+      }
+
       const response = await fetch(buildUrl(baseUrl, resolvedPath), {
         ...init,
-        headers: { ...(init.headers || {}), ...this.headers(context) },
+        headers,
       });
       const body = parseJson(await response.text());
-      if (response.ok) return { ok: true, data: body as T };
-      if (response.status === 401 || response.status === 403) return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: `Avasam authentication rejected (${response.status})` };
-      if (response.status === 429) {
-        const retryAfter = Number(response.headers.get('retry-after'));
-        return { ok: false, errorClass: 'RATE_LIMITED', message: 'Avasam rate limit reached', retryAfterMs: Number.isFinite(retryAfter) ? retryAfter * 1000 : undefined };
-      }
-      if (response.status >= 400 && response.status < 500) return { ok: false, errorClass: 'PERMANENT_REJECTION', message: `Avasam request rejected (${response.status})` };
-      if (response.status >= 500) return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: `Avasam server failure (${response.status})` };
-      return { ok: false, errorClass: 'UNKNOWN_OUTCOME', message: 'Avasam returned an unclassified response' };
+      return mapProviderResponse<T>(response, body);
     } catch (error) {
       if (error instanceof AvasamClientConfigurationError) return { ok: false, errorClass: error.errorClass, message: error.message };
       return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: error instanceof Error ? error.message : 'Avasam request failed' };
     }
   }
+
+  /**
+   * Generic transport without provider authentication. Provider auth headers are
+   * always blocked when supplied by callers.
+   */
+  request<T>(
+    context: AvasamRequestContext,
+    path: string | undefined,
+    init: RequestInit = {},
+  ): Promise<SupplierAdapterResult<T>> {
+    return this.execute<T>(context, path, init);
+  }
+
+  /**
+   * Verified authenticated Seller API transport.
+   *
+   * Controlled read-only probes established that Avasam accepts
+   * `Authorization: <access_token>` and rejects the OAuth-style
+   * `Authorization: Bearer <access_token>` form for these Seller API endpoints.
+   * The header is owned here so callers cannot override or leak it.
+   */
+  authenticatedRequest<T>(
+    context: AvasamRequestContext,
+    path: string | undefined,
+    accessToken: string,
+    init: RequestInit = {},
+  ): Promise<SupplierAdapterResult<T>> {
+    return this.execute<T>(context, path, init, accessToken);
+  }
 }
 
 /**
- * Creates only the verified server-side Avasam authentication boundary.
- * Consumer/secret credentials are used only by requestToken(). Concrete
- * catalog/stock/price token transport remains fail-closed until the documented
- * provider token header/transport contract is verified.
+ * Creates the verified server-side Avasam Seller API client boundary.
+ * Consumer/secret credentials are used only by requestToken(); access tokens are
+ * passed to authenticatedRequest(), which owns the verified raw Authorization
+ * header transport internally.
  */
 export function avasamClientFromEnvironment(): AvasamClient {
   return new AvasamClient({
