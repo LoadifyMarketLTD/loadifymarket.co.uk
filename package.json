@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "AVASAM_PROBE_SKU=S0671779793 AVASAM_PROBE_TRANSPORT=authorization-raw AVASAM_PROBE_GATE=sku-present node scripts/audit/avasam-readonly-token-transport-probe.mjs && AVASAM_PROBE_SKU=S0671779793 AVASAM_PROBE_TRANSPORT=authorization-raw AVASAM_PROBE_SHAPE_ARTIFACT=1 node scripts/audit/avasam-readonly-token-transport-probe.mjs && AVASAM_PROBE_SKU=S0671779793 AVASAM_PARSER_GATE=data-array node scripts/audit/avasam-sourced-sku-parser-probe.mjs",
+    "prebuild": "AVASAM_PROBE_SKU=S0671779793 AVASAM_PROBE_TRANSPORT=authorization-raw AVASAM_PROBE_GATE=sku-present node scripts/audit/avasam-readonly-token-transport-probe.mjs && AVASAM_PROBE_SKU=S0671779793 AVASAM_PROBE_TRANSPORT=authorization-raw AVASAM_PROBE_SHAPE_ARTIFACT=1 node scripts/audit/avasam-readonly-token-transport-probe.mjs && AVASAM_PROBE_SKU=S0671779793 AVASAM_PARSER_GATE=data-object node scripts/audit/avasam-sourced-sku-parser-probe.mjs",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
