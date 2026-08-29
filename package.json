@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "AVASAM_PROBE_TOKEN_ONLY=1 node scripts/audit/avasam-readonly-token-transport-probe.mjs",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
