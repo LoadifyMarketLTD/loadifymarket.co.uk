@@ -1,0 +1,101 @@
+/*
+ * Premium public desktop header.
+ *
+ * Loaded after the legacy compatibility layers so the approved light marketplace
+ * identity wins without altering mobile/native shells or the preserved login page.
+ */
+
+@media (min-width: 768px) {
+  :root.market-light-root body:not(:has(#login-email)) #root > header {
+    background: rgba(248, 247, 244, 0.97) !important;
+    border-color: rgba(10, 35, 79, 0.09) !important;
+    box-shadow: 0 1px 0 rgba(10, 35, 79, 0.06), 0 8px 24px rgba(15, 23, 42, 0.035) !important;
+    color: #0A234F !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header > div {
+    background: transparent !important;
+  }
+
+  /* Desktop does not need the drawer trigger when full navigation is visible. */
+  :root.market-light-root body:not(:has(#login-email)) #root > header > div > button[aria-label="Open navigation menu"] {
+    display: none !important;
+  }
+
+  /* Compact horizontal brand lockup: LM mark + Loadify Market wordmark. */
+  :root.market-light-root body:not(:has(#login-email)) #root > header a[aria-label^="Loadify Market"] {
+    gap: 0.65rem !important;
+    min-width: max-content;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header a[aria-label^="Loadify Market"] > img {
+    width: 2.1rem !important;
+    height: 2.1rem !important;
+    opacity: 0.96;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header a[aria-label^="Loadify Market"] > span {
+    display: flex !important;
+    align-items: baseline;
+    gap: 0.42rem;
+    line-height: 1 !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header a[aria-label^="Loadify Market"] > span > span:first-child {
+    color: #0A234F !important;
+    font-size: 1.18rem !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.025em !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header a[aria-label^="Loadify Market"] > span > span:last-child {
+    margin-top: 0 !important;
+    color: #8A7351 !important;
+    font-size: 0.56rem !important;
+    font-weight: 650 !important;
+    letter-spacing: 0.20em !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header input[type="search"] {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(10, 35, 79, 0.12) !important;
+    color: #0A234F !important;
+    box-shadow: none !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header input[type="search"]::placeholder {
+    color: #8A94A3 !important;
+    opacity: 1 !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header input[type="search"]:focus {
+    border-color: rgba(10, 35, 79, 0.25) !important;
+    box-shadow: 0 0 0 1px rgba(10, 35, 79, 0.06) !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header nav {
+    background: #F8F7F4 !important;
+    border-color: rgba(10, 35, 79, 0.075) !important;
+    box-shadow: none !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header nav a {
+    color: #5A6578 !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header nav a:hover {
+    color: #0A234F !important;
+  }
+
+  /* Keep only the account acquisition CTA as a solid structural button. */
+  :root.market-light-root body:not(:has(#login-email)) #root > header a[href="/register"] {
+    background: #0A234F !important;
+    color: #FFFFFF !important;
+    box-shadow: none !important;
+  }
+
+  :root.market-light-root body:not(:has(#login-email)) #root > header a[href="/register"]:hover {
+    background: #071A3C !important;
+    color: #FFFFFF !important;
+  }
+}
