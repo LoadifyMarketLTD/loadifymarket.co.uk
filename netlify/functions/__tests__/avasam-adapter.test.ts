@@ -1,26 +1,135 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AvasamAdapterV1 } from '../_shared/avasamAdapter';
 import { AvasamClient } from '../_shared/avasamClient';
+import { AVASAM_PILOT_SKU } from '../_shared/avasamSupplierPolicy';
 import { assertSupplierAdapterV1 } from '../_shared/supplierAdapter';
 
-describe('AvasamAdapterV1 foundation', () => {
-  it('conforms to SupplierAdapterV1 and exposes no unverified capabilities', () => {
+const PILOT_CONTEXT = {
+  correlationId: 'test-correlation',
+  idempotencyKey: 'test-idempotency',
+  supplierKey: 'avasam-gb010107',
+  territory: 'GB',
+};
+
+describe('AvasamAdapterV1 controlled read-only pilot', () => {
+  it('conforms to SupplierAdapterV1 and advertises only verified read capabilities', () => {
     const adapter = new AvasamAdapterV1();
     assertSupplierAdapterV1(adapter);
     expect(adapter.providerKey).toBe('avasam');
     expect(adapter.interfaceVersion).toBe(1);
-    expect(adapter.capabilities).toEqual([]);
+    expect(adapter.capabilities).toEqual(['catalog', 'stock', 'price']);
   });
 
-  it('fails closed instead of inventing undocumented provider behavior', async () => {
+  it('fails closed before network access for a SKU outside the controlled pilot', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
     const adapter = new AvasamAdapterV1();
-    const result = await adapter.getStock?.({
-      correlationId: 'test-correlation',
-      idempotencyKey: 'test-idempotency',
-      supplierKey: 'test-supplier',
-      territory: 'GB',
-    }, ['variant-1']);
-    expect(result?.ok).toBe(false);
+    const result = await adapter.getStock(PILOT_CONTEXT, ['variant-1']);
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('CAPABILITY_UNAVAILABLE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('fails closed before network access outside the GB pilot territory', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const adapter = new AvasamAdapterV1();
+    const result = await adapter.getPrices({ ...PILOT_CONTEXT, territory: 'US' }, [AVASAM_PILOT_SKU]);
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('CAPABILITY_UNAVAILABLE');
+    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockRestore();
+  });
+
+  it('maps the verified Seller Product List and Seller Stock List into provider-neutral snapshots', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input);
+      if (url.endsWith('/api/auth/request-token')) {
+        return new Response(JSON.stringify({
+          access_token: 'provider-access-token',
+          expires_at: '2099-08-29T18:00:00.000Z',
+        }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      const headers = new Headers(init?.headers);
+      expect(headers.get('Authorization')).toBe('provider-access-token');
+      expect(headers.get('X-Correlation-Id')).toBe(PILOT_CONTEXT.correlationId);
+      expect(headers.get('Idempotency-Key')).toBeNull();
+
+      if (url.endsWith('/apiseeker/Products/GetSellerProductList')) {
+        expect(JSON.parse(String(init?.body))).toEqual({ Page: 0, Limit: 100 });
+        return new Response(JSON.stringify([{
+          SKU: AVASAM_PILOT_SKU,
+          Price: 9.35,
+          Title: 'Pilot product',
+          Category: 'Automotive',
+        }]), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      if (url.endsWith('/apiseeker/Products/SellerStockList')) {
+        expect(JSON.parse(String(init?.body))).toEqual({ limit: 100, page: 0 });
+        return new Response(JSON.stringify([{
+          SKU: AVASAM_PILOT_SKU,
+          Stock: 35,
+        }]), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+
+      return new Response('{}', { status: 404, headers: { 'content-type': 'application/json' } });
+    });
+
+    const client = new AvasamClient({
+      baseUrl: 'https://app.avasam.com',
+      consumerKey: 'consumer-key',
+      secretKey: 'secret-key',
+    });
+    const observedAt = '2026-08-29T18:00:00.000Z';
+    const adapter = new AvasamAdapterV1({
+      client,
+      now: () => Date.parse(observedAt),
+    });
+
+    const catalog = await adapter.listCatalog(PILOT_CONTEXT);
+    expect(catalog).toEqual({
+      ok: true,
+      data: [{
+        externalProductRef: AVASAM_PILOT_SKU,
+        externalVariantRefs: [AVASAM_PILOT_SKU],
+      }],
+    });
+
+    const prices = await adapter.getPrices(PILOT_CONTEXT, [AVASAM_PILOT_SKU]);
+    expect(prices).toEqual({
+      ok: true,
+      data: [{
+        externalVariantRef: AVASAM_PILOT_SKU,
+        amountMinor: 935,
+        currency: 'GBP',
+        observedAt,
+      }],
+    });
+
+    const stock = await adapter.getStock(PILOT_CONTEXT, [AVASAM_PILOT_SKU]);
+    expect(stock).toEqual({
+      ok: true,
+      data: [{
+        externalVariantRef: AVASAM_PILOT_SKU,
+        quantity: 35,
+        availability: 'in_stock',
+        observedAt,
+      }],
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    fetchMock.mockRestore();
+  });
+
+  it('keeps order submission fail-closed even after read capabilities are verified', async () => {
+    const adapter = new AvasamAdapterV1();
+    const result = await adapter.submitOrder(PILOT_CONTEXT, {
+      externalOfferRef: AVASAM_PILOT_SKU,
+      quantity: 1,
+      destinationCountry: 'GB',
+    });
+    expect(result.ok).toBe(false);
     expect(result && !result.ok ? result.errorClass : null).toBe('CAPABILITY_UNAVAILABLE');
   });
 });
