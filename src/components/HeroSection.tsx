@@ -2,9 +2,47 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, ShieldCheck, Store, Truck } from 'lucide-react';
 import { useMobileGrid } from '@/hooks/useMobileGrid';
 
+const HERO_PRODUCT_PREFERENCES = [
+  'elegant gift set',
+  '3d decor',
+  'handmade decorative book art',
+];
+
+const normalizeProductTitle = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
 const HeroSection = () => {
   const { products, loading } = useMobileGrid();
-  const liveProducts = products.slice(0, 3);
+
+  const liveProducts = (() => {
+    const selected: typeof products = [];
+    const selectedIds = new Set<string>();
+
+    for (const preference of HERO_PRODUCT_PREFERENCES) {
+      const match = products.find((product) =>
+        normalizeProductTitle(product.title).includes(preference),
+      );
+
+      if (match && !selectedIds.has(match.id)) {
+        selected.push(match);
+        selectedIds.add(match.id);
+      }
+    }
+
+    for (const product of products) {
+      if (selected.length >= 3) break;
+      if (!selectedIds.has(product.id)) {
+        selected.push(product);
+        selectedIds.add(product.id);
+      }
+    }
+
+    return selected.slice(0, 3);
+  })();
 
   return (
     <section aria-label="Loadify Market UK marketplace" className="relative overflow-hidden bg-[#F7F9FC] text-[#0A234F]">
