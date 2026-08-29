@@ -82,9 +82,16 @@ async function main() {
   const record = isRecord(payload);
   const data = record ? payload.data : undefined;
   const result = record ? payload.result : undefined;
+  const Result = record ? payload.Result : undefined;
+  const items = record ? payload.items : undefined;
+  const Items = record ? payload.Items : undefined;
+  const products = record ? payload.products : undefined;
+  const Products = record ? payload.Products : undefined;
   const value = record ? payload.value : undefined;
+  const Value = record ? payload.Value : undefined;
   const dataRecord = isRecord(data);
   const resultRecord = isRecord(result);
+  const ResultRecord = isRecord(Result);
   const dataArray = record && Array.isArray(data);
   const totalNumber = record && typeof payload.total === 'number' && Number.isFinite(payload.total) && payload.total >= 0;
   const totalInteger = totalNumber && Number.isInteger(payload.total);
@@ -92,6 +99,10 @@ async function main() {
   const rowAnywhere = findSkuRecord(payload, sku);
   const rowInData = dataArray ? data.find(item => item && typeof item === 'object'
     && typeof item.SKU === 'string' && item.SKU.trim() === sku) : null;
+
+  const knownTopList = [result, Result, items, Items, products, Products, value, Value].some(Array.isArray);
+  const skuInKnownTop = [result, Result, items, Items, products, Products, value, Value]
+    .some(candidate => Boolean(findSkuRecord(candidate, sku)));
 
   const facts = {
     'envelope-record': record,
@@ -107,11 +118,29 @@ async function main() {
     'data-products-array': dataRecord && Array.isArray(data.products),
     'data-Products-array': dataRecord && Array.isArray(data.Products),
     'result-object': resultRecord,
+    'Result-object': ResultRecord,
+    'result-array': Array.isArray(result),
+    'Result-array': Array.isArray(Result),
+    'items-array': Array.isArray(items),
+    'Items-array': Array.isArray(Items),
+    'products-array': Array.isArray(products),
+    'Products-array': Array.isArray(Products),
+    'value-array': Array.isArray(value),
+    'Value-array': Array.isArray(Value),
+    'known-top-list': knownTopList,
+    'sku-in-known-top': skuInKnownTop,
     'sku-under-result': Boolean(findSkuRecord(result, sku)),
+    'sku-under-Result': Boolean(findSkuRecord(Result, sku)),
+    'sku-under-items': Boolean(findSkuRecord(items, sku)),
+    'sku-under-Items': Boolean(findSkuRecord(Items, sku)),
+    'sku-under-products': Boolean(findSkuRecord(products, sku)),
+    'sku-under-Products': Boolean(findSkuRecord(Products, sku)),
+    'sku-under-value': Boolean(findSkuRecord(value, sku)),
+    'sku-under-Value': Boolean(findSkuRecord(Value, sku)),
     'result-data-array': resultRecord && Array.isArray(result.data),
     'result-items-array': resultRecord && Array.isArray(result.items),
-    'value-array': Array.isArray(value),
-    'sku-under-value': Boolean(findSkuRecord(value, sku)),
+    'Result-Data-array': ResultRecord && Array.isArray(Result.Data),
+    'Result-Items-array': ResultRecord && Array.isArray(Result.Items),
     'total-number': totalNumber,
     'total-integer': totalInteger,
     'total-numeric-string': totalNumericString,
