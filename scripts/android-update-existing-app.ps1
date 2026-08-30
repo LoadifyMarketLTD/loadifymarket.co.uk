@@ -114,8 +114,8 @@ if ($gradle -notmatch 'applicationId\s+"co\.uk\.loadifymarket\.app"') { Fail "An
 if ($gradle -notmatch 'versionCode\s+2') { Fail "Expected versionCode 2 not found." }
 if ($gradle -notmatch 'versionName\s+"1\.0\.1"') { Fail "Expected versionName 1.0.1 not found." }
 
-$home = Get-Content ".\src\pages\Home.tsx" -Raw
-if ($home -notmatch 'UpdatedNativeHome') { Fail "Updated native Home boundary is not active." }
+$homeSourceText = Get-Content ".\src\pages\Home.tsx" -Raw
+if ($homeSourceText -notmatch 'UpdatedNativeHome') { Fail "Updated native Home boundary is not active." }
 
 $nativeShell = Get-Content ".\src\components\native\UpdatedNativeMarketplace.tsx" -Raw
 foreach ($colour in @('#F8F7F4', '#0A234F', '#8A7351')) {
