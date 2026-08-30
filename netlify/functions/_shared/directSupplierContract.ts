@@ -34,6 +34,17 @@ export type DirectSupplierWebhookEventType =
   | 'return.updated'
   | 'reimbursement.updated';
 
+export const DIRECT_SUPPLIER_WEBHOOK_EVENT_TYPES: readonly DirectSupplierWebhookEventType[] = [
+  'catalog.updated',
+  'stock.updated',
+  'price.updated',
+  'order.acknowledged',
+  'shipment.updated',
+  'order.cancelled',
+  'return.updated',
+  'reimbursement.updated',
+];
+
 /**
  * PII is deliberately excluded from the shared supplier webhook envelope.
  * Customer disclosure, if ever required for fulfillment, must be handled by a
@@ -46,6 +57,10 @@ export interface DirectSupplierWebhookEnvelopeV1<TPayload = Record<string, unkno
   supplierKey: string;
   occurredAt: string;
   payload: TPayload;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function validateDirectSupplierFeedBatch(batch: DirectSupplierFeedBatchV1): string[] {
@@ -66,6 +81,28 @@ export function validateDirectSupplierFeedBatch(batch: DirectSupplierFeedBatchV1
     }
     if (!/^[A-Z]{2}$/.test(variant.warehouseCountry.trim().toUpperCase())) errors.push(`${prefix}.warehouseCountry must be a 2-letter country code`);
   }
+
+  return errors;
+}
+
+export function validateDirectSupplierWebhookEnvelope(value: unknown): string[] {
+  const errors: string[] = [];
+  if (!isRecord(value)) return ['webhook envelope must be an object'];
+
+  if (value.contractVersion !== DIRECT_SUPPLIER_CONTRACT_VERSION) errors.push('unsupported contractVersion');
+  if (typeof value.eventId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/.test(value.eventId.trim())) {
+    errors.push('eventId is invalid');
+  }
+  if (typeof value.eventType !== 'string' || !DIRECT_SUPPLIER_WEBHOOK_EVENT_TYPES.includes(value.eventType as DirectSupplierWebhookEventType)) {
+    errors.push('eventType is unsupported');
+  }
+  if (typeof value.supplierKey !== 'string' || !/^[a-z0-9][a-z0-9_-]{2,63}$/.test(value.supplierKey.trim())) {
+    errors.push('supplierKey is invalid');
+  }
+  if (typeof value.occurredAt !== 'string' || !Number.isFinite(Date.parse(value.occurredAt))) {
+    errors.push('occurredAt must be an ISO-compatible timestamp');
+  }
+  if (!isRecord(value.payload)) errors.push('payload must be an object');
 
   return errors;
 }
