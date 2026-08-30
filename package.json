@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npx vitest run netlify/functions/__tests__/seller-profile-type-completeness.test.ts netlify/functions/__tests__/seller-activation-active-account.test.ts netlify/functions/__tests__/seller-onboarding.test.ts netlify/functions/__tests__/start-seller-activation.test.ts && npx eslint netlify/functions/__tests__/seller-profile-type-completeness.test.ts netlify/functions/_shared/sellerActivation.ts src/pages/onboarding/SellerOnboarding.tsx src/pages/pixel-perfect/seller/SellerProfile.tsx",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
