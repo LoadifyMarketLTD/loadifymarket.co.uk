@@ -1,0 +1,324 @@
+/*
+ * Seller listing editor visual repair.
+ *
+ * ProductFormPage historically shipped with a dark, high-contrast treatment
+ * inside an otherwise light Seller Hub. Keep the repair narrowly scoped to the
+ * listing create/edit routes so Workspace/Admin/public marketplace surfaces are
+ * not recoloured by accident.
+ */
+
+.loadify-seller-listing-route .bg-background.min-h-screen {
+  background: #f8fafc !important;
+  color: #0f172a;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen > .container {
+  width: 100% !important;
+  max-width: 100rem !important;
+  padding-top: 8.75rem !important;
+  padding-bottom: 3rem !important;
+  padding-left: clamp(1rem, 2.6vw, 2.75rem) !important;
+  padding-right: clamp(1rem, 2.6vw, 2.75rem) !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl {
+  max-width: 94rem !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl > .mb-6 {
+  margin-bottom: 1rem !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl > .mb-6 h1 {
+  color: #0b2f6b !important;
+  font-size: clamp(1.8rem, 2.4vw, 2.35rem) !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.02em;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl > .mb-6 > p {
+  color: #64748b !important;
+  font-size: 0.95rem !important;
+}
+
+/* Section surfaces */
+.loadify-seller-listing-route .bg-background.min-h-screen form > .bg-surface,
+.loadify-seller-listing-route .bg-background.min-h-screen form > div[class*="bg-surface"] {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
+  padding: 1.25rem 1.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form > .bg-surface:hover,
+.loadify-seller-listing-route .bg-background.min-h-screen form > div[class*="bg-surface"]:hover {
+  border-color: #cbd5e1 !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form > .bg-surface > h2,
+.loadify-seller-listing-route .bg-background.min-h-screen form > div[class*="bg-surface"] > h2 {
+  color: #0b2f6b !important;
+  border-color: #e2e8f0 !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.9rem !important;
+  padding-bottom: 0.7rem !important;
+}
+
+/* Readable body copy on white cards. */
+.loadify-seller-listing-route .bg-background.min-h-screen form .text-slate-300,
+.loadify-seller-listing-route .bg-background.min-h-screen form .text-slate-400 {
+  color: #475569 !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form .text-slate-500 {
+  color: #64748b !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form label,
+.loadify-seller-listing-route .bg-background.min-h-screen form label.text-slate-300 {
+  color: #334155 !important;
+}
+
+/* Inputs/selects */
+.loadify-seller-listing-route .bg-background.min-h-screen form input:not([type="radio"]):not([type="checkbox"]),
+.loadify-seller-listing-route .bg-background.min-h-screen form select {
+  min-height: 2.75rem !important;
+  height: 2.75rem !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form input:not([type="radio"]):not([type="checkbox"]),
+.loadify-seller-listing-route .bg-background.min-h-screen form textarea,
+.loadify-seller-listing-route .bg-background.min-h-screen form select {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025) !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form input::placeholder,
+.loadify-seller-listing-route .bg-background.min-h-screen form textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form select {
+  color-scheme: light !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form input:not([type="radio"]):not([type="checkbox"]):focus,
+.loadify-seller-listing-route .bg-background.min-h-screen form textarea:focus,
+.loadify-seller-listing-route .bg-background.min-h-screen form select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  outline: none !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form input:disabled,
+.loadify-seller-listing-route .bg-background.min-h-screen form textarea:disabled,
+.loadify-seller-listing-route .bg-background.min-h-screen form select:disabled {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form input[type="radio"],
+.loadify-seller-listing-route .bg-background.min-h-screen form input[type="checkbox"] {
+  accent-color: #d4af37 !important;
+}
+
+/* Listing type cards */
+.loadify-seller-listing-route .bg-background.min-h-screen form label[class*="border-2"] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form label[class*="border-primary"] {
+  background: #fff9e8 !important;
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12) !important;
+}
+
+/* Nested informational surfaces/status readouts. */
+.loadify-seller-listing-route .bg-background.min-h-screen form div[class*="bg-surface/50"],
+.loadify-seller-listing-route .bg-background.min-h-screen form div[class*="bg-surface"][class*="rounded-[14px]"] {
+  background: #f8fafc !important;
+  border-color: #dbe3ee !important;
+  color: #475569 !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form [class*="border-white/10"],
+.loadify-seller-listing-route .bg-background.min-h-screen form [class*="border-white/20"] {
+  border-color: #dbe3ee !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form [class*="border-t"] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Image dropzone / upload controls */
+.loadify-seller-listing-route .bg-background.min-h-screen form [class*="border-dashed"] {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #475569 !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form [class*="border-dashed"]:hover {
+  background: #eff6ff !important;
+  border-color: #2563eb !important;
+}
+
+/* Shipping selector cards: keep them consistent with the light form. */
+.loadify-seller-listing-route .bg-background.min-h-screen form [class*="rounded-xl"][class*="border"] {
+  --listing-card-border: #dbe3ee;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form button[class*="border-white/10"] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form button[class*="border-white/10"]:hover {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Primary publish CTA */
+.loadify-seller-listing-route .bg-background.min-h-screen form button[type="submit"] {
+  background: #d4af37 !important;
+  color: #0b192c !important;
+  border: 1px solid #c69c24 !important;
+  border-radius: 10px !important;
+  min-height: 42px;
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.2) !important;
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form button[type="submit"]:hover:not(:disabled) {
+  background: #e2bd43 !important;
+  transform: translateY(-1px);
+}
+
+.loadify-seller-listing-route .bg-background.min-h-screen form button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.55 !important;
+}
+
+/* Final publication card should read like a clear checkout-style decision. */
+.loadify-seller-listing-route .bg-background.min-h-screen form > div.bg-surface:last-of-type {
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07) !important;
+}
+
+/* Existing product danger area remains clearly separated, but not black. */
+.loadify-seller-listing-route .bg-background.min-h-screen form .bg-red-950\/30 {
+  background: #fff1f2 !important;
+}
+
+/*
+ * Desktop density. The previous attempt positioned cards on single grid lines,
+ * which collapsed them into one-column slivers. Use an explicit 12-column grid
+ * with real spans so the desktop width is useful without making fields cramped.
+ */
+@media (min-width: 1200px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    align-items: start;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > * {
+    grid-column: 1 / -1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > .bg-surface,
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > div[class*="bg-surface"] {
+    margin-bottom: 0 !important;
+  }
+
+  /* Service/new listing: Category + Pricing share one row. */
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > div:nth-of-type(3) {
+    grid-column: 1 / span 4;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > div:nth-of-type(4) {
+    grid-column: 5 / -1;
+  }
+
+  /* Physical product: Category (3/12), Pricing (5/12), Inventory (4/12). */
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(3) {
+    grid-column: 1 / span 3;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(4) {
+    grid-column: 4 / span 5;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(5) {
+    grid-column: 9 / -1;
+  }
+
+  /* Product Images + Dimensions & Shipping share the next desktop row. */
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(6) {
+    grid-column: 1 / span 5;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"][value="product"]:checked) > div:nth-of-type(7) {
+    grid-column: 6 / -1;
+  }
+
+  /* Prevent nested grids/content from forcing their parent card wider. */
+  .loadify-seller-listing-route .bg-background.min-h-screen form:has(input[name="listingContext"]) > div > * {
+    min-width: 0;
+  }
+}
+
+/* Remove the retired manual-approval controls from operator/seller UI while
+ * the legacy data columns remain for backwards-compatible schema reads. */
+.loadify-admin-products-route table th:nth-child(6),
+.loadify-admin-products-route table td:nth-child(6) {
+  display: none !important;
+}
+
+.loadify-admin-products-route [role="menuitem"]:has(svg.lucide-shield-check),
+.loadify-admin-products-route [role="menuitem"]:has(svg.lucide-shield-x) {
+  display: none !important;
+}
+
+.loadify-admin-settings-route .space-y-4 > div:nth-child(5) {
+  display: none !important;
+}
+
+.loadify-seller-products-route .flex.gap-2.flex-wrap > button:nth-child(3) {
+  display: none !important;
+}
+
+@media (max-width: 1199px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen > .container {
+    max-width: 76rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen > .container {
+    padding-top: 7.5rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form > .bg-surface,
+  .loadify-seller-listing-route .bg-background.min-h-screen form > div[class*="bg-surface"] {
+    padding: 1.1rem !important;
+    border-radius: 14px !important;
+    margin-bottom: 0.9rem !important;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen form .flex.gap-4 {
+    flex-direction: column;
+  }
+}

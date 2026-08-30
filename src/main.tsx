@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
+import RouteSurfaceClass from "./components/RouteSurfaceClass.tsx";
 import { initErrorTracking } from "./lib/errorTracking.ts";
 import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
 import { isCapacitorContext } from "./lib/capacitorUtils.ts";
@@ -11,6 +12,8 @@ import "./index.css";
 import "./light-compat.css";
 import "./light-semantic-compat.css";
 import "./mobile-drawer-identity.css";
+import "./seller-listing-editor-light.css";
+import "./seller-listing-editor-density.css";
 import "./native.css";
 
 // Initialise global error tracking (unhandled errors + unhandled rejections).
@@ -33,6 +36,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HelmetProvider>
       <BrowserRouter>
+        <RouteSurfaceClass />
         <ErrorBoundary>
           <App />
         </ErrorBoundary>

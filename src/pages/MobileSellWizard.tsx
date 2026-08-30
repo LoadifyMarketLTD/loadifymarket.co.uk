@@ -6,7 +6,7 @@
  * Required fields: at least 1 photo, title, price.
  * Optional (collapsible "More details"): description, category, condition.
  *
- * Desktop product form (/seller/products/new) is untouched.
+ * Desktop product form has an equivalent tax-gate draft recovery path.
  * Backend: calls /.netlify/functions/create-product unchanged.
  * Defaults: listingContext=product, stockQuantity=1, seller-selected shipping methods.
  */
@@ -42,6 +42,8 @@ const CONDITION_OPTIONS = [
   { value: 'fair', label: 'Fair' },
   { value: 'poor', label: 'Poor' },
 ] as const;
+
+type ListingResultMode = 'published' | 'draft';
 
 // ── Upload helper ──────────────────────────────────────────────────────────────
 
@@ -137,12 +139,16 @@ function FieldInput({
 
 function SuccessSheet({
   productId,
+  mode,
   onSellAnother,
 }: {
   productId: string;
+  mode: ListingResultMode;
   onSellAnother: () => void;
 }) {
   const navigate = useNavigate();
+  const isDraft = mode === 'draft';
+
   return (
     <div
       className="bg-background"
@@ -179,7 +185,7 @@ function SuccessSheet({
           marginBottom: '10px',
         }}
       >
-        Your item is live! 🎉
+        {isDraft ? 'Item saved as draft' : 'Your item is live! 🎉'}
       </h2>
       <p
         className="text-foreground/55"
@@ -190,7 +196,9 @@ function SuccessSheet({
           maxWidth: '300px',
         }}
       >
-        Buyers can now find and purchase your listing.
+        {isDraft
+          ? 'Your item was saved safely. Complete or refresh your seller tax setup before publishing it live.'
+          : 'Buyers can now find and purchase your listing.'}
       </p>
 
       <div
@@ -203,7 +211,7 @@ function SuccessSheet({
         }}
       >
         <button
-          onClick={() => navigate(`/product/${productId}`)}
+          onClick={() => navigate(isDraft ? `/seller/products/${productId}/edit` : `/product/${productId}`)}
           className="bg-primary"
           style={{
             width: '100%',
@@ -215,11 +223,11 @@ function SuccessSheet({
             cursor: 'pointer',
           }}
         >
-          View listing
+          {isDraft ? 'Review draft' : 'View listing'}
         </button>
 
         <button
-          onClick={() => navigate('/seller/setup')}
+          onClick={() => navigate(isDraft ? '/seller/profile' : '/seller/setup')}
           className="text-foreground bg-white/[0.06]"
           style={{
             width: '100%',
@@ -235,7 +243,7 @@ function SuccessSheet({
             gap: '8px',
           }}
         >
-          Set up payments
+          {isDraft ? 'Complete tax setup' : 'Set up payments'}
           <ChevronRight style={{ width: '16px', height: '16px' }} />
         </button>
 
@@ -295,6 +303,7 @@ export default function MobileSellWizard() {
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishedId, setPublishedId] = useState<string | null>(null);
+  const [listingResultMode, setListingResultMode] = useState<ListingResultMode>('published');
   const [fieldErrors, setFieldErrors] = useState<{ photos?: string; title?: string; price?: string; shipping?: string }>({});
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
@@ -369,18 +378,44 @@ export default function MobileSellWizard() {
         dispatchTime: dispatchTime || null,
       };
 
-      const res = await authorizedFetch('/.netlify/functions/create-product', {
+      const publishRes = await authorizedFetch('/.netlify/functions/create-product', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(data.error ?? `Server error (${res.status})`);
+      if (!publishRes.ok) {
+        const data = await publishRes.json().catch(() => ({})) as { error?: string; code?: string };
+
+        // P1 tax evidence currently supports only a narrow live-publication class.
+        // Never discard the seller's work when that live gate is not satisfied:
+        // retry exactly once as an inactive draft while leaving checkout fail-closed.
+        if (publishRes.status === 409 && data.code === 'TAX_EVIDENCE_REQUIRED') {
+          const draftRes = await authorizedFetch('/.netlify/functions/create-product', {
+            method: 'POST',
+            body: JSON.stringify({ ...payload, isActive: false }),
+          });
+
+          if (!draftRes.ok) {
+            const draftError = await draftRes.json().catch(() => ({})) as { error?: string };
+            throw new Error(draftError.error ?? data.error ?? `Server error (${draftRes.status})`);
+          }
+
+          const draft = await draftRes.json() as { id: string; isActive?: boolean };
+          setListingResultMode('draft');
+          setPublishedId(draft.id);
+          return;
+        }
+
+        throw new Error(data.error ?? `Server error (${publishRes.status})`);
       }
 
-      const created = await res.json() as { id: string };
-      trackPublishListing(created.id, form.title.trim());
+      const created = await publishRes.json() as { id: string; isActive?: boolean };
+      if (created.isActive === false) {
+        setListingResultMode('draft');
+      } else {
+        setListingResultMode('published');
+        trackPublishListing(created.id, form.title.trim());
+      }
       setPublishedId(created.id);
     } catch (err) {
       setPublishError(
@@ -399,6 +434,7 @@ export default function MobileSellWizard() {
     setSelectedShippingMethodIds([]);
     setDispatchTime('');
     setPublishedId(null);
+    setListingResultMode('published');
     setPublishError(null);
     setMoreDetailsOpen(false);
   };
@@ -406,7 +442,7 @@ export default function MobileSellWizard() {
   // ── Success screen ────────────────────────────────────────────────────────
 
   if (publishedId) {
-    return <SuccessSheet productId={publishedId} onSellAnother={handleSellAnother} />;
+    return <SuccessSheet productId={publishedId} mode={listingResultMode} onSellAnother={handleSellAnother} />;
   }
 
   const busy = publishing || photoUploading;
@@ -481,7 +517,8 @@ export default function MobileSellWizard() {
                   borderRadius: '14px',
                   overflow: 'hidden',
                 }}
-                className="bg-surface"              >
+                className="bg-surface"
+              >
                 <img
                   src={url}
                   alt={`Photo ${idx + 1}`}
@@ -521,7 +558,6 @@ export default function MobileSellWizard() {
                     style={{
                       width: '24px',
                       height: '24px',
-                      
                       animation: 'spin 1s linear infinite',
                     }}
                   />

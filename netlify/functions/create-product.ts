@@ -5,14 +5,14 @@
  * Moving this out of the client enforces platform flags server-side:
  *
  *  - maintenanceMode  → 503 for non-admin sellers
- *  - autoApproveProducts → backend sets isApproved (client cannot override)
  *  - seller activation → only fully active sellers may publish public listings
+ *  - product approval → automatic; moderation happens after publication
  */
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
-import { isMaintenanceMode, getFeatureFlags } from './_shared/platformFlags';
+import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import {
   buildSellerNonVatProductEvidence,
@@ -168,17 +168,15 @@ export const handler: Handler = async (event) => {
   }
 
   let sellerCanPublish = isAdmin;
-  let sellerListingLimit: number | null = null;
 
   const { data: sellerProfile, error: profileError } = await supabase
     .from('seller_profiles')
-    .select('sellerStatus, stripeConnectStatus, isPaused, listingLimit, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
+    .select('sellerStatus, stripeConnectStatus, isPaused, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
     .eq('userId', callerId)
     .maybeSingle<{
       sellerStatus: string | null;
       stripeConnectStatus: string | null;
       isPaused: boolean | null;
-      listingLimit: number | null;
       country: string | null;
       isVatRegistered: boolean | null;
       vatNumber: string | null;
@@ -197,7 +195,6 @@ export const handler: Handler = async (event) => {
   }
 
   if (!isAdmin) {
-    sellerListingLimit = sellerProfile.listingLimit ?? null;
     sellerCanPublish =
       sellerProfile.sellerStatus === 'active' &&
       sellerProfile.stripeConnectStatus === 'active' &&
@@ -213,6 +210,8 @@ export const handler: Handler = async (event) => {
     }
   }
 
+  // Materialise tax evidence when available, but do not make catalogue publication
+  // depend on it. Checkout/payment remains the authoritative fail-closed tax boundary.
   const taxEvidence =
     normalizedListingContext === 'product' &&
     normaliseMarketplaceCountry(sellerProfile.country) === 'GB' &&
@@ -220,37 +219,9 @@ export const handler: Handler = async (event) => {
       ? buildSellerNonVatProductEvidence(price)
       : null;
 
-  if (Boolean(isActive) && normalizedListingContext === 'product' && !taxEvidence) {
-    return {
-      statusCode: 409,
-      body: JSON.stringify({
-        error: 'This listing cannot be published until the seller has explicitly confirmed a supported tax status and UK tax location.',
-        code: 'TAX_EVIDENCE_REQUIRED',
-      }),
-    };
-  }
-
-  const flags = await getFeatureFlags(supabase);
-  const isApproved: boolean = isAdmin
-    ? true
-    : sellerCanPublish && Boolean(flags.autoApproveProducts);
-
-  if (!isAdmin) {
-    const countRes = await supabase
-      .from('products')
-      .select('id', { count: 'exact', head: true })
-      .eq('sellerId', callerId);
-
-    const currentCount = countRes.count ?? 0;
-    if (sellerListingLimit !== null && currentCount >= sellerListingLimit) {
-      return {
-        statusCode: 429,
-        body: JSON.stringify({
-          error: `Listing limit reached. You can have a maximum of ${sellerListingLimit} listing(s). Archive or delete existing listings to create new ones.`,
-        }),
-      };
-    }
-  }
+  // Marketplace Seller listings are published without owner pre-approval.
+  // Moderation remains available after publication.
+  const isApproved = true;
 
   const allowedFields = pickAllowedFields(rest);
   const parsedStockQuantity = parseStockQuantity(allowedFields.stockQuantity);

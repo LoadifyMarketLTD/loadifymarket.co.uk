@@ -1,0 +1,171 @@
+/*
+ * Desktop density layer for the Seller listing editor.
+ *
+ * The light visual repair fixes colour/contrast. This layer uses the available
+ * desktop viewport so sellers do not have to scroll through a narrow single
+ * column when there is plenty of horizontal room.
+ *
+ * IMPORTANT: sections are identified by stable controls they contain, never by
+ * DOM child number. Conditional banners/sections can therefore no longer move
+ * Category, Pricing, Inventory or Media onto the wrong grid area.
+ */
+
+@media (min-width: 1280px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen > .container {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: clamp(1.25rem, 2vw, 2.5rem) !important;
+    padding-right: clamp(1.25rem, 2vw, 2.5rem) !important;
+  }
+
+  .loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* New-listing desktop composition only. Edit screens keep normal flow. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    gap: 1rem 1.25rem !important;
+    align-items: start !important;
+  }
+
+  /*
+   * Reset every direct child first. This deliberately overrides the historical
+   * nth-of-type rules in seller-listing-editor-light.css before assigning the
+   * real sections below.
+   */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > * {
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div {
+    margin-bottom: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div > * {
+    min-width: 0;
+  }
+
+  /* Listing-context chooser. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:has(input[name="listingContext"]) {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+  }
+
+  /* Basic Information: the long left-hand card. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:has(textarea[placeholder^="Describe your product in detail"]) {
+    grid-column: 1 / span 8 !important;
+    grid-row: 2 / span 3 !important;
+    align-self: stretch !important;
+  }
+
+  /* Category: identified by its stable select id. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:has(#main-category-select) {
+    grid-column: 9 / -1 !important;
+    grid-row: 2 !important;
+  }
+
+  /* Pricing: the discounted-price placeholder is unique to this section. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) > div:has(input[placeholder="Optional — leave blank if no discount"]) {
+    grid-column: 9 / -1 !important;
+    grid-row: 3 !important;
+  }
+
+  /* Inventory: unique stock quantity input. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:has(input[type="number"][min="0"][placeholder="0"]) {
+    grid-column: 9 / -1 !important;
+    grid-row: 4 !important;
+  }
+
+  /* Media: ImageUpload owns the only file input in the editor. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:has(input[type="file"]) {
+    grid-column: 1 / span 5 !important;
+    grid-row: 5 !important;
+    align-self: stretch !important;
+  }
+
+  /* Dimensions & Shipping: unique delivery-notes placeholder. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:has(input[placeholder^="e.g., Fragile"]) {
+    grid-column: 6 / -1 !important;
+    grid-row: 5 !important;
+    align-self: stretch !important;
+  }
+
+  /* Specifications: unique Brand placeholder. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:has(input[placeholder="e.g., Samsung"]) {
+    grid-column: 1 / -1 !important;
+    grid-row: 6 !important;
+  }
+
+  /* Optional bulk/pallet details, when rendered. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:has(input[placeholder="Optional RRP estimate"]) {
+    grid-column: 1 / -1 !important;
+    grid-row: 7 !important;
+  }
+
+  /* Publish/Save action card is identified by the submit button, not position. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="product"]:checked) > div:has(button[type="submit"]) {
+    grid-column: 1 / -1 !important;
+    grid-row: 8 !important;
+  }
+
+  /*
+   * Service listing: no Inventory or Shipping section. Keep the long Basic card
+   * alongside Category + Pricing, then place Media and Specifications together.
+   */
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="service"]:checked) > div:has(textarea[placeholder^="Describe your product in detail"]) {
+    grid-column: 1 / span 8 !important;
+    grid-row: 2 / span 2 !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="service"]:checked) > div:has(input[type="file"]) {
+    grid-column: 1 / span 6 !important;
+    grid-row: 4 !important;
+    align-self: stretch !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="service"]:checked) > div:has(input[placeholder="e.g., Samsung"]) {
+    grid-column: 7 / -1 !important;
+    grid-row: 4 !important;
+    align-self: stretch !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="service"]:checked) > div:has(input[placeholder="Optional RRP estimate"]) {
+    grid-column: 1 / -1 !important;
+    grid-row: 5 !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"][value="service"]:checked) > div:has(button[type="submit"]) {
+    grid-column: 1 / -1 !important;
+    grid-row: 6 !important;
+  }
+
+  /* Use the wider media card efficiently without creating oversized tiles. */
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) .grid.grid-cols-2.sm\:grid-cols-3.lg\:grid-cols-5.xl\:grid-cols-6 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) .aspect-square {
+    max-width: 10.5rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .loadify-seller-listing-route .bg-background.min-h-screen > .container {
+    padding-left: 2.75rem !important;
+    padding-right: 2.75rem !important;
+  }
+
+  .loadify-seller-listing-route form:has(input[name="listingContext"]) {
+    gap: 1rem 1.5rem !important;
+  }
+}

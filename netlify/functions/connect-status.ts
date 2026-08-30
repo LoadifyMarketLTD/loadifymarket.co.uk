@@ -2,6 +2,10 @@ import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import {
+  isOutsideP1GreatBritainPostcode,
+  normaliseMarketplaceCountry,
+} from './_shared/marketplaceTax';
 
 /**
  * POST /.netlify/functions/connect-status
@@ -107,13 +111,6 @@ export const handler: Handler = async (event) => {
       stripeConnectStatus = 'pending';
     }
 
-    const stripeUpdate: Record<string, unknown> = {
-      stripeConnectStatus,
-      stripeChargesEnabled: account.charges_enabled,
-      stripePayoutsEnabled: account.payouts_enabled,
-      stripeDetailsSubmitted: account.details_submitted,
-    };
-
     const stripeTaxCountry = account.country?.trim().toUpperCase() || null;
     const stripeTaxPostcode = (
       account.company?.address?.postal_code
@@ -122,21 +119,96 @@ export const handler: Handler = async (event) => {
       ?? null
     )?.trim().toUpperCase() || null;
 
-    if (stripeTaxCountry) {
-      stripeUpdate.taxCountry = stripeTaxCountry;
-      stripeUpdate.taxPostcode = stripeTaxPostcode;
-      stripeUpdate.taxCountrySource = 'stripe_connect_account_v1';
-      stripeUpdate.taxCountryCapturedAt = new Date().toISOString();
-    }
+    // Always persist the evidence snapshot we actually received from Stripe.
+    // Never leave stale tax-location evidence behind if Stripe stops returning it.
+    const stripeUpdate: Record<string, unknown> = {
+      stripeConnectStatus,
+      stripeChargesEnabled: account.charges_enabled,
+      stripePayoutsEnabled: account.payouts_enabled,
+      stripeDetailsSubmitted: account.details_submitted,
+      taxCountry: stripeTaxCountry,
+      taxPostcode: stripeTaxCountry ? stripeTaxPostcode : null,
+      taxCountrySource: stripeTaxCountry ? 'stripe_connect_account_v1' : null,
+      taxCountryCapturedAt: stripeTaxCountry ? new Date().toISOString() : null,
+    };
 
     const { error: stripeStatusUpdateError } = await supabase
       .from('seller_profiles')
       .update(stripeUpdate)
       .eq('userId', sellerId);
 
+    // Tax evidence is a publication/checkout security boundary. A failed
+    // persistence must never be reported to the seller UI as a successful sync.
     if (stripeStatusUpdateError) {
-      console.warn('connect-status: failed to persist stripeConnectStatus for', sellerId, stripeStatusUpdateError.message);
+      console.error(
+        'connect-status: failed to persist Stripe status/tax evidence for',
+        sellerId,
+        stripeStatusUpdateError.message,
+      );
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: 'Stripe account data was read, but Loadify could not save the tax-location evidence.',
+          taxEvidenceReady: false,
+          taxEvidenceReason: 'persist_failed',
+        }),
+      };
     }
+
+    // Read the server-only fields back from the database. Do not infer success
+    // merely because the UPDATE request itself returned without an error.
+    const { data: persistedTaxEvidence, error: taxEvidenceReadbackError } = await supabase
+      .from('seller_profiles')
+      .select('taxCountry, taxPostcode, taxCountrySource, taxCountryCapturedAt')
+      .eq('userId', sellerId)
+      .maybeSingle<{
+        taxCountry: string | null;
+        taxPostcode: string | null;
+        taxCountrySource: string | null;
+        taxCountryCapturedAt: string | null;
+      }>();
+
+    if (taxEvidenceReadbackError || !persistedTaxEvidence) {
+      console.error(
+        'connect-status: unable to verify persisted Stripe tax evidence for',
+        sellerId,
+        taxEvidenceReadbackError?.message,
+      );
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: 'Loadify could not verify the saved Stripe tax-location evidence.',
+          taxEvidenceReady: false,
+          taxEvidenceReason: 'readback_failed',
+        }),
+      };
+    }
+
+    const persistedTaxCountry =
+      normaliseMarketplaceCountry(persistedTaxEvidence.taxCountry);
+    const persistedTaxPostcode =
+      persistedTaxEvidence.taxPostcode?.trim().toUpperCase() || null;
+
+    const taxEvidenceReady =
+      persistedTaxCountry === 'GB'
+      && Boolean(persistedTaxPostcode)
+      && !isOutsideP1GreatBritainPostcode(persistedTaxPostcode)
+      && persistedTaxEvidence.taxCountrySource === 'stripe_connect_account_v1'
+      && Boolean(persistedTaxEvidence.taxCountryCapturedAt);
+
+    const taxEvidenceReason = taxEvidenceReady
+      ? null
+      : persistedTaxCountry !== 'GB'
+        ? 'stripe_country_unsupported'
+        : !persistedTaxPostcode
+          ? 'stripe_postcode_missing'
+          : isOutsideP1GreatBritainPostcode(persistedTaxPostcode)
+            ? 'stripe_postcode_unsupported'
+            : persistedTaxEvidence.taxCountrySource !== 'stripe_connect_account_v1'
+              ? 'source_mismatch'
+              : !persistedTaxEvidence.taxCountryCapturedAt
+                ? 'capture_missing'
+                : 'evidence_incomplete';
 
     let sellerStatus: string | null = null;
     let profileComplete = false;
@@ -200,6 +272,8 @@ export const handler: Handler = async (event) => {
         detailsSubmitted: account.details_submitted,
         sellerStatus,
         profileComplete,
+        taxEvidenceReady,
+        taxEvidenceReason,
       }),
     };
   } catch (error) {

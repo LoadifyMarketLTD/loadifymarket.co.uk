@@ -112,6 +112,7 @@ export default function ProductFormPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [publishedProductId, setPublishedProductId] = useState<string | null>(null);
+  const [loadedIsActive, setLoadedIsActive] = useState<boolean | null>(null);
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
   // True when the product has active reservation/paid-order locks — critical fields are locked for sellers
@@ -191,6 +192,8 @@ export default function ProductFormPage() {
       }
 
       if (data) {
+        setLoadedIsActive(Boolean(data.isActive));
+
         // Restore listing context from the saved product.
         // Production physical listings use listingContext='product'.
         // Any non-service legacy value is treated as physical product.
@@ -396,6 +399,10 @@ export default function ProductFormPage() {
         isActive: publishMode,
       };
 
+      let recoveredTaxDraftId: string | null = null;
+      const taxDraftMessage =
+        'Product saved as draft because your seller tax setup is not yet ready for live publication. Complete or refresh your tax setup before publishing it live.';
+
       if (id && hasActiveOrders && !isAdmin) {
         // Locked product — only allow non-critical fields via update-product
         const { description, images, specifications, weight, dimensions, palletInfo } = productData;
@@ -424,52 +431,152 @@ export default function ProductFormPage() {
         );
       } else if (id) {
         // Full update via update-product
+        const updateBody = {
+          id,
+          ...productData,
+          shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
+          dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
+        };
+
         const res = await authorizedFetch('/.netlify/functions/update-product', {
           method: 'POST',
-          body: JSON.stringify({
-            id,
-            ...productData,
-            shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
-          }),
+          body: JSON.stringify(updateBody),
         });
+
         if (!res.ok) {
           const payload = await extractUpdateError(res);
-          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+
+          // Keep the live tax gate fail-closed, but never discard seller work.
+          // A tax-blocked publication is retried exactly once as an inactive draft.
+          if (
+            publishMode &&
+            res.status === 409 &&
+            payload.code === 'TAX_EVIDENCE_REQUIRED'
+          ) {
+            const draftRes = await authorizedFetch('/.netlify/functions/update-product', {
+              method: 'POST',
+              body: JSON.stringify({ ...updateBody, isActive: false }),
+            });
+
+            if (!draftRes.ok) {
+              const draftPayload = await extractUpdateError(draftRes);
+              throw new Error(
+                draftPayload.error ??
+                payload.error ??
+                `Server returned ${draftRes.status}`
+              );
+            }
+
+            recoveredTaxDraftId = id;
+            setLoadedIsActive(false);
+            setPublishedProductId(null);
+            setSuccessMessage(taxDraftMessage);
+          } else {
+            throw new Error(payload.error ?? `Server returned ${res.status}`);
+          }
+        } else {
+          if (publishMode) setLoadedIsActive(true);
+          setSuccessMessage(
+            publishMode
+              ? 'Product updated and published.'
+              : 'Draft saved successfully.'
+          );
         }
-        setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
       } else {
         // Create new product via create-product (backend sets isApproved)
+        const createBody = {
+          ...productData,
+          listingContext,
+          shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
+          dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
+        };
+
         const res = await authorizedFetch('/.netlify/functions/create-product', {
           method: 'POST',
-          body: JSON.stringify({
-            ...productData,
-            listingContext,
-            shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
-          }),
+          body: JSON.stringify(createBody),
         });
-        if (!res.ok) {
-          const payload = await res.json().catch(() => ({}));
-          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
-        }
-        const created = await res.json() as { id: string; isApproved: boolean };
 
-        setSuccessMessage(
-          publishMode
-            ? (created.isApproved
-                ? 'Product created and is now live!'
-                : 'Product created! It will be visible after admin approval.')
-            : 'Draft saved. You can continue editing and publish when ready.'
-        );
-        if (publishMode && created.id) {
-          setPublishedProductId(created.id);
-          trackPublishListing(created.id, formData.title);
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({})) as {
+            error?: string;
+            code?: string;
+          };
+
+          // P1 currently supports only a narrow class of live tax evidence.
+          // Preserve the listing as an inactive draft instead of losing the form.
+          if (
+            publishMode &&
+            res.status === 409 &&
+            payload.code === 'TAX_EVIDENCE_REQUIRED'
+          ) {
+            const draftRes = await authorizedFetch('/.netlify/functions/create-product', {
+              method: 'POST',
+              body: JSON.stringify({ ...createBody, isActive: false }),
+            });
+
+            const draftPayload = await draftRes.json().catch(() => ({})) as {
+              id?: string;
+              isActive?: boolean;
+              error?: string;
+            };
+
+            if (!draftRes.ok) {
+              throw new Error(
+                draftPayload.error ??
+                payload.error ??
+                `Server returned ${draftRes.status}`
+              );
+            }
+
+            if (!draftPayload.id) {
+              throw new Error('Draft save succeeded without a product id.');
+            }
+
+            recoveredTaxDraftId = draftPayload.id;
+            setPublishedProductId(null);
+            setSuccessMessage(taxDraftMessage);
+          } else {
+            throw new Error(payload.error ?? `Server returned ${res.status}`);
+          }
+        } else {
+          const created = await res.json() as {
+            id: string;
+            isApproved: boolean;
+            isActive?: boolean;
+          };
+
+          const createdAsDraft =
+            publishMode && created.isActive === false;
+
+          if (createdAsDraft) {
+            recoveredTaxDraftId = created.id;
+            setPublishedProductId(null);
+            setSuccessMessage(taxDraftMessage);
+          } else {
+            setSuccessMessage(
+              publishMode
+                ? (created.isApproved
+                    ? 'Product created and is now live!'
+                    : 'Product created! It will be visible after admin approval.')
+                : 'Draft saved. You can continue editing and publish when ready.'
+            );
+
+            if (publishMode && created.id) {
+              setPublishedProductId(created.id);
+              trackPublishListing(created.id, formData.title);
+            }
+          }
         }
       }
 
-      // Brief success feedback, then navigate back
-      setTimeout(() => navigate(publishMode ? '/seller' : '/onboarding'), SUCCESS_REDIRECT_DELAY_MS);
+      // Brief success feedback, then navigate to the correct result.
+      const nextRoute = recoveredTaxDraftId
+        ? `/seller/products/${recoveredTaxDraftId}/edit`
+        : id && !publishMode
+          ? `/seller/products/${id}/edit`
+          : (publishMode ? '/seller' : '/onboarding');
+
+      setTimeout(() => navigate(nextRoute), SUCCESS_REDIRECT_DELAY_MS);
     } catch (error) {
       console.error('Error saving product:', error);
       const msg =
@@ -830,7 +937,9 @@ export default function ProductFormPage() {
                     className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.price ? 'border-red-400' : ''}`}
                     placeholder="0.00"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Enter the VAT-inclusive price (20% VAT applied)</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Enter the price buyers will see. Tax treatment is determined from your verified seller tax profile.
+                  </p>
                   <FieldError msg={errors.price} />
                 </div>
 
@@ -853,18 +962,7 @@ export default function ProductFormPage() {
 
               {formData.price && (
                 <div className="mt-3 p-3 bg-surface border border-white/10 rounded-[14px] text-sm text-slate-400">
-                  {(() => {
-                    const priceNum = parseFloat(formData.price || '0');
-                    const exVat = priceNum / 1.2;
-                    const vatAmt = priceNum - exVat;
-                    return (
-                      <>
-                        <span className="font-medium">Price ex-VAT: </span>
-                        £{exVat.toFixed(2)}
-                        {' '}<span className="text-slate-500">(20% VAT: £{vatAmt.toFixed(2)})</span>
-                      </>
-                    );
-                  })()}
+                  No VAT rate is assumed in this form. Live publication and checkout use the seller&apos;s verified tax evidence.
                 </div>
               )}
             </Section>
@@ -1282,7 +1380,11 @@ export default function ProductFormPage() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="text-sm text-slate-400">
                   {id ? (
-                    <p>Save your changes. Published listings require admin approval before going live.</p>
+                    loadedIsActive === false ? (
+                      <p>This listing is a draft. Publish it when your seller and tax setup are ready.</p>
+                    ) : (
+                      <p>Save changes to this published listing.</p>
+                    )
                   ) : (
                     <>
                       <p className="font-medium text-slate-300 mb-1">Ready to list your product?</p>
@@ -1299,14 +1401,14 @@ export default function ProductFormPage() {
                   >
                     Cancel
                   </button>
-                  {!id && (
+                  {(!id || loadedIsActive === false) && (
                     <button
                       type="button"
                       onClick={handleSaveDraft}
                       disabled={savingDraft || saving}
                       className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
                     >
-                      {savingDraft ? 'Saving...' : 'Save as Draft'}
+                      {savingDraft ? 'Saving...' : (id ? 'Save Draft' : 'Save as Draft')}
                     </button>
                   )}
                   <button
@@ -1315,8 +1417,12 @@ export default function ProductFormPage() {
                     className="px-4 py-2 rounded-lg text-black text-sm font-semibold disabled:opacity-50 transition-all bg-primary hover:bg-primary-hover"
                   >
                     {saving
-                      ? (id && hasActiveOrders ? 'Saving...' : 'Publishing...')
-                      : id ? 'Save Changes' : 'Publish Listing'}
+                      ? (id
+                          ? (loadedIsActive === false ? 'Publishing...' : 'Saving...')
+                          : 'Publishing...')
+                      : id
+                        ? (loadedIsActive === false ? 'Publish Draft' : 'Save Changes')
+                        : 'Publish Listing'}
                   </button>
                 </div>
               </div>
