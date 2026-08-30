@@ -4,12 +4,11 @@
  * Dynamically switches between two layout shells based on the current viewport:
  *
  *   Mobile (< 768 px) → MobileAppLayout
- *     Dark app background, MobileBottomNav, no desktop Footer, no desktop Header.
- *     Matches the APK experience exactly.
+ *     App-style navigation, no desktop Footer/Header. Capacitor keeps the
+ *     installed-app interaction structure while using the current brand colours.
  *
  *   Desktop (>= 768 px) → DesktopLayout
- *     Transparent background, desktop Footer.
- *     The desktop Header is rendered globally in App.tsx.
+ *     Desktop marketplace layout. The desktop Header is rendered globally in App.tsx.
  *
  * Usage is unchanged — pages wrap their content in <MainLayout> as before.
  */
