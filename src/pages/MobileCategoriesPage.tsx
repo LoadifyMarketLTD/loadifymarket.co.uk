@@ -1,9 +1,9 @@
 /**
  * MobileCategoriesPage — /categories
  *
- * Mobile web keeps the current editorial category grid. Capacitor intentionally
- * renders the established dark installed-app category list instead, so web
- * visual polish cannot replace the Android application identity.
+ * Mobile web keeps the current editorial category grid. Capacitor preserves
+ * the established app-style category list, but uses the current Loadify Market
+ * colour identity instead of the historical dark/gold palette.
  */
 
 import { useNavigate, Link } from 'react-router-dom';
@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import MobileBottomNav from '@/components/MobileBottomNav';
-import { LegacyNativeBottomNav } from '@/components/native/LegacyNativeMarketplace';
 import { useCategories } from '@/hooks/useCategories';
 import { visualForCategory } from '@/data/marketplaceVisuals';
 import { marketplaceCategorySlug } from '@/data/marketplaceTaxonomy';
@@ -62,56 +61,58 @@ function categoryIcon(slug: string): LucideIcon {
   return SLUG_ICON_MAP[slug] ?? Tag;
 }
 
-function LegacyNativeCategories() {
+function UpdatedNativeCategories() {
   const navigate = useNavigate();
   const { categories, loading } = useCategories();
   const visibleCategories = categories.slice(0, 12);
   const hasMoreCategories = categories.length > visibleCategories.length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-[#F8F7F4] text-[#0A234F]">
       <div
-        className="shrink-0 flex items-center gap-3 px-4 sticky top-0 z-10 bg-background/[0.97]"
+        className="shrink-0 flex items-center gap-3 px-4 sticky top-0 z-10 bg-[#F8F7F4]/[0.97]"
         style={{
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          borderBottom: '1px solid rgba(10,35,79,0.08)',
           paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))',
           paddingBottom: '1rem',
         }}
       >
         <button
           onClick={() => navigate(-1)}
-          className="p-2 rounded-xl active:bg-white/10 transition-colors bg-white/[0.05]"
+          className="p-2 rounded-xl active:bg-[#0A234F]/5 transition-colors bg-white border border-[#0A234F]/10"
           aria-label="Back"
         >
-          <ArrowLeft className="h-5 w-5 text-white" aria-hidden="true" />
+          <ArrowLeft className="h-5 w-5 text-[#0A234F]" aria-hidden="true" />
         </button>
-        <h1 className="flex-1 text-center text-white font-bold text-lg pr-9">Categories</h1>
+        <h1 className="flex-1 text-center text-[#0A234F] font-bold text-lg pr-9">Categories</h1>
       </div>
 
       <div
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto bg-[#F8F7F4]"
         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
       >
         <Link
           to="/catalog"
-          className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
-          style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)', textDecoration: 'none' }}
+          className="flex items-center px-4 active:bg-[#0A234F]/[0.03] transition-colors bg-white"
+          style={{ height: 58, borderBottom: '1px solid rgba(10,35,79,0.07)', textDecoration: 'none' }}
         >
-          <LayoutGrid className="h-[22px] w-[22px] shrink-0 text-primary" aria-hidden="true" />
-          <span className="flex-1 ml-3 text-[16px] font-medium text-white">All Categories</span>
-          <ChevronRight className="h-[18px] w-[18px] shrink-0 text-foreground/30" aria-hidden="true" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0A234F]">
+            <LayoutGrid className="h-[19px] w-[19px] text-white" aria-hidden="true" />
+          </div>
+          <span className="flex-1 ml-3 text-[15px] font-semibold text-[#0A234F]">All Categories</span>
+          <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[#8A94A3]" aria-hidden="true" />
         </Link>
 
         {loading && Array.from({ length: 8 }).map((_, index) => (
           <div
             key={index}
-            className="flex items-center px-4 gap-3 animate-pulse"
-            style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+            className="flex items-center px-4 gap-3 animate-pulse bg-white"
+            style={{ height: 58, borderBottom: '1px solid rgba(10,35,79,0.07)' }}
           >
-            <div className="h-[22px] w-[22px] rounded bg-white/10 shrink-0" />
-            <div className="flex-1 h-4 rounded bg-white/10" />
+            <div className="h-9 w-9 rounded-xl bg-[#E9E6DF] shrink-0" />
+            <div className="flex-1 h-4 rounded bg-[#E9E6DF]" />
           </div>
         ))}
 
@@ -121,12 +122,14 @@ function LegacyNativeCategories() {
             <Link
               key={cat.id}
               to={`/category/${cat.slug}`}
-              className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
-              style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)', textDecoration: 'none' }}
+              className="flex items-center px-4 active:bg-[#0A234F]/[0.03] transition-colors bg-white"
+              style={{ height: 58, borderBottom: '1px solid rgba(10,35,79,0.07)', textDecoration: 'none' }}
             >
-              <Icon className="h-[22px] w-[22px] shrink-0 text-primary" aria-hidden="true" />
-              <span className="flex-1 ml-3 text-[16px] font-medium text-white">{cat.name}</span>
-              <ChevronRight className="h-[18px] w-[18px] shrink-0 text-foreground/30" aria-hidden="true" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F7F4] border border-[#0A234F]/10">
+                <Icon className="h-[19px] w-[19px] text-[#8A7351]" aria-hidden="true" />
+              </div>
+              <span className="flex-1 ml-3 text-[15px] font-medium text-[#334155]">{cat.name}</span>
+              <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[#8A94A3]" aria-hidden="true" />
             </Link>
           );
         })}
@@ -134,17 +137,19 @@ function LegacyNativeCategories() {
         {!loading && hasMoreCategories && (
           <Link
             to="/catalog"
-            className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
-            style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)', textDecoration: 'none' }}
+            className="flex items-center px-4 active:bg-[#0A234F]/[0.03] transition-colors bg-white"
+            style={{ height: 58, borderBottom: '1px solid rgba(10,35,79,0.07)', textDecoration: 'none' }}
           >
-            <LayoutGrid className="h-[22px] w-[22px] shrink-0 text-primary" aria-hidden="true" />
-            <span className="flex-1 ml-3 text-[16px] font-medium text-white">View All Categories</span>
-            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-foreground/30" aria-hidden="true" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8F7F4] border border-[#0A234F]/10">
+              <LayoutGrid className="h-[19px] w-[19px] text-[#8A7351]" aria-hidden="true" />
+            </div>
+            <span className="flex-1 ml-3 text-[15px] font-semibold text-[#0A234F]">View All Categories</span>
+            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[#8A94A3]" aria-hidden="true" />
           </Link>
         )}
       </div>
 
-      <LegacyNativeBottomNav />
+      <MobileBottomNav />
     </div>
   );
 }
@@ -244,5 +249,5 @@ function MobileWebCategories() {
 }
 
 export default function MobileCategoriesPage() {
-  return isCapacitorContext() ? <LegacyNativeCategories /> : <MobileWebCategories />;
+  return isCapacitorContext() ? <UpdatedNativeCategories /> : <MobileWebCategories />;
 }
