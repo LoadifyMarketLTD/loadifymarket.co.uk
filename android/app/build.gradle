@@ -79,17 +79,21 @@ apply from: 'capacitor.build.gradle'
 
 def servicesJSON = file('google-services.json')
 def googleServicesConfigured = servicesJSON.exists() && servicesJSON.length() > 0
-def releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
-    taskName.toLowerCase().contains('release')
+def androidPackageTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    def normalized = taskName.toLowerCase()
+    normalized.contains('assemble') ||
+        normalized.contains('bundle') ||
+        normalized.contains('install') ||
+        normalized.contains('package')
 }
 
 if (googleServicesConfigured) {
     apply plugin: 'com.google.gms.google-services'
-} else if (releaseTaskRequested) {
+} else if (androidPackageTaskRequested) {
     throw new GradleException(
-        'google-services.json is required for Loadify Android release builds. ' +
-        'Inject android/app/google-services.json from CI/local secure configuration before assembleRelease or bundleRelease.'
+        'google-services.json is required for Loadify Android APK/AAB build and install tasks. ' +
+        'Inject android/app/google-services.json from CI/local secure configuration before building or installing the app.'
     )
 } else {
-    logger.info("google-services.json not found, google-services plugin not applied for non-release task")
+    logger.info("google-services.json not found; packaging/install tasks will fail closed until secure Firebase configuration is injected")
 }
