@@ -11,6 +11,7 @@ $ExpectedInstalledCertSha256 = "0365a35b3413daf8c76e0bab2f56d898b94895dcee9e2715
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $AndroidAppDir = Join-Path $RepoRoot "android\app"
 $BackupRoot = Join-Path $env:USERPROFILE "Desktop\LoadifyMarket-Android-Backups"
+$EnvLocalPath = Join-Path $RepoRoot ".env.local"
 
 function Pass([string]$Message) { Write-Host "PASS: $Message" -ForegroundColor Green }
 function Info([string]$Message) { Write-Host "INFO: $Message" -ForegroundColor Cyan }
@@ -42,7 +43,7 @@ function Get-ApkCertSha256([string]$ApkPath, [string]$ApkSigner) {
     return (($line.ToString() -split ":", 2)[1]).Trim().ToLowerInvariant()
 }
 
-function Read-GradleProperties([string]$Path) {
+function Read-KeyValueFile([string]$Path) {
     $map = @{}
     if (-not (Test-Path $Path)) { return $map }
     foreach ($line in Get-Content $Path) {
@@ -53,19 +54,30 @@ function Read-GradleProperties([string]$Path) {
         if ($idx -lt 1) { continue }
         $name = $trimmed.Substring(0, $idx).Trim()
         $value = $trimmed.Substring($idx + 1).Trim()
+        if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+            $value = $value.Substring(1, $value.Length - 2)
+        }
         $map[$name] = $value
     }
     return $map
 }
 
-$repoProps = Read-GradleProperties (Join-Path $RepoRoot "android\gradle.properties")
-$userProps = Read-GradleProperties (Join-Path $HOME ".gradle\gradle.properties")
+$repoProps = Read-KeyValueFile (Join-Path $RepoRoot "android\gradle.properties")
+$userProps = Read-KeyValueFile (Join-Path $HOME ".gradle\gradle.properties")
+$envLocal = Read-KeyValueFile $EnvLocalPath
 
 function Get-ReleaseSetting([string]$Name) {
     $envValue = [Environment]::GetEnvironmentVariable($Name)
     if (-not [string]::IsNullOrWhiteSpace($envValue)) { return $envValue.Trim() }
     if ($repoProps.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$repoProps[$Name])) { return ([string]$repoProps[$Name]).Trim() }
     if ($userProps.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$userProps[$Name])) { return ([string]$userProps[$Name]).Trim() }
+    return ""
+}
+
+function Get-RuntimeSetting([string]$Name) {
+    $envValue = [Environment]::GetEnvironmentVariable($Name)
+    if (-not [string]::IsNullOrWhiteSpace($envValue)) { return $envValue.Trim() }
+    if ($envLocal.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$envLocal[$Name])) { return ([string]$envLocal[$Name]).Trim() }
     return ""
 }
 
@@ -187,11 +199,6 @@ if ($signingReady) {
     $certTemp = Join-Path $env:TEMP "loadify-keystore-cert.der"
     if (Test-Path $certTemp) { Remove-Item $certTemp -Force }
 
-    # Windows PowerShell can promote benign native stderr text from keytool
-    # (for example "Certificate stored in file ...") into a terminating
-    # NativeCommandError when ErrorActionPreference=Stop. Run keytool with a
-    # temporarily non-terminating preference, then trust only its exit code and
-    # the exported certificate file. No password/alias material is printed.
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     try {
@@ -222,23 +229,77 @@ if ($signingReady) {
 }
 
 Write-Host "`n=== RUNTIME BUILD CONFIG ===" -ForegroundColor Cyan
+$firebaseReady = $false
 $firebasePath = Join-Path $AndroidAppDir "google-services.json"
-if (Test-Path $firebasePath) { Pass "google-services.json is present locally" } else { Warn "google-services.json is currently missing locally" }
+if (Test-Path $firebasePath) {
+    try {
+        $firebaseJson = Get-Content $firebasePath -Raw | ConvertFrom-Json
+        $firebasePackages = @($firebaseJson.client | ForEach-Object { $_.client_info.android_client_info.package_name })
+        $hasFirebaseCore = -not [string]::IsNullOrWhiteSpace([string]$firebaseJson.project_info.project_number) -and
+            -not [string]::IsNullOrWhiteSpace([string]$firebaseJson.project_info.project_id) -and
+            @($firebaseJson.client).Count -gt 0
+        if (($Package -in $firebasePackages) -and $hasFirebaseCore) {
+            git -C $RepoRoot check-ignore -q -- "android/app/google-services.json"
+            if ($LASTEXITCODE -eq 0) {
+                Pass "google-services.json is present, structurally valid, package-matched and gitignored"
+                $firebaseReady = $true
+            } else {
+                Fail "google-services.json is not gitignored"
+            }
+        } else {
+            Fail "google-services.json does not contain the required Loadify Android package/core project metadata"
+        }
+    } catch {
+        Fail "google-services.json is not valid JSON"
+    }
+} else {
+    Warn "google-services.json is currently missing locally"
+}
 
 $runtimeNames = @('VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY','VITE_STRIPE_PUBLISHABLE_KEY','VITE_APP_URL')
+$runtimeValues = @{}
+$runtimeReady = $true
 foreach ($name in $runtimeNames) {
-    $v = [Environment]::GetEnvironmentVariable($name)
-    if ([string]::IsNullOrWhiteSpace($v)) {
-        Write-Host "$name = NOT SET IN PROCESS" -ForegroundColor Yellow
+    $runtimeValues[$name] = Get-RuntimeSetting $name
+    if ([string]::IsNullOrWhiteSpace([string]$runtimeValues[$name])) {
+        Write-Host "$name = MISSING" -ForegroundColor Yellow
+        $runtimeReady = $false
     } else {
-        Write-Host "$name = SET IN PROCESS" -ForegroundColor Green
+        Write-Host "$name = SET" -ForegroundColor Green
+    }
+}
+
+if ($runtimeReady) {
+    if ([string]$runtimeValues['VITE_SUPABASE_URL'] -notmatch '^https://[A-Za-z0-9-]+\.supabase\.co/?$') {
+        Fail "VITE_SUPABASE_URL format is invalid"
+        $runtimeReady = $false
+    }
+    if ([string]$runtimeValues['VITE_SUPABASE_ANON_KEY'] -notmatch '^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$') {
+        Fail "VITE_SUPABASE_ANON_KEY is not a JWT-shaped anon key"
+        $runtimeReady = $false
+    }
+    if ([string]$runtimeValues['VITE_STRIPE_PUBLISHABLE_KEY'] -notmatch '^pk_(live|test)_[A-Za-z0-9]+$') {
+        Fail "VITE_STRIPE_PUBLISHABLE_KEY format is invalid"
+        $runtimeReady = $false
+    }
+    if ([string]$runtimeValues['VITE_APP_URL'] -notmatch '^https://(?:www\.)?loadifymarket\.co\.uk/?$') {
+        Fail "VITE_APP_URL is not the expected Loadify production URL"
+        $runtimeReady = $false
+    }
+    if ($runtimeReady) {
+        git -C $RepoRoot check-ignore -q -- ".env.local"
+        if ((Test-Path $EnvLocalPath) -and $LASTEXITCODE -ne 0) {
+            Fail ".env.local exists but is not gitignored"
+            $runtimeReady = $false
+        } else {
+            Pass "Required public VITE runtime values are present and structurally valid"
+        }
     }
 }
 
 Write-Host "`n=== PREFLIGHT RESULT ===" -ForegroundColor Cyan
-if ($backupReady -and $deviceReady -and $signingReady) {
-    Pass "Rollback + device lineage + local signing identity are ready"
+if ($backupReady -and $deviceReady -and $signingReady -and $firebaseReady -and $runtimeReady) {
+    Pass "FULL RELEASE PREFLIGHT READY — release candidate build may proceed; no install was attempted"
 } else {
     Warn "Release update is NOT ready yet. No build/install/update was attempted."
 }
-Write-Host "Firebase/runtime configuration is reported separately above and must also be complete before any release candidate is built."
