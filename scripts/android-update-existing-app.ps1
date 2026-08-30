@@ -13,6 +13,18 @@ $ExpectedBranch = "visual/product-detail-premium-polish-20260829"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $RepoRoot
 
+# This machine has historical LOADIFY_UPLOAD_* entries in the global Gradle
+# properties file. Some may be blank/partial. Debug verification must not inherit
+# those release-only values, otherwise build.gradle correctly fails closed before
+# a debug task can run. Explicit empty -P values reproduce the already-proven
+# local debug invocation without modifying the user's global Gradle file.
+$DebugGradlePropertyOverrides = @(
+    "-PLOADIFY_UPLOAD_STORE_FILE=",
+    "-PLOADIFY_UPLOAD_KEY_ALIAS=",
+    "-PLOADIFY_UPLOAD_STORE_PASSWORD=",
+    "-PLOADIFY_UPLOAD_KEY_PASSWORD="
+)
+
 function Fail([string]$Message) {
     Write-Host "`nSTOP: $Message" -ForegroundColor Red
     exit 1
@@ -186,7 +198,7 @@ Pass "Firebase config exists, matches package, and is ignored"
 
 Push-Location android
 try {
-    .\gradlew.bat :app:processDebugGoogleServices
+    & .\gradlew.bat :app:processDebugGoogleServices @DebugGradlePropertyOverrides
     if ($LASTEXITCODE -ne 0) { Fail "processDebugGoogleServices failed." }
 } finally {
     Pop-Location
@@ -234,7 +246,7 @@ Write-Host "`n=== ANDROID CANDIDATE BUILD ===" -ForegroundColor Cyan
 
 Push-Location android
 try {
-    .\gradlew.bat assembleDebug
+    & .\gradlew.bat assembleDebug @DebugGradlePropertyOverrides
     if ($LASTEXITCODE -ne 0) { Fail "assembleDebug failed." }
 } finally {
     Pop-Location
