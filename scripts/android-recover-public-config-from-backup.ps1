@@ -38,6 +38,7 @@ function Find-Aapt2 {
     if ($env:ANDROID_HOME) { $roots += $env:ANDROID_HOME }
     if ($env:ANDROID_SDK_ROOT) { $roots += $env:ANDROID_SDK_ROOT }
     $roots += (Join-Path $env:LOCALAPPDATA "Android\Sdk")
+
     foreach ($root in ($roots | Select-Object -Unique)) {
         if (-not (Test-Path $root)) { continue }
         $candidate = Get-ChildItem (Join-Path $root "build-tools") -Directory -ErrorAction SilentlyContinue |
@@ -53,7 +54,7 @@ function Find-Aapt2 {
 function Get-AaptStringResource([string[]]$DumpLines, [string]$Name) {
     for ($i = 0; $i -lt $DumpLines.Count; $i++) {
         if ($DumpLines[$i] -notmatch ([regex]::Escape("string/$Name"))) { continue }
-        $max = [Math]::Min($DumpLines.Count - 1, $i + 10)
+        $max = [Math]::Min($DumpLines.Count - 1, $i + 12)
         for ($j = $i; $j -le $max; $j++) {
             $line = $DumpLines[$j]
             if ($line -match '"([^"\r\n]+)"') {
@@ -65,12 +66,28 @@ function Get-AaptStringResource([string[]]$DumpLines, [string]$Name) {
     return $null
 }
 
+function Read-KeyValueFile([string]$Path) {
+    $map = @{}
+    if (-not (Test-Path $Path)) { return $map }
+    foreach ($line in Get-Content $Path) {
+        $trimmed = $line.Trim()
+        if (-not $trimmed -or $trimmed.StartsWith('#')) { continue }
+        $idx = $trimmed.IndexOf('=')
+        if ($idx -lt 1) { continue }
+        $name = $trimmed.Substring(0, $idx).Trim()
+        $value = $trimmed.Substring($idx + 1).Trim()
+        $map[$name] = $value
+    }
+    return $map
+}
+
 Write-Host "`n=== LOADIFY PUBLIC CONFIG RECOVERY FROM BACKUP APK ===" -ForegroundColor Cyan
 
 if ([string]::IsNullOrWhiteSpace($BackupDir)) {
     if (Test-Path $BackupRoot) {
         $latest = Get-ChildItem $BackupRoot -Directory -Filter "installed-*" -ErrorAction SilentlyContinue |
-            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
         if ($latest) { $BackupDir = $latest.FullName }
     }
 }
@@ -94,29 +111,36 @@ if (-not $expectedHash -or $actualHash -ne $expectedHash) {
     Fail "Backup APK hash does not match sha256.txt. Recovery aborted."
     exit 1
 }
-Pass "Backup APK hash verified before extraction"
+Pass "Backup APK hash verified before reading"
 
-$tempRoot = Join-Path $env:TEMP ("loadify-apk-public-config-" + [Guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
-
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zip = [System.IO.Compression.ZipFile]::OpenRead($Apk)
 try {
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($Apk, $tempRoot)
-
-    $jsFiles = @(Get-ChildItem $tempRoot -Recurse -File -Filter "*.js" -ErrorAction SilentlyContinue)
-    if ($jsFiles.Count -eq 0) {
+    $jsEntries = @($zip.Entries | Where-Object { $_.FullName -match '\.js$' })
+    if ($jsEntries.Count -eq 0) {
         Fail "No JavaScript bundle was found inside the backed-up APK."
         exit 1
     }
-    Info "Scanning $($jsFiles.Count) JavaScript bundle file(s) for public VITE values; values will not be printed."
+
+    Info "Scanning $($jsEntries.Count) JavaScript bundle entry or entries directly from APK; values will not be printed."
 
     $supabaseUrls = New-Object System.Collections.Generic.HashSet[string]
     $anonTokens = New-Object System.Collections.Generic.HashSet[string]
     $stripeKeys = New-Object System.Collections.Generic.HashSet[string]
     $appUrls = New-Object System.Collections.Generic.HashSet[string]
 
-    foreach ($file in $jsFiles) {
-        $text = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
+    foreach ($entry in $jsEntries) {
+        $stream = $null
+        $reader = $null
+        try {
+            $stream = $entry.Open()
+            $reader = New-Object System.IO.StreamReader($stream, [Text.Encoding]::UTF8, $true)
+            $text = $reader.ReadToEnd()
+        } finally {
+            if ($reader) { $reader.Dispose() }
+            elseif ($stream) { $stream.Dispose() }
+        }
+
         if ([string]::IsNullOrWhiteSpace($text)) { continue }
 
         foreach ($m in [regex]::Matches($text, 'https://[a-z0-9-]+\.supabase\.co', 'IgnoreCase')) {
@@ -135,144 +159,156 @@ try {
             [void]$appUrls.Add($m.Value.TrimEnd('/'))
         }
     }
-
-    $recovered = [ordered]@{}
-    if ($supabaseUrls.Count -eq 1) {
-        $recovered['VITE_SUPABASE_URL'] = @($supabaseUrls)[0]
-        Pass "Recovered one Supabase project URL from installed APK"
-    } else {
-        Warn "Supabase URL recovery was not unambiguous (found $($supabaseUrls.Count))."
-    }
-
-    if ($anonTokens.Count -eq 1) {
-        $recovered['VITE_SUPABASE_ANON_KEY'] = @($anonTokens)[0]
-        Pass "Recovered one Supabase anon JWT from installed APK"
-    } else {
-        Warn "Supabase anon-key recovery was not unambiguous (found $($anonTokens.Count))."
-    }
-
-    if ($stripeKeys.Count -eq 1) {
-        $recovered['VITE_STRIPE_PUBLISHABLE_KEY'] = @($stripeKeys)[0]
-        Pass "Recovered one Stripe publishable key from installed APK"
-    } else {
-        Warn "Stripe publishable-key recovery was not unambiguous (found $($stripeKeys.Count))."
-    }
-
-    if ($appUrls.Count -eq 1) {
-        $recovered['VITE_APP_URL'] = @($appUrls)[0]
-        Pass "Recovered one Loadify application URL from installed APK"
-    } else {
-        Warn "Loadify app-URL recovery was not unambiguous (found $($appUrls.Count))."
-    }
-
-    if ($recovered.Count -gt 0) {
-        if (Test-Path $EnvTarget) {
-            Warn ".env.local already exists; it was left unchanged to avoid overwriting local configuration."
-        } else {
-            $lines = @(
-                "# Recovered locally from the signed installed Loadify Android APK.",
-                "# Public build-time values only. File is gitignored and must not be committed."
-            )
-            foreach ($entry in $recovered.GetEnumerator()) {
-                $lines += "$($entry.Key)=$($entry.Value)"
-            }
-            $lines | Set-Content -LiteralPath $EnvTarget -Encoding utf8
-            git -C $RepoRoot check-ignore -q -- ".env.local"
-            if ($LASTEXITCODE -ne 0) {
-                Remove-Item $EnvTarget -Force -ErrorAction SilentlyContinue
-                Fail ".env.local is not gitignored; recovered values were removed."
-                exit 1
-            }
-            Pass "Recovered public VITE configuration written to gitignored .env.local"
-        }
-    }
-
-    Write-Host "`n=== FIREBASE RESOURCE RECOVERY ===" -ForegroundColor Cyan
-    if (Test-Path $FirebaseTarget) {
-        Pass "google-services.json already exists locally; existing file was left unchanged"
-    } else {
-        $aapt2 = Find-Aapt2
-        if (-not $aapt2) {
-            Warn "aapt2.exe not found; Firebase resource recovery cannot run locally."
-        } else {
-            # As with keytool, Windows PowerShell may promote benign native stderr
-            # text into a terminating NativeCommandError. Capture output under a
-            # non-terminating preference and decide only from the native exit code.
-            $previousErrorActionPreference = $ErrorActionPreference
-            $ErrorActionPreference = "Continue"
-            try {
-                $dump = @(& $aapt2 dump resources $Apk 2>&1 | ForEach-Object { $_.ToString() })
-                $aaptExitCode = $LASTEXITCODE
-            } finally {
-                $ErrorActionPreference = $previousErrorActionPreference
-            }
-
-            if ($aaptExitCode -ne 0 -or $dump.Count -eq 0) {
-                Warn "aapt2 could not dump APK resources; no Firebase file was generated."
-            } else {
-                $googleAppId = Get-AaptStringResource $dump 'google_app_id'
-                $senderId = Get-AaptStringResource $dump 'gcm_defaultSenderId'
-                $projectId = Get-AaptStringResource $dump 'project_id'
-                $apiKey = Get-AaptStringResource $dump 'google_api_key'
-                $storageBucket = Get-AaptStringResource $dump 'google_storage_bucket'
-                $webClientId = Get-AaptStringResource $dump 'default_web_client_id'
-
-                $requiredFirebase = @($googleAppId, $senderId, $projectId, $apiKey)
-                if ($requiredFirebase -contains $null -or $requiredFirebase -contains '') {
-                    Warn "Installed APK did not expose all Firebase resources required for a safe google-services.json reconstruction. No file was generated."
-                } else {
-                    $projectInfo = [ordered]@{
-                        project_number = $senderId
-                        project_id = $projectId
-                    }
-                    if ($storageBucket) { $projectInfo['storage_bucket'] = $storageBucket }
-
-                    $client = [ordered]@{
-                        client_info = [ordered]@{
-                            mobilesdk_app_id = $googleAppId
-                            android_client_info = [ordered]@{ package_name = $Package }
-                        }
-                        api_key = @([ordered]@{ current_key = $apiKey })
-                    }
-                    if ($webClientId) {
-                        $client['oauth_client'] = @([ordered]@{ client_id = $webClientId; client_type = 3 })
-                    }
-
-                    $firebase = [ordered]@{
-                        project_info = $projectInfo
-                        client = @($client)
-                        configuration_version = '1'
-                    }
-                    $firebase | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $FirebaseTarget -Encoding utf8
-                    git -C $RepoRoot check-ignore -q -- "android/app/google-services.json"
-                    if ($LASTEXITCODE -ne 0) {
-                        Remove-Item $FirebaseTarget -Force -ErrorAction SilentlyContinue
-                        Fail "Recovered google-services.json is not gitignored; file was removed."
-                        exit 1
-                    }
-
-                    # Read back and validate the generated local file before it can
-                    # be accepted by the release preflight. Values remain hidden.
-                    try {
-                        $roundTrip = Get-Content $FirebaseTarget -Raw | ConvertFrom-Json
-                        $packages = @($roundTrip.client | ForEach-Object { $_.client_info.android_client_info.package_name })
-                        if ($Package -notin $packages) { throw "package mismatch" }
-                    } catch {
-                        Remove-Item $FirebaseTarget -Force -ErrorAction SilentlyContinue
-                        Fail "Recovered google-services.json failed local structural/package validation and was removed."
-                        exit 1
-                    }
-
-                    Pass "Reconstructed package-matched google-services.json from Firebase resources embedded in the signed installed APK"
-                    Info "No Firebase value was printed and no remote secret was read."
-                }
-            }
-        }
-    }
-
-    Write-Host "`n=== RESULT ===" -ForegroundColor Cyan
-    Write-Host "PUBLIC CONFIG RECOVERY COMPLETE"
-    Write-Host "No APK was built or installed; the phone was not modified."
 } finally {
-    Remove-Item $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+    $zip.Dispose()
 }
+
+$recovered = [ordered]@{}
+if ($supabaseUrls.Count -eq 1) {
+    $recovered['VITE_SUPABASE_URL'] = @($supabaseUrls)[0]
+    Pass "Recovered one Supabase project URL from installed APK"
+} else {
+    Warn "Supabase URL recovery was not unambiguous (found $($supabaseUrls.Count))."
+}
+
+if ($anonTokens.Count -eq 1) {
+    $recovered['VITE_SUPABASE_ANON_KEY'] = @($anonTokens)[0]
+    Pass "Recovered one Supabase anon JWT from installed APK"
+} else {
+    Warn "Supabase anon-key recovery was not unambiguous (found $($anonTokens.Count))."
+}
+
+if ($stripeKeys.Count -eq 1) {
+    $recovered['VITE_STRIPE_PUBLISHABLE_KEY'] = @($stripeKeys)[0]
+    Pass "Recovered one Stripe publishable key from installed APK"
+} else {
+    Warn "Stripe publishable-key recovery was not unambiguous (found $($stripeKeys.Count))."
+}
+
+if ($appUrls.Count -eq 1) {
+    $recovered['VITE_APP_URL'] = @($appUrls)[0]
+    Pass "Recovered one Loadify application URL from installed APK"
+} else {
+    Warn "Loadify app-URL recovery was not unambiguous (found $($appUrls.Count))."
+}
+
+git -C $RepoRoot check-ignore -q -- ".env.local"
+if ($LASTEXITCODE -ne 0) {
+    Fail ".env.local is not gitignored. Recovery will not write runtime values."
+    exit 1
+}
+
+if ($recovered.Count -gt 0) {
+    $existingMap = Read-KeyValueFile $EnvTarget
+    $lines = @()
+    if (Test-Path $EnvTarget) {
+        $lines = @(Get-Content $EnvTarget)
+        Info ".env.local already exists; only missing recovered keys will be appended."
+    } else {
+        $lines = @(
+            "# Recovered locally from the signed installed Loadify Android APK.",
+            "# Public build-time values only. This file is gitignored."
+        )
+    }
+
+    $added = 0
+    foreach ($entry in $recovered.GetEnumerator()) {
+        if (-not $existingMap.ContainsKey($entry.Key) -or [string]::IsNullOrWhiteSpace([string]$existingMap[$entry.Key])) {
+            $lines += "$($entry.Key)=$($entry.Value)"
+            $added++
+        }
+    }
+    $lines | Set-Content -LiteralPath $EnvTarget -Encoding utf8
+    Pass "Recovered public VITE configuration stored in gitignored .env.local ($added missing key or keys added)"
+}
+
+Write-Host "`n=== FIREBASE RESOURCE RECOVERY ===" -ForegroundColor Cyan
+if (Test-Path $FirebaseTarget) {
+    try {
+        $existingFirebase = Get-Content $FirebaseTarget -Raw | ConvertFrom-Json
+        $existingPackages = @($existingFirebase.client | ForEach-Object { $_.client_info.android_client_info.package_name })
+        if ($Package -notin $existingPackages) { throw "package mismatch" }
+        Pass "google-services.json already exists locally and matches the Loadify package; file left unchanged"
+    } catch {
+        Fail "Existing google-services.json is invalid or package-mismatched. It was not overwritten."
+        exit 1
+    }
+} else {
+    $aapt2 = Find-Aapt2
+    if (-not $aapt2) {
+        Warn "aapt2.exe not found; Firebase resource recovery cannot run locally."
+    } else {
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+            $dump = @(& $aapt2 dump resources $Apk 2>&1 | ForEach-Object { $_.ToString() })
+            $aaptExitCode = $LASTEXITCODE
+        } finally {
+            $ErrorActionPreference = $previousErrorActionPreference
+        }
+
+        if ($aaptExitCode -ne 0 -or $dump.Count -eq 0) {
+            Warn "aapt2 could not dump APK resources; no Firebase file was generated."
+        } else {
+            $googleAppId = Get-AaptStringResource $dump 'google_app_id'
+            $senderId = Get-AaptStringResource $dump 'gcm_defaultSenderId'
+            $projectId = Get-AaptStringResource $dump 'project_id'
+            $apiKey = Get-AaptStringResource $dump 'google_api_key'
+            $storageBucket = Get-AaptStringResource $dump 'google_storage_bucket'
+            $webClientId = Get-AaptStringResource $dump 'default_web_client_id'
+
+            $requiredFirebase = @($googleAppId, $senderId, $projectId, $apiKey)
+            if ($requiredFirebase -contains $null -or $requiredFirebase -contains '') {
+                Warn "Installed APK did not expose all Firebase resources required for safe reconstruction. No file was generated."
+            } else {
+                $projectInfo = [ordered]@{
+                    project_number = $senderId
+                    project_id = $projectId
+                }
+                if ($storageBucket) { $projectInfo['storage_bucket'] = $storageBucket }
+
+                $client = [ordered]@{
+                    client_info = [ordered]@{
+                        mobilesdk_app_id = $googleAppId
+                        android_client_info = [ordered]@{ package_name = $Package }
+                    }
+                    api_key = @([ordered]@{ current_key = $apiKey })
+                }
+                if ($webClientId) {
+                    $client['oauth_client'] = @([ordered]@{ client_id = $webClientId; client_type = 3 })
+                }
+
+                $firebase = [ordered]@{
+                    project_info = $projectInfo
+                    client = @($client)
+                    configuration_version = '1'
+                }
+
+                $firebase | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $FirebaseTarget -Encoding utf8
+                git -C $RepoRoot check-ignore -q -- "android/app/google-services.json"
+                if ($LASTEXITCODE -ne 0) {
+                    Remove-Item $FirebaseTarget -Force -ErrorAction SilentlyContinue
+                    Fail "Recovered google-services.json is not gitignored; generated file was removed."
+                    exit 1
+                }
+
+                try {
+                    $roundTrip = Get-Content $FirebaseTarget -Raw | ConvertFrom-Json
+                    $packages = @($roundTrip.client | ForEach-Object { $_.client_info.android_client_info.package_name })
+                    if ($Package -notin $packages) { throw "package mismatch" }
+                } catch {
+                    Remove-Item $FirebaseTarget -Force -ErrorAction SilentlyContinue
+                    Fail "Recovered google-services.json failed structural/package validation and was removed."
+                    exit 1
+                }
+
+                Pass "Reconstructed package-matched google-services.json from Firebase resources embedded in signed installed APK"
+                Info "No Firebase value was printed and no remote secret was read."
+            }
+        }
+    }
+}
+
+Write-Host "`n=== RESULT ===" -ForegroundColor Cyan
+Write-Host "PUBLIC CONFIG RECOVERY COMPLETE"
+Write-Host "No APK was built or installed; the phone was not modified."
