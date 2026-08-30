@@ -100,14 +100,24 @@ BigBuy remains:
 7. Only after those gates may a real `BigBuyAdapterV1` advertise any read capability.
 8. Orders remain a later independent PII/commercial gate.
 
-## Quality gate plan
+## Quality evidence — diagnostic PR #636
 
-The product branch must pass:
+Diagnostic PR `#636 — Diagnostic: BigBuy read-only contract gates` was used only as a Netlify execution runner and was closed without merge.
 
-- targeted `bigbuy-readonly-contracts.test.ts`;
-- ESLint over the new BigBuy client/contracts/test;
-- TypeScript typecheck;
-- Vite production build;
-- normal Netlify Deploy Preview.
+Diagnostic HEAD:
 
-A separate diagnostic PR may temporarily place the targeted gates in `prebuild`; that diagnostic must be closed without merge after evidence is collected.
+`17a58072a8c81b95c434500702ae632c24666f6b`
+
+Netlify Deploy Preview: **SUCCESS**.
+
+The diagnostic `prebuild` executed and passed:
+
+- `bigbuy-readonly-contracts.test.ts`;
+- ESLint for `bigBuyClient.ts`, `bigBuyContracts.ts` and the targeted test;
+- normal TypeScript `tsc -b`;
+- normal Vite production build;
+- Netlify packaging / Deploy Preview.
+
+The targeted test verifies sandbox/production host selection, Bearer auth ownership, correlation headers, missing-key fail-closed behavior, write-method blocking, caller Authorization override blocking, URL/path escape blocking, strict products/variations/stock parsing, stock aggregation, malformed provider data rejection, and the BigBuy activation guard (`verifiedCapabilities=[]`, hosted OFF, runtime adapter capabilities `[]`).
+
+The product PR #635 also passed its normal Netlify Deploy Preview before this evidence update. A final normal preview must pass on the checkpoint-updated product HEAD before merge.
