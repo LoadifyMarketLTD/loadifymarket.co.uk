@@ -31,15 +31,14 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      // Match the premium public marketplace shell instead of flashing the old
-      // dark identity before the React bundle becomes visible.
-      backgroundColor: '#F8F7F4',
+      // Capacitor keeps the established installed-app launch identity. Public
+      // mobile web styling must not change the native splash surface.
+      backgroundColor: '#0A0E1A',
       showSpinner: false,
     },
     StatusBar: {
-      // Dark status-bar content on the warm light application chrome.
       style: 'Dark',
-      backgroundColor: '#F8F7F4',
+      backgroundColor: '#0A0E1A',
     },
   },
 };
