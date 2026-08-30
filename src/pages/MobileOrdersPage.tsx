@@ -132,6 +132,8 @@ export default function MobileOrdersPage() {
 
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const cardRefs = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(new Map());
 
@@ -143,6 +145,7 @@ export default function MobileOrdersPage() {
 
     const load = async () => {
       setLoading(true);
+      setLoadError(null);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -150,7 +153,7 @@ export default function MobileOrdersPage() {
           return;
         }
 
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("orders")
           .select(
             `id, orderNumber, total, status, createdAt, quantity,
@@ -160,6 +163,7 @@ export default function MobileOrdersPage() {
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
 
+        if (error) throw error;
         if (!data) {
           setOrders([]);
           return;
@@ -201,13 +205,17 @@ export default function MobileOrdersPage() {
         });
 
         setOrders(rows);
+      } catch (error) {
+        console.error("Error fetching mobile orders:", error);
+        setOrders([]);
+        setLoadError("We couldn't load your orders. Check your connection and try again.");
       } finally {
         setLoading(false);
       }
     };
 
     void load();
-  }, [user?.id, promptAuth]);
+  }, [user?.id, promptAuth, reloadToken]);
 
   useEffect(() => {
     if (!deepLinkOrderId || loading) return;
@@ -270,6 +278,21 @@ export default function MobileOrdersPage() {
           [1, 2, 3].map((n) => (
             <div key={n} className="animate-pulse bg-white/[0.05]" style={{ height: "108px", borderRadius: "16px", marginBottom: "12px" }} />
           ))
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-danger/10 flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-danger" />
+            </div>
+            <p className="text-foreground text-sm font-semibold">Orders unavailable</p>
+            <p className="text-foreground/65 text-xs max-w-[280px]">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => setReloadToken((value) => value + 1)}
+              className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold border border-primary/25"
+            >
+              Try again
+            </button>
+          </div>
         ) : visibleOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
@@ -300,7 +323,7 @@ export default function MobileOrdersPage() {
           </div>
         )}
 
-        {!loading && hasAwaitingPayment && (
+        {!loading && !loadError && hasAwaitingPayment && (
           <div className="flex items-start gap-2 rounded-xl bg-primary/10 border border-primary/40 p-3 mt-3">
             <AlertCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
             <p className="text-primary text-xs leading-relaxed">
@@ -309,7 +332,7 @@ export default function MobileOrdersPage() {
           </div>
         )}
 
-        {!loading && (
+        {!loading && !loadError && (
           <button
             onClick={() => navigate("/buyer/profile")}
             style={{
