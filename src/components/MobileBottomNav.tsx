@@ -1,8 +1,9 @@
 /**
- * MobileBottomNav — premium light mobile bottom navigation bar shared by mobile
- * web and the Capacitor app.
+ * MobileBottomNav
  *
- * Items (left → right): Home | Search | Sell | Inbox | Profile.
+ * Mobile web uses the premium light navigation below. Capacitor delegates to
+ * LegacyNativeBottomNav so standalone mobile pages cannot bypass the native
+ * identity boundary simply by importing this shared component directly.
  */
 
 import { useEffect, useState } from 'react';
@@ -12,6 +13,8 @@ import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import { supabase } from '@/lib/supabase';
+import { isCapacitorContext } from '@/lib/capacitorUtils';
+import { LegacyNativeBottomNav } from '@/components/native/LegacyNativeMarketplace';
 
 function NavItem({
   to,
@@ -124,7 +127,7 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
   );
 }
 
-export default function MobileBottomNav() {
+function MobileWebBottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -187,4 +190,8 @@ export default function MobileBottomNav() {
       </div>
     </nav>
   );
+}
+
+export default function MobileBottomNav() {
+  return isCapacitorContext() ? <LegacyNativeBottomNav /> : <MobileWebBottomNav />;
 }
