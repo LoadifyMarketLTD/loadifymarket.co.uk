@@ -59,7 +59,10 @@ async function accessTokenFromBrowser(page: Page): Promise<string | null> {
 }
 
 test('Buyer can reach Buyer orders and Checkout without crossing into Admin', async ({ page, request }) => {
-  test.skip(!hasCredentials(buyer), 'E2E Buyer credentials are not configured');
+  if (!hasCredentials(buyer)) {
+    test.skip(true, 'E2E Buyer credentials are not configured');
+    return;
+  }
 
   await signIn(page, buyer);
 
@@ -79,7 +82,10 @@ test('Buyer can reach Buyer orders and Checkout without crossing into Admin', as
 });
 
 test('Seller can reach canonical fulfillment workspaces', async ({ page }) => {
-  test.skip(!hasCredentials(seller), 'E2E Seller credentials are not configured');
+  if (!hasCredentials(seller)) {
+    test.skip(true, 'E2E Seller credentials are not configured');
+    return;
+  }
 
   await signIn(page, seller);
 
@@ -92,7 +98,10 @@ test('Seller can reach canonical fulfillment workspaces', async ({ page }) => {
 
 test('Seller cannot mutate another seller order when a foreign fixture is configured', async ({ page, request }) => {
   const foreignOrderId = process.env.E2E_FOREIGN_ORDER_ID;
-  test.skip(!hasCredentials(seller) || !foreignOrderId, 'Seller credentials and E2E_FOREIGN_ORDER_ID are required');
+  if (!hasCredentials(seller) || !foreignOrderId) {
+    test.skip(true, 'Seller credentials and E2E_FOREIGN_ORDER_ID are required');
+    return;
+  }
 
   await signIn(page, seller);
   const token = await accessTokenFromBrowser(page);
@@ -110,7 +119,10 @@ test('Seller cannot mutate another seller order when a foreign fixture is config
 });
 
 test('Admin can reach order and payout reconciliation surfaces', async ({ page }) => {
-  test.skip(!hasCredentials(admin), 'E2E Admin credentials are not configured');
+  if (!hasCredentials(admin)) {
+    test.skip(true, 'E2E Admin credentials are not configured');
+    return;
+  }
 
   await signIn(page, admin);
 
