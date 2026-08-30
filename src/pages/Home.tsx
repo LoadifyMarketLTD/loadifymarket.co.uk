@@ -6,7 +6,7 @@ import MainLayout from "@/layouts/MainLayout";
 import MobileAppHeader from "@/components/MobileAppHeader";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
 import MobileGridCard from "@/components/MobileGridCard";
-import { LegacyNativeHome } from "@/components/native/LegacyNativeMarketplace";
+import { UpdatedNativeHome } from "@/components/native/UpdatedNativeMarketplace";
 import { useMobileGrid } from "@/hooks/useMobileGrid";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { isCapacitorContext } from "@/lib/capacitorUtils";
@@ -53,8 +53,8 @@ function MobileProductGrid({ products, startIndex = 0 }: { products: ReturnType<
 
 /**
  * Mobile browser homepage only.
- * The installed Capacitor app has its own canonical shell in
- * LegacyNativeMarketplace and must not inherit web visual redesigns.
+ * The installed Capacitor app keeps its application structure but uses the
+ * current Loadify Market colour identity through UpdatedNativeMarketplace.
  */
 function MobileHome() {
   const { products, loading, loadingMore, hasMore, loadMore } = useMobileGrid();
@@ -231,7 +231,7 @@ export default function Home() {
 
       <main id="main-content">
         {isMobile
-          ? (isNativeApp ? <LegacyNativeHome /> : <MobileHome />)
+          ? (isNativeApp ? <UpdatedNativeHome /> : <MobileHome />)
           : <DesktopHome />}
       </main>
     </MainLayout>
