@@ -1,5 +1,5 @@
 param(
-    [string]$DeviceSerial = "57311FDCQ00BGS",
+    [string]$DeviceSerial = "2A141FDH300HZL",
     [string]$FirebaseSource = ""
 )
 
