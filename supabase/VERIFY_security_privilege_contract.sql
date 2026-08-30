@@ -95,7 +95,8 @@ WITH violations AS (
 
   UNION ALL
 
-  -- The Before User Created hook helper must not be callable by browser roles.
+  -- The Before User Created hook helper must not be callable by browser roles
+  -- or by PostgreSQL PUBLIC. ACL grantee OID 0 represents PUBLIC.
   SELECT
     'AUTH_HOOK_CLIENT_EXECUTE',
     format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)),
@@ -107,7 +108,12 @@ WITH violations AS (
     AND (
       has_function_privilege('anon', p.oid, 'EXECUTE')
       OR has_function_privilege('authenticated', p.oid, 'EXECUTE')
-      OR has_function_privilege('PUBLIC', p.oid, 'EXECUTE')
+      OR EXISTS (
+        SELECT 1
+        FROM aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) acl
+        WHERE acl.grantee = 0
+          AND acl.privilege_type = 'EXECUTE'
+      )
     )
 
   UNION ALL
