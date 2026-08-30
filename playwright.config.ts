@@ -1,6 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = process.env.E2E_BASE_URL ?? 'https://loadifymarket.co.uk';
+const baseURL = process.env.E2E_BASE_URL ?? process.env.DEPLOY_PRIME_URL;
+
+if (!baseURL) {
+  throw new Error(
+    'E2E_BASE_URL is required for local Playwright runs. Point it at the exact Netlify Deploy Preview (or an explicitly started local Netlify dev server).',
+  );
+}
 
 export default defineConfig({
   testDir: './e2e',
