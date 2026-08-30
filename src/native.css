@@ -1,220 +1,126 @@
-/* Native Capacitor-only compatibility and identity corrections.
+/* Native Capacitor-only compatibility and colour identity.
  *
- * The installed Android app is intentionally a distinct dark application shell.
- * Mobile-web marketplace polish must not silently override the established APK
- * identity. All rules in this file are hard-scoped to html.capacitor-native.
+ * The installed Android application keeps its app-specific navigation and
+ * interaction structure, while its colour system follows the current Loadify
+ * Market site identity. All rules remain hard-scoped to html.capacitor-native.
  */
 
 /* -------------------------------------------------------------------------- */
-/* Native token boundary                                                       */
+/* Current Loadify Market colour identity                                      */
 /* -------------------------------------------------------------------------- */
 
-/* App.tsx currently adds market-light-root globally for web/workspace
- * compatibility. Inside Capacitor, restore the canonical dark token set so the
- * native shell cannot inherit light website variables through that root class.
- */
 html.capacitor-native.market-light-root {
-  --background: 225 44% 7%;
-  --foreground: 213 27% 97%;
-  --card: 220 40% 12%;
-  --card-foreground: 213 27% 97%;
-  --popover: 220 32% 16%;
-  --popover-foreground: 213 27% 97%;
-  --primary: 45 64% 52%;
-  --primary-foreground: 0 0% 5%;
-  --primary-hover: 39 63% 48%;
-  --primary-soft: 45 64% 52%;
-  --secondary: 220 54% 40%;
-  --secondary-foreground: 213 27% 97%;
-  --muted: 220 40% 12%;
-  --muted-foreground: 217 18% 70%;
-  --accent: 166 63% 33%;
-  --accent-foreground: 213 27% 97%;
-  --border: 221 28% 23%;
-  --input: 221 28% 23%;
-  --ring: 45 64% 52%;
-  --sidebar-background: 225 44% 7%;
-  --sidebar-foreground: 217 18% 70%;
-  --sidebar-primary: 45 64% 52%;
-  --sidebar-primary-foreground: 0 0% 5%;
-  --sidebar-accent: 220 40% 12%;
-  --sidebar-accent-foreground: 213 27% 97%;
-  --sidebar-border: 221 28% 23%;
-  --sidebar-ring: 45 64% 52%;
-  --surface: 220 40% 12%;
-  --surface-raised: 220 32% 16%;
-  --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.6);
-  --shadow-elevated: 0 0 20px rgba(212, 175, 55, 0.15), 0 10px 40px rgba(0, 0, 0, 0.8);
+  --background: 45 22% 96.5%;          /* #F8F7F4 */
+  --foreground: 218 78% 17.5%;         /* #0A234F */
+  --card: 0 0% 100%;                   /* #FFFFFF */
+  --card-foreground: 218 78% 17.5%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 218 78% 17.5%;
+  --primary: 218 78% 17.5%;            /* #0A234F */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 218 79% 13%;         /* ~#071A3C */
+  --primary-soft: 45 22% 96.5%;
+  --secondary: 42 19% 89%;             /* #E9E6DF */
+  --secondary-foreground: 218 78% 17.5%;
+  --muted: 42 19% 89%;                 /* #E9E6DF */
+  --muted-foreground: 218 14% 41%;     /* #5A6578 */
+  --accent: 36 26% 43%;                /* #8A7351 */
+  --accent-foreground: 0 0% 100%;
+  --border: 215 32% 90%;               /* #DCE3ED */
+  --input: 215 32% 90%;
+  --ring: 218 78% 17.5%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 218 14% 41%;
+  --sidebar-primary: 218 78% 17.5%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 45 22% 96.5%;
+  --sidebar-accent-foreground: 218 78% 17.5%;
+  --sidebar-border: 215 32% 90%;
+  --sidebar-ring: 218 78% 17.5%;
+  --surface: 0 0% 100%;
+  --surface-raised: 40 33% 98%;         /* #FCFBF9 */
+  --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.055);
+  --shadow-elevated: 0 16px 38px rgba(10, 35, 79, 0.10);
 }
 
 html.capacitor-native.market-light-root body {
-  background: radial-gradient(circle at top, #182235, #0A0E1A) !important;
-  color: hsl(var(--foreground));
+  background: #F8F7F4 !important;
+  color: #0A234F !important;
 }
 
-/* Public web pages opt into market-public-light. In Capacitor the same markup
- * must resolve back to the native dark semantic tokens.
+/* Public marketplace pages may opt into market-public-light. In Capacitor they
+ * keep the same current brand palette instead of being forced back to the
+ * historical dark/gold colour set.
  */
 html.capacitor-native .market-public-light {
-  --background: 225 44% 7%;
-  --foreground: 213 27% 97%;
-  --card: 220 40% 12%;
-  --card-foreground: 213 27% 97%;
-  --popover: 220 32% 16%;
-  --popover-foreground: 213 27% 97%;
-  --primary: 45 64% 52%;
-  --primary-foreground: 0 0% 5%;
-  --primary-hover: 39 63% 48%;
-  --primary-soft: 45 64% 52%;
-  --secondary: 220 54% 40%;
-  --secondary-foreground: 213 27% 97%;
-  --muted: 220 40% 12%;
-  --muted-foreground: 217 18% 70%;
-  --accent: 166 63% 33%;
-  --accent-foreground: 213 27% 97%;
-  --border: 221 28% 23%;
-  --input: 221 28% 23%;
-  --ring: 45 64% 52%;
-  --surface: 220 40% 12%;
-  --surface-raised: 220 32% 16%;
-  --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.6);
-  --shadow-elevated: 0 0 20px rgba(212, 175, 55, 0.15), 0 10px 40px rgba(0, 0, 0, 0.8);
-  background: #0A0E1A !important;
-  color: #F5F7FA !important;
+  --background: 45 22% 96.5%;
+  --foreground: 218 78% 17.5%;
+  --card: 0 0% 100%;
+  --card-foreground: 218 78% 17.5%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 218 78% 17.5%;
+  --primary: 218 78% 17.5%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 218 79% 13%;
+  --primary-soft: 45 22% 96.5%;
+  --secondary: 42 19% 89%;
+  --secondary-foreground: 218 78% 17.5%;
+  --muted: 42 19% 89%;
+  --muted-foreground: 218 14% 41%;
+  --accent: 36 26% 43%;
+  --accent-foreground: 0 0% 100%;
+  --border: 215 32% 90%;
+  --input: 215 32% 90%;
+  --ring: 218 78% 17.5%;
+  --surface: 0 0% 100%;
+  --surface-raised: 40 33% 98%;
+  --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.055);
+  --shadow-elevated: 0 16px 38px rgba(10, 35, 79, 0.10);
+  background: #F8F7F4 !important;
+  color: #0A234F !important;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Product / catalog / category native leakage guard                           */
-/* -------------------------------------------------------------------------- */
-
+/* Native marketplace routes use the current site surfaces. Their application
+ * navigation remains native; only the colour system is shared.
+ */
 html.capacitor-native.loadify-native-catalog-route #main-content,
 html.capacitor-native.loadify-native-category-route #main-content,
 html.capacitor-native.loadify-native-product-route #main-content {
-  background: #0A0E1A !important;
-  color: #F5F7FA !important;
+  background: #F8F7F4 !important;
+  color: #0A234F !important;
 }
 
-/* Shared light ProductCard literals are valid on web. Re-map only when those
- * cards render on native marketplace routes.
+/* Keep semantic cards and fixed action surfaces clean and readable inside the
+ * Android WebView while matching the new brand palette.
  */
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="bg-[#FEFEFD]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="bg-[#F8F9FB]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="bg-[#F5F7FA]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class~="bg-white"] {
-  background-color: #121A2B !important;
+html.capacitor-native.loadify-native-product-route #main-content [class*="bg-card"] {
+  background-color: #FFFFFF !important;
+  border-color: #DCE3ED !important;
 }
 
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="bg-[#F3F5F7]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="bg-[#F4F6F8]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="bg-[#F6F4F1]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="bg-[#F4F4F5]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="bg-[#F7F4F0]"] {
-  background-color: #182235 !important;
-}
-
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="border-[#E"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="border-[#D"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="border-slate-200"] {
-  border-color: #2A344A !important;
-}
-
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-[#0A234F]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-[#243B5A]"] {
-  color: #F5F7FA !important;
-}
-
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-[#64748B]"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-[#667"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-[#6F"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-[#7A"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-[#8B95"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-slate-600"],
-html.capacitor-native:is(.loadify-native-product-route, .loadify-native-catalog-route, .loadify-native-category-route) [class*="text-slate-500"] {
-  color: #A7B0C0 !important;
-}
-
-/* Catalog-specific web literals. */
-html.capacitor-native.loadify-native-catalog-route #main-content [class*="bg-[#F7F9FC]"] {
-  background-color: #0A0E1A !important;
-}
-
-html.capacitor-native.loadify-native-catalog-route #main-content [class*="shadow-[0_8px_24px"] {
-  box-shadow: none !important;
-}
-
-/* Product-detail mobile overlay: restore the historical dark glass header. */
 html.capacitor-native.loadify-native-product-route #root [class~="md:hidden"][class~="fixed"][class~="top-0"][class~="left-0"][class~="right-0"] {
-  background: rgba(7, 8, 11, 0.88) !important;
-  border-color: rgba(255, 255, 255, 0.07) !important;
+  background: rgba(248, 247, 244, 0.96) !important;
+  border-color: rgba(10, 35, 79, 0.08) !important;
 }
 
 html.capacitor-native.loadify-native-product-route #root [class~="md:hidden"][class~="fixed"][class~="top-0"][class~="left-0"][class~="right-0"] button {
-  background: rgba(255, 255, 255, 0.10) !important;
+  background: #FFFFFF !important;
+  border-color: rgba(10, 35, 79, 0.09) !important;
 }
 
 html.capacitor-native.loadify-native-product-route #root [class~="md:hidden"][class~="fixed"][class~="top-0"][class~="left-0"][class~="right-0"] svg {
-  color: #FFFFFF !important;
+  color: #0A234F !important;
 }
 
-/* Product-detail mobile inline information card. */
-html.capacitor-native.loadify-native-product-route #main-content [class~="order-2"][class~="md:hidden"] {
-  background: #12121A !important;
-  border-color: rgba(255, 255, 255, 0.07) !important;
-  color: #FFFFFF !important;
-}
-
-html.capacitor-native.loadify-native-product-route #main-content [class~="order-2"][class~="md:hidden"] h1,
-html.capacitor-native.loadify-native-product-route #main-content [class~="order-2"][class~="md:hidden"] p,
-html.capacitor-native.loadify-native-product-route #main-content [class~="order-2"][class~="md:hidden"] span {
-  color: #FFFFFF !important;
-}
-
-html.capacitor-native.loadify-native-product-route #main-content [class~="order-2"][class~="md:hidden"] > p:not(:first-of-type),
-html.capacitor-native.loadify-native-product-route #main-content [class~="order-2"][class~="md:hidden"] > div > span:first-child {
-  color: rgba(255, 255, 255, 0.56) !important;
-}
-
-html.capacitor-native.loadify-native-product-route #main-content [class~="order-2"][class~="md:hidden"] > div {
-  border-color: rgba(255, 255, 255, 0.07) !important;
-}
-
-html.capacitor-native.loadify-native-product-route #main-content [class~="order-2"][class~="md:hidden"] select {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  color: #FFFFFF !important;
-}
-
-/* Product-detail description card remains a native dark card. */
-html.capacitor-native.loadify-native-product-route #main-content [class*="bg-card"] {
-  background-color: #121A2B !important;
-  border-color: #2A344A !important;
-}
-
-/* Product-detail fixed action bar — dark shell + gold primary CTA. */
 html.capacitor-native.loadify-native-product-route #root [class~="md:hidden"][class~="fixed"][class~="left-0"][class~="right-0"]:not([class~="top-0"]) {
-  background: rgba(10, 14, 26, 0.97) !important;
-  border-color: rgba(255, 255, 255, 0.07) !important;
-}
-
-html.capacitor-native.loadify-native-product-route #root [class~="md:hidden"][class~="fixed"][class~="left-0"][class~="right-0"]:not([class~="top-0"]) button:first-child {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  color: #FFFFFF !important;
-}
-
-html.capacitor-native.loadify-native-product-route #root [class~="md:hidden"][class~="fixed"][class~="left-0"][class~="right-0"]:not([class~="top-0"]) button:last-child {
-  background: #D4AF37 !important;
-  color: #121A2B !important;
+  background: rgba(252, 251, 249, 0.98) !important;
+  border-color: rgba(10, 35, 79, 0.08) !important;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Native login corrections                                                    */
+/* Native login layout corrections                                             */
 /* -------------------------------------------------------------------------- */
 
-/* The selector intentionally matches the existing Login.tsx root exactly so
- * no marketplace, dashboard, checkout, admin, or other mobile surface inherits
- * these layout rules.
- */
 html.capacitor-native #main-content.flex.bg-background {
   margin-top: 0 !important;
   min-height: 100dvh !important;
@@ -228,10 +134,6 @@ html.capacitor-native #main-content.flex.bg-background > div:last-child {
   min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
 }
 
-/* Login.tsx vertically centres this wrapper on the website. In the native app,
- * an OAuth notice changes the card height and therefore shifts the whole form.
- * Anchor only the native login form to the top instead.
- */
 html.capacitor-native #main-content.flex.bg-background > div:last-child > div {
   align-items: flex-start !important;
   padding-top: 1rem !important;
@@ -244,7 +146,6 @@ html.capacitor-native #main-content.flex.bg-background > div:last-child > div > 
   max-width: 32rem;
 }
 
-/* Protect the final account CTA from Android gesture / three-button navigation. */
 html.capacitor-native #main-content.flex.bg-background > div:last-child > div > div > p:last-child {
   margin-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
