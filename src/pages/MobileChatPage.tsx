@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
@@ -86,7 +86,8 @@ export default function MobileChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
 
   const navigate = useNavigate();
-  const showDebug = import.meta.env.DEV;
+  const location = useLocation();
+  const showDebug = new URLSearchParams(location.search).get("debug") === "1" || import.meta.env.DEV;
   const { user, isLoading } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
 
@@ -102,10 +103,6 @@ export default function MobileChatPage() {
   // Typing indicator — true when the other participant is typing
   const [otherTyping, setOtherTyping] = useState(false);
   const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const typingBroadcastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const typingActiveRef = useRef(false);
-  const presenceReadyRef = useRef(false);
-  const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   // Track whether the last sent message has been read by the other participant
   const [lastSentRead, setLastSentRead] = useState(false);
   // Product preview in chat header
@@ -116,21 +113,6 @@ export default function MobileChatPage() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const publishTypingState = (typing: boolean) => {
-    const channel = presenceChannelRef.current;
-    if (!channel || !presenceReadyRef.current) return;
-    typingActiveRef.current = typing;
-    void channel.track({ typing });
-  };
-
-  const stopTypingBroadcast = () => {
-    if (typingBroadcastTimeout.current) {
-      clearTimeout(typingBroadcastTimeout.current);
-      typingBroadcastTimeout.current = null;
-    }
-    if (typingActiveRef.current) publishTypingState(false);
-  };
 
   // Auth guard
   useEffect(() => {
@@ -147,23 +129,19 @@ export default function MobileChatPage() {
     const load = async () => {
       // Force-verify auth session before RLS-protected fetch.
       const { data: { session }, error: authError } = await supabase.auth.getSession();
-      if (import.meta.env.DEV) {
-        console.info("[MobileChat] session check", {
+      console.info("[MobileChat] session check", {
+        conversationId,
+        userId: user?.id,
+        hasSession: !!session,
+        sessionMatchesStore: session?.user?.id === user?.id,
+        authError: authError?.message ?? null,
+      });
+      if (!session?.user) {
+        console.warn("[MobileChat] No valid session during conversation load", {
           conversationId,
           userId: user?.id,
-          hasSession: !!session,
-          sessionMatchesStore: session?.user?.id === user?.id,
           authError: authError?.message ?? null,
         });
-      }
-      if (!session?.user) {
-        if (import.meta.env.DEV) {
-          console.warn("[MobileChat] No valid session during conversation load", {
-            conversationId,
-            userId: user?.id,
-            authError: authError?.message ?? null,
-          });
-        }
         if (!cancelled) navigate("/inbox", { replace: true });
         return;
       }
@@ -175,39 +153,33 @@ export default function MobileChatPage() {
         .maybeSingle<ConversationMeta>();
 
       if (error || !conv) {
-        if (import.meta.env.DEV) {
-          console.warn("[MobileChat] Conversation not found or error", {
-            conversationId,
-            userId: user?.id,
-            error: error?.message ?? null,
-          });
-        }
+        console.warn("[MobileChat] Conversation not found or error", {
+          conversationId,
+          userId: user?.id,
+          error: error?.message ?? null,
+        });
         if (!cancelled) navigate("/inbox", { replace: true });
         return;
       }
       // Verify the current user is actually a participant (belt-and-suspenders
       // on top of Supabase RLS, in case of any stale session edge-case)
       if (conv.user1Id !== user.id && conv.user2Id !== user.id) {
-        if (import.meta.env.DEV) {
-          console.warn("[MobileChat] User is not a participant in this conversation", {
-            conversationId,
-            userId: user.id,
-            user1Id: conv.user1Id,
-            user2Id: conv.user2Id,
-          });
-        }
+        console.warn("[MobileChat] User is not a participant in this conversation", {
+          conversationId,
+          userId: user.id,
+          user1Id: conv.user1Id,
+          user2Id: conv.user2Id,
+        });
         if (!cancelled) navigate("/inbox", { replace: true });
         return;
       }
       if (cancelled) return;
-      if (import.meta.env.DEV) {
-        console.info("[MobileChat] Conversation loaded", {
-          conversationId,
-          userId: user?.id,
-          user1Id: conv.user1Id,
-          user2Id: conv.user2Id,
-        });
-      }
+      console.info("[MobileChat] Conversation loaded", {
+        conversationId,
+        userId: user?.id,
+        user1Id: conv.user1Id,
+        user2Id: conv.user2Id,
+      });
       setConvMeta(conv);
 
       // Resolve the other participant's name
@@ -243,7 +215,7 @@ export default function MobileChatPage() {
       }
     };
 
-    void load();
+    load();
     return () => { cancelled = true; };
   }, [conversationId, user?.id, navigate]);
 
@@ -255,12 +227,10 @@ export default function MobileChatPage() {
     const load = async () => {
       setLoadingMsgs(true);
       setMessages([]);
-      if (import.meta.env.DEV) {
-        console.info("[MobileChat] loadMessages:start", {
-          conversationId,
-          userId: user?.id,
-        });
-      }
+      console.info("[MobileChat] loadMessages:start", {
+        conversationId,
+        userId: user?.id,
+      });
       try {
         const { data, error } = await supabase
           .from("messages")
@@ -272,25 +242,20 @@ export default function MobileChatPage() {
         if (error) throw error;
         if (cancelled) return;
         const msgs = (data as Message[]) ?? [];
-        if (import.meta.env.DEV) {
-          console.info("[MobileChat] loadMessages:result", {
-            conversationId,
-            userId: user?.id,
-            count: msgs.length,
-          });
-        }
+        console.info("[MobileChat] loadMessages:result", {
+          conversationId,
+          userId: user?.id,
+          count: msgs.length,
+        });
         setMessages(msgs);
 
         // Mark incoming as read
-        const { error: readError } = await supabase
+        await supabase
           .from("messages")
           .update({ isRead: true, readAt: new Date().toISOString() })
           .eq("conversationId", conversationId)
           .eq("receiverId", user.id)
           .eq("isRead", false);
-        if (readError && import.meta.env.DEV) {
-          console.warn("[MobileChat] Failed to mark loaded messages as read", readError.message);
-        }
       } catch {
         toast({ title: "Failed to load messages", variant: "destructive" });
       } finally {
@@ -298,7 +263,7 @@ export default function MobileChatPage() {
       }
     };
 
-    void load();
+    load();
     return () => { cancelled = true; };
   }, [conversationId, user?.id]);
 
@@ -306,12 +271,10 @@ export default function MobileChatPage() {
   useEffect(() => {
     if (!loadingMsgs) return;
     const timeout = setTimeout(() => {
-      if (import.meta.env.DEV) {
-        console.warn("[MobileChat] Message loading timeout — forcing off after 8s", {
-          conversationId,
-          userId: user?.id,
-        });
-      }
+      console.warn("[MobileChat] Message loading timeout — forcing off after 8s", {
+        conversationId,
+        userId: user?.id,
+      });
       setLoadingMsgs(false);
     }, 8000);
     return () => clearTimeout(timeout);
@@ -350,18 +313,16 @@ export default function MobileChatPage() {
     return () => { void supabase.removeChannel(channel); };
   }, [conversationId, user?.id]);
 
-  // Supabase Presence channel — one managed channel per conversation.
+  // Supabase Presence channel — used for typing indicator only.
+  // We join the channel for the conversation; each side broadcasts
+  // {typing:true|false} via presenceState.
   useEffect(() => {
     if (!conversationId || !user?.id || !otherId) return;
-
-    presenceReadyRef.current = false;
-    typingActiveRef.current = false;
 
     const presenceChannel = supabase.channel(
       `chat-presence:${conversationId}`,
       { config: { presence: { key: user.id } } },
     );
-    presenceChannelRef.current = presenceChannel;
 
     presenceChannel
       .on("presence", { event: "sync" }, () => {
@@ -380,28 +341,10 @@ export default function MobileChatPage() {
           }, TYPING_INDICATOR_TIMEOUT_MS);
         }
       })
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          presenceReadyRef.current = true;
-          void presenceChannel.track({ typing: false });
-        }
-      });
+      .subscribe();
 
     return () => {
-      if (otherTypingTimeout.current) {
-        clearTimeout(otherTypingTimeout.current);
-        otherTypingTimeout.current = null;
-      }
-      if (typingBroadcastTimeout.current) {
-        clearTimeout(typingBroadcastTimeout.current);
-        typingBroadcastTimeout.current = null;
-      }
-      presenceReadyRef.current = false;
-      typingActiveRef.current = false;
-      if (presenceChannelRef.current === presenceChannel) {
-        presenceChannelRef.current = null;
-      }
-      void presenceChannel.untrack();
+      if (otherTypingTimeout.current) clearTimeout(otherTypingTimeout.current);
       void supabase.removeChannel(presenceChannel);
     };
   }, [conversationId, user?.id, otherId]);
@@ -445,7 +388,6 @@ export default function MobileChatPage() {
     setSending(true);
     const text = draft.trim();
     setDraft("");
-    stopTypingBroadcast();
     try {
       const res = await authorizedFetch("/.netlify/functions/send-message", {
         method: "POST",
@@ -457,17 +399,14 @@ export default function MobileChatPage() {
         isRead?: boolean; createdAt?: string; error?: string;
       };
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-      if (!json.id || !json.senderId || typeof json.message !== "string" || !json.createdAt) {
-        throw new Error("Message service returned an incomplete response.");
-      }
 
       // Append to local state; Realtime will also fire but dedup by id prevents duplicates.
       const msg: Message = {
-        id:        json.id,
-        senderId:  json.senderId,
-        message:   json.message,
+        id:        json.id!,
+        senderId:  json.senderId!,
+        message:   json.message!,
         isRead:    json.isRead ?? false,
-        createdAt: json.createdAt,
+        createdAt: json.createdAt!,
       };
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
@@ -490,21 +429,17 @@ export default function MobileChatPage() {
     }
   };
 
-  // Broadcast typing through the already-subscribed Presence channel.
+  // Broadcast typing state to the Presence channel.
+  // Uses a 1 s debounce so we don't spam on every keystroke.
+  const typingBroadcastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const nextDraft = e.target.value;
-    setDraft(nextDraft);
-
-    if (!nextDraft.trim()) {
-      stopTypingBroadcast();
-      return;
-    }
-
-    if (!typingActiveRef.current) publishTypingState(true);
+    setDraft(e.target.value);
+    if (!conversationId || !user?.id) return;
+    const channel = supabase.channel(`chat-presence:${conversationId}`);
+    void channel.track({ typing: true });
     if (typingBroadcastTimeout.current) clearTimeout(typingBroadcastTimeout.current);
     typingBroadcastTimeout.current = setTimeout(() => {
-      typingBroadcastTimeout.current = null;
-      if (typingActiveRef.current) publishTypingState(false);
+      void channel.track({ typing: false });
     }, 1500);
   };
 
@@ -660,7 +595,7 @@ export default function MobileChatPage() {
         )}
       </div>
 
-      {/* Debug state panel — development only */}
+      {/* Debug state panel — activate with ?debug=1 in the URL */}
       {showDebug && (
         <div className="shrink-0 px-3 py-1 bg-yellow-500/10 border-t border-yellow-500/20 text-[10px] font-mono text-yellow-400">
           uid: {user?.id ?? "—"} | conv: {conversationId ?? "—"} | msgs: {messages.length}

@@ -58,6 +58,7 @@ function buildSections(role: string | undefined): Section[] {
   ];
 }
 
+// ── Row component ──────────────────────────────────────────────────────────────
 function MenuRow({ label, to, external, badgeCount }: SectionItem) {
   const inner = (
     <div
@@ -108,6 +109,7 @@ function MenuRow({ label, to, external, badgeCount }: SectionItem) {
   );
 }
 
+// ── Section component ──────────────────────────────────────────────────────────
 function MenuSection({ title, items }: Section) {
   return (
     <div style={{ marginBottom: 8 }}>
@@ -145,6 +147,7 @@ function MenuSection({ title, items }: Section) {
   );
 }
 
+// ── Guest CTA ──────────────────────────────────────────────────────────────────
 function GuestView() {
   const navigate = useNavigate();
   return (
@@ -204,6 +207,7 @@ function GuestView() {
   );
 }
 
+// ── Main page ──────────────────────────────────────────────────────────────────
 export default function MobileProfilePage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -217,7 +221,6 @@ export default function MobileProfilePage() {
        ((user as { lastName?: string }).lastName?.[0] ?? '')).toUpperCase() || displayName?.[0]?.toUpperCase() || '?'
     : null;
 
-  const isSellerOrAdmin = user?.role === 'seller' || user?.role === 'admin';
   const sections = buildSections(user?.role as string | undefined);
   const unreadNotifications = useUnreadNotificationsCount(user?.id);
 
@@ -234,6 +237,7 @@ export default function MobileProfilePage() {
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
     >
+      {/* ── Page title ──────────────────────────────────────────────────────── */}
       <div
         style={{
           paddingInline: 'var(--mob-side, 16px)',
@@ -248,6 +252,7 @@ export default function MobileProfilePage() {
         <GuestView />
       ) : (
         <>
+          {/* ── Profile header ──────────────────────────────────────────────── */}
           <div
             style={{
               paddingInline: 'var(--mob-side, 16px)',
@@ -258,6 +263,7 @@ export default function MobileProfilePage() {
               gap: 14,
             }}
           >
+            {/* Avatar */}
             <div
               style={{
                 width: 60,
@@ -275,20 +281,22 @@ export default function MobileProfilePage() {
               </span>
             </div>
 
+            {/* Name + listings link */}
             <div style={{ minWidth: 0 }}>
               <p className="text-[18px] font-bold text-foreground m-0" style={{ lineHeight: 1.2 }}>
                 {displayName}
               </p>
               <Link
-                to={isSellerOrAdmin ? '/seller/products' : '/catalog'}
+                to={user.role === 'seller' || user.role === 'admin' ? '/seller/products' : '/catalog'}
                 style={{ fontSize: 13, textDecoration: 'none', fontWeight: 600 }}
                 className="text-primary"
               >
-                {isSellerOrAdmin ? 'View my listings →' : 'Browse marketplace →'}
+                View my listings →
               </Link>
             </div>
           </div>
 
+          {/* ── Sections ────────────────────────────────────────────────────── */}
           {sections.map((section) => (
             <MenuSection
               key={section.title}
@@ -301,6 +309,7 @@ export default function MobileProfilePage() {
             />
           ))}
 
+          {/* ── Sign out ────────────────────────────────────────────────────── */}
           <div style={{ marginTop: 8, marginBottom: 8 }}>
             <button
               onClick={handleSignOut}
