@@ -16,6 +16,7 @@ describe('Avasam controlled read-only token transport probe', () => {
     process.env.AVASAM_CONSUMER_KEY = 'test-consumer-secret-value';
     process.env.AVASAM_SECRET_KEY = 'test-secret-secret-value';
     process.env.AVASAM_PROBE_SKU = 'S0671779793';
+    process.env.AVASAM_PROBE_TRANSPORT = 'authorization-raw';
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -26,7 +27,7 @@ describe('Avasam controlled read-only token transport probe', () => {
     process.env = { ...ORIGINAL_ENV };
   });
 
-  it('proves Bearer only when unauthenticated control fails and Bearer returns the documented inventory envelope', async () => {
+  it('proves raw Authorization only when the unauthenticated control fails and the authenticated call returns the documented inventory envelope', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(response(200, {
         access_token: 'fake-access-token',
@@ -41,13 +42,9 @@ describe('Avasam controlled read-only token transport probe', () => {
 
     const evidence = await runAvasamBearerReadOnlyProbe();
 
-    expect(evidence.unauthenticated).toEqual({ status: 401, shapeOk: false });
-    expect(evidence.bearer).toEqual({
-      status: 200,
-      shapeOk: true,
-      count: 1,
-      total: 1,
-      skuMatched: true,
+    expect(evidence).toEqual({
+      endpoint: '/apiseeker/ProductModule/GetInventoryListWithFilter',
+      transport: 'authorization-raw',
     });
     expect(fetchMock).toHaveBeenCalledTimes(3);
 
@@ -59,7 +56,7 @@ describe('Avasam controlled read-only token transport probe', () => {
     });
 
     const controlCall = fetchMock.mock.calls[1];
-    const bearerCall = fetchMock.mock.calls[2];
+    const authenticatedCall = fetchMock.mock.calls[2];
     expect(controlCall[0]).toBe('https://app.avasam.com/apiseeker/ProductModule/GetInventoryListWithFilter');
     expect(controlCall[1].headers.Authorization).toBeUndefined();
     expect(JSON.parse(controlCall[1].body)).toMatchObject({
@@ -67,9 +64,13 @@ describe('Avasam controlled read-only token transport probe', () => {
       limit: 1,
       page: 0,
     });
-    expect(bearerCall[1].headers.Authorization).toBe('Bearer fake-access-token');
+    expect(authenticatedCall[1].headers.Authorization).toBe('fake-access-token');
+    expect(authenticatedCall[1].headers.Authorization).not.toContain('Bearer ');
 
-    const emitted = console.log.mock.calls.map(args => args.join(' ')).join('\n');
+    const emitted = [
+      ...console.log.mock.calls,
+      ...console.error.mock.calls,
+    ].map(args => args.join(' ')).join('\n');
     expect(emitted).not.toContain('fake-access-token');
     expect(emitted).not.toContain('test-consumer-secret-value');
     expect(emitted).not.toContain('test-secret-secret-value');
@@ -77,7 +78,7 @@ describe('Avasam controlled read-only token transport probe', () => {
     expect(emitted).not.toContain('"Stock"');
   });
 
-  it('fails closed when Bearer does not produce a valid read-only response', async () => {
+  it('fails closed when raw Authorization does not produce a valid read-only response', async () => {
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(response(200, {
         access_token: 'fake-access-token',
@@ -86,7 +87,7 @@ describe('Avasam controlled read-only token transport probe', () => {
       .mockResolvedValueOnce(response(401, { message: 'unauthorized' }))
       .mockResolvedValueOnce(response(401, { message: 'unauthorized' })));
 
-    await expect(runAvasamBearerReadOnlyProbe()).rejects.toThrow('Bearer transport was not proven');
+    await expect(runAvasamBearerReadOnlyProbe()).rejects.toThrow('authorization-raw transport was not proven');
   });
 
   it('fails closed if the supposedly unauthenticated control already returns a valid inventory envelope', async () => {
@@ -98,7 +99,7 @@ describe('Avasam controlled read-only token transport probe', () => {
       .mockResolvedValueOnce(response(200, { data: [], total: 0 }))
       .mockResolvedValueOnce(response(200, { data: [], total: 0 })));
 
-    await expect(runAvasamBearerReadOnlyProbe()).rejects.toThrow('Bearer transport was not proven');
+    await expect(runAvasamBearerReadOnlyProbe()).rejects.toThrow('authorization-raw transport was not proven');
   });
 
   it('requires all secrets and the explicitly scoped probe SKU before any network access', async () => {
