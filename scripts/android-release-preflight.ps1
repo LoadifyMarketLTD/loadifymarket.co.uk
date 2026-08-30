@@ -40,14 +40,14 @@ function Get-ApkCertSha256([string]$ApkPath, [string]$ApkSigner) {
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     try {
-        $out = @(& $ApkSigner verify --print-certs $ApkPath 2>&1 | ForEach-Object { $_.ToString() })
+        $output = @(& $ApkSigner verify --print-certs $ApkPath 2>&1 | ForEach-Object { $_.ToString() })
         $exitCode = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $previousErrorActionPreference
     }
 
     if ($exitCode -ne 0) { return $null }
-    $line = $out | Select-String -Pattern "Signer #1 certificate SHA-256 digest:" | Select-Object -First 1
+    $line = $output | Select-String -Pattern "Signer #1 certificate SHA-256 digest:" | Select-Object -First 1
     if (-not $line) { return $null }
     return (($line.ToString() -split ":", 2)[1]).Trim().ToLowerInvariant()
 }
@@ -59,12 +59,12 @@ function Read-KeyValueFile([string]$Path) {
     foreach ($line in Get-Content $Path) {
         $trimmed = $line.Trim()
         if (-not $trimmed -or $trimmed.StartsWith('#') -or $trimmed.StartsWith('!')) { continue }
-        $idx = $trimmed.IndexOf('=')
-        if ($idx -lt 1) { $idx = $trimmed.IndexOf(':') }
-        if ($idx -lt 1) { continue }
+        $index = $trimmed.IndexOf('=')
+        if ($index -lt 1) { $index = $trimmed.IndexOf(':') }
+        if ($index -lt 1) { continue }
 
-        $name = $trimmed.Substring(0, $idx).Trim()
-        $value = $trimmed.Substring($idx + 1).Trim()
+        $name = $trimmed.Substring(0, $index).Trim()
+        $value = $trimmed.Substring($index + 1).Trim()
         if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
             $value = $value.Substring(1, $value.Length - 2)
         }
@@ -137,19 +137,13 @@ Write-Host "Package: $Package"
 Write-Host "Expected signing certificate SHA-256: $ExpectedInstalledCertSha256"
 
 $ApkSigner = Find-ApkSigner
-if ($ApkSigner) {
-    Pass "Android apksigner is available"
-} else {
-    Fail "Android apksigner is unavailable"
-}
+if ($ApkSigner) { Pass "Android apksigner is available" } else { Fail "Android apksigner is unavailable" }
 
-if ([string]::IsNullOrWhiteSpace($BackupDir)) {
-    if (Test-Path $BackupRoot) {
-        $latest = Get-ChildItem $BackupRoot -Directory -Filter "installed-*" -ErrorAction SilentlyContinue |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
-        if ($latest) { $BackupDir = $latest.FullName }
-    }
+if ([string]::IsNullOrWhiteSpace($BackupDir) -and (Test-Path $BackupRoot)) {
+    $latest = Get-ChildItem $BackupRoot -Directory -Filter "installed-*" -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1
+    if ($latest) { $BackupDir = $latest.FullName }
 }
 
 Write-Host "`n=== ROLLBACK BACKUP ===" -ForegroundColor Cyan
@@ -235,11 +229,7 @@ foreach ($name in $names) {
 }
 
 $keystorePath = Resolve-KeystorePath ([string]$values['LOADIFY_UPLOAD_STORE_FILE'])
-if ($keystorePath) {
-    Pass "Configured release keystore file exists"
-} else {
-    Fail "Configured release keystore file is missing or unresolvable"
-}
+if ($keystorePath) { Pass "Configured release keystore file exists" } else { Fail "Configured release keystore file is missing or unresolvable" }
 
 $signingFieldsReady = @($names | ForEach-Object { -not [string]::IsNullOrWhiteSpace([string]$values[$_]) })
 $signingReady = ($signingFieldsReady -notcontains $false) -and [bool]$keystorePath
@@ -306,11 +296,8 @@ if (Test-Path $firebasePath) {
     Warn "google-services.json is currently missing locally"
 }
 
-# The current checkout UI does not instantiate Stripe.js. It POSTs to the
-# server-side create-checkout function and opens the returned Stripe Checkout
-# URL. Therefore the client publishable key is optional for the current APK.
-# Historical Android CI also guarded Supabase URL + anon key as required while
-# carrying VITE_STRIPE_PUBLISHABLE_KEY only as an optional environment value.
+# Current checkout is server-driven through create-checkout and does not consume
+# VITE_STRIPE_PUBLISHABLE_KEY in the APK client. Keep it informational only.
 $requiredRuntimeNames = @(
     'VITE_SUPABASE_URL',
     'VITE_SUPABASE_ANON_KEY',
@@ -343,16 +330,23 @@ if ($runtimeReady) {
         $runtimeReady = $false
     }
 
-    $anon = [string]$runtimeValues['VITE_SUPABASE_ANON_KEY']
-    if ($anon -notmatch '^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$') {
-        Fail "VITE_SUPABASE_ANON_KEY is not JWT-shaped"
+    $publicClientKey = [string]$runtimeValues['VITE_SUPABASE_ANON_KEY']
+    if ($publicClientKey -match '\s') {
+        Fail "VITE_SUPABASE_ANON_KEY contains whitespace or newline"
         $runtimeReady = $false
-    } else {
-        $payload = Decode-JwtPayload $anon
+    } elseif ($publicClientKey.StartsWith('sb_publishable_')) {
+        Pass "Supabase public client key uses modern publishable-key format"
+    } elseif ($publicClientKey -match '^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$') {
+        $payload = Decode-JwtPayload $publicClientKey
         if (-not $payload -or -not ($payload.PSObject.Properties.Name -contains 'role') -or [string]$payload.role -ne 'anon') {
-            Fail "VITE_SUPABASE_ANON_KEY does not decode to role=anon"
+            Fail "Legacy Supabase client key does not decode to role=anon"
             $runtimeReady = $false
+        } else {
+            Pass "Supabase public client key uses legacy anon-JWT format"
         }
+    } else {
+        Fail "VITE_SUPABASE_ANON_KEY is neither a legacy anon JWT nor a modern sb_publishable_ key"
+        $runtimeReady = $false
     }
 
     if ([string]$runtimeValues['VITE_APP_URL'] -notmatch '^https://(?:www\.)?loadifymarket\.co\.uk/?$') {
