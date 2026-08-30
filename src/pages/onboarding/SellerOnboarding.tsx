@@ -62,7 +62,7 @@ interface OnboardingStatus {
 
 const STEPS = [
   { id: 1, label: 'Seller type', icon: User },
-  { id: 2, label: 'Business details', icon: Building2 },
+  { id: 2, label: 'Profile details', icon: Building2 },
   { id: 3, label: 'Store identity', icon: Store },
   { id: 4, label: 'Catalogue', icon: Package },
   { id: 5, label: 'Activation', icon: CreditCard },
@@ -349,6 +349,9 @@ const SellerOnboarding = () => {
     );
   }
 
+  const individualProfile = status.sellerType === 'individual';
+  const profileLabel = individualProfile ? 'Individual seller profile' : 'Business / trader profile';
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="mx-auto max-w-3xl space-y-7">
@@ -430,13 +433,17 @@ const SellerOnboarding = () => {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Complete your legal & business details</h2>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {individualProfile ? 'Complete your personal seller details' : 'Complete your legal & business details'}
+                </h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Add the factual identity, contact and address information required for your seller type. Company and VAT details are required only when applicable.
+                  {individualProfile
+                    ? 'Add your personal identity, contact and address information. Business name, Company Number and VAT Number are not required unless they genuinely apply.'
+                    : 'Add the factual identity, contact and address information required for your seller type. Company and VAT details are required only when applicable.'}
                 </p>
               </div>
               <StatusRow
-                label="Business/trader profile"
+                label={profileLabel}
                 done={status.profileComplete}
                 detail={status.profileComplete ? 'Required persisted profile fields are present.' : 'Your seller profile still has required information missing.'}
               />
@@ -525,7 +532,7 @@ const SellerOnboarding = () => {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <StatusRow label="Seller type" done={status.readiness.sellerTypeReady} />
-                <StatusRow label="Business details" done={status.readiness.profileReady} />
+                <StatusRow label={profileLabel} done={status.readiness.profileReady} />
                 <StatusRow label="Store identity" done={status.readiness.storeReady} />
                 <StatusRow label="Catalogue draft" done={status.readiness.catalogueReady} />
                 <StatusRow
