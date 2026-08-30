@@ -63,7 +63,7 @@ function routeFromPushAction(action: ActionPerformed): string {
     }
   }
 
-  return '/notifications';
+  return '/profile/notifications';
 }
 
 export function usePushTokenRegistration(userId?: string): void {
