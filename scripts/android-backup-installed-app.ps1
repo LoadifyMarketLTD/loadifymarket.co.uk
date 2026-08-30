@@ -1,5 +1,5 @@
 param(
-    [string]$DeviceSerial = "57311FDCQ00BGS"
+    [string]$DeviceSerial = "2A141FDH300HZL"
 )
 
 $ErrorActionPreference = "Stop"
@@ -106,7 +106,8 @@ foreach ($line in $pathLines) {
     $remote = ($line -replace '^package:', '').Trim()
     $leaf = Split-Path $remote -Leaf
     if ([string]::IsNullOrWhiteSpace($leaf)) { $leaf = "package-$index.apk" }
-    if ($pulled.Name -contains $leaf) { $leaf = "package-$index-$leaf" }
+    $existingNames = @($pulled | ForEach-Object { $_.Name })
+    if ($existingNames -contains $leaf) { $leaf = "package-$index-$leaf" }
     $local = Join-Path $BackupDir $leaf
     adb -s $DeviceSerial pull $remote $local | Out-Null
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $local)) {
