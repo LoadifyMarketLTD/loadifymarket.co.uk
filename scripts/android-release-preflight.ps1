@@ -186,8 +186,26 @@ $signingReady = ($signingFieldsReady -notcontains $false) -and [bool]$keystorePa
 if ($signingReady) {
     $certTemp = Join-Path $env:TEMP "loadify-keystore-cert.der"
     if (Test-Path $certTemp) { Remove-Item $certTemp -Force }
-    & keytool -exportcert -alias ([string]$values['LOADIFY_UPLOAD_KEY_ALIAS']) -keystore $keystorePath -storepass ([string]$values['LOADIFY_UPLOAD_STORE_PASSWORD']) -file $certTemp 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0 -and (Test-Path $certTemp)) {
+
+    # Windows PowerShell can promote benign native stderr text from keytool
+    # (for example "Certificate stored in file ...") into a terminating
+    # NativeCommandError when ErrorActionPreference=Stop. Run keytool with a
+    # temporarily non-terminating preference, then trust only its exit code and
+    # the exported certificate file. No password/alias material is printed.
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $keytoolOutput = & keytool -exportcert `
+            -alias ([string]$values['LOADIFY_UPLOAD_KEY_ALIAS']) `
+            -keystore $keystorePath `
+            -storepass ([string]$values['LOADIFY_UPLOAD_STORE_PASSWORD']) `
+            -file $certTemp 2>&1
+        $keytoolExitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if ($keytoolExitCode -eq 0 -and (Test-Path $certTemp)) {
         $keystoreCert = (Get-FileHash -Algorithm SHA256 $certTemp).Hash.ToLowerInvariant()
         Remove-Item $certTemp -Force -ErrorAction SilentlyContinue
         if ($keystoreCert -eq $ExpectedInstalledCertSha256) {
@@ -197,6 +215,7 @@ if ($signingReady) {
             $signingReady = $false
         }
     } else {
+        Remove-Item $certTemp -Force -ErrorAction SilentlyContinue
         Fail "Local keystore could not be opened with the configured store password/alias"
         $signingReady = $false
     }
