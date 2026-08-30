@@ -35,9 +35,14 @@ const config: CapacitorConfig = {
       backgroundColor: '#F8F7F4',
       showSpinner: false,
     },
-    StatusBar: {
-      style: 'Dark',
-      backgroundColor: '#F8F7F4',
+    // Capacitor 8 bundles SystemBars with @capacitor/core. Use its modern
+    // edge-to-edge configuration instead of the legacy StatusBar background
+    // controls, and expose reliable safe-area variables to the WebView.
+    SystemBars: {
+      insetsHandling: 'css',
+      style: 'LIGHT',
+      hidden: false,
+      animation: 'NONE',
     },
   },
 };
