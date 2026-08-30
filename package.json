@@ -18,6 +18,7 @@
     "e2e:list": "playwright test --list",
     "e2e": "playwright test",
     "verify:local": "npm run typecheck && npm run lint && npm test && npm run verify:migrations && npm run e2e:setup && npm run e2e:typecheck && npm run e2e && npm run build",
+    "audit:bigbuy:readonly": "node scripts/audit/bigbuy-readonly-catalog-probe.mjs",
     "generate:icons": "npx @capacitor/assets@3.0.5 generate --iconBackgroundColor '#0A0E1A' --iconBackgroundColorDark '#0A0E1A'"
   },
   "dependencies": {
