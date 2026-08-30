@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";import {
   LayoutDashboard, Package, ShoppingCart, ShoppingBag, Truck,
-  RotateCcw, Star, Settings, UserCircle, ChevronRight,
+  RotateCcw, Star, Settings, UserCircle, ChevronRight, Store,
   LogOut, Menu, Bell, MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { useUnreadNotificationsCount } from "@/hooks/useUnreadNotificationsCount";
+import { isCapacitorNative } from "@/lib/capacitorUtils";
 import logo from "@/assets/loadify-logo-light.svg";
 
 const navItems = [
@@ -35,22 +36,36 @@ interface SidebarContentProps {
   displayName: string;
   onNavClick: () => void;
   onLogout: () => void;
+  nativeBrand: boolean;
 }
 
-const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentProps) => (
+const SidebarContent = ({ displayName, onNavClick, onLogout, nativeBrand }: SidebarContentProps) => (
   <div className="flex flex-col h-full">
     {/* Logo / Brand */}
     <div className="p-5 border-b border-border">
-      <div className="flex items-center gap-2.5">
-        <img src={logo} alt="" aria-hidden="true" className="w-9 h-9 shrink-0" />
-        <div className="min-w-0">
-          <p className="font-serif text-[16px] font-semibold leading-none text-[#0A234F]">
-            Loadify <span className="text-[#8A7351]">Market</span>
-          </p>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#5A6578] mt-1">Seller Hub</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[140px]">{displayName}</p>
+      {nativeBrand ? (
+        <div className="flex items-center gap-2.5">
+          <img src={logo} alt="" aria-hidden="true" className="w-9 h-9 shrink-0" />
+          <div className="min-w-0">
+            <p className="font-serif text-[16px] font-semibold leading-none text-[#0A234F]">
+              Loadify <span className="text-[#8A7351]">Market</span>
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#5A6578] mt-1">Seller Hub</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[140px]">{displayName}</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary hover:bg-primary-hover flex items-center justify-center shrink-0">
+            <Store className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground leading-none">Seller Hub</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[140px]">{displayName}</p>
+            <p className="text-[10px] text-muted-foreground/80 mt-0.5">Your seller dashboard</p>
+          </div>
+        </div>
+      )}
     </div>
 
     {/* Nav */}
@@ -112,6 +127,7 @@ const SellerShell = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const nativeBrand = isCapacitorNative();
 
   const unreadNotifications = useUnreadNotificationsCount(user?.id);
 
@@ -132,10 +148,10 @@ const SellerShell = () => {
   const headerHeight = "calc(var(--shell-offset-h, 0px) + env(safe-area-inset-top, 0px))";
 
   return (
-    <div className="market-workspace-light flex bg-[#F8F7F4] overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>
+    <div className="market-workspace-light flex bg-[#F7F9FC] overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
-        <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
+        <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} nativeBrand={nativeBrand} />
       </aside>
 
       {/* Mobile sidebar overlay */}
@@ -143,7 +159,7 @@ const SellerShell = () => {
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 h-full w-64 bg-card border-r border-border flex flex-col">
-            <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
+            <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} nativeBrand={nativeBrand} />
           </aside>
         </div>
       )}
@@ -155,15 +171,23 @@ const SellerShell = () => {
           <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
-            <img src={logo} alt="" aria-hidden="true" className="w-7 h-7 shrink-0" />
-            <div className="min-w-0 text-left">
-              <span className="block truncate font-serif text-[15px] font-semibold leading-tight text-[#0A234F]">
-                Loadify <span className="text-[#8A7351]">Market</span>
-              </span>
-              <span className="block text-[9px] font-semibold uppercase tracking-[0.12em] text-[#667085] leading-tight">Seller Hub</span>
+          {nativeBrand ? (
+            <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
+              <img src={logo} alt="" aria-hidden="true" className="w-7 h-7 shrink-0" />
+              <div className="min-w-0 text-left">
+                <span className="block truncate font-serif text-[15px] font-semibold leading-tight text-[#0A234F]">
+                  Loadify <span className="text-[#8A7351]">Market</span>
+                </span>
+                <span className="block text-[9px] font-semibold uppercase tracking-[0.12em] text-[#667085] leading-tight">Seller Hub</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <span className="font-bold text-foreground text-[15px] leading-tight">Seller Hub</span>
+              <span className="text-[10px] text-muted-foreground leading-tight truncate max-w-[160px]">{displayName}</span>
+              <span className="text-[10px] text-muted-foreground/80 leading-tight">Your seller dashboard</span>
+            </div>
+          )}
           <NavLink to="/seller/notifications" aria-label="Notifications" className="h-10 w-10 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground">
             <span className="relative inline-flex">
               <Bell className="h-5 w-5" />
