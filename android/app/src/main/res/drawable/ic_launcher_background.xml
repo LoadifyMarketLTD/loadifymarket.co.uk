@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Legacy background — superseded by mipmap-*/ic_launcher_background.png on Android 8+.
-     Kept as a solid-colour fallback for older API levels. -->
+<!-- Solid-colour launcher fallback for older Android API levels. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportHeight="108"
     android:viewportWidth="108">
     <path
-        android:fillColor="#0A0E1A"
+        android:fillColor="#F8F7F4"
         android:pathData="M0,0h108v108h-108z" />
 </vector>
