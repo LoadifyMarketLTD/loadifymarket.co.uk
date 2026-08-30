@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm test",
+    "prebuild": "npx vitest run netlify/functions/__tests__/profile-type-completeness.test.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
