@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "generate:icons": "npx @capacitor/assets@3.0.5 generate --iconBackgroundColor '#0A0E1A' --iconBackgroundColorDark '#0A0E1A'"
+    "generate:icons": "npx @capacitor/assets@3.0.5 generate --iconBackgroundColor '#F8F7F4' --iconBackgroundColorDark '#F8F7F4'"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
