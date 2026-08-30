@@ -8,11 +8,14 @@ const imageUpload = read('src/components/ImageUpload.tsx');
 const editorCss = read('src/seller-listing-editor-light.css');
 
 describe('Seller listing desktop density', () => {
-  it('uses the available desktop width and pairs compact sections on new listings', () => {
+  it('uses the available desktop width and explicit 12-column section spans', () => {
     expect(editorCss).toContain('max-width: 94rem !important');
     expect(editorCss).toContain('max-width: 100rem !important');
     expect(editorCss).toContain('form:has(input[name="listingContext"])');
-    expect(editorCss).toContain('grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr)');
+    expect(editorCss).toContain('grid-template-columns: repeat(12, minmax(0, 1fr));');
+    expect(editorCss).toContain('grid-column: 1 / span 3;');
+    expect(editorCss).toContain('grid-column: 4 / span 5;');
+    expect(editorCss).toContain('grid-column: 9 / -1;');
   });
 });
 
