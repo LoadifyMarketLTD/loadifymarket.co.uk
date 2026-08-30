@@ -11,7 +11,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Archive, MessageSquare, User, Search, SquarePen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
@@ -32,7 +32,8 @@ interface ConversationRow {
   productId: string | null;
 }
 
-type Conversation = InboxConversation & ConversationRow;
+type OtherParticipantRole = "buyer" | "seller" | null;
+type Conversation = InboxConversation & ConversationRow & { otherRole: OtherParticipantRole };
 
 type Tab = "all" | "unread" | "buyers" | "sellers";
 
@@ -88,7 +89,6 @@ function previewText(raw: string | null): string {
 
 export default function MobileInboxPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, isLoading } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -99,8 +99,8 @@ export default function MobileInboxPage() {
   // Retry counter and one-shot post-hydration re-fetch gate
   const hydrationRetryRef = useRef(0);
   const postHydrationRefetchFired = useRef(false);
-  // Show debug state panel when ?debug=1 is in the URL (or in dev mode)
-  const showDebug = new URLSearchParams(location.search).get("debug") === "1" || import.meta.env.DEV;
+  // Never expose account identifiers through a production query-string debug switch.
+  const showDebug = import.meta.env.DEV;
 
   // Auth gate — show prompt modal instead of hard redirect to /login
   useEffect(() => {
@@ -114,20 +114,24 @@ export default function MobileInboxPage() {
     setLoading(true);
     // Force-verify auth session before RLS-protected queries.
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    console.info("[MobileInboxPage] session check", {
-      userId: user.id,
-      hasSession: !!session,
-      sessionUserId: session?.user?.id,
-      sessionMatchesStore: session?.user?.id === user.id,
-      expiresAt: session?.expires_at ?? null,
-      sessionError: sessionError?.message ?? null,
-      retryAttempt: hydrationRetryRef.current,
-    });
-    if (!session?.user) {
-      console.warn("[MobileInboxPage] No valid session — conversations query skipped", {
+    if (import.meta.env.DEV) {
+      console.info("[MobileInboxPage] session check", {
         userId: user.id,
+        hasSession: !!session,
+        sessionUserId: session?.user?.id,
+        sessionMatchesStore: session?.user?.id === user.id,
+        expiresAt: session?.expires_at ?? null,
         sessionError: sessionError?.message ?? null,
+        retryAttempt: hydrationRetryRef.current,
       });
+    }
+    if (!session?.user) {
+      if (import.meta.env.DEV) {
+        console.warn("[MobileInboxPage] No valid session — conversations query skipped", {
+          userId: user.id,
+          sessionError: sessionError?.message ?? null,
+        });
+      }
       setLoading(false);
       return;
     }
@@ -142,17 +146,19 @@ export default function MobileInboxPage() {
 
       if (error) throw error;
       const convRows = (rows ?? []) as ConversationRow[];
-      console.info("[MobileInboxPage] conversations loaded", {
-        userId: user.id,
-        count: convRows.length,
-        sessionUserId: session?.user?.id,
-      });
-      if (convRows.length === 0) {
-        console.warn("[MobileInboxPage] RLS returned empty conversations list", {
+      if (import.meta.env.DEV) {
+        console.info("[MobileInboxPage] conversations loaded", {
           userId: user.id,
+          count: convRows.length,
           sessionUserId: session?.user?.id,
-          supabasePayload: rows,
         });
+        if (convRows.length === 0) {
+          console.warn("[MobileInboxPage] RLS returned empty conversations list", {
+            userId: user.id,
+            sessionUserId: session?.user?.id,
+            supabasePayload: rows,
+          });
+        }
       }
 
       // Resolve other participants
@@ -177,7 +183,7 @@ export default function MobileInboxPage() {
         unreadMap.set(r.conversationId, (unreadMap.get(r.conversationId) ?? 0) + 1);
       });
 
-      // Last message per conversation (with senderId for "Sent" tab)
+      // Last message per conversation.
       const convIds = convRows.map((r) => r.id);
       const lastMsgMap = new Map<string, string>();
       const lastMsgSenderMap = new Map<string, string>();
@@ -196,25 +202,36 @@ export default function MobileInboxPage() {
         });
       }
 
-      // Product images for conversation thumbnails
+      // Product images and ownership provide the safe Buyer/Seller classification.
+      // seller_profiles is intentionally not readable for arbitrary participants
+      // under RLS, so do not bypass that boundary just to obtain a role label.
       const productIds = [...new Set(convRows.map((r) => r.productId).filter((x): x is string => x != null))];
       const productImageMap = new Map<string, string>();
+      const productSellerMap = new Map<string, string>();
       if (productIds.length > 0) {
         const { data: products } = await supabase
           .from("products")
-          .select("id, images")
+          .select("id, images, sellerId")
           .in("id", productIds);
-        (products ?? []).forEach((p: { id: string; images?: string[] | null }) => {
+        (products ?? []).forEach((p: { id: string; images?: string[] | null; sellerId?: string | null }) => {
           const firstImg = (p.images ?? [])[0];
           if (firstImg) productImageMap.set(p.id, firstImg);
+          if (p.sellerId) productSellerMap.set(p.id, p.sellerId);
         });
       }
 
       const enriched: Conversation[] = convRows.map((r) => {
         const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
+        const productSellerId = r.productId ? (productSellerMap.get(r.productId) ?? null) : null;
+        const otherRole: OtherParticipantRole = productSellerId === user.id
+          ? "buyer"
+          : productSellerId === otherId
+            ? "seller"
+            : null;
         return {
           ...r,
           other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
+          otherRole,
           unreadCount: unreadMap.get(r.id) ?? 0,
           lastMessagePreview: lastMsgMap.get(r.id) ?? null,
           lastMessageSenderId: lastMsgSenderMap.get(r.id) ?? null,
@@ -275,9 +292,11 @@ export default function MobileInboxPage() {
   useEffect(() => {
     if (!loading) return;
     const timeout = setTimeout(() => {
-      console.warn("[MobileInboxPage] Loading timeout — forcing off after 10s", {
-        userId: user?.id,
-      });
+      if (import.meta.env.DEV) {
+        console.warn("[MobileInboxPage] Loading timeout — forcing off after 10s", {
+          userId: user?.id,
+        });
+      }
       setLoading(false);
     }, 10_000);
     return () => clearTimeout(timeout);
@@ -288,22 +307,25 @@ export default function MobileInboxPage() {
     if (!user?.id || postHydrationRefetchFired.current) return;
     postHydrationRefetchFired.current = true;
     const timer = setTimeout(() => {
-      console.info("[MobileInboxPage] Post-auth-hydration delayed re-fetch", {
-        userId: user.id,
-        currentCount: conversations.length,
-      });
+      if (import.meta.env.DEV) {
+        console.info("[MobileInboxPage] Post-auth-hydration delayed re-fetch", {
+          userId: user.id,
+          currentCount: conversations.length,
+        });
+      }
       void loadConversations();
     }, 2000);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Filter by tab
+  // Filter by tab. Buyer/Seller classification comes from product ownership,
+  // not from whichever participant happened to send the latest message.
   const tabFiltered = conversations.filter((c) => {
     if (activeTab === "all") return !c.isArchived;
     if (activeTab === "unread") return !c.isArchived && c.unreadCount > 0;
-    if (activeTab === "buyers") return !c.isArchived && c.lastMessageSenderId !== user?.id;
-    if (activeTab === "sellers") return !c.isArchived && c.lastMessageSenderId === user?.id;
+    if (activeTab === "buyers") return !c.isArchived && c.otherRole === "buyer";
+    if (activeTab === "sellers") return !c.isArchived && c.otherRole === "seller";
     return true;
   });
 
@@ -448,7 +470,7 @@ export default function MobileInboxPage() {
         </div>
       </div>
 
-      {/* ── Debug state panel — activate with ?debug=1 in the URL ── */}
+      {/* ── Debug state panel — development only ── */}
       {showDebug && (
         <div
           style={{ padding: "6px 12px", background: "rgba(234,179,8,0.08)", borderBottom: "1px solid rgba(234,179,8,0.18)" }}
