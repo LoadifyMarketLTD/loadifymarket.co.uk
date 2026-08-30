@@ -6,8 +6,10 @@ import MainLayout from "@/layouts/MainLayout";
 import MobileAppHeader from "@/components/MobileAppHeader";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
 import MobileGridCard from "@/components/MobileGridCard";
+import { LegacyNativeHome } from "@/components/native/LegacyNativeMarketplace";
 import { useMobileGrid } from "@/hooks/useMobileGrid";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { isCapacitorContext } from "@/lib/capacitorUtils";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
@@ -49,6 +51,11 @@ function MobileProductGrid({ products, startIndex = 0 }: { products: ReturnType<
   );
 }
 
+/**
+ * Mobile browser homepage only.
+ * The installed Capacitor app has its own canonical shell in
+ * LegacyNativeMarketplace and must not inherit web visual redesigns.
+ */
 function MobileHome() {
   const { products, loading, loadingMore, hasMore, loadMore } = useMobileGrid();
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -210,6 +217,7 @@ function DesktopHome() {
 
 export default function Home() {
   const isMobile = useIsMobile();
+  const isNativeApp = isCapacitorContext();
 
   useEffect(() => { trackViewHome(); }, []);
 
@@ -222,7 +230,9 @@ export default function Home() {
       />
 
       <main id="main-content">
-        {isMobile ? <MobileHome /> : <DesktopHome />}
+        {isMobile
+          ? (isNativeApp ? <LegacyNativeHome /> : <MobileHome />)
+          : <DesktopHome />}
       </main>
     </MainLayout>
   );
