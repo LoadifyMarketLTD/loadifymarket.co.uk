@@ -118,6 +118,75 @@ html.capacitor-native.loadify-native-product-route #root [class~="md:hidden"][cl
 }
 
 /* -------------------------------------------------------------------------- */
+/* Native Inbox / Chat light-identity repair                                   */
+/* -------------------------------------------------------------------------- */
+
+html.capacitor-native.loadify-native-inbox-route {
+  --background: 45 22% 96.5%;          /* #F8F7F4 */
+  --foreground: 218 78% 17.5%;         /* #0A234F */
+  --card: 0 0% 100%;
+  --card-foreground: 218 78% 17.5%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 218 78% 17.5%;
+  --primary: 218 78% 17.5%;            /* #0A234F */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 218 79% 13%;
+  --secondary: 42 19% 89%;
+  --secondary-foreground: 218 78% 17.5%;
+  --muted: 42 19% 89%;
+  --muted-foreground: 218 14% 41%;
+  --accent: 36 26% 43%;                /* #8A7351 */
+  --accent-foreground: 0 0% 100%;
+  --border: 215 32% 90%;               /* #DCE3ED */
+  --input: 215 32% 90%;
+  --ring: 218 78% 17.5%;
+  --surface: 0 0% 100%;
+  --surface-raised: 40 33% 98%;        /* #FCFBF9 */
+}
+
+html.capacitor-native.loadify-native-inbox-route body,
+html.capacitor-native.loadify-native-inbox-route #root {
+  background: #F8F7F4 !important;
+  color: #0A234F !important;
+}
+
+/* MobileInboxPage and MobileChatPage still contain literal dark-era white
+ * utility colours. Remap only those native routes; mobile web is untouched.
+ */
+html.capacitor-native.loadify-native-inbox-route #root [class*="bg-white/"] {
+  background-color: #FCFBF9 !important;
+}
+
+html.capacitor-native.loadify-native-inbox-route #root [class*="border-white"] {
+  border-color: #DCE3ED !important;
+}
+
+html.capacitor-native.loadify-native-inbox-route #root [class*="text-white"] {
+  color: #5A6578 !important;
+}
+
+html.capacitor-native.loadify-native-inbox-route #root input::placeholder,
+html.capacitor-native.loadify-native-inbox-route #root textarea::placeholder {
+  color: #8A94A3 !important;
+  opacity: 1 !important;
+}
+
+html.capacitor-native.loadify-native-inbox-route #root ul > li,
+html.capacitor-native.loadify-native-inbox-route #root [class*="sticky"][class*="bg-background"],
+html.capacitor-native.loadify-native-inbox-route #root [class*="shrink-0"][class*="bg-background"] {
+  border-color: rgba(10, 35, 79, 0.10) !important;
+}
+
+html.capacitor-native.loadify-native-inbox-route #root [class*="bg-primary"][class*="text-black"] {
+  color: #FFFFFF !important;
+}
+
+html.capacitor-native.loadify-native-inbox-route #root button[class*="bg-white/"],
+html.capacitor-native.loadify-native-inbox-route #root div[class*="bg-white/"] {
+  border-color: #DCE3ED !important;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Native login layout corrections                                             */
 /* -------------------------------------------------------------------------- */
 
