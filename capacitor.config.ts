@@ -31,14 +31,13 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      // Capacitor keeps the established installed-app launch identity. Public
-      // mobile web styling must not change the native splash surface.
-      backgroundColor: '#0A0E1A',
+      // Match the current Loadify Market site/app colour identity.
+      backgroundColor: '#F8F7F4',
       showSpinner: false,
     },
     StatusBar: {
       style: 'Dark',
-      backgroundColor: '#0A0E1A',
+      backgroundColor: '#F8F7F4',
     },
   },
 };
