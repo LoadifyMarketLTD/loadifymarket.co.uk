@@ -218,3 +218,112 @@ html.capacitor-native #main-content.flex.bg-background > div:last-child > div > 
 html.capacitor-native #main-content.flex.bg-background > div:last-child > div > div > p:last-child {
   margin-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
+
+/* -------------------------------------------------------------------------- */
+/* Native-only brand convergence                                               */
+/* -------------------------------------------------------------------------- */
+
+/* Seller workspace: keep every semantic control on the same ivory/navy/taupe
+ * identity. This is presentation-only and does not alter seller behaviour. */
+html.capacitor-native .market-workspace-light {
+  background: #F8F7F4 !important;
+  color: #0A234F !important;
+}
+
+html.capacitor-native .market-workspace-light [class*="bg-card"],
+html.capacitor-native .market-workspace-light [class*="bg-popover"] {
+  background-color: #FFFFFF !important;
+}
+
+html.capacitor-native .market-workspace-light [class*="border-white"],
+html.capacitor-native .market-workspace-light [class*="border-border"] {
+  border-color: #DCE3ED !important;
+}
+
+html.capacitor-native .market-workspace-light [class*="bg-primary"][class*="text-black"] {
+  color: #FFFFFF !important;
+}
+
+html.capacitor-native .market-workspace-light [class*="text-primary"] {
+  color: #0A234F !important;
+}
+
+html.capacitor-native .market-workspace-light [class*="bg-primary/10"],
+html.capacitor-native .market-workspace-light [class*="bg-primary/15"] {
+  background-color: rgba(10, 35, 79, 0.08) !important;
+}
+
+/* Seller listing editor had retained explicit historical gold and royal-blue
+ * literals. Override only inside the native WebView. */
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen {
+  background: #F8F7F4 !important;
+  color: #334155 !important;
+}
+
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen .max-w-3xl > .mb-6 h1,
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form > .bg-surface > h2,
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form > div[class*="bg-surface"] > h2 {
+  color: #0A234F !important;
+}
+
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form input[type="radio"],
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form input[type="checkbox"] {
+  accent-color: #0A234F !important;
+}
+
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form label[class*="border-primary"] {
+  background: rgba(10, 35, 79, 0.045) !important;
+  border-color: #0A234F !important;
+  box-shadow: 0 0 0 3px rgba(10, 35, 79, 0.08) !important;
+}
+
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form input:not([type="radio"]):not([type="checkbox"]):focus,
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form textarea:focus,
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form select:focus {
+  border-color: #0A234F !important;
+  box-shadow: 0 0 0 3px rgba(10, 35, 79, 0.09) !important;
+}
+
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form [class*="border-dashed"]:hover {
+  background: #FCFBF9 !important;
+  border-color: #8A7351 !important;
+}
+
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form button[type="submit"] {
+  background: #0A234F !important;
+  color: #FFFFFF !important;
+  border-color: #0A234F !important;
+  box-shadow: 0 7px 20px rgba(10, 35, 79, 0.14) !important;
+}
+
+html.capacitor-native.loadify-seller-listing-route .bg-background.min-h-screen form button[type="submit"]:hover:not(:disabled) {
+  background: #071A3C !important;
+}
+
+/* The hamburger drawer previously reintroduced royal-blue/orange/gold. In the
+ * native app it is a light ivory/white surface with restrained taupe accent. */
+html.capacitor-native.market-light-root body:not(:has(#login-email)):has([role="dialog"][aria-label="Navigation menu"]) > div[class*="bg-black/40"] {
+  background: rgba(10, 35, 79, 0.30) !important;
+}
+
+html.capacitor-native.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] {
+  background: #FCFBF9 !important;
+  border-color: #DCE3ED !important;
+  color: #0A234F !important;
+  box-shadow: 18px 0 50px rgba(10, 35, 79, 0.18) !important;
+}
+
+html.capacitor-native.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="text-"],
+html.capacitor-native.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] svg {
+  color: #334155 !important;
+}
+
+html.capacitor-native.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] a:hover,
+html.capacitor-native.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] button:hover {
+  background-color: rgba(10, 35, 79, 0.055) !important;
+}
+
+html.capacitor-native.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] a:hover [class*="text-"],
+html.capacitor-native.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] button:hover [class*="text-"] {
+  color: #8A7351 !important;
+}
