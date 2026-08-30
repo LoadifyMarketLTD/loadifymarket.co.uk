@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "vitest run netlify/functions/__tests__/bigbuy-readonly-contracts.test.ts && eslint netlify/functions/_shared/bigBuyClient.ts netlify/functions/_shared/bigBuyContracts.ts netlify/functions/__tests__/bigbuy-readonly-contracts.test.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
