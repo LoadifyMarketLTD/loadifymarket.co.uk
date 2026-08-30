@@ -21,6 +21,71 @@ function Fail([string]$Message) {
     exit 1
 }
 
+function Pass([string]$Message) {
+    Write-Host "PASS: $Message" -ForegroundColor Green
+}
+
+function Warn([string]$Message) {
+    Write-Host "WARN: $Message" -ForegroundColor Yellow
+}
+
+function Get-AdbState {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $output = @(& adb -s $DeviceSerial get-state 2>&1 | ForEach-Object { $_.ToString() })
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+
+    if ($exitCode -ne 0 -or $output.Count -eq 0) { return "" }
+    $line = $output | Select-Object -First 1
+    if ($null -eq $line) { return "" }
+    return $line.ToString().Trim()
+}
+
+function Ensure-AdbDeviceOnline {
+    Write-Host "`n=== ADB DEVICE RECOVERY ===" -ForegroundColor Cyan
+    $state = Get-AdbState
+    if ($state -eq "device") {
+        Pass "Pixel is already online and authorized"
+        return
+    }
+
+    Warn "Pixel is not currently online in ADB. Restarting only the ADB host connection; no app/package/data action is performed."
+
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & adb kill-server 2>&1 | Out-Null
+        Start-Sleep -Seconds 1
+        & adb start-server 2>&1 | Out-Null
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+
+    for ($attempt = 1; $attempt -le 15; $attempt++) {
+        Start-Sleep -Seconds 2
+        $state = Get-AdbState
+        if ($state -eq "device") {
+            Pass "Pixel recovered to online/authorized ADB state"
+            return
+        }
+    }
+
+    Write-Host "Current ADB devices:" -ForegroundColor Yellow
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & adb devices -l 2>&1 | ForEach-Object { Write-Host $_ }
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+
+    Fail "Pixel '$DeviceSerial' did not recover to ADB state 'device'. Unlock/reconnect the phone and keep USB debugging authorized, then rerun. No build or install was attempted after this failure."
+}
+
 if (-not $AcknowledgeSameVersionRepair) {
     Fail "Explicit acknowledgement required. Re-run with -AcknowledgeSameVersionRepair."
 }
@@ -30,6 +95,8 @@ Write-Host "Policy: same package co.uk.loadifymarket.app, same version 2 / 1.0.1
 Write-Host "Functional baseline: $FunctionalBaseline"
 Write-Host "Original saved base.apk: read-only / never overwritten"
 Write-Host "Forbidden: uninstall, clear-data, downgrade"
+
+Ensure-AdbDeviceOnline
 
 $buildScript = Join-Path $PSScriptRoot "android-build-release-candidate.ps1"
 $installScript = Join-Path $PSScriptRoot "android-install-repaired-v2-candidate.ps1"
@@ -78,7 +145,7 @@ if ($unexpected.Count -gt 0) {
 }
 Write-Host "Allowed post-baseline files:" -ForegroundColor DarkGray
 $changedSinceBaseline | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
-Write-Host "PASS: Candidate functional delta is locked to approved visual/install files only" -ForegroundColor Green
+Pass "Candidate functional delta is locked to approved visual/install files only"
 
 Write-Host "`n=== APPROVED CANDIDATE HANDOFF ===" -ForegroundColor Cyan
 Write-Host "Candidate folder: $CandidateFolder"
