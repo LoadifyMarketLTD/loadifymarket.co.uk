@@ -39,6 +39,15 @@ jobs:
       - name: Install pinned Playwright runner without changing lockfile
         run: npm install --no-save --package-lock=false @playwright/test@1.62.1
 
+      - name: Type-check Playwright configuration and specs
+        run: npx tsc -p e2e/tsconfig.json --noEmit
+
+      - name: Lint Playwright configuration and specs
+        run: npx eslint e2e playwright.config.ts
+
+      - name: Verify Playwright test discovery
+        run: npx playwright test --list
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
