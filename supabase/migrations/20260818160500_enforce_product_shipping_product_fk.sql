@@ -6,7 +6,6 @@ WHERE NOT EXISTS (
   FROM public.products p
   WHERE p.id = ps.product_id
 );
-
 DO $$
 BEGIN
   IF NOT EXISTS (

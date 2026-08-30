@@ -76,4 +76,4 @@ $$;
 REVOKE ALL ON FUNCTION public.consume_rate_limit(TEXT, TEXT, TIMESTAMPTZ, INTEGER) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.consume_rate_limit(TEXT, TEXT, TIMESTAMPTZ, INTEGER) FROM anon;
 REVOKE ALL ON FUNCTION public.consume_rate_limit(TEXT, TEXT, TIMESTAMPTZ, INTEGER) FROM authenticated;
-GRANT EXECUTE ON FUNCTION public.consume_rate_limit(TEXT, TEXT, TIMESTAMPTZ, INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION public.consume_rate_limit(TEXT, TEXT, TIMESTAMPTZ, INTEGER) TO service_role;;

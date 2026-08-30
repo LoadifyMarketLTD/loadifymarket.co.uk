@@ -30,7 +30,6 @@ BEGIN
   END LOOP;
 END;
 $$;
-
 DO $$
 BEGIN
   IF to_regclass('public.category_filter_definitions') IS NOT NULL THEN
@@ -41,7 +40,6 @@ BEGIN
   END IF;
 END;
 $$;
-
 -- Fail closed if any ordinary API role still has CRUD rights on server-only
 -- rate-limit relations after the cleanup.
 DO $$

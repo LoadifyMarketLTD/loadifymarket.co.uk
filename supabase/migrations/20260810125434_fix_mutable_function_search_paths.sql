@@ -1,0 +1,14 @@
+ALTER FUNCTION public.expire_orphan_offer(uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public.handle_new_user_profile() SET search_path = public, pg_temp;
+ALTER FUNCTION public.handle_seller_verification_upgrade() SET search_path = public, pg_temp;
+ALTER FUNCTION public.refresh_product_rating() SET search_path = public, pg_temp;
+ALTER FUNCTION public.set_seller_service_capability() SET search_path = public, pg_temp;
+ALTER FUNCTION public.set_seller_service_capability_from_services() SET search_path = public, pg_temp;
+ALTER FUNCTION public.set_updated_at() SET search_path = public, pg_temp;
+ALTER FUNCTION public.sync_category_parent_columns() SET search_path = public, pg_temp;
+ALTER FUNCTION public.sync_seller_approval_from_status() SET search_path = public, pg_temp;
+ALTER FUNCTION public.sync_seller_onboarding_completed() SET search_path = public, pg_temp;
+ALTER FUNCTION public.update_conversation_last_message() SET search_path = public, pg_temp;
+ALTER FUNCTION public.update_updated_at_column() SET search_path = public, pg_temp;
+ALTER FUNCTION public.update_updated_at_column_snake() SET search_path = public, pg_temp;
+ALTER FUNCTION public.validate_product_category_assignment() SET search_path = public, pg_temp;;
