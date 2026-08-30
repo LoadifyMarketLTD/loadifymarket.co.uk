@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { SystemBars, SystemBarsStyle, SystemBarType } from "@capacitor/core";
 import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import RouteSurfaceClass from "./components/RouteSurfaceClass.tsx";
@@ -25,6 +26,17 @@ initErrorTracking();
 // scoped without changing the regular website or mobile browser experience.
 if (isCapacitorContext()) {
   document.documentElement.classList.add('capacitor-native');
+
+  // Capacitor 8 SystemBars is bundled with @capacitor/core and is the modern
+  // edge-to-edge API. The app now uses predominantly light/ivory surfaces, so
+  // request dark status-bar glyphs explicitly; limit this to the top status bar
+  // so Android's navigation bar behaviour is not changed here.
+  void SystemBars.setStyle({
+    style: SystemBarsStyle.Light,
+    bar: SystemBarType.StatusBar,
+  }).catch(() => {
+    // System-bar styling is best-effort and must never block app startup.
+  });
 }
 
 // On Capacitor APK, relative /.netlify/functions/ URLs resolve to
