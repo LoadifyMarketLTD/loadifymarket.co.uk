@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "vitest run netlify/functions/__tests__/profile-type-completeness.test.ts netlify/functions/__tests__/buyer-onboarding-alignment.test.ts && npx eslint src/lib/buyerProfileModel.ts src/pages/pixel-perfect/buyer/BuyerProfile.tsx netlify/functions/__tests__/profile-type-completeness.test.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
