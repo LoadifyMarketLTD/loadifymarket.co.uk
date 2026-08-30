@@ -3,8 +3,11 @@
  *
  * A seller's account becomes ACTIVE only when ALL of the following are true:
  *   1. Their live public.users row has role = 'seller' and isActive = true
- *   2. Profile is complete: business/store name + phone + address postcode
- *      (companies also require companyRegistrationNumber + vatNumber)
+ *   2. Profile is complete for the seller's legal/profile type:
+ *      - individual: phone + address postcode (personal identity lives on public.users)
+ *      - sole trader/company/legacy: business/store name + phone + postcode
+ *      - company: companyRegistrationNumber is additionally required
+ *      - VAT number is required only when VAT registration is declared
  *   3. Stripe Connect account exists (stripeAccountId present)
  *   4. Stripe account is fully ready: stripeConnectStatus = 'active'
  *      (which maps to charges_enabled=true AND payouts_enabled=true)
@@ -42,19 +45,19 @@ export interface SellerProfileSnapshot {
 }
 
 /**
- * Returns true when the minimum required profile fields are present.
+ * Returns true when the minimum required profile fields are present for the
+ * selected seller profile type.
  *
- * Base requirements (all seller types):
- *   - a business/store name
- *   - a contact phone
- *   - an address postcode
+ * Individual sellers use public.users for their personal identity, so a fake
+ * business/store name must never be required to satisfy profile readiness.
+ * They still require a contact phone and an address postcode.
  *
- * Additional requirements for company sellers:
- *   - companyRegistrationNumber (non-empty)
- *   - vatNumber (non-empty) ONLY when isVatRegistered = true
+ * Sole traders and companies retain the existing business/trading identity
+ * requirement. Company sellers additionally require company registration data.
+ * VAT remains conditional on an explicit VAT-registration declaration.
  *
- * Existing sellers whose sellerType is NULL are treated as non-company
- * and are unaffected by the additional checks.
+ * Existing sellers whose sellerType is NULL preserve the legacy business-name
+ * requirement so this change does not silently broaden historical readiness.
  */
 export function isProfileComplete(
   profile: Pick<
@@ -69,22 +72,33 @@ export function isProfileComplete(
   >,
   sellerType?: string | null,
 ): boolean {
-  const name = (profile.storeName ?? profile.businessName ?? '').trim();
+  // `storeName` can legitimately be persisted as an empty string while a
+  // business/trading name is populated. Nullish coalescing would treat that
+  // empty storeName as authoritative and incorrectly hide the valid fallback.
+  const storeName = (profile.storeName ?? '').trim();
+  const businessName = (profile.businessName ?? '').trim();
+  const name = storeName || businessName;
   const phone = (profile.contactPhone ?? '').trim();
   const postcode = (
     (profile.businessAddress as { postcode?: string } | null)?.postcode ?? ''
   ).trim();
-  const base = name.length > 0 && phone.length > 0 && postcode.length > 0;
-  if (!base) return false;
+
+  const contactAndAddressComplete = phone.length > 0 && postcode.length > 0;
+  if (!contactAndAddressComplete) return false;
+
+  if (sellerType !== 'individual' && name.length === 0) return false;
 
   if (sellerType === 'company') {
     const companyReg = (profile.companyRegistrationNumber ?? '').trim();
     if (companyReg.length === 0) return false;
-    // VAT number is only required when the seller declares VAT registration.
-    if (profile.isVatRegistered) {
-      const vat = (profile.vatNumber ?? '').trim();
-      if (vat.length === 0) return false;
-    }
+  }
+
+  // VAT number is required whenever the seller explicitly declares VAT
+  // registration, regardless of whether the seller is an individual, trader,
+  // or company. This preserves the existing fail-closed tax declaration rule.
+  if (profile.isVatRegistered) {
+    const vat = (profile.vatNumber ?? '').trim();
+    if (vat.length === 0) return false;
   }
 
   return true;
