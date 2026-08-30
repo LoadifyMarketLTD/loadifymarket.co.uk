@@ -13,8 +13,6 @@ BEGIN;
 ALTER TABLE public.products
   ALTER COLUMN "isApproved" SET DEFAULT true;
 
--- Close the historical backlog so previously published/draft listings do not
--- remain stuck behind a manual owner-approval state after the workflow is retired.
 UPDATE public.products
 SET "isApproved" = true
 WHERE "isApproved" IS DISTINCT FROM true;
@@ -42,4 +40,4 @@ COMMENT ON FUNCTION private.enforce_marketplace_product_auto_approval_v1() IS
 
 REVOKE ALL ON FUNCTION private.enforce_marketplace_product_auto_approval_v1() FROM PUBLIC;
 
-COMMIT;
+COMMIT;;

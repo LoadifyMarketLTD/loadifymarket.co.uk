@@ -1,4 +1,4 @@
-﻿-- 675_track_product_view_rpc_privilege_closure.sql
+-- 675_track_product_view_rpc_privilege_closure.sql
 -- Release-hardening RPC privilege closure.
 --
 -- track_product_view() is a SECURITY DEFINER write-side-effect function.
@@ -11,10 +11,8 @@
 
 REVOKE ALL ON FUNCTION public.track_product_view(uuid, uuid, text)
 FROM PUBLIC, anon, authenticated;
-
 GRANT EXECUTE ON FUNCTION public.track_product_view(uuid, uuid, text)
 TO service_role;
-
 -- Fail closed if ordinary API roles can still invoke this SECURITY DEFINER RPC.
 DO $$
 BEGIN

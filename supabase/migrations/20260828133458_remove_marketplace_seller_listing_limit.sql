@@ -1,12 +1,5 @@
 -- Marketplace Seller catalogue-size limit retirement.
---
--- Marketplace Sellers are not capped by total catalogue size. The historical
--- seller_profiles.listingLimit column is retained only for compatibility with
--- older code/views and is forced to NULL (unlimited).
---
--- This does NOT remove operational abuse protection. Request-rate limiting,
--- seller suspension/pausing, publication eligibility, tax, shipping and payment
--- gates remain independent controls.
+-- NULL means unlimited. Keep the legacy column only for compatibility with old code/views.
 
 ALTER TABLE public.seller_profiles
   ALTER COLUMN "listingLimit" DROP DEFAULT;
@@ -37,4 +30,4 @@ CREATE TRIGGER zz_force_unlimited_seller_listings_v1
 BEFORE INSERT OR UPDATE OF "listingLimit"
 ON public.seller_profiles
 FOR EACH ROW
-EXECUTE FUNCTION private.force_unlimited_seller_listings_v1();
+EXECUTE FUNCTION private.force_unlimited_seller_listings_v1();;

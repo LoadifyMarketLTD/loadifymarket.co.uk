@@ -35,12 +35,10 @@ BEGIN
   END IF;
 END;
 $$;
-
 -- Replace the owner-rights view with a real read-only public projection table.
 -- The table contains only fields already intentionally published by migrations
 -- 594/598/602; no phone number or full business address is introduced.
 DROP VIEW public.seller_profiles_public;
-
 CREATE TABLE public.seller_profiles_public (
   "userId" uuid PRIMARY KEY,
   "businessName" text,
@@ -58,7 +56,6 @@ CREATE TABLE public.seller_profiles_public (
   CONSTRAINT seller_profiles_public_phone_must_remain_null
     CHECK ("contactPhone" IS NULL)
 );
-
 INSERT INTO public.seller_profiles_public (
   "userId",
   "businessName",
@@ -89,28 +86,22 @@ SELECT
   NULL::text,
   "createdAt"
 FROM private.seller_profiles_public_data;
-
 ALTER TABLE public.seller_profiles_public ENABLE ROW LEVEL SECURITY;
-
 REVOKE ALL ON TABLE public.seller_profiles_public
 FROM PUBLIC, anon, authenticated, service_role;
-
 CREATE POLICY seller_profiles_public_read
 ON public.seller_profiles_public
 FOR SELECT
 TO anon, authenticated
 USING (true);
-
 GRANT SELECT ON TABLE public.seller_profiles_public
 TO anon, authenticated, service_role;
-
 COMMENT ON TABLE public.seller_profiles_public IS
   'Read-only public seller projection. Synced server-side from seller_profiles; contains only intentionally public fields.';
 COMMENT ON COLUMN public.seller_profiles_public."businessAddress" IS
   'Public coarse location only (city/country), never the full seller business address.';
 COMMENT ON COLUMN public.seller_profiles_public."contactPhone" IS
   'Compatibility column intentionally constrained to NULL; seller phone numbers are not public.';
-
 -- Keep the existing trigger identity but point it at the new read-only public
 -- projection. The function remains private and cannot be called by API roles.
 CREATE OR REPLACE FUNCTION private.sync_seller_profiles_public_data()
@@ -180,20 +171,16 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 REVOKE ALL ON FUNCTION private.sync_seller_profiles_public_data()
 FROM PUBLIC, anon, authenticated, service_role;
-
 -- The private cache no longer serves any runtime purpose once the public
 -- projection table is read-only, RLS-protected and maintained by the trigger.
 DROP TABLE private.seller_profiles_public_data;
-
 -- This is a trigger-only helper. Direct PostgREST RPC execution is unnecessary
 -- and was reported by the Security Advisor for both anonymous and signed-in
 -- users. Trigger execution is unaffected by revoking API-role EXECUTE grants.
 REVOKE ALL ON FUNCTION public.sync_seller_suspension_from_user_activity()
 FROM PUBLIC, anon, authenticated, service_role;
-
 -- Fail closed if the projection became writable or lost its public read path.
 DO $$
 DECLARE
