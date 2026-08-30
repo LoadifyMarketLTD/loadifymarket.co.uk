@@ -36,15 +36,15 @@ export interface SupplierProviderDefinition {
   codeState: SupplierProviderCodeState;
   /** Hosted Supplier Commerce activation remains OFF independently of code readiness. */
   hostedActivation: 'off';
-  /** Capabilities proven in code/live-provider evidence. Empty means none verified. */
+  /** Capabilities proven in Loadify code/live-provider evidence. Empty means none verified. */
   verifiedCapabilities: readonly SupplierAdapterCapability[];
-  /** Research targets only. These MUST NOT be treated as enabled capabilities. */
+  /** Research targets only. These MUST NOT be treated as enabled or provider-verified capabilities. */
   potentialCapabilities: readonly SupplierAdapterCapability[];
   requiresProviderOrPartnerApproval: boolean;
   notes: string;
 }
 
-const FULL_PROVIDER_TARGETS = [
+const DIRECT_SUPPLIER_TARGETS = [
   'supplier_identity',
   'catalog',
   'variants',
@@ -59,11 +59,31 @@ const FULL_PROVIDER_TARGETS = [
   'reimbursement',
 ] as const satisfies readonly SupplierAdapterCapability[];
 
+const BIGBUY_RESEARCH_TARGETS = [
+  'catalog',
+  'variants',
+  'stock',
+  'price',
+  'shipping',
+  'order_submission',
+  'acknowledgement',
+  'tracking',
+] as const satisfies readonly SupplierAdapterCapability[];
+
 const READ_TARGETS = [
   'catalog',
   'variants',
   'stock',
   'price',
+] as const satisfies readonly SupplierAdapterCapability[];
+
+const ASIA_RESEARCH_TARGETS = [
+  'catalog',
+  'variants',
+  'stock',
+  'price',
+  'order_submission',
+  'tracking',
 ] as const satisfies readonly SupplierAdapterCapability[];
 
 const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
@@ -74,7 +94,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     codeState: 'verified_read_only',
     hostedActivation: 'off',
     verifiedCapabilities: ['catalog', 'stock', 'price'],
-    potentialCapabilities: FULL_PROVIDER_TARGETS,
+    potentialCapabilities: ['catalog', 'stock', 'price'],
     requiresProviderOrPartnerApproval: false,
     notes: 'Controlled GB read-only pilot exists; commercial/write capabilities remain unavailable.',
   },
@@ -85,9 +105,9 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     codeState: 'scaffolded_unverified',
     hostedActivation: 'off',
     verifiedCapabilities: [],
-    potentialCapabilities: FULL_PROVIDER_TARGETS,
+    potentialCapabilities: BIGBUY_RESEARCH_TARGETS,
     requiresProviderOrPartnerApproval: true,
-    notes: 'Official API and sandbox are documented, but Loadify has not verified credentials or live contracts yet.',
+    notes: 'Official API/sandbox surfaces exist, but Loadify has not verified credentials or live provider contracts yet.',
   },
   direct_supplier: {
     key: 'direct_supplier',
@@ -96,7 +116,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     codeState: 'scaffolded_unverified',
     hostedActivation: 'off',
     verifiedCapabilities: [],
-    potentialCapabilities: FULL_PROVIDER_TARGETS,
+    potentialCapabilities: DIRECT_SUPPLIER_TARGETS,
     requiresProviderOrPartnerApproval: false,
     notes: 'Provider-neutral contract for direct UK/EU manufacturers and wholesalers; no supplier is activated by this scaffold.',
   },
@@ -109,7 +129,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     verifiedCapabilities: [],
     potentialCapabilities: READ_TARGETS,
     requiresProviderOrPartnerApproval: true,
-    notes: 'Custom-platform capabilities require provider coordination; do not infer retailer catalog/order API access from supplier webhooks.',
+    notes: 'Custom-platform capabilities require provider coordination; do not infer retailer catalog/order API access from supplier-side webhooks.',
   },
   appscenic: {
     key: 'appscenic',
@@ -151,7 +171,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     codeState: 'future_compliance_gate',
     hostedActivation: 'off',
     verifiedCapabilities: [],
-    potentialCapabilities: FULL_PROVIDER_TARGETS,
+    potentialCapabilities: ASIA_RESEARCH_TARGETS,
     requiresProviderOrPartnerApproval: true,
     notes: 'Future-only until UK import VAT, customs, product safety, landed-cost and returns controls are complete.',
   },
