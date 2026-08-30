@@ -306,15 +306,19 @@ if (Test-Path $firebasePath) {
     Warn "google-services.json is currently missing locally"
 }
 
-$runtimeNames = @(
+# The current checkout UI does not instantiate Stripe.js. It POSTs to the
+# server-side create-checkout function and opens the returned Stripe Checkout
+# URL. Therefore the client publishable key is optional for the current APK.
+# Historical Android CI also guarded Supabase URL + anon key as required while
+# carrying VITE_STRIPE_PUBLISHABLE_KEY only as an optional environment value.
+$requiredRuntimeNames = @(
     'VITE_SUPABASE_URL',
     'VITE_SUPABASE_ANON_KEY',
-    'VITE_STRIPE_PUBLISHABLE_KEY',
     'VITE_APP_URL'
 )
 $runtimeValues = @{}
 $runtimeReady = $true
-foreach ($name in $runtimeNames) {
+foreach ($name in $requiredRuntimeNames) {
     $runtimeValues[$name] = Get-RuntimeSetting $name
     if ([string]::IsNullOrWhiteSpace([string]$runtimeValues[$name])) {
         Write-Host "$name = MISSING" -ForegroundColor Yellow
@@ -322,6 +326,15 @@ foreach ($name in $runtimeNames) {
     } else {
         Write-Host "$name = SET" -ForegroundColor Green
     }
+}
+
+$stripePublishableKey = Get-RuntimeSetting 'VITE_STRIPE_PUBLISHABLE_KEY'
+if ([string]::IsNullOrWhiteSpace($stripePublishableKey)) {
+    Write-Host "VITE_STRIPE_PUBLISHABLE_KEY = OPTIONAL / NOT SET" -ForegroundColor DarkGray
+} elseif ($stripePublishableKey -match '^pk_(live|test)_[A-Za-z0-9]+$') {
+    Write-Host "VITE_STRIPE_PUBLISHABLE_KEY = OPTIONAL / SET" -ForegroundColor Green
+} else {
+    Warn "VITE_STRIPE_PUBLISHABLE_KEY is present but malformed; ignored because current checkout does not consume it"
 }
 
 if ($runtimeReady) {
@@ -340,11 +353,6 @@ if ($runtimeReady) {
             Fail "VITE_SUPABASE_ANON_KEY does not decode to role=anon"
             $runtimeReady = $false
         }
-    }
-
-    if ([string]$runtimeValues['VITE_STRIPE_PUBLISHABLE_KEY'] -notmatch '^pk_(live|test)_[A-Za-z0-9]+$') {
-        Fail "VITE_STRIPE_PUBLISHABLE_KEY format is invalid"
-        $runtimeReady = $false
     }
 
     if ([string]$runtimeValues['VITE_APP_URL'] -notmatch '^https://(?:www\.)?loadifymarket\.co\.uk/?$') {
