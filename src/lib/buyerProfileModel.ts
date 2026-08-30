@@ -22,6 +22,24 @@ export function isBuyerAccountType(value: unknown): value is BuyerAccountType {
   return BUYER_ACCOUNT_TYPES.some((option) => option.value === value);
 }
 
+/**
+ * Keep historical buyer profile values readable without preserving the old
+ * values as writable contract options. The Auth cutover accepts only the
+ * canonical account types above.
+ */
+export function normalizeBuyerAccountType(value: unknown): BuyerAccountType {
+  if (isBuyerAccountType(value)) return value;
+
+  // Legacy UI values represented a non-individual commercial account but did
+  // not encode a legal form. Map them deterministically to the canonical
+  // catch-all instead of silently converting them to Individual.
+  if (value === 'business' || value === 'reseller' || value === 'distributor') {
+    return 'other';
+  }
+
+  return 'individual';
+}
+
 export function isBusinessBuyerAccount(type: BuyerAccountType): boolean {
   return type !== 'individual';
 }
