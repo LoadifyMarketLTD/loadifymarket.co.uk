@@ -78,6 +78,10 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 function deriveStatus(p: Product): string {
+  // "Mark as Sold" intentionally deactivates the listing and persists the
+  // explicit out-of-stock state. Preserve that state before the generic
+  // inactive => draft fallback so sold listings do not reappear as drafts.
+  if (!p.isActive && p.stockStatus === "out_of_stock" && (p.stockQuantity ?? 0) === 0) return "out_of_stock";
   if (!p.isActive) return "draft";
   if (!p.isApproved) return "pending_review";
   // Service listings are reusable — skip stock checks entirely.
@@ -557,7 +561,6 @@ const SellerProducts = () => {
             </tbody>
           </table>
         </div>
-
       </div>
 
       {/* ── Delete confirm dialog ─────────────────────────────────────────── */}
