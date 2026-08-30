@@ -195,8 +195,19 @@ try {
         if (-not $aapt2) {
             Warn "aapt2.exe not found; Firebase resource recovery cannot run locally."
         } else {
-            $dump = @(& $aapt2 dump resources $Apk 2>&1 | ForEach-Object { $_.ToString() })
-            if ($LASTEXITCODE -ne 0 -or $dump.Count -eq 0) {
+            # As with keytool, Windows PowerShell may promote benign native stderr
+            # text into a terminating NativeCommandError. Capture output under a
+            # non-terminating preference and decide only from the native exit code.
+            $previousErrorActionPreference = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            try {
+                $dump = @(& $aapt2 dump resources $Apk 2>&1 | ForEach-Object { $_.ToString() })
+                $aaptExitCode = $LASTEXITCODE
+            } finally {
+                $ErrorActionPreference = $previousErrorActionPreference
+            }
+
+            if ($aaptExitCode -ne 0 -or $dump.Count -eq 0) {
                 Warn "aapt2 could not dump APK resources; no Firebase file was generated."
             } else {
                 $googleAppId = Get-AaptStringResource $dump 'google_app_id'
@@ -208,7 +219,7 @@ try {
 
                 $requiredFirebase = @($googleAppId, $senderId, $projectId, $apiKey)
                 if ($requiredFirebase -contains $null -or $requiredFirebase -contains '') {
-                    Warn "Installed APK did not expose all Firebase resources required for a faithful google-services.json reconstruction. No file was generated."
+                    Warn "Installed APK did not expose all Firebase resources required for a safe google-services.json reconstruction. No file was generated."
                 } else {
                     $projectInfo = [ordered]@{
                         project_number = $senderId
@@ -239,7 +250,20 @@ try {
                         Fail "Recovered google-services.json is not gitignored; file was removed."
                         exit 1
                     }
-                    Pass "Reconstructed google-services.json from Firebase resources embedded in the signed installed APK"
+
+                    # Read back and validate the generated local file before it can
+                    # be accepted by the release preflight. Values remain hidden.
+                    try {
+                        $roundTrip = Get-Content $FirebaseTarget -Raw | ConvertFrom-Json
+                        $packages = @($roundTrip.client | ForEach-Object { $_.client_info.android_client_info.package_name })
+                        if ($Package -notin $packages) { throw "package mismatch" }
+                    } catch {
+                        Remove-Item $FirebaseTarget -Force -ErrorAction SilentlyContinue
+                        Fail "Recovered google-services.json failed local structural/package validation and was removed."
+                        exit 1
+                    }
+
+                    Pass "Reconstructed package-matched google-services.json from Firebase resources embedded in the signed installed APK"
                     Info "No Firebase value was printed and no remote secret was read."
                 }
             }
