@@ -4,14 +4,18 @@ import process from 'node:process';
 
 const PLAYWRIGHT_VERSION = '1.62.1';
 const packageLockUrl = new URL('../package-lock.json', import.meta.url);
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const isWindows = process.platform === 'win32';
+const npmCommand = isWindows ? 'npm.cmd' : 'npm';
+const npxCommand = isWindows ? 'npx.cmd' : 'npx';
 
 function run(command, args) {
   const result = spawnSync(command, args, {
     cwd: process.cwd(),
     stdio: 'inherit',
-    shell: false,
+    // Windows resolves npm/npx through .cmd shims. Node 24 can reject direct
+    // spawnSync of those shims with EINVAL unless they are invoked via a shell.
+    // Keep POSIX execution shell-free.
+    shell: isWindows,
   });
 
   if (result.error) throw result.error;
