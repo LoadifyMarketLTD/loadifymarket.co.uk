@@ -4,14 +4,24 @@ import {
   buyerAccountRequiresOrganisationName,
   isBuyerAccountType,
   isBuyerProfileComplete,
+  normalizeBuyerAccountType,
 } from '../../../src/lib/buyerProfileModel';
 
 const sellerBase = {
   contactPhone: '07123456789',
-  businessAddress: { postcode: 'BB1 9QL' },
+  businessAddress: { postcode: 'SW1A 1AA' },
   companyRegistrationNumber: '',
   vatNumber: '',
   isVatRegistered: false,
+};
+
+const buyerBase = {
+  firstName: 'Test',
+  lastName: 'Buyer',
+  shippingLine1: '1 Example Street',
+  shippingCity: 'London',
+  shippingPostcode: 'SW1A 1AA',
+  shippingCountry: 'United Kingdom',
 };
 
 describe('profile-type-aware completeness', () => {
@@ -69,7 +79,7 @@ describe('profile-type-aware completeness', () => {
     ).toBe(false);
     expect(
       isProfileComplete(
-        { ...sellerBase, businessName: 'Daniel Trading', storeName: '' },
+        { ...sellerBase, businessName: 'Example Trading', storeName: '' },
         'sole_trader',
       ),
     ).toBe(true);
@@ -78,7 +88,7 @@ describe('profile-type-aware completeness', () => {
   it('keeps company registration and declared VAT requirements fail-closed', () => {
     expect(
       isProfileComplete(
-        { ...sellerBase, businessName: 'Loadify Ltd' },
+        { ...sellerBase, businessName: 'Example Ltd' },
         'company',
       ),
     ).toBe(false);
@@ -87,8 +97,8 @@ describe('profile-type-aware completeness', () => {
       isProfileComplete(
         {
           ...sellerBase,
-          businessName: 'Loadify Ltd',
-          companyRegistrationNumber: '13171804',
+          businessName: 'Example Ltd',
+          companyRegistrationNumber: '12345678',
           isVatRegistered: true,
           vatNumber: '',
         },
@@ -100,8 +110,8 @@ describe('profile-type-aware completeness', () => {
       isProfileComplete(
         {
           ...sellerBase,
-          businessName: 'Loadify Ltd',
-          companyRegistrationNumber: '13171804',
+          businessName: 'Example Ltd',
+          companyRegistrationNumber: '12345678',
           isVatRegistered: true,
           vatNumber: 'GB123456789',
         },
@@ -127,16 +137,19 @@ describe('profile-type-aware completeness', () => {
     expect(isBuyerAccountType('distributor')).toBe(false);
   });
 
+  it('maps historical Buyer commercial values to the canonical catch-all without turning them into Individual', () => {
+    expect(normalizeBuyerAccountType('business')).toBe('other');
+    expect(normalizeBuyerAccountType('reseller')).toBe('other');
+    expect(normalizeBuyerAccountType('distributor')).toBe('other');
+    expect(normalizeBuyerAccountType('limited_company')).toBe('limited_company');
+    expect(normalizeBuyerAccountType(undefined)).toBe('individual');
+  });
+
   it('allows an Individual Buyer to complete without business-only fields', () => {
     expect(
       isBuyerProfileComplete({
         accountType: 'individual',
-        firstName: 'Daniel',
-        lastName: 'Preda',
-        shippingLine1: '101 Cornelian Street',
-        shippingCity: 'Blackburn',
-        shippingPostcode: 'BB1 9QL',
-        shippingCountry: 'United Kingdom',
+        ...buyerBase,
         companyName: '',
       }),
     ).toBe(true);
@@ -146,12 +159,8 @@ describe('profile-type-aware completeness', () => {
     expect(
       isBuyerProfileComplete({
         accountType: 'individual',
-        firstName: 'Daniel',
+        ...buyerBase,
         lastName: '',
-        shippingLine1: '101 Cornelian Street',
-        shippingCity: 'Blackburn',
-        shippingPostcode: 'BB1 9QL',
-        shippingCountry: 'United Kingdom',
       }),
     ).toBe(false);
   });
@@ -163,12 +172,7 @@ describe('profile-type-aware completeness', () => {
     expect(
       isBuyerProfileComplete({
         accountType: 'sole_trader',
-        firstName: 'Daniel',
-        lastName: 'Preda',
-        shippingLine1: '101 Cornelian Street',
-        shippingCity: 'Blackburn',
-        shippingPostcode: 'BB1 9QL',
-        shippingCountry: 'United Kingdom',
+        ...buyerBase,
         companyName: '',
       }),
     ).toBe(true);
@@ -176,12 +180,7 @@ describe('profile-type-aware completeness', () => {
     expect(
       isBuyerProfileComplete({
         accountType: 'limited_company',
-        firstName: 'Daniel',
-        lastName: 'Preda',
-        shippingLine1: '101 Cornelian Street',
-        shippingCity: 'Blackburn',
-        shippingPostcode: 'BB1 9QL',
-        shippingCountry: 'United Kingdom',
+        ...buyerBase,
         companyName: '',
       }),
     ).toBe(false);
