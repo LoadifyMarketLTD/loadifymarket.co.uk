@@ -72,7 +72,12 @@ export function isProfileComplete(
   >,
   sellerType?: string | null,
 ): boolean {
-  const name = (profile.storeName ?? profile.businessName ?? '').trim();
+  // `storeName` can legitimately be persisted as an empty string while a
+  // business/trading name is populated. Nullish coalescing would treat that
+  // empty storeName as authoritative and incorrectly hide the valid fallback.
+  const storeName = (profile.storeName ?? '').trim();
+  const businessName = (profile.businessName ?? '').trim();
+  const name = storeName || businessName;
   const phone = (profile.contactPhone ?? '').trim();
   const postcode = (
     (profile.businessAddress as { postcode?: string } | null)?.postcode ?? ''
