@@ -80,13 +80,13 @@ function renderProductInfo(props: Partial<ComponentProps<typeof ProductInfo>> = 
 }
 
 describe("ProductInfo contact CTAs", () => {
-  it("renders a Message button and triggers its handler", async () => {
+  it("renders a Message seller button and triggers its handler", async () => {
     const user = userEvent.setup();
     const onMessageSeller = vi.fn();
 
     renderProductInfo({ onMessageSeller });
 
-    await user.click(screen.getByRole("button", { name: "Message" }));
+    await user.click(screen.getByRole("button", { name: "Message seller" }));
 
     expect(onMessageSeller).toHaveBeenCalledTimes(1);
   });
