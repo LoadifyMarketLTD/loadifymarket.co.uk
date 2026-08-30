@@ -13,11 +13,11 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "verify:migrations": "node scripts/verify-migration-health.mjs",
-    "e2e:setup": "npm install --no-save --package-lock=false @playwright/test@1.62.1 && npx playwright install chromium",
+    "e2e:setup": "node scripts/setup-playwright-local.mjs",
     "e2e:typecheck": "tsc -p e2e/tsconfig.json --noEmit",
     "e2e:list": "playwright test --list",
     "e2e": "playwright test",
-    "verify:local": "npm run typecheck && npm run lint && npm test && npm run verify:migrations && npm run e2e:typecheck && npm run e2e && npm run build",
+    "verify:local": "npm run typecheck && npm run lint && npm test && npm run verify:migrations && npm run e2e:setup && npm run e2e:typecheck && npm run e2e && npm run build",
     "generate:icons": "npx @capacitor/assets@3.0.5 generate --iconBackgroundColor '#0A0E1A' --iconBackgroundColorDark '#0A0E1A'"
   },
   "dependencies": {
