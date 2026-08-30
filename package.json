@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "vitest run netlify/functions/__tests__/direct-supplier-secure-ingestion.test.ts && eslint netlify/functions/_shared/directSupplierContract.ts netlify/functions/_shared/directSupplierOnboarding.ts netlify/functions/_shared/directSupplierSecurity.ts netlify/functions/__tests__/direct-supplier-secure-ingestion.test.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
