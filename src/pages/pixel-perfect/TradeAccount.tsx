@@ -19,6 +19,14 @@ import logo from "@/assets/loadify-logo.svg";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type BuyerCustomerType =
+  | "individual"
+  | "sole_trader"
+  | "limited_company"
+  | "partnership"
+  | "charity"
+  | "other";
+
 interface FormState {
   // Personal
   firstName: string;
@@ -27,7 +35,7 @@ interface FormState {
   email: string;
   phone: string;
   vatNumber: string;
-  customerType: string;
+  customerType: BuyerCustomerType | "";
   newsletter: boolean;
   // Business / Address
   companyName: string;
@@ -53,11 +61,13 @@ interface FieldErrors {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CUSTOMER_TYPES = [
+const CUSTOMER_TYPES: ReadonlyArray<{ value: BuyerCustomerType; label: string }> = [
   { value: "individual", label: "Individual" },
-  { value: "business", label: "Business" },
-  { value: "reseller", label: "Reseller" },
-  { value: "distributor", label: "Distributor" },
+  { value: "sole_trader", label: "Sole trader" },
+  { value: "limited_company", label: "Limited company" },
+  { value: "partnership", label: "Partnership" },
+  { value: "charity", label: "Charity / organisation" },
+  { value: "other", label: "Other business / trader" },
 ];
 
 const HEAR_ABOUT_US = [
@@ -72,10 +82,14 @@ const HEAR_ABOUT_US = [
 ];
 
 const TRUST_POINTS = [
-  { icon: "✔", text: "Keep business details with your Buyer account" },
+  { icon: "✔", text: "Keep account and applicable business details with your Buyer profile" },
   { icon: "✔", text: "Use the same Loadify identity for permitted Buyer and Seller access" },
   { icon: "✔", text: "Manage orders and account details from Buyer Space" },
 ];
+
+function buyerTypeRequiresOrganisationName(type: FormState["customerType"]): boolean {
+  return ["limited_company", "partnership", "charity", "other"].includes(type);
+}
 
 // ─── Password strength helper ─────────────────────────────────────────────────
 
@@ -137,6 +151,9 @@ export default function TradeAccount() {
     gdprAccepted: false,
   });
 
+  const businessCustomer = form.customerType !== "" && form.customerType !== "individual";
+  const organisationNameRequired = buyerTypeRequiresOrganisationName(form.customerType);
+
   const set = (field: keyof FormState) => (value: string | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -144,6 +161,25 @@ export default function TradeAccount() {
     (field: keyof FormState) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
       set(field)(e.target.value);
+
+  const handleCustomerTypeChange = (value: string) => {
+    const customerType = value as BuyerCustomerType;
+    setForm((prev) => ({
+      ...prev,
+      customerType,
+      ...(customerType === "individual"
+        ? { companyName: "", vatNumber: "", website: "" }
+        : {}),
+    }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.customerType;
+      if (customerType === "individual" || !buyerTypeRequiresOrganisationName(customerType)) {
+        delete next.companyName;
+      }
+      return next;
+    });
+  };
 
   // ── Postcode lookup (stub) ──────────────────────────────────────────────────
   const handlePostcodeLookup = () => {
@@ -166,7 +202,10 @@ export default function TradeAccount() {
       newErrors.email = "Please enter a valid email address";
     }
     if (!form.phone.trim()) newErrors.phone = "Phone number is required";
-    if (!form.companyName.trim()) newErrors.companyName = "Company name is required";
+    if (!form.customerType) newErrors.customerType = "Customer type is required";
+    if (organisationNameRequired && !form.companyName.trim()) {
+      newErrors.companyName = "Organisation / trading name is required for this customer type";
+    }
     if (!form.mobile.trim()) newErrors.mobile = "Mobile number is required";
     if (!form.streetAddress.trim()) newErrors.streetAddress = "Street address is required";
     if (!form.city.trim()) newErrors.city = "City is required";
@@ -208,10 +247,10 @@ export default function TradeAccount() {
           lastName: form.lastName.trim(),
           email: form.email.trim(),
           requestedRole: "buyer",
-          companyName: form.companyName.trim() || undefined,
+          companyName: businessCustomer ? form.companyName.trim() || undefined : undefined,
           phone: form.phone.trim(),
-          vatNumber: form.vatNumber.trim() || undefined,
-          customerType: form.customerType || undefined,
+          vatNumber: businessCustomer ? form.vatNumber.trim() || undefined : undefined,
+          customerType: form.customerType,
           businessAddress: (form.streetAddress || form.city || form.postcode)
             ? {
                 line1: form.streetAddress.trim(),
@@ -295,7 +334,7 @@ export default function TradeAccount() {
             <span className="text-primary mt-0.5 shrink-0">⚠️</span>
             <p className="text-sm text-primary">
               <strong>IMPORTANT:</strong> Please ensure all details are correct before submitting.
-              Your business details are stored with your Buyer profile and used only where supported for account, order, invoice and tax handling.
+              Your Buyer account details and any applicable business or trader information are stored with your Buyer profile and used only where supported for account, order, invoice and tax handling.
             </p>
           </div>
         </div>
@@ -403,22 +442,13 @@ export default function TradeAccount() {
                   <FieldError msg={errors.phone} />
                 </div>
 
-                {/* VAT */}
-                <div className="space-y-1">
-                  <Label htmlFor="vatNumber">Tax / VAT Number</Label>
-                  <Input
-                    id="vatNumber"
-                    value={form.vatNumber}
-                    onChange={handleInput("vatNumber")}
-                    placeholder="GB123456789"
-                  />
-                </div>
-
                 {/* Customer type */}
-                <div className="space-y-1">
-                  <Label htmlFor="customerType">Customer Type</Label>
-                  <Select value={form.customerType} onValueChange={set("customerType")}>
-                    <SelectTrigger id="customerType">
+                <div className="space-y-1" data-error={!!errors.customerType || undefined}>
+                  <Label htmlFor="customerType">
+                    Customer Type <span className="text-red-500">*</span>
+                  </Label>
+                  <Select value={form.customerType} onValueChange={handleCustomerTypeChange}>
+                    <SelectTrigger id="customerType" className={errors.customerType ? "border-red-400 focus:ring-red-400" : ""}>
                       <SelectValue placeholder="Select customer type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -429,7 +459,24 @@ export default function TradeAccount() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <FieldError msg={errors.customerType} />
                 </div>
+
+                {/* VAT — applicable only to business/trader Buyer profiles */}
+                {businessCustomer && (
+                  <div className="space-y-1">
+                    <Label htmlFor="vatNumber">Tax / VAT Number</Label>
+                    <Input
+                      id="vatNumber"
+                      value={form.vatNumber}
+                      onChange={handleInput("vatNumber")}
+                      placeholder="GB123456789"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Optional unless separately required by the applicable tax or verification flow.
+                    </p>
+                  </div>
+                )}
 
                 {/* Newsletter */}
                 <div className="flex items-center gap-2 pt-1">
@@ -445,28 +492,36 @@ export default function TradeAccount() {
               </div>
 
               {/* ════════════════════════════════════════════════════════════
-                  RIGHT — ADDRESS / BUSINESS INFORMATION
+                  RIGHT — ADDRESS / APPLICABLE BUSINESS INFORMATION
               ════════════════════════════════════════════════════════════ */}
               <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
-                <SectionHeader label="Business & Address Information" />
+                <SectionHeader label={businessCustomer ? "Business & Address Information" : "Address Information"} />
 
-                {/* Company */}
-                <div
-                  className="space-y-1"
-                  data-error={!!errors.companyName || undefined}
-                >
-                  <Label htmlFor="companyName">
-                    Company Name <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="companyName"
-                    value={form.companyName}
-                    onChange={handleInput("companyName")}
-                    placeholder="Acme Wholesale Ltd"
-                    className={errors.companyName ? "border-red-400 focus-visible:ring-red-400" : ""}
-                  />
-                  <FieldError msg={errors.companyName} />
-                </div>
+                {/* Organisation / trading identity — never required for Individual */}
+                {businessCustomer && (
+                  <div
+                    className="space-y-1"
+                    data-error={!!errors.companyName || undefined}
+                  >
+                    <Label htmlFor="companyName">
+                      Organisation / Trading Name
+                      {organisationNameRequired && <span className="text-red-500"> *</span>}
+                    </Label>
+                    <Input
+                      id="companyName"
+                      value={form.companyName}
+                      onChange={handleInput("companyName")}
+                      placeholder={form.customerType === "sole_trader" ? "Optional trading name" : "Business or organisation name"}
+                      className={errors.companyName ? "border-red-400 focus-visible:ring-red-400" : ""}
+                    />
+                    {form.customerType === "sole_trader" && (
+                      <p className="text-xs text-gray-500">
+                        Optional if you trade under your own personal name.
+                      </p>
+                    )}
+                    <FieldError msg={errors.companyName} />
+                  </div>
+                )}
 
                 {/* Mobile */}
                 <div
@@ -490,17 +545,19 @@ export default function TradeAccount() {
                   <FieldError msg={errors.mobile} />
                 </div>
 
-                {/* Website */}
-                <div className="space-y-1">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    type="url"
-                    value={form.website}
-                    onChange={handleInput("website")}
-                    placeholder="https://www.company.com"
-                  />
-                </div>
+                {/* Website — business/trader only */}
+                {businessCustomer && (
+                  <div className="space-y-1">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      value={form.website}
+                      onChange={handleInput("website")}
+                      placeholder="https://www.company.com"
+                    />
+                  </div>
+                )}
 
                 {/* Country */}
                 <div className="space-y-1">
