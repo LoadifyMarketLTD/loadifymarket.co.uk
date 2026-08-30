@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "vitest run netlify/functions/__tests__/supplier-provider-foundation.test.ts netlify/functions/__tests__/marketplace-channel-foundation.test.ts && eslint netlify/functions/_shared/inactiveSupplierAdapter.ts netlify/functions/_shared/supplierProviderRegistry.ts netlify/functions/_shared/directSupplierContract.ts netlify/functions/_shared/marketplaceChannelConnector.ts netlify/functions/_shared/marketplaceChannelRegistry.ts netlify/functions/__tests__/supplier-provider-foundation.test.ts netlify/functions/__tests__/marketplace-channel-foundation.test.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
@@ -84,7 +85,6 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.1",
-    "@eslint/js": "^9.39.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
