@@ -39,6 +39,35 @@ describe('Stage 4 Buyer onboarding alignment contract', () => {
     );
   });
 
+  it('uses the canonical Buyer account-type contract in Trade Account', () => {
+    const trade = source('src/pages/pixel-perfect/TradeAccount.tsx');
+
+    expect(trade).toContain('{ value: "individual", label: "Individual" }');
+    expect(trade).toContain('{ value: "sole_trader", label: "Sole trader" }');
+    expect(trade).toContain('{ value: "limited_company", label: "Limited company" }');
+    expect(trade).toContain('{ value: "partnership", label: "Partnership" }');
+    expect(trade).toContain('{ value: "charity", label: "Charity / organisation" }');
+    expect(trade).toContain('{ value: "other", label: "Other business / trader" }');
+
+    expect(trade).not.toContain('{ value: "business", label: "Business" }');
+    expect(trade).not.toContain('{ value: "reseller", label: "Reseller" }');
+    expect(trade).not.toContain('{ value: "distributor", label: "Distributor" }');
+
+    expect(trade).toContain(
+      'if (!form.customerType) newErrors.customerType = "Customer type is required"',
+    );
+    expect(trade).toContain(
+      'if (organisationNameRequired && !form.companyName.trim())',
+    );
+    expect(trade).toContain(
+      'companyName: businessCustomer ? form.companyName.trim() || undefined : undefined',
+    );
+    expect(trade).toContain(
+      'vatNumber: businessCustomer ? form.vatNumber.trim() || undefined : undefined',
+    );
+    expect(trade).toContain('customerType: form.customerType');
+  });
+
   it('does not promise Buyer pricing or reverse-charge treatment from profile fields alone', () => {
     const profile = source(
       'src/pages/pixel-perfect/buyer/BuyerProfile.tsx',
