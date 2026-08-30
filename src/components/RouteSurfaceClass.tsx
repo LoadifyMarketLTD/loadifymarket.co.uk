@@ -10,6 +10,7 @@ const CLASS_NAMES = [
   'loadify-native-product-route',
   'loadify-native-catalog-route',
   'loadify-native-category-route',
+  'loadify-native-inbox-route',
 ] as const;
 
 const SELLER_LISTING_ROUTE = /^\/seller\/products\/(?:new|[^/]+\/edit)\/?$/;
@@ -19,6 +20,7 @@ const ADMIN_SETTINGS_ROUTE = /^\/admin\/settings\/?$/;
 const PRODUCT_ROUTE = /^\/product\/[^/]+\/?$/;
 const CATALOG_ROUTE = /^\/catalog\/?$/;
 const CATEGORY_ROUTE = /^\/category\/[^/]+\/?$/;
+const INBOX_ROUTE = /^\/inbox(?:\/[^/]+)?\/?$/;
 
 const LEGACY_APPROVAL_COPY =
   'Use Save as Draft to continue editing later, or Publish to submit for admin approval.';
@@ -39,8 +41,8 @@ function repairLegacySellerPublishCopy(): void {
  *
  * The native marketplace route classes are added only inside Capacitor. They
  * provide a hard CSS boundary so approved mobile-web polish cannot leak into
- * the established installed-app identity on Product, Catalog or Category
- * routes.
+ * the established installed-app identity on Product, Catalog, Category or
+ * Inbox/Chat routes.
  *
  * The legacy ProductFormPage still contains one pre-approval sentence. Until
  * that large form is decomposed into smaller components, replace only that
@@ -62,6 +64,7 @@ export default function RouteSurfaceClass() {
     root.classList.toggle('loadify-native-product-route', native && PRODUCT_ROUTE.test(pathname));
     root.classList.toggle('loadify-native-catalog-route', native && CATALOG_ROUTE.test(pathname));
     root.classList.toggle('loadify-native-category-route', native && CATEGORY_ROUTE.test(pathname));
+    root.classList.toggle('loadify-native-inbox-route', native && INBOX_ROUTE.test(pathname));
 
     let observer: MutationObserver | null = null;
     if (sellerListing) {
