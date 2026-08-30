@@ -1,9 +1,14 @@
 apply plugin: 'com.android.application'
 
-def loadifyUploadStoreFile = project.findProperty('LOADIFY_UPLOAD_STORE_FILE') ?: System.getenv('LOADIFY_UPLOAD_STORE_FILE')
-def loadifyUploadKeyAlias = project.findProperty('LOADIFY_UPLOAD_KEY_ALIAS') ?: System.getenv('LOADIFY_UPLOAD_KEY_ALIAS')
-def loadifyUploadStorePassword = project.findProperty('LOADIFY_UPLOAD_STORE_PASSWORD') ?: System.getenv('LOADIFY_UPLOAD_STORE_PASSWORD')
-def loadifyUploadKeyPassword = project.findProperty('LOADIFY_UPLOAD_KEY_PASSWORD') ?: System.getenv('LOADIFY_UPLOAD_KEY_PASSWORD')
+// Explicit process environment values take precedence over Gradle properties.
+// This matters on recovery/build machines that may still have historical
+// LOADIFY_UPLOAD_* entries in ~/.gradle/gradle.properties. The local release
+// preflight validates the explicit environment-selected keystore, so Gradle
+// must resolve signing inputs using the same precedence rule.
+def loadifyUploadStoreFile = System.getenv('LOADIFY_UPLOAD_STORE_FILE') ?: project.findProperty('LOADIFY_UPLOAD_STORE_FILE')
+def loadifyUploadKeyAlias = System.getenv('LOADIFY_UPLOAD_KEY_ALIAS') ?: project.findProperty('LOADIFY_UPLOAD_KEY_ALIAS')
+def loadifyUploadStorePassword = System.getenv('LOADIFY_UPLOAD_STORE_PASSWORD') ?: project.findProperty('LOADIFY_UPLOAD_STORE_PASSWORD')
+def loadifyUploadKeyPassword = System.getenv('LOADIFY_UPLOAD_KEY_PASSWORD') ?: project.findProperty('LOADIFY_UPLOAD_KEY_PASSWORD')
 def loadifyReleaseSigningValues = [
     loadifyUploadStoreFile,
     loadifyUploadKeyAlias,
