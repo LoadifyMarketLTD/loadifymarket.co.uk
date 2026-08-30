@@ -14,7 +14,9 @@ $ExpectedVersionName = "1.0.1"
 $ExpectedCertSha256 = "0365a35b3413daf8c76e0bab2f56d898b94895dcee9e27151a03e1778bb97f24"
 $ExpectedBranch = "visual/product-detail-premium-polish-20260829"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$OriginalBackup = Join-Path $env:USERPROFILE "Desktop\LoadifyMarket-Android-Backups\installed-20260830-023504\base.apk"
+$OriginalBackupDir = Join-Path $env:USERPROFILE "Desktop\LoadifyMarket-Android-Backups\installed-20260830-023504"
+$OriginalBackup = Join-Path $OriginalBackupDir "base.apk"
+$OriginalBackupManifest = Join-Path $OriginalBackupDir "sha256.txt"
 Set-Location $RepoRoot
 
 function Pass([string]$Message) { Write-Host "PASS: $Message" -ForegroundColor Green }
@@ -104,13 +106,25 @@ if (-not $AcknowledgeSameVersionRepair) {
 }
 Pass "Same-version in-place repair explicitly acknowledged"
 
-if (Test-Path -LiteralPath $OriginalBackup) {
-    $backupHashBefore = (Get-FileHash -Algorithm SHA256 -LiteralPath $OriginalBackup).Hash.ToLowerInvariant()
-    Info "Original backup detected and will only be hash-checked"
-} else {
-    $backupHashBefore = $null
-    Warn "Original backup path is not currently visible; this script will not create, replace or delete it."
+Write-Host "`n=== ORIGINAL BACKUP INTEGRITY LOCK ===" -ForegroundColor Cyan
+if (-not (Test-Path -LiteralPath $OriginalBackup -PathType Leaf)) {
+    Fail "Exact original saved base.apk is missing: $OriginalBackup"
 }
+if (-not (Test-Path -LiteralPath $OriginalBackupManifest -PathType Leaf)) {
+    Fail "Original backup SHA-256 manifest is missing: $OriginalBackupManifest"
+}
+$manifestLine = Get-Content -LiteralPath $OriginalBackupManifest |
+    Where-Object { $_ -match '\s+base\.apk\s*$' } |
+    Select-Object -First 1
+if (-not $manifestLine) { Fail "Original backup manifest has no base.apk hash entry." }
+$backupExpectedHash = (($manifestLine -split '\s+')[0]).ToLowerInvariant()
+if ([string]::IsNullOrWhiteSpace($backupExpectedHash)) { Fail "Original backup manifest hash is empty." }
+$backupHashBefore = (Get-FileHash -Algorithm SHA256 -LiteralPath $OriginalBackup).Hash.ToLowerInvariant()
+if ($backupHashBefore -ne $backupExpectedHash) {
+    Fail "Original saved base.apk no longer matches its saved SHA-256 manifest."
+}
+Pass "Exact original saved base.apk matches its saved SHA-256 manifest and is locked read-only"
+Info "Original backup: $OriginalBackup"
 
 $branch = (git branch --show-current).Trim()
 if ($LASTEXITCODE -ne 0 -or $branch -ne $ExpectedBranch) { Fail "Wrong Git branch. Expected $ExpectedBranch." }
@@ -244,11 +258,15 @@ if ($appCritical.Count -gt 0) {
 }
 Pass "No Loadify Firebase initialization fatal detected in startup window"
 
-if ($backupHashBefore -and (Test-Path -LiteralPath $OriginalBackup)) {
-    $backupHashAfter = (Get-FileHash -Algorithm SHA256 -LiteralPath $OriginalBackup).Hash.ToLowerInvariant()
-    if ($backupHashAfter -ne $backupHashBefore) { Fail "Original saved base.apk hash changed unexpectedly." }
-    Pass "Original saved base.apk remained byte-for-byte untouched"
+Write-Host "`n=== ORIGINAL BACKUP POST-CHECK ===" -ForegroundColor Cyan
+if (-not (Test-Path -LiteralPath $OriginalBackup -PathType Leaf)) {
+    Fail "Original saved base.apk disappeared during repair."
 }
+$backupHashAfter = (Get-FileHash -Algorithm SHA256 -LiteralPath $OriginalBackup).Hash.ToLowerInvariant()
+if ($backupHashAfter -ne $backupHashBefore -or $backupHashAfter -ne $backupExpectedHash) {
+    Fail "Original saved base.apk hash changed unexpectedly."
+}
+Pass "Original saved base.apk remained byte-for-byte untouched and still matches its saved manifest"
 
 Write-Host "`n=== RESULT ===" -ForegroundColor Green
 Write-Host "SAME-VERSION V2 REPAIR INSTALL PASS"
