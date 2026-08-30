@@ -1,29 +1,32 @@
 /**
- * MobileAppLayout — mobile-first shell used on viewports < 768 px by both the
- * mobile website and the Capacitor app.
+ * MobileAppLayout — mobile layout boundary.
  *
- * Provides:
- *  - warm light marketplace background matching the public web identity;
- *  - bottom safe-area padding so content is never hidden behind the nav bar;
- *  - MobileBottomNav fixed at the bottom;
- *  - a spacer above MobileBottomNav so the final content remains reachable.
- *
- * Individual pages remain responsible for their own page-level mobile headers.
+ * Mobile web keeps the current public marketplace shell. Capacitor keeps the
+ * established installed-app shell and must not inherit website visual redesigns.
  */
 
 import type { ReactNode } from "react";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import { LegacyNativeBottomNav } from "@/components/native/LegacyNativeMarketplace";
+import { isCapacitorContext } from "@/lib/capacitorUtils";
 
 interface MobileAppLayoutProps {
   children: ReactNode;
 }
 
 export default function MobileAppLayout({ children }: MobileAppLayoutProps) {
+  const isNativeApp = isCapacitorContext();
+
   return (
-    <div className="min-h-screen bg-[#F8F7F4] text-[#0A234F]">
+    <div
+      className={isNativeApp ? "min-h-screen text-white" : "min-h-screen bg-[#F8F7F4] text-[#0A234F]"}
+      style={isNativeApp ? { background: '#0A0E1A' } : undefined}
+    >
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-[99999] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:rounded-md focus:bg-[#0A234F] focus:text-white focus:font-semibold focus:shadow-lg"
+        className={isNativeApp
+          ? "sr-only focus:not-sr-only focus:absolute focus:z-[99999] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:rounded-md focus:bg-[#F2B84B] focus:text-black focus:font-semibold focus:shadow-lg"
+          : "sr-only focus:not-sr-only focus:absolute focus:z-[99999] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:rounded-md focus:bg-[#0A234F] focus:text-white focus:font-semibold focus:shadow-lg"}
       >
         Skip to main content
       </a>
@@ -32,7 +35,7 @@ export default function MobileAppLayout({ children }: MobileAppLayoutProps) {
 
       <div className="h-[70px]" aria-hidden="true" />
 
-      <MobileBottomNav />
+      {isNativeApp ? <LegacyNativeBottomNav /> : <MobileBottomNav />}
     </div>
   );
 }
