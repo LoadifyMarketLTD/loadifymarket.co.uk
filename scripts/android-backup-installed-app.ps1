@@ -38,12 +38,50 @@ function Find-ApkSigner {
     return $null
 }
 
+function Get-AdbDeviceState([string]$Serial) {
+    $rows = @(adb devices 2>$null | ForEach-Object { $_.ToString().Trim() })
+    foreach ($row in $rows) {
+        if ($row -match ('^' + [regex]::Escape($Serial) + '\s+(\S+)')) {
+            return $matches[1]
+        }
+    }
+    return $null
+}
+
 Write-Host "`n=== LOADIFY INSTALLED-APP BACKUP ===" -ForegroundColor Cyan
 Write-Host "Device: $DeviceSerial"
 Write-Host "Package: $Package"
 
-adb -s $DeviceSerial get-state | Out-Null
-if ($LASTEXITCODE -ne 0) { Fail "ADB device '$DeviceSerial' is not available/authorized." }
+# Start/reuse the local ADB server, then give the known device a short window to
+# reconnect. This does not install, uninstall, clear data, or otherwise mutate it.
+adb start-server | Out-Null
+
+Write-Host "`n=== ADB DEVICE DISCOVERY ===" -ForegroundColor Cyan
+$deviceState = Get-AdbDeviceState $DeviceSerial
+for ($attempt = 1; -not $deviceState -and $attempt -le 10; $attempt++) {
+    if ($attempt -eq 1) {
+        Write-Host "Waiting up to 20 seconds for the known phone to reconnect..." -ForegroundColor Yellow
+    }
+    Start-Sleep -Seconds 2
+    $deviceState = Get-AdbDeviceState $DeviceSerial
+}
+
+Write-Host "Current ADB devices:"
+adb devices -l
+
+if (-not $deviceState) {
+    Fail "ADB cannot see device '$DeviceSerial'. Connect/unlock the phone, keep USB debugging enabled, then rerun this backup."
+}
+if ($deviceState -eq 'unauthorized') {
+    Fail "Device '$DeviceSerial' is visible but UNAUTHORIZED. Unlock the phone and approve the 'Allow USB debugging' RSA prompt, then rerun."
+}
+if ($deviceState -eq 'offline') {
+    Fail "Device '$DeviceSerial' is OFFLINE. Reconnect USB (or restart ADB) and rerun; no app mutation occurred."
+}
+if ($deviceState -ne 'device') {
+    Fail "Device '$DeviceSerial' has unexpected ADB state '$deviceState'. Backup will not continue."
+}
+Pass "Exact Android device is connected and authorized"
 
 $pathLines = @(adb -s $DeviceSerial shell pm path $Package 2>$null |
     ForEach-Object { $_.ToString().Trim() } |
@@ -116,7 +154,7 @@ $versionLines = adb -s $DeviceSerial shell dumpsys package $Package |
     "Future updates must use adb install -r and must never uninstall the existing app as a workaround."
 ) | Out-File -FilePath $summaryPath -Encoding utf8
 
-# Best-effort private-data snapshot only when Android explicitly allows run-as.
+# Best-effort private-data probe only when Android explicitly allows run-as.
 # Failure here is expected for a non-debuggable release build and is NOT treated
 # as a backup failure because APK preservation is the mandatory rollback asset.
 $dataProbe = ((adb -s $DeviceSerial shell run-as $Package pwd 2>$null) | Out-String).Trim()
