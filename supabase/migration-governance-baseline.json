@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "capturedDate": "2026-08-30",
+  "source": "Supabase production schema_migrations read-only audit",
+  "hostedLedger": {
+    "totalMigrations": 158,
+    "earliestVersion": "20260810120700",
+    "earliestName": "reconcile_core_rls_policies_20260810",
+    "latestVersion": "20260829130531",
+    "latestName": "validate_google_provider_bound_success_20260829"
+  },
+  "repositoryCanonical": {
+    "directory": "supabase/migrations",
+    "fileCount": 9,
+    "exactHostedVersionNameMatches": 9,
+    "hostedEntriesWithoutExactRepositoryFile": 149
+  },
+  "bootstrapReplay": {
+    "status": "BLOCKED",
+    "reason": "The hosted Supabase migration ledger begins after the historical base schema already existed, and supabase/migrations does not contain that base schema. Do not claim empty-database replay readiness from this directory yet."
+  },
+  "canonicalEntries": [
+    {
+      "file": "20260818102000_remove_unused_transport_surfaces_20260818.sql",
+      "version": "20260818102000",
+      "name": "remove_unused_transport_surfaces_20260818",
+      "status": "hosted_exact"
+    },
+    {
+      "file": "20260818160500_enforce_product_shipping_product_fk.sql",
+      "version": "20260818160500",
+      "name": "enforce_product_shipping_product_fk",
+      "status": "hosted_exact"
+    },
+    {
+      "file": "20260824081413_atomic_rate_limit_consume.sql",
+      "version": "20260824081413",
+      "name": "atomic_rate_limit_consume",
+      "status": "hosted_exact"
+    },
+    {
+      "file": "20260825160000_supplier_commerce_hot_path_indexes.sql",
+      "version": "20260825160000",
+      "name": "supplier_commerce_hot_path_indexes",
+      "status": "hosted_exact"
+    },
+    {
+      "file": "20260825192000_public_seller_projection_security_closure.sql",
+      "version": "20260825192000",
+      "name": "public_seller_projection_security_closure",
+      "status": "hosted_exact"
+    },
+    {
+      "file": "20260825192100_server_only_privilege_closure.sql",
+      "version": "20260825192100",
+      "name": "server_only_privilege_closure",
+      "status": "hosted_exact"
+    },
+    {
+      "file": "20260825192200_track_product_view_rpc_privilege_closure.sql",
+      "version": "20260825192200",
+      "name": "track_product_view_rpc_privilege_closure",
+      "status": "hosted_exact"
+    },
+    {
+      "file": "20260828123840_marketplace_seller_direct_publish.sql",
+      "version": "20260828123840",
+      "name": "marketplace_seller_direct_publish",
+      "status": "hosted_exact",
+      "note": "Repository filename was corrected from 20260828123500 after verifying the hosted ledger version; SQL semantics are unchanged."
+    },
+    {
+      "file": "20260828133458_remove_marketplace_seller_listing_limit.sql",
+      "version": "20260828133458",
+      "name": "remove_marketplace_seller_listing_limit",
+      "status": "hosted_exact"
+    }
+  ],
+  "rules": [
+    "Every SQL file under supabase/migrations must be classified in this baseline or a successor baseline.",
+    "A migration timestamp at or before the captured hosted head must not be introduced as a new unhosted migration without explicit reconciliation.",
+    "The legacy numbered SQL files directly under supabase are historical inputs and are not proof of canonical Supabase migration replay.",
+    "VERIFY_migration_health.sql is a diagnostic script; repository presence alone is not execution evidence.",
+    "No production migration history is to be rewritten merely to make repository checks green."
+  ]
+}
