@@ -249,7 +249,7 @@ const SellerSettings = () => {
       setIsPaused(true);
       toast({
         title: "Account paused",
-        description: "All your listings are now hidden from the marketplace. Click Resume to re-enable them.",
+        description: "Active listings are now hidden. Resume will not automatically publish drafts or previously inactive listings.",
       });
     } catch {
       toast({ title: "Failed to pause account", description: "Please try again.", variant: "destructive" });
@@ -267,23 +267,16 @@ const SellerSettings = () => {
         .update({ isPaused: false })
         .eq("userId", user.id);
       if (profileError) throw profileError;
-      const { error: productsError } = await supabase
-        .from("products")
-        .update({ isActive: true })
-        .eq("sellerId", user.id)
-        .eq("isActive", false);
-      if (productsError) {
-        // Roll back the profile flag so both sides stay consistent.
-        await supabase
-          .from("seller_profiles")
-          .update({ isPaused: true })
-          .eq("userId", user.id);
-        throw productsError;
-      }
+
+      // Fail safe: we do not know which inactive products were active before
+      // the pause and which were intentional drafts/sold/disabled listings.
+      // Reactivating every isActive=false row could publish content the seller
+      // never intended to make live. Resume the account only; listing publication
+      // remains an explicit per-listing action.
       setIsPaused(false);
       toast({
         title: "Account resumed",
-        description: "All your listings are now visible on the marketplace.",
+        description: "Your seller account is active again. Review your listings and re-activate only the products you want to publish.",
       });
     } catch {
       toast({ title: "Failed to resume account", description: "Please try again.", variant: "destructive" });
@@ -536,8 +529,8 @@ const SellerSettings = () => {
               <p className="text-sm font-medium text-foreground">{isPaused ? "Resume Seller Account" : "Pause Seller Account"}</p>
               <p className="text-xs text-muted-foreground">
                 {isPaused
-                  ? "Re-enable all your listings on the marketplace"
-                  : "Temporarily hide all your listings from the marketplace"}
+                  ? "Resume the seller account; listings stay hidden until you explicitly re-activate them"
+                  : "Temporarily hide all currently active listings from the marketplace"}
               </p>
             </div>
             <Button
