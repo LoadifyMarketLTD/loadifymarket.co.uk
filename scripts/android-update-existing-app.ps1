@@ -1,0 +1,286 @@
+param(
+    [string]$DeviceSerial = "57311FDCQ00BGS",
+    [string]$FirebaseSource = ""
+)
+
+$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+
+$Package = "co.uk.loadifymarket.app"
+$ExpectedVersionCode = "2"
+$ExpectedVersionName = "1.0.1"
+$ExpectedBranch = "visual/product-detail-premium-polish-20260829"
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+Set-Location $RepoRoot
+
+function Fail([string]$Message) {
+    Write-Host "`nSTOP: $Message" -ForegroundColor Red
+    exit 1
+}
+
+function Pass([string]$Message) {
+    Write-Host "PASS: $Message" -ForegroundColor Green
+}
+
+function Find-ApkSigner {
+    $roots = @()
+    if ($env:ANDROID_HOME) { $roots += $env:ANDROID_HOME }
+    if ($env:ANDROID_SDK_ROOT) { $roots += $env:ANDROID_SDK_ROOT }
+    $roots += (Join-Path $env:LOCALAPPDATA "Android\Sdk")
+
+    foreach ($root in ($roots | Select-Object -Unique)) {
+        if (-not (Test-Path $root)) { continue }
+        $candidate = Get-ChildItem (Join-Path $root "build-tools") -Directory -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName "apksigner.bat" } |
+            Where-Object { Test-Path $_ } |
+            Select-Object -First 1
+        if ($candidate) { return $candidate }
+    }
+    return $null
+}
+
+function Get-CertSha256([string]$ApkPath, [string]$ApkSigner) {
+    $out = & $ApkSigner verify --print-certs $ApkPath 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Fail "apksigner could not verify $ApkPath"
+    }
+    $line = $out | Select-String -Pattern "Signer #1 certificate SHA-256 digest:" | Select-Object -First 1
+    if (-not $line) {
+        Fail "Could not read signer certificate SHA-256 digest from $ApkPath"
+    }
+    return (($line.ToString() -split ":", 2)[1]).Trim().ToLowerInvariant()
+}
+
+Write-Host "`n=== LOADIFY ANDROID EXISTING-APP UPDATE GATE ===" -ForegroundColor Cyan
+Write-Host "Repository: $RepoRoot"
+Write-Host "Target package: $Package"
+Write-Host "Expected candidate: versionCode=$ExpectedVersionCode versionName=$ExpectedVersionName"
+
+# ---------------------------------------------------------------------------
+# 1. Git safety and exact branch
+# ---------------------------------------------------------------------------
+Write-Host "`n=== GIT SAFETY ===" -ForegroundColor Cyan
+
+$branch = (git branch --show-current).Trim()
+if ($LASTEXITCODE -ne 0) { Fail "Not inside a Git checkout." }
+if ($branch -ne $ExpectedBranch) {
+    Fail "Wrong branch: '$branch'. Expected '$ExpectedBranch'."
+}
+
+# Only two generated tracked files from prior cap sync may be auto-restored.
+$allowedGenerated = @(
+    "android/app/capacitor.build.gradle",
+    "android/capacitor.settings.gradle"
+)
+
+$trackedDirty = @(git status --porcelain=v1 --untracked-files=no | ForEach-Object {
+    if ($_.Length -ge 4) { $_.Substring(3).Trim() }
+})
+
+$unexpectedDirty = @($trackedDirty | Where-Object { $_ -and ($_ -notin $allowedGenerated) })
+if ($unexpectedDirty.Count -gt 0) {
+    Write-Host "Unexpected tracked local changes:" -ForegroundColor Yellow
+    $unexpectedDirty | ForEach-Object { Write-Host "  $_" }
+    Fail "Local tracked work must be preserved before syncing this branch."
+}
+
+$generatedDirty = @($trackedDirty | Where-Object { $_ -in $allowedGenerated })
+if ($generatedDirty.Count -gt 0) {
+    Write-Host "Restoring only generated Capacitor Gradle files from HEAD..."
+    git restore -- $generatedDirty
+    if ($LASTEXITCODE -ne 0) { Fail "Could not restore generated Capacitor files." }
+}
+
+# Preserve all untracked files, including diagnostic logs. Never delete them here.
+git fetch origin $ExpectedBranch
+if ($LASTEXITCODE -ne 0) { Fail "git fetch failed." }
+
+git merge --ff-only "origin/$ExpectedBranch"
+if ($LASTEXITCODE -ne 0) { Fail "Branch cannot fast-forward cleanly. No reset was attempted." }
+
+$Head = (git rev-parse HEAD).Trim()
+Write-Host "HEAD: $Head"
+Pass "Git branch synchronized without reset/uninstall"
+
+# ---------------------------------------------------------------------------
+# 2. Source identity gates
+# ---------------------------------------------------------------------------
+Write-Host "`n=== SOURCE IDENTITY ===" -ForegroundColor Cyan
+
+$gradle = Get-Content ".\android\app\build.gradle" -Raw
+if ($gradle -notmatch 'applicationId\s+"co\.uk\.loadifymarket\.app"') { Fail "Android package id mismatch in build.gradle." }
+if ($gradle -notmatch 'versionCode\s+2') { Fail "Expected versionCode 2 not found." }
+if ($gradle -notmatch 'versionName\s+"1\.0\.1"') { Fail "Expected versionName 1.0.1 not found." }
+
+$home = Get-Content ".\src\pages\Home.tsx" -Raw
+if ($home -notmatch 'UpdatedNativeHome') { Fail "Updated native Home boundary is not active." }
+
+$nativeShell = Get-Content ".\src\components\native\UpdatedNativeMarketplace.tsx" -Raw
+foreach ($colour in @('#F8F7F4', '#0A234F', '#8A7351')) {
+    if ($nativeShell -notmatch [regex]::Escape($colour)) { Fail "Current brand colour $colour missing from updated native shell." }
+}
+Pass "Package/version/native colour identity present in source"
+
+# ---------------------------------------------------------------------------
+# 3. JS validation + build
+# ---------------------------------------------------------------------------
+Write-Host "`n=== JS VALIDATION ===" -ForegroundColor Cyan
+
+npm ci
+if ($LASTEXITCODE -ne 0) { Fail "npm ci failed." }
+
+npm run typecheck
+if ($LASTEXITCODE -ne 0) { Fail "TypeScript typecheck failed." }
+
+npm run build
+if ($LASTEXITCODE -ne 0) { Fail "Production web build failed." }
+Pass "Typecheck and production build"
+
+# ---------------------------------------------------------------------------
+# 4. Capacitor sync, then secure Firebase restore/validation
+# ---------------------------------------------------------------------------
+Write-Host "`n=== CAPACITOR + FIREBASE ===" -ForegroundColor Cyan
+
+npx cap sync android
+if ($LASTEXITCODE -ne 0) { Fail "Capacitor Android sync failed." }
+
+$FirebaseTarget = Join-Path $RepoRoot "android\app\google-services.json"
+
+if (-not (Test-Path $FirebaseTarget)) {
+    $candidates = @()
+    if ($FirebaseSource) { $candidates += $FirebaseSource }
+    $candidates += @(
+        (Join-Path $env:USERPROFILE "Desktop\LoadifyMarket-GitHub-20260820-0950\android\app\google-services.json"),
+        (Join-Path $env:USERPROFILE "Desktop\LoadifyMarket-PR600\secure\google-services.json")
+    )
+
+    $safeSource = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+    if (-not $safeSource) {
+        Fail "Real google-services.json is missing. Re-run with -FirebaseSource 'C:\secure\google-services.json'. No fake config will be generated."
+    }
+    Copy-Item -LiteralPath $safeSource -Destination $FirebaseTarget -Force
+}
+
+try {
+    $firebaseJson = Get-Content $FirebaseTarget -Raw | ConvertFrom-Json
+} catch {
+    Fail "google-services.json is not valid JSON."
+}
+
+$packageNames = @($firebaseJson.client | ForEach-Object { $_.client_info.android_client_info.package_name })
+if ($Package -notin $packageNames) {
+    Fail "Firebase config does not contain package $Package."
+}
+
+git check-ignore -q -- "android/app/google-services.json"
+if ($LASTEXITCODE -ne 0) { Fail "google-services.json is not gitignored. STOP before build." }
+Pass "Firebase config exists, matches package, and is ignored"
+
+Push-Location android
+try {
+    .\gradlew.bat :app:processDebugGoogleServices
+    if ($LASTEXITCODE -ne 0) { Fail "processDebugGoogleServices failed." }
+} finally {
+    Pop-Location
+}
+
+$googleResource = Get-ChildItem ".\android\app\build" -Recurse -File -Filter "values.xml" -ErrorAction SilentlyContinue |
+    Where-Object { (Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue) -match 'name="google_app_id"' } |
+    Select-Object -First 1
+if (-not $googleResource) { Fail "google_app_id was not generated by Google Services Gradle processing." }
+
+$firebaseProvider = Get-ChildItem ".\android\app\build\intermediates" -Recurse -File -Filter "AndroidManifest.xml" -ErrorAction SilentlyContinue |
+    Where-Object { (Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue) -match 'FirebaseInitProvider' } |
+    Select-Object -First 1
+if (-not $firebaseProvider) { Fail "FirebaseInitProvider not found in merged Android manifests." }
+Pass "Firebase generated resources and init provider"
+
+# ---------------------------------------------------------------------------
+# 5. Existing installed app + signing certificate parity
+# ---------------------------------------------------------------------------
+Write-Host "`n=== EXISTING APP + SIGNING PARITY ===" -ForegroundColor Cyan
+
+adb -s $DeviceSerial get-state | Out-Null
+if ($LASTEXITCODE -ne 0) { Fail "ADB device '$DeviceSerial' is not available/authorized." }
+
+$installedPathLine = adb -s $DeviceSerial shell pm path $Package | Select-Object -First 1
+if (-not $installedPathLine -or $installedPathLine -notmatch '^package:') {
+    Fail "Package $Package is not currently installed. This script will not perform a fresh install."
+}
+
+Write-Host "Installed package metadata:"
+adb -s $DeviceSerial shell dumpsys package $Package |
+    Select-String -Pattern "versionCode=|versionName=|lastUpdateTime="
+
+$remoteApk = ($installedPathLine -replace '^package:', '').Trim()
+$installedCopy = Join-Path $env:TEMP "loadify-installed-base.apk"
+if (Test-Path $installedCopy) { Remove-Item $installedCopy -Force }
+adb -s $DeviceSerial pull $remoteApk $installedCopy | Out-Null
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path $installedCopy)) { Fail "Could not pull currently installed base.apk for certificate comparison." }
+
+$ApkSigner = Find-ApkSigner
+if (-not $ApkSigner) { Fail "Android apksigner.bat was not found. Certificate parity is mandatory before update install." }
+
+$installedCert = Get-CertSha256 $installedCopy $ApkSigner
+Write-Host "Installed certificate SHA-256: $installedCert"
+
+# ---------------------------------------------------------------------------
+# 6. Build debug candidate and prove it can update THIS installed app
+# ---------------------------------------------------------------------------
+Write-Host "`n=== ANDROID CANDIDATE BUILD ===" -ForegroundColor Cyan
+
+Push-Location android
+try {
+    .\gradlew.bat assembleDebug
+    if ($LASTEXITCODE -ne 0) { Fail "assembleDebug failed." }
+} finally {
+    Pop-Location
+}
+
+$Candidate = Join-Path $RepoRoot "android\app\build\outputs\apk\debug\app-debug.apk"
+if (-not (Test-Path $Candidate)) { Fail "Debug APK was not produced." }
+
+$candidateCert = Get-CertSha256 $Candidate $ApkSigner
+Write-Host "Candidate certificate SHA-256: $candidateCert"
+
+if ($candidateCert -ne $installedCert) {
+    Fail "Signing certificate mismatch. Refusing adb install -r. No uninstall will be attempted."
+}
+Pass "Candidate signing certificate matches currently installed app"
+
+# ---------------------------------------------------------------------------
+# 7. Update install only, then startup gate
+# ---------------------------------------------------------------------------
+Write-Host "`n=== UPDATE INSTALL ===" -ForegroundColor Cyan
+
+adb -s $DeviceSerial install -r $Candidate
+if ($LASTEXITCODE -ne 0) { Fail "adb install -r failed. No uninstall fallback is permitted." }
+Pass "In-place APK update installed"
+
+adb -s $DeviceSerial logcat -c
+adb -s $DeviceSerial shell am force-stop $Package
+adb -s $DeviceSerial shell monkey -p $Package -c android.intent.category.LAUNCHER 1 | Out-Null
+Start-Sleep -Seconds 12
+
+$pid = (adb -s $DeviceSerial shell pidof $Package).Trim()
+if (-not $pid) { Fail "App process is not alive 12 seconds after launch." }
+Write-Host "PID after 12s: $pid"
+
+$crashLines = adb -s $DeviceSerial logcat -d -v brief |
+    Select-String -Pattern "FATAL EXCEPTION|Default FirebaseApp is not initialized|AndroidRuntime.*$Package|Process: $Package"
+
+if ($crashLines) {
+    Write-Host "Filtered fatal logcat:" -ForegroundColor Red
+    $crashLines | ForEach-Object { Write-Host $_.Line }
+    Fail "Fatal Android/Firebase log detected after update."
+}
+Pass "Startup: process alive and no filtered Firebase/Android fatal"
+
+Write-Host "`n=== FINAL INSTALLED VERSION ===" -ForegroundColor Cyan
+adb -s $DeviceSerial shell dumpsys package $Package |
+    Select-String -Pattern "versionCode=|versionName=|lastUpdateTime="
+
+Write-Host "`n=== RESULT ===" -ForegroundColor Green
+Write-Host "APK update gate PASS. App data was preserved; adb uninstall was never used."
+Write-Host "Next: manual visual/functional smoke on Home, Search/Categories, Product Detail, Cart/Checkout, Orders, Inbox/Chat, Profile, Seller flow and notifications."
