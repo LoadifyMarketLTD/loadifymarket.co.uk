@@ -14,6 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "verify:migrations": "node scripts/verify-migration-health.mjs",
     "e2e:setup": "node scripts/setup-playwright-local.mjs",
+    "e2e:fixtures:provision": "node scripts/provision-e2e-role-fixtures.mjs",
     "e2e:typecheck": "tsc -p e2e/tsconfig.json --noEmit",
     "e2e:list": "playwright test --list",
     "e2e": "playwright test",
