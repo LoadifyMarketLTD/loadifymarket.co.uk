@@ -61,6 +61,27 @@ function Get-ApkCertSha256([string]$ApkPath, [string]$ApkSigner) {
     return (($line.ToString() -split ":", 2)[1]).Trim().ToLowerInvariant()
 }
 
+function Read-KeyValueFile([string]$Path) {
+    $map = @{}
+    if (-not (Test-Path $Path)) { return $map }
+
+    foreach ($line in Get-Content $Path) {
+        $trimmed = $line.Trim()
+        if (-not $trimmed -or $trimmed.StartsWith('#') -or $trimmed.StartsWith('!')) { continue }
+        $index = $trimmed.IndexOf('=')
+        if ($index -lt 1) { $index = $trimmed.IndexOf(':') }
+        if ($index -lt 1) { continue }
+
+        $name = $trimmed.Substring(0, $index).Trim()
+        $value = $trimmed.Substring($index + 1).Trim()
+        if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+            $value = $value.Substring(1, $value.Length - 2)
+        }
+        $map[$name] = $value
+    }
+    return $map
+}
+
 Write-Host "`n=== LOADIFY SIGNED RELEASE CANDIDATE BUILD ===" -ForegroundColor Cyan
 Write-Host "Repository: $RepoRoot"
 Write-Host "Package: $Package"
@@ -127,6 +148,42 @@ if ($preflightOutput -notcontains "PASS: FULL RELEASE PREFLIGHT READY - release 
     Fail "FULL RELEASE PREFLIGHT READY was not proven in this build run."
 }
 Pass "Full rollback/device/signing/Firebase/runtime preflight"
+
+# Resolve the exact same signing inputs that the preflight accepts, then expose
+# them only to this script process and its Gradle children. This avoids a stale
+# ~/.gradle store path winning for one field while alias/password are read from
+# another source. Values are deliberately never printed.
+Write-Host "`n=== RELEASE SIGNING ENVIRONMENT ===" -ForegroundColor Cyan
+$repoGradleProps = Read-KeyValueFile (Join-Path $RepoRoot "android\gradle.properties")
+$userGradleProps = Read-KeyValueFile (Join-Path $HOME ".gradle\gradle.properties")
+$signingNames = @(
+    'LOADIFY_UPLOAD_STORE_FILE',
+    'LOADIFY_UPLOAD_KEY_ALIAS',
+    'LOADIFY_UPLOAD_STORE_PASSWORD',
+    'LOADIFY_UPLOAD_KEY_PASSWORD'
+)
+$resolvedSigning = @{}
+foreach ($name in $signingNames) {
+    $value = [Environment]::GetEnvironmentVariable($name)
+    if ([string]::IsNullOrWhiteSpace($value) -and $repoGradleProps.ContainsKey($name)) {
+        $value = [string]$repoGradleProps[$name]
+    }
+    if ([string]::IsNullOrWhiteSpace($value) -and $userGradleProps.ContainsKey($name)) {
+        $value = [string]$userGradleProps[$name]
+    }
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        Fail "$name could not be resolved for the Gradle child process."
+    }
+    $resolvedSigning[$name] = $value.Trim()
+}
+
+if (-not (Test-Path -LiteralPath ([string]$resolvedSigning['LOADIFY_UPLOAD_STORE_FILE']) -PathType Leaf)) {
+    Fail "Resolved release keystore path is not a file."
+}
+foreach ($name in $signingNames) {
+    [Environment]::SetEnvironmentVariable($name, [string]$resolvedSigning[$name], 'Process')
+}
+Pass "All four release signing values resolved for Gradle child process without disclosure"
 
 # ---------------------------------------------------------------------------
 # 3. Source identity before expensive build
