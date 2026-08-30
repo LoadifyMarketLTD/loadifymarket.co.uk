@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import MobileAppHeader from '@/components/MobileAppHeader';
 import MobileGridCard from '@/components/MobileGridCard';
@@ -28,18 +28,23 @@ const MUTED = '#667085';
 const BORDER = 'rgba(10,35,79,0.09)';
 
 const CATEGORIES = [
-  { label: 'All', to: '/catalog' },
-  { label: 'Home', to: '/category/homeware' },
-  { label: 'Electronics', to: '/category/electrical' },
-  { label: 'Entertainment', to: '/category/entertainment' },
-  { label: 'Hobbies', to: '/category/toys' },
-  { label: 'Sports', to: '/category/sports-fitness' },
-  { label: 'Vehicles', to: '/category/vehicles' },
-  { label: 'Fashion', to: '/category/wholesale-clothing' },
-  { label: 'Kids', to: '/category/kids' },
+  { id: 'all', label: 'All', to: '/catalog', match: '' },
+  { id: 'home', label: 'Home', to: '/category/homeware', match: '/category/homeware' },
+  { id: 'electronics', label: 'Electronics', to: '/category/electrical', match: '/category/electrical' },
+  { id: 'entertainment', label: 'Entertainment', to: '/category/entertainment', match: '/category/entertainment' },
+  { id: 'hobbies', label: 'Hobbies', to: '/category/toys', match: '/category/toys' },
+  { id: 'sports', label: 'Sports', to: '/category/sports-fitness', match: '/category/sports-fitness' },
+  { id: 'vehicles', label: 'Vehicles', to: '/category/vehicles', match: '/category/vehicles' },
+  { id: 'fashion', label: 'Fashion', to: '/category/wholesale-clothing', match: '/category/wholesale-clothing' },
+  { id: 'kids', label: 'Kids', to: '/category/kids', match: '/category/kids' },
 ];
 
 function NativeCategoryShortcuts() {
+  const { pathname } = useLocation();
+  const activeId = pathname === '/' || pathname === '/catalog'
+    ? 'all'
+    : (CATEGORIES.find((category) => category.match && pathname.startsWith(category.match))?.id ?? '');
+
   return (
     <section aria-label="Browse by category" style={{ background: BG, paddingTop: 12, paddingBottom: 4 }}>
       <div
@@ -47,29 +52,32 @@ function NativeCategoryShortcuts() {
         style={{ paddingLeft: 'var(--mob-side, 16px)', scrollPaddingInlineStart: 'var(--mob-side, 16px)' }}
       >
         <div style={{ display: 'flex', gap: 8, width: 'max-content' }}>
-          {CATEGORIES.map(({ label, to }, index) => (
-            <Link
-              key={to}
-              to={to}
-              style={{
-                display: 'flex',
-                minHeight: 36,
-                alignItems: 'center',
-                paddingInline: 14,
-                borderRadius: 9999,
-                border: index === 0 ? `1px solid ${NAVY}` : `1px solid ${BORDER}`,
-                background: index === 0 ? NAVY : '#FFFFFF',
-                color: index === 0 ? '#FFFFFF' : TEXT,
-                fontSize: 13,
-                fontWeight: index === 0 ? 650 : 500,
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                boxShadow: index === 0 ? '0 4px 12px rgba(10,35,79,0.10)' : 'none',
-              }}
-            >
-              {label}
-            </Link>
-          ))}
+          {CATEGORIES.map(({ id, label, to }) => {
+            const active = id === activeId;
+            return (
+              <Link
+                key={to}
+                to={to}
+                style={{
+                  display: 'flex',
+                  minHeight: 36,
+                  alignItems: 'center',
+                  paddingInline: 14,
+                  borderRadius: 9999,
+                  border: active ? `1px solid ${NAVY}` : `1px solid ${BORDER}`,
+                  background: active ? NAVY : '#FFFFFF',
+                  color: active ? '#FFFFFF' : TEXT,
+                  fontSize: 13,
+                  fontWeight: active ? 650 : 500,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  boxShadow: active ? '0 4px 12px rgba(10,35,79,0.10)' : 'none',
+                }}
+              >
+                {label}
+              </Link>
+            );
+          })}
           <div style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }} aria-hidden="true" />
         </div>
       </div>
@@ -112,7 +120,7 @@ function NativeSellerBanner() {
           Sell fast. Manage everything in one place.
         </h2>
         <p style={{ margin: '8px 0 0', color: MUTED, fontSize: 12.5, lineHeight: 1.5 }}>
-          Keep the app experience, now aligned with the current Loadify Market identity.
+          List products, manage marketplace orders and grow your presence from the app.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 15 }}>
           <button
