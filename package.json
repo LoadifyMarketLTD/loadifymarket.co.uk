@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npx eslint src/pages/Home.tsx src/components/Header.tsx src/components/HeroSection.tsx src/components/FeaturedProducts.tsx src/components/VisualMarketplaceCategories.tsx src/components/DesktopTrustStrip.tsx",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
