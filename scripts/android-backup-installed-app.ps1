@@ -117,14 +117,25 @@ foreach ($line in $pathLines) {
     $index++
 }
 
+if ($pulled.Count -eq 0) {
+    Fail "No APK files were copied from the installed package."
+}
+
 $baseApk = $pulled | Where-Object { $_.Name -eq 'base.apk' } | Select-Object -First 1
 if (-not $baseApk) { $baseApk = $pulled | Select-Object -First 1 }
+if (-not $baseApk -or $baseApk.Length -le 0) {
+    Fail "Backed-up base APK is missing or empty."
+}
+Pass "Installed APK package files copied from phone"
 
 $apkSigner = Find-ApkSigner
 if ($apkSigner -and $baseApk) {
     $certPath = Join-Path $BackupDir "installed-apk-certificate.txt"
     & $apkSigner verify --print-certs $baseApk.FullName 2>&1 | Out-File -FilePath $certPath -Encoding utf8
     if ($LASTEXITCODE -ne 0) { Fail "Backup APK was pulled but signature verification failed." }
+    Pass "Backed-up base APK signature verified"
+} else {
+    Write-Host "WARN: apksigner was not found; APK hash/metadata backup will still be preserved." -ForegroundColor Yellow
 }
 
 $shaPath = Join-Path $BackupDir "sha256.txt"
@@ -151,21 +162,17 @@ $versionLines = adb -s $DeviceSerial shell dumpsys package $Package |
     ($pulled | ForEach-Object { "- $($_.Name) ($($_.Length) bytes)" }),
     "",
     "This backup preserves the installed APK package files and metadata.",
-    "It does not guarantee a full export of private app data; Android normally blocks that for release apps without root/debuggable access.",
-    "Future updates must use adb install -r and must never uninstall the existing app as a workaround."
+    "Private app data is not exported: Android protects release/non-debuggable app data without root/debuggable access.",
+    "Private app data remains on the phone and must be preserved by using adb install -r; never uninstall or clear app data as an update workaround."
 ) | Out-File -FilePath $summaryPath -Encoding utf8
 
-# Best-effort private-data probe only when Android explicitly allows run-as.
-# Failure here is expected for a non-debuggable release build and is NOT treated
-# as a backup failure because APK preservation is the mandatory rollback asset.
-$dataProbe = ((adb -s $DeviceSerial shell run-as $Package pwd 2>$null) | Out-String).Trim()
-if ($dataProbe) {
-    $dataNote = Join-Path $BackupDir "private-data-access.txt"
-    "run-as available for $Package at $dataProbe. Private data was not modified." | Out-File $dataNote -Encoding utf8
-} else {
-    $dataNote = Join-Path $BackupDir "private-data-access.txt"
-    "run-as unavailable (normal for a release/non-debuggable app). APK files and package metadata are backed up; private app data remains on-device and is preserved by adb install -r." | Out-File $dataNote -Encoding utf8
-}
+$dataNote = Join-Path $BackupDir "private-data-access.txt"
+@(
+    "Private app data was NOT accessed or exported.",
+    "Reason: the installed package is treated as a protected release/non-debuggable application.",
+    "This is expected Android security behavior and is not a backup failure.",
+    "APK package files, package metadata, hashes and available certificate information are preserved in this folder."
+) | Out-File -FilePath $dataNote -Encoding utf8
 
 Write-Host "`n=== BACKUP CONTENTS ===" -ForegroundColor Cyan
 Get-ChildItem $BackupDir | Select-Object Name, Length, LastWriteTime | Format-Table -AutoSize
