@@ -1,4 +1,8 @@
 import { AvasamAdapterV1 } from './avasamAdapter';
+import {
+  AVASAM_GATE_B_CAPABILITIES,
+  AVASAM_VERIFIED_IMPLEMENTABLE_CAPABILITIES,
+} from './avasamCommercialCapabilityPolicy';
 import { InactiveSupplierAdapterV1 } from './inactiveSupplierAdapter';
 import type { SupplierAdapterCapability, SupplierAdapterV1 } from './supplierAdapter';
 
@@ -93,10 +97,10 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     role: 'supplier_network',
     codeState: 'verified_read_only',
     hostedActivation: 'off',
-    verifiedCapabilities: ['catalog', 'stock', 'price'],
-    potentialCapabilities: ['catalog', 'stock', 'price'],
+    verifiedCapabilities: AVASAM_VERIFIED_IMPLEMENTABLE_CAPABILITIES,
+    potentialCapabilities: AVASAM_GATE_B_CAPABILITIES,
     requiresProviderOrPartnerApproval: false,
-    notes: 'Controlled GB read-only pilot exists; commercial/write capabilities remain unavailable.',
+    notes: 'Controlled GB read-only pilot exists. Gate B classifies every SupplierAdapterV1 capability and keeps commercial/write capabilities fail-closed until provider evidence promotes them.',
   },
   bigbuy: {
     key: 'bigbuy',
