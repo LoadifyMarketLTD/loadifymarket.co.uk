@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import MobileAppHeader from '@/components/MobileAppHeader';
 import MobileGridCard from '@/components/MobileGridCard';
+import { useCategories } from '@/hooks/useCategories';
 import { useMobileGrid } from '@/hooks/useMobileGrid';
 import { hasSellerAccess } from '@/lib/roleUtils';
 import { useAuthStore } from '@/store';
@@ -27,23 +28,23 @@ const TEXT = '#334155';
 const MUTED = '#667085';
 const BORDER = 'rgba(10,35,79,0.09)';
 
-const CATEGORIES = [
-  { id: 'all', label: 'All', to: '/catalog', match: '' },
-  { id: 'home', label: 'Home', to: '/category/homeware', match: '/category/homeware' },
-  { id: 'electronics', label: 'Electronics', to: '/category/electrical', match: '/category/electrical' },
-  { id: 'entertainment', label: 'Entertainment', to: '/category/entertainment', match: '/category/entertainment' },
-  { id: 'hobbies', label: 'Hobbies', to: '/category/toys', match: '/category/toys' },
-  { id: 'sports', label: 'Sports', to: '/category/sports-fitness', match: '/category/sports-fitness' },
-  { id: 'vehicles', label: 'Vehicles', to: '/category/vehicles', match: '/category/vehicles' },
-  { id: 'fashion', label: 'Fashion', to: '/category/wholesale-clothing', match: '/category/wholesale-clothing' },
-  { id: 'kids', label: 'Kids', to: '/category/kids', match: '/category/kids' },
-];
-
 function NativeCategoryShortcuts() {
   const { pathname } = useLocation();
+  const { categories } = useCategories();
+  const shortcuts = [
+    { id: 'all', label: 'All', to: '/catalog', match: '/catalog' },
+    ...categories.slice(0, 8).map((category) => ({
+      id: category.id,
+      label: category.name,
+      to: `/category/${category.slug}`,
+      match: `/category/${category.slug}`,
+    })),
+    { id: 'more', label: 'More', to: '/categories', match: '/categories' },
+  ];
+
   const activeId = pathname === '/' || pathname === '/catalog'
     ? 'all'
-    : (CATEGORIES.find((category) => category.match && pathname.startsWith(category.match))?.id ?? '');
+    : (shortcuts.find((category) => category.match && pathname.startsWith(category.match))?.id ?? '');
 
   return (
     <section aria-label="Browse by category" style={{ background: BG, paddingTop: 12, paddingBottom: 4 }}>
@@ -52,11 +53,11 @@ function NativeCategoryShortcuts() {
         style={{ paddingLeft: 'var(--mob-side, 16px)', scrollPaddingInlineStart: 'var(--mob-side, 16px)' }}
       >
         <div style={{ display: 'flex', gap: 8, width: 'max-content' }}>
-          {CATEGORIES.map(({ id, label, to }) => {
+          {shortcuts.map(({ id, label, to }) => {
             const active = id === activeId;
             return (
               <Link
-                key={to}
+                key={id}
                 to={to}
                 style={{
                   display: 'flex',
