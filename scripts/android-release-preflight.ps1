@@ -23,6 +23,7 @@ function Find-ApkSigner {
     if ($env:ANDROID_HOME) { $roots += $env:ANDROID_HOME }
     if ($env:ANDROID_SDK_ROOT) { $roots += $env:ANDROID_SDK_ROOT }
     $roots += (Join-Path $env:LOCALAPPDATA "Android\Sdk")
+
     foreach ($root in ($roots | Select-Object -Unique)) {
         if (-not (Test-Path $root)) { continue }
         $candidate = Get-ChildItem (Join-Path $root "build-tools") -Directory -ErrorAction SilentlyContinue |
@@ -36,8 +37,16 @@ function Find-ApkSigner {
 }
 
 function Get-ApkCertSha256([string]$ApkPath, [string]$ApkSigner) {
-    $out = & $ApkSigner verify --print-certs $ApkPath 2>&1
-    if ($LASTEXITCODE -ne 0) { return $null }
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $out = @(& $ApkSigner verify --print-certs $ApkPath 2>&1 | ForEach-Object { $_.ToString() })
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if ($exitCode -ne 0) { return $null }
     $line = $out | Select-String -Pattern "Signer #1 certificate SHA-256 digest:" | Select-Object -First 1
     if (-not $line) { return $null }
     return (($line.ToString() -split ":", 2)[1]).Trim().ToLowerInvariant()
@@ -46,12 +55,14 @@ function Get-ApkCertSha256([string]$ApkPath, [string]$ApkSigner) {
 function Read-KeyValueFile([string]$Path) {
     $map = @{}
     if (-not (Test-Path $Path)) { return $map }
+
     foreach ($line in Get-Content $Path) {
         $trimmed = $line.Trim()
         if (-not $trimmed -or $trimmed.StartsWith('#') -or $trimmed.StartsWith('!')) { continue }
         $idx = $trimmed.IndexOf('=')
         if ($idx -lt 1) { $idx = $trimmed.IndexOf(':') }
         if ($idx -lt 1) { continue }
+
         $name = $trimmed.Substring(0, $idx).Trim()
         $value = $trimmed.Substring($idx + 1).Trim()
         if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
@@ -62,6 +73,22 @@ function Read-KeyValueFile([string]$Path) {
     return $map
 }
 
+function Decode-JwtPayload([string]$Token) {
+    try {
+        $parts = $Token.Split('.')
+        if ($parts.Count -lt 2) { return $null }
+        $payload = $parts[1].Replace('-', '+').Replace('_', '/')
+        switch ($payload.Length % 4) {
+            2 { $payload += '==' }
+            3 { $payload += '=' }
+        }
+        $json = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($payload))
+        return $json | ConvertFrom-Json
+    } catch {
+        return $null
+    }
+}
+
 $repoProps = Read-KeyValueFile (Join-Path $RepoRoot "android\gradle.properties")
 $userProps = Read-KeyValueFile (Join-Path $HOME ".gradle\gradle.properties")
 $envLocal = Read-KeyValueFile $EnvLocalPath
@@ -69,15 +96,21 @@ $envLocal = Read-KeyValueFile $EnvLocalPath
 function Get-ReleaseSetting([string]$Name) {
     $envValue = [Environment]::GetEnvironmentVariable($Name)
     if (-not [string]::IsNullOrWhiteSpace($envValue)) { return $envValue.Trim() }
-    if ($repoProps.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$repoProps[$Name])) { return ([string]$repoProps[$Name]).Trim() }
-    if ($userProps.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$userProps[$Name])) { return ([string]$userProps[$Name]).Trim() }
+    if ($repoProps.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$repoProps[$Name])) {
+        return ([string]$repoProps[$Name]).Trim()
+    }
+    if ($userProps.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$userProps[$Name])) {
+        return ([string]$userProps[$Name]).Trim()
+    }
     return ""
 }
 
 function Get-RuntimeSetting([string]$Name) {
     $envValue = [Environment]::GetEnvironmentVariable($Name)
     if (-not [string]::IsNullOrWhiteSpace($envValue)) { return $envValue.Trim() }
-    if ($envLocal.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$envLocal[$Name])) { return ([string]$envLocal[$Name]).Trim() }
+    if ($envLocal.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace([string]$envLocal[$Name])) {
+        return ([string]$envLocal[$Name]).Trim()
+    }
     return ""
 }
 
@@ -89,6 +122,7 @@ function Resolve-KeystorePath([string]$Value) {
         $candidates += (Join-Path $RepoRoot $Value)
         $candidates += (Join-Path $HOME $Value)
     }
+
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
         if (Test-Path -LiteralPath $candidate -PathType Leaf) {
             return (Resolve-Path -LiteralPath $candidate).Path
@@ -103,12 +137,17 @@ Write-Host "Package: $Package"
 Write-Host "Expected signing certificate SHA-256: $ExpectedInstalledCertSha256"
 
 $ApkSigner = Find-ApkSigner
-if ($ApkSigner) { Pass "Android apksigner is available" } else { Fail "Android apksigner is unavailable" }
+if ($ApkSigner) {
+    Pass "Android apksigner is available"
+} else {
+    Fail "Android apksigner is unavailable"
+}
 
 if ([string]::IsNullOrWhiteSpace($BackupDir)) {
     if (Test-Path $BackupRoot) {
         $latest = Get-ChildItem $BackupRoot -Directory -Filter "installed-*" -ErrorAction SilentlyContinue |
-            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
         if ($latest) { $BackupDir = $latest.FullName }
     }
 }
@@ -118,10 +157,12 @@ $backupReady = $false
 if (-not [string]::IsNullOrWhiteSpace($BackupDir) -and (Test-Path $BackupDir)) {
     $backupApk = Join-Path $BackupDir "base.apk"
     $shaFile = Join-Path $BackupDir "sha256.txt"
+
     if ((Test-Path $backupApk) -and (Test-Path $shaFile)) {
         $expectedHashLine = Get-Content $shaFile | Where-Object { $_ -match '\s+base\.apk\s*$' } | Select-Object -First 1
         $expectedHash = if ($expectedHashLine) { (($expectedHashLine -split '\s+')[0]).ToLowerInvariant() } else { "" }
         $actualHash = (Get-FileHash -Algorithm SHA256 $backupApk).Hash.ToLowerInvariant()
+
         if ($expectedHash -and $actualHash -eq $expectedHash) {
             Pass "Rollback base.apk SHA-256 matches saved manifest"
             if ($ApkSigner) {
@@ -155,6 +196,7 @@ if ($state -eq 'device') {
         $remoteApk = ($installedPathLine -replace '^package:', '').Trim()
         $tempApk = Join-Path $env:TEMP "loadify-preflight-installed.apk"
         if (Test-Path $tempApk) { Remove-Item $tempApk -Force }
+
         adb -s $DeviceSerial pull $remoteApk $tempApk | Out-Null
         if ($LASTEXITCODE -eq 0 -and (Test-Path $tempApk) -and $ApkSigner) {
             $deviceCert = Get-ApkCertSha256 $tempApk $ApkSigner
@@ -164,12 +206,15 @@ if ($state -eq 'device') {
             } else {
                 Fail "Installed app certificate differs from expected Loadify release certificate"
             }
+        } else {
+            Fail "Could not pull installed app for certificate verification"
         }
+        Remove-Item $tempApk -Force -ErrorAction SilentlyContinue
     } else {
         Fail "$Package is not installed on the connected Pixel"
     }
 } else {
-    Fail "Pixel device is not currently available/authorized through ADB"
+    Fail "Pixel device is not currently available or authorized through ADB"
 }
 
 Write-Host "`n=== LOCAL RELEASE SIGNING MATERIAL ===" -ForegroundColor Cyan
@@ -190,9 +235,13 @@ foreach ($name in $names) {
 }
 
 $keystorePath = Resolve-KeystorePath ([string]$values['LOADIFY_UPLOAD_STORE_FILE'])
-if ($keystorePath) { Pass "Configured release keystore file exists" } else { Fail "Configured release keystore file is missing/unresolvable" }
+if ($keystorePath) {
+    Pass "Configured release keystore file exists"
+} else {
+    Fail "Configured release keystore file is missing or unresolvable"
+}
 
-$signingFieldsReady = $names | ForEach-Object { -not [string]::IsNullOrWhiteSpace([string]$values[$_]) }
+$signingFieldsReady = @($names | ForEach-Object { -not [string]::IsNullOrWhiteSpace([string]$values[$_]) })
 $signingReady = ($signingFieldsReady -notcontains $false) -and [bool]$keystorePath
 
 if ($signingReady) {
@@ -202,11 +251,11 @@ if ($signingReady) {
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     try {
-        $keytoolOutput = & keytool -exportcert `
+        $keytoolOutput = @(& keytool -exportcert `
             -alias ([string]$values['LOADIFY_UPLOAD_KEY_ALIAS']) `
             -keystore $keystorePath `
             -storepass ([string]$values['LOADIFY_UPLOAD_STORE_PASSWORD']) `
-            -file $certTemp 2>&1
+            -file $certTemp 2>&1 | ForEach-Object { $_.ToString() })
         $keytoolExitCode = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $previousErrorActionPreference
@@ -218,12 +267,12 @@ if ($signingReady) {
         if ($keystoreCert -eq $ExpectedInstalledCertSha256) {
             Pass "Local keystore certificate EXACTLY matches installed Loadify release certificate"
         } else {
-            Fail "Local keystore certificate does NOT match the installed Loadify release certificate"
+            Fail "Local keystore certificate does NOT match installed Loadify release certificate"
             $signingReady = $false
         }
     } else {
         Remove-Item $certTemp -Force -ErrorAction SilentlyContinue
-        Fail "Local keystore could not be opened with the configured store password/alias"
+        Fail "Local keystore could not be opened with configured password and alias"
         $signingReady = $false
     }
 }
@@ -234,20 +283,21 @@ $firebasePath = Join-Path $AndroidAppDir "google-services.json"
 if (Test-Path $firebasePath) {
     try {
         $firebaseJson = Get-Content $firebasePath -Raw | ConvertFrom-Json
-        $firebasePackages = @($firebaseJson.client | ForEach-Object { $_.client_info.android_client_info.package_name })
-        $hasFirebaseCore = -not [string]::IsNullOrWhiteSpace([string]$firebaseJson.project_info.project_number) -and
-            -not [string]::IsNullOrWhiteSpace([string]$firebaseJson.project_info.project_id) -and
-            @($firebaseJson.client).Count -gt 0
-        if (($Package -in $firebasePackages) -and $hasFirebaseCore) {
-            git -C $RepoRoot check-ignore -q -- "android/app/google-services.json"
-            if ($LASTEXITCODE -eq 0) {
-                Pass "google-services.json is present, structurally valid, package-matched and gitignored"
-                $firebaseReady = $true
-            } else {
-                Fail "google-services.json is not gitignored"
-            }
+        $clients = @($firebaseJson.client)
+        $matchingClients = @($clients | Where-Object { $_.client_info.android_client_info.package_name -eq $Package })
+        $hasProjectNumber = -not [string]::IsNullOrWhiteSpace([string]$firebaseJson.project_info.project_number)
+        $hasProjectId = -not [string]::IsNullOrWhiteSpace([string]$firebaseJson.project_info.project_id)
+        $hasAppId = $matchingClients.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$matchingClients[0].client_info.mobilesdk_app_id)
+        $hasApiKey = $matchingClients.Count -gt 0 -and @($matchingClients[0].api_key).Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$matchingClients[0].api_key[0].current_key)
+
+        git -C $RepoRoot check-ignore -q -- "android/app/google-services.json"
+        $firebaseIgnored = ($LASTEXITCODE -eq 0)
+
+        if ($hasProjectNumber -and $hasProjectId -and $hasAppId -and $hasApiKey -and $firebaseIgnored) {
+            Pass "google-services.json is structurally valid, package-matched and gitignored"
+            $firebaseReady = $true
         } else {
-            Fail "google-services.json does not contain the required Loadify Android package/core project metadata"
+            Fail "google-services.json is incomplete, package-mismatched or not gitignored"
         }
     } catch {
         Fail "google-services.json is not valid JSON"
@@ -256,7 +306,12 @@ if (Test-Path $firebasePath) {
     Warn "google-services.json is currently missing locally"
 }
 
-$runtimeNames = @('VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY','VITE_STRIPE_PUBLISHABLE_KEY','VITE_APP_URL')
+$runtimeNames = @(
+    'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_ANON_KEY',
+    'VITE_STRIPE_PUBLISHABLE_KEY',
+    'VITE_APP_URL'
+)
 $runtimeValues = @{}
 $runtimeReady = $true
 foreach ($name in $runtimeNames) {
@@ -274,32 +329,45 @@ if ($runtimeReady) {
         Fail "VITE_SUPABASE_URL format is invalid"
         $runtimeReady = $false
     }
-    if ([string]$runtimeValues['VITE_SUPABASE_ANON_KEY'] -notmatch '^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$') {
-        Fail "VITE_SUPABASE_ANON_KEY is not a JWT-shaped anon key"
+
+    $anon = [string]$runtimeValues['VITE_SUPABASE_ANON_KEY']
+    if ($anon -notmatch '^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$') {
+        Fail "VITE_SUPABASE_ANON_KEY is not JWT-shaped"
         $runtimeReady = $false
+    } else {
+        $payload = Decode-JwtPayload $anon
+        if (-not $payload -or -not ($payload.PSObject.Properties.Name -contains 'role') -or [string]$payload.role -ne 'anon') {
+            Fail "VITE_SUPABASE_ANON_KEY does not decode to role=anon"
+            $runtimeReady = $false
+        }
     }
+
     if ([string]$runtimeValues['VITE_STRIPE_PUBLISHABLE_KEY'] -notmatch '^pk_(live|test)_[A-Za-z0-9]+$') {
         Fail "VITE_STRIPE_PUBLISHABLE_KEY format is invalid"
         $runtimeReady = $false
     }
+
     if ([string]$runtimeValues['VITE_APP_URL'] -notmatch '^https://(?:www\.)?loadifymarket\.co\.uk/?$') {
         Fail "VITE_APP_URL is not the expected Loadify production URL"
         $runtimeReady = $false
     }
-    if ($runtimeReady) {
+
+    if (Test-Path $EnvLocalPath) {
         git -C $RepoRoot check-ignore -q -- ".env.local"
-        if ((Test-Path $EnvLocalPath) -and $LASTEXITCODE -ne 0) {
+        if ($LASTEXITCODE -ne 0) {
             Fail ".env.local exists but is not gitignored"
             $runtimeReady = $false
-        } else {
-            Pass "Required public VITE runtime values are present and structurally valid"
         }
+    }
+
+    if ($runtimeReady) {
+        Pass "Required public VITE runtime values are present and structurally valid"
     }
 }
 
 Write-Host "`n=== PREFLIGHT RESULT ===" -ForegroundColor Cyan
 if ($backupReady -and $deviceReady -and $signingReady -and $firebaseReady -and $runtimeReady) {
-    Pass "FULL RELEASE PREFLIGHT READY — release candidate build may proceed; no install was attempted"
+    Pass "FULL RELEASE PREFLIGHT READY - release candidate build may proceed; no install was attempted"
 } else {
-    Warn "Release update is NOT ready yet. No build/install/update was attempted."
+    Warn "Release update is NOT ready yet. No build, install or update was attempted."
 }
