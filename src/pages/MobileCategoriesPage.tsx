@@ -1,17 +1,155 @@
 /**
  * MobileCategoriesPage — /categories
- * DB-driven category list enriched with canonical editorial category imagery.
- * Editorial images are navigation aids only; live inventory remains seller-sourced.
+ *
+ * Mobile web keeps the current editorial category grid. Capacitor intentionally
+ * renders the established dark installed-app category list instead, so web
+ * visual polish cannot replace the Android application identity.
  */
 
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, LayoutGrid } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronRight,
+  LayoutGrid,
+  Smartphone,
+  Laptop,
+  Watch,
+  Car,
+  Shirt,
+  Zap,
+  Home,
+  Dumbbell,
+  Leaf,
+  ShoppingBag,
+  Cpu,
+  Gamepad2,
+  Baby,
+  BookOpen,
+  Tag,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import { LegacyNativeBottomNav } from '@/components/native/LegacyNativeMarketplace';
 import { useCategories } from '@/hooks/useCategories';
 import { visualForCategory } from '@/data/marketplaceVisuals';
 import { marketplaceCategorySlug } from '@/data/marketplaceTaxonomy';
+import { isCapacitorContext } from '@/lib/capacitorUtils';
 
-export default function MobileCategoriesPage() {
+const SLUG_ICON_MAP: Record<string, LucideIcon> = {
+  electronics: Zap,
+  'phones-tablets': Smartphone,
+  'laptops-computers': Laptop,
+  'smart-tech': Cpu,
+  gaming: Gamepad2,
+  'watches-jewellery': Watch,
+  accessories: Watch,
+  automotive: Car,
+  'clothing-fashion': Shirt,
+  fashion: Shirt,
+  'home-garden': Home,
+  'home-living': Home,
+  sports: Dumbbell,
+  'sports-outdoors': Dumbbell,
+  garden: Leaf,
+  'health-beauty': Leaf,
+  toys: Baby,
+  baby: Baby,
+  books: BookOpen,
+  'bags-luggage': ShoppingBag,
+};
+
+function categoryIcon(slug: string): LucideIcon {
+  return SLUG_ICON_MAP[slug] ?? Tag;
+}
+
+function LegacyNativeCategories() {
+  const navigate = useNavigate();
+  const { categories, loading } = useCategories();
+  const visibleCategories = categories.slice(0, 12);
+  const hasMoreCategories = categories.length > visibleCategories.length;
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <div
+        className="shrink-0 flex items-center gap-3 px-4 sticky top-0 z-10 bg-background/[0.97]"
+        style={{
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))',
+          paddingBottom: '1rem',
+        }}
+      >
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-xl active:bg-white/10 transition-colors bg-white/[0.05]"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5 text-white" aria-hidden="true" />
+        </button>
+        <h1 className="flex-1 text-center text-white font-bold text-lg pr-9">Categories</h1>
+      </div>
+
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
+      >
+        <Link
+          to="/catalog"
+          className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
+          style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)', textDecoration: 'none' }}
+        >
+          <LayoutGrid className="h-[22px] w-[22px] shrink-0 text-primary" aria-hidden="true" />
+          <span className="flex-1 ml-3 text-[16px] font-medium text-white">All Categories</span>
+          <ChevronRight className="h-[18px] w-[18px] shrink-0 text-foreground/30" aria-hidden="true" />
+        </Link>
+
+        {loading && Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="flex items-center px-4 gap-3 animate-pulse"
+            style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+          >
+            <div className="h-[22px] w-[22px] rounded bg-white/10 shrink-0" />
+            <div className="flex-1 h-4 rounded bg-white/10" />
+          </div>
+        ))}
+
+        {!loading && visibleCategories.map((cat) => {
+          const Icon = categoryIcon(cat.slug);
+          return (
+            <Link
+              key={cat.id}
+              to={`/category/${cat.slug}`}
+              className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
+              style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)', textDecoration: 'none' }}
+            >
+              <Icon className="h-[22px] w-[22px] shrink-0 text-primary" aria-hidden="true" />
+              <span className="flex-1 ml-3 text-[16px] font-medium text-white">{cat.name}</span>
+              <ChevronRight className="h-[18px] w-[18px] shrink-0 text-foreground/30" aria-hidden="true" />
+            </Link>
+          );
+        })}
+
+        {!loading && hasMoreCategories && (
+          <Link
+            to="/catalog"
+            className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
+            style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)', textDecoration: 'none' }}
+          >
+            <LayoutGrid className="h-[22px] w-[22px] shrink-0 text-primary" aria-hidden="true" />
+            <span className="flex-1 ml-3 text-[16px] font-medium text-white">View All Categories</span>
+            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-foreground/30" aria-hidden="true" />
+          </Link>
+        )}
+      </div>
+
+      <LegacyNativeBottomNav />
+    </div>
+  );
+}
+
+function MobileWebCategories() {
   const navigate = useNavigate();
   const { categories, loading } = useCategories();
 
@@ -103,4 +241,8 @@ export default function MobileCategoriesPage() {
       <MobileBottomNav />
     </div>
   );
+}
+
+export default function MobileCategoriesPage() {
+  return isCapacitorContext() ? <LegacyNativeCategories /> : <MobileWebCategories />;
 }
