@@ -108,11 +108,21 @@ Pass "Exact branch synchronized without reset"
 # ---------------------------------------------------------------------------
 Write-Host "`n=== RELEASE PREFLIGHT RECHECK ===" -ForegroundColor Cyan
 $preflightScript = Join-Path $PSScriptRoot "android-release-preflight.ps1"
-$preflightOutput = @(& powershell -ExecutionPolicy Bypass -File $preflightScript -DeviceSerial $DeviceSerial 2>&1 | ForEach-Object {
-    $text = $_.ToString()
-    Write-Host $text
-    $text
-})
+$previousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+try {
+    $preflightOutput = @(& powershell -ExecutionPolicy Bypass -File $preflightScript -DeviceSerial $DeviceSerial 2>&1 | ForEach-Object {
+        $text = $_.ToString()
+        Write-Host $text
+        $text
+    })
+    $preflightExitCode = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}
+if ($preflightExitCode -ne 0) {
+    Fail "Release preflight child process exited with code $preflightExitCode."
+}
 if ($preflightOutput -notcontains "PASS: FULL RELEASE PREFLIGHT READY - release candidate build may proceed; no install was attempted") {
     Fail "FULL RELEASE PREFLIGHT READY was not proven in this build run."
 }
