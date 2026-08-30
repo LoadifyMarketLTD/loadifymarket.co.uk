@@ -4,88 +4,99 @@ Status: PREPARED / NOT YET ACTIVATED
 Date: 30 August 2026
 Repository: `LoadifyMarketLTD/loadifymarket.co.uk`
 Target branch: `main`
-Baseline commit: `327b61e21feea91d432664337d9a818a9566b6f1`
+
+## Canonical decision
+
+Loadify Market does **not** use GitHub Actions as a code-quality, compile, test, E2E or production-build gate while GitHub Actions credits/runners are unavailable.
+
+The verification model is now:
+
+1. **Local CLI gate before push**.
+2. **Netlify Build / Deploy Preview gate on every PR**.
+3. **PR-only governance for `main`**.
+4. **No required GitHub Actions checks**.
+
+Do not re-introduce automatic GitHub Actions verification without an explicit governance decision.
 
 ## Observed GitHub state
 
-At the start of this P0 work:
+- `main` currently reports `protected: false`.
+- no active branch-protection/ruleset write path is exposed through the connected in-chat GitHub integration.
+- therefore this document describes the target policy; it is not evidence that protection is already active.
 
-- `main` reports `protected: false`.
-- no repository rulesets are configured.
-- the connected GitHub integration exposes admin repository permission, but the available in-chat branch-protection/ruleset API is read-only; no protection write action is exposed.
+## Target `main` protection
 
-Therefore this document is the canonical activation contract. Do not claim Branch Protection is active until GitHub reports `protected: true` (or an active matching ruleset) after an actual settings write.
+When a protection write path is available, configure `main` with:
 
-## Required main policy
+1. changes through pull requests only;
+2. direct pushes blocked, except an explicitly documented emergency owner bypass if one is deliberately retained;
+3. force pushes blocked;
+4. branch deletion blocked;
+5. conversation resolution required before merge;
+6. no GitHub Actions job required as a status check.
 
-When the protection write path is available and CI runner health is confirmed, configure `main` with:
+Netlify Deploy Preview is the remote build/test evidence used during PR review. It may later be made a required external status if desired and proven stable, but this policy does not depend on GitHub Actions.
 
-1. Pull-request-only changes to `main`.
-2. Block direct pushes except a deliberately configured emergency bypass if the repository owner decides one is required.
-3. Block force pushes.
-4. Block branch deletion.
-5. Require branches to be up to date before merge (`strict` status checks).
-6. Require conversation resolution before merge.
-7. Do not require an external approval count by default for the current owner-operated workflow; the PR boundary plus required checks is the P0 safety invariant. Review requirements can be increased later without changing runtime code.
+## Local CLI gate
 
-## Required status checks
+Before a branch is pushed for review, the development environment should run:
 
-The current canonical CI workflow exposes the following job names. The P0 protection target is:
+```bash
+npm ci
+npm run e2e:setup
+npm run verify:local
+```
 
-- `Lint`
-- `Type Check`
-- `Critical Smoke Tests`
-- `Production Build`
+`verify:local` covers:
 
-`Production Build` already depends on lint, typecheck, unit tests, migration health, and critical smoke tests, but the explicit checks above make the intended governance surface visible in GitHub.
+- frontend TypeScript;
+- ESLint;
+- Vitest suite;
+- migration inventory/health guard;
+- Playwright E2E TypeScript;
+- Playwright browser E2E;
+- production build.
 
-Do not activate required checks while GitHub Actions is unable to start jobs for account/runner/billing reasons. Doing so would create a governance deadlock where correct PRs cannot be merged for infrastructure reasons unrelated to code quality.
+Credentialed Buyer/Seller/Admin Playwright cases remain fixture-gated. Secretless guest and unauthenticated BOLA cases must still execute.
 
-## Playwright E2E policy
+## Netlify remote gate
 
-The new `Role Isolation E2E` workflow is initially an observation/non-required check until all of the following are true:
+`netlify.toml` runs the repository-owned `verify:netlify` command before a Deploy Preview is published.
 
-1. GitHub Actions runners start reliably.
-2. Netlify Deploy Preview is consistently reachable by the predictable PR URL.
-3. the secretless guest/BOLA suite has passed on real preview deployments.
-4. Buyer/Seller/Admin E2E test accounts are provisioned as non-production fixtures.
-5. credentialed role-flow tests are observed green without production data mutation.
+The Netlify gate covers:
 
-After those gates, `Role Isolation E2E` may be promoted to a required status check.
+- frontend TypeScript;
+- ESLint;
+- Vitest suite;
+- migration inventory/health guard;
+- Playwright E2E TypeScript;
+- Playwright test discovery;
+- production Vite build.
 
-## E2E secrets / fixtures
+Browser Playwright execution is intentionally local rather than executed in Netlify.
 
-Credentialed tests use these GitHub Actions secrets when present:
+A PR is not considered remotely green until its exact HEAD has a successful Netlify Deploy Preview.
 
-- `E2E_BUYER_EMAIL`
-- `E2E_BUYER_PASSWORD`
-- `E2E_SELLER_EMAIL`
-- `E2E_SELLER_PASSWORD`
-- `E2E_ADMIN_EMAIL`
-- `E2E_ADMIN_PASSWORD`
-- `E2E_FOREIGN_ORDER_ID` — an order owned by a seller other than the E2E seller, used only to assert a 403 BOLA denial.
+## GitHub Actions
 
-The guest isolation and unauthenticated API tests run without these secrets.
+Automatic GitHub Actions workflows for web CI, role-isolation E2E and Android compilation are removed from the active repository configuration. Historical workflow implementations remain recoverable through Git history if ever needed.
+
+No failed/queued GitHub Actions run is to be interpreted as a code-quality verdict under this governance model.
 
 ## Financial side-effect boundary
 
-No PR E2E test may trigger live escrow release, Stripe Transfer, refund, payment capture, or real fulfillment state mutation.
+No routine E2E test may trigger a live:
 
-The canonical `escrow-release.ts` can move funds. Any future mutation E2E for escrow release must require all of:
+- checkout payment;
+- Stripe Transfer;
+- escrow release;
+- refund;
+- irreversible fulfillment mutation.
 
-- Stripe test mode only;
-- a dedicated seeded test order;
-- dedicated test seller/buyer identities;
-- explicit mutation enablement;
-- reconciliation/cleanup assertions.
-
-Until then, Admin E2E verifies access to canonical order/payout reconciliation surfaces without clicking or invoking a release action.
+Any future mutation E2E must use dedicated test-mode identities/data and explicit enablement.
 
 ## Activation verification
 
-Branch protection is considered ACTIVE only after a fresh GitHub read confirms one of:
+Branch protection is ACTIVE only after a fresh GitHub read reports `main.protected === true` or an equivalent active ruleset.
 
-- `main.protected === true` with the expected required status checks; or
-- an active ruleset targeting `main` with equivalent PR/status/force-push/deletion controls.
-
-A policy document, workflow file, or successful PR build by itself is not evidence that GitHub branch protection has been activated.
+A policy file, Netlify success or merged PR alone does not prove GitHub branch protection is enabled.
