@@ -65,12 +65,20 @@
   directory = "netlify/functions-modern"
   node_bundler = "esbuild"
 
-
 [functions."onboarding-reminder"]
   schedule = "0 9 * * *"
 
 [functions."escrow-release"]
   schedule = "0 2 * * *"
+
+# Autonomous Supplier Commerce is committed inert-by-default. These schedules
+# package the workers for preview/testing; runtime policy flags remain OFF unless
+# explicitly configured outside the repository.
+[functions."autonomous-supplier-commerce"]
+  schedule = "17 * * * *"
+
+[functions."autonomous-shipment-stall-monitor"]
+  schedule = "43 * * * *"
 
 # ─── Edge Functions ───────────────────────────────────────────────────────────
 # EXECUTION ORDER matters: Netlify runs edge functions in the order declared
