@@ -1,4 +1,6 @@
-<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loadify Market">
-  <rect x="2.5" y="2.5" width="43" height="43" rx="2" fill="none" stroke="#B8892D" stroke-width="1.3"/>
-  <text x="24" y="31.5" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="23" letter-spacing="-1" fill="#0A234F">LM</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+<rect width="1000" height="1000" fill="none"/>
+<rect x="100" y="100" width="800" height="800" rx="70" ry="70" fill="none" stroke="#E5A502" stroke-width="26"/>
+<path d="M38 0V10H51Q133 10 133 82V636Q133 704 51 704H38V714H329V704H316Q234 704 234 632V10H419Q472 10 503.5 25.5Q535 41 550.0 79.0Q565 117 569 182L571 215H581L574 0Z" fill="#E5A502" transform="translate(245.000,720.000) scale(0.468000,-0.520000)"/>
+<path d="M38 0V10H77Q159 10 159 82V636Q159 704 77 704H38V714H241L496 112L717 714H900V704H887Q805 704 805 632V82Q805 10 887 10H900V0H634V10H637Q670 10 689.5 28.0Q709 46 709 82V662L466 0H442L169 649V82Q169 10 251 10H269V0Z" fill="#E5A502" transform="translate(400.000,720.000) scale(0.450000,-0.500000)"/>
 </svg>

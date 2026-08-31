@@ -9,7 +9,6 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@/assets/loadify-logo.svg': path.resolve(__dirname, './src/assets/LOGO.png'),
       '@': path.resolve(__dirname, './src'),
     },
   },
