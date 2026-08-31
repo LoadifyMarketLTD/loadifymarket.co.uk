@@ -17,6 +17,7 @@
     "e2e:typecheck": "tsc -p e2e/tsconfig.json --noEmit",
     "e2e:list": "playwright test --list",
     "e2e": "playwright test",
+    "verify:autonomous-supplier-commerce": "vitest run netlify/functions/__tests__/supplier-feed-circuit-breaker.test.ts netlify/functions/__tests__/autonomous-supplier-commerce-engine.test.ts netlify/functions/__tests__/autonomous-supplier-commerce-boundaries.test.ts netlify/functions/__tests__/supplier-sync.test.ts && npm run typecheck && npm run verify:migrations && npm run build",
     "verify:local": "npm run typecheck && npm run lint && npm test && npm run verify:migrations && npm run e2e:setup && npm run e2e:typecheck && npm run e2e && npm run build",
     "generate:icons": "npx @capacitor/assets@3.0.5 generate --iconBackgroundColor '#0A0E1A' --iconBackgroundColorDark '#0A0E1A'"
   },
