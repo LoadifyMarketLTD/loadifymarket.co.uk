@@ -64,7 +64,7 @@ export const handler: Handler = async (event) => {
   if (shipment) {
     const { data: eventRows } = await admin
       .from('shipment_events')
-      .select('status, created_at, occurred_at, description, location')
+      .select('status, created_at')
       .eq('shipment_id', shipment.id)
       .order('created_at', { ascending: true });
     events = (eventRows ?? []) as CustomerOrderSupportEvent[];
