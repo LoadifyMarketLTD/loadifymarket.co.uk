@@ -6,7 +6,10 @@ import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import { supabase } from "@/lib/supabase";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import { isCapacitorContext } from "@/lib/capacitorUtils";
 import { useAuthStore } from "@/store";
+import GoogleRoleRegistrationButton from "@/components/auth/GoogleRoleRegistrationButton";
+import SignupEntry from "./SignupEntry";
 
 const inputClass =
   "mt-1.5 block h-11 w-full rounded-xl border border-[#0A234F]/15 bg-white px-3.5 text-sm text-[#0A234F] outline-none transition focus:border-[#0E3FA9]/60 focus:ring-2 focus:ring-[#0E3FA9]/10";
@@ -16,7 +19,9 @@ const Signup = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const isSeller = searchParams.get("type") === "seller";
+  const requestedType = searchParams.get("type");
+  const nativeContext = isCapacitorContext();
+  const isSeller = requestedType === "seller";
   const role: "buyer" | "seller" = isSeller ? "seller" : "buyer";
 
   const [loading, setLoading] = useState(false);
@@ -82,8 +87,6 @@ const Signup = () => {
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Unable to start Seller setup");
 
-      // Refresh the auth session so App.tsx rehydrates the newly persisted
-      // compatibility role before RequireSellerAny evaluates /onboarding.
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         throw new Error("Seller setup started, but your session could not be refreshed. Please sign in again to continue.");
@@ -136,33 +139,83 @@ const Signup = () => {
 
     setLoading(true);
     try {
-      const response = await fetch("/.netlify/functions/register", {
+      const intentResponse = await fetch("/.netlify/functions/register-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           email: form.email.trim(),
-          password: form.password,
-          role,
-          newsletter: form.newsletter,
+          requestedRole: role,
           ...(isSeller ? { sellerType: form.sellerType } : {}),
         }),
       });
-      const payload = (await response.json()) as { error?: string; message?: string };
-      if (!response.ok) throw new Error(payload.error || "Registration failed");
+
+      const intentPayload = (await intentResponse.json().catch(() => ({}))) as {
+        intentId?: string;
+        expiresAt?: string;
+        error?: string;
+      };
+
+      if (!intentResponse.ok || !intentPayload.intentId) {
+        throw new Error(
+          intentPayload.error || "Registration could not be initialized. Please try again.",
+        );
+      }
+
+      const emailRedirectTo =
+        `${window.location.origin}/login?confirmed=1${
+          isSeller ? "&next=%2Fonboarding" : ""
+        }`;
+
+      const { data: signupData, error: signupError } =
+        await supabase.auth.signUp({
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+          options: {
+            data: {
+              intent_id: intentPayload.intentId,
+              newsletter: form.newsletter,
+            },
+            emailRedirectTo,
+          },
+        });
+
+      if (signupError) {
+        throw new Error(signupError.message || "Registration failed");
+      }
+
+      if (!signupData.user) {
+        throw new Error(
+          "Registration could not be completed. Please try again.",
+        );
+      }
 
       toast({
         title: "Account created",
         description: "Check your email to confirm your address, then sign in.",
       });
-      navigate(`/login?registered=1${isSeller ? "&next=%2Fonboarding" : ""}`, { replace: true });
+
+      navigate(
+        `/login?registered=1${isSeller ? "&next=%2Fonboarding" : ""}`,
+        { replace: true },
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  const googleRegistrationDisabled =
+    registrationDisabled ||
+    loading ||
+    !form.agreeTerms ||
+    (isSeller && (!form.agreeSellerCompliance || !form.sellerType));
+
+  if (!nativeContext && requestedType !== "buyer" && requestedType !== "seller") {
+    return <SignupEntry />;
+  }
 
   return (
     <MainLayout>
@@ -374,6 +427,13 @@ const Signup = () => {
                       </label>
                     </div>
 
+                    <GoogleRoleRegistrationButton
+                      role={role}
+                      sellerType={form.sellerType}
+                      disabled={googleRegistrationDisabled}
+                      onError={setError}
+                    />
+
                     <button
                       type="submit"
                       disabled={loading || registrationDisabled}
@@ -386,7 +446,7 @@ const Signup = () => {
 
                     <div className="mt-5 text-center text-xs text-[#64748B]">
                       {isSeller ? (
-                        <>Here to shop? <Link to="/register" className="font-extrabold text-[#0E3FA9] hover:underline">Create a Buyer account</Link></>
+                        <>Here to shop? <Link to="/register?type=buyer" className="font-extrabold text-[#0E3FA9] hover:underline">Create a Buyer account</Link></>
                       ) : (
                         <>Want to sell? <Link to="/register?type=seller" className="font-extrabold text-[#0E3FA9] hover:underline">Start as a Marketplace Seller</Link></>
                       )}
