@@ -1,51 +1,16 @@
-/* Mobile / hamburger navigation identity.
- * Keeps navigation chrome aligned with the Seller Signup navy/gold panel and
- * repairs the drawer overlay after the global light compatibility pass.
- * /login is explicitly excluded from these overrides.
+/* Mobile / hamburger navigation compatibility.
+ *
+ * The current MobileDrawer and its child components own the complete light
+ * drawer identity (ivory panel, navy text, muted secondary text and gold
+ * accents) directly in their component classes.
+ *
+ * Keep this compatibility layer intentionally non-invasive. The previous
+ * version forced a legacy navy-drawer palette with high-specificity
+ * `!important` selectors. That legacy override turned drawer text white while
+ * the rebuilt drawer panel remained light, producing unreadable navigation in
+ * production.
+ *
+ * Do not add broad descendant colour/background overrides here. Any future
+ * drawer visual changes belong in MobileDrawer.tsx, DrawerAccountBlock.tsx or
+ * DrawerCTACards.tsx so the panel and its content cannot drift apart again.
  */
-
-:root.market-light-root body:not(:has(#login-email)):has([role="dialog"][aria-label="Navigation menu"]) > div[class*="bg-black/40"] {
-  background: rgba(10, 35, 79, 0.42) !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] {
-  background:
-    radial-gradient(circle at 18% -8%, rgba(29, 87, 216, 0.30), transparent 35%),
-    #0A234F !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
-  box-shadow: 18px 0 50px rgba(10, 35, 79, 0.32) !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="border-slate"] {
-  border-color: rgba(255, 255, 255, 0.10) !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="bg-slate"],
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="bg-white"] {
-  background-color: rgba(255, 255, 255, 0.06) !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="text-[#0A234F]"],
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="text-slate-600"],
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="text-slate-500"] {
-  color: rgba(255, 255, 255, 0.80) !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="text-slate-400"] {
-  color: rgba(255, 255, 255, 0.60) !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] [class*="text-[#1D57D8]"] {
-  color: #F5A300 !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] a:hover,
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] button:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] a:hover [class*="text-"],
-:root.market-light-root body:not(:has(#login-email)) [role="dialog"][aria-label="Navigation menu"] button:hover [class*="text-"] {
-  color: #F5A300 !important;
-}
