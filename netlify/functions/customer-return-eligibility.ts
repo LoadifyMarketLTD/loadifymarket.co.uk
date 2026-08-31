@@ -32,8 +32,9 @@ export const handler: Handler = async (event) => {
   const orderId = typeof body.orderId === 'string' ? body.orderId.trim() : '';
   const orderItemId = typeof body.orderItemId === 'string' ? body.orderItemId.trim() : '';
   const reasonCode = typeof body.reasonCode === 'string' ? body.reasonCode.trim() : '';
-  if (!orderId || !orderItemId || !Number.isSafeInteger(body.quantity) || !reasonCode) {
-    return jsonResponse(400, { error: 'orderId, orderItemId, integer quantity and reasonCode are required' }, METHODS);
+  const quantity = typeof body.quantity === 'number' ? body.quantity : Number.NaN;
+  if (!orderId || !orderItemId || !Number.isSafeInteger(quantity) || quantity <= 0 || !reasonCode) {
+    return jsonResponse(400, { error: 'orderId, orderItemId, positive integer quantity and reasonCode are required' }, METHODS);
   }
 
   const { data: order, error: orderError } = await admin
@@ -63,7 +64,7 @@ export const handler: Handler = async (event) => {
     orderStatus: order.status,
     deliveredAt: delivered ? shipment?.updated_at : null,
     purchasedQuantity: item.quantity,
-    requestedQuantity: body.quantity as number,
+    requestedQuantity: quantity,
     reasonCode,
     // Provider-side return/label execution remains capability-gated. The
     // current Avasam pilot and BigBuy scaffold do not verify these capabilities.
