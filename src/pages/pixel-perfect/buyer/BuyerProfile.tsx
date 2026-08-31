@@ -9,15 +9,16 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import {
+  BUYER_ACCOUNT_TYPES,
+  type BuyerAccountType,
+  buyerAccountRequiresOrganisationName,
+  isBusinessBuyerAccount,
+  isBuyerProfileComplete,
+  normalizeBuyerAccountType,
+} from "@/lib/buyerProfileModel";
 import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
-
-const ACCOUNT_TYPES = [
-  { value: "individual", label: "Individual" },
-  { value: "business",   label: "Business" },
-  { value: "reseller",   label: "Reseller" },
-  { value: "distributor",label: "Distributor" },
-];
 
 interface FormState {
   firstName: string;
@@ -30,8 +31,8 @@ interface FormState {
   shippingCountry: string;
 }
 
-interface B2BForm {
-  accountType: string;
+interface AccountForm {
+  accountType: BuyerAccountType;
   companyName: string;
   vatNumber: string;
   isVatVerified: boolean;
@@ -42,9 +43,9 @@ const BuyerProfile = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingB2B, setSavingB2B] = useState(false);
   const [totalOrders, setTotalOrders] = useState(0);
   const [memberSince, setMemberSince] = useState("—");
+  const [persistedVatNumber, setPersistedVatNumber] = useState("");
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
@@ -55,7 +56,7 @@ const BuyerProfile = () => {
     shippingPostcode: "",
     shippingCountry: "United Kingdom",
   });
-  const [b2bForm, setB2BForm] = useState<B2BForm>({
+  const [accountForm, setAccountForm] = useState<AccountForm>({
     accountType: "individual",
     companyName: "",
     vatNumber: "",
@@ -118,10 +119,12 @@ const BuyerProfile = () => {
           }));
         }
         if (p) {
-          setB2BForm({
-            accountType: p.accountType ?? "individual",
+          const vatNumber = p.vatNumber ?? "";
+          setPersistedVatNumber(vatNumber);
+          setAccountForm({
+            accountType: normalizeBuyerAccountType(p.accountType),
             companyName: p.companyName ?? "",
-            vatNumber: p.vatNumber ?? "",
+            vatNumber,
             isVatVerified: Boolean(p.isVatVerified),
           });
         }
@@ -138,29 +141,82 @@ const BuyerProfile = () => {
   const updateField = (field: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const updateB2B = (field: keyof B2BForm, value: string) =>
-    setB2BForm((prev) => ({ ...prev, [field]: value }));
+  const updateAccountField = (field: "companyName" | "vatNumber", value: string) =>
+    setAccountForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleAccountTypeChange = (value: string) => {
+    const accountType = normalizeBuyerAccountType(value);
+    setAccountForm((prev) => ({
+      ...prev,
+      accountType,
+      ...(accountType === "individual"
+        ? { companyName: "", vatNumber: "", isVatVerified: false }
+        : {}),
+    }));
+  };
 
   const handleSave = async () => {
     if (!user) return;
+
+    const profileComplete = isBuyerProfileComplete({
+      accountType: accountForm.accountType,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      shippingLine1: form.shippingLine1,
+      shippingCity: form.shippingCity,
+      shippingPostcode: form.shippingPostcode,
+      shippingCountry: form.shippingCountry,
+      companyName: accountForm.companyName,
+    });
+
+    if (!profileComplete) {
+      const businessNameMissing =
+        buyerAccountRequiresOrganisationName(accountForm.accountType) &&
+        !accountForm.companyName.trim();
+      toast({
+        title: businessNameMissing ? "Organisation name required" : "Profile details required",
+        description: businessNameMissing
+          ? "Please enter the organisation or business name for this account type."
+          : "Please complete your name and default address before saving the completed Buyer profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
+      const businessAccount = isBusinessBuyerAccount(accountForm.accountType);
+      const normalizedVatNumber = businessAccount ? accountForm.vatNumber.trim() : "";
+      const vatUnchanged = normalizedVatNumber === persistedVatNumber.trim();
+      const isVatVerified = businessAccount && vatUnchanged
+        ? accountForm.isVatVerified
+        : false;
+
       const [usersRes, profileRes] = await Promise.all([
         supabase
           .from("users")
-          .update({ firstName: form.firstName, lastName: form.lastName })
+          .update({
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+          })
           .eq("id", user.id),
         supabase
           .from("buyer_profiles")
           .upsert(
             {
               userId: user.id,
+              accountType: accountForm.accountType,
+              companyName: businessAccount
+                ? accountForm.companyName.trim() || null
+                : null,
+              vatNumber: normalizedVatNumber || null,
+              isVatVerified,
               shippingAddress: {
-                line1: form.shippingLine1,
-                line2: form.shippingLine2,
-                city: form.shippingCity,
-                postcode: form.shippingPostcode,
-                country: form.shippingCountry,
+                line1: form.shippingLine1.trim(),
+                line2: form.shippingLine2.trim(),
+                city: form.shippingCity.trim(),
+                postcode: form.shippingPostcode.trim(),
+                country: form.shippingCountry.trim(),
                 isDefault: true,
               },
             },
@@ -169,7 +225,15 @@ const BuyerProfile = () => {
       ]);
       if (usersRes.error) throw usersRes.error;
       if (profileRes.error) throw profileRes.error;
-      toast({ title: "Profile saved", description: "Your profile has been updated." });
+
+      setPersistedVatNumber(normalizedVatNumber);
+      setAccountForm((prev) => ({ ...prev, isVatVerified }));
+      toast({
+        title: "Profile saved",
+        description: accountForm.accountType === "individual"
+          ? "Your Individual Buyer profile has been updated."
+          : "Your Buyer profile and applicable business details have been updated.",
+      });
     } catch (err) {
       console.error("Failed to save profile:", err);
       toast({ title: "Failed to save profile", description: "Please try again.", variant: "destructive" });
@@ -178,39 +242,18 @@ const BuyerProfile = () => {
     }
   };
 
-  const handleSaveB2B = async () => {
-    if (!user) return;
-    setSavingB2B(true);
-    try {
-      const { error } = await supabase
-        .from("buyer_profiles")
-        .upsert(
-          {
-            userId: user.id,
-            accountType: b2bForm.accountType || "individual",
-            companyName: b2bForm.companyName.trim() || null,
-            vatNumber: b2bForm.vatNumber.trim() || null,
-          },
-          { onConflict: "userId" }
-        );
-      if (error) throw error;
-      toast({ title: "Business account saved", description: "Your business details have been updated." });
-    } catch (err) {
-      console.error("Failed to save B2B profile:", err);
-      toast({ title: "Failed to save", description: "Please try again.", variant: "destructive" });
-    } finally {
-      setSavingB2B(false);
-    }
-  };
-
   const initials = `${form.firstName?.[0] ?? ""}${form.lastName?.[0] ?? ""}`.toUpperCase() || "?";
+  const businessAccount = isBusinessBuyerAccount(accountForm.accountType);
+  const organisationNameRequired = buyerAccountRequiresOrganisationName(accountForm.accountType);
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[900px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your personal information.</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your Buyer identity, contact details and account type.
+          </p>
         </div>
         <Button size="sm" className="w-full sm:w-auto" onClick={handleSave} disabled={saving || loading}>
           <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
@@ -229,7 +272,9 @@ const BuyerProfile = () => {
                 <h2 className="text-xl font-bold text-foreground">
                   {loading ? "Loading…" : `${form.firstName} ${form.lastName}`.trim() || "—"}
                 </h2>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">Registered Buyer</Badge>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                  {businessAccount ? "Business / Trader Buyer" : "Individual Buyer"}
+                </Badge>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Since {memberSince}</span>
@@ -241,6 +286,92 @@ const BuyerProfile = () => {
         </CardContent>
       </Card>
 
+      {/* Profile Type */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                {businessAccount
+                  ? <Building2 className="h-4 w-4 text-primary" />
+                  : <UserCircle className="h-4 w-4 text-primary" />}
+                Profile Type
+              </CardTitle>
+              <CardDescription>
+                Choose whether this Buyer account represents you personally or a business / trader.
+              </CardDescription>
+            </div>
+            {businessAccount && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 shrink-0">
+                Business / Trader
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="max-w-sm">
+            <Label className="text-xs">Account Type</Label>
+            <Select value={accountForm.accountType} onValueChange={handleAccountTypeChange}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {BUYER_ACCOUNT_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {businessAccount ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs">
+                  Organisation / Trading Name
+                  {organisationNameRequired && <span className="text-red-500"> *</span>}
+                </Label>
+                <Input
+                  value={accountForm.companyName}
+                  onChange={(e) => updateAccountField("companyName", e.target.value)}
+                  placeholder={accountForm.accountType === "sole_trader" ? "Optional trading name" : "Business or organisation name"}
+                  className="mt-1"
+                />
+                {accountForm.accountType === "sole_trader" && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Optional if you trade under your own personal name.
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label className="text-xs">VAT Number</Label>
+                <Input
+                  value={accountForm.vatNumber}
+                  onChange={(e) => updateAccountField("vatNumber", e.target.value)}
+                  placeholder="GB123456789"
+                  className="mt-1"
+                />
+                {accountForm.isVatVerified && accountForm.vatNumber.trim() === persistedVatNumber.trim() ? (
+                  <span className="flex items-center gap-1.5 text-xs text-success font-medium mt-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5" /> VAT Verified
+                  </span>
+                ) : accountForm.vatNumber ? (
+                  <span className="text-[11px] text-primary mt-1.5 block">
+                    VAT details saved here remain subject to server-side verification and tax rules.
+                  </span>
+                ) : null}
+              </div>
+              <p className="text-xs text-muted-foreground sm:col-span-2">
+                Business and VAT details do not automatically change marketplace prices or tax treatment. Checkout and invoices continue to use the applicable server-side rules.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Individual Buyer profiles use your personal identity and delivery/contact information. Business name, company number and VAT number are not required.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Personal Info */}
       <Card>
         <CardHeader>
@@ -249,11 +380,11 @@ const BuyerProfile = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs">First Name</Label>
+              <Label className="text-xs">First Name <span className="text-red-500">*</span></Label>
               <Input value={form.firstName} onChange={(e) => updateField("firstName", e.target.value)} className="mt-1" />
             </div>
             <div>
-              <Label className="text-xs">Last Name</Label>
+              <Label className="text-xs">Last Name <span className="text-red-500">*</span></Label>
               <Input value={form.lastName} onChange={(e) => updateField("lastName", e.target.value)} className="mt-1" />
             </div>
             <div className="sm:col-span-2">
@@ -274,7 +405,7 @@ const BuyerProfile = () => {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <Label className="text-xs">Address Line 1</Label>
+              <Label className="text-xs">Address Line 1 <span className="text-red-500">*</span></Label>
               <Input value={form.shippingLine1} onChange={(e) => updateField("shippingLine1", e.target.value)} className="mt-1" />
             </div>
             <div className="sm:col-span-2">
@@ -282,96 +413,17 @@ const BuyerProfile = () => {
               <Input value={form.shippingLine2} onChange={(e) => updateField("shippingLine2", e.target.value)} className="mt-1" />
             </div>
             <div>
-              <Label className="text-xs">City</Label>
+              <Label className="text-xs">City <span className="text-red-500">*</span></Label>
               <Input value={form.shippingCity} onChange={(e) => updateField("shippingCity", e.target.value)} className="mt-1" />
             </div>
             <div>
-              <Label className="text-xs">Postcode</Label>
+              <Label className="text-xs">Postcode <span className="text-red-500">*</span></Label>
               <Input value={form.shippingPostcode} onChange={(e) => updateField("shippingPostcode", e.target.value)} className="mt-1" />
             </div>
             <div className="sm:col-span-2">
-              <Label className="text-xs">Country</Label>
+              <Label className="text-xs">Country <span className="text-red-500">*</span></Label>
               <Input value={form.shippingCountry} onChange={(e) => updateField("shippingCountry", e.target.value)} className="mt-1" />
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Business Account (B2B) */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-primary" /> Business Account
-              </CardTitle>
-              <CardDescription>
-                Add optional company and VAT details for supported business account, invoice and tax handling.
-              </CardDescription>
-            </div>
-            {b2bForm.accountType !== "individual" && (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 shrink-0">
-                B2B Account
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs">Account Type</Label>
-              <Select value={b2bForm.accountType} onValueChange={(v) => updateB2B("accountType", v)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ACCOUNT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Company Name</Label>
-              <Input
-                value={b2bForm.companyName}
-                onChange={(e) => updateB2B("companyName", e.target.value)}
-                placeholder="Acme Ltd"
-                className="mt-1"
-                disabled={b2bForm.accountType === "individual"}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">VAT Number</Label>
-              <Input
-                value={b2bForm.vatNumber}
-                onChange={(e) => updateB2B("vatNumber", e.target.value)}
-                placeholder="GB123456789"
-                className="mt-1"
-                disabled={b2bForm.accountType === "individual"}
-              />
-            </div>
-            <div className="flex items-end pb-1">
-              {b2bForm.isVatVerified ? (
-                <span className="flex items-center gap-1.5 text-sm text-success font-medium">
-                  <ShieldCheck className="h-4 w-4" /> VAT Verified
-                </span>
-              ) : b2bForm.vatNumber && b2bForm.accountType !== "individual" ? (
-                <span className="text-xs text-primary">
-                  VAT details saved — verification may be required
-                </span>
-              ) : null}
-            </div>
-          </div>
-          {b2bForm.accountType !== "individual" && (
-            <p className="text-xs text-muted-foreground">
-              Business and VAT details do not automatically change marketplace prices or tax treatment. Checkout and invoices use the applicable server-side rules.
-            </p>
-          )}
-          <div className="pt-2">
-            <Button size="sm" onClick={handleSaveB2B} disabled={savingB2B || loading}>
-              <Save className="mr-2 h-4 w-4" />{savingB2B ? "Saving…" : "Save Business Details"}
-            </Button>
           </div>
         </CardContent>
       </Card>
