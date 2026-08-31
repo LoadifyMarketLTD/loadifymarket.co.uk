@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 function getCspDirectives() {
-  const netlifyToml = readFileSync(new URL('../../netlify.toml', import.meta.url), 'utf8');
+  const netlifyToml = readFileSync(resolve(process.cwd(), 'netlify.toml'), 'utf8');
   const match = netlifyToml.match(/Content-Security-Policy\s*=\s*"([^"]+)"/);
 
   if (!match) {
