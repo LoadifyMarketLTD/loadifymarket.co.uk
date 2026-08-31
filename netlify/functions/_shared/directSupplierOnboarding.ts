@@ -2,6 +2,7 @@ import type { SupplierAdapterCapability } from './supplierAdapter';
 import type { DirectSupplierFeedTransport } from './directSupplierContract';
 
 export const DIRECT_SUPPLIER_ONBOARDING_VERSION = 1 as const;
+export const DIRECT_SUPPLIER_MAX_ONBOARDING_BODY_BYTES = 65536 as const;
 
 export interface DirectSupplierWarehouseDeclaration {
   externalWarehouseRef: string;
@@ -35,6 +36,11 @@ export type DirectSupplierOnboardingParseResult =
 
 const SUPPLIER_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]{2,63}$/;
 const COUNTRY_PATTERN = /^[A-Z]{2}$/;
+const MAX_LEGAL_NAME_LENGTH = 256;
+const MAX_REGISTRATION_REFERENCE_LENGTH = 128;
+const MAX_WAREHOUSES = 100;
+const MAX_WAREHOUSE_REF_LENGTH = 128;
+const MAX_TERRITORIES = 32;
 const FEED_TRANSPORTS = new Set<DirectSupplierFeedTransport>([
   'json_api',
   'json_feed',
@@ -91,9 +97,17 @@ export function validateDirectSupplierOnboardingManifest(
   if (!SUPPLIER_KEY_PATTERN.test(manifest.supplierKey.trim())) {
     errors.push('supplierKey must be a stable lowercase identifier');
   }
-  if (!manifest.legalName.trim()) errors.push('legalName is required');
+  const legalName = manifest.legalName.trim();
+  if (!legalName) errors.push('legalName is required');
+  if (legalName.length > MAX_LEGAL_NAME_LENGTH) errors.push(`legalName must be at most ${MAX_LEGAL_NAME_LENGTH} characters`);
   if (!COUNTRY_PATTERN.test(normalizedCountry(manifest.registrationCountry))) {
     errors.push('registrationCountry must be a 2-letter country code');
+  }
+  if (manifest.registrationNumber?.trim() && manifest.registrationNumber.trim().length > MAX_REGISTRATION_REFERENCE_LENGTH) {
+    errors.push(`registrationNumber must be at most ${MAX_REGISTRATION_REFERENCE_LENGTH} characters`);
+  }
+  if (manifest.vatNumber?.trim() && manifest.vatNumber.trim().length > MAX_REGISTRATION_REFERENCE_LENGTH) {
+    errors.push(`vatNumber must be at most ${MAX_REGISTRATION_REFERENCE_LENGTH} characters`);
   }
   if (!FEED_TRANSPORTS.has(manifest.feedTransport)) {
     errors.push('feedTransport is unsupported');
@@ -105,11 +119,17 @@ export function validateDirectSupplierOnboardingManifest(
     errors.push('hostedActivation must remain off in onboarding manifests');
   }
 
+  if (manifest.warehouseDeclarations.length > MAX_WAREHOUSES) {
+    errors.push(`warehouseDeclarations must contain at most ${MAX_WAREHOUSES} records`);
+  }
   const warehouseRefs = new Set<string>();
   for (const [index, warehouse] of manifest.warehouseDeclarations.entries()) {
     const prefix = `warehouseDeclarations[${index}]`;
     const ref = warehouse.externalWarehouseRef.trim();
     if (!ref) errors.push(`${prefix}.externalWarehouseRef is required`);
+    if (ref.length > MAX_WAREHOUSE_REF_LENGTH) {
+      errors.push(`${prefix}.externalWarehouseRef must be at most ${MAX_WAREHOUSE_REF_LENGTH} characters`);
+    }
     if (ref && warehouseRefs.has(ref)) errors.push(`${prefix}.externalWarehouseRef must be unique`);
     warehouseRefs.add(ref);
     if (!COUNTRY_PATTERN.test(normalizedCountry(warehouse.country))) {
@@ -119,6 +139,7 @@ export function validateDirectSupplierOnboardingManifest(
 
   const territories = manifest.supportedTerritories.map(normalizedCountry);
   if (territories.length === 0) errors.push('supportedTerritories must not be empty');
+  if (territories.length > MAX_TERRITORIES) errors.push(`supportedTerritories must contain at most ${MAX_TERRITORIES} records`);
   if (territories.some(country => !COUNTRY_PATTERN.test(country))) {
     errors.push('supportedTerritories must contain only 2-letter country codes');
   }
@@ -126,6 +147,9 @@ export function validateDirectSupplierOnboardingManifest(
     errors.push('supportedTerritories must be unique');
   }
 
+  if (manifest.requestedCapabilities.length > ADAPTER_CAPABILITIES.size) {
+    errors.push('requestedCapabilities contains too many entries');
+  }
   if (manifest.requestedCapabilities.some(capability => !ADAPTER_CAPABILITIES.has(capability))) {
     errors.push('requestedCapabilities contains an unsupported capability');
   }
@@ -178,6 +202,9 @@ export function parseDirectSupplierOnboardingManifest(value: unknown): DirectSup
   if (!Array.isArray(value.warehouseDeclarations)) {
     errors.push('warehouseDeclarations must be an array');
   } else {
+    if (value.warehouseDeclarations.length > MAX_WAREHOUSES) {
+      errors.push(`warehouseDeclarations must contain at most ${MAX_WAREHOUSES} records`);
+    }
     for (const [index, warehouse] of value.warehouseDeclarations.entries()) {
       if (!isRecord(warehouse)) {
         errors.push(`warehouseDeclarations[${index}] must be an object`);
@@ -205,6 +232,9 @@ export function parseDirectSupplierOnboardingManifest(value: unknown): DirectSup
   if (!Array.isArray(value.supportedTerritories) || !value.supportedTerritories.every(item => typeof item === 'string')) {
     errors.push('supportedTerritories must be an array of strings');
   } else {
+    if (value.supportedTerritories.length > MAX_TERRITORIES) {
+      errors.push(`supportedTerritories must contain at most ${MAX_TERRITORIES} records`);
+    }
     territories.push(...value.supportedTerritories.map(item => normalizedCountry(item as string)));
   }
 
@@ -212,6 +242,9 @@ export function parseDirectSupplierOnboardingManifest(value: unknown): DirectSup
   if (!Array.isArray(value.requestedCapabilities) || !value.requestedCapabilities.every(item => typeof item === 'string')) {
     errors.push('requestedCapabilities must be an array of strings');
   } else {
+    if (value.requestedCapabilities.length > ADAPTER_CAPABILITIES.size) {
+      errors.push('requestedCapabilities contains too many entries');
+    }
     for (const capability of value.requestedCapabilities) {
       if (!ADAPTER_CAPABILITIES.has(capability as SupplierAdapterCapability)) {
         errors.push(`unsupported requested capability: ${capability}`);
