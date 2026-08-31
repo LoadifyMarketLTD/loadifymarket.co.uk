@@ -1,4 +1,5 @@
 export const DIRECT_SUPPLIER_CONTRACT_VERSION = 1 as const;
+export const DIRECT_SUPPLIER_MAX_VARIANTS_PER_BATCH = 500 as const;
 
 export type DirectSupplierFeedTransport = 'json_api' | 'json_feed' | 'csv' | 'xml' | 'sftp';
 
@@ -68,6 +69,11 @@ export function validateDirectSupplierFeedBatch(batch: DirectSupplierFeedBatchV1
   if (batch.contractVersion !== DIRECT_SUPPLIER_CONTRACT_VERSION) errors.push('unsupported contractVersion');
   if (!batch.supplierKey.trim()) errors.push('supplierKey is required');
   if (!Number.isFinite(Date.parse(batch.generatedAt))) errors.push('generatedAt must be an ISO-compatible timestamp');
+  if (batch.variants.length > DIRECT_SUPPLIER_MAX_VARIANTS_PER_BATCH) {
+    errors.push(
+      `variants must contain at most ${DIRECT_SUPPLIER_MAX_VARIANTS_PER_BATCH} records; split larger feeds into smaller batches`,
+    );
+  }
 
   for (const [index, variant] of batch.variants.entries()) {
     const prefix = `variants[${index}]`;
