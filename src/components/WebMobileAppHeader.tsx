@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import { MOBILE_NOTIFICATION_QUERY_TYPES } from '@/lib/notificationUtils';
 import WebMobileSearchOverlay from '@/components/WebMobileSearchOverlay';
-import logo from '@/assets/loadify-logo-light.svg';
+import logo from '@/assets/LOGO.png';
 
 export default function WebMobileAppHeader() {
   const navigate = useNavigate();
@@ -83,19 +83,14 @@ export default function WebMobileAppHeader() {
             type="button"
             onClick={() => navigate('/')}
             aria-label="Loadify Market home"
-            className="flex min-w-0 flex-1 items-center gap-2.5 border-0 bg-transparent p-0 text-left"
+            className="flex min-w-0 flex-1 items-center border-0 bg-transparent p-0 text-left"
           >
             <img
               src={logo}
               alt=""
               aria-hidden="true"
-              width={36}
-              height={36}
-              style={{ width: 36, height: 36, flexShrink: 0 }}
+              className="h-9 w-auto max-w-[170px] object-contain"
             />
-            <span className="min-w-0 truncate font-serif text-[19px] font-medium tracking-[-0.025em] text-[#0A234F]">
-              Loadify <span className="text-[#8A7351]">Market</span>
-            </span>
           </button>
 
           <button
