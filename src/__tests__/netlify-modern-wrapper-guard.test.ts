@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 const criticalHandlers = [
   'register',
+  'register-intent',
+  'register-social-intent',
   'start-seller-activation',
   'seller-onboarding-status',
   'set-seller-onboarding',
