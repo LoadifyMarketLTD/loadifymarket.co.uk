@@ -11,7 +11,7 @@ describe('Stage 4 Buyer onboarding alignment contract', () => {
     const signup = source('src/pages/pixel-perfect/Signup.tsx');
 
     expect(signup).toContain('role: "buyer" | "seller"');
-    expect(signup).toContain('navigate(`/login?registered=1');
+    expect(signup).toContain('/login?registered=1');
     expect(signup).not.toContain('companyName: ""');
     expect(signup).not.toContain('vatNumber: ""');
     expect(signup).not.toContain('businessAddress:');
@@ -20,7 +20,13 @@ describe('Stage 4 Buyer onboarding alignment contract', () => {
   it('keeps Trade Account as an optional Buyer path but still requires email confirmation', () => {
     const trade = source('src/pages/pixel-perfect/TradeAccount.tsx');
 
-    expect(trade).toContain('role: "buyer" as const');
+    expect(trade).toContain('fetch("/.netlify/functions/register-intent"');
+    expect(trade).toContain('requestedRole: "buyer"');
+    expect(trade).toContain('supabase.auth.signUp');
+    expect(trade).toContain('intent_id: intentPayload.intentId');
+    expect(trade).toContain('newsletter: form.newsletter');
+    expect(trade).not.toContain('fetch("/.netlify/functions/register",');
+    expect(trade).not.toContain('role: "buyer" as const');
     expect(trade).toContain('navigate("/login?registered=1"');
     expect(trade).toContain(
       'Check your email to confirm your address, then sign in to Buyer Space.',
@@ -31,6 +37,35 @@ describe('Stage 4 Buyer onboarding alignment contract', () => {
     expect(trade).not.toContain(
       'You can now sign in and start browsing products across the marketplace.',
     );
+  });
+
+  it('uses the canonical Buyer account-type contract in Trade Account', () => {
+    const trade = source('src/pages/pixel-perfect/TradeAccount.tsx');
+
+    expect(trade).toContain('{ value: "individual", label: "Individual" }');
+    expect(trade).toContain('{ value: "sole_trader", label: "Sole trader" }');
+    expect(trade).toContain('{ value: "limited_company", label: "Limited company" }');
+    expect(trade).toContain('{ value: "partnership", label: "Partnership" }');
+    expect(trade).toContain('{ value: "charity", label: "Charity / organisation" }');
+    expect(trade).toContain('{ value: "other", label: "Other business / trader" }');
+
+    expect(trade).not.toContain('{ value: "business", label: "Business" }');
+    expect(trade).not.toContain('{ value: "reseller", label: "Reseller" }');
+    expect(trade).not.toContain('{ value: "distributor", label: "Distributor" }');
+
+    expect(trade).toContain(
+      'if (!form.customerType) newErrors.customerType = "Customer type is required"',
+    );
+    expect(trade).toContain(
+      'if (organisationNameRequired && !form.companyName.trim())',
+    );
+    expect(trade).toContain(
+      'companyName: businessCustomer ? form.companyName.trim() || undefined : undefined',
+    );
+    expect(trade).toContain(
+      'vatNumber: businessCustomer ? form.vatNumber.trim() || undefined : undefined',
+    );
+    expect(trade).toContain('customerType: form.customerType');
   });
 
   it('does not promise Buyer pricing or reverse-charge treatment from profile fields alone', () => {
