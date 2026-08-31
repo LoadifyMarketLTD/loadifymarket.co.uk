@@ -240,20 +240,17 @@ export default function GoogleRoleRegistrationButton({ role, sellerType, disable
         <span>or</span>
         <span className="h-px flex-1 bg-[#0A234F]/10" />
       </div>
-      {!ready && (
-        <p
-          aria-live="polite"
-          className="mb-2 text-center text-xs font-semibold text-[#64748B]"
-        >
-          Loading Google registration…
-        </p>
-      )}
       <div
         ref={containerRef}
         aria-busy={busy || !ready}
         className="flex min-h-11 w-full items-center justify-center overflow-hidden rounded-xl"
       />
-      {busy && <p className="mt-2 text-center text-xs font-semibold text-[#0E3FA9]">Verifying your Google account…</p>}
+      <p
+        aria-live="polite"
+        className={`mt-2 text-center text-xs font-semibold ${busy ? 'text-[#0E3FA9]' : 'text-[#64748B]'}`}
+      >
+        {busy ? 'Verifying your Google account…' : !ready ? 'Loading Google registration…' : ''}
+      </p>
     </div>
   );
 }
