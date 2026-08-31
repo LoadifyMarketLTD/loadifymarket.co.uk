@@ -23,10 +23,10 @@ const DrawerCTACards = ({ onClose }: DrawerCTACardsProps) => (
         key={label}
         to={route}
         onClick={onClose}
-        className="flex h-[68px] flex-col items-start gap-1.5 rounded-lg border border-[#0A234F]/10 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#8A7351]/35 hover:bg-[#0A234F]/[0.025] active:scale-[0.98]"
+        className="flex h-[68px] flex-col items-start gap-1.5 rounded-lg border border-[#0A234F]/10 !bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#8A7351]/35 hover:!bg-[#0A234F]/[0.025] active:scale-[0.98]"
       >
-        <Icon className="h-5 w-5 text-[#8A7351]" aria-hidden="true" />
-        <span className="text-xs font-semibold leading-tight text-[#0A234F]">{label}</span>
+        <Icon className="h-5 w-5 !text-[#8A7351]" aria-hidden="true" />
+        <span className="text-xs font-semibold leading-tight !text-[#0A234F]">{label}</span>
       </Link>
     ))}
   </div>

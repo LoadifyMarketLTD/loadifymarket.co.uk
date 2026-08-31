@@ -1,29 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import {
-  X,
-  ChevronDown,
-  Shirt,
-  Smartphone,
-  Gamepad2,
-  HeartPulse,
-  PawPrint,
-  UtensilsCrossed,
-  Briefcase,
-  Home,
-  Car,
-  Dumbbell,
-  ArrowRight,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { X, ChevronDown, ArrowRight } from "lucide-react";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/LOGO.png";
 import type { User } from "@/types";
-import { useCategories } from "@/hooks/useCategories";
-import type { CategoryNode } from "@/hooks/useCategories";
-import { marketplaceCategorySlug, marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
+import CATEGORY_CONFIG from "@/lib/category-config";
+import { marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -31,8 +15,6 @@ interface MobileDrawerProps {
   user: User | null;
   dashboardPath: string;
   onLogout: () => void;
-  liveCategoryIds: string[];
-  liveRootCategoryIds: string[];
 }
 
 interface MainScreenProps {
@@ -41,29 +23,9 @@ interface MainScreenProps {
   onLogout: () => void;
   onClose: () => void;
   closeBtnRef: React.RefObject<HTMLButtonElement | null>;
-  categories: CategoryNode[];
-  liveCategoryIds: string[];
-  liveRootCategoryIds: string[];
   expandedSlug: string | null;
   onCategoryExpand: (slug: string | null) => void;
 }
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  electronics: Smartphone,
-  "home-garden": Home,
-  "clothing-fashion": Shirt,
-  "toys-games": Gamepad2,
-  toys: Gamepad2,
-  "sports-fitness": Dumbbell,
-  automotive: Car,
-  "health-beauty": HeartPulse,
-  pets: PawPrint,
-  "pet-supplies": PawPrint,
-  "food-drink": UtensilsCrossed,
-  "office-business": Briefcase,
-};
-
-const DEFAULT_ICON = Briefcase;
 
 const MainScreen = ({
   user,
@@ -71,37 +33,21 @@ const MainScreen = ({
   onLogout,
   onClose,
   closeBtnRef,
-  categories,
-  liveCategoryIds,
-  liveRootCategoryIds,
   expandedSlug,
   onCategoryExpand,
 }: MainScreenProps) => {
-  const liveCategoryIdSet = new Set(liveCategoryIds);
-  const liveRootCategoryIdSet = new Set(liveRootCategoryIds);
-  const hasLiveRootData = liveRootCategoryIds.length > 0;
-  const hasLiveCategoryData = liveCategoryIds.length > 0;
-
-  const visibleCategories = (hasLiveRootData
-    ? categories.filter((category) => liveRootCategoryIdSet.has(category.id))
-    : categories
-  ).slice(0, 8);
+  const visibleCategories = CATEGORY_CONFIG;
 
   return (
-    <div className="flex h-full flex-col bg-[#F8F7F4] text-[#0A234F]">
+    <div className="flex h-full flex-col bg-[#F8F7F4] !text-[#0A234F]">
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#0A234F]/10 px-4">
         <Link to="/" onClick={onClose} className="flex min-w-0 items-center" aria-label="Loadify Market — Home">
-          <img
-            src={logo}
-            alt=""
-            aria-hidden="true"
-            className="h-10 w-auto max-w-[190px] object-contain"
-          />
+          <img src={logo} alt="" aria-hidden="true" className="h-10 w-auto max-w-[190px] object-contain" />
         </Link>
         <button
           ref={closeBtnRef}
           onClick={onClose}
-          className="rounded-lg p-2 text-[#667085] transition-colors hover:bg-[#0A234F]/5 hover:text-[#0A234F]"
+          className="rounded-lg p-2 !text-[#667085] transition-colors hover:bg-[#0A234F]/5 hover:!text-[#0A234F]"
           aria-label="Close menu"
         >
           <X className="h-5 w-5" />
@@ -114,28 +60,25 @@ const MainScreen = ({
         <div className="mx-4 h-px bg-[#0A234F]/10" />
 
         <div className="pt-4">
-          <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-[#667085]">Quick Actions</p>
+          <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest !text-[#667085]">Quick Actions</p>
           <DrawerCTACards onClose={onClose} />
         </div>
 
         <div className="mx-4 h-px bg-[#0A234F]/10" />
 
         <div className="flex items-center justify-between px-4 pb-2 pt-4">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#667085]">Browse Categories</p>
-          <Link to="/catalog" onClick={onClose} className="flex items-center gap-1 text-[11px] font-bold text-[#8A7351] hover:text-[#0A234F]">
+          <p className="text-[11px] font-bold uppercase tracking-widest !text-[#667085]">Browse Categories</p>
+          <Link to="/catalog" onClick={onClose} className="flex items-center gap-1 text-[11px] font-bold !text-[#8A7351] hover:!text-[#0A234F]">
             All <ArrowRight className="h-3 w-3" aria-hidden="true" />
           </Link>
         </div>
 
         <nav aria-label="Marketplace categories">
           {visibleCategories.map((cat) => {
-            const Icon = ICON_MAP[cat.slug] ?? DEFAULT_ICON;
+            const Icon = cat.icon;
             const isOpen = expandedSlug === cat.slug;
-            const categoryUrl = `/category/${marketplaceCategorySlug(cat.name)}`;
-            const visibleChildren = hasLiveCategoryData
-              ? cat.children.filter((child) => liveCategoryIdSet.has(child.id))
-              : cat.children;
-            const hasChildren = visibleChildren.length > 0;
+            const categoryUrl = `/category/${cat.slug}`;
+            const hasChildren = cat.subcategories.length > 0;
 
             return (
               <div key={cat.slug}>
@@ -143,18 +86,18 @@ const MainScreen = ({
                   <Link
                     to={categoryUrl}
                     onClick={onClose}
-                    className="flex min-h-[50px] flex-1 items-center gap-3 px-4 transition-colors hover:bg-[#0A234F]/[0.035]"
+                    className="flex min-h-[50px] flex-1 items-center gap-3 px-4 !text-[#0A234F] transition-colors hover:bg-[#0A234F]/[0.035]"
                   >
-                    <Icon className="h-[18px] w-[18px] shrink-0 text-[#8A7351]" aria-hidden="true" />
-                    <span className="flex-1 text-left text-[15px] font-semibold text-[#0A234F]">{cat.name}</span>
+                    <Icon className="h-[18px] w-[18px] shrink-0 !text-[#8A7351]" aria-hidden="true" />
+                    <span className="flex-1 text-left text-[15px] font-semibold !text-[#0A234F]">{cat.label}</span>
                   </Link>
                   {hasChildren && (
                     <button
                       type="button"
                       onClick={() => onCategoryExpand(isOpen ? null : cat.slug)}
                       aria-expanded={isOpen}
-                      aria-label={`${isOpen ? "Collapse" : "Expand"} ${cat.name}`}
-                      className="flex w-12 items-center justify-center text-[#8A94A3] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
+                      aria-label={`${isOpen ? "Collapse" : "Expand"} ${cat.label}`}
+                      className="flex w-12 items-center justify-center !text-[#8A94A3] transition-colors hover:bg-[#0A234F]/[0.035] hover:!text-[#0A234F]"
                     >
                       <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                     </button>
@@ -163,25 +106,16 @@ const MainScreen = ({
 
                 {isOpen && hasChildren && (
                   <div className="border-b border-[#0A234F]/10 bg-white/60">
-                    {visibleChildren.slice(0, 6).map((sub) => (
+                    {cat.subcategories.map((sub) => (
                       <Link
-                        key={sub.slug}
-                        to={`${categoryUrl}?sub=${encodeURIComponent(marketplaceSubcategorySlug(cat.name, sub.name))}`}
+                        key={sub}
+                        to={`${categoryUrl}?sub=${encodeURIComponent(marketplaceSubcategorySlug(cat.label, sub))}`}
                         onClick={onClose}
-                        className="flex h-[42px] items-center border-b border-[#0A234F]/[0.06] px-8 transition-colors last:border-b-0 hover:bg-[#0A234F]/[0.035]"
+                        className="flex h-[42px] items-center border-b border-[#0A234F]/[0.06] px-8 !text-[#5A6578] transition-colors last:border-b-0 hover:bg-[#0A234F]/[0.035] hover:!text-[#0A234F]"
                       >
-                        <span className="text-[14px] font-medium text-[#5A6578]">{sub.name}</span>
+                        <span className="text-[14px] font-medium !text-[#5A6578]">{sub}</span>
                       </Link>
                     ))}
-                    {visibleChildren.length > 6 && (
-                      <Link
-                        to={categoryUrl}
-                        onClick={onClose}
-                        className="flex h-[42px] items-center px-8 text-[13px] font-bold text-[#8A7351] hover:bg-[#0A234F]/[0.035]"
-                      >
-                        View all {cat.name}
-                      </Link>
-                    )}
                   </div>
                 )}
               </div>
@@ -192,18 +126,18 @@ const MainScreen = ({
         <Link
           to="/catalog"
           onClick={onClose}
-          className="mx-4 mt-4 flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#0A234F]/10 bg-white px-4 text-sm font-semibold text-[#0A234F] shadow-sm transition-colors hover:bg-[#0A234F]/[0.035]"
+          className="mx-4 mt-4 flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#0A234F]/10 bg-white px-4 text-sm font-semibold !text-[#0A234F] shadow-sm transition-colors hover:bg-[#0A234F]/[0.035]"
         >
-          Browse all categories <ArrowRight className="h-4 w-4 text-[#8A7351]" aria-hidden="true" />
+          Browse all categories <ArrowRight className="h-4 w-4 !text-[#8A7351]" aria-hidden="true" />
         </Link>
 
         <div className="mx-4 mt-4 h-px bg-[#0A234F]/10" />
 
         <nav aria-label="Support links" className="flex flex-col py-2">
-          <Link to="/register?type=seller" onClick={onClose} className="flex h-11 items-center px-4 text-sm font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]">Start Selling</Link>
-          <Link to="/shipping-policy" onClick={onClose} className="flex h-11 items-center px-4 text-sm font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]">Shipping Policy</Link>
-          <Link to="/wholesale-info" onClick={onClose} className="flex h-11 items-center px-4 text-sm font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]">Marketplace Information</Link>
-          <Link to="/about" onClick={onClose} className="flex h-11 items-center px-4 text-sm font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]">About Us</Link>
+          <Link to="/register?type=seller" onClick={onClose} className="flex h-11 items-center px-4 text-sm font-medium !text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:!text-[#0A234F]">Start Selling</Link>
+          <Link to="/shipping-policy" onClick={onClose} className="flex h-11 items-center px-4 text-sm font-medium !text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:!text-[#0A234F]">Shipping Policy</Link>
+          <Link to="/wholesale-info" onClick={onClose} className="flex h-11 items-center px-4 text-sm font-medium !text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:!text-[#0A234F]">Marketplace Information</Link>
+          <Link to="/about" onClick={onClose} className="flex h-11 items-center px-4 text-sm font-medium !text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:!text-[#0A234F]">About Us</Link>
         </nav>
 
         <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
@@ -212,19 +146,10 @@ const MainScreen = ({
   );
 };
 
-const MobileDrawer = ({
-  open,
-  onClose,
-  user,
-  dashboardPath,
-  onLogout,
-  liveCategoryIds,
-  liveRootCategoryIds,
-}: MobileDrawerProps) => {
+const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDrawerProps) => {
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const { categories } = useCategories();
 
   useEffect(() => {
     if (!open) {
@@ -298,9 +223,6 @@ const MobileDrawer = ({
           onLogout={onLogout}
           onClose={onClose}
           closeBtnRef={closeBtnRef}
-          categories={categories}
-          liveCategoryIds={liveCategoryIds}
-          liveRootCategoryIds={liveRootCategoryIds}
           expandedSlug={expandedSlug}
           onCategoryExpand={setExpandedSlug}
         />

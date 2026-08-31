@@ -1,15 +1,13 @@
 import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
+import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard } from "lucide-react";
 import logo from "@/assets/LOGO.png";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import MobileDrawer from "@/components/MobileDrawer";
-import { useCategories } from "@/hooks/useCategories";
-import type { CategoryNode } from "@/hooks/useCategories";
-import { useLiveCategoryAvailability } from "@/hooks/useLiveCategoryAvailability";
 import { supabase } from "@/lib/supabase";
-import { marketplaceCategorySlug, marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
+import { marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
+import CATEGORY_CONFIG from "@/lib/category-config";
 
 const Header = () => {
   const [query, setQuery] = useState("");
@@ -19,12 +17,6 @@ const Header = () => {
   const { cartCount } = useCart();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  const { categories } = useCategories();
-  const { liveCategoryIds, liveRootCategoryIds } = useLiveCategoryAvailability();
-
-  const liveCategoryIdSet = new Set(liveCategoryIds);
-  const liveRootCategoryIdSet = new Set(liveRootCategoryIds);
-  const hasLiveCategorySnapshot = liveRootCategoryIdSet.size > 0;
 
   const scheduleClose = useCallback(() => {
     closeTimerRef.current = setTimeout(() => setHoveredCat(null), 80);
@@ -53,20 +45,16 @@ const Header = () => {
     navigate("/login", { replace: true });
   };
 
-  const displayCategories = (hasLiveCategorySnapshot
-    ? categories.filter((category) => liveRootCategoryIdSet.has(category.id))
-    : categories
-  ).slice(0, 6);
-
+  const displayCategories = CATEGORY_CONFIG.slice(0, 6);
   const navLinks = [
-    { to: "/", label: "Home", catSlug: null as string | null },
-    { to: "/catalog", label: "Shop all", catSlug: null as string | null },
-    ...displayCategories.map((cat) => ({
-      to: `/category/${marketplaceCategorySlug(cat.name)}`,
-      label: cat.name,
-      catSlug: cat.slug,
+    { to: "/", label: "Home", category: null },
+    { to: "/catalog", label: "Shop all", category: null },
+    ...displayCategories.map((category) => ({
+      to: `/category/${category.slug}`,
+      label: category.label,
+      category,
     })),
-    { to: "/catalog", label: "More categories", catSlug: null as string | null },
+    { to: "/catalog", label: "More categories", category: null },
   ];
 
   const utilityLinkClass =
@@ -93,12 +81,7 @@ const Header = () => {
           aria-label="Loadify Market — Home"
           className="flex h-12 shrink-0 items-center rounded-lg bg-[#F8F7F4] px-3 shadow-[0_2px_10px_rgba(0,0,0,0.12)] ring-1 ring-white/15"
         >
-          <img
-            src={logo}
-            alt=""
-            aria-hidden="true"
-            className="h-9 w-auto max-w-[150px] object-contain"
-          />
+          <img src={logo} alt="" aria-hidden="true" className="h-9 w-auto max-w-[150px] object-contain" />
         </Link>
 
         <form onSubmit={handleSearch} className="mx-auto hidden min-w-0 max-w-[560px] flex-1 md:flex" role="search">
@@ -129,7 +112,7 @@ const Header = () => {
           <Link
             to="/cart"
             className="relative ml-1 rounded-md p-2 text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
-            aria-label={`Shopping cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
+            aria-label={`Shopping cart${cartCount > 0 ? `, ${cartCount} items` : ""}`}
           >
             <ShoppingCart className="h-[19px] w-[19px]" aria-hidden="true" />
             {cartCount > 0 && (
@@ -167,17 +150,11 @@ const Header = () => {
       <nav aria-label="Category navigation" className="border-t border-[#0A234F]/[0.07] bg-[#F8F7F4]">
         <div className="w-full px-5 lg:px-8">
           <div className="h-[50px] overflow-x-auto scrollbar-none">
-            <div className="grid h-full min-w-[980px] grid-flow-col auto-cols-fr items-center gap-x-8 lg:min-w-0">
+            <div className="grid h-full min-w-[1180px] grid-flow-col auto-cols-fr items-center gap-x-5 xl:min-w-0">
               {navLinks.map((link) => {
-                const catNode: CategoryNode | undefined = link.catSlug
-                  ? categories.find((c) => c.slug === link.catSlug)
-                  : undefined;
-                const liveChildren = catNode
-                  ? (liveCategoryIdSet.size > 0
-                    ? catNode.children.filter((child) => liveCategoryIdSet.has(child.id))
-                    : catNode.children)
-                  : [];
-                const hasChildren = liveChildren.length > 0;
+                const category = link.category;
+                const children = category?.subcategories ?? [];
+                const hasChildren = children.length > 0;
                 const isHovered = hoveredCat === link.to;
 
                 return (
@@ -197,24 +174,21 @@ const Header = () => {
                       {link.label}
                     </Link>
 
-                    {hasChildren && isHovered && (
+                    {hasChildren && isHovered && category && (
                       <div
-                        className="absolute left-0 top-full z-50 min-w-[190px] overflow-hidden rounded-lg border border-[#0A234F]/10 bg-[#FCFBF9] shadow-[0_12px_30px_rgba(10,35,79,0.10)]"
+                        className="absolute left-0 top-full z-50 min-w-[220px] overflow-hidden rounded-lg border border-[#0A234F]/10 bg-[#FCFBF9] shadow-[0_12px_30px_rgba(10,35,79,0.10)]"
                         style={{ marginTop: "1px" }}
                         onMouseEnter={cancelClose}
                         onMouseLeave={scheduleClose}
                       >
-                        {liveChildren.map((child) => (
+                        {children.map((child) => (
                           <Link
-                            key={child.id}
-                            to={`/category/${marketplaceCategorySlug(catNode!.name)}?sub=${encodeURIComponent(marketplaceSubcategorySlug(catNode!.name, child.name))}`}
-                            className="flex items-center justify-between px-4 py-2.5 text-[13px] font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
+                            key={child}
+                            to={`/category/${category.slug}?sub=${encodeURIComponent(marketplaceSubcategorySlug(category.label, child))}`}
+                            className="flex items-center px-4 py-2.5 text-[13px] font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
                             onClick={() => setHoveredCat(null)}
                           >
-                            {child.name}
-                            {child.children?.length > 0 && (
-                              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#8A94A3]" aria-hidden="true" />
-                            )}
+                            {child}
                           </Link>
                         ))}
                       </div>
@@ -233,8 +207,6 @@ const Header = () => {
         user={user}
         dashboardPath={dashboardPath}
         onLogout={handleLogout}
-        liveCategoryIds={liveCategoryIds}
-        liveRootCategoryIds={liveRootCategoryIds}
       />
     </header>
   );
