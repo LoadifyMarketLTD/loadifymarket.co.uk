@@ -53,6 +53,14 @@ describe('role-first Google web registration contract', () => {
     expect(netlify).toMatch(/frame-src[^\n]*https:\/\/accounts\.google\.com/);
   });
 
+  it('keeps the Google render target empty so React and GSI do not own the same child nodes', () => {
+    expect(googleButton).toContain('container.replaceChildren();');
+    expect(googleButton).toContain('google.accounts.id.renderButton(container');
+    expect(googleButton).toContain('aria-live="polite"');
+    expect(googleButton).toMatch(/ref=\{containerRef\}[\s\S]{0,240}className=[^>]+\/>/);
+    expect(googleButton).not.toMatch(/ref=\{containerRef\}[\s\S]{0,400}\{!ready\s*&&/);
+  });
+
   it('keeps Facebook fresh signup outside this web registration implementation', () => {
     expect(googleButton).not.toContain("provider: 'facebook'");
     expect(signupEntry).not.toContain('Continue with Facebook');
