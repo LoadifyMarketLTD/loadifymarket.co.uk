@@ -1,5 +1,9 @@
 BEGIN;
 
+ALTER TABLE private.direct_supplier_ingestion_batches
+  ADD CONSTRAINT direct_supplier_batch_reviewable_size_check
+  CHECK (accepted_count + quarantined_count <= 500);
+
 CREATE OR REPLACE FUNCTION public.server_get_direct_supplier_staging_review_v1(
   p_supplier_key text,
   p_source_batch_digest text
