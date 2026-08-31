@@ -96,7 +96,7 @@ describe('Direct Supplier onboarding manifest runtime parsing', () => {
 
 describe('Direct Supplier Supplier Foundation candidate onboarding', () => {
   it('uses only the existing upsert_supplier action and withholds qualification/capability evidence', async () => {
-    const { client, rpc } = clientWith(async (name, args) => {
+    const { client, rpc } = clientWith(async (name, _args) => {
       if (name === 'server_admin_supplier_foundation_v1') {
         return {
           data: {
