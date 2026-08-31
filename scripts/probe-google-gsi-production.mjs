@@ -9,7 +9,6 @@ const browserModes = [
 ];
 
 const roles = ['buyer', 'seller'];
-const GOOGLE_HOST_RE = /(^|\.)(google\.com|googleapis\.com|googleusercontent\.com)$/i;
 
 function redact(value) {
   return String(value ?? '')
@@ -20,15 +19,12 @@ function redact(value) {
 function safeUrl(raw, { keepRole = false } = {}) {
   try {
     const url = new URL(raw);
-    const parts = [];
+    const params = [];
     for (const [key, value] of url.searchParams.entries()) {
-      if (keepRole && key === 'type' && /^(buyer|seller)$/.test(value)) {
-        parts.push(`${key}=${value}`);
-      } else {
-        parts.push(key);
-      }
+      if (keepRole && key === 'type' && /^(buyer|seller)$/.test(value)) params.push(`${key}=${value}`);
+      else params.push(key);
     }
-    return `${url.origin}${url.pathname}${parts.length ? `?${parts.join('&')}` : ''}`;
+    return `${url.origin}${url.pathname}${params.length ? `?${params.join('&')}` : ''}`;
   } catch {
     return redact(raw);
   }
@@ -36,8 +32,14 @@ function safeUrl(raw, { keepRole = false } = {}) {
 
 function isGoogleIdentityUrl(raw) {
   try {
-    const url = new URL(raw);
-    return GOOGLE_HOST_RE.test(url.hostname) || /(^|\.)accounts\.google\.com$/i.test(url.hostname);
+    const host = new URL(raw).hostname.toLowerCase();
+    return (
+      host === 'accounts.google.com' ||
+      host === 'oauth2.googleapis.com' ||
+      host.endsWith('.google.com') ||
+      host.endsWith('.googleapis.com') ||
+      host.endsWith('.googleusercontent.com')
+    );
   } catch {
     return false;
   }
@@ -46,6 +48,7 @@ function isGoogleIdentityUrl(raw) {
 async function installGsiInstrumentation(page) {
   await page.addInitScript(() => {
     const state = { events: [], wrapped: false, wrapErrors: [] };
+
     Object.defineProperty(window, '__LOADIFY_GSI_PROBE__', {
       configurable: true,
       value: state,
@@ -62,10 +65,14 @@ async function installGsiInstrumentation(page) {
       return {
         parentTag: parent.tagName,
         parentChildCount: parent.childNodes.length,
-        parentText: String(parent.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200),
+        parentText: String(parent.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 180),
         parentWidth: Math.round(box.width),
         parentHeight: Math.round(box.height),
-        parentVisible: box.width > 0 && box.height > 0 && style.display !== 'none' && style.visibility !== 'hidden',
+        parentVisible:
+          box.width > 0 &&
+          box.height > 0 &&
+          style.display !== 'none' &&
+          style.visibility !== 'hidden',
         parentAriaBusy: parent.getAttribute('aria-busy'),
       };
     };
@@ -109,10 +116,7 @@ async function installGsiInstrumentation(page) {
           });
 
           setTimeout(() => {
-            capture('google.accounts.id.renderButton.after-1000ms', {
-              ...describeParent(parent),
-              iframeCount: parent?.querySelectorAll?.('iframe')?.length ?? null,
-            });
+            capture('google.accounts.id.renderButton.after-1000ms', describeParent(parent));
           }, 1000);
 
           return result;
@@ -169,63 +173,59 @@ async function installGsiInstrumentation(page) {
 }
 
 async function locateRegistrationForm(page, role) {
-  await page.waitForFunction(() => document.querySelectorAll('form').length > 0, undefined, { timeout: 30000 });
+  const givenName = page.locator('input[autocomplete="given-name"]').first();
+  await givenName.waitFor({ state: 'visible', timeout: 30000 });
 
-  const discovery = await page.evaluate((expectedRole) => {
-    const forms = [...document.querySelectorAll('form')];
-    const candidates = forms.map((form, index) => {
-      const email = form.querySelector('input[type="email"][autocomplete="email"]');
-      const newPasswords = form.querySelectorAll('input[autocomplete="new-password"]');
-      const termsLink = form.querySelector('a[href="/terms"]');
-      const privacyLink = form.querySelector('a[href="/privacy"]');
-      const sellerTermsLink = form.querySelector('a[href="/seller-terms"]');
-      const sellerSelect = form.querySelector('select');
-      const headings = [...form.querySelectorAll('h1,h2,h3')].map((node) => (node.textContent || '').trim());
-      const score =
-        (email ? 4 : 0) +
-        (newPasswords.length >= 2 ? 4 : 0) +
-        (termsLink ? 3 : 0) +
-        (privacyLink ? 1 : 0) +
-        (expectedRole === 'seller' && sellerSelect ? 2 : 0) +
-        (expectedRole === 'seller' && sellerTermsLink ? 2 : 0);
+  const form = givenName.locator('xpath=ancestor::form[1]');
+  if ((await form.count()) !== 1) {
+    throw new Error(`${role.toUpperCase()}: role-first registration form ancestor was not uniquely located.`);
+  }
 
-      return {
-        index,
-        score,
-        email: Boolean(email),
-        newPasswordCount: newPasswords.length,
-        termsLink: Boolean(termsLink),
-        privacyLink: Boolean(privacyLink),
-        sellerTermsLink: Boolean(sellerTermsLink),
-        sellerSelect: Boolean(sellerSelect),
-        headings,
-      };
-    });
+  const discovery = await form.evaluate((formElement, expectedRole) => {
+    const email = formElement.querySelector('input[type="email"][autocomplete="email"]');
+    const newPasswordCount = formElement.querySelectorAll('input[autocomplete="new-password"]').length;
+    const termsLink = formElement.querySelector('a[href="/terms"]');
+    const privacyLink = formElement.querySelector('a[href="/privacy"]');
+    const sellerTermsLink = formElement.querySelector('a[href="/seller-terms"]');
+    const sellerSelect = formElement.querySelector('select');
+    const headings = [...formElement.querySelectorAll('h1,h2,h3')].map((node) =>
+      String(node.textContent || '').replace(/\s+/g, ' ').trim(),
+    );
 
-    const valid = candidates
-      .filter((candidate) => candidate.email && candidate.newPasswordCount >= 2 && candidate.termsLink)
-      .sort((a, b) => b.score - a.score);
+    const ok = Boolean(
+      email &&
+      newPasswordCount >= 2 &&
+      termsLink &&
+      privacyLink &&
+      (expectedRole !== 'seller' || (sellerTermsLink && sellerSelect)),
+    );
 
-    if (valid.length !== 1) {
-      return { ok: false, candidates };
-    }
+    if (ok) formElement.setAttribute('data-loadify-registration-probe', 'true');
 
-    forms[valid[0].index].setAttribute('data-loadify-registration-probe', 'true');
-    return { ok: true, selected: valid[0], candidates };
+    return {
+      ok,
+      email: Boolean(email),
+      newPasswordCount,
+      termsLink: Boolean(termsLink),
+      privacyLink: Boolean(privacyLink),
+      sellerTermsLink: Boolean(sellerTermsLink),
+      sellerSelect: Boolean(sellerSelect),
+      headings,
+    };
   }, role);
 
   if (!discovery.ok) {
-    throw new Error(`${role.toUpperCase()}: unable to uniquely identify the Loadify registration form structurally. Candidates=${JSON.stringify(discovery.candidates)}`);
+    throw new Error(
+      `${role.toUpperCase()}: React registration form mounted, but its structural contract is incomplete. Discovery=${JSON.stringify(discovery)}`,
+    );
   }
 
-  const form = page.locator('form[data-loadify-registration-probe="true"]');
-  await form.waitFor({ state: 'visible', timeout: 10000 });
   return { form, discovery };
 }
 
 async function registrationEnablementSnapshot(form) {
   return form.evaluate((formElement) => {
-    const clip = (value, max = 300) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
+    const clip = (value, max = 260) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
     const visible = (element) => {
       const box = element.getBoundingClientRect();
       const style = getComputedStyle(element);
@@ -243,7 +243,7 @@ async function registrationEnablementSnapshot(form) {
       labelText: clip(select.closest('label')?.textContent || ''),
     }));
 
-    const disabledGoogleButton = [...formElement.querySelectorAll('button')].find((button) =>
+    const googleDisabledButton = [...formElement.querySelectorAll('button')].find((button) =>
       /Sign up with Google/i.test(button.textContent || ''),
     );
 
@@ -262,10 +262,9 @@ async function registrationEnablementSnapshot(form) {
     return {
       checkboxes,
       selects,
-      disabledGoogleButton: disabledGoogleButton ? {
-        disabled: disabledGoogleButton.disabled,
-        visible: visible(disabledGoogleButton),
-      } : null,
+      disabledGoogleButton: googleDisabledButton
+        ? { disabled: googleDisabledButton.disabled, visible: visible(googleDisabledButton) }
+        : null,
       ariaBusyNodes,
     };
   });
@@ -287,7 +286,9 @@ async function enableGoogleRegistration(form, role) {
   if (!(await termsCheckbox.isChecked())) await termsCheckbox.check();
 
   if (role === 'seller') {
-    const sellerTermsCheckbox = form.locator('label:has(a[href="/seller-terms"]) input[type="checkbox"]').first();
+    const sellerTermsCheckbox = form
+      .locator('label:has(a[href="/seller-terms"]) input[type="checkbox"]')
+      .first();
     if ((await sellerTermsCheckbox.count()) !== 1) {
       throw new Error('SELLER: Seller Terms checkbox linked to /seller-terms was not uniquely located.');
     }
@@ -299,7 +300,9 @@ async function enableGoogleRegistration(form, role) {
     if (!terms?.checked) throw new Error('Terms prerequisite did not become checked.');
 
     if (expectedRole === 'seller') {
-      const sellerTerms = formElement.querySelector('label:has(a[href="/seller-terms"]) input[type="checkbox"]');
+      const sellerTerms = formElement.querySelector(
+        'label:has(a[href="/seller-terms"]) input[type="checkbox"]',
+      );
       const sellerSelect = formElement.querySelector('select');
       if (!sellerTerms?.checked) throw new Error('Seller Terms prerequisite did not become checked.');
       if (!sellerSelect?.value) throw new Error('Seller legal type prerequisite did not become selected.');
@@ -312,7 +315,12 @@ async function collectSnapshot(page) {
     const clip = (value, max = 500) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
     const rect = (element) => {
       const box = element.getBoundingClientRect();
-      return { x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width), height: Math.round(box.height) };
+      return {
+        x: Math.round(box.x),
+        y: Math.round(box.y),
+        width: Math.round(box.width),
+        height: Math.round(box.height),
+      };
     };
     const visible = (element) => {
       const box = element.getBoundingClientRect();
@@ -321,13 +329,25 @@ async function collectSnapshot(page) {
     };
 
     const registrationForm = document.querySelector('form[data-loadify-registration-probe="true"]');
-    const script = document.getElementById('loadify-google-gsi') ||
-      [...document.scripts].find((node) => /accounts\.google\.com\/gsi\/client/i.test(node.src || '')) || null;
+    const script =
+      document.getElementById('loadify-google-gsi') ||
+      [...document.scripts].find((node) => /accounts\.google\.com\/gsi\/client/i.test(node.src || '')) ||
+      null;
     const trackedContainer = document.querySelector('[data-loadify-gsi-probe-container="true"]');
+
+    const trackedContainerState = trackedContainer
+      ? {
+          ariaBusy: trackedContainer.getAttribute('aria-busy'),
+          childCount: trackedContainer.childNodes.length,
+          text: clip(trackedContainer.textContent),
+          html: clip(trackedContainer.innerHTML),
+          rect: rect(trackedContainer),
+          visible: visible(trackedContainer),
+        }
+      : null;
 
     const registrationBusyNodes = registrationForm
       ? [...registrationForm.querySelectorAll('[aria-busy]')].map((element) => ({
-          tag: element.tagName,
           ariaBusy: element.getAttribute('aria-busy'),
           text: clip(element.textContent),
           childCount: element.childNodes.length,
@@ -335,15 +355,6 @@ async function collectSnapshot(page) {
           visible: visible(element),
         }))
       : [];
-
-    const trackedContainerState = trackedContainer ? {
-      ariaBusy: trackedContainer.getAttribute('aria-busy'),
-      childCount: trackedContainer.childNodes.length,
-      text: clip(trackedContainer.textContent),
-      html: clip(trackedContainer.innerHTML),
-      rect: rect(trackedContainer),
-      visible: visible(trackedContainer),
-    } : null;
 
     const iframes = [...document.querySelectorAll('iframe')].map((iframe) => ({
       src: iframe.getAttribute('src') || '',
@@ -363,13 +374,15 @@ async function collectSnapshot(page) {
         initialize: typeof window.google?.accounts?.id?.initialize === 'function',
         renderButton: typeof window.google?.accounts?.id?.renderButton === 'function',
       },
-      script: script ? {
-        src: script.getAttribute('src') || '',
-        datasetLoaded: script.dataset.loaded || '',
-        isConnected: script.isConnected,
-      } : null,
-      registrationBusyNodes,
+      script: script
+        ? {
+            src: script.getAttribute('src') || '',
+            datasetLoaded: script.dataset.loaded || '',
+            isConnected: script.isConnected,
+          }
+        : null,
       trackedContainer: trackedContainerState,
+      registrationBusyNodes,
       iframes,
       probe: window.__LOADIFY_GSI_PROBE__ || null,
       alerts: [...document.querySelectorAll('[role="alert"]')].map((node) => clip(node.textContent, 300)),
@@ -381,7 +394,9 @@ function verdict(result) {
   const events = result.snapshot?.probe?.events || [];
   const initializeCalled = events.some((event) => event.type === 'google.accounts.id.initialize');
   const renderCalled = events.some((event) => event.type === 'google.accounts.id.renderButton.before');
-  const renderAfter = [...events].reverse().find((event) => event.type === 'google.accounts.id.renderButton.after-1000ms');
+  const renderAfter = [...events]
+    .reverse()
+    .find((event) => event.type === 'google.accounts.id.renderButton.after-1000ms');
 
   const consoleText = [
     ...result.console.map((entry) => entry.text),
@@ -389,21 +404,34 @@ function verdict(result) {
     ...result.snapshot.alerts,
   ].join('\n');
 
-  const originClientRejected = /given origin is not allowed|origin[^\n]*(not allowed|mismatch|unauthori[sz]ed)|client.?id[^\n]*(invalid|mismatch|not allowed|unauthori[sz]ed)|GSI_LOGGER[^\n]*(origin|client)/i.test(consoleText);
+  const originClientRejected =
+    /given origin is not allowed|origin[^\n]*(not allowed|mismatch|unauthori[sz]ed)|client.?id[^\n]*(invalid|mismatch|not allowed|unauthori[sz]ed)|GSI_LOGGER[^\n]*(origin|client)/i.test(
+      consoleText,
+    );
   const google4xx = result.googleResponses.filter((entry) => entry.status >= 400 && entry.status < 500);
 
   const tracked = result.snapshot.trackedContainer;
   const renderedOutput = Boolean(
-    (tracked && tracked.visible && tracked.rect.width > 0 && tracked.rect.height > 0 && tracked.childCount > 0) ||
-    (renderAfter && renderAfter.parentVisible && renderAfter.parentWidth > 0 && renderAfter.parentHeight > 0 && renderAfter.parentChildCount > 0),
+    (tracked &&
+      tracked.visible &&
+      tracked.rect.width > 0 &&
+      tracked.rect.height > 0 &&
+      tracked.childCount > 0) ||
+      (renderAfter &&
+        renderAfter.parentVisible &&
+        renderAfter.parentWidth > 0 &&
+        renderAfter.parentHeight > 0 &&
+        renderAfter.parentChildCount > 0),
   );
 
   if (originClientRejected || google4xx.length) {
     return {
       status: 'FAIL — GOOGLE ORIGIN/CLIENT REJECTED',
       reason: google4xx.length
-        ? `Google Identity/OAuth returned ${google4xx.map((entry) => `HTTP ${entry.status} ${entry.url}`).join(', ')}.`
-        : 'Google console/runtime evidence indicates an origin/client authorization rejection.',
+        ? `Google Identity/OAuth returned ${google4xx
+            .map((entry) => `HTTP ${entry.status} ${entry.url}`)
+            .join(', ')}.`
+        : 'Google console/runtime evidence indicates an origin or OAuth client authorization rejection.',
     };
   }
 
@@ -411,8 +439,8 @@ function verdict(result) {
     return {
       status: 'FAIL — GOOGLE API ABSENT',
       reason: result.snapshot.script
-        ? 'The GSI script element exists, but window.google.accounts.id is absent after the wait window.'
-        : 'No GSI script element and no window.google.accounts.id were observed after the actual Loadify registration prerequisites were satisfied.',
+        ? 'The GSI script element exists, but window.google.accounts.id is absent after the enabled-state wait window.'
+        : 'No GSI script element and no window.google.accounts.id were observed after the real Loadify registration prerequisites were satisfied.',
     };
   }
 
@@ -433,13 +461,14 @@ function verdict(result) {
   if (!renderedOutput) {
     return {
       status: 'FAIL — RENDER CALLED NO OUTPUT',
-      reason: 'GSI initialize() and renderButton() were observed, but the actual React render container had no visible output.',
+      reason: 'GSI initialize() and renderButton() were observed, but the real React render container had no visible rendered output.',
     };
   }
 
   return {
     status: 'PASS — GSI INITIALIZED AND RENDERED',
-    reason: 'window.google.accounts.id is present, initialize() and renderButton() were observed, and the actual Loadify React container contains visible rendered output.',
+    reason:
+      'window.google.accounts.id is present, initialize() and renderButton() were observed, and the real Loadify React container contains visible rendered output.',
   };
 }
 
@@ -477,34 +506,40 @@ async function probeRole(browser, browserName, role) {
   await installGsiInstrumentation(page);
 
   const target = `${productionOrigin}/register?type=${role}`;
-  const documentResponse = await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  const documentResponse = await page.goto(target, {
+    waitUntil: 'domcontentloaded',
+    timeout: 45000,
+  });
 
-  const { form: registrationForm, discovery } = await locateRegistrationForm(page, role);
-  const preEnablement = await registrationEnablementSnapshot(registrationForm);
-  await enableGoogleRegistration(registrationForm, role);
-  const postEnablement = await registrationEnablementSnapshot(registrationForm);
+  const { form, discovery } = await locateRegistrationForm(page, role);
+  const preEnablement = await registrationEnablementSnapshot(form);
+  await enableGoogleRegistration(form, role);
 
-  await page.waitForFunction(() => {
-    const probe = window.__LOADIFY_GSI_PROBE__;
-    return Boolean(
-      probe?.events?.some((event) => event.type === 'google.accounts.id.renderButton.before') ||
-      window.google?.accounts?.id ||
-      document.getElementById('loadify-google-gsi') ||
-      document.querySelector('[data-loadify-gsi-probe-container="true"]'),
-    );
-  }, undefined, { timeout: Math.max(1500, waitMs) }).catch(() => {});
+  await page
+    .waitForFunction(
+      () =>
+        Boolean(
+          document.getElementById('loadify-google-gsi') ||
+            window.google?.accounts?.id ||
+            document.querySelector('[data-loadify-gsi-probe-container="true"]'),
+        ),
+      undefined,
+      { timeout: Math.max(3000, waitMs) },
+    )
+    .catch(() => {});
 
   await page.waitForTimeout(Math.min(1500, waitMs));
 
+  const postEnablement = await registrationEnablementSnapshot(form);
   const snapshot = await collectSnapshot(page);
   const frames = page.frames().map((frame) => safeUrl(frame.url(), { keepRole: true }));
 
   const result = {
     browser: browserName,
     role,
-    discovery,
     documentHttp: documentResponse?.status() ?? null,
     finalUrl: safeUrl(page.url(), { keepRole: true }),
+    discovery,
     preEnablement,
     postEnablement,
     snapshot,
@@ -523,16 +558,17 @@ async function probeRole(browser, browserName, role) {
 function printResult(result) {
   const googleIframeObserved = result.snapshot.iframes.some((frame) => {
     try {
-      return /(^|\.)accounts\.google\.com$/i.test(new URL(frame.src).hostname);
+      return new URL(frame.src).hostname === 'accounts.google.com';
     } catch {
       return false;
     }
   });
 
-  const relevantConsole = result.console.filter((entry) =>
-    entry.type === 'error' ||
-    entry.type === 'warning' ||
-    /google|gsi|content security policy|csp|frame|origin|oauth|client.?id/i.test(entry.text),
+  const relevantConsole = result.console.filter(
+    (entry) =>
+      entry.type === 'error' ||
+      entry.type === 'warning' ||
+      /google|gsi|content security policy|csp|frame|origin|oauth|client.?id/i.test(entry.text),
   );
 
   console.log(`\n=== ${result.browser} / ${result.role.toUpperCase()} ===`);
@@ -541,7 +577,7 @@ function printResult(result) {
   console.log(`READY_STATE=${result.snapshot.readyState}`);
   console.log(`FORM_COUNT=${result.snapshot.formCount}`);
   console.log(`REGISTRATION_FORM_PRESENT=${result.snapshot.registrationFormPresent ? 'YES' : 'NO'}`);
-  console.log(`REGISTRATION_FORM_DISCOVERY=${JSON.stringify(result.discovery.selected)}`);
+  console.log(`REGISTRATION_FORM_DISCOVERY=${JSON.stringify(result.discovery)}`);
   console.log(`PRE_ENABLEMENT=${JSON.stringify(result.preEnablement)}`);
   console.log(`POST_ENABLEMENT=${JSON.stringify(result.postEnablement)}`);
   console.log(`GSI_SCRIPT=${result.snapshot.script ? safeUrl(result.snapshot.script.src) : 'MISSING'}`);
@@ -552,7 +588,11 @@ function printResult(result) {
   console.log(`GSI_REACT_CONTAINER=${JSON.stringify(result.snapshot.trackedContainer)}`);
   console.log(`REGISTRATION_ARIA_BUSY_NODES=${JSON.stringify(result.snapshot.registrationBusyNodes)}`);
   console.log(`GOOGLE_IFRAME_OBSERVED=${googleIframeObserved ? 'YES' : 'NO'}`);
-  console.log(`IFRAMES_INFO=${JSON.stringify(result.snapshot.iframes.map((frame) => ({ ...frame, src: safeUrl(frame.src) })))}`);
+  console.log(
+    `IFRAMES_INFO=${JSON.stringify(
+      result.snapshot.iframes.map((frame) => ({ ...frame, src: safeUrl(frame.src) })),
+    )}`,
+  );
   console.log(`FRAMES=${JSON.stringify(result.frames)}`);
   console.log(`GOOGLE_RESPONSES=${JSON.stringify(result.googleResponses)}`);
   console.log(`GOOGLE_REQUEST_FAILURES=${JSON.stringify(result.failedRequests)}`);
@@ -597,13 +637,14 @@ for (const role of roles) {
   const results = allResults.filter((result) => result.role === role);
   const summaries = results.map((result) => `${result.browser}:${result.verdict.status}`);
   const passCount = results.filter((result) => result.verdict.status.startsWith('PASS')).length;
-  const dualModeState = results.length < 2
-    ? 'INCOMPLETE'
-    : passCount === results.length
-      ? 'BOTH_PASS'
-      : passCount === 0
-        ? 'BOTH_FAIL'
-        : 'HEADLESS_MODE_DIFFERENCE';
+  const dualModeState =
+    results.length < 2
+      ? 'INCOMPLETE'
+      : passCount === results.length
+        ? 'BOTH_PASS'
+        : passCount === 0
+          ? 'BOTH_FAIL'
+          : 'HEADLESS_MODE_DIFFERENCE';
 
   console.log(`\nSUMMARY_${role.toUpperCase()}=${JSON.stringify(summaries)}`);
   console.log(`DUAL_HEADLESS_${role.toUpperCase()}=${dualModeState}`);
