@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      '@/assets/LOGO.png': path.resolve(__dirname, './src/assets/loadify-wordmark.svg'),
       '@': path.resolve(__dirname, './src'),
     },
   },
