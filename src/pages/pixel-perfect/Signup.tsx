@@ -87,6 +87,8 @@ const Signup = () => {
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Unable to start Seller setup");
 
+      // Refresh the auth session so App.tsx rehydrates the newly persisted
+      // compatibility role before RequireSellerAny evaluates /onboarding.
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
         throw new Error("Seller setup started, but your session could not be refreshed. Please sign in again to continue.");
@@ -139,6 +141,8 @@ const Signup = () => {
 
     setLoading(true);
     try {
+      // Stage 1: create a short-lived server-owned registration intent.
+      // Password is intentionally NOT sent to Netlify or stored in the intent.
       const intentResponse = await fetch("/.netlify/functions/register-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -163,6 +167,8 @@ const Signup = () => {
         );
       }
 
+      // Stage 2: Supabase Auth owns password handling and confirmation delivery.
+      // Only the opaque signup intent id crosses into Auth metadata.
       const emailRedirectTo =
         `${window.location.origin}/login?confirmed=1${
           isSeller ? "&next=%2Fonboarding" : ""
@@ -213,6 +219,8 @@ const Signup = () => {
     !form.agreeTerms ||
     (isSeller && (!form.agreeSellerCompliance || !form.sellerType));
 
+  // Web registration is role-first. Native/Capacitor keeps the existing
+  // registration screen and behaviour so this Auth repair does not redesign APK UI.
   if (!nativeContext && requestedType !== "buyer" && requestedType !== "seller") {
     return <SignupEntry />;
   }
