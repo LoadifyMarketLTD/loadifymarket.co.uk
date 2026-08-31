@@ -24,6 +24,7 @@ const Header = () => {
 
   const liveCategoryIdSet = new Set(liveCategoryIds);
   const liveRootCategoryIdSet = new Set(liveRootCategoryIds);
+  const hasLiveCategorySnapshot = liveRootCategoryIdSet.size > 0;
 
   const scheduleClose = useCallback(() => {
     closeTimerRef.current = setTimeout(() => setHoveredCat(null), 80);
@@ -52,9 +53,13 @@ const Header = () => {
     navigate("/login", { replace: true });
   };
 
-  const displayCategories = categories
-    .filter((category) => liveRootCategoryIdSet.has(category.id))
-    .slice(0, 6);
+  // Navigation must remain usable even if the live-availability query is blocked
+  // or temporarily returns no snapshot. When live data is available we still
+  // prefer it, otherwise fall back to the active category taxonomy.
+  const displayCategories = (hasLiveCategorySnapshot
+    ? categories.filter((category) => liveRootCategoryIdSet.has(category.id))
+    : categories
+  ).slice(0, 6);
 
   const navLinks = [
     { to: "/", label: "Home", catSlug: null as string | null },
@@ -68,16 +73,16 @@ const Header = () => {
   ];
 
   const utilityLinkClass =
-    "rounded-md px-2.5 py-2 text-[13px] font-medium text-[#334155] transition-colors hover:text-[#0A234F]";
+    "rounded-md px-2.5 py-2 text-[13px] font-medium text-white/75 transition-colors hover:bg-white/[0.07] hover:text-white";
 
   return (
     <header
       className="fixed inset-x-0 top-0 z-40 hidden border-b border-[#0A234F]/10 bg-[#F8F7F4]/95 backdrop-blur-md md:block"
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
-      <div className="flex h-[72px] w-full items-center gap-4 px-5 lg:px-8">
+      <div className="flex h-[72px] w-full items-center gap-4 bg-[#0A234F] px-5 lg:px-8">
         <button
-          className="shrink-0 rounded-md p-2 text-[#64748B] transition-colors hover:bg-black/[0.025] hover:text-[#0A234F]"
+          className="shrink-0 rounded-md p-2 text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={mobileOpen}
@@ -86,11 +91,15 @@ const Header = () => {
           <Menu size={21} aria-hidden="true" />
         </button>
 
-        <Link to="/" aria-label="Loadify Market — Home" className="flex shrink-0 items-center gap-3">
-          <img src={logo} alt="" aria-hidden="true" className="h-9 w-9" />
+        <Link
+          to="/"
+          aria-label="Loadify Market — Home"
+          className="flex shrink-0 items-center gap-2.5 rounded-lg bg-[#F8F7F4] px-2.5 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.12)] ring-1 ring-white/15"
+        >
+          <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
           <span className="hidden leading-none xl:block">
-            <span className="block font-serif text-[19px] font-medium tracking-[-0.025em] text-[#0A234F]">Loadify</span>
-            <span className="mt-1 block text-[8px] font-semibold uppercase tracking-[0.30em] text-[#7A6850]">Market</span>
+            <span className="block font-serif text-[18px] font-medium tracking-[-0.025em] text-[#0A234F]">Loadify</span>
+            <span className="mt-1 block text-[8px] font-semibold uppercase tracking-[0.30em] text-[#8A7351]">Market</span>
           </span>
         </Link>
 
@@ -102,11 +111,11 @@ const Header = () => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products and categories..."
               aria-label="Search products and categories"
-              className="h-10 w-full rounded-lg border border-[#0A234F]/12 bg-white/90 pl-4 pr-11 text-[13px] text-[#0A234F] outline-none transition placeholder:text-[#8A94A3] focus:border-[#0A234F]/25 focus:ring-1 focus:ring-[#0A234F]/10"
+              className="h-10 w-full rounded-lg border border-white/15 bg-white/[0.08] pl-4 pr-11 text-[13px] text-white outline-none transition placeholder:text-white/50 focus:border-white/30 focus:bg-white/[0.11] focus:ring-1 focus:ring-white/15"
             />
             <button
               type="submit"
-              className="absolute right-1 top-1/2 flex h-8 w-9 -translate-y-1/2 items-center justify-center rounded-md text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.045] hover:text-[#0A234F]"
+              className="absolute right-1 top-1/2 flex h-8 w-9 -translate-y-1/2 items-center justify-center rounded-md text-white/65 transition-colors hover:bg-white/[0.08] hover:text-white"
               aria-label="Search"
             >
               <Search className="h-[17px] w-[17px]" aria-hidden="true" />
@@ -121,12 +130,12 @@ const Header = () => {
 
           <Link
             to="/cart"
-            className="relative ml-1 rounded-md p-2 text-[#5A6578] transition-colors hover:bg-black/[0.025] hover:text-[#0A234F]"
+            className="relative ml-1 rounded-md p-2 text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
             aria-label={`Shopping cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
           >
             <ShoppingCart className="h-[19px] w-[19px]" aria-hidden="true" />
             {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#0A234F] px-1 text-[9px] font-semibold text-white" aria-hidden="true">
+              <span className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#F8F7F4] px-1 text-[9px] font-semibold text-[#0A234F]" aria-hidden="true">
                 {cartCount}
               </span>
             )}
@@ -148,7 +157,7 @@ const Header = () => {
               <Link to="/login" className={`${utilityLinkClass} ml-1`}>Sign in</Link>
               <Link
                 to="/register"
-                className="ml-2 inline-flex h-9 items-center rounded-md bg-[#0A234F] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#071A3C]"
+                className="ml-2 inline-flex h-9 items-center rounded-md bg-[#F8F7F4] px-4 text-[13px] font-semibold text-[#0A234F] transition-colors hover:bg-white"
               >
                 Join Loadify
               </Link>
@@ -165,7 +174,11 @@ const Header = () => {
                 const catNode: CategoryNode | undefined = link.catSlug
                   ? categories.find((c) => c.slug === link.catSlug)
                   : undefined;
-                const liveChildren = catNode?.children.filter((child) => liveCategoryIdSet.has(child.id)) ?? [];
+                const liveChildren = catNode
+                  ? (liveCategoryIdSet.size > 0
+                    ? catNode.children.filter((child) => liveCategoryIdSet.has(child.id))
+                    : catNode.children)
+                  : [];
                 const hasChildren = liveChildren.length > 0;
                 const isHovered = hoveredCat === link.to;
 
