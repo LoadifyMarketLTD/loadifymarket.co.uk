@@ -24,10 +24,9 @@ const DrawerAccountBlock = ({
       "/buyer/orders";
 
     return (
-      <div className="p-4 space-y-3">
-        {/* Avatar + name */}
+      <div className="space-y-3 p-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#0A234F]/15 bg-[#0A234F]/[0.06] text-sm font-bold text-[#0A234F]">
             {initial}
           </div>
           <span className="text-sm font-semibold text-[#0A234F]">
@@ -35,51 +34,49 @@ const DrawerAccountBlock = ({
           </span>
         </div>
 
-        {/* Primary links */}
         <div className="space-y-0.5">
           <Link
             to={dashboardPath}
             onClick={onClose}
-            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 transition-colors"
+            className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
           >
-            <LayoutDashboard className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+            <LayoutDashboard className="h-4 w-4 shrink-0 text-[#8A7351]" aria-hidden="true" />
             {user.role === "admin" ? "Admin Hub" : "My Account"}
           </Link>
           <Link
             to={ordersHref}
             onClick={onClose}
-            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 transition-colors"
+            className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
           >
-            <ShoppingBag className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+            <ShoppingBag className="h-4 w-4 shrink-0 text-[#8A7351]" aria-hidden="true" />
             Orders
           </Link>
           <Link
             to="/inbox"
             onClick={onClose}
-            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 transition-colors"
+            className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
           >
-            <MessageSquare className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+            <MessageSquare className="h-4 w-4 shrink-0 text-[#8A7351]" aria-hidden="true" />
             Messages
           </Link>
           <Link
             to="/contact"
             onClick={onClose}
-            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 transition-colors"
+            className="flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#5A6578] transition-colors hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
           >
-            <LifeBuoy className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+            <LifeBuoy className="h-4 w-4 shrink-0 text-[#8A7351]" aria-hidden="true" />
             Support
           </Link>
         </div>
 
-        {/* Action row */}
         <div className="flex gap-2 pt-1">
           {user.role !== "admin" && user.role !== "seller" && (
             <Button
               size="sm"
-              className="flex-1 h-10 bg-primary hover:bg-primary-hover text-black font-semibold rounded-full shadow-lg transition-all duration-300"
+              className="h-10 flex-1 rounded-lg bg-[#0A234F] font-semibold text-white shadow-none hover:bg-[#071A3C]"
               asChild
             >
-              <Link to="/seller" onClick={onClose}>
+              <Link to="/register?type=seller" onClick={onClose}>
                 Start Selling
               </Link>
             </Button>
@@ -87,13 +84,13 @@ const DrawerAccountBlock = ({
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 h-10 border-danger/30 text-danger hover:bg-danger/100/10 hover:text-red-300 bg-transparent font-semibold rounded-full"
+            className="h-10 flex-1 rounded-lg border-[#0A234F]/15 bg-white font-semibold text-[#5A6578] hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
             onClick={() => {
               onClose();
               onLogout();
             }}
           >
-            <LogOut className="h-4 w-4 mr-1.5" aria-hidden="true" />
+            <LogOut className="mr-1.5 h-4 w-4" aria-hidden="true" />
             Sign Out
           </Button>
         </div>
@@ -105,9 +102,9 @@ const DrawerAccountBlock = ({
     <div className="p-4">
       <div className="flex gap-2">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="flex-1 h-11 text-slate-600 hover:text-[#1D57D8] hover:bg-blue-50 font-medium"
+          className="h-11 flex-1 rounded-lg border-[#0A234F]/15 bg-white font-semibold text-[#0A234F] hover:bg-[#0A234F]/[0.035] hover:text-[#0A234F]"
           asChild
         >
           <Link to="/login" onClick={onClose}>
@@ -116,10 +113,10 @@ const DrawerAccountBlock = ({
         </Button>
         <Button
           size="sm"
-          className="flex-1 h-11 bg-primary hover:bg-primary-hover text-black font-semibold rounded-full shadow-lg transition-all duration-300"
+          className="h-11 flex-1 rounded-lg bg-[#0A234F] font-semibold text-white shadow-none hover:bg-[#071A3C]"
           asChild
         >
-          <Link to="/signup?type=seller" onClick={onClose}>
+          <Link to="/register?type=seller" onClick={onClose}>
             Start Selling
           </Link>
         </Button>
