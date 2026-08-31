@@ -154,7 +154,7 @@ describe('prepareDirectSupplierCanonicalReviewPackage', () => {
     expect(() => prepare([candidate({ sourceGeneratedAt: '2026-08-31T08:00:01.000Z' })]))
       .toThrow('accepted candidate sourceGeneratedAt must match review package sourceGeneratedAt');
 
-    expect(() => prepare([candidate({ sourceTransport: 'csv_file' })]))
+    expect(() => prepare([candidate({ sourceTransport: 'csv' })]))
       .toThrow('accepted candidate sourceTransport must match review package sourceTransport');
   });
 
