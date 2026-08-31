@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
