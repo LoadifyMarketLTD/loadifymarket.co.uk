@@ -177,3 +177,27 @@ The next concrete Direct Supplier transition may create a Supplier Foundation **
 BigBuy may advance only by executing the already-prepared GET-only sandbox probe with an authorised sandbox credential and controlled identifiers; credentials must not be committed or pasted into canonical evidence.
 
 Controlled Pilot PASS still requires real provider/supplier evidence and the canonical Phase O acceptance criteria. None of the pre-pilot hardening above marks Phase O `[x]`.
+
+---
+
+## 31 August 2026 — Direct Supplier Foundation candidate onboarding closeout
+
+PR `#670` — `Add admin-only Direct Supplier Foundation candidate onboarding` — merged to `main` at `42ce4b110fbc7ee622b64e73b474a9be5c36e327` from validated head `8c7d2e0a34b07195593a3a77e97aebac7ee9a893`. Netlify Deploy Preview was SUCCESS on that exact head and no review thread remained open at merge.
+
+The gate adds a strict runtime parser for external Direct Supplier onboarding manifests and an active-admin-only endpoint that reuses `public.server_admin_supplier_foundation_v1` with the single action `upsert_supplier`.
+
+The path can create/update only Supplier Foundation identity-candidate data. It does not expose lifecycle approval, qualification verification, SLA/compliance approval, adapter registration, capability promotion, Phase E catalog mutation, Supplier Import creation, marketplace listing, supplier-order execution, Orders/PII, or checkout/payment changes.
+
+Before implementation merge, hosted verification confirmed `server_admin_supplier_foundation_v1` EXECUTE was true only for `service_role` and false for `anon`/`authenticated`, while hosted Supplier Foundation row count remained `0`. No synthetic fixture or fake supplier was inserted during implementation or validation.
+
+Canonical record:
+
+- `30_DIRECT_SUPPLIER_FOUNDATION_CANDIDATE_ONBOARDING_2026-08-31.md`.
+
+### Exact next gate after #670
+
+**PHASE O — CONTROLLED PILOT remains OPEN.**
+
+For Direct Supplier, further commercial progression is now evidence-bound rather than code-bound: an authentic admin-reviewed onboarding manifest is required before creating a real Supplier Foundation candidate. After candidate creation, the existing canonical lifecycle still requires real qualification evidence, active SLA, approved compliance, and verified adapter capability before approval/readiness can be claimed.
+
+Do not use the synthetic `uk-maker-001` fixture or invented legal/commercial data to manufacture Pilot evidence. No provider/supplier capability is promoted merely because the candidate-onboarding route exists.
