@@ -19,7 +19,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
-import logo from "@/assets/loadify-logo-light.svg";
+import logo from "@/assets/LOGO.png";
 import type { User } from "@/types";
 import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
@@ -90,13 +90,13 @@ const MainScreen = ({
   return (
     <div className="flex h-full flex-col bg-[#F8F7F4] text-[#0A234F]">
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#0A234F]/10 px-4">
-        <Link to="/" onClick={onClose} className="flex items-center gap-2.5" aria-label="Loadify Market — Home">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#0A234F]/10 bg-white shadow-sm">
-            <img src={logo} alt="" aria-hidden="true" className="h-7 w-7" />
-          </span>
-          <span className="font-serif text-[17px] font-semibold leading-none text-[#0A234F]">
-            Loadify <span className="text-[#8A7351]">Market</span>
-          </span>
+        <Link to="/" onClick={onClose} className="flex min-w-0 items-center" aria-label="Loadify Market — Home">
+          <img
+            src={logo}
+            alt=""
+            aria-hidden="true"
+            className="h-10 w-auto max-w-[190px] object-contain"
+          />
         </Link>
         <button
           ref={closeBtnRef}
