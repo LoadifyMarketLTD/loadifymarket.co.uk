@@ -16,8 +16,11 @@ SECURITY DEFINER
 SET search_path TO ''
 AS $$
 DECLARE
+  v_supplier_key text := lower(BTRIM(COALESCE(p_supplier_key, '')));
+  v_source_batch_digest text := lower(BTRIM(COALESCE(p_source_batch_digest, '')));
   v_claimed boolean;
   v_persistence jsonb;
+  v_existing private.direct_supplier_ingestion_batches%ROWTYPE;
 BEGIN
   v_claimed := public.server_direct_supplier_claim_event_v1(
     p_supplier_key,
@@ -26,10 +29,27 @@ BEGIN
   );
 
   IF NOT v_claimed THEN
+    SELECT * INTO v_existing
+    FROM private.direct_supplier_ingestion_batches
+    WHERE supplier_key = v_supplier_key
+      AND source_batch_digest = v_source_batch_digest
+      AND status = 'staged'
+    LIMIT 1;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'direct supplier replay has no committed staging batch'
+        USING ERRCODE = '40001';
+    END IF;
+
     RETURN jsonb_build_object(
       'eventClaimed', false,
       'replayed', true,
       'persisted', false,
+      'batchId', v_existing.id,
+      'duplicate', true,
+      'status', v_existing.status,
+      'acceptedCount', v_existing.accepted_count,
+      'quarantinedCount', v_existing.quarantined_count,
       'commercialActivationPerformed', false,
       'capabilityPromotionPerformed', false,
       'marketplaceListingPerformed', false,
