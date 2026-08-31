@@ -2,7 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { upsertDirectSupplierFoundationCandidate } from './_shared/directSupplierFoundationCandidate';
-import { parseDirectSupplierOnboardingManifest } from './_shared/directSupplierOnboarding';
+import {
+  DIRECT_SUPPLIER_MAX_ONBOARDING_BODY_BYTES,
+  parseDirectSupplierOnboardingManifest,
+} from './_shared/directSupplierOnboarding';
 import { jsonResponse, optionsResponse } from './_shared/http';
 
 const METHODS = 'POST, OPTIONS';
@@ -23,9 +26,14 @@ export const handler: Handler = async (event) => {
   const auth = await authenticateActiveAccount(event, admin, ['admin']);
   if (!auth.ok) return jsonResponse(auth.status, { error: 'Unauthorized' }, METHODS);
 
+  const rawBody = event.body || '';
+  if (Buffer.byteLength(rawBody, 'utf8') > DIRECT_SUPPLIER_MAX_ONBOARDING_BODY_BYTES) {
+    return jsonResponse(413, { error: 'Direct Supplier onboarding manifest is too large' }, METHODS);
+  }
+
   let parsedBody: unknown;
   try {
-    parsedBody = JSON.parse(event.body || 'null') as unknown;
+    parsedBody = JSON.parse(rawBody || 'null') as unknown;
   } catch {
     return jsonResponse(400, { error: 'Invalid JSON body' }, METHODS);
   }
