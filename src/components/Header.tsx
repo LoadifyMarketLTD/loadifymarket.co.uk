@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
-import logo from "@/assets/loadify-logo-light.svg";
+import logo from "@/assets/LOGO.png";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import MobileDrawer from "@/components/MobileDrawer";
@@ -53,9 +53,6 @@ const Header = () => {
     navigate("/login", { replace: true });
   };
 
-  // Navigation must remain usable even if the live-availability query is blocked
-  // or temporarily returns no snapshot. When live data is available we still
-  // prefer it, otherwise fall back to the active category taxonomy.
   const displayCategories = (hasLiveCategorySnapshot
     ? categories.filter((category) => liveRootCategoryIdSet.has(category.id))
     : categories
@@ -94,13 +91,14 @@ const Header = () => {
         <Link
           to="/"
           aria-label="Loadify Market — Home"
-          className="flex shrink-0 items-center gap-2.5 rounded-lg bg-[#F8F7F4] px-2.5 py-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.12)] ring-1 ring-white/15"
+          className="flex h-12 shrink-0 items-center rounded-lg bg-[#F8F7F4] px-3 shadow-[0_2px_10px_rgba(0,0,0,0.12)] ring-1 ring-white/15"
         >
-          <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
-          <span className="hidden leading-none xl:block">
-            <span className="block font-serif text-[18px] font-medium tracking-[-0.025em] text-[#0A234F]">Loadify</span>
-            <span className="mt-1 block text-[8px] font-semibold uppercase tracking-[0.30em] text-[#8A7351]">Market</span>
-          </span>
+          <img
+            src={logo}
+            alt=""
+            aria-hidden="true"
+            className="h-9 w-auto max-w-[150px] object-contain"
+          />
         </Link>
 
         <form onSubmit={handleSearch} className="mx-auto hidden min-w-0 max-w-[560px] flex-1 md:flex" role="search">
