@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { resolveDirectSupplierFoundationBinding } from './_shared/directSupplierFoundationBinding';
 import { readDirectSupplierStagingReview } from './_shared/directSupplierStagingReview';
 import { jsonResponse, optionsResponse } from './_shared/http';
 
@@ -36,8 +37,15 @@ export const handler: Handler = async (event) => {
     return jsonResponse(500, { error: 'Unable to read Direct Supplier staging review' }, METHODS);
   }
 
+  const foundation = await resolveDirectSupplierFoundationBinding(admin, result.reviewPackage.supplierKey);
+  if (!foundation.ok) {
+    console.error('admin-direct-supplier-staging-review: foundation binding failed:', foundation.error);
+    return jsonResponse(500, { error: 'Unable to resolve Direct Supplier foundation binding' }, METHODS);
+  }
+
   return jsonResponse(200, {
     ok: true,
     reviewPackage: result.reviewPackage,
+    foundationBinding: foundation.binding,
   }, METHODS);
 };
