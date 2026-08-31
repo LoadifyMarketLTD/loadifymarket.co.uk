@@ -92,6 +92,12 @@ This archive is the rollback/reference point for the complete pre-reconciliation
 
 The active #682 branch was then reset to current `main` and its valid Supplier Commerce delta was replayed deliberately, rather than merging the stale branch history.
 
+Reconciliation implementation commit:
+
+`1ccc7b05653781585f7547d1db762afaa53f24c6`
+
+Verified relationship to checkpoint `main`: **1 commit ahead / 0 behind**, with 24 intended changed files.
+
 Do not delete the archive branch until the reconciled workstream has passed all gates and is no longer needed for rollback/reference.
 
 ---
@@ -110,12 +116,14 @@ The reconciled workstream preserves the repo-native Supplier Commerce modules fo
 - Netlify function entrypoints and modern wrappers;
 - targeted Supplier Commerce tests.
 
-The original `netlify.toml` scheduling changes were **INTENTIONALLY NOT RESTORED** during preparation.
+The original `netlify.toml` scheduling overrides were **INTENTIONALLY NOT RESTORED** during preparation.
+
+Important nuance: the preserved Netlify functions still contain their original code-level `schedule(...)` wrappers. They are fail-closed by the Autonomous Supplier Commerce policy and no production activation was performed. The absence of the old `netlify.toml` overrides prevents restoring the previous configuration layer, but the code-level schedule declarations must remain part of tomorrow's runtime review.
 
 Reason:
-- no autonomous cron execution is authorised yet;
+- no autonomous commercial execution is authorised yet;
 - no production activation is authorised;
-- keeping schedules absent avoids accidental execution while the workstream is still DRAFT.
+- policy defaults remain inert unless independent environment switches are explicitly enabled.
 
 The old full `package.json` was also not restored, to avoid regressing newer scripts/configuration from `main`.
 
@@ -167,7 +175,9 @@ Keep ALL of the following fail-closed until explicitly verified and promoted:
 - provider capability promotion: OFF
 - payment mutation: OFF
 - automatic refund execution: OFF
-- autonomous production schedules: NOT CONFIGURED
+- old `netlify.toml` schedule overrides: NOT CONFIGURED
+- code-level scheduled-function wrappers: PRESENT / FAIL-CLOSED BY POLICY
+- production autonomous execution: NOT ACTIVATED
 - real Supplier Commerce pilot: NOT ACTIVATED
 
 No migration was introduced during this preparation.
@@ -247,11 +257,15 @@ Targeted unit tests after reconciliation: **NOT EXECUTED**
 
 Global typecheck/lint/build after reconciliation: **NOT EXECUTED**
 
-Netlify Deploy Preview validation after reconciliation: **NOT EXECUTED**
+Netlify Deploy Preview validation after reconciliation: **PASS**
+
+Preview: `https://deploy-preview-682--loadifymarketcouk.netlify.app`
+
+GitHub commit status context: `netlify/loadifymarketcouk/deploy-preview = success`
 
 Runtime Supplier Commerce probes after reconciliation: **NOT EXECUTED**
 
-Never rewrite the above NOT EXECUTED items as PASS without actual evidence.
+Never rewrite the remaining NOT EXECUTED items as PASS without actual evidence.
 
 ---
 
@@ -271,7 +285,7 @@ Start by verifying factual state, not by rewriting architecture.
 6. Run global lint.
 7. Run production build.
 8. Run the project's relevant local verification gates.
-9. Inspect Netlify Deploy Preview.
+9. Inspect Netlify Deploy Preview and code-level schedule/runtime policy state.
 10. Fix only evidenced regressions.
 11. Keep #682 DRAFT.
 12. Begin CTO Charter Lane C — Intelligence Bridge v1:
