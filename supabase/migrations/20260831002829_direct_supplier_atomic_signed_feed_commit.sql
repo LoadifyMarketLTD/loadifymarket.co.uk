@@ -72,4 +72,15 @@ GRANT EXECUTE ON FUNCTION public.server_commit_direct_supplier_signed_feed_v1(
   text, text, timestamptz, timestamptz, text, text, jsonb, jsonb
 ) TO service_role;
 
+-- Retire the split service-role entry points. The atomic SECURITY DEFINER function
+-- above can still call them as their owner, but service-role callers can no longer
+-- claim a replay id separately from staging persistence.
+REVOKE ALL ON FUNCTION public.server_direct_supplier_claim_event_v1(
+  text, text, timestamptz
+) FROM PUBLIC, anon, authenticated, service_role;
+
+REVOKE ALL ON FUNCTION public.server_persist_direct_supplier_feed_v1(
+  text, timestamptz, text, text, jsonb, jsonb
+) FROM PUBLIC, anon, authenticated, service_role;
+
 COMMIT;
