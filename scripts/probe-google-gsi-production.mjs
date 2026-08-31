@@ -15,6 +15,7 @@ const browserModes = [
 ];
 
 const roles = ['buyer', 'seller'];
+const GOOGLE_HOST_RE = /(^|\.)(google\.com|googleapis\.com|googleusercontent\.com)$/i;
 
 function redact(value) {
   return String(value ?? '')
@@ -22,13 +23,29 @@ function redact(value) {
     .replace(/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g, '[jwt]');
 }
 
-function safeUrl(raw) {
+function safeUrl(raw, { keepRole = false } = {}) {
   try {
     const url = new URL(raw);
-    const keys = [...url.searchParams.keys()];
-    return `${url.origin}${url.pathname}${keys.length ? `?${keys.join('&')}` : ''}`;
+    const parts = [];
+    for (const [key, value] of url.searchParams.entries()) {
+      if (keepRole && key === 'type' && /^(buyer|seller)$/.test(value)) {
+        parts.push(`${key}=${value}`);
+      } else {
+        parts.push(key);
+      }
+    }
+    return `${url.origin}${url.pathname}${parts.length ? `?${parts.join('&')}` : ''}`;
   } catch {
     return redact(raw);
+  }
+}
+
+function isGoogleIdentityUrl(raw) {
+  try {
+    const url = new URL(raw);
+    return GOOGLE_HOST_RE.test(url.hostname) || /(^|\.)accounts\.google\.com$/i.test(url.hostname);
+  } catch {
+    return false;
   }
 }
 
@@ -47,6 +64,19 @@ async function installGsiInstrumentation(page) {
 
     const capture = (type, details = {}) => {
       state.events.push({ type, at: Date.now(), ...details });
+    };
+
+    const describeParent = (parent) => {
+      if (!(parent instanceof HTMLElement)) return {};
+      const box = parent.getBoundingClientRect();
+      return {
+        parentTag: parent.tagName,
+        parentChildCount: parent.childNodes.length,
+        parentText: String(parent.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200),
+        parentWidth: Math.round(box.width),
+        parentHeight: Math.round(box.height),
+        parentAriaBusy: parent.getAttribute('aria-busy'),
+      };
     };
 
     const wrapGoogle = () => {
@@ -70,9 +100,12 @@ async function installGsiInstrumentation(page) {
         };
 
         id.renderButton = function renderButtonProbe(parent, options) {
+          if (parent instanceof HTMLElement) {
+            parent.setAttribute('data-loadify-gsi-probe-container', 'true');
+          }
+
           capture('google.accounts.id.renderButton.before', {
-            parentTag: parent?.tagName || null,
-            parentChildCount: parent?.childNodes?.length ?? null,
+            ...describeParent(parent),
             width: options?.width ?? null,
             type: options?.type ?? null,
             text: options?.text ?? null,
@@ -81,16 +114,12 @@ async function installGsiInstrumentation(page) {
           const result = originalRenderButton.call(this, parent, options);
 
           queueMicrotask(() => {
-            capture('google.accounts.id.renderButton.microtask', {
-              parentChildCount: parent?.childNodes?.length ?? null,
-              parentText: String(parent?.textContent || '').slice(0, 200),
-            });
+            capture('google.accounts.id.renderButton.microtask', describeParent(parent));
           });
 
           setTimeout(() => {
             capture('google.accounts.id.renderButton.after-1000ms', {
-              parentChildCount: parent?.childNodes?.length ?? null,
-              parentText: String(parent?.textContent || '').slice(0, 200),
+              ...describeParent(parent),
               iframeCount: parent?.querySelectorAll?.('iframe')?.length ?? null,
             });
           }, 1000);
@@ -105,16 +134,40 @@ async function installGsiInstrumentation(page) {
       }
     };
 
+    const nativeAppendChild = Node.prototype.appendChild;
+    Node.prototype.appendChild = function appendChildProbe(child) {
+      if (
+        child instanceof HTMLScriptElement &&
+        (child.id === 'loadify-google-gsi' || /accounts\.google\.com\/gsi\/client/i.test(child.src || ''))
+      ) {
+        capture('gsi-script-appended', {
+          id: child.id || '',
+          srcPresent: Boolean(child.src),
+        });
+      }
+      return nativeAppendChild.call(this, child);
+    };
+
     const nativeAddEventListener = EventTarget.prototype.addEventListener;
     EventTarget.prototype.addEventListener = function addEventListenerProbe(type, listener, options) {
       const isGsiScript =
         this instanceof HTMLScriptElement &&
-        this.id === 'loadify-google-gsi';
+        (this.id === 'loadify-google-gsi' || /accounts\.google\.com\/gsi\/client/i.test(this.src || ''));
 
       if (isGsiScript && type === 'load' && typeof listener === 'function') {
         const wrappedListener = function wrappedGsiLoadListener(...args) {
           capture('gsi-script-load-listener.before');
           wrapGoogle();
+          const result = listener.apply(this, args);
+          capture('gsi-script-load-listener.after');
+          return result;
+        };
+        return nativeAddEventListener.call(this, type, wrappedListener, options);
+      }
+
+      if (isGsiScript && type === 'error' && typeof listener === 'function') {
+        const wrappedListener = function wrappedGsiErrorListener(...args) {
+          capture('gsi-script-error-listener');
           return listener.apply(this, args);
         };
         return nativeAddEventListener.call(this, type, wrappedListener, options);
@@ -127,23 +180,100 @@ async function installGsiInstrumentation(page) {
   });
 }
 
-async function enableGoogleRegistration(page, role) {
-  if (role === 'seller') {
-    const selects = page.locator('form select');
-    if (await selects.count()) {
-      await selects.first().selectOption('company');
-    }
+async function locateRegistrationForm(page, role) {
+  const form = page
+    .locator('form')
+    .filter({ hasText: /I agree to the\s+Terms\s*&\s*Conditions/i })
+    .first();
+
+  await form.waitFor({ state: 'visible', timeout: 30000 });
+
+  const expectedHeading = role === 'seller' ? 'Start your Seller journey' : 'Join Loadify';
+  const headingCount = await form.getByRole('heading', { name: expectedHeading, exact: true }).count();
+  if (!headingCount) {
+    throw new Error(`${role.toUpperCase()}: Loadify registration form found, but expected heading "${expectedHeading}" is missing.`);
   }
 
-  const labels = page.locator('form label:has(input[type="checkbox"])');
-  const labelCount = await labels.count();
-  for (let index = 0; index < labelCount; index += 1) {
-    const label = labels.nth(index);
-    const text = (await label.innerText().catch(() => '')).trim();
-    if (/Terms\s*&\s*Conditions|Seller Terms/i.test(text)) {
-      const checkbox = label.locator('input[type="checkbox"]');
-      if (!(await checkbox.isChecked())) await checkbox.check();
+  return form;
+}
+
+async function registrationEnablementSnapshot(form) {
+  return form.evaluate((formElement) => {
+    const clip = (value, max = 300) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
+    const visible = (element) => {
+      const box = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return box.width > 0 && box.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    };
+
+    const checkboxes = [...formElement.querySelectorAll('input[type="checkbox"]')].map((input) => ({
+      checked: input.checked,
+      labelText: clip(input.closest('label')?.textContent || ''),
+    }));
+
+    const selects = [...formElement.querySelectorAll('select')].map((select) => ({
+      value: select.value,
+      labelText: clip(select.closest('label')?.textContent || ''),
+    }));
+
+    const disabledGoogleButton = [...formElement.querySelectorAll('button')].find((button) =>
+      /Sign up with Google/i.test(button.textContent || ''),
+    );
+
+    const loadingGoogleNode = [...formElement.querySelectorAll('*')].find((element) =>
+      /Loading Google registration/i.test(element.textContent || '') &&
+      ![...element.children].some((child) => /Loading Google registration/i.test(child.textContent || '')),
+    );
+
+    const ariaBusyNodes = [...formElement.querySelectorAll('[aria-busy]')].map((element) => {
+      const box = element.getBoundingClientRect();
+      return {
+        ariaBusy: element.getAttribute('aria-busy'),
+        text: clip(element.textContent),
+        childCount: element.childNodes.length,
+        width: Math.round(box.width),
+        height: Math.round(box.height),
+        visible: visible(element),
+      };
+    });
+
+    return {
+      checkboxes,
+      selects,
+      disabledGoogleButton: disabledGoogleButton ? {
+        disabled: disabledGoogleButton.disabled,
+        visible: visible(disabledGoogleButton),
+      } : null,
+      loadingGoogleRegistrationVisible: Boolean(loadingGoogleNode && visible(loadingGoogleNode)),
+      ariaBusyNodes,
+    };
+  });
+}
+
+async function enableGoogleRegistration(form, role) {
+  if (role === 'seller') {
+    const sellerTypeLabel = form.locator('label').filter({ hasText: /How will you sell\?/i }).first();
+    const sellerSelect = sellerTypeLabel.locator('select');
+    if ((await sellerSelect.count()) !== 1) {
+      throw new Error('SELLER: expected exactly one legal-type select in the registration form.');
     }
+    await sellerSelect.selectOption('company');
+  }
+
+  const termsLabel = form.locator('label').filter({ hasText: /Terms\s*&\s*Conditions/i }).first();
+  const termsCheckbox = termsLabel.locator('input[type="checkbox"]');
+  if ((await termsCheckbox.count()) !== 1) {
+    throw new Error(`${role.toUpperCase()}: Terms & Conditions checkbox was not uniquely located.`);
+  }
+  if (!(await termsCheckbox.isChecked())) await termsCheckbox.check();
+
+  if (role === 'seller') {
+    const sellerTermsLabel = form.locator('label').filter({ hasText: /Seller Terms/i }).first();
+    const sellerTermsCheckbox = sellerTermsLabel.locator('input[type="checkbox"]');
+    if ((await sellerTermsCheckbox.count()) !== 1) {
+      throw new Error('SELLER: Seller Terms checkbox was not uniquely located.');
+    }
+    if (!(await sellerTermsCheckbox.isChecked())) await sellerTermsCheckbox.check();
   }
 }
 
@@ -159,17 +289,30 @@ async function collectSnapshot(page) {
         height: Math.round(box.height),
       };
     };
+    const isVisible = (element) => {
+      const box = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return box.width > 0 && box.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    };
 
+    const registrationForm = [...document.querySelectorAll('form')].find((form) =>
+      /I agree to the\s+Terms\s*&\s*Conditions/i.test(form.textContent || ''),
+    );
     const script = document.getElementById('loadify-google-gsi');
-    const busyNodes = [...document.querySelectorAll('[aria-busy]')].map((element) => ({
-      tag: element.tagName,
-      ariaBusy: element.getAttribute('aria-busy'),
-      text: clip(element.textContent),
-      childCount: element.childNodes.length,
-      iframeCount: element.querySelectorAll('iframe').length,
-      html: clip(element.innerHTML),
-      rect: rect(element),
-    }));
+    const trackedContainer = document.querySelector('[data-loadify-gsi-probe-container="true"]');
+
+    const registrationBusyNodes = registrationForm
+      ? [...registrationForm.querySelectorAll('[aria-busy]')].map((element) => ({
+          tag: element.tagName,
+          ariaBusy: element.getAttribute('aria-busy'),
+          text: clip(element.textContent),
+          childCount: element.childNodes.length,
+          iframeCount: element.querySelectorAll('iframe').length,
+          html: clip(element.innerHTML),
+          rect: rect(element),
+          visible: isVisible(element),
+        }))
+      : [];
 
     const iframes = [...document.querySelectorAll('iframe')].map((iframe) => ({
       src: iframe.getAttribute('src') || '',
@@ -186,12 +329,24 @@ async function collectSnapshot(page) {
       className: typeof element.className === 'string' ? element.className : '',
       text: clip(element.textContent, 200),
       rect: rect(element),
+      visible: isVisible(element),
     }));
+
+    const trackedContainerState = trackedContainer ? {
+      ariaBusy: trackedContainer.getAttribute('aria-busy'),
+      childCount: trackedContainer.childNodes.length,
+      iframeCount: trackedContainer.querySelectorAll('iframe').length,
+      text: clip(trackedContainer.textContent),
+      html: clip(trackedContainer.innerHTML),
+      rect: rect(trackedContainer),
+      visible: isVisible(trackedContainer),
+    } : null;
 
     return {
       url: location.href,
       readyState: document.readyState,
       formCount: document.querySelectorAll('form').length,
+      registrationFormPresent: Boolean(registrationForm),
       googleApi: {
         google: Boolean(window.google),
         accounts: Boolean(window.google?.accounts),
@@ -204,35 +359,84 @@ async function collectSnapshot(page) {
         datasetLoaded: script.dataset.loaded || '',
         isConnected: script.isConnected,
       } : null,
-      busyNodes,
+      registrationBusyNodes,
+      trackedContainer: trackedContainerState,
       iframes,
       googleLikeElements,
       probe: window.__LOADIFY_GSI_PROBE__ || null,
       alerts: [...document.querySelectorAll('[role="alert"]')].map((node) => clip(node.textContent, 300)),
-      bodyGoogleText: [...document.querySelectorAll('body *')]
-        .map((node) => clip(node.textContent, 180))
-        .filter((text) => /Google registration|Sign up with Google|Loading Google/i.test(text))
-        .slice(0, 20),
     };
   });
 }
 
-function classify(result) {
+function verdict(result) {
   const events = result.snapshot?.probe?.events || [];
   const initializeCalled = events.some((event) => event.type === 'google.accounts.id.initialize');
   const renderCalled = events.some((event) => event.type === 'google.accounts.id.renderButton.before');
-  const hasGoogleIframe = (result.snapshot?.iframes || []).some((frame) => /accounts\.google\.com/i.test(frame.src));
-  const renderedChildren = (result.snapshot?.busyNodes || []).some((node) => node.childCount > 0 && node.rect.width > 0 && node.rect.height > 0);
-  const originError = result.console.some((entry) => /given origin is not allowed|GSI_LOGGER/i.test(entry.text));
-  const google4xx = result.googleResponses.some((entry) => entry.status >= 400);
+  const renderAfter = [...events].reverse().find((event) => event.type === 'google.accounts.id.renderButton.after-1000ms');
 
-  if (originError) return 'PRODUCTION_GOOGLE_ORIGIN_REJECTED';
-  if (renderCalled && renderedChildren && !hasGoogleIframe) return 'OLD_IFRAME_ASSERTION_INVALID_RENDER_PRESENT';
-  if (renderCalled && hasGoogleIframe) return 'GSI_RENDERED_WITH_GOOGLE_IFRAME';
-  if (initializeCalled && renderCalled && google4xx) return 'GSI_CALLED_GOOGLE_REQUEST_FAILED';
-  if (initializeCalled && renderCalled && !renderedChildren) return 'GSI_CALLED_BUT_NO_RENDERED_CHILDREN';
-  if (result.snapshot?.googleApi?.id && !initializeCalled) return 'GSI_API_PRESENT_INITIALIZE_NOT_OBSERVED';
-  return 'INCONCLUSIVE';
+  const consoleText = [
+    ...result.console.map((entry) => entry.text),
+    ...result.pageErrors,
+    ...result.snapshot.alerts,
+  ].join('\n');
+
+  const originClientRejected = /given origin is not allowed|origin[^\n]*(not allowed|mismatch|unauthori[sz]ed)|client.?id[^\n]*(invalid|mismatch|not allowed|unauthori[sz]ed)|GSI_LOGGER[^\n]*(origin|client)/i.test(consoleText);
+  const google4xx = result.googleResponses.filter((entry) => entry.status >= 400 && entry.status < 500);
+
+  const tracked = result.snapshot.trackedContainer;
+  const renderedOutput = Boolean(
+    (tracked && tracked.visible && tracked.rect.width > 0 && tracked.rect.height > 0 && tracked.childCount > 0) ||
+    (renderAfter && renderAfter.parentWidth > 0 && renderAfter.parentHeight > 0 && renderAfter.parentChildCount > 0),
+  );
+
+  if (originClientRejected || google4xx.length) {
+    const responseReason = google4xx.length
+      ? ` Google Identity/OAuth returned ${google4xx.map((entry) => `HTTP ${entry.status} ${entry.url}`).join(', ')}.`
+      : '';
+    return {
+      status: 'FAIL — GOOGLE ORIGIN/CLIENT REJECTED',
+      reason: `Google runtime evidence indicates an origin/client authorization rejection.${responseReason}`,
+    };
+  }
+
+  if (!result.snapshot.googleApi.id) {
+    const enablementBlocked = Boolean(result.postEnablement.disabledGoogleButton?.visible);
+    return {
+      status: 'FAIL — GOOGLE API ABSENT',
+      reason: enablementBlocked
+        ? 'The Loadify Google component remained in its disabled-button state after the probe satisfied the registration prerequisites; GSI was never mounted.'
+        : result.snapshot.script
+          ? 'The GSI script element exists, but window.google.accounts.id is absent after the wait window.'
+          : 'No GSI script element and no window.google.accounts.id were observed after the Loadify registration prerequisites were satisfied.',
+    };
+  }
+
+  if (!initializeCalled) {
+    return {
+      status: 'FAIL — INITIALIZE NOT CALLED',
+      reason: 'window.google.accounts.id is available, but the probe did not observe Loadify calling google.accounts.id.initialize().',
+    };
+  }
+
+  if (!renderCalled) {
+    return {
+      status: 'FAIL — RENDERBUTTON NOT CALLED',
+      reason: 'GSI initialize() was observed, but Loadify did not call google.accounts.id.renderButton().',
+    };
+  }
+
+  if (!renderedOutput) {
+    return {
+      status: 'FAIL — RENDER CALLED NO OUTPUT',
+      reason: 'GSI initialize() and renderButton() were observed, but the real React render container had no visible rendered output after the wait window.',
+    };
+  }
+
+  return {
+    status: 'PASS — GSI INITIALIZED AND RENDERED',
+    reason: 'window.google.accounts.id is present, initialize() and renderButton() were observed, and the real Loadify React container contains visible rendered output.',
+  };
 }
 
 async function probeRole(browser, browserName, role) {
@@ -259,7 +463,7 @@ async function probeRole(browser, browserName, role) {
 
   page.on('response', (response) => {
     const url = response.url();
-    if (/https:\/\/(accounts|oauth2|www)\.google\.com\//i.test(url)) {
+    if (isGoogleIdentityUrl(url)) {
       googleResponses.push({
         status: response.status(),
         url: safeUrl(url),
@@ -269,7 +473,7 @@ async function probeRole(browser, browserName, role) {
 
   page.on('requestfailed', (request) => {
     const url = request.url();
-    if (/google\.com\//i.test(url)) {
+    if (isGoogleIdentityUrl(url)) {
       failedRequests.push({
         url: safeUrl(url),
         failure: redact(request.failure()?.errorText || 'unknown'),
@@ -285,18 +489,34 @@ async function probeRole(browser, browserName, role) {
     timeout: 45000,
   });
 
-  await page.locator('form').first().waitFor({ state: 'visible', timeout: 30000 });
-  await enableGoogleRegistration(page, role);
-  await page.waitForTimeout(waitMs);
+  const registrationForm = await locateRegistrationForm(page, role);
+  const preEnablement = await registrationEnablementSnapshot(registrationForm);
+  await enableGoogleRegistration(registrationForm, role);
 
+  await page.waitForFunction(() => {
+    return Boolean(
+      document.getElementById('loadify-google-gsi') ||
+      window.google?.accounts?.id ||
+      document.querySelector('[data-loadify-gsi-probe-container="true"]') ||
+      [...document.querySelectorAll('[aria-busy]')].some((node) =>
+        /Loading Google registration/i.test(node.textContent || ''),
+      ),
+    );
+  }, undefined, { timeout: Math.max(1500, waitMs) }).catch(() => {});
+
+  await page.waitForTimeout(Math.min(1500, waitMs));
+
+  const postEnablement = await registrationEnablementSnapshot(registrationForm);
   const snapshot = await collectSnapshot(page);
-  const frames = page.frames().map((frame) => safeUrl(frame.url()));
+  const frames = page.frames().map((frame) => safeUrl(frame.url(), { keepRole: true }));
 
   const result = {
     browser: browserName,
     role,
     documentHttp: documentResponse?.status() ?? null,
-    finalUrl: safeUrl(page.url()),
+    finalUrl: safeUrl(page.url(), { keepRole: true }),
+    preEnablement,
+    postEnablement,
     snapshot,
     frames,
     console: consoleEntries,
@@ -305,24 +525,33 @@ async function probeRole(browser, browserName, role) {
     failedRequests,
   };
 
-  result.classification = classify(result);
+  result.verdict = verdict(result);
   await context.close();
   return result;
 }
 
 function printResult(result) {
+  const googleIframeObserved = result.snapshot.iframes.some((frame) => /(^|\.)accounts\.google\.com/i.test((() => {
+    try { return new URL(frame.src).hostname; } catch { return ''; }
+  })()));
+
   console.log(`\n=== ${result.browser} / ${result.role.toUpperCase()} ===`);
   console.log(`DOCUMENT_HTTP=${result.documentHttp}`);
   console.log(`FINAL_URL=${result.finalUrl}`);
   console.log(`READY_STATE=${result.snapshot.readyState}`);
   console.log(`FORM_COUNT=${result.snapshot.formCount}`);
+  console.log(`REGISTRATION_FORM_PRESENT=${result.snapshot.registrationFormPresent ? 'YES' : 'NO'}`);
+  console.log(`PRE_ENABLEMENT=${JSON.stringify(result.preEnablement)}`);
+  console.log(`POST_ENABLEMENT=${JSON.stringify(result.postEnablement)}`);
   console.log(`GSI_SCRIPT=${result.snapshot.script ? safeUrl(result.snapshot.script.src) : 'MISSING'}`);
   console.log(`GSI_SCRIPT_DATASET_LOADED=${result.snapshot.script?.datasetLoaded || 'false'}`);
   console.log(`GOOGLE_API=${JSON.stringify(result.snapshot.googleApi)}`);
   console.log(`PROBE_EVENTS=${JSON.stringify(result.snapshot.probe?.events || [])}`);
   console.log(`PROBE_WRAP_ERRORS=${JSON.stringify(result.snapshot.probe?.wrapErrors || [])}`);
-  console.log(`ARIA_BUSY_NODES=${JSON.stringify(result.snapshot.busyNodes)}`);
-  console.log(`IFRAMES=${JSON.stringify(result.snapshot.iframes.map((frame) => ({ ...frame, src: safeUrl(frame.src) })))}`);
+  console.log(`GSI_REACT_CONTAINER=${JSON.stringify(result.snapshot.trackedContainer)}`);
+  console.log(`REGISTRATION_ARIA_BUSY_NODES=${JSON.stringify(result.snapshot.registrationBusyNodes)}`);
+  console.log(`GOOGLE_IFRAME_OBSERVED=${googleIframeObserved ? 'YES' : 'NO'}`);
+  console.log(`IFRAMES_INFO=${JSON.stringify(result.snapshot.iframes.map((frame) => ({ ...frame, src: safeUrl(frame.src) })))}`);
   console.log(`GOOGLE_LIKE_ELEMENTS=${JSON.stringify(result.snapshot.googleLikeElements)}`);
   console.log(`FRAMES=${JSON.stringify(result.frames)}`);
   console.log(`GOOGLE_RESPONSES=${JSON.stringify(result.googleResponses)}`);
@@ -332,11 +561,12 @@ function printResult(result) {
   const relevantConsole = result.console.filter((entry) =>
     entry.type === 'error' ||
     entry.type === 'warning' ||
-    /google|gsi|content security policy|csp|frame|origin/i.test(entry.text),
+    /google|gsi|content security policy|csp|frame|origin|oauth|client.?id/i.test(entry.text),
   );
   console.log(`RELEVANT_CONSOLE=${JSON.stringify(relevantConsole)}`);
   console.log(`PAGE_ERRORS=${JSON.stringify(result.pageErrors)}`);
-  console.log(`CLASSIFICATION=${result.classification}`);
+  console.log(`VERDICT=${result.verdict.status}`);
+  console.log(`VERDICT_REASON=${result.verdict.reason}`);
 }
 
 const allResults = [];
@@ -347,7 +577,7 @@ for (const mode of browserModes) {
     browser = await chromium.launch(mode.launchOptions);
   } catch (error) {
     console.log(`\n=== ${mode.name} ===`);
-    console.log(`BROWSER_LAUNCH=SKIP`);
+    console.log('BROWSER_LAUNCH=SKIP');
     console.log(`REASON=${redact(error instanceof Error ? error.message : error)}`);
     continue;
   }
@@ -369,11 +599,20 @@ for (const mode of browserModes) {
   }
 }
 
-const grouped = Object.groupBy(allResults, (result) => result.role);
 for (const role of roles) {
-  const results = grouped[role] || [];
-  const classifications = results.map((result) => `${result.browser}:${result.classification}`);
-  console.log(`\nSUMMARY_${role.toUpperCase()}=${JSON.stringify(classifications)}`);
+  const results = allResults.filter((result) => result.role === role);
+  const summaries = results.map((result) => `${result.browser}:${result.verdict.status}`);
+  const passCount = results.filter((result) => result.verdict.status.startsWith('PASS')).length;
+  const dualModeState = results.length < 2
+    ? 'INCOMPLETE'
+    : passCount === results.length
+      ? 'BOTH_PASS'
+      : passCount === 0
+        ? 'BOTH_FAIL'
+        : 'HEADLESS_MODE_DIFFERENCE';
+
+  console.log(`\nSUMMARY_${role.toUpperCase()}=${JSON.stringify(summaries)}`);
+  console.log(`DUAL_HEADLESS_${role.toUpperCase()}=${dualModeState}`);
 }
 
 console.log('\nREAD_ONLY_PROBE_COMPLETE');
