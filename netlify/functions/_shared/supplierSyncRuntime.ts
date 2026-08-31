@@ -21,6 +21,11 @@ export interface SupplierSyncRunResult {
   errorClass?: string;
 }
 
+export interface SupplierStockPriceSnapshots {
+  stock: SupplierStockSnapshot[];
+  prices: SupplierPriceSnapshot[];
+}
+
 function eventKey(kind: 'stock' | 'price', target: SupplierSyncTarget, variant: string, observedAt: string): string {
   return createHash('sha256').update([kind, target.supplierOfferId, variant, observedAt].join('|')).digest('hex');
 }
@@ -59,6 +64,53 @@ async function persistPrice(client: SupabaseClient, adapter: SupplierAdapterV1, 
   });
 }
 
+/**
+ * Persists already validated provider observations through the existing
+ * server-only Supplier Sync RPC. It does not publish products or alter buyer
+ * price truth; the database remains the authoritative fail-closed boundary.
+ */
+export async function persistSupplierStockPriceSnapshots(
+  client: SupabaseClient,
+  adapter: SupplierAdapterV1,
+  context: SupplierAdapterContext,
+  target: SupplierSyncTarget,
+  snapshots: SupplierStockPriceSnapshots,
+): Promise<SupplierSyncRunResult> {
+  const startedAt = new Date().toISOString();
+  let stockAccepted = 0;
+  let priceAccepted = 0;
+  let blocked = false;
+
+  for (const row of snapshots.stock) {
+    const { data, error } = await persistStock(client, adapter, target, row);
+    const accepted = !error && data && typeof data === 'object' && (data as { accepted?: unknown }).accepted === true;
+    if (accepted) stockAccepted += 1;
+    else blocked = true;
+  }
+  for (const row of snapshots.prices) {
+    const { data, error } = await persistPrice(client, adapter, target, row);
+    const accepted = !error && data && typeof data === 'object' && (data as { accepted?: unknown }).accepted === true;
+    if (accepted) priceAccepted += 1;
+    else blocked = true;
+  }
+
+  await recordSupplierCommerceOperation(client, {
+    correlationId: context.correlationId,
+    requestId: context.idempotencyKey,
+    operation: 'stock_price_sync',
+    providerRef: adapter.providerKey,
+    supplierRef: target.supplierKey,
+    entityType: 'supplier_offer',
+    entityRef: target.offerKey,
+    resultClass: blocked ? 'BLOCKED_BY_CONTROL' : 'SUCCESS',
+    recoveryState: blocked ? 'none' : 'resolved',
+    startedAt,
+    finishedAt: new Date().toISOString(),
+  });
+
+  return { ok: !blocked, stockAccepted, priceAccepted, blocked };
+}
+
 export async function runSupplierStockPriceSync(
   client: SupabaseClient,
   adapter: SupplierAdapterV1,
@@ -94,35 +146,8 @@ export async function runSupplierStockPriceSync(
     return { ok: false, stockAccepted: 0, priceAccepted: 0, errorClass };
   }
 
-  let stockAccepted = 0;
-  let priceAccepted = 0;
-  let blocked = false;
-  for (const row of stock.data) {
-    const { data, error } = await persistStock(client, adapter, target, row);
-    const accepted = !error && data && typeof data === 'object' && (data as { accepted?: unknown }).accepted === true;
-    if (accepted) stockAccepted += 1;
-    else blocked = true;
-  }
-  for (const row of prices.data) {
-    const { data, error } = await persistPrice(client, adapter, target, row);
-    const accepted = !error && data && typeof data === 'object' && (data as { accepted?: unknown }).accepted === true;
-    if (accepted) priceAccepted += 1;
-    else blocked = true;
-  }
-
-  await recordSupplierCommerceOperation(client, {
-    correlationId: context.correlationId,
-    requestId: context.idempotencyKey,
-    operation: 'stock_price_sync',
-    providerRef: adapter.providerKey,
-    supplierRef: target.supplierKey,
-    entityType: 'supplier_offer',
-    entityRef: target.offerKey,
-    resultClass: blocked ? 'BLOCKED_BY_CONTROL' : 'SUCCESS',
-    recoveryState: blocked ? 'none' : 'resolved',
-    startedAt,
-    finishedAt: new Date().toISOString(),
+  return persistSupplierStockPriceSnapshots(client, adapter, context, target, {
+    stock: stock.data,
+    prices: prices.data,
   });
-
-  return { ok: !blocked, stockAccepted, priceAccepted, blocked };
 }
