@@ -182,6 +182,19 @@ BEGIN
     RAISE EXCEPTION 'invalid direct supplier replay expiry' USING ERRCODE = '22023';
   END IF;
 
+  WITH expired AS (
+    SELECT supplier_key, event_id
+    FROM private.direct_supplier_replay_claims
+    WHERE expires_at <= now()
+    ORDER BY expires_at
+    LIMIT 256
+    FOR UPDATE SKIP LOCKED
+  )
+  DELETE FROM private.direct_supplier_replay_claims AS claims
+  USING expired
+  WHERE claims.supplier_key = expired.supplier_key
+    AND claims.event_id = expired.event_id;
+
   INSERT INTO private.direct_supplier_replay_claims AS existing (
     supplier_key,
     event_id,
