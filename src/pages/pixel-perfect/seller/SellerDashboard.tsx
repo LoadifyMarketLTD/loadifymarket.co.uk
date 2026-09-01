@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Package, ShoppingCart, PoundSterling, TrendingUp,
   Eye, Users, Star, Truck, Send, Loader2, MessageSquare,
-  AlertCircle, CheckCircle2, Store
+  AlertCircle, CheckCircle2, Store, RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -16,15 +16,19 @@ import {
   RECOGNISED_SELLER_SALE_STATUSES,
   type SellerProductMetric,
 } from "@/lib/sellerDashboardMetrics";
+import { isSellerLowStock, isSellerOutOfStock } from "@/lib/sellerInventory";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
 interface DashboardStats {
-  totalRevenue: number;
+  grossSales: number;
   activeOrders: number;
   productsListed: number;
+  activeProducts: number;
   totalCustomers: number;
   pendingShipments: number;
+  pendingReturns: number;
+  reviewsAwaitingReply: number | null;
   lowStockItems: number;
   outOfStockItems: number;
   sellerRating: number;
@@ -100,10 +104,10 @@ const SellerDashboard = () => {
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
-        const [productsRes, allOrdersRes, profileRes, balanceRes, todayMessagesRes, unreadMessagesRes] = await Promise.all([
+        const [productsRes, allOrdersRes, profileRes, balanceRes, todayMessagesRes, unreadMessagesRes, pendingReturnsRes] = await Promise.all([
           supabase
             .from("products")
-            .select("id, title, views, addToCartCount, stockQuantity, isActive, listingContext")
+            .select("id, title, views, addToCartCount, stockQuantity, isActive, isUnique, listingContext")
             .eq("sellerId", user.id),
           supabase
             .from("orders")
@@ -130,6 +134,11 @@ const SellerDashboard = () => {
             .select("id", { count: "exact", head: true })
             .eq("receiverId", user.id)
             .eq("isRead", false),
+          supabase
+            .from("returns")
+            .select("id", { count: "exact", head: true })
+            .eq("sellerId", user.id)
+            .eq("status", "requested"),
         ]);
 
         const products = productsRes.data ?? [];
@@ -144,29 +153,37 @@ const SellerDashboard = () => {
           commercialSnapshotSource: string | null;
         }>;
 
+        const recognisedOrders = orders.filter((o) => RECOGNISED_SELLER_SALE_STATUSES.has(o.status));
         const activeOrders = orders.filter((o) => ["paid", "packed", "shipped"].includes(o.status)).length;
-        const totalRevenue = orders
-          .filter((o) => RECOGNISED_SELLER_SALE_STATUSES.has(o.status))
-          .reduce((sum, o) => sum + (o.total || 0), 0);
-        const productsListed = products.filter((p) => p.isActive).length;
-        const lowStockItems = products.filter((p) =>
-          p.listingContext !== "service" &&
-          p.stockQuantity !== null && p.stockQuantity > 0 && p.stockQuantity <= 5
-        ).length;
-        const outOfStockItems = products.filter((p) =>
-          p.listingContext !== "service" &&
-          p.stockQuantity !== null && p.stockQuantity <= 0
-        ).length;
+        const grossSales = recognisedOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+        const productsListed = products.length;
+        const activeProducts = products.filter((p) => p.isActive).length;
+        const lowStockItems = products.filter((p) => isSellerLowStock(p)).length;
+        const outOfStockItems = products.filter((p) => isSellerOutOfStock(p)).length;
 
-        const uniqueBuyerIds = [...new Set(orders.map((o) => o.buyerId).filter(Boolean))];
+        const uniqueBuyerIds = [...new Set(recognisedOrders.map((o) => o.buyerId).filter(Boolean))];
         const todayOrders = orders.filter((o) => new Date(o.createdAt) >= startOfToday).length;
 
+        let reviewsAwaitingReply: number | null = 0;
+        if (products.length > 0) {
+          const { count, error } = await supabase
+            .from("reviews")
+            .select("id", { count: "exact", head: true })
+            .in("productId", products.map((product) => product.id))
+            .eq("status", "published")
+            .is("sellerResponse", null);
+          reviewsAwaitingReply = error ? null : (count ?? 0);
+        }
+
         setStats({
-          totalRevenue,
+          grossSales,
           activeOrders,
           productsListed,
+          activeProducts,
           totalCustomers: uniqueBuyerIds.length,
           pendingShipments: orders.filter((o) => o.status === "paid" || o.status === "packed").length,
+          pendingReturns: pendingReturnsRes.count ?? 0,
+          reviewsAwaitingReply,
           lowStockItems,
           outOfStockItems,
           sellerRating: profileRes.data?.rating ?? 0,
@@ -220,9 +237,7 @@ const SellerDashboard = () => {
         // Product commercial metrics must come from canonical order_items, not
         // from product engagement counters. Fetch only recognised sale orders,
         // in bounded chunks, under the seller's existing RLS policies.
-        const recognisedOrderIds = orders
-          .filter((order) => RECOGNISED_SELLER_SALE_STATUSES.has(order.status))
-          .map((order) => order.id);
+        const recognisedOrderIds = recognisedOrders.map((order) => order.id);
         const orderItems: OrderItemMetricRow[] = [];
         let metricsAvailable = true;
 
@@ -299,39 +314,31 @@ const SellerDashboard = () => {
   const statsCards = stats
     ? [
         {
-          label: "Total Revenue (All Time)",
-          value: `£${stats.totalRevenue.toLocaleString("en-GB", { maximumFractionDigits: 0 })}`,
-          change: "",
-          trend: "up" as const,
+          label: "Gross Sales (All Time)",
+          value: `£${stats.grossSales.toLocaleString("en-GB", { maximumFractionDigits: 0 })}`,
           icon: PoundSterling,
-          description: "all time",
+          description: "Recognised orders",
           to: "/seller/orders",
         },
         {
           label: "Active Orders (Current)",
           value: String(stats.activeOrders),
-          change: "",
-          trend: "up" as const,
           icon: ShoppingCart,
-          description: "in progress",
+          description: "In progress",
           to: "/seller/orders",
         },
         {
           label: "Products Listed (Total)",
           value: String(stats.productsListed),
-          change: "",
-          trend: "up" as const,
           icon: Package,
-          description: "active",
+          description: `${stats.activeProducts} active`,
           to: "/seller/products",
         },
         {
           label: "Low Stock",
           value: String(stats.lowStockItems),
-          change: "",
-          trend: stats.lowStockItems > 0 ? ("down" as const) : ("up" as const),
           icon: TrendingUp,
-          description: "items ≤ 5 units",
+          description: "Excludes unique items",
           to: "/seller/products",
         },
       ]
@@ -350,6 +357,18 @@ const SellerDashboard = () => {
           detail: "Reply to buyers from your Messages inbox.",
           to: "/seller/messages",
           icon: MessageSquare,
+        }] : []),
+        ...(stats.pendingReturns > 0 ? [{
+          label: `${stats.pendingReturns} return request${stats.pendingReturns === 1 ? "" : "s"} awaiting a decision`,
+          detail: "Review the buyer's request and respond.",
+          to: "/seller/returns",
+          icon: RotateCcw,
+        }] : []),
+        ...((stats.reviewsAwaitingReply ?? 0) > 0 ? [{
+          label: `${stats.reviewsAwaitingReply} review${stats.reviewsAwaitingReply === 1 ? "" : "s"} awaiting your reply`,
+          detail: "Respond to recent buyer feedback.",
+          to: "/seller/reviews",
+          icon: Star,
         }] : []),
         ...(stats.outOfStockItems > 0 ? [{
           label: `${stats.outOfStockItems} product${stats.outOfStockItems === 1 ? "" : "s"} out of stock`,
@@ -475,6 +494,7 @@ const SellerDashboard = () => {
               <div className="min-w-0">
                 <div className="font-bold text-lg leading-tight text-foreground">{stat.value}</div>
                 <p className="text-[11px] text-muted-foreground truncate">{stat.label}</p>
+                <p className="text-[10px] text-muted-foreground/80 truncate">{stat.description}</p>
               </div>
             </Link>
           ))}
@@ -504,7 +524,7 @@ const SellerDashboard = () => {
             <p className="font-bold text-base text-foreground leading-tight">
               £{balance.totalEarned.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <p className="text-[11px] text-muted-foreground">All time</p>
+            <p className="text-[11px] text-muted-foreground">Net seller earnings · all time</p>
           </div>
         </div>
       )}
