@@ -21,6 +21,12 @@ export interface ProviderCapabilityRecord {
   evidenceSource: string | null;
   evidenceVersion: string | null;
   lastVerifiedAt: string | null;
+  /**
+   * Maximum age of capability evidence before external execution fails closed.
+   * A null/invalid TTL is acceptable for read-only documentation, but it can
+   * never authorise an external mutation.
+   */
+  verificationTtlHours: number | null;
   readAllowed: boolean;
   writeAllowed: boolean;
   piiAllowed: boolean;
@@ -72,26 +78,37 @@ const EXTERNAL_EXECUTION_VERIFICATION = new Set<CapabilityVerificationStatus>([
   'production_verified',
 ]);
 
-function hasCurrentEvidence(record: ProviderCapabilityRecord): boolean {
+function hasCurrentEvidence(record: ProviderCapabilityRecord, now: Date): boolean {
   if (!record.evidenceSource?.trim() || !record.evidenceVersion?.trim() || !record.lastVerifiedAt) {
     return false;
   }
+  if (!Number.isFinite(record.verificationTtlHours) || (record.verificationTtlHours ?? 0) <= 0) {
+    return false;
+  }
 
-  return !Number.isNaN(Date.parse(record.lastVerifiedAt));
+  const verifiedAt = Date.parse(record.lastVerifiedAt);
+  if (Number.isNaN(verifiedAt)) return false;
+
+  const ageMs = now.getTime() - verifiedAt;
+  if (ageMs < 0) return false;
+  return ageMs <= (record.verificationTtlHours as number) * 3_600_000;
 }
 
 /**
  * Shared fail-closed gate for provider-side mutations.
  *
  * Generic external execution is denied unless the capability has runtime-grade
- * evidence, an explicit write grant, a proven retry/recovery contract and the
- * highest autonomy level. Provider-specific policy may impose stricter rules.
+ * current evidence, an explicit write grant, a proven retry/recovery contract
+ * and the highest autonomy level. Provider-specific policy may be stricter.
  */
-export function canPerformExternalMutation(record: ProviderCapabilityRecord): boolean {
+export function canPerformExternalMutation(
+  record: ProviderCapabilityRecord,
+  now: Date = new Date(),
+): boolean {
   return (
     record.verified
     && EXTERNAL_EXECUTION_VERIFICATION.has(record.verificationStatus)
-    && hasCurrentEvidence(record)
+    && hasCurrentEvidence(record, now)
     && record.writeAllowed
     && record.idempotencyKnown
     && record.lostResponseRecoveryKnown
@@ -105,8 +122,11 @@ export function canPerformExternalMutation(record: ProviderCapabilityRecord): bo
  * executable provider capability. A write-capable provider does not
  * automatically gain access to customer data.
  */
-export function canDiscloseCustomerPii(record: ProviderCapabilityRecord): boolean {
-  return canPerformExternalMutation(record) && record.piiAllowed;
+export function canDiscloseCustomerPii(
+  record: ProviderCapabilityRecord,
+  now: Date = new Date(),
+): boolean {
+  return canPerformExternalMutation(record, now) && record.piiAllowed;
 }
 
 /**
