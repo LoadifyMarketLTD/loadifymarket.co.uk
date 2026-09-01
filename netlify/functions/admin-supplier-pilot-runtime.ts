@@ -4,7 +4,11 @@ import { handler as canonicalPilotHandler } from './admin-supplier-pilot';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { createProviderExecutionCapabilityRegistry } from './_shared/providerExecutionContracts';
 import { jsonResponse } from './_shared/http';
-import { evaluatePhaseOPilotAutonomyReadiness } from './_shared/phaseOPilotAutonomyReadiness';
+import {
+  PHASE_O_SHADOW_REVIEW_CAPABILITY,
+  PHASE_O_SHADOW_REVIEW_SOURCE,
+  evaluatePhaseOPilotAutonomyReadiness,
+} from './_shared/phaseOPilotAutonomyReadiness';
 
 const METHODS = 'POST, OPTIONS';
 
@@ -76,7 +80,7 @@ export const handler: Handler = async (event, context) => {
     : null;
   if (!status?.exists) return jsonResponse(404, { error: 'Controlled pilot not found' }, METHODS);
 
-  const providerKey = text(status.providerKey);
+  const providerKey = text(status.providerKey).toLowerCase();
   if (!providerKey) return jsonResponse(409, { error: 'Controlled pilot provider is unavailable' }, METHODS);
 
   const { data: rawCanonicalReadiness, error: readinessError } = await admin.rpc(
@@ -94,7 +98,15 @@ export const handler: Handler = async (event, context) => {
   const capabilityRegistry = createProviderExecutionCapabilityRegistry();
   const providerOrderExecution = capabilityRegistry.resolve({
     provider: providerKey,
-    capability: 'order_submission',
+    capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
+  });
+
+  const shadowReviewRequiredBinding = Object.freeze({
+    pilotId,
+    providerKey,
+    capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
+    source: PHASE_O_SHADOW_REVIEW_SOURCE,
+    persistenceBound: true,
   });
 
   const autonomyReadiness = evaluatePhaseOPilotAutonomyReadiness({
@@ -108,9 +120,10 @@ export const handler: Handler = async (event, context) => {
       externalMutationAllowed: providerOrderExecution.externalMutationAllowed,
       piiDisclosureAllowed: providerOrderExecution.piiDisclosureAllowed,
     },
-    // Lane H is deliberately side-effect free. No durable pilot-bound Shadow
-    // review evidence reader exists in the canonical Phase O schema today, so
-    // activation remains fail-closed instead of accepting caller self-attestation.
+    // Lane H remains side-effect free today. No durable server-derived reader
+    // exists yet for the exact pilot + provider + order_submission tuple, so
+    // activation stays fail-closed rather than accepting caller self-attestation
+    // or unrelated Shadow Mode evidence such as shipment-stall evaluation.
     shadowReview: null,
   });
 
@@ -122,6 +135,7 @@ export const handler: Handler = async (event, context) => {
       canonicalReadiness,
       autonomyReadiness,
       shadowReviewPersistenceBound: false,
+      shadowReviewRequiredBinding,
       activationPerformed: false,
       providerMutationPerformed: false,
       customerPiiDisclosurePerformed: false,
@@ -138,6 +152,7 @@ export const handler: Handler = async (event, context) => {
       canonicalReadiness,
       autonomyReadiness,
       shadowReviewPersistenceBound: false,
+      shadowReviewRequiredBinding,
       activationPerformed: false,
       providerMutationPerformed: false,
       customerPiiDisclosurePerformed: false,
