@@ -15,6 +15,7 @@ describe('provider execution runtime boundary', () => {
     expect(endpoint).not.toContain('submitOrder(');
     expect(endpoint).not.toContain('cancelOrder(');
     expect(endpoint).not.toContain('requestReturn(');
+    expect(endpoint).toContain('providerReadiness: listSupplierProviderReadiness()');
     expect(endpoint).toContain('providerWriteActivationPerformed: false');
     expect(endpoint).toContain('customerPiiDisclosurePerformed: false');
     expect(endpoint).toContain('financialMutationPerformed: false');

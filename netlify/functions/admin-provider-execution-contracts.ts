@@ -5,6 +5,7 @@ import {
   listProviderExecutionContracts,
   type ProviderExecutionContractProvider,
 } from './_shared/providerExecutionContracts';
+import { listSupplierProviderReadiness } from './_shared/supplierProviderReadiness';
 import { jsonResponse, optionsResponse } from './_shared/http';
 
 const METHODS = 'GET, OPTIONS';
@@ -49,6 +50,7 @@ export const handler: Handler = async (event) => {
     ok: true,
     interfaceVersion: 1,
     contracts,
+    providerReadiness: listSupplierProviderReadiness(),
     providerWriteActivationPerformed: false,
     customerPiiDisclosurePerformed: false,
     financialMutationPerformed: false,
