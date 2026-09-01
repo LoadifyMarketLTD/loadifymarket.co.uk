@@ -133,7 +133,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     verifiedCapabilities: [],
     potentialCapabilities: READ_TARGETS,
     requiresProviderOrPartnerApproval: true,
-    notes: 'Custom-platform capabilities require provider coordination; do not infer retailer catalog/order API access from supplier-side webhooks.',
+    notes: 'Current custom-platform webhook documentation is supplier-side order intake only and explicitly does not provide catalog access. Do not infer retailer catalog/order API access without explicit Syncee partner enablement and evidence.',
   },
   appscenic: {
     key: 'appscenic',
@@ -144,7 +144,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     verifiedCapabilities: [],
     potentialCapabilities: READ_TARGETS,
     requiresProviderOrPartnerApproval: true,
-    notes: 'Keep inactive until retailer-side API access and contracts are explicitly available to Loadify.',
+    notes: 'AppScenic documents a Supplier Public API while its current integrations page says a retailer Public API is still upcoming. Keep inactive until retailer-side access and compatible contracts are explicitly available to Loadify.',
   },
   salehoo: {
     key: 'salehoo',
@@ -155,7 +155,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     verifiedCapabilities: [],
     potentialCapabilities: ['supplier_identity', 'catalog'],
     requiresProviderOrPartnerApproval: true,
-    notes: 'Treat primarily as supplier discovery/due-diligence; Developer API access requires approval.',
+    notes: 'Treat primarily as supplier discovery/due-diligence. Developer API registration requires approval, and API access must not be treated as commerce execution authority.',
   },
   spocket: {
     key: 'spocket',
@@ -166,7 +166,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     verifiedCapabilities: [],
     potentialCapabilities: [],
     requiresProviderOrPartnerApproval: true,
-    notes: 'Do not integrate marketplace resale without explicit written permission compatible with Loadify Market.',
+    notes: 'Current retailer guidance permits supported standalone store channels but restricts third-party marketplace resale. Keep Loadify Market integration contract-blocked until explicit written permission is compatible with the marketplace model.',
   },
   aliexpress_dsers: {
     key: 'aliexpress_dsers',
@@ -177,7 +177,7 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
     verifiedCapabilities: [],
     potentialCapabilities: ASIA_RESEARCH_TARGETS,
     requiresProviderOrPartnerApproval: true,
-    notes: 'Future-only until UK import VAT, customs, product safety, landed-cost and returns controls are complete.',
+    notes: 'DSers now documents Developer/Open API registration for third-party integrations. Keep future-only until Loadify receives developer approval and UK import VAT, customs, product safety, landed-cost and returns controls are complete.',
   },
 };
 
