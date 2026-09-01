@@ -137,6 +137,10 @@ export function evaluateSupplierHealth(input: SupplierHealthInput): SupplierHeal
     + count(input.operations.rateLimited, 'operations.rateLimited')
     + count(input.operations.unknownOutcomes, 'operations.unknownOutcomes');
   const operationTotal = count(input.operations.total, 'operations.total');
+  const fulfilmentFailures = Math.max(
+    count(input.fulfilment.failures, 'fulfilment.failures'),
+    count(input.fulfilment.cancellations, 'fulfilment.cancellations'),
+  );
 
   const components: SupplierHealthComponent[] = [
     component('api_reliability', operationTotal, operationFailures, 'supplier commerce operation outcomes'),
@@ -155,7 +159,7 @@ export function evaluateSupplierHealth(input: SupplierHealthInput): SupplierHeal
     component(
       'fulfilment',
       count(input.fulfilment.orders, 'fulfilment.orders'),
-      count(input.fulfilment.failures, 'fulfilment.failures') + count(input.fulfilment.cancellations, 'fulfilment.cancellations'),
+      fulfilmentFailures,
       'supplier fulfilment failures and cancellations',
     ),
     component(
