@@ -283,7 +283,9 @@ const SellerNotifications = () => {
               group.count === 1
                 ? n.title
                 : n.type === "message"
-                  ? `${group.count} new messages in this conversation`
+                  ? group.unreadCount > 0
+                    ? `${group.unreadCount} new message${group.unreadCount === 1 ? "" : "s"} in this conversation`
+                    : `${group.count} messages in this conversation`
                   : `${group.count} similar notifications`;
 
             return (
