@@ -2,6 +2,7 @@ export const PHASE_O_AUTONOMY_READINESS_INTERFACE_VERSION = 2 as const;
 export const PHASE_O_AUTONOMY_READINESS_POLICY_VERSION = 'phase-o-autonomy-readiness-v2' as const;
 export const PHASE_O_SHADOW_REVIEW_CAPABILITY = 'order_submission' as const;
 export const PHASE_O_SHADOW_REVIEW_SOURCE = 'durable_shadow_review_v1' as const;
+export const PHASE_O_SHADOW_REVIEW_POLICY_VERSION = 'phase-o-order-shadow-v1' as const;
 
 export interface PhaseOProviderOrderExecutionState {
   registered: boolean;
@@ -18,7 +19,7 @@ export interface PhaseOShadowReviewEvidence {
   source: typeof PHASE_O_SHADOW_REVIEW_SOURCE;
   persistenceBound: true;
   evidenceRef: string;
-  policyVersion: string;
+  policyVersion: typeof PHASE_O_SHADOW_REVIEW_POLICY_VERSION;
   reviewedAt: string;
   sampleSize: number;
   resolvedComparisons: number;
@@ -33,6 +34,7 @@ export type PhaseOShadowReviewBlocker =
   | 'shadow_mode_review_pilot_mismatch'
   | 'shadow_mode_review_provider_mismatch'
   | 'shadow_mode_review_capability_mismatch'
+  | 'shadow_mode_review_policy_mismatch'
   | 'shadow_mode_review_invalid'
   | 'shadow_mode_review_not_passed';
 
@@ -99,6 +101,7 @@ function shadowReviewBlockers(
   if (text(review.pilotId) !== expected.pilotId) blockers.push('shadow_mode_review_pilot_mismatch');
   if (text(review.providerKey).toLowerCase() !== expected.providerKey) blockers.push('shadow_mode_review_provider_mismatch');
   if (text(review.capability) !== PHASE_O_SHADOW_REVIEW_CAPABILITY) blockers.push('shadow_mode_review_capability_mismatch');
+  if (text(review.policyVersion) !== PHASE_O_SHADOW_REVIEW_POLICY_VERSION) blockers.push('shadow_mode_review_policy_mismatch');
 
   const reviewedAt = Date.parse(review.reviewedAt);
   const validMetrics = Number.isSafeInteger(review.sampleSize)
@@ -108,7 +111,6 @@ function shadowReviewBlockers(
     && review.resolvedComparisons <= review.sampleSize;
   if (
     !text(review.evidenceRef)
-    || !text(review.policyVersion)
     || Number.isNaN(reviewedAt)
     || reviewedAt > now.getTime()
     || !validMetrics
@@ -130,8 +132,8 @@ function shadowReviewBlockers(
  * review must be demonstrated before the admin runtime may request activation.
  *
  * Shadow evidence is intentionally scoped to the exact pilot + provider +
- * order_submission capability. An unrelated Shadow Mode result must never be
- * reusable as supplier-order activation evidence.
+ * order_submission capability + policy version. An unrelated or stale Shadow
+ * Mode result must never be reusable as supplier-order activation evidence.
  */
 export function evaluatePhaseOPilotAutonomyReadiness(
   input: PhaseOPilotAutonomyReadinessInput,
