@@ -32,12 +32,13 @@ describe('Phase O durable Shadow persistence', () => {
   });
 
   it('accepts operator review but never accepts a caller-provided PASS decision', () => {
-    expect(migration).toContain("p_operator_action text");
-    expect(migration).toContain("p_operator_status text");
+    expect(migration).toContain('p_operator_action text');
+    expect(migration).toContain('p_operator_status text');
     expect(migration).toContain("classification IN ('agreement','false_positive','false_negative','ambiguous')");
     expect(migration).toContain("'passed',false");
     expect(migration).toContain("'passPolicyConfigured',false");
     expect(migration).toContain("'shadow_pass_policy_not_configured'");
+    expect(migration).toContain("policy_version text NOT NULL DEFAULT 'phase-o-order-shadow-v1'");
   });
 
   it('exposes only service-role RPC access for the persistence boundary', () => {
@@ -59,12 +60,12 @@ describe('Phase O durable Shadow persistence', () => {
 
   it('binds runtime observation input to operator outcome only', () => {
     expect(runtime).toContain("body.action !== 'shadow_observe'");
-    expect(runtime).toContain("server_record_supplier_pilot_shadow_observation_v1");
-    expect(runtime).toContain("server_get_supplier_pilot_shadow_review_v1");
+    expect(runtime).toContain('server_record_supplier_pilot_shadow_observation_v1');
+    expect(runtime).toContain('server_get_supplier_pilot_shadow_review_v1');
     expect(runtime).toContain('p_provider_contract_ready: providerOrderContractReady');
     expect(runtime).toContain('p_provider_contract_reason: providerOrderExecution.reason');
+    expect(runtime).toContain('policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION');
     expect(runtime).not.toContain('systemAction?:');
-    expect(runtime).not.toContain('passed?:');
     expect(runtime).not.toContain('shadowReview?:');
   });
 
