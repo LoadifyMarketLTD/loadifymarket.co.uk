@@ -1,0 +1,284 @@
+/*
+ * LOADIFY MARKET — GLOBAL PLATFORM PALETTE PREVIEW
+ *
+ * PREVIEW ONLY. This layer is intentionally conservative: it changes colour
+ * language without changing layout, opacity mechanics, z-index, transforms,
+ * drawer behaviour or business logic.
+ *
+ * Owner palette:
+ * Navy       #0B234A
+ * Blue       #2563EB
+ * Teal/Cyan  #0891B2
+ * Emerald    #16A34A
+ * Amber      #D97706
+ * Red        #DC2626
+ * Purple     #7C3AED
+ * Slate      #334155 / #64748B
+ * Background #F6F8FC
+ * Cards      #FFFFFF
+ * Border     #E2E8F0
+ */
+
+:root,
+:root.market-light-root,
+:root.market-public-light {
+  --background: 220 50% 98%;
+  --foreground: 215 25% 27%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 27%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 27%;
+
+  --primary: 221 83% 53%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 221 83% 46%;
+  --primary-soft: 221 83% 96%;
+
+  --secondary: 192 91% 37%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 192 91% 37%;
+  --accent-foreground: 0 0% 100%;
+
+  --muted: 220 50% 98%;
+  --muted-foreground: 215 16% 47%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
+
+  --sidebar-background: 217 74% 17%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 221 83% 53%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 221 83% 53%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 217 38% 28%;
+  --sidebar-ring: 192 91% 37%;
+
+  --primary-dark: 217 74% 17%;
+  --primary-light: 221 83% 60%;
+  --surface: 0 0% 100%;
+  --surface-raised: 220 50% 98%;
+  --gradient-hero: linear-gradient(135deg, #0B234A 0%, #2563EB 100%);
+  --gradient-accent: linear-gradient(135deg, #0891B2 0%, #2563EB 100%);
+  --shadow-card: 0 8px 24px rgba(11, 35, 74, 0.07);
+  --shadow-elevated: 0 18px 44px rgba(11, 35, 74, 0.12);
+}
+
+html,
+body,
+:root.market-light-root body:not(:has(#login-email)),
+:root.market-public-light body {
+  background: #F6F8FC !important;
+  color: #334155;
+}
+
+/* Canonical marketplace chrome. Scope this to real headers only; never use
+   substring class matching here because classes such as bg-[#0A234F]/35 are
+   transparency-bearing overlays and must retain their alpha. */
+:root.market-light-root body:not(:has(#login-email)) > div header,
+:root.market-public-light body > div header,
+header[class~="bg-[#0A234F]"],
+header[class~="bg-[#0a234f]"] {
+  background:
+    radial-gradient(circle at 22% -90%, rgba(37, 99, 235, 0.28), transparent 44%),
+    #0B234A !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 0 8px 25px rgba(11, 35, 74, 0.22) !important;
+  color: #FFFFFF !important;
+}
+
+/* Exact opaque legacy navy tokens only. Alpha variants such as /35 are
+   intentionally excluded so drawer scrims and overlays remain translucent. */
+[class~="bg-[#0A234F]"],
+[class~="bg-[#0a234f]"] {
+  background-color: #0B234A !important;
+}
+
+/* Normal actions / selected navigation. */
+.bg-primary {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+}
+.text-primary { color: #2563EB !important; }
+.border-primary { border-color: #2563EB !important; }
+.ring-primary { --tw-ring-color: rgba(37, 99, 235, 0.45) !important; }
+
+[class~="bg-primary/5"] { background-color: rgba(37, 99, 235, 0.05) !important; }
+[class~="bg-primary/10"] { background-color: rgba(37, 99, 235, 0.10) !important; }
+[class~="bg-primary/15"] { background-color: rgba(37, 99, 235, 0.15) !important; }
+[class~="bg-primary/20"] { background-color: rgba(37, 99, 235, 0.20) !important; }
+[class~="bg-primary/30"] { background-color: rgba(37, 99, 235, 0.30) !important; }
+
+/* Integrations / system health. */
+.bg-secondary,
+.bg-accent { background-color: #0891B2 !important; color: #FFFFFF !important; }
+.text-secondary,
+.text-accent { color: #0891B2 !important; }
+.border-secondary,
+.border-accent { border-color: #0891B2 !important; }
+
+/* One semantic job per status colour. */
+.bg-success { background-color: #16A34A !important; color: #FFFFFF !important; }
+.text-success { color: #16A34A !important; }
+.border-success { border-color: #16A34A !important; }
+[class~="bg-success/10"] { background-color: rgba(22, 163, 74, 0.10) !important; }
+[class~="bg-success/20"] { background-color: rgba(22, 163, 74, 0.20) !important; }
+
+.bg-warning { background-color: #D97706 !important; color: #FFFFFF !important; }
+.text-warning { color: #D97706 !important; }
+.border-warning { border-color: #D97706 !important; }
+[class~="bg-warning/10"] { background-color: rgba(217, 119, 6, 0.10) !important; }
+[class~="bg-warning/20"] { background-color: rgba(217, 119, 6, 0.20) !important; }
+
+.bg-danger,
+.bg-destructive { background-color: #DC2626 !important; color: #FFFFFF !important; }
+.text-danger,
+.text-destructive { color: #DC2626 !important; }
+.border-danger,
+.border-destructive { border-color: #DC2626 !important; }
+[class~="bg-danger/10"],
+[class~="bg-destructive/10"] { background-color: rgba(220, 38, 38, 0.10) !important; }
+[class~="bg-danger/20"],
+[class~="bg-destructive/20"] { background-color: rgba(220, 38, 38, 0.20) !important; }
+
+.bg-admin { background-color: #7C3AED !important; color: #FFFFFF !important; }
+.text-admin { color: #7C3AED !important; }
+.border-admin { border-color: #7C3AED !important; }
+[class~="bg-admin/10"] { background-color: rgba(124, 58, 237, 0.10) !important; }
+[class~="bg-admin/20"] { background-color: rgba(124, 58, 237, 0.20) !important; }
+
+/* Light marketplace/workspace surfaces. */
+.market-workspace-light,
+.market-public-light,
+.market-light-root body:not(:has(#login-email)) {
+  color: #334155 !important;
+}
+
+.market-workspace-light .bg-background,
+.market-public-light .bg-background,
+.market-light-root body:not(:has(#login-email)) .bg-background {
+  background-color: #F6F8FC !important;
+}
+
+.market-workspace-light .bg-card,
+.market-workspace-light .bg-popover,
+.market-public-light .bg-card,
+.market-public-light .bg-popover,
+.market-light-root body:not(:has(#login-email)) .bg-card,
+.market-light-root body:not(:has(#login-email)) .bg-popover {
+  background-color: #FFFFFF !important;
+}
+
+/* Legacy Tailwind opacity utilities were compiled against the old dark muted
+   token. Remap them explicitly so pale information cards do not become muddy
+   grey on the new light platform palette. */
+[class~="bg-muted/20"] { background-color: rgba(246, 248, 252, 0.20) !important; }
+[class~="bg-muted/30"] { background-color: rgba(246, 248, 252, 0.30) !important; }
+[class~="bg-muted/40"] { background-color: rgba(246, 248, 252, 0.40) !important; }
+[class~="bg-muted/50"] { background-color: rgba(246, 248, 252, 0.92) !important; }
+[class~="bg-muted/60"] { background-color: rgba(246, 248, 252, 0.96) !important; }
+
+.market-workspace-light .text-foreground,
+.market-workspace-light .text-card-foreground,
+.market-workspace-light .text-popover-foreground,
+.market-public-light .text-foreground,
+.market-light-root body:not(:has(#login-email)) :not(header):not(header *) .text-foreground {
+  color: #334155 !important;
+}
+
+.market-workspace-light .text-muted-foreground,
+.market-public-light .text-muted-foreground,
+.market-light-root body:not(:has(#login-email)) :not(header):not(header *) .text-muted-foreground {
+  color: #64748B !important;
+}
+
+.market-workspace-light .border-border,
+.market-public-light .border-border,
+.market-light-root body:not(:has(#login-email)) :not(header):not(header *) .border-border {
+  border-color: #E2E8F0 !important;
+}
+
+/* Authenticated navigation shell. */
+.market-workspace-light > aside,
+.market-workspace-light > .fixed aside,
+.market-workspace-light .fixed > aside {
+  background: #0B234A !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+.market-workspace-light aside .text-foreground {
+  color: #FFFFFF !important;
+}
+.market-workspace-light aside .text-muted-foreground {
+  color: #CBD5E1 !important;
+}
+.market-workspace-light aside .border-border {
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+.market-workspace-light aside [class~="bg-primary/10"] {
+  background-color: rgba(37, 99, 235, 0.22) !important;
+}
+
+/* Exact legacy opaque accent tokens. Avoid substring selectors so variants with
+   alpha/hover semantics are not accidentally flattened into opaque blocks. */
+[class~="text-[#D4AF37]"],
+[class~="text-[#d4af37]"],
+[class~="!text-[#8A7351]"],
+[class~="!text-[#8a7351]"] { color: #2563EB !important; }
+
+[class~="bg-[#D4AF37]"],
+[class~="bg-[#d4af37]"] { background-color: #2563EB !important; }
+[class~="border-[#D4AF37]"],
+[class~="border-[#d4af37]"] { border-color: #2563EB !important; }
+[class~="accent-[#D4AF37]"],
+[class~="accent-[#d4af37]"] { accent-color: #2563EB !important; }
+
+[class~="text-[#F5A300]"],
+[class~="text-[#f5a300]"] { color: #D97706 !important; }
+[class~="bg-[#F5A300]"],
+[class~="bg-[#f5a300]"] { background-color: #D97706 !important; }
+[class~="border-[#F5A300]"],
+[class~="border-[#f5a300]"] { border-color: #D97706 !important; }
+
+[class~="text-[#1D57D8]"],
+[class~="text-[#1d57d8]"],
+[class~="text-[#1F5BD8]"],
+[class~="text-[#1f5bd8]"] { color: #2563EB !important; }
+[class~="bg-[#1D57D8]"],
+[class~="bg-[#1d57d8]"],
+[class~="bg-[#1F5BD8]"],
+[class~="bg-[#1f5bd8]"] { background-color: #2563EB !important; }
+[class~="border-[#1D57D8]"],
+[class~="border-[#1d57d8]"],
+[class~="border-[#1F5BD8]"],
+[class~="border-[#1f5bd8]"] { border-color: #2563EB !important; }
+
+/* Ambient/focus treatment follows the new palette. */
+body::before {
+  background: radial-gradient(
+    400px circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
+    rgba(8, 145, 178, 0.07),
+    transparent 60%
+  ) !important;
+}
+
+@keyframes goldPulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.20)); }
+  50% { filter: drop-shadow(0 0 10px rgba(8, 145, 178, 0.34)); }
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #2563EB !important;
+  outline-color: #2563EB;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #64748B;
+}

@@ -16,6 +16,7 @@ import { useAuthStore } from "@/store";
 import { copyToClipboard } from "@/lib/clipboard";
 import { trackShareProduct, trackCopyLink } from "@/lib/analytics";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { isSellerLowStock, isSellerOutOfStock } from "@/lib/sellerInventory";
 
 /** Branded Loadify Market "LM" placeholder shown when a product has no image. */
 function LMPlaceholder({ size = 48 }: { size?: number }) {
@@ -63,6 +64,7 @@ interface Product {
   stockStatus: string;
   isActive: boolean;
   isApproved: boolean;
+  isUnique?: boolean | null;
   views: number;
   shareCount?: number;
   images?: string[];
@@ -80,11 +82,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 function deriveStatus(p: Product): string {
   if (!p.isActive) return "draft";
   if (!p.isApproved) return "pending_review";
-  // Service listings are reusable — skip stock checks entirely.
-  if (p.listingContext === "service") return "active";
-  const qty = p.stockQuantity ?? 0;
-  if (qty === 0) return "out_of_stock";
-  if (qty <= 5) return "low_stock";
+  if (isSellerOutOfStock(p)) return "out_of_stock";
+  if (isSellerLowStock(p)) return "low_stock";
   return "active";
 }
 
@@ -125,7 +124,7 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, shareCount, images, listingContext")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, isUnique, views, shareCount, images, listingContext")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
@@ -557,7 +556,6 @@ const SellerProducts = () => {
             </tbody>
           </table>
         </div>
-
       </div>
 
       {/* ── Delete confirm dialog ─────────────────────────────────────────── */}
