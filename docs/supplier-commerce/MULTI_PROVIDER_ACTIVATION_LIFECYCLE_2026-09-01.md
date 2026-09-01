@@ -69,7 +69,7 @@ Remains `configured` at most until authorised sandbox evidence is reviewed and t
 
 Remains blocked on an authentic supplier and canonical Supplier Foundation evidence. Synthetic fixtures are not acceptable activation evidence.
 
-### Syncee / AppScenic / SaleHoo / Spocket / AliExpress-DSers
+### AppScenic / SaleHoo / Spocket / AliExpress-DSers
 
 Remain governed by their existing external-access, contract, marketplace-resale or compliance blockers. Registry presence is not activation.
 
