@@ -173,6 +173,15 @@ header[class~="bg-[#0a234f]"] {
   background-color: #FFFFFF !important;
 }
 
+/* Legacy Tailwind opacity utilities were compiled against the old dark muted
+   token. Remap them explicitly so pale information cards do not become muddy
+   grey on the new light platform palette. */
+[class~="bg-muted/20"] { background-color: rgba(246, 248, 252, 0.20) !important; }
+[class~="bg-muted/30"] { background-color: rgba(246, 248, 252, 0.30) !important; }
+[class~="bg-muted/40"] { background-color: rgba(246, 248, 252, 0.40) !important; }
+[class~="bg-muted/50"] { background-color: rgba(246, 248, 252, 0.92) !important; }
+[class~="bg-muted/60"] { background-color: rgba(246, 248, 252, 0.96) !important; }
+
 .market-workspace-light .text-foreground,
 .market-workspace-light .text-card-foreground,
 .market-workspace-light .text-popover-foreground,
