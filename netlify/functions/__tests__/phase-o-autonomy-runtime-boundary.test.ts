@@ -27,10 +27,12 @@ describe('Phase O autonomous runtime boundary', () => {
 
   it('does not accept caller self-attestation as Shadow review evidence', () => {
     const runtime = repo('netlify/functions/admin-supplier-pilot-runtime.ts');
+    const readiness = repo('netlify/functions/_shared/phaseOPilotAutonomyReadiness.ts');
     expect(runtime).not.toContain('shadowReviewEvidenceRef?:');
     expect(runtime).not.toContain('shadowReview?:');
     expect(runtime).toContain('shadowReviewPersistenceBound: false');
-    expect(runtime).toContain('shadow_mode_review_not_demonstrated');
+    expect(runtime).toContain('shadowReview: null');
+    expect(readiness).toContain('shadow_mode_review_not_demonstrated');
   });
 
   it('keeps the runtime preflight free of direct provider financial and notification side effects', () => {
