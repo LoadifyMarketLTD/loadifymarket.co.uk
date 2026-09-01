@@ -17,7 +17,7 @@ describe('Phase O autonomous runtime boundary', () => {
     expect(runtime).toContain("server_admin_supplier_pilot_status_v1");
     expect(runtime).toContain("server_supplier_pilot_activation_readiness_v1");
     expect(runtime).toContain('createProviderExecutionCapabilityRegistry()');
-    expect(runtime).toContain("capability: 'order_submission'");
+    expect(runtime).toContain('capability: PHASE_O_SHADOW_REVIEW_CAPABILITY');
     expect(runtime).toContain('evaluatePhaseOPilotAutonomyReadiness({');
     expect(runtime).toContain('shadowReview: null');
     expect(runtime).toContain("reason: 'autonomous_pilot_readiness_failed'");
@@ -25,14 +25,25 @@ describe('Phase O autonomous runtime boundary', () => {
     expect(runtime).toContain('return canonicalPilotHandler(event, context)');
   });
 
-  it('does not accept caller self-attestation as Shadow review evidence', () => {
+  it('does not accept caller self-attestation or unrelated Shadow review evidence', () => {
     const runtime = repo('netlify/functions/admin-supplier-pilot-runtime.ts');
     const readiness = repo('netlify/functions/_shared/phaseOPilotAutonomyReadiness.ts');
     expect(runtime).not.toContain('shadowReviewEvidenceRef?:');
     expect(runtime).not.toContain('shadowReview?:');
     expect(runtime).toContain('shadowReviewPersistenceBound: false');
+    expect(runtime).toContain('shadowReviewRequiredBinding');
+    expect(runtime).toContain('pilotId,');
+    expect(runtime).toContain('providerKey,');
+    expect(runtime).toContain('capability: PHASE_O_SHADOW_REVIEW_CAPABILITY');
+    expect(runtime).toContain('source: PHASE_O_SHADOW_REVIEW_SOURCE');
+    expect(runtime).toContain('persistenceBound: true');
     expect(runtime).toContain('shadowReview: null');
     expect(readiness).toContain('shadow_mode_review_not_demonstrated');
+    expect(readiness).toContain('shadow_mode_review_not_persistence_bound');
+    expect(readiness).toContain('shadow_mode_review_source_untrusted');
+    expect(readiness).toContain('shadow_mode_review_pilot_mismatch');
+    expect(readiness).toContain('shadow_mode_review_provider_mismatch');
+    expect(readiness).toContain('shadow_mode_review_capability_mismatch');
   });
 
   it('keeps the runtime preflight free of direct provider financial and notification side effects', () => {
