@@ -17,6 +17,17 @@ export type SupplierProviderReadinessState =
   | 'contract_blocked'
   | 'compliance_blocked';
 
+export type SupplierProviderBlockingDependency =
+  | 'provider_transactional_evidence'
+  | 'sandbox_credentials'
+  | 'controlled_sandbox_identifiers'
+  | 'authentic_supplier'
+  | 'partner_retailer_api_access'
+  | 'directory_api_approval'
+  | 'marketplace_resale_permission'
+  | 'developer_api_approval'
+  | 'uk_import_compliance_controls';
+
 export interface SupplierProviderReadinessV1 {
   interfaceVersion: typeof SUPPLIER_PROVIDER_READINESS_INTERFACE_VERSION;
   provider: SupplierProviderKey;
@@ -27,6 +38,7 @@ export interface SupplierProviderReadinessV1 {
   hostedActivation: 'off';
   verifiedCapabilities: readonly SupplierAdapterCapability[];
   potentialCapabilities: readonly SupplierAdapterCapability[];
+  blockingDependencies: readonly SupplierProviderBlockingDependency[];
   providerActivationBlocked: boolean;
   externalDependency: boolean;
   platformEngineeringBlocked: false;
@@ -37,12 +49,13 @@ export interface SupplierProviderReadinessV1 {
 
 function readinessFor(definition: SupplierProviderDefinition): Pick<
   SupplierProviderReadinessV1,
-  'readinessState' | 'providerActivationBlocked' | 'externalDependency' | 'nextAction'
+  'readinessState' | 'blockingDependencies' | 'providerActivationBlocked' | 'externalDependency' | 'nextAction'
 > {
   switch (definition.key) {
     case 'avasam':
       return {
         readinessState: 'read_only_verified',
+        blockingDependencies: ['provider_transactional_evidence'],
         providerActivationBlocked: true,
         externalDependency: true,
         nextAction: 'Keep verified read-only capabilities available while awaiting authoritative transactional Gate B evidence; do not block unrelated platform engineering.',
@@ -50,6 +63,7 @@ function readinessFor(definition: SupplierProviderDefinition): Pick<
     case 'bigbuy':
       return {
         readinessState: 'sandbox_evidence_required',
+        blockingDependencies: ['sandbox_credentials', 'controlled_sandbox_identifiers'],
         providerActivationBlocked: true,
         externalDependency: true,
         nextAction: 'Configure an authorised BigBuy sandbox API key plus controlled taxonomy/product/variation identifiers, then run the admin-only sandbox verification gate.',
@@ -57,38 +71,50 @@ function readinessFor(definition: SupplierProviderDefinition): Pick<
     case 'direct_supplier':
       return {
         readinessState: 'authentic_supplier_required',
+        blockingDependencies: ['authentic_supplier'],
         providerActivationBlocked: true,
         externalDependency: true,
         nextAction: 'Onboard and approve one authentic UK/EU supplier in Supplier Foundation, then execute the existing Phase E identity capture and Phase F import-review workflow under admin control.',
       };
     case 'syncee':
+      return {
+        readinessState: 'partner_access_required',
+        blockingDependencies: ['partner_retailer_api_access'],
+        providerActivationBlocked: true,
+        externalDependency: true,
+        nextAction: 'Obtain explicit retailer/custom-platform partner API access from Syncee. The documented custom-platform supplier webhook is not retailer catalog access; keep the provider inactive until contract and runtime evidence exist.',
+      };
     case 'appscenic':
       return {
         readinessState: 'partner_access_required',
+        blockingDependencies: ['partner_retailer_api_access'],
         providerActivationBlocked: true,
         externalDependency: true,
-        nextAction: `Obtain explicit retailer/custom-platform partner API access from ${definition.label}; keep the provider inactive until contract and runtime evidence exist.`,
+        nextAction: 'Obtain explicit AppScenic retailer-side Public API access and compatible commercial terms. Supplier Public API availability is not retailer API evidence; keep the provider inactive until runtime evidence exists.',
       };
     case 'salehoo':
       return {
         readinessState: 'directory_api_approval_required',
+        blockingDependencies: ['directory_api_approval'],
         providerActivationBlocked: true,
         externalDependency: true,
-        nextAction: 'Use SaleHoo primarily for supplier discovery/due diligence unless Developer API access is explicitly approved; do not treat directory access as commerce capability.',
+        nextAction: 'Use SaleHoo primarily for supplier discovery/due diligence unless Developer API access is explicitly approved; do not treat directory or API access as commerce execution capability.',
       };
     case 'spocket':
       return {
         readinessState: 'contract_blocked',
+        blockingDependencies: ['marketplace_resale_permission'],
         providerActivationBlocked: true,
         externalDependency: true,
-        nextAction: 'Do not integrate until written marketplace-resale permission and compatible commercial terms are confirmed.',
+        nextAction: 'Do not integrate Spocket into the Loadify Market marketplace model until written marketplace-resale permission and compatible commercial terms are confirmed.',
       };
     case 'aliexpress_dsers':
       return {
         readinessState: 'compliance_blocked',
+        blockingDependencies: ['developer_api_approval', 'uk_import_compliance_controls'],
         providerActivationBlocked: true,
         externalDependency: true,
-        nextAction: 'Defer until UK import VAT, customs, product-safety, landed-cost and returns controls are complete and reviewed.',
+        nextAction: 'Obtain DSers Developer/Open API approval, then keep the provider inactive until UK import VAT, customs, product-safety, landed-cost and returns controls are complete and reviewed.',
       };
   }
 }
@@ -110,6 +136,7 @@ export function getSupplierProviderReadiness(
     hostedActivation: definition.hostedActivation,
     verifiedCapabilities: definition.verifiedCapabilities,
     potentialCapabilities: definition.potentialCapabilities,
+    blockingDependencies: readiness.blockingDependencies,
     providerActivationBlocked: readiness.providerActivationBlocked,
     externalDependency: readiness.externalDependency,
     platformEngineeringBlocked: false,
