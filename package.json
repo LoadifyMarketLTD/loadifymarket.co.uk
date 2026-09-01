@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vitest run netlify/functions/__tests__/phase-o-autonomy-readiness.test.ts netlify/functions/__tests__/phase-o-autonomy-runtime-boundary.test.ts netlify/functions/__tests__/phase-o-shadow-persistence.test.ts && eslint netlify/functions/_shared/phaseOPilotAutonomyReadiness.ts netlify/functions/admin-supplier-pilot-runtime.ts netlify/functions/__tests__/phase-o-autonomy-readiness.test.ts netlify/functions/__tests__/phase-o-autonomy-runtime-boundary.test.ts netlify/functions/__tests__/phase-o-shadow-persistence.test.ts && npm run verify:migrations && tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -68,7 +68,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
-    "input-otp": "^1.4.2",
+    "input-otp": "^1.4.1",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.556.0",
     "next-themes": "^0.4.6",
