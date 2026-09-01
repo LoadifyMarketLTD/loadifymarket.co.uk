@@ -18,10 +18,14 @@ describe('Phase O durable Shadow persistence', () => {
     expect(migration).toContain('UNIQUE(pilot_id,order_id,policy_version)');
   });
 
-  it('records only real pilot-scoped orders and derives the system action server-side', () => {
+  it('records only contemporaneous real pilot-scoped orders and derives the system action server-side', () => {
     expect(migration).toContain('Shadow observation requires an existing order');
-    expect(migration).toContain('Shadow observation order buyer is outside the pilot cohort');
-    expect(migration).toContain('Shadow observation order product is outside the pilot offer set');
+    expect(migration).toContain('Shadow observation order predates pilot preparation');
+    expect(migration).toContain('c.added_at<=v_order.created_at');
+    expect(migration).toContain('po.approved_at<=v_order.created_at');
+    expect(migration).toContain('so.approved_at<=v_order.created_at');
+    expect(migration).toContain('Shadow observation order buyer is outside the contemporaneous pilot cohort');
+    expect(migration).toContain('Shadow observation order product is outside the contemporaneous pilot offer set');
     expect(migration).toContain('Shadow observation order value is outside the pilot cap');
     expect(migration).toContain('server_supplier_pilot_activation_readiness_v1(v_pilot.id)');
     expect(migration).toContain(
