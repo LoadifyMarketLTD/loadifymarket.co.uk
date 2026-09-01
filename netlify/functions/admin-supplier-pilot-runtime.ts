@@ -56,7 +56,11 @@ interface DurableShadowReviewShape {
   operatorRelative?: boolean;
   passed?: boolean;
   passPolicyConfigured?: boolean;
+  promotionPolicyId?: string | null;
+  promotionPolicyVersion?: number | null;
+  promotionPolicyApprovedAt?: string | null;
   reason?: string;
+  criteria?: unknown;
   metrics?: unknown;
 }
 
@@ -105,6 +109,12 @@ function toDurableShadowEvidence(
     sampleSize: review.sampleSize as number,
     resolvedComparisons: review.resolvedComparisons as number,
     operatorRelative: true,
+    promotionPolicyConfigured: review.passPolicyConfigured === true,
+    promotionPolicyId: text(review.promotionPolicyId) || null,
+    promotionPolicyVersion: Number.isSafeInteger(review.promotionPolicyVersion)
+      ? review.promotionPolicyVersion as number
+      : null,
+    promotionPolicyApprovedAt: text(review.promotionPolicyApprovedAt) || null,
     passed: review.passed === true,
   };
 }
@@ -192,6 +202,7 @@ export const handler: Handler = async (event, context) => {
     source: PHASE_O_SHADOW_REVIEW_SOURCE,
     policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
     persistenceBound: true,
+    promotionPolicyRequired: true,
   });
 
   if (body.action === 'shadow_observe') {
@@ -257,6 +268,7 @@ export const handler: Handler = async (event, context) => {
       canonicalReadiness,
       shadowReview: rawShadowReview ?? null,
       shadowReviewPersistenceBound: shadowReview?.persistenceBound === true,
+      shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true,
       shadowReviewReadAvailable: !shadowReviewError,
       shadowReviewRequiredBinding,
       autonomyReadiness,
@@ -301,6 +313,7 @@ export const handler: Handler = async (event, context) => {
       shadowReview: rawShadowReview ?? null,
       autonomyReadiness,
       shadowReviewPersistenceBound: shadowReview?.persistenceBound === true,
+      shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true,
       shadowReviewReadAvailable: !shadowReviewError,
       shadowReviewRequiredBinding,
       activationPerformed: false,
@@ -320,6 +333,7 @@ export const handler: Handler = async (event, context) => {
       shadowReview: rawShadowReview ?? null,
       autonomyReadiness,
       shadowReviewPersistenceBound: shadowReview?.persistenceBound === true,
+      shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true,
       shadowReviewReadAvailable: !shadowReviewError,
       shadowReviewRequiredBinding,
       activationPerformed: false,
