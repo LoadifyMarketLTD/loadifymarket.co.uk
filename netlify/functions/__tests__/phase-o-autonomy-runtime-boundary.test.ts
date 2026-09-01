@@ -33,8 +33,8 @@ describe('Phase O autonomous runtime boundary', () => {
     expect(runtime).not.toContain('shadowReviewEvidenceRef?:');
     expect(runtime).not.toContain('shadowReview?:');
     expect(runtime).not.toContain('systemAction?:');
-    expect(runtime).not.toContain('promotionPolicyId?:');
-    expect(runtime).not.toContain('promotionPolicyVersion?:');
+    expect(runtime).not.toContain('body.promotionPolicy');
+    expect(runtime).not.toContain('body.shadowReview');
     expect(runtime).toContain('toDurableShadowEvidence');
     expect(runtime).toContain('shadowReviewRequiredBinding');
     expect(runtime).toContain('pilotId,');
