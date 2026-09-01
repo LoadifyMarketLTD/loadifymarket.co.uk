@@ -6,15 +6,27 @@ import { createProviderExecutionCapabilityRegistry } from './_shared/providerExe
 import { jsonResponse } from './_shared/http';
 import {
   PHASE_O_SHADOW_REVIEW_CAPABILITY,
+  PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
   PHASE_O_SHADOW_REVIEW_SOURCE,
   evaluatePhaseOPilotAutonomyReadiness,
+  type PhaseOShadowReviewEvidence,
 } from './_shared/phaseOPilotAutonomyReadiness';
 
 const METHODS = 'POST, OPTIONS';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type ShadowOperatorAction = 'submit_order' | 'no_action';
+type ShadowOperatorStatus = 'resolved' | 'unresolved';
 
 interface RuntimeBody {
   action?: string;
   pilotId?: string;
+  orderId?: string;
+  operatorOutcome?: {
+    action?: string;
+    status?: string;
+    rationaleCode?: string | null;
+  } | null;
 }
 
 interface PilotStatusShape {
@@ -29,8 +41,82 @@ interface CanonicalReadinessShape {
   failures?: unknown[];
 }
 
+interface DurableShadowReviewShape {
+  exists?: boolean;
+  pilotId?: string;
+  providerKey?: string;
+  capability?: string;
+  source?: string;
+  persistenceBound?: boolean;
+  evidenceRef?: string | null;
+  policyVersion?: string;
+  reviewedAt?: string | null;
+  sampleSize?: number;
+  resolvedComparisons?: number;
+  operatorRelative?: boolean;
+  passed?: boolean;
+  passPolicyConfigured?: boolean;
+  promotionPolicyId?: string | null;
+  promotionPolicyVersion?: number | null;
+  promotionPolicyApprovedAt?: string | null;
+  reason?: string;
+  criteria?: unknown;
+  metrics?: unknown;
+}
+
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function isUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
+
+function isShadowOperatorAction(value: unknown): value is ShadowOperatorAction {
+  return value === 'submit_order' || value === 'no_action';
+}
+
+function isShadowOperatorStatus(value: unknown): value is ShadowOperatorStatus {
+  return value === 'resolved' || value === 'unresolved';
+}
+
+function toDurableShadowEvidence(
+  raw: unknown,
+  expected: { pilotId: string; providerKey: string },
+): PhaseOShadowReviewEvidence | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const review = raw as DurableShadowReviewShape;
+  if (review.exists !== true) return null;
+  if (text(review.pilotId) !== expected.pilotId) return null;
+  if (text(review.providerKey).toLowerCase() !== expected.providerKey) return null;
+  if (text(review.capability) !== PHASE_O_SHADOW_REVIEW_CAPABILITY) return null;
+  if (text(review.source) !== PHASE_O_SHADOW_REVIEW_SOURCE) return null;
+  if (text(review.policyVersion) !== PHASE_O_SHADOW_REVIEW_POLICY_VERSION) return null;
+  if (review.persistenceBound !== true || review.operatorRelative !== true) return null;
+  if (!text(review.evidenceRef) || !text(review.reviewedAt)) return null;
+  if (!Number.isSafeInteger(review.sampleSize) || (review.sampleSize ?? 0) <= 0) return null;
+  if (!Number.isSafeInteger(review.resolvedComparisons) || (review.resolvedComparisons ?? 0) < 0) return null;
+
+  return {
+    pilotId: expected.pilotId,
+    providerKey: expected.providerKey,
+    capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
+    source: PHASE_O_SHADOW_REVIEW_SOURCE,
+    persistenceBound: true,
+    evidenceRef: text(review.evidenceRef),
+    policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
+    reviewedAt: text(review.reviewedAt),
+    sampleSize: review.sampleSize as number,
+    resolvedComparisons: review.resolvedComparisons as number,
+    operatorRelative: true,
+    promotionPolicyConfigured: review.passPolicyConfigured === true,
+    promotionPolicyId: text(review.promotionPolicyId) || null,
+    promotionPolicyVersion: Number.isSafeInteger(review.promotionPolicyVersion)
+      ? review.promotionPolicyVersion as number
+      : null,
+    promotionPolicyApprovedAt: text(review.promotionPolicyApprovedAt) || null,
+    passed: review.passed === true,
+  };
 }
 
 /**
@@ -52,12 +138,16 @@ export const handler: Handler = async (event, context) => {
     return canonicalPilotHandler(event, context);
   }
 
-  if (body.action !== 'activate' && body.action !== 'autonomous_readiness') {
+  if (
+    body.action !== 'activate'
+    && body.action !== 'autonomous_readiness'
+    && body.action !== 'shadow_observe'
+  ) {
     return canonicalPilotHandler(event, context);
   }
 
   const pilotId = text(body.pilotId);
-  if (!pilotId) return jsonResponse(400, { error: 'pilotId is required' }, METHODS);
+  if (!pilotId || !isUuid(pilotId)) return jsonResponse(400, { error: 'Valid pilotId is required' }, METHODS);
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -100,14 +190,105 @@ export const handler: Handler = async (event, context) => {
     provider: providerKey,
     capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
   });
+  const providerOrderContractReady = providerOrderExecution.found
+    && providerOrderExecution.availability === 'available'
+    && providerOrderExecution.externalMutationAllowed
+    && providerOrderExecution.piiDisclosureAllowed;
 
   const shadowReviewRequiredBinding = Object.freeze({
     pilotId,
     providerKey,
     capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
     source: PHASE_O_SHADOW_REVIEW_SOURCE,
+    policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
     persistenceBound: true,
+    promotionPolicyRequired: true,
   });
+
+  if (body.action === 'shadow_observe') {
+    const orderId = text(body.orderId);
+    const operatorAction = body.operatorOutcome?.action;
+    const operatorStatus = body.operatorOutcome?.status;
+    if (!orderId || !isUuid(orderId)) return jsonResponse(400, { error: 'Valid orderId is required' }, METHODS);
+    if (!isShadowOperatorAction(operatorAction) || !isShadowOperatorStatus(operatorStatus)) {
+      return jsonResponse(400, { error: 'Valid operatorOutcome is required' }, METHODS);
+    }
+
+    const { data: observationId, error: observationError } = await admin.rpc(
+      'server_record_supplier_pilot_shadow_observation_v1',
+      {
+        p_actor_id: auth.actor.id,
+        p_pilot_id: pilotId,
+        p_order_id: orderId,
+        p_operator_action: operatorAction,
+        p_operator_status: operatorStatus,
+        p_operator_rationale_code: body.operatorOutcome?.rationaleCode ?? null,
+        p_provider_contract_ready: providerOrderContractReady,
+        p_provider_contract_reason: providerOrderExecution.reason,
+      },
+    );
+    if (observationError) {
+      return jsonResponse(409, {
+        error: 'Unable to record durable Shadow observation',
+        reason: 'shadow_observation_rejected',
+        activationPerformed: false,
+        providerMutationPerformed: false,
+        customerPiiDisclosurePerformed: false,
+        paymentMutationPerformed: false,
+      }, METHODS);
+    }
+
+    const { data: rawShadowReview, error: shadowReviewError } = await admin.rpc(
+      'server_get_supplier_pilot_shadow_review_v1',
+      { p_actor_id: auth.actor.id, p_pilot_id: pilotId },
+    );
+    const shadowReview = shadowReviewError
+      ? null
+      : toDurableShadowEvidence(rawShadowReview, { pilotId, providerKey });
+
+    const autonomyReadiness = evaluatePhaseOPilotAutonomyReadiness({
+      pilotId,
+      providerKey,
+      canonicalReady: canonicalReadiness?.ready === true,
+      providerOrderExecution: {
+        registered: providerOrderExecution.found,
+        availability: providerOrderExecution.availability,
+        reason: providerOrderExecution.reason,
+        externalMutationAllowed: providerOrderExecution.externalMutationAllowed,
+        piiDisclosureAllowed: providerOrderExecution.piiDisclosureAllowed,
+      },
+      shadowReview,
+    });
+
+    return jsonResponse(200, {
+      ok: true,
+      pilotId,
+      providerKey,
+      observationId,
+      canonicalReadiness,
+      shadowReview: rawShadowReview ?? null,
+      shadowReviewPersistenceBound: shadowReview?.persistenceBound === true,
+      shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true,
+      shadowReviewReadAvailable: !shadowReviewError,
+      shadowReviewRequiredBinding,
+      autonomyReadiness,
+      activationPerformed: false,
+      providerMutationPerformed: false,
+      customerPiiDisclosurePerformed: false,
+      paymentMutationPerformed: false,
+    }, METHODS);
+  }
+
+  // Deploy-before-migration remains fail-closed: if the durable reader is not
+  // available yet, activation is blocked exactly as before instead of returning
+  // a false readiness signal.
+  const { data: rawShadowReview, error: shadowReviewError } = await admin.rpc(
+    'server_get_supplier_pilot_shadow_review_v1',
+    { p_actor_id: auth.actor.id, p_pilot_id: pilotId },
+  );
+  const shadowReview = shadowReviewError
+    ? null
+    : toDurableShadowEvidence(rawShadowReview, { pilotId, providerKey });
 
   const autonomyReadiness = evaluatePhaseOPilotAutonomyReadiness({
     pilotId,
@@ -120,11 +301,7 @@ export const handler: Handler = async (event, context) => {
       externalMutationAllowed: providerOrderExecution.externalMutationAllowed,
       piiDisclosureAllowed: providerOrderExecution.piiDisclosureAllowed,
     },
-    // Lane H remains side-effect free today. No durable server-derived reader
-    // exists yet for the exact pilot + provider + order_submission tuple, so
-    // activation stays fail-closed rather than accepting caller self-attestation
-    // or unrelated Shadow Mode evidence such as shipment-stall evaluation.
-    shadowReview: null,
+    shadowReview,
   });
 
   if (body.action === 'autonomous_readiness') {
@@ -133,8 +310,11 @@ export const handler: Handler = async (event, context) => {
       pilotId,
       providerKey,
       canonicalReadiness,
+      shadowReview: rawShadowReview ?? null,
       autonomyReadiness,
-      shadowReviewPersistenceBound: false,
+      shadowReviewPersistenceBound: shadowReview?.persistenceBound === true,
+      shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true,
+      shadowReviewReadAvailable: !shadowReviewError,
       shadowReviewRequiredBinding,
       activationPerformed: false,
       providerMutationPerformed: false,
@@ -150,8 +330,11 @@ export const handler: Handler = async (event, context) => {
       pilotId,
       providerKey,
       canonicalReadiness,
+      shadowReview: rawShadowReview ?? null,
       autonomyReadiness,
-      shadowReviewPersistenceBound: false,
+      shadowReviewPersistenceBound: shadowReview?.persistenceBound === true,
+      shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true,
+      shadowReviewReadAvailable: !shadowReviewError,
       shadowReviewRequiredBinding,
       activationPerformed: false,
       providerMutationPerformed: false,

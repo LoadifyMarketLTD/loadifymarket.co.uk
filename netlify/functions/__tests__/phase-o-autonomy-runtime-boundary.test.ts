@@ -11,39 +11,59 @@ describe('Phase O autonomous runtime boundary', () => {
     expect(wrapper).toContain('withLambda(handler)');
   });
 
-  it('intercepts activate and exposes autonomous_readiness before canonical mutation', () => {
+  it('intercepts activate, autonomous_readiness and shadow_observe before canonical mutation', () => {
     const runtime = repo('netlify/functions/admin-supplier-pilot-runtime.ts');
-    expect(runtime).toContain("body.action !== 'activate' && body.action !== 'autonomous_readiness'");
+    expect(runtime).toContain("body.action !== 'activate'");
+    expect(runtime).toContain("body.action !== 'autonomous_readiness'");
+    expect(runtime).toContain("body.action !== 'shadow_observe'");
     expect(runtime).toContain("server_admin_supplier_pilot_status_v1");
     expect(runtime).toContain("server_supplier_pilot_activation_readiness_v1");
     expect(runtime).toContain('createProviderExecutionCapabilityRegistry()');
     expect(runtime).toContain('capability: PHASE_O_SHADOW_REVIEW_CAPABILITY');
+    expect(runtime).toContain("server_get_supplier_pilot_shadow_review_v1");
     expect(runtime).toContain('evaluatePhaseOPilotAutonomyReadiness({');
-    expect(runtime).toContain('shadowReview: null');
     expect(runtime).toContain("reason: 'autonomous_pilot_readiness_failed'");
     expect(runtime).toContain('if (!autonomyReadiness.ready)');
     expect(runtime).toContain('return canonicalPilotHandler(event, context)');
   });
 
-  it('does not accept caller self-attestation or unrelated Shadow review evidence', () => {
+  it('accepts no caller Shadow system action or policy override and binds only durable server review evidence', () => {
     const runtime = repo('netlify/functions/admin-supplier-pilot-runtime.ts');
     const readiness = repo('netlify/functions/_shared/phaseOPilotAutonomyReadiness.ts');
     expect(runtime).not.toContain('shadowReviewEvidenceRef?:');
     expect(runtime).not.toContain('shadowReview?:');
-    expect(runtime).toContain('shadowReviewPersistenceBound: false');
+    expect(runtime).not.toContain('systemAction?:');
+    expect(runtime).not.toContain('body.promotionPolicy');
+    expect(runtime).not.toContain('body.shadowReview');
+    expect(runtime).toContain('toDurableShadowEvidence');
     expect(runtime).toContain('shadowReviewRequiredBinding');
     expect(runtime).toContain('pilotId,');
     expect(runtime).toContain('providerKey,');
     expect(runtime).toContain('capability: PHASE_O_SHADOW_REVIEW_CAPABILITY');
     expect(runtime).toContain('source: PHASE_O_SHADOW_REVIEW_SOURCE');
+    expect(runtime).toContain('policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION');
     expect(runtime).toContain('persistenceBound: true');
-    expect(runtime).toContain('shadowReview: null');
+    expect(runtime).toContain('promotionPolicyRequired: true');
+    expect(runtime).toContain('promotionPolicyConfigured: review.passPolicyConfigured === true');
+    expect(runtime).toContain('shadowPromotionPolicyConfigured');
     expect(readiness).toContain('shadow_mode_review_not_demonstrated');
     expect(readiness).toContain('shadow_mode_review_not_persistence_bound');
     expect(readiness).toContain('shadow_mode_review_source_untrusted');
     expect(readiness).toContain('shadow_mode_review_pilot_mismatch');
     expect(readiness).toContain('shadow_mode_review_provider_mismatch');
     expect(readiness).toContain('shadow_mode_review_capability_mismatch');
+    expect(readiness).toContain('shadow_mode_review_policy_mismatch');
+    expect(readiness).toContain('shadow_mode_promotion_policy_not_configured');
+    expect(readiness).toContain('shadow_mode_promotion_policy_invalid');
+  });
+
+  it('keeps deploy-before-migration fail-closed when the governed durable reader is unavailable or old', () => {
+    const runtime = repo('netlify/functions/admin-supplier-pilot-runtime.ts');
+    expect(runtime).toContain('shadowReviewError');
+    expect(runtime).toContain('? null');
+    expect(runtime).toContain('shadowReviewReadAvailable: !shadowReviewError');
+    expect(runtime).toContain('shadowReviewPersistenceBound: shadowReview?.persistenceBound === true');
+    expect(runtime).toContain('shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true');
   });
 
   it('keeps the runtime preflight free of direct provider financial and notification side effects', () => {
