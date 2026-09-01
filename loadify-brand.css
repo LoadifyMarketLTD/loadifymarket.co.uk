@@ -1,0 +1,18 @@
+:root {
+  --loadify-gold: #E5A502;
+  --loadify-black: #000000;
+  --loadify-white: #FFFFFF;
+  --loadify-dark: #111111;
+}
+
+/* Recommended */
+.loadify-logo {
+  display: block;
+  width: auto;
+  height: 48px;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .loadify-logo { height: 40px; }
+}
