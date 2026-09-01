@@ -44,14 +44,15 @@ describe('BigBuyClient read-only security boundary', () => {
     fetchMock.mockRestore();
   });
 
-  it('uses the production host only when production is explicitly selected', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse([]));
+  it('rejects production transport before network access while BigBuy remains unverified', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
     const client = new BigBuyClient({ environment: 'production', apiKey: 'production-key' });
 
     const result = await client.request<unknown[]>(CONTEXT, '/rest/catalog/taxonomies.json');
 
-    expect(result.ok).toBe(true);
-    expect(String(fetchMock.mock.calls[0][0])).toBe('https://api.bigbuy.eu/rest/catalog/taxonomies.json');
+    expect(result.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('CAPABILITY_UNAVAILABLE');
+    expect(fetchMock).not.toHaveBeenCalled();
     fetchMock.mockRestore();
   });
 
