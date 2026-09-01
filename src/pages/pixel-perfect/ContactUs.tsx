@@ -215,9 +215,9 @@ const ContactUs = () => {
                 </div>
               </div>
 
-              <div className="mt-6 p-5 rounded-xl bg-muted/50 border border-border">
-                <p className="text-sm font-medium text-foreground mb-1">Business Enquiries</p>
-                <p className="text-sm text-muted-foreground">
+              <div className="mt-6 rounded-xl border border-[#E2E8F0] border-l-4 border-l-[#2563EB] bg-white p-5 shadow-[0_8px_24px_rgba(11,35,74,0.06)]">
+                <p className="mb-1 text-sm font-semibold text-[#0B234A]">Business Enquiries</p>
+                <p className="text-sm leading-relaxed text-[#64748B]">
                   For partnership, wholesale supply or volume trading enquiries, please email us directly with "Business Enquiry" in the subject line.
                 </p>
               </div>
