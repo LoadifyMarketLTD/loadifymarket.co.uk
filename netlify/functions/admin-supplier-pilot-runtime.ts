@@ -6,6 +6,7 @@ import { createProviderExecutionCapabilityRegistry } from './_shared/providerExe
 import { jsonResponse } from './_shared/http';
 import {
   PHASE_O_SHADOW_REVIEW_CAPABILITY,
+  PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
   PHASE_O_SHADOW_REVIEW_SOURCE,
   evaluatePhaseOPilotAutonomyReadiness,
   type PhaseOShadowReviewEvidence,
@@ -86,8 +87,9 @@ function toDurableShadowEvidence(
   if (text(review.providerKey).toLowerCase() !== expected.providerKey) return null;
   if (text(review.capability) !== PHASE_O_SHADOW_REVIEW_CAPABILITY) return null;
   if (text(review.source) !== PHASE_O_SHADOW_REVIEW_SOURCE) return null;
+  if (text(review.policyVersion) !== PHASE_O_SHADOW_REVIEW_POLICY_VERSION) return null;
   if (review.persistenceBound !== true || review.operatorRelative !== true) return null;
-  if (!text(review.evidenceRef) || !text(review.policyVersion) || !text(review.reviewedAt)) return null;
+  if (!text(review.evidenceRef) || !text(review.reviewedAt)) return null;
   if (!Number.isSafeInteger(review.sampleSize) || (review.sampleSize ?? 0) <= 0) return null;
   if (!Number.isSafeInteger(review.resolvedComparisons) || (review.resolvedComparisons ?? 0) < 0) return null;
 
@@ -98,7 +100,7 @@ function toDurableShadowEvidence(
     source: PHASE_O_SHADOW_REVIEW_SOURCE,
     persistenceBound: true,
     evidenceRef: text(review.evidenceRef),
-    policyVersion: text(review.policyVersion),
+    policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
     reviewedAt: text(review.reviewedAt),
     sampleSize: review.sampleSize as number,
     resolvedComparisons: review.resolvedComparisons as number,
@@ -188,6 +190,7 @@ export const handler: Handler = async (event, context) => {
     providerKey,
     capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
     source: PHASE_O_SHADOW_REVIEW_SOURCE,
+    policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
     persistenceBound: true,
   });
 
