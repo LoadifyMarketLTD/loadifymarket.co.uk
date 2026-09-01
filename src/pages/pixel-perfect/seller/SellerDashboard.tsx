@@ -10,6 +10,11 @@ import { useAuthStore } from "@/store";
 import type { User } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { OnboardingChecklist } from "@/components/OnboardingChecklist";
+import {
+  buildSellerProductMetrics,
+  RECOGNISED_SELLER_SALE_STATUSES,
+  type SellerProductMetric,
+} from "@/lib/sellerDashboardMetrics";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
@@ -34,12 +39,11 @@ interface RecentOrder {
   createdAt: string;
 }
 
-interface TopProduct {
-  id: string;
-  title: string;
-  views: number;
-  addToCartCount: number;
-  revenue: number;
+interface OrderItemMetricRow {
+  orderId: string;
+  productId: string;
+  quantity: number | string;
+  subtotal: number | string;
 }
 
 const statusColors: Record<string, string> = {
@@ -47,7 +51,7 @@ const statusColors: Record<string, string> = {
   packed: "bg-primary/10 text-primary border-primary/40",
   shipped: "bg-secondary/10 text-secondary border-secondary/20",
   delivered: "bg-success/10 text-success border-success/40",
-  cancelled: "bg-danger/100/10 text-danger border-danger/30",
+  cancelled: "bg-danger/10 text-danger border-danger/30",
   refunded: "bg-muted text-muted-foreground border-border",
 };
 
@@ -65,7 +69,8 @@ const SellerDashboard = () => {
   const { user } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
-  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [topProducts, setTopProducts] = useState<SellerProductMetric[]>([]);
+  const [productMetricsAvailable, setProductMetricsAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState<{ availableAmount: number; totalEarned: number } | null>(null);
   const [payoutLoading, setPayoutLoading] = useState(false);
@@ -117,9 +122,8 @@ const SellerDashboard = () => {
         }>;
 
         const activeOrders = orders.filter((o) => ["paid", "packed", "shipped"].includes(o.status)).length;
-        const PAID_STATUSES = ["paid", "packed", "shipped", "delivered", "completed"];
         const totalRevenue = orders
-          .filter((o) => PAID_STATUSES.includes(o.status))
+          .filter((o) => RECOGNISED_SELLER_SALE_STATUSES.has(o.status))
           .reduce((sum, o) => sum + (o.total || 0), 0);
         const productsListed = products.filter((p) => p.isActive).length;
         const lowStockItems = products.filter((p) =>
@@ -177,18 +181,52 @@ const SellerDashboard = () => {
           }))
         );
 
-        const sorted = [...products]
-          .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
-          .slice(0, 4);
-        setTopProducts(
-          sorted.map((p) => ({
-            id: p.id,
-            title: p.title,
-            views: p.views ?? 0,
-            addToCartCount: p.addToCartCount ?? 0,
-            revenue: 0,
-          }))
-        );
+        // Product commercial metrics must come from canonical order_items, not
+        // from product engagement counters. Fetch only recognised sale orders,
+        // in bounded chunks, under the seller's existing RLS policies.
+        const recognisedOrderIds = orders
+          .filter((order) => RECOGNISED_SELLER_SALE_STATUSES.has(order.status))
+          .map((order) => order.id);
+        const orderItems: OrderItemMetricRow[] = [];
+        let metricsAvailable = true;
+
+        for (let offset = 0; offset < recognisedOrderIds.length; offset += 100) {
+          const batch = recognisedOrderIds.slice(offset, offset + 100);
+          const { data, error } = await supabase
+            .from("order_items")
+            .select("orderId, productId, quantity, subtotal")
+            .in("orderId", batch);
+
+          if (error) {
+            console.error("SellerDashboard: unable to read product commercial metrics", error);
+            metricsAvailable = false;
+            break;
+          }
+          orderItems.push(...((data ?? []) as OrderItemMetricRow[]));
+        }
+
+        setProductMetricsAvailable(metricsAvailable);
+        if (metricsAvailable) {
+          setTopProducts(buildSellerProductMetrics(products, orders, orderItems).slice(0, 4));
+        } else {
+          // Engagement data can still be shown truthfully. Commercial values are
+          // rendered as em-dashes instead of fabricated zeroes.
+          setTopProducts(
+            products
+              .map((product) => ({
+                id: product.id,
+                title: product.title,
+                views: product.views ?? 0,
+                cartAdds: product.addToCartCount ?? 0,
+                orderCount: 0,
+                unitsSold: 0,
+                salesAmount: 0,
+                conversionRate: 0,
+              }))
+              .sort((a, b) => b.views - a.views || b.cartAdds - a.cartAdds)
+              .slice(0, 4),
+          );
+        }
 
         if (balanceRes.data) {
           setBalance({
@@ -331,7 +369,7 @@ const SellerDashboard = () => {
           <p className="text-xs text-muted-foreground">No activity yet today</p>
         ) : (
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <p className="text-muted-foreground">Orders: <span className="text-foreground font-semibold">{stats.todayOrders}</span></p>
+            <p className="text-muted-foreground">Orders created: <span className="text-foreground font-semibold">{stats.todayOrders}</span></p>
             <p className="text-muted-foreground">Messages: <span className="text-foreground font-semibold">{stats.todayMessages ?? 0}</span></p>
           </div>
         )}
@@ -372,7 +410,10 @@ const SellerDashboard = () => {
 
       <div className="bg-card rounded-lg border border-border">
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">Top Products</h2>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Top Products</h2>
+            <p className="text-[10px] text-muted-foreground">Ranked by sales, then orders and engagement</p>
+          </div>
           <Link to="/seller/products" className="text-xs text-primary font-medium">View All</Link>
         </div>
         <div className="divide-y divide-border">
@@ -385,13 +426,28 @@ const SellerDashboard = () => {
             </div>
           ) : (
             topProducts.map((prod, i) => (
-              <div key={prod.id} className="flex items-center gap-3 px-3 py-2.5">
-                <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">{i + 1}</span>
+              <div key={prod.id} className="flex items-start gap-3 px-3 py-2.5">
+                <span className="mt-0.5 w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-foreground truncate">{prod.title}</p>
-                  <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground mt-0.5">
-                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> Sales: £{prod.revenue.toLocaleString("en-GB", { maximumFractionDigits: 0 })}</span>
-                    <span className="flex items-center gap-1"><ShoppingCart className="h-3 w-3" /> Orders: {prod.addToCartCount}</span>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1">
+                      <PoundSterling className="h-3 w-3" />
+                      Sales: {productMetricsAvailable ? `£${prod.salesAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <ShoppingCart className="h-3 w-3" />
+                      Orders: {productMetricsAvailable ? prod.orderCount : "—"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Package className="h-3 w-3" />
+                      Units: {productMetricsAvailable ? prod.unitsSold : "—"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> Views: {prod.views}</span>
+                    <span>Cart adds: {prod.cartAdds}</span>
+                    <span>Conversion: {productMetricsAvailable ? `${prod.conversionRate.toFixed(1)}%` : "—"}</span>
                   </div>
                 </div>
               </div>
