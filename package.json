@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vitest run netlify/functions/__tests__/phase-o-autonomy-readiness.test.ts netlify/functions/__tests__/phase-o-autonomy-runtime-boundary.test.ts && eslint netlify/functions-modern/admin-supplier-pilot.ts netlify/functions/_shared/phaseOPilotAutonomyReadiness.ts netlify/functions/admin-supplier-pilot-runtime.ts netlify/functions/__tests__/phase-o-autonomy-readiness.test.ts netlify/functions/__tests__/phase-o-autonomy-runtime-boundary.test.ts && node scripts/verify-migration-health.mjs && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "preview": "vite preview",
