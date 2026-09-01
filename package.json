@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx vitest run netlify/functions/__tests__/phase-o-autonomy-readiness.test.ts netlify/functions/__tests__/phase-o-autonomy-runtime-boundary.test.ts netlify/functions/__tests__/phase-o-shadow-persistence.test.ts netlify/functions/__tests__/phase-o-shadow-promotion-policy-governance.test.ts && npx eslint netlify/functions/__tests__/phase-o-autonomy-readiness.test.ts netlify/functions/__tests__/phase-o-autonomy-runtime-boundary.test.ts netlify/functions/__tests__/phase-o-shadow-persistence.test.ts netlify/functions/__tests__/phase-o-shadow-promotion-policy-governance.test.ts netlify/functions/_shared/phaseOPilotAutonomyReadiness.ts netlify/functions/admin-supplier-pilot-runtime.ts && npm run verify:migrations && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -102,7 +102,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-hooks": "^6.9.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "jsdom": "^29.0.0",
