@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Package, ShoppingCart, PoundSterling, TrendingUp,
-  Eye, Users, Star, Truck, Send, Loader2
+  Eye, Users, Star, Truck, Send, Loader2, MessageSquare,
+  AlertCircle, CheckCircle2, Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -25,9 +26,18 @@ interface DashboardStats {
   totalCustomers: number;
   pendingShipments: number;
   lowStockItems: number;
+  outOfStockItems: number;
   sellerRating: number;
   todayOrders: number;
   todayMessages: number | null;
+  unreadMessages: number | null;
+}
+
+interface SellerHealth {
+  sellerStatus: string | null;
+  stripeConnectStatus: string | null;
+  profileCompleteness: number | null;
+  isPaused: boolean;
 }
 
 interface RecentOrder {
@@ -65,14 +75,22 @@ function timeAgo(dateStr: string): string {
   return `${days} day${days !== 1 ? "s" : ""} ago`;
 }
 
+function greetingForNow(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 const SellerDashboard = () => {
   const { user } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [sellerHealth, setSellerHealth] = useState<SellerHealth | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [topProducts, setTopProducts] = useState<SellerProductMetric[]>([]);
   const [productMetricsAvailable, setProductMetricsAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [balance, setBalance] = useState<{ availableAmount: number; totalEarned: number } | null>(null);
+  const [balance, setBalance] = useState<{ availableAmount: number; pendingAmount: number; totalEarned: number } | null>(null);
   const [payoutLoading, setPayoutLoading] = useState(false);
 
   useEffect(() => {
@@ -82,7 +100,7 @@ const SellerDashboard = () => {
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
-        const [productsRes, allOrdersRes, profileRes, balanceRes, todayMessagesRes] = await Promise.all([
+        const [productsRes, allOrdersRes, profileRes, balanceRes, todayMessagesRes, unreadMessagesRes] = await Promise.all([
           supabase
             .from("products")
             .select("id, title, views, addToCartCount, stockQuantity, isActive, listingContext")
@@ -94,12 +112,12 @@ const SellerDashboard = () => {
             .order("createdAt", { ascending: false }),
           supabase
             .from("seller_profiles")
-            .select("rating")
+            .select("rating, sellerStatus, stripeConnectStatus, profileCompleteness, isPaused")
             .eq("userId", user.id)
             .maybeSingle(),
           supabase
             .from("seller_balance")
-            .select("availableAmount, totalEarned")
+            .select("availableAmount, pendingAmount, totalEarned")
             .eq("sellerId", user.id)
             .maybeSingle(),
           supabase
@@ -107,6 +125,11 @@ const SellerDashboard = () => {
             .select("id", { count: "exact", head: true })
             .eq("receiverId", user.id)
             .gte("createdAt", startOfToday.toISOString()),
+          supabase
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .eq("receiverId", user.id)
+            .eq("isRead", false),
         ]);
 
         const products = productsRes.data ?? [];
@@ -130,6 +153,10 @@ const SellerDashboard = () => {
           p.listingContext !== "service" &&
           p.stockQuantity !== null && p.stockQuantity > 0 && p.stockQuantity <= 5
         ).length;
+        const outOfStockItems = products.filter((p) =>
+          p.listingContext !== "service" &&
+          p.stockQuantity !== null && p.stockQuantity <= 0
+        ).length;
 
         const uniqueBuyerIds = [...new Set(orders.map((o) => o.buyerId).filter(Boolean))];
         const todayOrders = orders.filter((o) => new Date(o.createdAt) >= startOfToday).length;
@@ -141,9 +168,18 @@ const SellerDashboard = () => {
           totalCustomers: uniqueBuyerIds.length,
           pendingShipments: orders.filter((o) => o.status === "paid" || o.status === "packed").length,
           lowStockItems,
+          outOfStockItems,
           sellerRating: profileRes.data?.rating ?? 0,
           todayOrders,
           todayMessages: todayMessagesRes.count ?? null,
+          unreadMessages: unreadMessagesRes.count ?? null,
+        });
+
+        setSellerHealth({
+          sellerStatus: profileRes.data?.sellerStatus ?? null,
+          stripeConnectStatus: profileRes.data?.stripeConnectStatus ?? null,
+          profileCompleteness: profileRes.data?.profileCompleteness ?? null,
+          isPaused: profileRes.data?.isPaused ?? false,
         });
 
         // Snapshot identity is authoritative for post-cutover commercial history.
@@ -230,8 +266,9 @@ const SellerDashboard = () => {
 
         if (balanceRes.data) {
           setBalance({
-            availableAmount: (balanceRes.data as { availableAmount: number; totalEarned: number }).availableAmount ?? 0,
-            totalEarned: (balanceRes.data as { availableAmount: number; totalEarned: number }).totalEarned ?? 0,
+            availableAmount: balanceRes.data.availableAmount ?? 0,
+            pendingAmount: balanceRes.data.pendingAmount ?? 0,
+            totalEarned: balanceRes.data.totalEarned ?? 0,
           });
         }
       } finally {
@@ -251,7 +288,7 @@ const SellerDashboard = () => {
       const { error } = await supabase.rpc("request_payout", { p_amount: balance.availableAmount });
       if (error) throw error;
       toast({ title: "Payout requested", description: `A payout of £${balance.availableAmount.toFixed(2)} has been requested. It will be reviewed within 1–2 business days.` });
-      setBalance((b) => b ? { ...b, availableAmount: 0 } : b);
+      setBalance((b) => b ? { ...b, pendingAmount: b.pendingAmount + b.availableAmount, availableAmount: 0 } : b);
     } catch (err: unknown) {
       toast({ title: "Payout failed", description: (err as Error).message, variant: "destructive" });
     } finally {
@@ -300,9 +337,79 @@ const SellerDashboard = () => {
       ]
     : [];
 
+  const thingsToDo = stats
+    ? [
+        ...(stats.pendingShipments > 0 ? [{
+          label: `${stats.pendingShipments} order${stats.pendingShipments === 1 ? "" : "s"} to prepare or ship`,
+          detail: "Keep buyers updated and dispatch on time.",
+          to: "/seller/shipments",
+          icon: Truck,
+        }] : []),
+        ...((stats.unreadMessages ?? 0) > 0 ? [{
+          label: `${stats.unreadMessages} unread message${stats.unreadMessages === 1 ? "" : "s"}`,
+          detail: "Reply to buyers from your Messages inbox.",
+          to: "/seller/messages",
+          icon: MessageSquare,
+        }] : []),
+        ...(stats.outOfStockItems > 0 ? [{
+          label: `${stats.outOfStockItems} product${stats.outOfStockItems === 1 ? "" : "s"} out of stock`,
+          detail: "Restock or review the affected listings.",
+          to: "/seller/products",
+          icon: Package,
+        }] : []),
+        ...(stats.lowStockItems > 0 ? [{
+          label: `${stats.lowStockItems} product${stats.lowStockItems === 1 ? "" : "s"} running low`,
+          detail: "Check stock before the next order arrives.",
+          to: "/seller/products",
+          icon: AlertCircle,
+        }] : []),
+        ...(sellerHealth?.isPaused ? [{
+          label: "Your shop is paused",
+          detail: "Listings are hidden until you resume selling.",
+          to: "/seller/settings",
+          icon: Store,
+        }] : []),
+        ...(sellerHealth && sellerHealth.stripeConnectStatus !== "active" ? [{
+          label: "Payment setup needs attention",
+          detail: "Review your Stripe Connect status before receiving payouts.",
+          to: "/seller/settings",
+          icon: PoundSterling,
+        }] : []),
+      ]
+    : [];
+
+  const shopStatus = sellerHealth?.isPaused
+    ? { label: "Shop paused", detail: "Your listings are currently hidden." }
+    : sellerHealth?.sellerStatus === "active"
+      ? { label: "Shop active", detail: "Your seller workspace is ready for orders." }
+      : { label: "Setup in progress", detail: "Complete any remaining seller setup steps." };
+
   return (
     <div className="px-3 pt-3 pb-4 sm:p-6 space-y-3 sm:space-y-6 max-w-[1200px]">
       <OnboardingChecklist />
+
+      {/* Essentials is additive: the existing dashboard remains below. */}
+      <div className="bg-card rounded-lg border border-border p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Seller Essentials</span>
+              <span className="text-[10px] text-muted-foreground">Your day at a glance</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+              {greetingForNow()}, {user?.firstName || "Seller"}
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">See what needs attention without digging through the workspace.</p>
+          </div>
+          <Link to={sellerHealth?.isPaused ? "/seller/settings" : "/seller/profile"} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 bg-background hover:bg-muted/30 transition-colors">
+            {sellerHealth?.isPaused ? <AlertCircle className="h-4 w-4 text-destructive" /> : <CheckCircle2 className="h-4 w-4 text-success" />}
+            <div>
+              <p className="text-xs font-semibold text-foreground">{shopStatus.label}</p>
+              <p className="text-[10px] text-muted-foreground">{shopStatus.detail}</p>
+            </div>
+          </Link>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Button size="sm" className="bg-primary hover:bg-primary-hover text-black h-10 text-sm font-extrabold shadow-[0_0_18px_rgba(212,175,55,0.35)] ring-1 ring-primary/40" asChild>
@@ -311,6 +418,40 @@ const SellerDashboard = () => {
         <Button size="sm" variant="outline" className="h-10 text-sm font-semibold border-primary/40 hover:border-primary" asChild>
           <Link to="/seller/shipments"><Truck className="mr-1.5 h-4 w-4 text-primary" /> Log Shipment</Link>
         </Button>
+      </div>
+
+      {/* Additive Essentials task list — no existing workspace area is removed. */}
+      <div className="bg-card rounded-lg border border-border">
+        <div className="px-3 py-2.5 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">Things to do</h2>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Only items that may need your attention.</p>
+        </div>
+        {loading ? (
+          <div className="px-3 py-4 text-xs text-muted-foreground">Checking your shop…</div>
+        ) : thingsToDo.length === 0 ? (
+          <div className="flex items-center gap-2 px-3 py-4">
+            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-foreground">You're all caught up</p>
+              <p className="text-[10px] text-muted-foreground">Nothing needs your attention right now.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {thingsToDo.map((item) => (
+              <Link key={`${item.to}-${item.label}`} to={item.to} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                  <item.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{item.detail}</p>
+                </div>
+                <span className="text-xs font-medium text-primary">View</span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -341,7 +482,7 @@ const SellerDashboard = () => {
       )}
 
       {balance && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <div className="bg-card rounded-lg border border-border p-3 space-y-1.5">
             <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Available</p>
             <p className="font-bold text-base text-foreground leading-tight">
@@ -350,6 +491,13 @@ const SellerDashboard = () => {
             <Button size="sm" className="h-7 text-xs w-full px-2" onClick={handleRequestPayout} disabled={payoutLoading || balance.availableAmount <= 0}>
               {payoutLoading ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Requesting…</> : <><Send className="mr-1 h-3 w-3" /> Payout</>}
             </Button>
+          </div>
+          <div className="bg-card rounded-lg border border-border p-3 space-y-1">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Pending</p>
+            <p className="font-bold text-base text-foreground leading-tight">
+              £{balance.pendingAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-[11px] text-muted-foreground">In payout review</p>
           </div>
           <div className="bg-card rounded-lg border border-border p-3 space-y-1">
             <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Total Earned</p>
@@ -476,6 +624,16 @@ const SellerDashboard = () => {
             <span className={`text-[12px] font-semibold ${(stats?.lowStockItems ?? 0) > 0 ? "text-destructive" : "text-foreground"}`}>
               {loading ? "—" : stats?.lowStockItems ?? 0}
             </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Package className="h-3.5 w-3.5 text-primary" /> Out of Stock</span>
+            <span className={`text-[12px] font-semibold ${(stats?.outOfStockItems ?? 0) > 0 ? "text-destructive" : "text-foreground"}`}>
+              {loading ? "—" : stats?.outOfStockItems ?? 0}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><MessageSquare className="h-3.5 w-3.5 text-primary" /> Unread</span>
+            <span className="text-[12px] font-semibold text-foreground">{loading ? "—" : stats?.unreadMessages ?? 0}</span>
           </div>
         </div>
       </div>
