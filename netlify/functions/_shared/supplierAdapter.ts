@@ -62,6 +62,22 @@ export interface SupplierShippingQuote {
   estimatedDeliveryTo?: string;
 }
 
+/**
+ * Provider-neutral pre-order shipping request.
+ *
+ * `destinationPostcode` is optional at the core boundary because not every
+ * provider requires it. A provider that does require postcode-level routing
+ * must fail closed when it is absent rather than inventing or broadening a
+ * quote. This contract deliberately carries no customer name, street address,
+ * phone or email.
+ */
+export interface SupplierShippingQuoteRequest {
+  externalOfferRef: string;
+  quantity: number;
+  destinationCountry: string;
+  destinationPostcode?: string;
+}
+
 export interface SupplierOrderRequest {
   externalOfferRef: string;
   quantity: number;
@@ -103,7 +119,7 @@ export interface SupplierAdapterV1 {
   listCatalog?(context: SupplierAdapterContext): Promise<SupplierAdapterResult<SupplierCatalogItemRef[]>>;
   getStock?(context: SupplierAdapterContext, externalVariantRefs: string[]): Promise<SupplierAdapterResult<SupplierStockSnapshot[]>>;
   getPrices?(context: SupplierAdapterContext, externalVariantRefs: string[]): Promise<SupplierAdapterResult<SupplierPriceSnapshot[]>>;
-  quoteShipping?(context: SupplierAdapterContext, input: { externalOfferRef: string; quantity: number; destinationCountry: string }): Promise<SupplierAdapterResult<SupplierShippingQuote[]>>;
+  quoteShipping?(context: SupplierAdapterContext, input: SupplierShippingQuoteRequest): Promise<SupplierAdapterResult<SupplierShippingQuote[]>>;
   submitOrder?(context: SupplierAdapterContext, input: SupplierOrderRequest): Promise<SupplierAdapterResult<SupplierOrderAcknowledgement>>;
   getOrderAcknowledgement?(context: SupplierAdapterContext, supplierOrderRef: string): Promise<SupplierAdapterResult<SupplierOrderAcknowledgement>>;
   /**
