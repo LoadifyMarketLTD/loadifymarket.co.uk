@@ -2,10 +2,7 @@ import type { SupplierAdapterResult } from './supplierAdapter';
 
 export type BigBuyEnvironment = 'sandbox' | 'production';
 
-const BIGBUY_BASE_URLS: Record<BigBuyEnvironment, string> = {
-  sandbox: 'https://api.sandbox.bigbuy.eu',
-  production: 'https://api.bigbuy.eu',
-};
+const BIGBUY_SANDBOX_BASE_URL = 'https://api.sandbox.bigbuy.eu';
 
 export interface BigBuyClientConfig {
   environment?: BigBuyEnvironment | string;
@@ -41,12 +38,13 @@ function mapFailure(status: number, message: string): SupplierAdapterResult<neve
 }
 
 /**
- * BigBuy transport scaffold restricted to read-only GET requests.
+ * BigBuy transport scaffold restricted to sandbox read-only GET requests.
  *
- * The official BigBuy guide documents Bearer API-key authentication and fixed
- * sandbox/production hosts. This client owns those values so callers cannot
- * replace the trusted host or authentication transport. Write requests are
- * deliberately rejected until a separate commercial/PII order gate exists.
+ * The official BigBuy guide documents Bearer API-key authentication and a
+ * dedicated sandbox host. Until Loadify has completed authorised sandbox
+ * verification and separately approved a production-read gate, this client
+ * rejects production before network access. Write requests remain rejected
+ * independently of environment.
  */
 export class BigBuyClient {
   private readonly environment: string;
@@ -76,6 +74,14 @@ export class BigBuyClient {
         ok: false,
         errorClass: 'AUTH_CONFIGURATION_FAILURE',
         message: 'BIGBUY_API_ENVIRONMENT must be sandbox or production',
+      };
+    }
+
+    if (environment !== 'sandbox') {
+      return {
+        ok: false,
+        errorClass: 'CAPABILITY_UNAVAILABLE',
+        message: 'BigBuy production transport is disabled until the production-read gate is explicitly verified and approved',
       };
     }
 
@@ -121,7 +127,7 @@ export class BigBuyClient {
     headers.set('X-Correlation-Id', context.correlationId.trim());
 
     try {
-      const response = await fetch(`${BIGBUY_BASE_URLS[environment]}${path}`, {
+      const response = await fetch(`${BIGBUY_SANDBOX_BASE_URL}${path}`, {
         ...init,
         method: 'GET',
         headers,
