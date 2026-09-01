@@ -1,5 +1,5 @@
-export const PHASE_O_AUTONOMY_READINESS_INTERFACE_VERSION = 2 as const;
-export const PHASE_O_AUTONOMY_READINESS_POLICY_VERSION = 'phase-o-autonomy-readiness-v2' as const;
+export const PHASE_O_AUTONOMY_READINESS_INTERFACE_VERSION = 3 as const;
+export const PHASE_O_AUTONOMY_READINESS_POLICY_VERSION = 'phase-o-autonomy-readiness-v3' as const;
 export const PHASE_O_SHADOW_REVIEW_CAPABILITY = 'order_submission' as const;
 export const PHASE_O_SHADOW_REVIEW_SOURCE = 'durable_shadow_review_v1' as const;
 export const PHASE_O_SHADOW_REVIEW_POLICY_VERSION = 'phase-o-order-shadow-v1' as const;
@@ -24,6 +24,10 @@ export interface PhaseOShadowReviewEvidence {
   sampleSize: number;
   resolvedComparisons: number;
   operatorRelative: true;
+  promotionPolicyConfigured: boolean;
+  promotionPolicyId: string | null;
+  promotionPolicyVersion: number | null;
+  promotionPolicyApprovedAt: string | null;
   passed: boolean;
 }
 
@@ -35,6 +39,8 @@ export type PhaseOShadowReviewBlocker =
   | 'shadow_mode_review_provider_mismatch'
   | 'shadow_mode_review_capability_mismatch'
   | 'shadow_mode_review_policy_mismatch'
+  | 'shadow_mode_promotion_policy_not_configured'
+  | 'shadow_mode_promotion_policy_invalid'
   | 'shadow_mode_review_invalid'
   | 'shadow_mode_review_not_passed';
 
@@ -47,7 +53,7 @@ export interface PhaseOPilotAutonomyReadinessInput {
   now?: Date;
 }
 
-export interface PhaseOPilotAutonomyReadinessV2 {
+export interface PhaseOPilotAutonomyReadinessV3 {
   interfaceVersion: typeof PHASE_O_AUTONOMY_READINESS_INTERFACE_VERSION;
   policyVersion: typeof PHASE_O_AUTONOMY_READINESS_POLICY_VERSION;
   pilotId: string;
@@ -71,6 +77,10 @@ export interface PhaseOPilotAutonomyReadinessV2 {
     sampleSize: number;
     resolvedComparisons: number;
     operatorRelative: boolean;
+    promotionPolicyConfigured: boolean;
+    promotionPolicyId: string | null;
+    promotionPolicyVersion: number | null;
+    promotionPolicyApprovedAt: string | null;
     passed: boolean;
   };
   externalMutationPerformed: false;
@@ -116,6 +126,21 @@ function shadowReviewBlockers(
     || !validMetrics
     || review.operatorRelative !== true
   ) blockers.push('shadow_mode_review_invalid');
+
+  if (review.promotionPolicyConfigured !== true) {
+    blockers.push('shadow_mode_promotion_policy_not_configured');
+  } else {
+    const promotionApprovedAt = Date.parse(review.promotionPolicyApprovedAt ?? '');
+    const validPromotionPolicy = Boolean(text(review.promotionPolicyId))
+      && Number.isSafeInteger(review.promotionPolicyVersion)
+      && (review.promotionPolicyVersion ?? 0) > 0
+      && !Number.isNaN(promotionApprovedAt)
+      && promotionApprovedAt <= now.getTime()
+      && !Number.isNaN(reviewedAt)
+      && promotionApprovedAt <= reviewedAt;
+    if (!validPromotionPolicy) blockers.push('shadow_mode_promotion_policy_invalid');
+  }
+
   if (review.passed !== true) blockers.push('shadow_mode_review_not_passed');
 
   return [...new Set(blockers)];
@@ -127,17 +152,17 @@ function shadowReviewBlockers(
  * Canonical SQL readiness remains authoritative for Supplier Foundation,
  * governance, cohort, caps, simulator evidence, kill switches and the single
  * fully verified GB adapter. This overlay adds the newer Autonomous Operations
- * invariants without pretending they are already persisted in the older pilot
- * schema: Lane G must permit real order submission and a durable Lane H Shadow
- * review must be demonstrated before the admin runtime may request activation.
+ * invariants: Lane G must permit real order submission and a durable Lane H
+ * Shadow review must pass a separately governed, pre-registered promotion
+ * policy before the admin runtime may request activation.
  *
- * Shadow evidence is intentionally scoped to the exact pilot + provider +
- * order_submission capability + policy version. An unrelated or stale Shadow
- * Mode result must never be reusable as supplier-order activation evidence.
+ * Shadow evidence is scoped to the exact pilot + provider + order_submission
+ * capability + observation policy, and a PASS is invalid without an approved
+ * promotion policy identity/version that predates the reviewed evidence.
  */
 export function evaluatePhaseOPilotAutonomyReadiness(
   input: PhaseOPilotAutonomyReadinessInput,
-): PhaseOPilotAutonomyReadinessV2 {
+): PhaseOPilotAutonomyReadinessV3 {
   const pilotId = required(input.pilotId, 'pilotId');
   const providerKey = required(input.providerKey, 'providerKey').toLowerCase();
   const now = input.now ?? new Date();
@@ -179,6 +204,10 @@ export function evaluatePhaseOPilotAutonomyReadiness(
       sampleSize: shadow?.sampleSize ?? 0,
       resolvedComparisons: shadow?.resolvedComparisons ?? 0,
       operatorRelative: shadow?.operatorRelative === true,
+      promotionPolicyConfigured: shadow?.promotionPolicyConfigured === true,
+      promotionPolicyId: text(shadow?.promotionPolicyId) || null,
+      promotionPolicyVersion: shadow?.promotionPolicyVersion ?? null,
+      promotionPolicyApprovedAt: shadow?.promotionPolicyApprovedAt ?? null,
       passed: shadow?.passed === true,
     },
     externalMutationPerformed: false,

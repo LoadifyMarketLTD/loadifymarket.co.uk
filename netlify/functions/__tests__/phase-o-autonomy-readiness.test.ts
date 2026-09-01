@@ -29,6 +29,10 @@ const shadowReady = (pilotId: string, providerKey: string): PhaseOShadowReviewEv
   sampleSize: 25,
   resolvedComparisons: 20,
   operatorRelative: true,
+  promotionPolicyConfigured: true,
+  promotionPolicyId: '11111111-1111-4111-8111-111111111111',
+  promotionPolicyVersion: 1,
+  promotionPolicyApprovedAt: '2026-09-01T09:00:00.000Z',
   passed: true,
 });
 
@@ -129,7 +133,7 @@ describe('Phase O Autonomous Operations readiness', () => {
     expect(result.blockers).toContain('shadow_mode_review_source_untrusted');
   });
 
-  it('rejects Shadow evidence from another pilot provider capability or policy version', () => {
+  it('rejects Shadow evidence from another pilot provider capability or observation policy version', () => {
     const wrongScope = {
       ...shadowReady('pilot-other', 'provider-b'),
       capability: 'shipment_stall_review',
@@ -152,13 +156,51 @@ describe('Phase O Autonomous Operations readiness', () => {
     expect(result.blockers).toContain('shadow_mode_review_policy_mismatch');
   });
 
-  it('requires a passed operator-relative review even when scope is correctly bound', () => {
+  it('requires a configured promotion policy even if a review claims PASS', () => {
     const result = evaluatePhaseOPilotAutonomyReadiness({
       pilotId: 'pilot-8',
       providerKey: 'provider-a',
       canonicalReady: true,
       providerOrderExecution: providerReady(),
-      shadowReview: { ...shadowReady('pilot-8', 'provider-a'), passed: false },
+      shadowReview: {
+        ...shadowReady('pilot-8', 'provider-a'),
+        promotionPolicyConfigured: false,
+        promotionPolicyId: null,
+        promotionPolicyVersion: null,
+        promotionPolicyApprovedAt: null,
+      },
+      now: NOW,
+    });
+
+    expect(result.ready).toBe(false);
+    expect(result.blockers).toContain('shadow_mode_promotion_policy_not_configured');
+  });
+
+  it('rejects malformed or retrospectively approved promotion policy evidence', () => {
+    const result = evaluatePhaseOPilotAutonomyReadiness({
+      pilotId: 'pilot-9',
+      providerKey: 'provider-a',
+      canonicalReady: true,
+      providerOrderExecution: providerReady(),
+      shadowReview: {
+        ...shadowReady('pilot-9', 'provider-a'),
+        promotionPolicyVersion: 0,
+        promotionPolicyApprovedAt: '2026-09-01T10:45:00.000Z',
+      },
+      now: NOW,
+    });
+
+    expect(result.ready).toBe(false);
+    expect(result.blockers).toContain('shadow_mode_promotion_policy_invalid');
+  });
+
+  it('requires a passed operator-relative review even when all policy bindings are valid', () => {
+    const result = evaluatePhaseOPilotAutonomyReadiness({
+      pilotId: 'pilot-10',
+      providerKey: 'provider-a',
+      canonicalReady: true,
+      providerOrderExecution: providerReady(),
+      shadowReview: { ...shadowReady('pilot-10', 'provider-a'), passed: false },
       now: NOW,
     });
 
@@ -166,27 +208,30 @@ describe('Phase O Autonomous Operations readiness', () => {
     expect(result.blockers).toContain('shadow_mode_review_not_passed');
   });
 
-  it('can report readiness only when all independent gates and exact Shadow bindings are demonstrated', () => {
+  it('can report readiness only when all independent gates and exact Shadow policy bindings are demonstrated', () => {
     const result = evaluatePhaseOPilotAutonomyReadiness({
-      pilotId: 'pilot-9',
+      pilotId: 'pilot-11',
       providerKey: 'provider-a',
       canonicalReady: true,
       providerOrderExecution: providerReady(),
-      shadowReview: shadowReady('pilot-9', 'provider-a'),
+      shadowReview: shadowReady('pilot-11', 'provider-a'),
       now: NOW,
     });
     expect(result.ready).toBe(true);
     expect(result.reason).toBe('phase_o_autonomy_ready');
     expect(result.blockers).toEqual([]);
-    expect(result.interfaceVersion).toBe(2);
+    expect(result.interfaceVersion).toBe(3);
     expect(result.shadowReview.demonstrated).toBe(true);
     expect(result.shadowReview.validationBlockers).toEqual([]);
-    expect(result.shadowReview.pilotId).toBe('pilot-9');
+    expect(result.shadowReview.pilotId).toBe('pilot-11');
     expect(result.shadowReview.providerKey).toBe('provider-a');
     expect(result.shadowReview.capability).toBe('order_submission');
     expect(result.shadowReview.source).toBe('durable_shadow_review_v1');
     expect(result.shadowReview.policyVersion).toBe('phase-o-order-shadow-v1');
     expect(result.shadowReview.persistenceBound).toBe(true);
+    expect(result.shadowReview.promotionPolicyConfigured).toBe(true);
+    expect(result.shadowReview.promotionPolicyId).toBe('11111111-1111-4111-8111-111111111111');
+    expect(result.shadowReview.promotionPolicyVersion).toBe(1);
     expect(result.externalMutationPerformed).toBe(false);
     expect(result.pilotActivationPerformed).toBe(false);
     expect(result.paymentMutationPerformed).toBe(false);
