@@ -51,11 +51,31 @@ The supported dimensions are:
 
 Runtime readiness v3 also rejects any claimed PASS without a valid promotion policy identity/version/approval timestamp that predates the reviewed evidence.
 
+## Hosted reconciliation
+
+Migration `phase_o_shadow_promotion_policy_governance` is applied in hosted history as version `20260901150548`.
+
+Observed after apply:
+
+- promotion policy table: RLS enabled, 0 rows;
+- policy audit table: RLS enabled, 0 rows;
+- Shadow observation table: RLS enabled, 0 rows;
+- pilot programs: 0 rows;
+- `promotion_policy_id` and `promotion_policy_version` are mandatory on Shadow observations;
+- no direct table grants exist for PUBLIC, anon, authenticated or service_role;
+- policy, audit and observation immutability triggers are active;
+- create/approve/retire governance RPCs and record/review RPCs are SECURITY DEFINER with empty search path and active-admin guards;
+- anon/authenticated cannot execute those five RPCs; service_role can;
+- security advisor reports only the intentional RLS-enabled/no-policy informational notices for the new private tables, with no new authenticated SECURITY DEFINER warning for these RPCs.
+
+No policy row, threshold, pilot data or Shadow observation was created during hosted reconciliation.
+
 ## Safety boundary
 
 This work does not:
 
 - create or approve a policy;
+- choose a Shadow acceptance threshold;
 - create pilot data;
 - create Shadow observations;
 - activate a pilot or provider;
@@ -63,5 +83,3 @@ This work does not:
 - disclose customer PII;
 - mutate payments or refunds;
 - relax RLS or direct table privileges.
-
-Hosted migration state at document creation: **NOT APPLIED**.
