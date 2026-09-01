@@ -1,6 +1,7 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";import {
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
   LayoutDashboard, Package, ShoppingCart, ShoppingBag, Truck,
-  RotateCcw, Star, Settings, UserCircle, ChevronRight, Store,
+  RotateCcw, Star, Settings, ChevronRight, Store,
   LogOut, Menu, Bell, MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
@@ -9,25 +10,56 @@ import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { useUnreadNotificationsCount } from "@/hooks/useUnreadNotificationsCount";
 
-const navItems = [
-  { to: "/seller", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/seller/products", label: "Products", icon: Package },
-  { to: "/seller/orders", label: "Orders", icon: ShoppingCart },
-  { to: "/seller/shipments", label: "Shipments", icon: Truck },
-  { to: "/seller/returns", label: "Returns", icon: RotateCcw },
-  { to: "/seller/messages", label: "Messages", icon: MessageSquare },
-  { to: "/seller/reviews", label: "Reviews", icon: Star },
-  { to: "/seller/notifications", label: "Notifications", icon: Bell },
-  { to: "/seller/profile", label: "Profile", icon: UserCircle },
-  { to: "/seller/settings", label: "Settings", icon: Settings },
+type SellerNavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  end?: boolean;
+};
+
+const navGroups: Array<{ label: string; items: SellerNavItem[] }> = [
+  {
+    label: "Workspace",
+    items: [
+      { to: "/seller", label: "Home", icon: LayoutDashboard, end: true },
+    ],
+  },
+  {
+    label: "Sell",
+    items: [
+      { to: "/seller/products", label: "Listings", icon: Package },
+    ],
+  },
+  {
+    label: "Orders",
+    items: [
+      { to: "/seller/orders", label: "Orders", icon: ShoppingCart },
+      { to: "/seller/shipments", label: "Shipping", icon: Truck },
+      { to: "/seller/returns", label: "Returns & issues", icon: RotateCcw },
+    ],
+  },
+  {
+    label: "Customers",
+    items: [
+      { to: "/seller/messages", label: "Inbox", icon: MessageSquare },
+      { to: "/seller/reviews", label: "Reviews", icon: Star },
+    ],
+  },
+  {
+    label: "Shop",
+    items: [
+      { to: "/seller/profile", label: "My Shop", icon: Store },
+      { to: "/seller/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
 
-/** The 4 most important pages shown in the mobile bottom tab bar */
-const mobileTabItems = [
-  { to: "/seller", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/seller/products", label: "Products", icon: Package },
+/** Essentials keeps the four highest-frequency destinations one tap away. */
+const mobileTabItems: SellerNavItem[] = [
+  { to: "/seller", label: "Home", icon: LayoutDashboard, end: true },
+  { to: "/seller/products", label: "Listings", icon: Package },
   { to: "/seller/orders", label: "Orders", icon: ShoppingCart },
-  { to: "/seller/settings", label: "Settings", icon: Settings },
+  { to: "/seller/messages", label: "Inbox", icon: MessageSquare },
 ];
 
 interface SidebarContentProps {
@@ -38,48 +70,57 @@ interface SidebarContentProps {
 
 const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentProps) => (
   <div className="flex flex-col h-full">
-    {/* Logo / Brand */}
     <div className="p-5 border-b border-border">
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2.5">
         <div className="w-8 h-8 rounded-lg bg-primary hover:bg-primary-hover flex items-center justify-center shrink-0">
           <Store className="h-4 w-4 text-white" />
         </div>
-        <div>
-          <p className="text-sm font-semibold text-foreground leading-none">Seller Hub</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[140px]">{displayName}</p>
-          <p className="text-[10px] text-muted-foreground/80 mt-0.5">Your seller dashboard</p>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-foreground leading-none">Seller Workspace</p>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary">Essentials</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1 truncate max-w-[160px]">{displayName}</p>
+          <p className="text-[10px] text-muted-foreground/80 mt-0.5">Simple tools to run your shop</p>
         </div>
       </div>
     </div>
 
-    {/* Nav */}
-    <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-      {navItems.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.end}
-          onClick={onNavClick}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors group ${
-              isActive
-                ? "bg-primary/10 text-primary font-medium"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
-              <span className="flex-1">{item.label}</span>
-              {isActive && <ChevronRight className="h-3.5 w-3.5 text-primary" />}
-            </>
-          )}
-        </NavLink>
+    <nav className="flex-1 overflow-y-auto py-3 px-2">
+      {navGroups.map((group) => (
+        <div key={group.label} className="mb-3 last:mb-0">
+          <p className="px-3 pb-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
+            {group.label}
+          </p>
+          <div className="space-y-0.5">
+            {group.items.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={onNavClick}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors group ${
+                    isActive
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+                    <span className="flex-1">{item.label}</span>
+                    {isActive && <ChevronRight className="h-3.5 w-3.5 text-primary" />}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </div>
+        </div>
       ))}
     </nav>
 
-    {/* Bottom actions */}
     <div className="p-3 border-t border-border space-y-1">
       <NavLink
         to="/buyer"
@@ -125,39 +166,32 @@ const SellerShell = () => {
       ? `${user.firstName}${user.lastName ? " " + user.lastName : ""}`
       : user?.email ?? "Seller";
 
-  // On mobile the global Header is hidden (see Header.tsx) so the shell
-  // starts at the top with only safe-area-inset-top clearance.
-  // On desktop the shell must sit below the full global header (--shell-offset-h = 7.625rem).
   const headerHeight = "calc(var(--shell-offset-h, 0px) + env(safe-area-inset-top, 0px))";
 
   return (
     <div className="market-workspace-light flex bg-[#F7F9FC] overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
+      <aside className="hidden lg:flex w-60 border-r border-border bg-card shrink-0 flex-col">
         <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
       </aside>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-64 bg-card border-r border-border flex flex-col">
+          <aside className="absolute left-0 top-0 h-full w-72 bg-card border-r border-border flex flex-col">
             <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
           </aside>
         </div>
       )}
 
-      {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile top header — compact app-style bar */}
         <header className="lg:hidden flex items-center px-2 pt-header-safe pb-2 border-b border-border bg-card shrink-0">
           <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex-1 flex flex-col items-center justify-center">
-            <span className="font-bold text-foreground text-[15px] leading-tight">Seller Hub</span>
+            <span className="font-bold text-foreground text-[15px] leading-tight">Seller Workspace</span>
+            <span className="text-[10px] text-primary font-semibold leading-tight">Essentials</span>
             <span className="text-[10px] text-muted-foreground leading-tight truncate max-w-[160px]">{displayName}</span>
-            <span className="text-[10px] text-muted-foreground/80 leading-tight">Your seller dashboard</span>
           </div>
           <NavLink to="/seller/notifications" aria-label="Notifications" className="h-10 w-10 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground">
             <span className="relative inline-flex">
@@ -171,13 +205,11 @@ const SellerShell = () => {
           </NavLink>
         </header>
 
-        {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
         <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-background">
           <Outlet />
         </main>
       </div>
 
-      {/* Mobile bottom tab bar */}
       <nav
         aria-label="Seller navigation"
         className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border flex items-center"
@@ -202,7 +234,6 @@ const SellerShell = () => {
             )}
           </NavLink>
         ))}
-        {/* "More" opens the sidebar */}
         <button
           className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium text-muted-foreground"
           onClick={() => setSidebarOpen(true)}
