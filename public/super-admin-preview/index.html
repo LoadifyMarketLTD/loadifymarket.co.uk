@@ -6,135 +6,15 @@
   <meta name="robots" content="noindex,nofollow" />
   <title>Loadify Market — Platform Owner Control Plane Preview</title>
   <style>
-    :root{
-      --navy:#0B234A;--blue:#2563EB;--cyan:#0891B2;--green:#16A34A;--amber:#D97706;
-      --red:#DC2626;--purple:#7C3AED;--ink:#0F172A;--text:#334155;--muted:#64748B;
-      --soft:#94A3B8;--bg:#F6F8FC;--card:#FFFFFF;--border:#E2E8F0;--border-strong:#CBD5E1;
-      --shadow:0 10px 30px rgba(15,23,42,.055)
-    }
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}
-    a{color:inherit;text-decoration:none}
-    button{font:inherit}
-    .app{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}
-    .sidebar{position:sticky;top:0;height:100vh;background:#fff;border-right:1px solid var(--border);padding:22px 16px;z-index:20;display:flex;flex-direction:column}
-    .brand{padding:2px 6px 22px;border-bottom:1px solid var(--border)}
-    .brand-row{display:flex;gap:12px;align-items:center}
-    .mark{width:42px;height:42px;border-radius:12px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:900;font-size:14px;box-shadow:var(--shadow)}
-    .brand h1{font-size:16px;line-height:1.1;margin:0;color:var(--navy)}
-    .brand p{font-size:11px;color:var(--muted);margin:4px 0 0}
-    .owner-badge{display:inline-flex;margin-top:14px;padding:7px 10px;border:1px solid #C7D2FE;background:#EEF2FF;border-radius:999px;color:#4338CA;font-size:10px;font-weight:850}
-    .nav{padding-top:18px;display:grid;gap:5px}
-    .nav-label{font-size:10px;font-weight:900;color:var(--soft);text-transform:uppercase;letter-spacing:.09em;padding:0 10px 7px}
-    .nav-item{border:0;background:transparent;width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:11px 12px;border-radius:10px;color:var(--muted);font-size:13px;font-weight:720;cursor:pointer}
-    .nav-item:hover{background:#F8FAFC;color:var(--navy)}
-    .nav-item.active{background:#EFF6FF;color:var(--blue)}
-    .nav-icon{width:26px;height:26px;border-radius:8px;background:#F1F5F9;color:#64748B;display:grid;place-items:center;font-size:11px;font-weight:900;flex:none}
-    .nav-item.active .nav-icon{background:#DBEAFE;color:#1D4ED8}
-    .side-links{margin-top:auto;padding-top:18px;border-top:1px solid var(--border);display:grid;gap:8px}
-    .side-link{padding:9px 10px;border-radius:9px;color:var(--muted);font-size:12px;font-weight:700}
-    .side-link:hover{background:#F8FAFC;color:var(--navy)}
-    .side-state{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;color:var(--muted);font-size:11px}
-    .content{min-width:0}
-    .topbar{height:72px;position:sticky;top:0;z-index:15;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 34px;gap:16px}
-    .crumb{font-size:12px;color:var(--muted)}
-    .crumb b{color:var(--navy)}
-    .top-actions{display:flex;align-items:center;gap:10px}
-    .chip,.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;font-weight:850;white-space:nowrap}
-    .chip{padding:8px 11px;background:#fff;border:1px solid var(--border);font-size:10px}
-    .badge{padding:5px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.02em}
-    .b-live{background:#DCFCE7;color:#166534}.b-governed{background:#DBEAFE;color:#1D4ED8}.b-owner{background:#FEF3C7;color:#92400E}.b-review{background:#FEF3C7;color:#92400E}.b-blocked{background:#FEE2E2;color:#991B1B}.b-purple{background:#EDE9FE;color:#6D28D9}.b-sample{background:#F1F5F9;color:#475569}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:12px;font-weight:800}
-    .btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
-    .page{max-width:1500px;margin:0 auto;padding:30px 36px 60px}
-    .notice{display:flex;gap:10px;align-items:flex-start;padding:13px 15px;border:1px solid #C7D2FE;background:#EEF2FF;color:#3730A3;border-radius:12px;font-size:12px;line-height:1.55;margin-bottom:24px}
-    .hero{display:flex;justify-content:space-between;gap:28px;align-items:flex-start;margin-bottom:26px}
-    .eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--blue)}
-    .hero h2{font-size:34px;line-height:1.08;letter-spacing:-.035em;color:var(--navy);margin:7px 0 10px}
-    .hero p{font-size:14px;line-height:1.65;color:var(--muted);max-width:820px;margin:0}
-    .hero-meta{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:430px}
-    .view{display:none}
-    .view.active{display:block}
-    .section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:30px 0 14px}
-    .section-title:first-child{margin-top:0}
-    .section-title h3{margin:0;font-size:21px;letter-spacing:-.02em;color:var(--navy)}
-    .section-title p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
-    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:20px}
-    .kpi{padding:20px 20px 18px;min-height:138px}
-    .k-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;font-weight:780}
-    .ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:13px;font-weight:900}
-    .i-blue{background:#DBEAFE;color:#1D4ED8}.i-green{background:#DCFCE7;color:#15803D}.i-cyan{background:#CFFAFE;color:#0E7490}.i-amber{background:#FEF3C7;color:#B45309}.i-red{background:#FEE2E2;color:#B91C1C}.i-purple{background:#EDE9FE;color:#6D28D9}
-    .k-value{font-size:28px;font-weight:900;color:var(--navy);margin-top:20px;letter-spacing:-.035em}
-    .k-sub{font-size:11px;color:var(--soft);margin-top:4px}
-    .overview-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(360px,.75fr);gap:18px;margin-bottom:18px}
-    .panel{padding:22px}
-    .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:18px}
-    .panel h3{font-size:18px;color:var(--navy);margin:0}
-    .panel .desc{font-size:12px;line-height:1.5;color:var(--muted);margin:5px 0 0}
-    .action-list{display:grid;gap:10px}
-    .action{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--border);background:#FCFDFE;padding:13px 14px;border-radius:12px}
-    .action .title{font-size:13px;color:var(--text);font-weight:850}
-    .action .meta{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
-    .health-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .health{border:1px solid var(--border);padding:13px;border-radius:12px;min-height:96px}
-    .health-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
-    .health-name{font-size:12px;font-weight:850;color:var(--text)}
-    .health small{display:block;font-size:10.5px;color:var(--muted);line-height:1.4;margin-top:7px}
-    .quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-    .quick{padding:18px;min-height:130px}
-    .quick h4{font-size:14px;color:var(--navy);margin:0 0 8px}
-    .quick p{font-size:11.5px;color:var(--muted);line-height:1.55;margin:0}
-    .module-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-    .module{padding:20px;border:1px solid var(--border);border-radius:14px;background:#fff;min-height:156px;position:relative}
-    .module:hover{border-color:#BFDBFE;box-shadow:0 10px 24px rgba(15,23,42,.05)}
-    .module-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-    .module h4{font-size:15px;line-height:1.25;color:var(--text);margin:14px 0 7px}
-    .module p{font-size:12px;line-height:1.55;color:var(--muted);margin:0}
-    .module .meta-line{margin-top:12px;padding-top:11px;border-top:1px solid #EEF2F7;color:var(--soft);font-size:10.5px;line-height:1.45}
-    .subnav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
-    .subnav button{border:1px solid var(--border);background:#fff;color:var(--muted);border-radius:999px;padding:8px 12px;font-size:11px;font-weight:800;cursor:pointer}
-    .subnav button:hover{border-color:#BFDBFE;color:var(--blue)}
-    .finance-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-    .money{padding:18px;border:1px solid var(--border);border-radius:13px;background:#FAFCFF;min-height:118px}
-    .money-label{font-size:11px;color:var(--muted);font-weight:760}
-    .money-value{font-size:23px;color:var(--navy);font-weight:900;margin-top:11px;letter-spacing:-.025em}
-    .money-note{font-size:10.5px;color:var(--soft);margin-top:5px;line-height:1.4}
-    .provider-list{display:grid;gap:12px}
-    .provider{border:1px solid var(--border);border-radius:13px;padding:16px}
-    .provider-head{display:flex;justify-content:space-between;gap:12px;align-items:center}
-    .provider-name{font-size:14px;font-weight:880;color:var(--text)}
-    .provider p{font-size:11.5px;line-height:1.55;color:var(--muted);margin:8px 0 0}
-    .pipeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    .step{padding:15px;border:1px solid var(--border);border-radius:12px;background:#FAFCFF;min-height:112px}
-    .step b{display:block;font-size:12px;color:var(--text)}
-    .step span{display:block;font-size:10.5px;color:var(--muted);line-height:1.45;margin-top:6px}
-    .list{display:grid;gap:0}
-    .row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:14px 0;border-bottom:1px solid #EEF2F7}
-    .row:last-child{border-bottom:0}
-    .row .name{font-size:13px;font-weight:850;color:var(--text)}
-    .row .sub{font-size:11px;color:var(--muted);line-height:1.45;margin-top:4px}
-    details{border:1px solid var(--border);border-radius:13px;background:#fff;margin-bottom:12px;overflow:hidden}
-    summary{cursor:pointer;list-style:none;padding:16px 18px;font-size:13px;font-weight:850;color:var(--navy);display:flex;justify-content:space-between;align-items:center}
-    summary::-webkit-details-marker{display:none}
-    summary:after{content:"+";font-size:18px;color:var(--muted)}
-    details[open] summary:after{content:"–"}
-    .details-body{border-top:1px solid var(--border);padding:16px 18px;color:var(--muted);font-size:12px;line-height:1.6}
-    .coverage{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-    .coverage-box{padding:20px;border:1px solid var(--border);border-radius:14px;background:#fff}
-    .coverage-box h4{font-size:14px;color:var(--navy);margin:0 0 12px}
-    .coverage-box ul{padding:0;margin:0;list-style:none;display:grid;gap:9px}
-    .coverage-box li{font-size:11.5px;line-height:1.45;color:var(--muted);padding-left:16px;position:relative}
-    .coverage-box li:before{content:"";position:absolute;left:0;top:6px;width:7px;height:7px;border-radius:50%;background:#CBD5E1}
-    .coverage-box.existing li:before{background:var(--green)}.coverage-box.backend li:before{background:var(--blue)}.coverage-box.owner li:before{background:var(--amber)}
-    .definition{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-    .definition .item{padding:16px;border:1px solid var(--border);border-radius:12px;background:#fff}
-    .definition b{font-size:12px;color:var(--text)}
-    .definition p{font-size:11px;color:var(--muted);line-height:1.5;margin:6px 0 0}
-    .footer{color:var(--soft);font-size:10px;text-align:center;margin-top:32px}
-    .mobile-nav{display:none}
-    @media(max-width:1250px){.kpis{grid-template-columns:repeat(2,1fr)}.quick-grid{grid-template-columns:1fr 1fr}.finance-grid{grid-template-columns:1fr 1fr}.pipeline{grid-template-columns:repeat(3,1fr)}}
+    :root{--navy:#0B234A;--blue:#2563EB;--cyan:#0891B2;--green:#16A34A;--amber:#D97706;--red:#DC2626;--purple:#7C3AED;--ink:#0F172A;--text:#334155;--muted:#64748B;--soft:#94A3B8;--bg:#F6F8FC;--card:#fff;--border:#E2E8F0;--shadow:0 10px 30px rgba(15,23,42,.055)}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}a{color:inherit;text-decoration:none}button{font:inherit}.app{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}
+    .sidebar{position:sticky;top:0;height:100vh;background:#fff;border-right:1px solid var(--border);padding:22px 16px;display:flex;flex-direction:column;z-index:20}.brand{padding:2px 6px 22px;border-bottom:1px solid var(--border)}.brand-row{display:flex;gap:12px;align-items:center}.mark{width:42px;height:42px;border-radius:12px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:var(--shadow)}.brand h1{font-size:16px;margin:0;color:var(--navy)}.brand p{font-size:11px;color:var(--muted);margin:4px 0 0}.owner-badge{display:inline-flex;margin-top:14px;padding:7px 10px;border:1px solid #C7D2FE;background:#EEF2FF;border-radius:999px;color:#4338CA;font-size:10px;font-weight:850}.nav{padding-top:18px;display:grid;gap:5px}.nav-label{font-size:10px;font-weight:900;color:var(--soft);text-transform:uppercase;letter-spacing:.09em;padding:0 10px 7px}.nav-item{border:0;background:transparent;width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:11px 12px;border-radius:10px;color:var(--muted);font-size:13px;font-weight:720;cursor:pointer}.nav-item:hover{background:#F8FAFC;color:var(--navy)}.nav-item.active{background:#EFF6FF;color:var(--blue)}.nav-icon{width:26px;height:26px;border-radius:8px;background:#F1F5F9;color:#64748B;display:grid;place-items:center;font-size:11px;font-weight:900;flex:none}.nav-item.active .nav-icon{background:#DBEAFE;color:#1D4ED8}.side-links{margin-top:auto;padding-top:18px;border-top:1px solid var(--border);display:grid;gap:8px}.side-link{padding:9px 10px;border-radius:9px;color:var(--muted);font-size:12px;font-weight:700}.side-link:hover{background:#F8FAFC;color:var(--navy)}.side-state{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;color:var(--muted);font-size:11px}
+    .content{min-width:0}.topbar{height:72px;position:sticky;top:0;z-index:15;background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 34px;gap:16px}.crumb{font-size:12px;color:var(--muted)}.crumb b{color:var(--navy)}.top-actions{display:flex;align-items:center;gap:10px}.chip,.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;font-weight:850;white-space:nowrap}.chip{padding:8px 11px;background:#fff;border:1px solid var(--border);font-size:10px}.badge{padding:5px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.02em}.b-live{background:#DCFCE7;color:#166534}.b-governed{background:#DBEAFE;color:#1D4ED8}.b-owner{background:#FEF3C7;color:#92400E}.b-review{background:#FEF3C7;color:#92400E}.b-blocked{background:#FEE2E2;color:#991B1B}.b-purple{background:#EDE9FE;color:#6D28D9}.b-sample{background:#F1F5F9;color:#475569}.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:12px;font-weight:800}.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+    .page{max-width:1500px;margin:0 auto;padding:30px 36px 60px}.notice{display:flex;gap:10px;align-items:flex-start;padding:13px 15px;border:1px solid #C7D2FE;background:#EEF2FF;color:#3730A3;border-radius:12px;font-size:12px;line-height:1.55;margin-bottom:24px}.hero{display:flex;justify-content:space-between;gap:28px;align-items:flex-start;margin-bottom:26px}.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:var(--blue)}.hero h2{font-size:34px;line-height:1.08;letter-spacing:-.035em;color:var(--navy);margin:7px 0 10px}.hero p{font-size:14px;line-height:1.65;color:var(--muted);max-width:820px;margin:0}.hero-meta{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:430px}.view{display:none}.view.active{display:block}.section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:32px 0 14px}.section-title:first-child{margin-top:0}.section-title h3{margin:0;font-size:21px;letter-spacing:-.02em;color:var(--navy)}.section-title p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+    .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}.kpi{padding:20px;min-height:138px}.k-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;font-weight:780}.ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:13px;font-weight:900}.i-blue{background:#DBEAFE;color:#1D4ED8}.i-green{background:#DCFCE7;color:#15803D}.i-cyan{background:#CFFAFE;color:#0E7490}.i-amber{background:#FEF3C7;color:#B45309}.i-red{background:#FEE2E2;color:#B91C1C}.i-purple{background:#EDE9FE;color:#6D28D9}.k-value{font-size:28px;font-weight:900;color:var(--navy);margin-top:20px;letter-spacing:-.035em}.k-sub{font-size:11px;color:var(--soft);margin-top:4px}.overview-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(390px,.75fr);gap:18px;margin-bottom:18px}.panel{padding:22px}.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:18px}.panel h3{font-size:18px;color:var(--navy);margin:0}.panel .desc{font-size:12px;line-height:1.5;color:var(--muted);margin:5px 0 0}.action-list{display:grid;gap:10px}.action{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--border);background:#FCFDFE;padding:13px 14px;border-radius:12px}.action .title{font-size:13px;color:var(--text);font-weight:850}.action .meta{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.health{border:1px solid var(--border);padding:13px;border-radius:12px;min-height:96px}.health-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.health-name{font-size:12px;font-weight:850;color:var(--text)}.health small{display:block;font-size:10.5px;color:var(--muted);line-height:1.4;margin-top:7px}.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.quick{padding:18px;min-height:130px}.quick h4{font-size:14px;color:var(--navy);margin:0 0 8px}.quick p{font-size:11.5px;color:var(--muted);line-height:1.55;margin:0}
+    .module-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.module{padding:20px;border:1px solid var(--border);border-radius:14px;background:#fff;min-height:156px}.module:hover{border-color:#BFDBFE;box-shadow:0 10px 24px rgba(15,23,42,.05)}.module-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.module h4{font-size:15px;line-height:1.25;color:var(--text);margin:14px 0 7px}.module p{font-size:12px;line-height:1.55;color:var(--muted);margin:0}.module .meta-line{margin-top:12px;padding-top:11px;border-top:1px solid #EEF2F7;color:var(--soft);font-size:10.5px;line-height:1.45}.finance-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.money{padding:18px;border:1px solid var(--border);border-radius:13px;background:#FAFCFF;min-height:118px}.money-label{font-size:11px;color:var(--muted);font-weight:760}.money-value{font-size:23px;color:var(--navy);font-weight:900;margin-top:11px;letter-spacing:-.025em}.money-note{font-size:10.5px;color:var(--soft);margin-top:5px;line-height:1.4}.provider-list{display:grid;gap:12px}.provider{border:1px solid var(--border);border-radius:13px;padding:16px}.provider-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.provider-name{font-size:14px;font-weight:880;color:var(--text)}.provider p{font-size:11.5px;line-height:1.55;color:var(--muted);margin:8px 0 0}.pipeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.step{padding:15px;border:1px solid var(--border);border-radius:12px;background:#FAFCFF;min-height:112px}.step b{display:block;font-size:12px;color:var(--text)}.step span{display:block;font-size:10.5px;color:var(--muted);line-height:1.45;margin-top:6px}.list{display:grid;gap:0}.row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:14px 0;border-bottom:1px solid #EEF2F7}.row:last-child{border-bottom:0}.row .name{font-size:13px;font-weight:850;color:var(--text)}.row .sub{font-size:11px;color:var(--muted);line-height:1.45;margin-top:4px}
+    details{border:1px solid var(--border);border-radius:13px;background:#fff;margin-bottom:12px;overflow:hidden}summary{cursor:pointer;list-style:none;padding:17px 19px;font-size:14px;font-weight:850;color:var(--navy);display:flex;justify-content:space-between;align-items:center}summary::-webkit-details-marker{display:none}summary:after{content:"+";font-size:18px;color:var(--muted)}details[open] summary:after{content:"–"}.details-body{border-top:1px solid var(--border);padding:5px 19px 8px}.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.coverage{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.coverage-box{padding:20px;border:1px solid var(--border);border-radius:14px;background:#fff}.coverage-box h4{font-size:14px;color:var(--navy);margin:0 0 12px}.coverage-box ul{padding:0;margin:0;list-style:none;display:grid;gap:9px}.coverage-box li{font-size:11.5px;line-height:1.45;color:var(--muted);padding-left:16px;position:relative}.coverage-box li:before{content:"";position:absolute;left:0;top:6px;width:7px;height:7px;border-radius:50%;background:#CBD5E1}.coverage-box.existing li:before{background:var(--green)}.coverage-box.backend li:before{background:var(--blue)}.coverage-box.owner li:before{background:var(--amber)}.definition{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.definition .item{padding:16px;border:1px solid var(--border);border-radius:12px;background:#fff}.definition b{font-size:12px;color:var(--text)}.definition p{font-size:11px;color:var(--muted);line-height:1.5;margin:6px 0 0}.timeline{display:grid;gap:12px}.event{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:start}.event-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;background:var(--blue);box-shadow:0 0 0 4px #EFF6FF}.event-title{font-size:12px;font-weight:850;color:var(--text)}.event-sub,.event-time{font-size:10.5px;color:var(--muted);line-height:1.4}.footer{color:var(--soft);font-size:10px;text-align:center;margin-top:32px}.mobile-nav{display:none}
+    @media(max-width:1250px){.kpis{grid-template-columns:repeat(2,1fr)}.quick-grid{grid-template-columns:1fr 1fr}.finance-grid{grid-template-columns:repeat(2,1fr)}.pipeline{grid-template-columns:repeat(3,1fr)}.detail-grid{grid-template-columns:1fr}}
     @media(max-width:980px){.app{grid-template-columns:1fr}.sidebar{display:none}.topbar{padding:0 18px}.page{padding:24px 18px 50px}.overview-grid{grid-template-columns:1fr}.module-grid,.coverage{grid-template-columns:1fr}.mobile-nav{display:flex;gap:8px;overflow-x:auto;padding:10px 18px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:72px;z-index:12}.mobile-nav button{white-space:nowrap;border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800;color:var(--muted)}.mobile-nav button.active{background:#EFF6FF;color:var(--blue);border-color:#BFDBFE}}
     @media(max-width:680px){.hero{display:block}.hero-meta{justify-content:flex-start;margin-top:14px}.hero h2{font-size:28px}.kpis,.quick-grid,.finance-grid,.pipeline,.health-grid,.definition{grid-template-columns:1fr}.top-actions .chip,.top-actions .btn:not(.primary){display:none}.page{padding-left:14px;padding-right:14px}.action{grid-template-columns:40px minmax(0,1fr)}.action .badge{grid-column:2;justify-self:start}.module{min-height:0}}
   </style>
@@ -142,12 +22,8 @@
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-row"><div class="mark">LM</div><div><h1>Loadify Market</h1><p>Platform Owner Control Plane</p></div></div>
-      <span class="owner-badge">◆ PLATFORM OWNER PREVIEW</span>
-    </div>
-    <nav class="nav" id="desktopNav">
-      <div class="nav-label">Control plane</div>
+    <div class="brand"><div class="brand-row"><div class="mark">LM</div><div><h1>Loadify Market</h1><p>Platform Owner Control Plane</p></div></div><span class="owner-badge">◆ PLATFORM OWNER PREVIEW</span></div>
+    <nav class="nav"><div class="nav-label">Control plane</div>
       <button class="nav-item active" data-view="overview"><span class="nav-icon">O</span>Overview</button>
       <button class="nav-item" data-view="marketplace"><span class="nav-icon">M</span>Marketplace</button>
       <button class="nav-item" data-view="growth"><span class="nav-icon">G</span>Growth & Intelligence</button>
@@ -157,290 +33,117 @@
       <button class="nav-item" data-view="operations"><span class="nav-icon">P</span>Platform Operations</button>
       <button class="nav-item" data-view="governance"><span class="nav-icon">G</span>Audit & Governance</button>
     </nav>
-    <div class="side-links">
-      <a class="side-link" href="/admin">Open operational Admin Hub →</a>
-      <a class="side-link" href="/">Open Marketplace →</a>
-      <div class="side-state"><span>Provider writes</span><span class="badge b-blocked">OFF</span></div>
-      <div class="side-state"><span>Preview</span><span class="badge b-governed">READ ONLY</span></div>
-    </div>
+    <div class="side-links"><a class="side-link" href="/admin">Open operational Admin Hub →</a><a class="side-link" href="/">Open Marketplace →</a><div class="side-state"><span>Provider writes</span><span class="badge b-blocked">OFF</span></div><div class="side-state"><span>Preview</span><span class="badge b-governed">READ ONLY</span></div></div>
   </aside>
 
   <main class="content">
-    <header class="topbar">
-      <div class="crumb">Loadify Market / <b>Platform Owner</b></div>
-      <div class="top-actions"><span class="chip">Preview control plane</span><a class="btn" href="/admin">Open Admin Hub</a><a class="btn primary" href="/">Marketplace ↗</a></div>
-    </header>
+    <header class="topbar"><div class="crumb">Loadify Market / <b>Platform Owner</b></div><div class="top-actions"><span class="chip">Preview control plane</span><a class="btn" href="/admin">Open Admin Hub</a><a class="btn primary" href="/">Marketplace ↗</a></div></header>
     <div class="mobile-nav" id="mobileNav"></div>
-
     <div class="page">
-      <div class="notice">ⓘ <div><b>Repository-aligned design preview — not a live operations console.</b> The layout is intentionally split into focused control areas so the owner does not need to read the entire architecture on one screen. No production mutation is wired from this page.</div></div>
-
-      <section class="hero">
-        <div><div class="eyebrow">Platform Owner Control Plane</div><h2 id="pageTitle">Executive overview</h2><p id="pageIntro">A calm first screen for decisions that matter now. Deeper marketplace, money, supplier, autonomy and governance detail is one click away.</p></div>
-        <div class="hero-meta"><span class="badge b-governed">Repo-aligned</span><span class="badge b-live">RLS boundary exists</span><span class="badge b-blocked">Provider writes off</span><span class="badge b-purple">Autonomy fail-closed</span><span class="badge b-owner">Owner role pending</span></div>
-      </section>
+      <div class="notice">ⓘ <div><b>Repository-aligned design preview — not a live operations console.</b> Full audited coverage is retained, but deeper detail is opened by control area so the daily owner screen stays readable. No production mutation is wired from this page.</div></div>
+      <section class="hero"><div><div class="eyebrow">Platform Owner Control Plane</div><h2 id="pageTitle">Executive overview</h2><p id="pageIntro">A calm first screen for decisions that matter now, with full architecture available one level deeper.</p></div><div class="hero-meta"><span class="badge b-governed">Repo-aligned</span><span class="badge b-live">RLS boundary exists</span><span class="badge b-blocked">Provider writes off</span><span class="badge b-purple">Autonomy fail-closed</span><span class="badge b-owner">Owner role pending</span></div></section>
 
       <section class="view active" id="view-overview">
         <div class="kpis">
           <div class="card kpi"><div class="k-head"><span>Marketplace GMV</span><span class="ico i-blue">£</span></div><div class="k-value">£184.6k</div><div class="k-sub">SAMPLE • trailing 30 days</div></div>
+          <div class="card kpi"><div class="k-head"><span>Active sellers</span><span class="ico i-green">S</span></div><div class="k-value">428</div><div class="k-sub">SAMPLE • verified & active</div></div>
           <div class="card kpi"><div class="k-head"><span>Orders today</span><span class="ico i-cyan">O</span></div><div class="k-value">1,284</div><div class="k-sub">SAMPLE • all commerce paths</div></div>
           <div class="card kpi"><div class="k-head"><span>Open customer cases</span><span class="ico i-amber">!</span></div><div class="k-value">17</div><div class="k-sub">SAMPLE • returns / disputes / support</div></div>
+          <div class="card kpi"><div class="k-head"><span>Payout exposure</span><span class="ico i-purple">P</span></div><div class="k-value">£12.8k</div><div class="k-sub">SAMPLE • pending settlement</div></div>
           <div class="card kpi"><div class="k-head"><span>Critical incidents</span><span class="ico i-red">0</span></div><div class="k-value">0</div><div class="k-sub">SAMPLE • not live incident data</div></div>
         </div>
-
         <div class="overview-grid">
-          <section class="card panel">
-            <div class="panel-head"><div><h3>Owner Action Centre</h3><p class="desc">Only decisions with material customer, money, compliance or continuity impact.</p></div><span class="badge b-owner">Owner surface</span></div>
-            <div class="action-list">
-              <div class="action"><span class="ico i-red">!</span><div><div class="title">Payments, refunds & chargeback exposure</div><div class="meta">Unreconciled Stripe events, disputes, payout risk and unrecovered loss converge here.</div></div><span class="badge b-blocked">Critical</span></div>
-              <div class="action"><span class="ico i-amber">S</span><div><div class="title">Seller / business verification decisions</div><div class="meta">Onboarding readiness, Stripe readiness, VAT evidence, policy review and suspension decisions.</div></div><span class="badge b-review">Review</span></div>
-              <div class="action"><span class="ico i-purple">A</span><div><div class="title">Autonomy & provider evidence gates</div><div class="meta">No capability promotion without durable evidence, exact binding and fail-closed checks.</div></div><span class="badge b-purple">Blocked</span></div>
-              <div class="action"><span class="ico i-cyan">C</span><div><div class="title">Customer operations exceptions</div><div class="meta">WISMO escalation, return manual review, shipment stalls and notification recommendations.</div></div><span class="badge b-governed">Queue</span></div>
-            </div>
-          </section>
-
-          <section class="card panel">
-            <div class="panel-head"><div><h3>Platform Health</h3><p class="desc">Owner-level service posture. Static preview values are not live probes.</p></div><span class="badge b-sample">Not live</span></div>
-            <div class="health-grid">
-              <div class="health"><div class="health-top"><span class="health-name">Storefront & Netlify</span><span class="badge b-owner">Bind</span></div><small>Frontend, CDN, deploy and edge health.</small></div>
-              <div class="health"><div class="health-top"><span class="health-name">Auth & Identity</span><span class="badge b-governed">Governed</span></div><small>Supabase Auth, account status and capability boundaries.</small></div>
-              <div class="health"><div class="health-top"><span class="health-name">Database / RLS</span><span class="badge b-governed">Governed</span></div><small>Canonical commerce truth, migrations and recovery posture.</small></div>
-              <div class="health"><div class="health-top"><span class="health-name">Stripe / Money</span><span class="badge b-governed">Governed</span></div><small>Checkout, Connect, webhooks, balances and payout reconciliation.</small></div>
-              <div class="health"><div class="health-top"><span class="health-name">Supplier Runtime</span><span class="badge b-review">Guarded</span></div><small>Health, risk, SLA and evidence-gated provider execution.</small></div>
-              <div class="health"><div class="health-top"><span class="health-name">Recovery / Release</span><span class="badge b-owner">Gate</span></div><small>Deploy health, migration health, clean recovery and certification.</small></div>
-            </div>
-          </section>
+          <section class="card panel"><div class="panel-head"><div><h3>Owner Action Centre</h3><p class="desc">Only decisions with material customer, money, compliance or continuity impact.</p></div><span class="badge b-owner">Owner surface</span></div><div class="action-list">
+            <div class="action"><span class="ico i-red">!</span><div><div class="title">Payments, refunds & chargeback exposure</div><div class="meta">Unreconciled Stripe events, disputes, payout risk and unrecovered loss converge here.</div></div><span class="badge b-blocked">Critical</span></div>
+            <div class="action"><span class="ico i-amber">S</span><div><div class="title">Seller / business verification decisions</div><div class="meta">Onboarding readiness, Stripe readiness, VAT evidence, policy review and suspension decisions.</div></div><span class="badge b-review">Review</span></div>
+            <div class="action"><span class="ico i-purple">A</span><div><div class="title">Autonomy & provider evidence gates</div><div class="meta">No capability promotion without durable evidence, exact binding and fail-closed checks.</div></div><span class="badge b-purple">Blocked</span></div>
+            <div class="action"><span class="ico i-cyan">C</span><div><div class="title">Customer operations exceptions</div><div class="meta">WISMO escalation, return manual review, shipment stalls and notification recommendations.</div></div><span class="badge b-governed">Queue</span></div>
+            <div class="action"><span class="ico i-blue">G</span><div><div class="title">Global policy / feature / safety changes</div><div class="meta">Maintenance, payments safety, commission configuration, feature flags and high-impact platform settings.</div></div><span class="badge b-governed">Governance</span></div>
+            <div class="action"><span class="ico i-red">T</span><div><div class="title">Trust, legal & privacy escalations</div><div class="meta">Prohibited items, IP complaints, abuse reports, erasure/anonymisation and data-rights requests.</div></div><span class="badge b-review">Compliance</span></div>
+          </div></section>
+          <section class="card panel"><div class="panel-head"><div><h3>Platform Health</h3><p class="desc">Owner-level service posture. Static preview values are not live probes.</p></div><span class="badge b-sample">Not live</span></div><div class="health-grid">
+            <div class="health"><div class="health-top"><span class="health-name">Storefront & Netlify</span><span class="badge b-owner">Bind</span></div><small>Frontend, CDN, deploy and edge health.</small></div>
+            <div class="health"><div class="health-top"><span class="health-name">Auth & Identity</span><span class="badge b-governed">Governed</span></div><small>Supabase Auth, account status and capability boundaries.</small></div>
+            <div class="health"><div class="health-top"><span class="health-name">Database / RLS</span><span class="badge b-governed">Governed</span></div><small>Canonical commerce truth, migrations and recovery posture.</small></div>
+            <div class="health"><div class="health-top"><span class="health-name">Stripe / Money</span><span class="badge b-governed">Governed</span></div><small>Checkout, Connect, webhooks, balances and payout reconciliation.</small></div>
+            <div class="health"><div class="health-top"><span class="health-name">Notifications</span><span class="badge b-governed">Multi-channel</span></div><small>In-app, transactional email and push delivery boundaries.</small></div>
+            <div class="health"><div class="health-top"><span class="health-name">Supplier Runtime</span><span class="badge b-review">Guarded</span></div><small>Health, risk, SLA and evidence-gated provider execution.</small></div>
+            <div class="health"><div class="health-top"><span class="health-name">Monitoring & Abuse</span><span class="badge b-governed">Backend</span></div><small>CSP/error reports, rate limits and abuse surfaces.</small></div>
+            <div class="health"><div class="health-top"><span class="health-name">Recovery / Release</span><span class="badge b-owner">Gate</span></div><small>Deploy health, migration health, clean recovery and certification.</small></div>
+          </div></section>
         </div>
-
-        <div class="section-title"><div><h3>Executive shortcuts</h3><p>Open the control area you need without scrolling through the whole architecture.</p></div></div>
-        <div class="quick-grid">
-          <button class="card quick nav-jump" data-view="money" style="text-align:left;border:1px solid var(--border);cursor:pointer"><h4>Money & Trust</h4><p>Canonical finance, payouts, Stripe, tax/VAT, privacy and trust controls.</p></button>
-          <button class="card quick nav-jump" data-view="supplier" style="text-align:left;border:1px solid var(--border);cursor:pointer"><h4>Supplier Commerce</h4><p>Foundation, catalog, economics, sync, orchestration, provider evidence and recovery.</p></button>
-          <button class="card quick nav-jump" data-view="governance" style="text-align:left;border:1px solid var(--border);cursor:pointer"><h4>Audit & Governance</h4><p>Authority, monitoring, audit coverage, release gates and definition of complete.</p></button>
+        <div class="section-title"><div><h3>Executive shortcuts</h3><p>Open a control area without scrolling through the entire architecture.</p></div></div><div class="quick-grid">
+          <button class="card quick" data-view="marketplace" style="text-align:left;border:1px solid var(--border);cursor:pointer"><h4>Marketplace</h4><p>Identity, sellers, buyers, catalog, orders, logistics, disputes, services and communications.</p></button>
+          <button class="card quick" data-view="money" style="text-align:left;border:1px solid var(--border);cursor:pointer"><h4>Money & Trust</h4><p>Canonical finance, payouts, Stripe, tax/VAT, privacy and trust controls.</p></button>
+          <button class="card quick" data-view="supplier" style="text-align:left;border:1px solid var(--border);cursor:pointer"><h4>Supplier Commerce</h4><p>Foundation, catalog, economics, sync, orchestration, provider evidence and recovery.</p></button>
+          <button class="card quick" data-view="governance" style="text-align:left;border:1px solid var(--border);cursor:pointer"><h4>Audit & Governance</h4><p>Authority, audit coverage, release gates, activity and definition of complete.</p></button>
         </div>
       </section>
 
-      <section class="view" id="view-marketplace"></section>
-      <section class="view" id="view-growth"></section>
-      <section class="view" id="view-money"></section>
-      <section class="view" id="view-supplier"></section>
-      <section class="view" id="view-autonomy"></section>
-      <section class="view" id="view-operations"></section>
-      <section class="view" id="view-governance"></section>
-
+      <section class="view" id="view-marketplace"></section><section class="view" id="view-growth"></section><section class="view" id="view-money"></section><section class="view" id="view-supplier"></section><section class="view" id="view-autonomy"></section><section class="view" id="view-operations"></section><section class="view" id="view-governance"></section>
       <div class="footer">Loadify Market — Platform Owner / Super Admin visual preview • DRAFT • READ ONLY • No production mutations • Sample metrics are not live financial data</div>
     </div>
   </main>
 </div>
-
 <script>
-const views = {
-  marketplace:{
-    title:'Marketplace control',
-    intro:'Core marketplace operations grouped into clear business domains. Existing Admin Hub surfaces remain the operational execution layer.',
-    groups:[
-      ['Identity & participants',[
-        ['Users & Identity','Accounts, active/inactive state, role hydration and buyer/seller capability context.','LIVE','Admin UI exists at /admin/users.','/admin/users'],
-        ['Sellers & Stores','Verification, onboarding, storefront, Stripe readiness, shipping setup, pause/suspension and seller policy state.','LIVE','Admin seller/approval surfaces already exist.','/admin/approvals'],
-        ['Buyers & B2B','Buyer accounts, business identity, VAT profile evidence, invoice preference and activity context.','LIVE','Admin buyer surface exists.','/admin/buyers']
-      ]],
-      ['Commerce lifecycle',[
-        ['Catalog & Listings','Products, approval, listing context, moderation, quality signals and canonical product linkage.','LIVE','Admin product UI exists.','/admin/products'],
-        ['Taxonomy & Filters','Hierarchical categories and category filter definitions need an owner-level taxonomy view.','GOVERNED','Schema-backed; dedicated owner taxonomy surface is not claimed.'],
-        ['Orders & Commerce Truth','Canonical order lifecycle across product, service, B2B/RFQ and fulfilment contexts.','LIVE','Admin orders UI exists.','/admin/orders'],
-        ['Logistics & Shipping','Shipping methods, rates, zones, product shipping, shipments, shipment events and tracking.','GOVERNED','Backend/schema capability exists; owner summary should orchestrate it.'],
-        ['Returns & Disputes','Buyer protection, seller decisions, disputes, messages, refunds and supplier-recovery separation.','LIVE','Operational admin dispute/return surfaces exist.','/admin/disputes']
-      ]],
-      ['Services & communication',[
-        ['Services / RFQ / Transport','Services, service requests/quotes, RFQ requests/responses, delivery requests and transport quotes.','GOVERNED','Real schema-backed marketplace capability; needs owner-level visibility.'],
-        ['Reviews & Communications','Reviews, product questions, offers, conversations, messages and order messages.','GOVERNED','Mixed UI/backend coverage; owner sees health and exceptions, not every conversation.'],
-        ['Marketplace Moderation','Reported listings, listing review and policy enforcement workflows.','LIVE','Admin flagged/moderation UI exists.','/admin/flagged'],
-        ['Support & SLA','Tickets, ticket messages, assignment, status, escalations and customer impact.','LIVE','Admin support UI exists.','/admin/support']
-      ]]
-    ]
-  },
-  growth:{
-    title:'Growth, merchandising & intelligence',
-    intro:'Commercial growth controls remain subordinate to canonical product, rights, compliance and financial truth.',
-    groups:[
-      ['Merchandising & promotions',[
-        ['Featured Listings & Banners','Featured listings, banners and promoted listing primitives exist and should be measurable.','GOVERNED','Schema/backend primitives exist; owner view should show reach and policy state.'],
-        ['Promotions & Coupons','Seller-scoped coupons, discount rules and coupon usage need measurable governance.','GOVERNED','Schema-backed; avoid hidden or unmeasured discount behaviour.'],
-        ['Marketplace Insights','Admin analytics, product analytics, search/demand signals and seller/buyer performance summaries.','LIVE','Admin analytics surface exists.','/admin/analytics']
-      ]],
-      ['Discovery & AI',[
-        ['Product Discovery','Opportunity intelligence only. It may recommend opportunities but must not auto-publish or bypass compliance.','GOVERNED','Acts as recommendation intelligence, not commerce truth.'],
-        ['AI Product Builder','Verified facts → AI presentation. Never AI invention → product fact.','REVIEW','AI Facts Lock, rights and compliance remain mandatory before publication.']
-      ]]
-    ]
-  },
-  money:{
-    title:'Money, tax & trust',
-    intro:'Separate money truths stay separate. GMV, seller entitlement, platform revenue, processor state, payouts, refunds and supplier recovery must never collapse into one number.',
-    custom:'money'
-  },
-  supplier:{
-    title:'Supplier Commerce',
-    intro:'Govern the complete supplier lifecycle from intake to customer fulfilment without provider-specific commerce truth or direct publish bypass.',
-    custom:'supplier'
-  },
-  autonomy:{
-    title:'Autonomy & risk',
-    intro:'Autonomy is capability-scoped, evidence-driven and fail-closed. Generic write authority never implies PII or financial authority.',
-    custom:'autonomy'
-  },
-  operations:{
-    title:'Platform operations',
-    intro:'Service delivery, notification health, runtime guardrails and recovery are owner-visible without turning the owner console into an engineering dashboard.',
-    groups:[
-      ['Communications & delivery',[
-        ['In-App Notifications','Admin notification surface plus user notification records and settings.','LIVE','Existing admin UI.','/admin/notifications'],
-        ['Transactional Email','SendGrid service messages, delivery policy and rate limits.','GOVERNED','Transactional messaging only; not a marketing sender.'],
-        ['Push Notifications','Server-governed push-token ownership and push delivery path.','GOVERNED','Push token writes remain server governed.'],
-        ['Deliverability & Abuse','Failures, rate limits, spoofing boundaries, dedupe and channel-health escalation.','OWNER','Owner-level health surface required.']
-      ]],
-      ['Monitoring & recovery',[
-        ['CSP Reports','Browser security-policy reporting surface.','GOVERNED','Security telemetry exists in backend/schema.'],
-        ['Error Reports','Application error-reporting data path.','GOVERNED','Owner needs only trend/severity, not raw noisy logs.'],
-        ['Rate Limits','Checkout, registration, email, verification, Connect, tracking and error-report controls.','GOVERNED','Runtime guardrails are backend-controlled.'],
-        ['Account Security Response','Deactivate tokens/authority with account status changes.','GOVERNED','Security boundary exists and should remain auditable.'],
-        ['Netlify Deploy Health','Bind production + preview deployment state into one release posture.','OWNER','Needs live owner binding rather than static text.'],
-        ['Migration Health & Clean Recovery','Ordered migration integrity, drift evidence and fresh-zero recovery proof.','OWNER','Certification gate; static migration-health alone is insufficient.']
-      ]]
-    ]
-  },
-  governance:{
-    title:'Audit & governance',
-    intro:'Authority, audit evidence, release gates and architecture coverage live here instead of crowding the daily owner overview.',
-    custom:'governance'
-  }
+const statusClass=s=>({LIVE:'b-live',GOVERNED:'b-governed',OWNER:'b-owner',REVIEW:'b-review',BLOCKED:'b-blocked',SAMPLE:'b-sample'})[s]||'b-governed';
+const mod=m=>`<a class="module" ${m[4]?`href="${m[4]}"`:''}><div class="module-top"><span class="ico i-blue">${m[0].charAt(0)}</span><span class="badge ${statusClass(m[2])}">${m[2]}</span></div><h4>${m[0]}</h4><p>${m[1]}</p><div class="meta-line">${m[3]}</div></a>`;
+const row=(n,s,b,c='b-governed')=>`<div class="row"><div><div class="name">${n}</div><div class="sub">${s}</div></div><span class="badge ${c}">${b}</span></div>`;
+const views={
+ marketplace:{title:'Marketplace control',intro:'Core marketplace operations grouped into clear business domains. Existing Admin Hub surfaces remain the operational execution layer.',groups:[['Identity & participants',[
+ ['Users & Identity','Accounts, active/inactive state, role hydration and buyer/seller capability context.','LIVE','Admin UI exists at /admin/users.','/admin/users'],['Sellers & Stores','Verification, onboarding, storefront, Stripe readiness, shipping setup, pause/suspension and seller policy state.','LIVE','Admin seller/approval surfaces already exist.','/admin/approvals'],['Buyers & B2B','Buyer accounts, business identity, VAT profile evidence, invoice preference and activity context.','LIVE','Admin buyer surface exists.','/admin/buyers']]],['Commerce lifecycle',[
+ ['Catalog & Listings','Products, approval, listing context, moderation, quality signals and canonical product linkage.','LIVE','Admin product UI exists.','/admin/products'],['Taxonomy & Filters','Hierarchical categories, canonical taxonomy and category filter definitions.','GOVERNED','Schema-backed; dedicated owner taxonomy surface not yet claimed.'],['Orders & Commerce Truth','Canonical order lifecycle across product, service, B2B/RFQ and fulfilment contexts.','LIVE','Admin orders UI exists.','/admin/orders'],['Logistics & Shipping','Shipping methods/rates/zones, product shipping, shipments, shipment events, tracking and delivery exceptions.','GOVERNED','Backend/schema capability exists; owner summary should orchestrate it.'],['Returns & Disputes','Buyer protection, seller decisions, disputes, messages, refunds and supplier-recovery separation.','LIVE','Operational admin dispute/return surfaces exist.','/admin/disputes']]],['Services & communication',[
+ ['Services / RFQ / Transport','Services, service requests/quotes, RFQ requests/responses, delivery requests and transport quotes.','GOVERNED','Real schema-backed marketplace capability; needs owner-level visibility.'],['Reviews & Communications','Reviews, product questions, offers, conversations, messages and order messages.','GOVERNED','Mixed UI/backend coverage; owner sees health and exceptions, not every conversation.'],['Marketplace Moderation','Reported listings, listing review and policy enforcement workflows.','LIVE','Admin flagged/moderation UI exists.','/admin/flagged'],['Support & SLA','Tickets, ticket messages, assignment, status, escalations and customer impact.','LIVE','Admin support UI exists.','/admin/support']]]]},
+ growth:{title:'Growth, merchandising & intelligence',intro:'Commercial growth controls remain subordinate to canonical product, rights, compliance and financial truth.',groups:[['Merchandising & promotions',[
+ ['Featured Listings & Banners','Featured listings, banners and promoted listing primitives exist and should be measurable.','GOVERNED','Schema/backend primitives exist; owner view should show reach and policy state.'],['Promotions & Coupons','Seller-scoped coupons, discount rules and coupon usage need measurable governance.','GOVERNED','Schema-backed; avoid hidden or unmeasured discount behaviour.'],['Marketplace Insights','Admin analytics, product analytics, search/demand signals and seller/buyer performance summaries.','LIVE','Admin analytics surface exists.','/admin/analytics']]],['Discovery & AI',[
+ ['Product Discovery','Opportunity intelligence only. It may recommend opportunities but must not auto-publish or bypass compliance.','GOVERNED','Recommendation intelligence, not commerce truth.'],['AI Product Builder','Verified facts → AI presentation. Never AI invention → product fact.','REVIEW','AI Facts Lock, rights and compliance remain mandatory before publication.']]]]},
+ money:{title:'Money, tax & trust',intro:'Separate money truths stay separate. GMV, seller entitlement, platform revenue, processor state, payouts, refunds, chargebacks and supplier recovery must never collapse into one number.',custom:'money'},
+ supplier:{title:'Supplier Commerce',intro:'Govern the complete supplier lifecycle from intake to customer fulfilment without provider-specific commerce truth or direct publish bypass.',custom:'supplier'},
+ autonomy:{title:'Autonomy & risk',intro:'Autonomy is capability-scoped, evidence-driven and fail-closed. Generic write authority never implies PII or financial authority.',custom:'autonomy'},
+ operations:{title:'Platform operations',intro:'Service delivery, notification health, runtime guardrails and recovery are owner-visible without turning the owner console into an engineering dashboard.',groups:[['Communications & delivery',[
+ ['In-App Notifications','Admin notification surface plus user notification records/settings.','LIVE','Existing admin UI.','/admin/notifications'],['Transactional Email','SendGrid service messages, delivery policy and rate limits.','GOVERNED','Transactional messaging only; not a marketing sender.'],['Push Notifications','Server-governed push-token ownership and push delivery path.','GOVERNED','Push token writes remain server governed.'],['Deliverability & Abuse','Failures, rate limits, spoofing boundaries, dedupe and channel-health escalation.','OWNER','Owner-level health surface required.']]],['Monitoring, release & recovery',[
+ ['CSP Reports','Browser security-policy reporting surface.','GOVERNED','Security telemetry exists in backend/schema.'],['Error Reports','Application error-reporting data path.','GOVERNED','Owner needs trend/severity, not raw noisy logs.'],['Rate Limits','Checkout, registration, email, verification, Connect, tracking and error-report controls.','GOVERNED','Runtime guardrails are backend-controlled.'],['Account Security Response','Deactivate tokens/authority with account state changes.','GOVERNED','Security boundary exists and should remain auditable.'],['Netlify Deploy Health','Bind production + preview deployment state into one release posture.','OWNER','Needs live owner binding rather than static text.'],['Migration Health & Clean Recovery','Ordered migration integrity, drift evidence and fresh-zero recovery proof.','OWNER','Certification gate; static migration-health alone is insufficient.'],['Core E2E Certification','Buyer/Seller/Admin/Owner flows, Stripe TEST vertical, exact-once webhook/order and reconciliation gates.','OWNER','A deploy PASS is not full platform certification.']]]]},
+ governance:{title:'Audit & governance',intro:'Authority, audit evidence, release gates, activity and architecture coverage live here instead of crowding the daily owner overview.',custom:'governance'}
 };
-
-const statusClass = s => ({LIVE:'b-live',GOVERNED:'b-governed',OWNER:'b-owner',REVIEW:'b-review',BLOCKED:'b-blocked',SAMPLE:'b-sample'})[s] || 'b-governed';
-const renderModule = m => `<a class="module" ${m[4]?`href="${m[4]}"`:''}><div class="module-top"><span class="ico i-blue">${m[0].charAt(0)}</span><span class="badge ${statusClass(m[2])}">${m[2]}</span></div><h4>${m[0]}</h4><p>${m[1]}</p><div class="meta-line">${m[3]}</div></a>`;
-
-function renderGroups(view){
-  return view.groups.map(g=>`<div class="section-title"><div><h3>${g[0]}</h3><p>Focused owner visibility — open the operational Admin Hub only when action is required.</p></div></div><div class="module-grid">${g[1].map(renderModule).join('')}</div>`).join('');
-}
-
+function groups(v){return v.groups.map(g=>`<div class="section-title"><div><h3>${g[0]}</h3><p>Focused owner visibility — open the operational Admin Hub only when action is required.</p></div></div><div class="module-grid">${g[1].map(mod).join('')}</div>`).join('')}
 function moneyHTML(){return `
-  <div class="section-title"><div><h3>Canonical financial truth</h3><p>Illustrative numbers show layout only; live values must bind to canonical finance and reconciliation sources.</p></div><span class="badge b-sample">Sample values</span></div>
-  <div class="finance-grid">
-    <div class="money"><div class="money-label">Customer gross / GMV</div><div class="money-value">£184.6k</div><div class="money-note">Sample only.</div></div>
-    <div class="money"><div class="money-label">Seller entitlement</div><div class="money-value">£170.3k</div><div class="money-note">After governed fee/adjustment logic.</div></div>
-    <div class="money"><div class="money-label">Platform revenue</div><div class="money-value">£8.4k</div><div class="money-note">Commission / fee truth, sample only.</div></div>
-    <div class="money"><div class="money-label">Processor / payment state</div><div class="money-value">—</div><div class="money-note">Bind from canonical Stripe truth.</div></div>
-    <div class="money"><div class="money-label">Pending payouts</div><div class="money-value">£12.8k</div><div class="money-note">Sample outstanding settlement.</div></div>
-    <div class="money"><div class="money-label">Refund / chargeback exposure</div><div class="money-value">£3.24k</div><div class="money-note">Customer refund and loss exposure remain separate from supplier recovery.</div></div>
-  </div>
-  <div class="section-title"><div><h3>Money control surfaces</h3><p>Use owner views for exceptions and policy, not for ad-hoc manual rewriting of financial history.</p></div></div>
-  <div class="module-grid">
-    ${renderModule(['Finance & Reconciliation','GMV, seller entitlement, platform revenue, processor state, adjustments, reconciliation and immutable commercial history.','OWNER','Owner command view required; one canonical financial truth.'])}
-    ${renderModule(['Payouts & Balances','seller_balance, payout_requests and payouts remain distinct states with auditable movement.','LIVE','Operational payout UI exists.','/admin/payouts'])}
-    ${renderModule(['Stripe / Payments','Checkout, payment sessions, Stripe events, Connect state, webhook truth and payout reconciliation.','LIVE','Admin Stripe event surface exists.','/admin/stripe-events'])}
-    ${renderModule(['Supplier Recovery','Customer refund ≠ supplier recovery. Recovery must remain independently visible and evidenced.','OWNER','Owner-level exposure/recovery view required.'])}
-  </div>
-  <div class="section-title"><div><h3>Tax, trust & privacy</h3><p>Evidence-driven commercial and legal controls.</p></div></div>
-  <div class="module-grid">
-    ${renderModule(['Tax / VAT / Invoices','Product VAT data, order tax snapshots, B2B VAT verification and invoice governance.','GOVERNED','No universal VAT shortcut; tax decisions must be evidence-driven.'])}
-    ${renderModule(['Trust, Safety & Legal','Reported listings, seller verification, prohibited items/AUP and IP complaint escalation.','GOVERNED','Operational moderation exists; owner sees high-impact policy and legal cases.'])}
-    ${renderModule(['Privacy & Data Rights','Account deactivation, erasure/anonymisation, access/export requests, retention and legal hold.','OWNER','UK GDPR owner workflow needs explicit evidence and auditability.'])}
-    ${renderModule(['Payment Safety & Loss','High-risk review, unreconciled payment events, chargebacks and loss exposure.','OWNER','No preview toggle claims live values; owner surface binds real states later.'])}
-  </div>`}
-
-function supplierHTML(){return `
-  <div class="section-title"><div><h3>Governed product lifecycle</h3><p>The control plane represents the canonical pipeline, not only provider health.</p></div><span class="badge b-blocked">No direct publish bypass</span></div>
-  <div class="pipeline">
-    ${[['1. Source / Intake','Discovery source, direct supplier ingress, staging/quarantine.'],['2. Extract & Identity','Source identity, identifiers and evidence.'],['3. Normalize','Supplier import batches and normalised facts.'],['4. Canonical Match','Match/create candidate; canonical product ≠ supplier offer.'],['5. Variant / Offer','Variant map, offer and sellable-stock policy.'],['6. Provenance','Supplier provenance, source evidence and history.'],['7. Rights','Media/UGC commercial rights evidence.'],['8. Compliance','Territory/product compliance and restricted-item review.'],['9. Economics','Landed cost, tax evidence, margin and customer price.'],['10. AI Merchandising','Facts lock: presentation only from verified facts.'],['11. Review','Operator/governance review; no direct bypass.'],['12. Publish','Only governed sellable canonical output reaches marketplace.']].map(x=>`<div class="step"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('')}
-  </div>
-  <div class="section-title"><div><h3>Supplier operations & commerce truth</h3><p>Backend-governed capabilities grouped into readable owner domains.</p></div></div>
-  <div class="module-grid">
-    ${renderModule(['Supplier Foundation & Partners','Supplier identity, adapter registration, provenance, compliance profile and qualification evidence.','GOVERNED','Foundation and guard migrations exist.'])}
-    ${renderModule(['Intake / Import / Quarantine','HMAC/direct intake governance, staging, quarantine, import batches and normalisation review.','GOVERNED','No direct marketplace publication from intake.'])}
-    ${renderModule(['Canonical Supplier Catalog','Supplier items, identifiers, matching, supplier offers and provenance.','GOVERNED','Canonical product and supplier offer remain distinct.'])}
-    ${renderModule(['Commercial Economics','Supplier tax rules, landed-cost evidence, margin, customer price and policy history.','GOVERNED','Financial/tax evidence remains versioned and auditable.'])}
-    ${renderModule(['Stock & Price Sync','Staleness, unknown/out-of-stock fail-closed behaviour and supplier price-drift governance.','GOVERNED','Supplier raw stock ≠ Loadify sellable stock.'])}
-    ${renderModule(['Order Orchestration','Reservations, state transitions, append-only orchestration evidence and lost-response recovery.','GOVERNED','Payment success ≠ supplier order success.'])}
-    ${renderModule(['Provider Reconciliation','Provider order IDs, lookup/recovery, tracking and capability-specific reconciliation.','REVIEW','Provider evidence must prove each capability before promotion.'])}
-    ${renderModule(['Returns / Cancellation / Recovery','Customer refund, supplier cancellation, supplier return and reimbursement remain separate truths.','GOVERNED','No silent collapse into one refund state.'])}
-  </div>
-  <div class="section-title"><div><h3>Provider evidence posture</h3><p>Provider readiness is capability-scoped, not a single green/red status.</p></div></div>
-  <div class="provider-list">
-    <div class="provider"><div class="provider-head"><span class="provider-name">Avasam</span><span class="badge b-review">Read evidence only</span></div><p>Read-only auth/catalogue/price/stock evidence exists. Order create, acknowledgement, idempotency, lost-response recovery, lookup/reconciliation, tracking/PII, cancellation, returns, reimbursement, webhook and retry semantics remain evidence-gated.</p></div>
-    <div class="provider"><div class="provider-head"><span class="provider-name">BigBuy</span><span class="badge b-review">Evidence-gated</span></div><p>Sandbox/real capability promotion requires authorised evidence and controlled identifiers. No uncontrolled write promotion.</p></div>
-    <div class="provider"><div class="provider-head"><span class="provider-name">Direct Supplier</span><span class="badge b-owner">Foundation required</span></div><p>A real supplier identity/evidence packet is required before a real controlled pilot. Intake may remain staging/quarantine without marketplace activation.</p></div>
-    <div class="provider"><div class="provider-head"><span class="provider-name">Future Providers</span><span class="badge b-purple">Multi-provider</span></div><p>Provider-neutral core, capability-scoped evidence and separate READ / WRITE / PII / financial-impact authority.</p></div>
-  </div>`}
-
+ <div class="section-title"><div><h3>Canonical financial truth</h3><p>Illustrative numbers show layout only; live values must bind to canonical finance and reconciliation sources.</p></div><span class="badge b-sample">Sample values</span></div>
+ <div class="finance-grid"><div class="money"><div class="money-label">Customer gross / GMV</div><div class="money-value">£184.6k</div><div class="money-note">Sample only.</div></div><div class="money"><div class="money-label">Seller entitlement</div><div class="money-value">£170.3k</div><div class="money-note">After governed fee/adjustment logic.</div></div><div class="money"><div class="money-label">Platform revenue</div><div class="money-value">£8.4k</div><div class="money-note">Commission / fees, sample only.</div></div><div class="money"><div class="money-label">Processor / payment state</div><div class="money-value">—</div><div class="money-note">Bind from canonical Stripe truth.</div></div><div class="money"><div class="money-label">Available seller balance</div><div class="money-value">—</div><div class="money-note">seller_balance canonical state.</div></div><div class="money"><div class="money-label">Pending payouts</div><div class="money-value">£12.8k</div><div class="money-note">Sample outstanding settlement.</div></div><div class="money"><div class="money-label">Refund / return exposure</div><div class="money-value">£2.6k</div><div class="money-note">Sample only; distinct from chargebacks.</div></div><div class="money"><div class="money-label">Chargeback / loss exposure</div><div class="money-value">£640</div><div class="money-note">Sample loss exposure.</div></div></div>
+ <div class="section-title"><div><h3>Money control surfaces</h3><p>Owner views expose exceptions and policy without rewriting financial history.</p></div></div><div class="module-grid">${mod(['Finance & Reconciliation','GMV, seller entitlement, platform revenue, processor state, adjustments, reconciliation and immutable commercial history.','OWNER','Owner command view required; one canonical financial truth.'])}${mod(['Payouts & Balances','seller_balance, payout_requests and payouts remain distinct states with auditable movement.','LIVE','Operational payout UI exists.','/admin/payouts'])}${mod(['Stripe / Payments','Checkout, payment sessions, Stripe events, Connect state, webhook truth and payout reconciliation.','LIVE','Admin Stripe event surface exists.','/admin/stripe-events'])}${mod(['Supplier Recovery','Customer refund ≠ supplier recovery. Recovery stays independently visible and evidenced.','OWNER','Owner-level exposure/recovery view required.'])}</div>
+ <div class="section-title"><div><h3>Money safety & exact reconciliation</h3><p>Explicit controls restored from the full architecture view.</p></div></div><div class="card panel"><div class="list">${row('Payments safety hold','platform_settings safety boundary exists; preview does not claim its live value.','CONTROL EXISTS')}${row('Stripe event / webhook truth','Payment sessions and Stripe event visibility feed reconciliation.','EXISTING UI','b-live')}${row('Payout request lifecycle','seller_balance, payout_requests and payouts remain distinct states.','EXISTING UI','b-live')}${row('Supplier recovery','Customer refund ≠ supplier recovery; show separately.','OWNER VIEW','b-owner')}${row('Exact reconciliation','Order completed ≠ financially reconciled.','CERTIFY','b-owner')}</div></div>
+ <div class="section-title"><div><h3>Tax, trust & privacy</h3><p>Full detail is available on demand instead of occupying three dense columns at all times.</p></div></div><div class="detail-grid">
+  <details><summary>Tax, VAT & invoice evidence</summary><div class="details-body">${row('Product VAT data','priceExVat / vatRate evidence exists.','BACKEND')}${row('Order tax snapshot','vatAmount + tax decision evidence boundary.','BACKEND')}${row('B2B VAT verification','Buyer business profile includes VAT evidence state.','BACKEND')}${row('Invoices','Invoice generation should map to canonical commercial identity.','OWNER VIEW','b-owner')}</div></details>
+  <details><summary>Trust, Safety & Legal</summary><div class="details-body">${row('Reported listings','Operational moderation already exists.','EXISTING UI','b-live')}${row('Seller verification','Verification records and protected admin fields.','GOVERNED')}${row('Prohibited items / AUP','Current legal policy surfaces exist.','POLICY')}${row('IP complaints','Dedicated legal complaints policy exists; owner escalation view required.','OWNER VIEW','b-owner')}</div></details>
+  <details><summary>Privacy & Data Rights</summary><div class="details-body">${row('Account deactivation','Reversible deactivation boundary exists.','BACKEND')}${row('Erasure / anonymisation','Delete-account minimises profile data while retaining required transaction evidence.','BACKEND')}${row('Data access / export requests','Owner workflow must be verified before claiming runtime completeness.','VERIFY','b-owner')}${row('Retention / legal hold','Accounting, fraud, dispute and reconciliation retention must remain explicit.','OWNER VIEW','b-owner')}</div></details>
+ </div>`}
+function supplierHTML(){const steps=[['1. Source / Intake','Discovery source, direct supplier ingress, staging/quarantine.'],['2. Extract & Identity','Source identity, identifiers and evidence.'],['3. Normalize','Supplier import batches and normalised facts.'],['4. Canonical Match','Match/create candidate; canonical product ≠ supplier offer.'],['5. Variant / Offer','Variant map, offer and sellable-stock policy.'],['6. Provenance','Supplier provenance, source evidence and history.'],['7. Rights','Media/UGC commercial rights evidence.'],['8. Compliance','Territory/product compliance and restricted-item review.'],['9. Economics','Landed cost, tax evidence, margin and customer price.'],['10. AI Merchandising','Facts lock: presentation only from verified facts.'],['11. Review','Operator/governance review; no direct bypass.'],['12. Publish','Only governed sellable canonical output reaches marketplace.']];return `
+ <div class="section-title"><div><h3>Governed product lifecycle</h3><p>The canonical pipeline remains complete; it is simply isolated on its own page.</p></div><span class="badge b-blocked">No direct publish bypass</span></div><div class="pipeline">${steps.map(x=>`<div class="step"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('')}</div>
+ <div class="section-title"><div><h3>Supplier operations & commerce truth</h3><p>Backend-governed capabilities grouped into readable owner domains.</p></div></div><div class="module-grid">${mod(['Supplier Foundation & Partners','Supplier identity, adapter registration, provenance, compliance profile and qualification evidence.','GOVERNED','Foundation and guard migrations exist.'])}${mod(['Intake / Import / Quarantine','HMAC/direct intake governance, staging, quarantine, import batches and normalisation review.','GOVERNED','No direct marketplace publication from intake.'])}${mod(['Canonical Supplier Catalog','Supplier items, identifiers, matching, supplier offers and provenance.','GOVERNED','Canonical product and supplier offer remain distinct.'])}${mod(['Commercial Economics','Supplier tax rules, landed-cost evidence, margin, customer price and policy history.','GOVERNED','Financial/tax evidence remains versioned and auditable.'])}${mod(['Stock & Price Sync','Staleness, unknown/out-of-stock fail-closed behaviour and supplier price-drift governance.','GOVERNED','Supplier raw stock ≠ Loadify sellable stock.'])}${mod(['Order Orchestration','Reservations, state transitions, append-only orchestration evidence and lost-response recovery.','GOVERNED','Payment success ≠ supplier order success.'])}${mod(['Provider Reconciliation','Provider order IDs, lookup/recovery, tracking and capability-specific reconciliation.','REVIEW','Provider evidence must prove each capability before promotion.'])}${mod(['Returns / Cancellation / Recovery','Customer refund, supplier cancellation, supplier return and reimbursement remain separate truths.','GOVERNED','No silent collapse into one refund state.'])}</div>
+ <div class="section-title"><div><h3>Provider evidence posture</h3><p>Provider readiness is capability-scoped, not a single green/red status.</p></div></div><div class="provider-list"><div class="provider"><div class="provider-head"><span class="provider-name">Avasam</span><span class="badge b-review">Read evidence only</span></div><p>Read-only auth/catalogue/price/stock evidence exists. Order create, acknowledgement, idempotency, lost-response recovery, lookup/reconciliation, tracking/PII, cancellation, returns, reimbursement, webhook and retry semantics remain evidence-gated.</p></div><div class="provider"><div class="provider-head"><span class="provider-name">BigBuy</span><span class="badge b-review">Evidence-gated</span></div><p>Sandbox/real capability promotion requires authorised evidence and controlled identifiers. No uncontrolled write promotion.</p></div><div class="provider"><div class="provider-head"><span class="provider-name">Direct Supplier</span><span class="badge b-owner">Foundation required</span></div><p>A real supplier identity/evidence packet is required before a real controlled pilot. Intake may remain staging/quarantine without marketplace activation.</p></div><div class="provider"><div class="provider-head"><span class="provider-name">Future Providers</span><span class="badge b-purple">Multi-provider</span></div><p>Provider-neutral core, capability-scoped evidence and separate READ / WRITE / PII / financial-impact authority.</p></div></div>
+ <div class="section-title"><div><h3>Provider capability, health & control</h3><p>Restored explicitly here as well as in the autonomy/risk view.</p></div></div><div class="module-grid">${mod(['Supplier Health','Explainable operational health recommendation, separate from Supplier Risk and never auto-enabling commerce.','GOVERNED','Recommendation only; no automatic kill switch.'])}${mod(['Risk / Security / SLA / Incidents','Versioned risk policy, security posture, SLA breaches, incidents and recovery evidence.','GOVERNED','Supplier Control Centre foundations exist.'])}${mod(['Kill Switches','Global / provider / capability fail-closed boundaries with auditable action history.','GOVERNED','No provider activation bypass.'])}${mod(['PII & Financial Authority','Generic write authority never implies customer PII disclosure or financial mutation authority.','BLOCKED','Separate permission and evidence remain mandatory.'])}</div>`}
 function autonomyHTML(){return `
-  <div class="section-title"><div><h3>Capability ladder</h3><p>Every capability advances only with fresh, matching evidence.</p></div><span class="badge b-purple">Fail-closed</span></div>
-  <div class="card panel"><div class="list">
-    <div class="row"><div><div class="name">Capability Registry</div><div class="sub">Classify VERIFIED / STALE / UNVERIFIED / BLOCKED plus READ / WRITE / PII / financial impact.</div></div><span class="badge b-governed">Foundation</span></div>
-    <div class="row"><div><div class="name">Evidence freshness / TTL</div><div class="sub">Stale evidence cannot promote provider or autonomous capability.</div></div><span class="badge b-live">Required</span></div>
-    <div class="row"><div><div class="name">Shadow evidence</div><div class="sub">Must be durable and bound to exact pilot, provider and order_submission capability.</div></div><span class="badge b-purple">Bound</span></div>
-    <div class="row"><div><div class="name">Phase O controlled pilot</div><div class="sub">No real pilot without required provider and supplier evidence.</div></div><span class="badge b-blocked">Blocked</span></div>
-    <div class="row"><div><div class="name">Financial mutation</div><div class="sub">Generic autonomous financial mutation remains hard-disabled.</div></div><span class="badge b-blocked">Off</span></div>
-  </div></div>
-  <div class="section-title"><div><h3>Risk, health & customer exceptions</h3><p>Health recommendations never bypass risk/security governance or customer-protection rules.</p></div></div>
-  <div class="module-grid">
-    ${renderModule(['Supplier Health','Explainable operational health recommendation, separate from Supplier Risk and never auto-enabling commerce.','GOVERNED','Recommendation only; no automatic kill switch.'])}
-    ${renderModule(['Risk / Security / SLA / Incidents','Versioned risk policy, security posture, SLA breaches, incidents, recovery evidence and governed actions.','GOVERNED','Supplier Control Centre foundations exist.'])}
-    ${renderModule(['Kill Switches','Global / provider / capability fail-closed boundaries with auditable action history.','GOVERNED','No provider activation bypass.'])}
-    ${renderModule(['PII & Financial Authority','Generic write authority never implies customer PII disclosure or financial mutation authority.','BLOCKED','Separate permission and evidence remain mandatory.'])}
-    ${renderModule(['Customer Operations Exception Queue','WISMO, return manual review, shipment stalls and notification recommendations unify into a human-review queue.','GOVERNED','Admin read path exists; no automatic refund or external mutation.'])}
-    ${renderModule(['Notification Policy','Evidence age, material change, channel verification, dedupe and human-review recommendation.','GOVERNED','No sender is embedded in the recommendation engine.'])}
-  </div>`}
-
+ <div class="section-title"><div><h3>Capability ladder</h3><p>Every capability advances only with fresh, matching evidence.</p></div><span class="badge b-purple">Fail-closed</span></div><div class="card panel"><div class="list">${row('Capability Registry','Classify VERIFIED / STALE / UNVERIFIED / BLOCKED plus READ / WRITE / PII / financial impact.','FOUNDATION')}${row('Evidence freshness / TTL','Stale evidence cannot promote provider or autonomous capability.','REQUIRED','b-live')}${row('Shadow evidence','Must be durable and bound to exact pilot, provider and order_submission capability.','BOUND','b-purple')}${row('Phase O controlled pilot','No real pilot without required provider and supplier evidence.','BLOCKED','b-blocked')}${row('Financial mutation','Generic autonomous financial mutation remains hard-disabled.','OFF','b-blocked')}</div></div>
+ <div class="section-title"><div><h3>Risk & provider controls</h3><p>Health recommendations never bypass risk/security governance.</p></div></div><div class="module-grid">${mod(['Supplier Health','Explainable operational health recommendation, separate from Supplier Risk.','GOVERNED','Recommendation only; no automatic kill switch.'])}${mod(['Risk / Security / SLA / Incidents','Versioned policy, security posture, SLA breaches, incidents and recovery evidence.','GOVERNED','Supplier Control Centre foundations exist.'])}${mod(['Kill Switches','Global / provider / capability fail-closed boundaries with auditable action history.','GOVERNED','No provider activation bypass.'])}${mod(['PII & Financial Authority','Generic write authority never implies customer PII disclosure or financial mutation authority.','BLOCKED','Separate permission and evidence mandatory.'])}</div>
+ <div class="section-title"><div><h3>Customer Operations Exception Queue</h3><p>Individual exception types are visible again, without mixing them into the overview.</p></div><span class="badge b-governed">Admin read path</span></div><div class="card panel"><div class="action-list">
+  <div class="action"><span class="ico i-cyan">W</span><div><div class="title">WISMO / order-status escalation</div><div class="meta">Grounded customer order support; no invented delivery facts.</div></div><span class="badge b-governed">Review</span></div>
+  <div class="action"><span class="ico i-amber">↩</span><div><div class="title">Return manual review</div><div class="meta">Eligibility can recommend next action; automatic refund remains separate.</div></div><span class="badge b-review">Human</span></div>
+  <div class="action"><span class="ico i-red">S</span><div><div class="title">Shipment stall</div><div class="meta">Stalled shipment detection feeds operator exception handling.</div></div><span class="badge b-blocked">Exception</span></div>
+  <div class="action"><span class="ico i-purple">N</span><div><div class="title">Notification recommendation</div><div class="meta">Evidence age, material change, channel verification and dedupe checks; recommendation is not sender execution.</div></div><span class="badge b-purple">Policy</span></div>
+ </div></div>`}
 function governanceHTML(){return `
-  <div class="section-title"><div><h3>Security & authority</h3><p>Current repo authority is separated from future owner authority.</p></div></div>
-  <div class="card panel"><div class="list">
-    <div class="row"><div><div class="name">Current Admin UI</div><div class="sub">Existing admin access boundary.</div></div><span class="badge b-live">role=admin + isAdmin</span></div>
-    <div class="row"><div><div class="name">Buyer / Seller capabilities</div><div class="sub">Additive account_capabilities model for marketplace contexts.</div></div><span class="badge b-governed">account_capabilities</span></div>
-    <div class="row"><div><div class="name">Dedicated Platform Owner authority</div><div class="sub">Separate owner authority, delegation, re-auth/high-risk approvals and no privilege leakage.</div></div><span class="badge b-owner">Not modelled</span></div>
-    <div class="row"><div><div class="name">RLS / service-role boundary</div><div class="sub">RLS remains enforced; service role remains server-only; supplier secrets have no raw UI exposure.</div></div><span class="badge b-governed">Governed</span></div>
-  </div></div>
-  <div class="section-title"><div><h3>Repository coverage matrix</h3><p>Kept on this dedicated page so architecture evidence does not crowd the daily dashboard.</p></div><span class="badge b-governed">Audit-driven</span></div>
-  <div class="coverage">
-    <div class="coverage-box existing"><h4>Existing Admin Hub UI</h4><ul><li>Dashboard, users and buyers</li><li>Seller approvals / governance</li><li>Products and orders</li><li>Payouts and Stripe events</li><li>Flagged listings / moderation</li><li>Disputes, analytics and support</li><li>Notifications and settings</li></ul></div>
-    <div class="coverage-box backend"><h4>Backend / schema already exists</h4><ul><li>Taxonomy, category filters and merchandising</li><li>Coupons, promotions and featured listings</li><li>Shipping methods/rates/zones and shipment events</li><li>Services, RFQ, delivery requests and transport quotes</li><li>Reviews, questions, offers and order communications</li><li>Privacy lifecycle, audit and monitoring/rate limits</li><li>Supplier Foundation through Control Centre / pilot evidence</li></ul></div>
-    <div class="coverage-box owner"><h4>Dedicated owner surface required</h4><ul><li>Platform Owner authority distinct from ordinary Admin</li><li>Cross-domain owner action / exception centre</li><li>Canonical finance & reconciliation command view</li><li>Trust / privacy / legal escalation centre</li><li>Global provider capability/evidence control</li><li>Deploy, recovery and certification gate view</li><li>High-impact change approval and complete audit coverage</li></ul></div>
-  </div>
-  <div class="section-title"><div><h3>Audit, policy & release gates</h3><p>Details are collapsed by default to reduce visual fatigue.</p></div></div>
-  <details><summary>Audit & administrative actions</summary><div class="details-body">Admin action records and financial audit logs already exist in active paths. Every future high-impact owner mutation must prove audit coverage rather than assume it.</div></details>
-  <details><summary>Platform governance</summary><div class="details-body">Maintenance mode, feature flags, commission/platform configuration and seller/policy controls remain canonical, auditable and server governed. The static preview does not claim live values.</div></details>
-  <details><summary>Release, recovery & certification</summary><div class="details-body">Netlify deploy health, migration health, clean recovery replay and Core E2E certification are separate gates. A build/deploy PASS is not the same as full platform certification.</div></details>
-  <div class="section-title"><div><h3>Definition of complete for future /super-admin</h3><p>The page is not production-ready until all eight gates are satisfied.</p></div><span class="badge b-owner">Before production wiring</span></div>
-  <div class="definition">
-    ${[['1. Authority','Dedicated Platform Owner authority, delegation model, re-auth/high-risk approval rules and no privilege leakage.'],['2. Truth','Every number maps to canonical order, finance, tax, seller, supplier and reconciliation truth; no parallel ledgers.'],['3. Coverage','Marketplace, B2B/services, logistics, growth, trust, privacy, Supplier Commerce and platform operations are represented.'],['4. Safe Mutations','Server-owned endpoints, RLS/service-role boundaries, idempotency, audit, confirmation and rollback/recovery.'],['5. Live Health','Netlify, Supabase, Stripe, notifications, supplier runtime, monitoring and recovery probes are real, not decorative.'],['6. Evidence Gates','Provider capability, Shadow/pilot, tax/compliance, supplier rights and recovery evidence fail closed when absent/stale.'],['7. E2E','Buyer/Seller/Admin/Owner flows, money paths, disputes/returns, shipping, audit and permission denials tested end-to-end.'],['8. Owner Review','Desktop/mobile visual audit, accessibility, performance, density and action hierarchy approved before main.']].map(x=>`<div class="item"><b>${x[0]}</b><p>${x[1]}</p></div>`).join('')}
-  </div>`}
-
-function renderCustom(key){return key==='money'?moneyHTML():key==='supplier'?supplierHTML():key==='autonomy'?autonomyHTML():key==='governance'?governanceHTML():''}
-
-Object.entries(views).forEach(([key,v])=>{
-  const el=document.getElementById('view-'+key);
-  if(!el) return;
-  el.innerHTML=v.custom?renderCustom(v.custom):renderGroups(v);
-});
-
-const navNames={overview:'Overview',marketplace:'Marketplace',growth:'Growth & Intelligence',money:'Money & Trust',supplier:'Supplier Commerce',autonomy:'Autonomy & Risk',operations:'Platform Operations',governance:'Audit & Governance'};
-const mobileNav=document.getElementById('mobileNav');
-Object.entries(navNames).forEach(([k,n])=>{const b=document.createElement('button');b.dataset.view=k;b.textContent=n;mobileNav.appendChild(b)});
-
-function activate(viewKey, pushHash=true){
-  if(!navNames[viewKey]) viewKey='overview';
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-'+viewKey).classList.add('active');
-  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===viewKey));
-  const cfg=views[viewKey];
-  document.getElementById('pageTitle').textContent=viewKey==='overview'?'Executive overview':cfg.title;
-  document.getElementById('pageIntro').textContent=viewKey==='overview'?'A calm first screen for decisions that matter now. Deeper marketplace, money, supplier, autonomy and governance detail is one click away.':cfg.intro;
-  if(pushHash) history.replaceState(null,'','#'+viewKey);
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-document.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b){e.preventDefault();activate(b.dataset.view)}});
-window.addEventListener('hashchange',()=>activate(location.hash.slice(1)||'overview',false));
-activate(location.hash.slice(1)||'overview',false);
+ <div class="section-title"><div><h3>Security & authority</h3><p>Current repository authority is separated from future owner authority.</p></div></div><div class="card panel"><div class="list">${row('Current Admin UI','Existing admin access boundary.','role=admin + isAdmin','b-live')}${row('Buyer / Seller capabilities','Additive account_capabilities model for marketplace contexts.','account_capabilities')}${row('Dedicated Platform Owner authority','Separate owner authority, delegation, re-auth/high-risk approvals and no privilege leakage.','NOT MODELLED','b-owner')}${row('RLS / service-role boundary','RLS enforced; service role server-only; supplier secrets have no raw UI exposure.','GOVERNED','b-live')}</div></div>
+ <div class="section-title"><div><h3>Repository coverage matrix</h3><p>Architecture evidence lives here so the daily dashboard stays calm.</p></div><span class="badge b-governed">Audit-driven</span></div><div class="coverage"><div class="coverage-box existing"><h4>Existing Admin Hub UI</h4><ul><li>Dashboard, users and buyers</li><li>Seller approvals / governance</li><li>Products and orders</li><li>Payouts and Stripe events</li><li>Flagged listings / moderation</li><li>Disputes, analytics and support</li><li>Notifications and settings</li></ul></div><div class="coverage-box backend"><h4>Backend / schema already exists</h4><ul><li>Taxonomy, category filters and merchandising</li><li>Coupons, promotions and featured listings</li><li>Shipping methods/rates/zones and shipment events</li><li>Services, RFQ, delivery requests and transport quotes</li><li>Reviews, questions, offers and order communications</li><li>Privacy lifecycle, audit and monitoring/rate limits</li><li>Supplier Foundation through Control Centre / pilot evidence</li></ul></div><div class="coverage-box owner"><h4>Dedicated owner surface required</h4><ul><li>Platform Owner authority distinct from ordinary Admin</li><li>Cross-domain owner action / exception centre</li><li>Canonical finance & reconciliation command view</li><li>Trust / privacy / legal escalation centre</li><li>Global provider capability/evidence control</li><li>Deploy, recovery and certification gate view</li><li>High-impact change approval and complete audit coverage</li></ul></div></div>
+ <div class="section-title"><div><h3>Audit, policy & release gates</h3><p>Detailed controls are restored but collapsed by default.</p></div></div>
+ <details><summary>Audit & administrative actions</summary><div class="details-body">${row('Admin action records','Server admin user-status actions write audit evidence.','ACTIVE PATH')}${row('Financial audit logs','Payout workflows record audit evidence.','ACTIVE PATH')}${row('Coverage completeness','Every high-impact owner mutation must be proven audited before production wiring.','VERIFY','b-owner')}</div></details>
+ <details><summary>Platform governance</summary><div class="details-body">${row('Maintenance mode','Control exists; preview does not claim its live value.','CONTROL')}${row('Feature flags','Runtime capability switches remain governed.','GOVERNED')}${row('Commission / platform config','Canonical commercial config; changes must be audited.','GOVERNED')}${row('Policy / moderation controls','Seller, listing and platform policy decisions.','AVAILABLE','b-live')}</div></details>
+ <details><summary>Release, recovery & certification</summary><div class="details-body">${row('Netlify deploy health','Bind production + preview deployment state.','BIND','b-owner')}${row('Migration health','Ordered migration integrity and drift evidence.','GATE')}${row('Clean recovery replay','Fresh-zero replay/recovery remains a separate evidence gate.','CERTIFY','b-owner')}${row('Core E2E certification','Buyer/Seller/Admin/Owner, Stripe TEST vertical, exact-once webhook/order and reconciliation gates.','CERTIFY','b-owner')}</div></details>
+ <div class="section-title"><div><h3>Recent Control Activity</h3><p>Illustrative timeline restored; production version must bind real audit sources.</p></div><span class="badge b-sample">Sample</span></div><div class="card panel"><div class="timeline"><div class="event"><span class="event-dot"></span><div><div class="event-title">Phase O Shadow binding hardened</div><div class="event-sub">Exact pilot/provider/capability evidence binding.</div></div><span class="event-time">Repo</span></div><div class="event"><span class="event-dot" style="background:var(--green);box-shadow:0 0 0 4px #ECFDF5"></span><div><div class="event-title">Supplier readiness guard integrated</div><div class="event-sub">Provider write activation remains off.</div></div><span class="event-time">Repo</span></div><div class="event"><span class="event-dot" style="background:var(--amber);box-shadow:0 0 0 4px #FFFBEB"></span><div><div class="event-title">Dedicated owner authority still pending</div><div class="event-sub">Must be designed and security-reviewed before owner mutations.</div></div><span class="event-time">Design</span></div></div></div>
+ <div class="section-title"><div><h3>Definition of complete for future /super-admin</h3><p>The page is not production-ready until all eight gates are satisfied.</p></div><span class="badge b-owner">Before production wiring</span></div><div class="definition">${[['1. Authority','Dedicated Platform Owner authority, delegation, re-auth/high-risk approval and no privilege leakage.'],['2. Truth','Every number maps to canonical order, finance, tax, seller, supplier and reconciliation truth.'],['3. Coverage','Marketplace, B2B/services, logistics, growth, trust, privacy, Supplier Commerce and platform operations represented.'],['4. Safe Mutations','Server-owned endpoints, RLS/service-role boundaries, idempotency, audit, confirmation and rollback/recovery.'],['5. Live Health','Netlify, Supabase, Stripe, notifications, supplier runtime, monitoring and recovery probes are real.'],['6. Evidence Gates','Provider capability, Shadow/pilot, tax/compliance, supplier rights and recovery evidence fail closed when absent/stale.'],['7. E2E','Buyer/Seller/Admin/Owner flows, money paths, disputes/returns, shipping, audit and permission denials tested end-to-end.'],['8. Owner Review','Desktop/mobile visual audit, accessibility, performance, density and action hierarchy approved before main.']].map(x=>`<div class="item"><b>${x[0]}</b><p>${x[1]}</p></div>`).join('')}</div>`}
+function custom(k){return k==='money'?moneyHTML():k==='supplier'?supplierHTML():k==='autonomy'?autonomyHTML():k==='governance'?governanceHTML():''}
+Object.entries(views).forEach(([k,v])=>{const e=document.getElementById('view-'+k);if(e)e.innerHTML=v.custom?custom(v.custom):groups(v)});
+const names={overview:'Overview',marketplace:'Marketplace',growth:'Growth & Intelligence',money:'Money & Trust',supplier:'Supplier Commerce',autonomy:'Autonomy & Risk',operations:'Platform Operations',governance:'Audit & Governance'};const mobile=document.getElementById('mobileNav');Object.entries(names).forEach(([k,n])=>{const b=document.createElement('button');b.dataset.view=k;b.textContent=n;mobile.appendChild(b)});
+function activate(k,push=true){if(!names[k])k='overview';document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('view-'+k).classList.add('active');document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===k));const cfg=views[k];document.getElementById('pageTitle').textContent=k==='overview'?'Executive overview':cfg.title;document.getElementById('pageIntro').textContent=k==='overview'?'A calm first screen for decisions that matter now, with full architecture available one level deeper.':cfg.intro;if(push)history.replaceState(null,'','#'+k);window.scrollTo({top:0,behavior:'smooth'})}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b){e.preventDefault();activate(b.dataset.view)}});window.addEventListener('hashchange',()=>activate(location.hash.slice(1)||'overview',false));activate(location.hash.slice(1)||'overview',false);
 </script>
 </body>
 </html>
