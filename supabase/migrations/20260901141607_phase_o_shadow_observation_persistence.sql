@@ -102,21 +102,34 @@ BEGIN
   IF v_pilot.status<>'preparing' THEN
     RAISE EXCEPTION 'Shadow observations are accepted only while pilot is preparing';
   END IF;
+  IF v_pilot.prepared_at IS NULL THEN
+    RAISE EXCEPTION 'Shadow observation requires a prepared pilot timestamp';
+  END IF;
   IF v_provider_reason IS NULL THEN RAISE EXCEPTION 'provider contract reason is required'; END IF;
   IF v_operator_action NOT IN ('submit_order','no_action') THEN RAISE EXCEPTION 'operator action is invalid'; END IF;
   IF v_operator_status NOT IN ('resolved','unresolved') THEN RAISE EXCEPTION 'operator status is invalid'; END IF;
 
-  SELECT o.id,o."buyerId" AS buyer_id,o."productId" AS product_id,o.total
+  SELECT
+    o.id,
+    o."buyerId" AS buyer_id,
+    o."productId" AS product_id,
+    o.total,
+    o."createdAt" AS created_at
     INTO v_order
     FROM public.orders o
    WHERE o.id=p_order_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'Shadow observation requires an existing order'; END IF;
+  IF v_order.created_at<v_pilot.prepared_at THEN
+    RAISE EXCEPTION 'Shadow observation order predates pilot preparation';
+  END IF;
 
   IF NOT EXISTS(
     SELECT 1 FROM private.supplier_pilot_cohort_members c
-     WHERE c.pilot_id=v_pilot.id AND c.buyer_id=v_order.buyer_id
+     WHERE c.pilot_id=v_pilot.id
+       AND c.buyer_id=v_order.buyer_id
+       AND c.added_at<=v_order.created_at
   ) THEN
-    RAISE EXCEPTION 'Shadow observation order buyer is outside the pilot cohort';
+    RAISE EXCEPTION 'Shadow observation order buyer is outside the contemporaneous pilot cohort';
   END IF;
 
   IF v_order.product_id IS NULL OR NOT EXISTS(
@@ -124,12 +137,15 @@ BEGIN
       FROM private.supplier_pilot_offers po
       JOIN private.supplier_offers so ON so.id=po.supplier_offer_id
      WHERE po.pilot_id=v_pilot.id
+       AND po.approved_at<=v_order.created_at
        AND so.canonical_product_id=v_order.product_id
        AND so.supplier_id=v_pilot.supplier_id
        AND so.territory=v_pilot.territory
        AND so.status='approved'
+       AND so.approved_at IS NOT NULL
+       AND so.approved_at<=v_order.created_at
   ) THEN
-    RAISE EXCEPTION 'Shadow observation order product is outside the pilot offer set';
+    RAISE EXCEPTION 'Shadow observation order product is outside the contemporaneous pilot offer set';
   END IF;
 
   v_order_value_minor:=round(COALESCE(v_order.total,0) * 100)::bigint;
@@ -181,8 +197,10 @@ BEGIN
       'providerContractReason',v_provider_reason,
       'orderScope',jsonb_build_object(
         'orderId',p_order_id,
-        'buyerCohortMatched',true,
-        'productAllowlisted',true,
+        'orderCreatedAt',v_order.created_at,
+        'pilotPreparedAt',v_pilot.prepared_at,
+        'buyerCohortMatchedAtOrderTime',true,
+        'productAllowlistedAtOrderTime',true,
         'orderValueMinor',v_order_value_minor
       ),
       'externalMutationPerformed',false,
