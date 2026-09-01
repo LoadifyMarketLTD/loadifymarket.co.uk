@@ -27,12 +27,14 @@ describe('Phase O autonomous runtime boundary', () => {
     expect(runtime).toContain('return canonicalPilotHandler(event, context)');
   });
 
-  it('accepts no caller Shadow system action and binds only durable server review evidence', () => {
+  it('accepts no caller Shadow system action or policy override and binds only durable server review evidence', () => {
     const runtime = repo('netlify/functions/admin-supplier-pilot-runtime.ts');
     const readiness = repo('netlify/functions/_shared/phaseOPilotAutonomyReadiness.ts');
     expect(runtime).not.toContain('shadowReviewEvidenceRef?:');
     expect(runtime).not.toContain('shadowReview?:');
     expect(runtime).not.toContain('systemAction?:');
+    expect(runtime).not.toContain('promotionPolicyId?:');
+    expect(runtime).not.toContain('promotionPolicyVersion?:');
     expect(runtime).toContain('toDurableShadowEvidence');
     expect(runtime).toContain('shadowReviewRequiredBinding');
     expect(runtime).toContain('pilotId,');
@@ -41,6 +43,9 @@ describe('Phase O autonomous runtime boundary', () => {
     expect(runtime).toContain('source: PHASE_O_SHADOW_REVIEW_SOURCE');
     expect(runtime).toContain('policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION');
     expect(runtime).toContain('persistenceBound: true');
+    expect(runtime).toContain('promotionPolicyRequired: true');
+    expect(runtime).toContain('promotionPolicyConfigured: review.passPolicyConfigured === true');
+    expect(runtime).toContain('shadowPromotionPolicyConfigured');
     expect(readiness).toContain('shadow_mode_review_not_demonstrated');
     expect(readiness).toContain('shadow_mode_review_not_persistence_bound');
     expect(readiness).toContain('shadow_mode_review_source_untrusted');
@@ -48,14 +53,17 @@ describe('Phase O autonomous runtime boundary', () => {
     expect(readiness).toContain('shadow_mode_review_provider_mismatch');
     expect(readiness).toContain('shadow_mode_review_capability_mismatch');
     expect(readiness).toContain('shadow_mode_review_policy_mismatch');
+    expect(readiness).toContain('shadow_mode_promotion_policy_not_configured');
+    expect(readiness).toContain('shadow_mode_promotion_policy_invalid');
   });
 
-  it('keeps deploy-before-migration fail-closed when the durable reader is unavailable', () => {
+  it('keeps deploy-before-migration fail-closed when the governed durable reader is unavailable or old', () => {
     const runtime = repo('netlify/functions/admin-supplier-pilot-runtime.ts');
     expect(runtime).toContain('shadowReviewError');
     expect(runtime).toContain('? null');
     expect(runtime).toContain('shadowReviewReadAvailable: !shadowReviewError');
     expect(runtime).toContain('shadowReviewPersistenceBound: shadowReview?.persistenceBound === true');
+    expect(runtime).toContain('shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true');
   });
 
   it('keeps the runtime preflight free of direct provider financial and notification side effects', () => {
