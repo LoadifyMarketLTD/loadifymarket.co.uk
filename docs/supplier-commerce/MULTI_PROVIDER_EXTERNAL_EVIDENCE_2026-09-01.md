@@ -6,19 +6,6 @@ This ledger records the current external evidence used to classify provider read
 
 All provider activation remains hosted OFF unless separate runtime evidence, contractual authority, platform controls, and existing Supplier Commerce gates are satisfied.
 
-## Syncee
-
-**Status used by Loadify:** partner retailer/custom-platform access required.
-
-Official evidence checked on 2026-09-01:
-
-- Syncee documents a custom-platform webhook for suppliers that must be enabled by the Syncee team. The same documentation says the webhook is for receiving orders into a supplier store and cannot be used to upload products to the Syncee Marketplace or access the catalog.
-  - https://help.syncee.com/en/articles/12960517-order-synchronization-for-custom-platforms-as-a-supplier
-- Syncee retailer guidance states that a custom-built store cannot install Syncee and subscribe through the ordinary supported-store path.
-  - https://help.syncee.com/en/articles/8953542-can-i-subscribe-without-having-a-store
-
-**Loadify conclusion:** supplier-side webhook capability is not evidence of retailer-side catalog/order API access. Keep the adapter inactive until Syncee explicitly enables a compatible retailer/custom-platform integration and Loadify captures runtime/contract evidence.
-
 ## AppScenic
 
 **Status used by Loadify:** partner retailer-side API access required.

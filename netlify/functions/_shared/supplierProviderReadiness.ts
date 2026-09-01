@@ -76,14 +76,6 @@ function readinessFor(definition: SupplierProviderDefinition): Pick<
         externalDependency: true,
         nextAction: 'Onboard and approve one authentic UK/EU supplier in Supplier Foundation, then execute the existing Phase E identity capture and Phase F import-review workflow under admin control.',
       };
-    case 'syncee':
-      return {
-        readinessState: 'partner_access_required',
-        blockingDependencies: ['partner_retailer_api_access'],
-        providerActivationBlocked: true,
-        externalDependency: true,
-        nextAction: 'Obtain explicit retailer/custom-platform partner API access from Syncee. The documented custom-platform supplier webhook is not retailer catalog access; keep the provider inactive until contract and runtime evidence exist.',
-      };
     case 'appscenic':
       return {
         readinessState: 'partner_access_required',

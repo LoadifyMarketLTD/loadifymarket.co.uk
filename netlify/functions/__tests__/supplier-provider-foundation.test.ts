@@ -19,6 +19,10 @@ describe('supplier provider registry', () => {
     expect(listSupplierProviderDefinitions().every(provider => provider.hostedActivation === 'off')).toBe(true);
   });
 
+  it('does not register Syncee as a Loadify provider', () => {
+    expect(listSupplierProviderDefinitions().map(provider => provider.key)).not.toContain('syncee');
+  });
+
   it('preserves Avasam as the only provider with verified code capabilities', () => {
     const avasam = getSupplierProviderDefinition('avasam');
     expect(avasam.codeState).toBe('verified_read_only');
