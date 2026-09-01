@@ -44,12 +44,23 @@ describe('Autonomous Supplier Commerce integration boundaries', () => {
     expect(returns).toContain('carrierLabelCapability: false');
   });
 
-  it('packages both autonomous jobs as scheduled Netlify functions', () => {
+  it('keeps autonomous schedules out of netlify.toml and bound to fail-closed code wrappers', () => {
     const config = repo('netlify.toml');
-    expect(config).toContain('[functions."autonomous-supplier-commerce"]');
-    expect(config).toContain('schedule = "17 * * * *"');
-    expect(config).toContain('[functions."autonomous-shipment-stall-monitor"]');
-    expect(config).toContain('schedule = "43 * * * *"');
+    const supplierScheduler = repo('netlify/functions/autonomous-supplier-commerce.ts');
+    const stallMonitor = repo('netlify/functions/autonomous-shipment-stall-monitor.ts');
+
+    expect(config).not.toContain('[functions."autonomous-supplier-commerce"]');
+    expect(config).not.toContain('[functions."autonomous-shipment-stall-monitor"]');
+
+    expect(supplierScheduler).toContain("const SCHEDULE = '17 * * * *'");
+    expect(supplierScheduler).toContain('export const handler = schedule(SCHEDULE');
+    expect(supplierScheduler).toContain('resolveAutonomousSupplierCommercePolicy()');
+    expect(supplierScheduler).toContain('if (!policy.enabled || !policy.providerReadsAllowed)');
+
+    expect(stallMonitor).toContain("const SCHEDULE = '43 * * * *'");
+    expect(stallMonitor).toContain('export const handler = schedule(SCHEDULE');
+    expect(stallMonitor).toContain('resolveAutonomousSupplierCommercePolicy()');
+    expect(stallMonitor).toContain('if (!policy.enabled)');
   });
 
   it('keeps the stall monitor side-effect free until verified sinks exist', () => {
