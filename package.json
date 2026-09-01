@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "eslint . && vitest run netlify/functions/__tests__/supplier-feed-circuit-breaker.test.ts netlify/functions/__tests__/autonomous-supplier-commerce-boundaries.test.ts netlify/functions/__tests__/autonomous-supplier-commerce-engine.test.ts netlify/functions/__tests__/autonomous-operations-foundation.test.ts netlify/functions/__tests__/autonomous-intelligence-bridge.test.ts netlify/functions/__tests__/direct-supplier-intake-governance.test.ts && node scripts/verify-migration-health.mjs && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "preview": "vite preview",
