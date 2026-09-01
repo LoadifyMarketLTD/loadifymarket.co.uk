@@ -4,6 +4,7 @@ export const BIGBUY_READONLY_ENDPOINTS = {
   products: '/rest/catalog/products.json',
   productInformation: '/rest/catalog/productsinformation.json',
   productVariations: '/rest/catalog/productsvariations.json',
+  productImages: '/rest/catalog/productsimages.json',
   productStock: '/rest/catalog/productsstockbyhandlingdays.json',
   variationStock: '/rest/catalog/productsvariationsstockbyhandlingdays.json',
 } as const;
@@ -20,6 +21,20 @@ export interface BigBuyProductVariation {
   sku: string;
   product: number;
   wholesalePrice: number;
+}
+
+export interface BigBuyProductImage {
+  id: number;
+  isCover: boolean;
+  name: string;
+  url: string;
+  logo: boolean;
+  whiteBackground: boolean;
+}
+
+export interface BigBuyProductImages {
+  id: number;
+  images: BigBuyProductImage[];
 }
 
 export interface BigBuyStockBucket {
@@ -53,6 +68,27 @@ function nonNegativeSafeInteger(value: unknown): value is number {
 
 function nonNegativeFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function documentedBoolean(value: unknown): boolean | null {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  return null;
+}
+
+function trustedHttpsUrl(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== 'https:' || url.username || url.password) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 export function bigBuyParentTaxonomyPath(
@@ -119,6 +155,44 @@ export function parseBigBuyVariationsResponse(value: unknown): SupplierAdapterRe
     });
   }
   return { ok: true, data: variations };
+}
+
+export function parseBigBuyImagesResponse(value: unknown): SupplierAdapterResult<BigBuyProductImages[]> {
+  if (!Array.isArray(value)) return malformed('BigBuy images response must be an array');
+
+  const products: BigBuyProductImages[] = [];
+  for (const [index, item] of value.entries()) {
+    if (!isRecord(item)) return malformed(`BigBuy images[${index}] must be an object`);
+    if (!positiveSafeInteger(item.id)) return malformed(`BigBuy images[${index}].id is invalid`);
+    if (!Array.isArray(item.images)) return malformed(`BigBuy images[${index}].images must be an array`);
+
+    const images: BigBuyProductImage[] = [];
+    for (const [imageIndex, image] of item.images.entries()) {
+      if (!isRecord(image)) return malformed(`BigBuy images[${index}].images[${imageIndex}] must be an object`);
+      if (!positiveSafeInteger(image.id)) return malformed(`BigBuy images[${index}].images[${imageIndex}].id is invalid`);
+      const isCover = documentedBoolean(image.isCover);
+      const logo = documentedBoolean(image.logo);
+      const whiteBackground = documentedBoolean(image.whiteBackground);
+      const url = trustedHttpsUrl(image.url);
+      if (isCover === null) return malformed(`BigBuy images[${index}].images[${imageIndex}].isCover is invalid`);
+      if (logo === null) return malformed(`BigBuy images[${index}].images[${imageIndex}].logo is invalid`);
+      if (whiteBackground === null) return malformed(`BigBuy images[${index}].images[${imageIndex}].whiteBackground is invalid`);
+      if (typeof image.name !== 'string' || !image.name.trim()) return malformed(`BigBuy images[${index}].images[${imageIndex}].name is invalid`);
+      if (!url) return malformed(`BigBuy images[${index}].images[${imageIndex}].url is invalid`);
+
+      images.push({
+        id: image.id,
+        isCover,
+        name: image.name.trim(),
+        url,
+        logo,
+        whiteBackground,
+      });
+    }
+
+    products.push({ id: item.id, images });
+  }
+  return { ok: true, data: products };
 }
 
 export function parseBigBuyStockResponse(value: unknown): SupplierAdapterResult<BigBuyStockItem[]> {
