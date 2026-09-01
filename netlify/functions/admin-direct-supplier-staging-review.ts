@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { resolveDirectSupplierFoundationBinding } from './_shared/directSupplierFoundationBinding';
+import { evaluateDirectSupplierIntakeGovernance } from './_shared/directSupplierIntakeGovernance';
 import { readDirectSupplierStagingReview } from './_shared/directSupplierStagingReview';
 import { jsonResponse, optionsResponse } from './_shared/http';
 
@@ -43,9 +44,24 @@ export const handler: Handler = async (event) => {
     return jsonResponse(500, { error: 'Unable to resolve Direct Supplier foundation binding' }, METHODS);
   }
 
+  let intakeGovernance;
+  try {
+    intakeGovernance = evaluateDirectSupplierIntakeGovernance({
+      reviewPackage: result.reviewPackage,
+      foundationBinding: foundation.binding,
+    });
+  } catch (error) {
+    console.error(
+      'admin-direct-supplier-staging-review: intake governance failed:',
+      error instanceof Error ? error.message : 'unknown error',
+    );
+    return jsonResponse(500, { error: 'Unable to resolve Direct Supplier intake governance' }, METHODS);
+  }
+
   return jsonResponse(200, {
     ok: true,
     reviewPackage: result.reviewPackage,
     foundationBinding: foundation.binding,
+    intakeGovernance,
   }, METHODS);
 };
