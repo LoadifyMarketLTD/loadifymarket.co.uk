@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   PHASE_O_SHADOW_REVIEW_CAPABILITY,
+  PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
   PHASE_O_SHADOW_REVIEW_SOURCE,
   evaluatePhaseOPilotAutonomyReadiness,
   type PhaseOShadowReviewEvidence,
@@ -23,7 +24,7 @@ const shadowReady = (pilotId: string, providerKey: string): PhaseOShadowReviewEv
   source: PHASE_O_SHADOW_REVIEW_SOURCE,
   persistenceBound: true,
   evidenceRef: 'pilot-evidence:shadow-review-1',
-  policyVersion: 'shadow-mode-v1',
+  policyVersion: PHASE_O_SHADOW_REVIEW_POLICY_VERSION,
   reviewedAt: '2026-09-01T10:30:00.000Z',
   sampleSize: 25,
   resolvedComparisons: 20,
@@ -128,10 +129,11 @@ describe('Phase O Autonomous Operations readiness', () => {
     expect(result.blockers).toContain('shadow_mode_review_source_untrusted');
   });
 
-  it('rejects Shadow evidence from another pilot provider or capability', () => {
+  it('rejects Shadow evidence from another pilot provider capability or policy version', () => {
     const wrongScope = {
       ...shadowReady('pilot-other', 'provider-b'),
       capability: 'shipment_stall_review',
+      policyVersion: 'phase-o-order-shadow-v0',
     } as unknown as PhaseOShadowReviewEvidence;
 
     const result = evaluatePhaseOPilotAutonomyReadiness({
@@ -147,6 +149,7 @@ describe('Phase O Autonomous Operations readiness', () => {
     expect(result.blockers).toContain('shadow_mode_review_pilot_mismatch');
     expect(result.blockers).toContain('shadow_mode_review_provider_mismatch');
     expect(result.blockers).toContain('shadow_mode_review_capability_mismatch');
+    expect(result.blockers).toContain('shadow_mode_review_policy_mismatch');
   });
 
   it('requires a passed operator-relative review even when scope is correctly bound', () => {
@@ -182,6 +185,7 @@ describe('Phase O Autonomous Operations readiness', () => {
     expect(result.shadowReview.providerKey).toBe('provider-a');
     expect(result.shadowReview.capability).toBe('order_submission');
     expect(result.shadowReview.source).toBe('durable_shadow_review_v1');
+    expect(result.shadowReview.policyVersion).toBe('phase-o-order-shadow-v1');
     expect(result.shadowReview.persistenceBound).toBe(true);
     expect(result.externalMutationPerformed).toBe(false);
     expect(result.pilotActivationPerformed).toBe(false);
