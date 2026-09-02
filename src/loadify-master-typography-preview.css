@@ -1,0 +1,71 @@
+/*
+ * LOADIFY MASTER TYPOGRAPHY — PREVIEW ONLY
+ *
+ * Visual reference approved by owner on 2026-09-02.
+ * Editorial serif = identity headings/card titles.
+ * Inter = body copy, controls, navigation and data-dense UI.
+ *
+ * This file is deliberately loaded last so it can unify legacy heading stacks
+ * without changing layout structure, routing or business logic.
+ */
+
+:root {
+  --font-display: Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+.font-display,
+.font-serif {
+  font-family: var(--font-display) !important;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  line-height: 1.02;
+}
+
+h2,
+h3 {
+  line-height: 1.08;
+}
+
+/* Preserve the approved premium hierarchy on intentional Loadify navy cards. */
+[class~="bg-[#0A234F]"] h1,
+[class~="bg-[#0A234F]"] h2,
+[class~="bg-[#0A234F]"] h3,
+[class~="bg-[#0A234F]"] .font-serif,
+[class~="bg-[#0A234F]"] .font-display {
+  color: #FFFFFF !important;
+  font-family: var(--font-display) !important;
+  font-weight: 400;
+}
+
+/* Small labels, navigation, CTAs and operational UI stay crisp and functional. */
+nav,
+button,
+[role="button"],
+label,
+th,
+input,
+select,
+textarea {
+  font-family: var(--font-body);
+  letter-spacing: normal;
+}
