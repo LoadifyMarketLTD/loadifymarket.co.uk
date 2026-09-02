@@ -56,8 +56,8 @@
 }
 
 /* Intentional navy presentation cards are dark surfaces inside the otherwise
- * light public shell. Their explicitly white headings must stay white instead
- * of being remapped by the legacy light-compatibility rule above. */
+ * light public shell. Their explicitly white headings and labels must stay
+ * white instead of being remapped by the legacy light-compatibility rule above. */
 :root.market-light-root body:not(:has(#login-email))
   [class~="bg-[#0A234F]"] h1.text-white,
 :root.market-light-root body:not(:has(#login-email))
@@ -65,7 +65,9 @@
 :root.market-light-root body:not(:has(#login-email))
   [class~="bg-[#0A234F]"] h3.text-white,
 :root.market-light-root body:not(:has(#login-email))
-  [class~="bg-[#0A234F]"] h4.text-white {
+  [class~="bg-[#0A234F]"] h4.text-white,
+:root.market-light-root body:not(:has(#login-email))
+  [class~="bg-[#0A234F]"] p.text-white {
   color: #FFFFFF !important;
 }
 
