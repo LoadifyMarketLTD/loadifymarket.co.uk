@@ -2,6 +2,12 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Boxes, Building2, ClipboardCheck, Network, PackageCheck, ShieldCheck, Store, Truck } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import SectionNav from "@/components/presentation/SectionNav";
+
+const businessNav = [
+  { label: "Trade Buyers", to: "/trade" },
+  { label: "Suppliers, Brands & Wholesalers", to: "/suppliers" },
+] as const;
 
 const paths = [
   { icon: Store, title: "Sell on the marketplace", copy: "Eligible brands, wholesalers and commercial sellers can use the seller onboarding path to build and manage a Loadify marketplace presence.", to: "/register?type=seller", cta: "Start selling" },
@@ -24,7 +30,8 @@ export default function SuppliersPage() {
         description="Learn how brands, wholesalers, distributors and suppliers can discuss marketplace participation and controlled supplier integration with Loadify Market."
         canonical="/suppliers"
       />
-      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F] md:pt-[122px]">
+      <SectionNav title="Business" items={businessNav} />
+      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F]">
         <section className="border-b border-[#0A234F]/10 bg-[#F8F7F4]">
           <div className="mx-auto grid max-w-[1480px] gap-12 px-5 py-16 sm:px-7 lg:grid-cols-12 lg:items-center lg:px-10 lg:py-24">
             <div className="lg:col-span-7">
