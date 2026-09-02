@@ -1,30 +1,32 @@
-/**
- * MainLayout — universal layout wrapper.
- *
- * Dynamically switches between two layout shells based on the current viewport:
- *
- *   Mobile (< 768 px) → MobileAppLayout
- *     Dark app background, MobileBottomNav, no desktop Footer, no desktop Header.
- *     Matches the APK experience exactly.
- *
- *   Desktop (>= 768 px) → DesktopLayout
- *     Transparent background, desktop Footer.
- *     The desktop Header is rendered globally in App.tsx.
- *
- * Usage is unchanged — pages wrap their content in <MainLayout> as before.
- */
-
 import type { ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileAppLayout from "./MobileAppLayout";
 import DesktopLayout from "./DesktopLayout";
+import PresentationLayout from "./PresentationLayout";
 
-interface MainLayoutProps {
-  children: ReactNode;
-}
+const presentationPaths = new Set([
+  "/platform",
+  "/buyers",
+  "/sellers",
+  "/trade",
+  "/suppliers",
+  "/integrations",
+  "/partners",
+  "/developers",
+  "/how-it-works",
+  "/trust",
+]);
+
+interface MainLayoutProps { children: ReactNode; }
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const isMobile = useIsMobile();
+  const { pathname } = useLocation();
+
+  if (presentationPaths.has(pathname)) {
+    return <PresentationLayout>{children}</PresentationLayout>;
+  }
 
   return isMobile
     ? <MobileAppLayout>{children}</MobileAppLayout>
