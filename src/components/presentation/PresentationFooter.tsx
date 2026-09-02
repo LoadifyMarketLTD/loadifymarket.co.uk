@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logo from "@/assets/LOGO.png";
 
 const groups = [
   { title: "Platform", links: [["Overview", "/platform"], ["How It Works", "/how-it-works"], ["Trust", "/trust"]] },
@@ -13,9 +14,8 @@ export default function PresentationFooter() {
       <div className="mx-auto max-w-[1480px] px-6 py-14 lg:px-10">
         <div className="grid gap-10 lg:grid-cols-[1.15fr_2fr]">
           <div>
-            <Link to="/" className="inline-flex items-center gap-3" aria-label="Loadify home">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A234F] text-lg font-black text-[#F5A300]">L</div>
-              <div><div className="text-xl font-black tracking-[-0.03em]">Loadify</div><div className="text-[8px] font-black uppercase tracking-[0.2em] text-[#8A7351]">Market</div></div>
+            <Link to="/" className="inline-flex items-center" aria-label="Loadify home">
+              <img src={logo} alt="Loadify Market" className="h-11 w-auto max-w-[180px] object-contain" />
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-7 text-[#667085]">Explore Loadify's marketplace, buyer and seller environments, business routes and controlled ways to work with the platform.</p>
             <Link to="/marketplace" className="mt-6 inline-flex rounded-lg bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F]">Open Marketplace</Link>
