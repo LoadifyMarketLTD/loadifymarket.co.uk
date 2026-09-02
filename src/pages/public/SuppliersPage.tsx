@@ -5,6 +5,7 @@ import SEO from "@/components/SEO";
 import SectionNav from "@/components/presentation/SectionNav";
 
 const businessNav = [
+  { label: "Overview", to: "/business" },
   { label: "Trade Buyers", to: "/trade" },
   { label: "Suppliers, Brands & Wholesalers", to: "/suppliers" },
 ] as const;
