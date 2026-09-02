@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import logo from "@/assets/LOGO.png";
+import logo from "@/assets/loadify-wordmark.svg";
 
 const groups = [
-  { title: "Platform", links: [["Overview", "/platform"], ["How It Works", "/how-it-works"], ["Trust", "/trust"]] },
-  { title: "Business", links: [["Overview", "/business"], ["Trade Buyers", "/trade"], ["Suppliers, Brands & Wholesalers", "/suppliers"]] },
-  { title: "Technology", links: [["Overview", "/technology"], ["Integrations", "/integrations"], ["Developers", "/developers"], ["Partners", "/partners"]] },
+  { title: "Platform", links: [["Overview", "/platform"], ["Buyers", "/buyers"], ["Sellers", "/sellers"], ["How It Works", "/how-it-works"], ["Trust", "/trust"]] },
+  { title: "Business", links: [["Overview", "/business"], ["Trade Buyers", "/trade"], ["Suppliers, Brands & Wholesalers", "/suppliers"], ["Partners", "/partners"]] },
+  { title: "Technology", links: [["Overview", "/technology"], ["Integrations", "/integrations"], ["Developers", "/developers"]] },
   { title: "Company", links: [["About", "/about"], ["Help & FAQ", "/faq"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
 ] as const;
 
@@ -15,10 +15,13 @@ export default function PresentationFooter() {
         <div className="grid gap-10 lg:grid-cols-[1.15fr_2fr]">
           <div>
             <Link to="/" className="inline-flex items-center" aria-label="Loadify home">
-              <img src={logo} alt="Loadify Market" className="h-11 w-auto max-w-[180px] object-contain" />
+              <img src={logo} alt="Loadify Market" className="h-11 w-auto max-w-[190px] object-contain" />
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-7 text-[#667085]">Explore Loadify's marketplace, buyer and seller environments, business routes and controlled ways to work with the platform.</p>
-            <Link to="/marketplace" className="mt-6 inline-flex rounded-lg bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F]">Open Marketplace</Link>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link to="/marketplace" className="inline-flex rounded-lg bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F]">Open Marketplace</Link>
+              <Link to="/sellers" className="inline-flex rounded-lg border border-[#0A234F]/15 bg-white px-5 py-3 text-sm font-extrabold text-[#0A234F]">Start Selling</Link>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {groups.map((group) => <div key={group.title}><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">{group.title}</p><div className="mt-4 grid gap-3">{group.links.map(([label,to]) => <Link key={to} to={to} className="text-sm font-semibold text-[#536174] transition hover:text-[#1D57D8]">{label}</Link>)}</div></div>)}
