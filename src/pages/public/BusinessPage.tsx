@@ -11,8 +11,8 @@ const businessNav = [
 ] as const;
 
 const paths = [
-  { icon: ShoppingCart, title: "Trade Buyers", copy: "Use Loadify's dedicated trade registration path when purchasing in a business, trader or organisational context.", to: "/trade", cta: "Explore Trade Buyers" },
-  { icon: PackageCheck, title: "Suppliers, Brands & Wholesalers", copy: "Explore marketplace selling, supplier participation and controlled commerce connectivity according to the way your business supplies and fulfils products.", to: "/suppliers", cta: "Explore supplier paths" },
+  { icon: ShoppingCart, eyebrow: "TRADE", title: "Trade Buyers", copy: "Use Loadify's dedicated trade registration path when purchasing in a business, trader or organisational context.", to: "/trade", cta: "Explore Trade Buyers" },
+  { icon: PackageCheck, eyebrow: "SUPPLY", title: "Suppliers, Brands & Wholesalers", copy: "Explore marketplace selling, supplier participation and controlled commerce connectivity according to the way your business supplies and fulfils products.", to: "/suppliers", cta: "Explore supplier paths" },
 ] as const;
 
 export default function BusinessPage() {
@@ -29,10 +29,11 @@ export default function BusinessPage() {
               <p className="mt-7 max-w-[760px] text-[16px] leading-7 text-[#5A6578] sm:text-[18px] sm:leading-8">Whether you are purchasing for a business or bringing products and supply capability to the marketplace, Loadify keeps the route appropriate to your role and the capabilities actually available.</p>
             </div>
             <div className="lg:col-span-5">
-              <div className="rounded-[26px] border border-[#0A234F]/10 bg-white p-7 shadow-[0_22px_65px_rgba(10,35,79,0.09)]">
-                <Building2 className="h-7 w-7 text-[#8A7351]" />
-                <h2 className="mt-5 font-serif text-3xl tracking-[-0.025em]">One business section. Distinct participation paths.</h2>
-                <p className="mt-4 text-sm leading-7 text-[#667085]">Trade buying and supplier participation have different requirements. This section keeps them connected without presenting capabilities, commercial terms or integrations that have not been established.</p>
+              <div className="rounded-[26px] bg-[#0A234F] p-8 text-white shadow-[0_22px_65px_rgba(10,35,79,0.14)]">
+                <Building2 className="h-7 w-7 text-[#F5A300]" />
+                <p className="mt-7 text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">BUSINESS ROUTES</p>
+                <h2 className="mt-3 font-serif text-3xl font-normal leading-[1.08] tracking-[-0.03em] text-white">One business section. Distinct participation paths.</h2>
+                <p className="mt-5 text-[15px] leading-7 text-white/80">Trade buying and supplier participation have different requirements. This section keeps them connected without presenting capabilities, commercial terms or integrations that have not been established.</p>
               </div>
             </div>
           </div>
@@ -42,12 +43,13 @@ export default function BusinessPage() {
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Choose your route</p>
             <h2 className="mt-3 max-w-3xl font-serif text-3xl tracking-[-0.025em] sm:text-4xl">Start with the role that matches what your business needs to do.</h2>
             <div className="mt-10 grid gap-5 lg:grid-cols-2">
-              {paths.map(({ icon: Icon, title, copy, to, cta }) => (
-                <article key={title} className="flex min-h-[280px] flex-col rounded-[22px] border border-[#0A234F]/10 bg-[#F8F7F4] p-7">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0A234F] text-[#F5A300]"><Icon className="h-5 w-5" /></div>
-                  <h3 className="mt-6 font-serif text-3xl tracking-[-0.025em]">{title}</h3>
-                  <p className="mt-4 max-w-2xl flex-1 text-sm leading-7 text-[#667085]">{copy}</p>
-                  <Link to={to} className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-[#0A234F]">{cta} <ArrowRight className="h-4 w-4" /></Link>
+              {paths.map(({ icon: Icon, eyebrow, title, copy, to, cta }) => (
+                <article key={title} className="flex min-h-[280px] flex-col rounded-[24px] bg-[#0A234F] p-8 text-white shadow-[0_18px_50px_rgba(10,35,79,0.12)]">
+                  <Icon className="h-7 w-7 text-[#F5A300]" />
+                  <p className="mt-7 text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">{eyebrow}</p>
+                  <h3 className="mt-3 font-serif text-[2rem] font-normal leading-[1.08] tracking-[-0.03em] text-white sm:text-4xl">{title}</h3>
+                  <p className="mt-5 max-w-2xl flex-1 text-[15px] leading-7 text-white/80">{copy}</p>
+                  <Link to={to} className="mt-7 inline-flex items-center gap-2 text-sm font-extrabold text-white">{cta} <ArrowRight className="h-4 w-4" /></Link>
                 </article>
               ))}
             </div>
