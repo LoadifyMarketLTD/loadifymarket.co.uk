@@ -9,6 +9,7 @@ const presentationPaths = new Set([
   "/business",
   "/trade",
   "/suppliers",
+  "/technology",
   "/integrations",
   "/partners",
   "/developers",
@@ -18,10 +19,6 @@ const presentationPaths = new Set([
 
 export default function Header() {
   const { pathname } = useLocation();
-
-  // Corporate presentation pages own their header/footer through PresentationLayout.
-  // The global app header is reserved for marketplace/commercial routes only.
   if (presentationPaths.has(pathname)) return null;
-
   return <MarketplaceHeader />;
 }
