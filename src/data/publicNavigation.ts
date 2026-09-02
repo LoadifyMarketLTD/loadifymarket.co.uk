@@ -10,33 +10,29 @@ export type PublicNavGroup = {
 };
 
 export const primaryPublicNavigation: PublicNavItem[] = [
-  { label: "Marketplace", to: "/catalog", description: "Browse products and categories" },
-  { label: "Platform", to: "/platform", description: "See how the Loadify marketplace is structured" },
-  { label: "Buyers", to: "/buyers", description: "Discover, buy and manage marketplace orders" },
+  { label: "Platform", to: "/platform", description: "See how the Loadify ecosystem is structured" },
+  { label: "Buyers", to: "/buyers", description: "Discover, buy and manage marketplace activity" },
   { label: "Sellers", to: "/sellers", description: "Build and operate a seller presence" },
-  { label: "Integrations", to: "/integrations", description: "Supplier-commerce and partner connectivity" },
-  { label: "Partners", to: "/partners", description: "Commercial and technology partnerships" },
+  { label: "Partners", to: "/partners", description: "Commercial and strategic participation" },
+  { label: "How It Works", to: "/how-it-works", description: "Follow the marketplace lifecycle" },
+  { label: "Trust", to: "/trust", description: "Explore platform trust and governance" },
 ];
 
 export const businessNavigation: PublicNavItem[] = [
   { label: "Trade Buyers", to: "/trade", description: "Dedicated business and trader registration path" },
-  { label: "Brands & Wholesalers", to: "/suppliers", description: "Explore product-supply participation routes" },
-  { label: "Suppliers", to: "/suppliers", description: "Supplier and catalogue participation" },
+  { label: "Suppliers & Brands", to: "/suppliers", description: "Explore supplier, brand and wholesale participation routes" },
+];
+
+export const technologyNavigation: PublicNavItem[] = [
+  { label: "Integrations", to: "/integrations", description: "Controlled supplier-commerce and technology connectivity" },
+  { label: "Developers", to: "/developers", description: "Technical participation and access context" },
 ];
 
 export const publicNavigationGroups: PublicNavGroup[] = [
   {
-    label: "Explore",
+    label: "Platform",
     items: [
-      { label: "Marketplace", to: "/catalog" },
-      { label: "Deals", to: "/deals" },
-      { label: "Browse Categories", to: "/catalog" },
-    ],
-  },
-  {
-    label: "Discover Loadify",
-    items: [
-      { label: "Platform", to: "/platform" },
+      { label: "Overview", to: "/platform" },
       { label: "How It Works", to: "/how-it-works" },
       { label: "For Buyers", to: "/buyers" },
       { label: "For Sellers", to: "/sellers" },
@@ -47,11 +43,14 @@ export const publicNavigationGroups: PublicNavGroup[] = [
     items: businessNavigation,
   },
   {
-    label: "Connect with Loadify",
+    label: "Technology",
+    items: technologyNavigation,
+  },
+  {
+    label: "Connect",
     items: [
-      { label: "Integrations", to: "/integrations" },
       { label: "Partners", to: "/partners" },
-      { label: "Developers", to: "/developers" },
+      { label: "Contact", to: "/contact" },
     ],
   },
   {
@@ -63,9 +62,18 @@ export const publicNavigationGroups: PublicNavGroup[] = [
       { label: "Contact", to: "/contact" },
     ],
   },
+  {
+    label: "Marketplace",
+    items: [
+      { label: "Open Marketplace", to: "/marketplace" },
+      { label: "Browse Products", to: "/catalog" },
+      { label: "Deals", to: "/deals" },
+    ],
+  },
 ];
 
 export const utilityPublicNavigation: PublicNavItem[] = [
+  { label: "Marketplace", to: "/marketplace" },
   { label: "Trust", to: "/trust" },
   { label: "Help", to: "/help" },
 ];
