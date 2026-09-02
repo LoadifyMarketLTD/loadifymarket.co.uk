@@ -14,14 +14,18 @@ import { useSearchParams } from "react-router-dom";
 
 const SUPPORT_EMAIL = BRAND.supportEmail;
 
+const topicSubjects: Record<string, string> = {
+  partnership: "Partnership enquiry",
+  problem: "Report a problem",
+  supplier: "Supplier enquiry",
+  integration: "Integration enquiry",
+  technology: "Technology enquiry",
+};
+
 const ContactUs = () => {
   const [searchParams] = useSearchParams();
   const requestedTopic = searchParams.get("topic");
-  const initialSubject = requestedTopic === "partnership"
-    ? "Partnership enquiry"
-    : requestedTopic === "problem"
-      ? "Report a problem"
-      : "";
+  const initialSubject = requestedTopic ? topicSubjects[requestedTopic] ?? "" : "";
   const formOpenedAt = useMemo(() => Date.now(), []);
   const [formData, setFormData] = useState({
     name: "",
@@ -85,7 +89,6 @@ const ContactUs = () => {
           </p>
 
           <div className="grid md:grid-cols-2 gap-10">
-            {/* Contact form */}
             <div>
               <h2 className="text-xl font-display font-semibold text-foreground mb-5">
                 Send Us a Message
@@ -98,10 +101,7 @@ const ContactUs = () => {
                 onSubmit={handleSubmit}
                 className="space-y-4"
               >
-                {/* Required hidden inputs for Netlify Forms */}
                 <input type="hidden" name="form-name" value="contact" />
-
-                {/* Honeypot — hidden from real users */}
                 <div className="hidden" aria-hidden="true">
                   <Label htmlFor="bot-field">Don&apos;t fill this out if you&apos;re human:</Label>
                   <Input
@@ -157,7 +157,6 @@ const ContactUs = () => {
               </form>
             </div>
 
-            {/* Contact details */}
             <div className="space-y-6">
               <h2 className="text-xl font-display font-semibold text-foreground mb-5">
                 Get in Touch
