@@ -6,6 +6,7 @@ import SectionNav from "@/components/presentation/SectionNav";
 
 const accountTypes = ["Individual", "Sole trader", "Limited company", "Partnership", "Charity / organisation", "Other business or trader"] as const;
 const businessNav = [
+  { label: "Overview", to: "/business" },
   { label: "Trade Buyers", to: "/trade" },
   { label: "Suppliers, Brands & Wholesalers", to: "/suppliers" },
 ] as const;
