@@ -6,6 +6,7 @@ const presentationPaths = new Set([
   "/platform",
   "/buyers",
   "/sellers",
+  "/business",
   "/trade",
   "/suppliers",
   "/integrations",
