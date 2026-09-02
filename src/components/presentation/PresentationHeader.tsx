@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { ChevronDown, Menu, X } from "lucide-react";
+import logo from "@/assets/LOGO.png";
 
 const direct = [{label:"Platform",to:"/platform"},{label:"Buyers",to:"/buyers"},{label:"Sellers",to:"/sellers"},{label:"Partners",to:"/partners"},{label:"How It Works",to:"/how-it-works"},{label:"Trust",to:"/trust"}] as const;
 
@@ -9,7 +10,7 @@ export default function PresentationHeader(){
  const navClass=({isActive}:{isActive:boolean})=>`text-[13px] font-bold transition ${isActive?'text-[#1D57D8]':'text-[#0A234F] hover:text-[#1D57D8]'}`;
  return <header className="fixed inset-x-0 top-0 z-50 border-b border-[#0A234F]/10 bg-[#FCFBF8]/95 backdrop-blur-xl">
   <div className="mx-auto flex h-[82px] max-w-[1480px] items-center gap-7 px-6 lg:px-10">
-   <Link to="/" className="mr-auto flex items-center gap-3" aria-label="Loadify home"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0A234F] text-lg font-black text-[#F5A300]">L</div><div><div className="text-xl font-black tracking-[-0.03em] text-[#0A234F]">Loadify</div><div className="text-[8px] font-black uppercase tracking-[0.2em] text-[#8A7351]">Market</div></div></Link>
+   <Link to="/" className="mr-auto flex items-center" aria-label="Loadify home"><img src={logo} alt="Loadify Market" className="h-11 w-auto max-w-[170px] object-contain" /></Link>
    <nav className="hidden items-center gap-6 xl:flex" aria-label="Corporate navigation">
     {direct.slice(0,3).map(x=><NavLink key={x.to} to={x.to} className={navClass}>{x.label}</NavLink>)}
     <div className="relative"><button onClick={()=>{setBusiness(v=>!v);setTechnology(false)}} className="flex items-center gap-1 text-[13px] font-bold text-[#0A234F]">Business <ChevronDown className="h-3.5 w-3.5"/></button>{business&&<div className="absolute left-0 top-8 w-64 rounded-2xl border border-[#0A234F]/10 bg-white p-2 shadow-xl"><Link onClick={()=>setBusiness(false)} to="/trade" className="block rounded-xl px-4 py-3 hover:bg-[#F8F7F4]"><b className="text-sm">Trade Buyers</b><p className="mt-1 text-xs text-[#667085]">Business buying through Loadify</p></Link><Link onClick={()=>setBusiness(false)} to="/suppliers" className="block rounded-xl px-4 py-3 hover:bg-[#F8F7F4]"><b className="text-sm">Suppliers & Brands</b><p className="mt-1 text-xs text-[#667085]">Explore participation paths</p></Link></div>}</div>
