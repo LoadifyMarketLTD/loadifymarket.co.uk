@@ -50,7 +50,7 @@ const roleCards = [
 ] as const;
 
 const lifecycle = [
-  { step: "01", title: "Discover", copy: "Buyers find approved marketplace listings through search, categories and product pages." },
+  { step: "01", title: "Discover", copy: "Buyers find marketplace listings through search, categories and product pages." },
   { step: "02", title: "Choose", copy: "Product and seller information helps buyers evaluate the listing before checkout." },
   { step: "03", title: "Purchase", copy: "The customer completes Loadify checkout through the platform's Stripe-backed payment flow." },
   { step: "04", title: "Fulfil", copy: "The responsible seller or authorised fulfilment path progresses the order according to the applicable commerce model." },
@@ -105,7 +105,7 @@ export default function PlatformPage() {
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  to="/catalog"
+                  to="/marketplace"
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#0A234F] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#071A3C]"
                 >
                   Explore Marketplace <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -249,7 +249,7 @@ export default function PlatformPage() {
               Shop the marketplace, start selling, explore business buying, discuss supplier participation or open an integration conversation.
             </p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
-              <Link to="/catalog" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[#0A234F] px-6 py-3 text-sm font-bold text-white">Browse Marketplace</Link>
+              <Link to="/marketplace" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[#0A234F] px-6 py-3 text-sm font-bold text-white">Browse Marketplace</Link>
               <Link to="/register?type=seller" className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[#0A234F]/15 bg-white px-6 py-3 text-sm font-bold text-[#0A234F]">Start Selling</Link>
               <Link to="/partners" className="inline-flex min-h-12 items-center justify-center rounded-lg border border-[#0A234F]/15 bg-white px-6 py-3 text-sm font-bold text-[#0A234F]">Partner with Loadify</Link>
             </div>
