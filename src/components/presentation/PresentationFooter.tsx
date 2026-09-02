@@ -20,7 +20,7 @@ export default function PresentationFooter() {
             <p className="mt-5 max-w-sm text-sm leading-7 text-white/70">Explore Loadify's marketplace, buyer and seller environments, business routes and controlled ways to work with the platform.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/marketplace" className="inline-flex rounded-lg bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F]">Open Marketplace</Link>
-              <Link to="/sellers" className="inline-flex rounded-lg border border-white/20 bg-white/5 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-white/10">Start Selling</Link>
+              <Link to="/register?type=seller" className="inline-flex rounded-lg border border-white/20 bg-white/5 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-white/10">Start Selling</Link>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
