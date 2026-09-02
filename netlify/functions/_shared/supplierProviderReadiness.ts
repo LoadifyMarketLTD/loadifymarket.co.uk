@@ -15,6 +15,7 @@ export type SupplierProviderReadinessState =
   | 'partner_access_required'
   | 'directory_api_approval_required'
   | 'contract_blocked'
+  | 'developer_review_underway'
   | 'compliance_blocked';
 
 export type SupplierProviderBlockingDependency =
@@ -25,6 +26,7 @@ export type SupplierProviderBlockingDependency =
   | 'partner_retailer_api_access'
   | 'directory_api_approval'
   | 'marketplace_resale_permission'
+  | 'developer_review_result'
   | 'developer_api_approval'
   | 'uk_import_compliance_controls';
 
@@ -102,11 +104,11 @@ function readinessFor(definition: SupplierProviderDefinition): Pick<
       };
     case 'aliexpress_dsers':
       return {
-        readinessState: 'compliance_blocked',
-        blockingDependencies: ['developer_api_approval', 'uk_import_compliance_controls'],
+        readinessState: 'developer_review_underway',
+        blockingDependencies: ['developer_review_result', 'uk_import_compliance_controls'],
         providerActivationBlocked: true,
         externalDependency: true,
-        nextAction: 'Obtain DSers Developer/Open API approval, then keep the provider inactive until UK import VAT, customs, product-safety, landed-cost and returns controls are complete and reviewed.',
+        nextAction: 'Wait for the DSers Sales Channel Application review result. Do not treat the generic welcome/onboarding email as API approval. If approved, keep the provider inactive until the authorised development/sandbox contract is verified and UK import VAT, customs, product-safety, landed-cost and returns controls are complete and reviewed.',
       };
   }
 }

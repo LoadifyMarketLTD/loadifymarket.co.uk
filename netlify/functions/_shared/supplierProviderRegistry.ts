@@ -30,7 +30,8 @@ export type SupplierProviderRole =
   | 'supplier_network'
   | 'direct_supplier'
   | 'supplier_directory'
-  | 'marketplace_retail_source';
+  | 'marketplace_retail_source'
+  | 'sales_channel_fulfillment_bridge';
 
 export interface SupplierProviderDefinition {
   key: SupplierProviderKey;
@@ -159,13 +160,13 @@ const DEFINITIONS: Record<SupplierProviderKey, SupplierProviderDefinition> = {
   aliexpress_dsers: {
     key: 'aliexpress_dsers',
     label: 'AliExpress / DSers',
-    role: 'marketplace_retail_source',
+    role: 'sales_channel_fulfillment_bridge',
     codeState: 'future_compliance_gate',
     hostedActivation: 'off',
     verifiedCapabilities: [],
     potentialCapabilities: ASIA_RESEARCH_TARGETS,
     requiresProviderOrPartnerApproval: true,
-    notes: 'DSers now documents Developer/Open API registration for third-party integrations. Keep future-only until Loadify receives developer approval and UK import VAT, customs, product safety, landed-cost and returns controls are complete.',
+    notes: 'Loadify is the Sales Channel, not a product supplier to DSers. The intended direction is approved supplier/product source -> DSers -> Loadify catalogue -> customer sale on Loadify -> DSers/supplier fulfilment -> order-status/tracking back to Loadify. Loadify submitted a DSers Sales Channel Application on 2026-09-02 and DSers shows it Under Review with a stated 7-15 business day review window. A generic DSers welcome/onboarding email confirms account onboarding only; it is not API approval. Keep all capabilities unverified and hosted activation OFF until an approval decision is received and UK import VAT, customs, product safety, landed-cost and returns controls are reviewed.',
   },
 };
 

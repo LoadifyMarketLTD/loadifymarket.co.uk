@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getSupplierProviderDefinition } from '../_shared/supplierProviderRegistry';
 import {
   getSupplierProviderReadiness,
   listSupplierProviderReadiness,
@@ -67,11 +68,18 @@ describe('supplier provider readiness control plane', () => {
     expect(spocket.blockingDependencies).toEqual(['marketplace_resale_permission']);
   });
 
-  it('models DSers developer approval and UK import compliance as independent blockers', () => {
+  it('models DSers as a Sales Channel fulfillment bridge with review and compliance blockers', () => {
+    const definition = getSupplierProviderDefinition('aliexpress_dsers');
     const dsers = getSupplierProviderReadiness('aliexpress_dsers');
-    expect(dsers.readinessState).toBe('compliance_blocked');
-    expect(dsers.blockingDependencies).toEqual(['developer_api_approval', 'uk_import_compliance_controls']);
-    expect(dsers.nextAction).toMatch(/Developer\/Open API approval/i);
+
+    expect(definition.role).toBe('sales_channel_fulfillment_bridge');
+    expect(definition.notes).toMatch(/Loadify is the Sales Channel, not a product supplier/i);
+    expect(definition.notes).toMatch(/supplier\/product source -> DSers -> Loadify catalogue/i);
+
+    expect(dsers.readinessState).toBe('developer_review_underway');
+    expect(dsers.blockingDependencies).toEqual(['developer_review_result', 'uk_import_compliance_controls']);
+    expect(dsers.nextAction).toMatch(/Sales Channel Application review result/i);
+    expect(dsers.nextAction).toMatch(/welcome\/onboarding email/i);
     expect(dsers.nextAction).toMatch(/UK import VAT/i);
     expect(dsers.verifiedCapabilities).toEqual([]);
     expect(dsers.hostedActivation).toBe('off');
