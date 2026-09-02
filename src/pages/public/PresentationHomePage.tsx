@@ -1,86 +1,31 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Building2, CheckCircle2, Network, PackageSearch, ShieldCheck, Store, Users } from "lucide-react";
 import SEO from "@/components/SEO";
+import PresentationLayout from "@/layouts/PresentationLayout";
 
 const paths = [
-  { icon: PackageSearch, eyebrow: "BUY", title: "Buy through Loadify", copy: "Discover approved marketplace listings, purchase through Loadify and manage your activity through Buyer Space.", to: "/buyers", cta: "For buyers" },
+  { icon: PackageSearch, eyebrow: "BUY", title: "Buy through Loadify", copy: "Discover marketplace listings, purchase through Loadify and manage your activity through Buyer Space.", to: "/buyers", cta: "For buyers" },
   { icon: Store, eyebrow: "SELL", title: "Sell through Loadify", copy: "List products, manage marketplace orders, shipments, returns and eligible payout setup through Seller Space.", to: "/sellers", cta: "For sellers" },
   { icon: Building2, eyebrow: "TRADE", title: "Source for business", copy: "A dedicated route for business and trade buyers to register organisation details and use Loadify for marketplace sourcing.", to: "/trade", cta: "For trade buyers" },
   { icon: Network, eyebrow: "CONNECT", title: "Work with the platform", copy: "Explore controlled routes for supplier participation, commercial relationships and technology integration conversations.", to: "/partners", cta: "For partners" },
 ] as const;
-
 const lifecycle = ["Discover", "Evaluate", "Purchase", "Fulfil", "Track", "Manage"] as const;
 
 export default function PresentationHomePage() {
-  return (
-    <>
-      <SEO title="Loadify Market | Marketplace, Commerce & Business Platform" description="Discover Loadify Market: a UK-operated marketplace connecting buyers, sellers and business commerce with controlled supplier and technology participation paths." canonical="/" />
-      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F]">
-        <section className="relative overflow-hidden border-b border-[#0A234F]/10 pt-28 lg:pt-32">
-          <div className="pointer-events-none absolute -right-40 top-12 h-[560px] w-[560px] rounded-full bg-[#1D57D8]/[0.07] blur-3xl" />
-          <div className="mx-auto grid min-h-[680px] max-w-[1480px] items-center gap-14 px-6 py-16 lg:grid-cols-12 lg:px-10 lg:py-20">
-            <div className="lg:col-span-7">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8A7351]">Marketplace · Commerce · Business</p>
-              <h1 className="mt-5 max-w-[900px] font-serif text-[3.15rem] font-normal leading-[0.98] tracking-[-0.045em] text-[#0A234F] sm:text-[4.4rem] lg:text-[5.35rem]">
-                Commerce, connected around the people who make it work.
-              </h1>
-              <p className="mt-7 max-w-[760px] text-[17px] leading-8 text-[#5A6578] sm:text-[19px]">
-                Loadify brings marketplace discovery and ordering together with dedicated buyer and seller environments, business buying routes and controlled paths for suppliers and technology partners.
-              </p>
-              <div className="mt-9 flex flex-wrap gap-3">
-                <Link to="/platform" className="inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#0A234F] px-6 py-3 text-sm font-extrabold text-white">Explore the platform <ArrowRight className="h-4 w-4" /></Link>
-                <Link to="/marketplace" className="inline-flex min-h-12 items-center rounded-lg border border-[#0A234F]/15 bg-white px-6 py-3 text-sm font-extrabold text-[#0A234F]">Open marketplace</Link>
-              </div>
-            </div>
-            <div className="lg:col-span-5">
-              <div className="relative rounded-[30px] border border-[#0A234F]/10 bg-white p-7 shadow-[0_28px_80px_rgba(10,35,79,0.10)]">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">The Loadify ecosystem</p>
-                <div className="mt-6 rounded-[22px] bg-[#0A234F] p-6 text-white">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-5"><span className="font-serif text-2xl">Loadify Market</span><span className="rounded-full bg-[#F5A300] px-3 py-1 text-[10px] font-black text-[#0A234F]">PLATFORM</span></div>
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    {["Buyers", "Sellers", "Trade", "Suppliers", "Integrations", "Partners"].map((label) => <div key={label} className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-bold">{label}</div>)}
-                  </div>
-                </div>
-                <p className="mt-5 text-sm leading-6 text-[#667085]">One public platform story, with a clear route into the marketplace and a dedicated destination for every audience.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white py-20">
-          <div className="mx-auto max-w-[1480px] px-6 lg:px-10">
-            <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-              <div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Start with your role</p><h2 className="mt-3 font-serif text-4xl leading-tight tracking-[-0.03em] sm:text-5xl">Different goals. One connected platform.</h2></div>
-              <p className="max-w-2xl text-[16px] leading-8 text-[#667085] lg:justify-self-end">The homepage should not make every visitor decode the same proposition. Choose the route that matches what you want to do with Loadify.</p>
-            </div>
-            <div className="mt-12 grid gap-5 md:grid-cols-2">
-              {paths.map(({icon: Icon, eyebrow, title, copy, to, cta}) => <Link key={title} to={to} className="group rounded-[24px] border border-[#0A234F]/10 bg-[#F8F7F4] p-7 transition hover:-translate-y-0.5 hover:shadow-[0_18px_50px_rgba(10,35,79,0.08)]"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#0A234F] shadow-sm"><Icon className="h-5 w-5" /></div><p className="mt-7 text-[10px] font-black tracking-[0.18em] text-[#8A7351]">{eyebrow}</p><h3 className="mt-2 font-serif text-3xl tracking-[-0.025em]">{title}</h3><p className="mt-3 max-w-xl text-sm leading-7 text-[#667085]">{copy}</p><span className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold">{cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span></Link>)}
-            </div>
-          </div>
-        </section>
-
-        <section className="border-y border-[#0A234F]/10 bg-[#F8F7F4] py-20">
-          <div className="mx-auto max-w-[1480px] px-6 lg:px-10">
-            <div className="grid gap-12 lg:grid-cols-12">
-              <div className="lg:col-span-5"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">How commerce moves</p><h2 className="mt-3 font-serif text-4xl tracking-[-0.03em] sm:text-5xl">A customer journey that stays connected.</h2><p className="mt-5 max-w-xl text-[15px] leading-7 text-[#667085]">From finding a product to managing the order afterwards, Loadify connects the visible marketplace journey with the buyer and seller environments behind it.</p><Link to="/how-it-works" className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold">See how Loadify works <ArrowRight className="h-4 w-4" /></Link></div>
-              <div className="lg:col-span-7"><div className="overflow-hidden rounded-[26px] border border-[#0A234F]/10 bg-white">{lifecycle.map((item, index) => <div key={item} className="grid grid-cols-[52px_1fr_auto] items-center border-b border-[#0A234F]/[0.07] px-6 py-5 last:border-0"><span className="text-[11px] font-black text-[#8A7351]">{String(index + 1).padStart(2,"0")}</span><span className="text-base font-extrabold">{item}</span><CheckCircle2 className="h-4 w-4 text-[#8A7351]" /></div>)}</div></div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white py-20">
-          <div className="mx-auto max-w-[1480px] px-6 lg:px-10">
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="rounded-[26px] bg-[#0A234F] p-8 text-white lg:col-span-2"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Connect with Loadify</p><h2 className="mt-4 max-w-3xl font-serif text-4xl tracking-[-0.03em]">Supplier, commercial and technology relationships need a serious front door.</h2><p className="mt-5 max-w-3xl text-[15px] leading-7 text-white/70">Loadify separates a conversation about participation from a claim that an integration is already live. Explore the relevant route, understand the operating model and start from evidence.</p><div className="mt-7 flex flex-wrap gap-3"><Link to="/suppliers" className="rounded-lg bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F]">Supplier participation</Link><Link to="/integrations" className="rounded-lg border border-white/20 px-5 py-3 text-sm font-bold text-white">Integrations</Link><Link to="/partners" className="rounded-lg border border-white/20 px-5 py-3 text-sm font-bold text-white">Partners</Link></div></div>
-              <div className="rounded-[26px] border border-[#0A234F]/10 bg-[#F8F7F4] p-8"><ShieldCheck className="h-7 w-7 text-[#8A7351]"/><p className="mt-7 text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Trust & governance</p><h3 className="mt-3 font-serif text-3xl tracking-[-0.025em]">Evidence before activation.</h3><p className="mt-4 text-sm leading-7 text-[#667085]">Public claims should follow what the platform can support, with role-aware controls and capability-scoped integration paths.</p><Link to="/trust" className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold">Explore trust <ArrowRight className="h-4 w-4"/></Link></div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-[#F8F7F4] py-20">
-          <div className="mx-auto max-w-[1180px] px-6 text-center"><Users className="mx-auto h-6 w-6 text-[#8A7351]"/><p className="mt-5 text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Your next step</p><h2 className="mx-auto mt-3 max-w-4xl font-serif text-4xl tracking-[-0.03em] sm:text-5xl">Explore the platform. Then go deeper where it matters to you.</h2><p className="mx-auto mt-5 max-w-2xl text-[15px] leading-7 text-[#667085]">Whether you want to buy, sell, source for a business or discuss working with Loadify, there is a dedicated path from here.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><Link to="/platform" className="rounded-lg bg-[#0A234F] px-6 py-3 text-sm font-extrabold text-white">Explore Platform</Link><Link to="/marketplace" className="rounded-lg border border-[#0A234F]/15 bg-white px-6 py-3 text-sm font-extrabold">Open Marketplace</Link></div></div>
-        </section>
-      </main>
-    </>
-  );
+  return <PresentationLayout>
+    <SEO title="Loadify Market | Marketplace, Commerce & Business Platform" description="Discover Loadify Market: a UK-operated marketplace connecting buyers, sellers and business commerce with controlled supplier and technology participation paths." canonical="/" />
+    <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F]">
+      <section className="relative overflow-hidden border-b border-[#0A234F]/10 pt-28 lg:pt-32">
+        <div className="pointer-events-none absolute -right-40 top-12 h-[560px] w-[560px] rounded-full bg-[#1D57D8]/[0.07] blur-3xl" />
+        <div className="mx-auto grid min-h-[680px] max-w-[1480px] items-center gap-14 px-6 py-16 lg:grid-cols-12 lg:px-10 lg:py-20">
+          <div className="lg:col-span-7"><p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8A7351]">Marketplace · Commerce · Business</p><h1 className="mt-5 max-w-[900px] font-serif text-[3.15rem] font-normal leading-[0.98] tracking-[-0.045em] text-[#0A234F] sm:text-[4.4rem] lg:text-[5.35rem]">Commerce, connected around the people who make it work.</h1><p className="mt-7 max-w-[760px] text-[17px] leading-8 text-[#5A6578] sm:text-[19px]">Loadify brings marketplace discovery and ordering together with dedicated buyer and seller environments, business buying routes and controlled paths for suppliers and technology partners.</p><div className="mt-9 flex flex-wrap gap-3"><Link to="/platform" className="inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#0A234F] px-6 py-3 text-sm font-extrabold text-white">Explore the platform <ArrowRight className="h-4 w-4" /></Link><Link to="/marketplace" className="inline-flex min-h-12 items-center rounded-lg border border-[#0A234F]/15 bg-white px-6 py-3 text-sm font-extrabold text-[#0A234F]">Open marketplace</Link></div></div>
+          <div className="lg:col-span-5"><div className="relative rounded-[30px] border border-[#0A234F]/10 bg-white p-7 shadow-[0_28px_80px_rgba(10,35,79,0.10)]"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">The Loadify ecosystem</p><div className="mt-6 rounded-[22px] bg-[#0A234F] p-6 text-white"><div className="flex items-center justify-between border-b border-white/10 pb-5"><span className="font-serif text-2xl">Loadify Market</span><span className="rounded-full bg-[#F5A300] px-3 py-1 text-[10px] font-black text-[#0A234F]">PLATFORM</span></div><div className="mt-5 grid grid-cols-2 gap-3">{["Buyers", "Sellers", "Trade", "Suppliers", "Integrations", "Partners"].map(label => <div key={label} className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-bold">{label}</div>)}</div></div><p className="mt-5 text-sm leading-6 text-[#667085]">One public platform story, with a clear route into the marketplace and a dedicated destination for every audience.</p></div></div>
+        </div>
+      </section>
+      <section className="bg-white py-20"><div className="mx-auto max-w-[1480px] px-6 lg:px-10"><div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Start with your role</p><h2 className="mt-3 font-serif text-4xl leading-tight tracking-[-0.03em] sm:text-5xl">Different goals. One connected platform.</h2></div><p className="max-w-2xl text-[16px] leading-8 text-[#667085] lg:justify-self-end">Choose the route that matches what you want to do with Loadify, then explore the dedicated platform area built around that role.</p></div><div className="mt-12 grid gap-5 md:grid-cols-2">{paths.map(({icon:Icon,eyebrow,title,copy,to,cta}) => <Link key={title} to={to} className="group rounded-[24px] border border-[#0A234F]/10 bg-[#F8F7F4] p-7 transition hover:-translate-y-0.5 hover:shadow-[0_18px_50px_rgba(10,35,79,0.08)]"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#0A234F] shadow-sm"><Icon className="h-5 w-5" /></div><p className="mt-7 text-[10px] font-black tracking-[0.18em] text-[#8A7351]">{eyebrow}</p><h3 className="mt-2 font-serif text-3xl tracking-[-0.025em]">{title}</h3><p className="mt-3 max-w-xl text-sm leading-7 text-[#667085]">{copy}</p><span className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold">{cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span></Link>)}</div></div></section>
+      <section className="border-y border-[#0A234F]/10 bg-[#F8F7F4] py-20"><div className="mx-auto grid max-w-[1480px] gap-12 px-6 lg:grid-cols-12 lg:px-10"><div className="lg:col-span-5"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">How commerce moves</p><h2 className="mt-3 font-serif text-4xl tracking-[-0.03em] sm:text-5xl">A customer journey that stays connected.</h2><p className="mt-5 max-w-xl text-[15px] leading-7 text-[#667085]">From finding a product to managing the order afterwards, Loadify connects the visible marketplace journey with the buyer and seller environments behind it.</p><Link to="/how-it-works" className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold">See how Loadify works <ArrowRight className="h-4 w-4" /></Link></div><div className="lg:col-span-7"><div className="overflow-hidden rounded-[26px] border border-[#0A234F]/10 bg-white">{lifecycle.map((item,index)=><div key={item} className="grid grid-cols-[52px_1fr_auto] items-center border-b border-[#0A234F]/[0.07] px-6 py-5 last:border-0"><span className="text-[11px] font-black text-[#8A7351]">{String(index+1).padStart(2,"0")}</span><span className="text-base font-extrabold">{item}</span><CheckCircle2 className="h-4 w-4 text-[#8A7351]" /></div>)}</div></div></div></section>
+      <section className="bg-white py-20"><div className="mx-auto grid max-w-[1480px] gap-6 px-6 lg:grid-cols-3 lg:px-10"><div className="rounded-[26px] bg-[#0A234F] p-8 text-white lg:col-span-2"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Connect with Loadify</p><h2 className="mt-4 max-w-3xl font-serif text-4xl tracking-[-0.03em]">Supplier, commercial and technology relationships need a serious front door.</h2><p className="mt-5 max-w-3xl text-[15px] leading-7 text-white/70">Loadify separates a conversation about participation from a claim that an integration is already live. Explore the relevant route, understand the operating model and start from evidence.</p><div className="mt-7 flex flex-wrap gap-3"><Link to="/suppliers" className="rounded-lg bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F]">Supplier participation</Link><Link to="/integrations" className="rounded-lg border border-white/20 px-5 py-3 text-sm font-bold text-white">Integrations</Link><Link to="/partners" className="rounded-lg border border-white/20 px-5 py-3 text-sm font-bold text-white">Partners</Link></div></div><div className="rounded-[26px] border border-[#0A234F]/10 bg-[#F8F7F4] p-8"><ShieldCheck className="h-7 w-7 text-[#8A7351]"/><p className="mt-7 text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Trust & governance</p><h3 className="mt-3 font-serif text-3xl tracking-[-0.025em]">Evidence before activation.</h3><p className="mt-4 text-sm leading-7 text-[#667085]">Public claims follow what the platform can support, with role-aware controls and capability-scoped integration paths.</p><Link to="/trust" className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold">Explore trust <ArrowRight className="h-4 w-4"/></Link></div></div></section>
+      <section className="bg-[#F8F7F4] py-20"><div className="mx-auto max-w-[1180px] px-6 text-center"><Users className="mx-auto h-6 w-6 text-[#8A7351]"/><p className="mt-5 text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Your next step</p><h2 className="mx-auto mt-3 max-w-4xl font-serif text-4xl tracking-[-0.03em] sm:text-5xl">Explore the platform. Then go deeper where it matters to you.</h2><p className="mx-auto mt-5 max-w-2xl text-[15px] leading-7 text-[#667085]">Whether you want to buy, sell, source for a business or discuss working with Loadify, there is a dedicated path from here.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><Link to="/platform" className="rounded-lg bg-[#0A234F] px-6 py-3 text-sm font-extrabold text-white">Explore Platform</Link><Link to="/marketplace" className="rounded-lg border border-[#0A234F]/15 bg-white px-6 py-3 text-sm font-extrabold">Open Marketplace</Link></div></div></section>
+    </main>
+  </PresentationLayout>;
 }
