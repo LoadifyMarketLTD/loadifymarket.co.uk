@@ -2,14 +2,20 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Building2, CheckCircle2, ClipboardList, Search, ShieldCheck, ShoppingCart, UserRoundCheck } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import SectionNav from "@/components/presentation/SectionNav";
 
 const accountTypes = ["Individual", "Sole trader", "Limited company", "Partnership", "Charity / organisation", "Other business or trader"] as const;
+const businessNav = [
+  { label: "Trade Buyers", to: "/trade" },
+  { label: "Suppliers, Brands & Wholesalers", to: "/suppliers" },
+] as const;
 
 export default function TradePage() {
   return (
     <MainLayout>
       <SEO title="Loadify Trade | Marketplace Access for Business Buyers" description="Register a Loadify trade buyer account for business purchasing and access the marketplace through a dedicated buyer registration path." canonical="/trade" />
-      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F] md:pt-[122px]">
+      <SectionNav title="Business" items={businessNav} />
+      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F]">
         <section className="border-b border-[#0A234F]/10">
           <div className="mx-auto grid max-w-[1480px] gap-12 px-5 py-16 sm:px-7 lg:grid-cols-12 lg:items-center lg:px-10 lg:py-24">
             <div className="lg:col-span-7">
