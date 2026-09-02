@@ -8,7 +8,7 @@ const navigation = [
   { label: "Buyers", to: "/buyers" },
   { label: "Sellers", to: "/sellers" },
   { label: "Business", to: "/business" },
-  { label: "Technology", to: "/integrations" },
+  { label: "Technology", to: "/technology" },
   { label: "Partners", to: "/partners" },
   { label: "How It Works", to: "/how-it-works" },
   { label: "Trust", to: "/trust" },
