@@ -3,8 +3,8 @@ import logo from "@/assets/LOGO.png";
 
 const groups = [
   { title: "Platform", links: [["Overview", "/platform"], ["How It Works", "/how-it-works"], ["Trust", "/trust"]] },
-  { title: "For business", links: [["Buyers", "/buyers"], ["Sellers", "/sellers"], ["Trade Buyers", "/trade"], ["Suppliers & Brands", "/suppliers"]] },
-  { title: "Connect", links: [["Integrations", "/integrations"], ["Partners", "/partners"], ["Developers", "/developers"], ["Contact", "/contact"]] },
+  { title: "Business", links: [["Overview", "/business"], ["Trade Buyers", "/trade"], ["Suppliers, Brands & Wholesalers", "/suppliers"]] },
+  { title: "Technology", links: [["Overview", "/technology"], ["Integrations", "/integrations"], ["Developers", "/developers"], ["Partners", "/partners"]] },
   { title: "Company", links: [["About", "/about"], ["Help & FAQ", "/faq"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
 ] as const;
 
