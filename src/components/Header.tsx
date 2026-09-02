@@ -1,6 +1,5 @@
 import { useLocation } from "react-router-dom";
 import MarketplaceHeader from "@/components/marketplace/MarketplaceHeader";
-import PresentationHeader from "@/components/presentation/PresentationHeader";
 
 const presentationPaths = new Set([
   "/",
@@ -18,5 +17,10 @@ const presentationPaths = new Set([
 
 export default function Header() {
   const { pathname } = useLocation();
-  return presentationPaths.has(pathname) ? <PresentationHeader /> : <MarketplaceHeader />;
+
+  // Corporate presentation pages own their header/footer through PresentationLayout.
+  // The global app header is reserved for marketplace/commercial routes only.
+  if (presentationPaths.has(pathname)) return null;
+
+  return <MarketplaceHeader />;
 }
