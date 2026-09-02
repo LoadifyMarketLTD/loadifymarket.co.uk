@@ -14,8 +14,8 @@ export default function TechnologyPage() {
   return (
     <MainLayout>
       <SEO title="Loadify Technology | Integrations & Developer Context" description="Explore Loadify Market's controlled technology, commerce integration and developer connectivity model." canonical="/technology" />
-      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F] pt-[82px]">
-        <SectionNav title="Technology" items={technologyNav} />
+      <SectionNav title="Technology" items={technologyNav} />
+      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F]">
         <section className="border-b border-[#0A234F]/10">
           <div className="mx-auto grid max-w-[1480px] gap-12 px-5 py-16 sm:px-7 lg:grid-cols-12 lg:items-center lg:px-10 lg:py-24">
             <div className="lg:col-span-7">
