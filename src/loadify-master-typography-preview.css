@@ -69,3 +69,38 @@ textarea {
   font-family: var(--font-body);
   letter-spacing: normal;
 }
+
+/*
+ * Public presentation ending-card rhythm.
+ * Several presentation pages finish with a navy CTA section immediately before
+ * the shared footer. Keep those endings on the same card grid as the rest of
+ * the page instead of allowing the navy surface to run edge-to-edge.
+ *
+ * Scope is deliberately narrow: only a direct LAST section under main-content
+ * that is itself an intentional #0A234F surface is affected. Existing inset
+ * cards and non-navy page endings are left unchanged.
+ */
+main#main-content > section:last-child[class~="bg-[#0A234F]"] {
+  width: calc(100% - 2rem);
+  max-width: 1480px;
+  margin: 1rem auto 1.5rem;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(10, 35, 79, 0.12);
+}
+
+@media (min-width: 640px) {
+  main#main-content > section:last-child[class~="bg-[#0A234F]"] {
+    width: calc(100% - 3.5rem);
+    margin-top: 1.5rem;
+    margin-bottom: 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  main#main-content > section:last-child[class~="bg-[#0A234F]"] {
+    width: calc(100% - 5rem);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+}
