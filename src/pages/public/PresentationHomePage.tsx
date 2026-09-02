@@ -140,12 +140,12 @@ export default function PresentationHomePage() {
 
             <div className="mt-12 grid gap-5 md:grid-cols-2">
               {paths.map(({ icon: Icon, eyebrow, title, copy, to, cta }) => (
-                <Link key={title} to={to} className="group rounded-[24px] border border-[#0A234F]/10 bg-[#F8F7F4] p-7 transition hover:-translate-y-0.5 hover:shadow-[0_18px_50px_rgba(10,35,79,0.08)]">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#0A234F] shadow-sm"><Icon className="h-5 w-5" aria-hidden="true" /></div>
-                  <p className="mt-7 text-[10px] font-black tracking-[0.18em] text-[#8A7351]">{eyebrow}</p>
-                  <h3 className="mt-2 font-serif text-3xl tracking-[-0.025em]">{title}</h3>
-                  <p className="mt-3 max-w-xl text-sm leading-7 text-[#667085]">{copy}</p>
-                  <span className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold">{cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden="true" /></span>
+                <Link key={title} to={to} className="group rounded-[24px] border border-[#0A234F] bg-[#0A234F] p-7 text-white shadow-[0_18px_50px_rgba(10,35,79,0.12)] transition hover:-translate-y-0.5 hover:bg-[#071A3C] hover:shadow-[0_22px_56px_rgba(10,35,79,0.18)]">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white"><Icon className="h-5 w-5" aria-hidden="true" /></div>
+                  <p className="mt-7 text-[10px] font-black tracking-[0.18em] text-[#F5A300]">{eyebrow}</p>
+                  <h3 className="mt-2 font-serif text-3xl tracking-[-0.025em] text-white">{title}</h3>
+                  <p className="mt-3 max-w-xl text-sm leading-7 text-white/70">{copy}</p>
+                  <span className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold text-white">{cta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden="true" /></span>
                 </Link>
               ))}
             </div>
