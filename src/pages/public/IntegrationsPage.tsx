@@ -4,10 +4,10 @@ import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
 const domains = [
-  { icon: PackageSearch, title: "Catalogue & offers", copy: "Product identity, variations and commercial offer data can be evaluated as part of an approved integration path." },
+  { icon: PackageSearch, title: "Catalogue & offers", copy: "Product identity, variations and commercial offer data can be evaluated as part of a controlled integration path." },
   { icon: Database, title: "Stock & price", copy: "Inventory and pricing connectivity depends on the authoritative provider contract and verified capability available for that integration." },
   { icon: Truck, title: "Fulfilment & tracking", copy: "Order, fulfilment and tracking capabilities are never assumed. Each capability requires provider-specific evidence before activation." },
-  { icon: ShieldCheck, title: "Governance", copy: "Data access, customer information and provider writes remain scoped to the minimum verified capability required for the approved path." },
+  { icon: ShieldCheck, title: "Governance", copy: "Data access, customer information and provider writes remain scoped to the minimum verified capability required for the authorised path." },
 ] as const;
 
 const stages = [
@@ -20,14 +20,14 @@ const stages = [
 export default function IntegrationsPage() {
   return (
     <MainLayout>
-      <SEO title="Loadify Integrations | Supplier Commerce & Partner Connectivity" description="Explore Loadify Market's controlled supplier and commerce integration model, capability validation process and partner-based integration paths." canonical="/integrations" />
+      <SEO title="Loadify Integrations | Supplier Commerce & Technology Connectivity" description="Explore Loadify Market's controlled supplier and commerce integration model, capability validation process and evidence-based connectivity paths." canonical="/integrations" />
       <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F] md:pt-[122px]">
         <section className="border-b border-[#0A234F]/10">
           <div className="mx-auto grid max-w-[1480px] gap-12 px-5 py-16 sm:px-7 lg:grid-cols-12 lg:items-center lg:px-10 lg:py-24">
             <div className="lg:col-span-7">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#8A7351]">Supplier Commerce & Integrations</p>
               <h1 className="mt-5 max-w-[900px] font-serif text-[2.75rem] font-normal leading-[1.02] tracking-[-0.04em] sm:text-[3.8rem] lg:text-[4.5rem]">Controlled integration paths for supplier and commerce systems.</h1>
-              <p className="mt-7 max-w-[780px] text-[16px] leading-7 text-[#5A6578] sm:text-[18px] sm:leading-8">Loadify evaluates connectivity capability by capability. Commercial approval, technical evidence and controlled validation come before any supplier or provider function is presented as live.</p>
+              <p className="mt-7 max-w-[780px] text-[16px] leading-7 text-[#5A6578] sm:text-[18px] sm:leading-8">Loadify evaluates connectivity capability by capability. Commercial fit, technical evidence and controlled validation come before any supplier or provider function is presented as live.</p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link to="/contact?topic=integration" className="inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#0A234F] px-6 py-3 text-sm font-bold text-white">Integration enquiry <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
                 <Link to="/suppliers" className="inline-flex min-h-12 items-center rounded-lg border border-[#0A234F]/15 bg-white px-6 py-3 text-sm font-bold text-[#0A234F]">Supplier participation</Link>
@@ -37,10 +37,10 @@ export default function IntegrationsPage() {
               <div className="rounded-[26px] border border-[#0A234F]/10 bg-white p-7 shadow-[0_22px_65px_rgba(10,35,79,0.09)]">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Current access model</p>
                 <div className="mt-5 space-y-4 text-sm">
-                  <div className="flex gap-3"><KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-[#0A234F]" /><div><strong>Public API</strong><p className="mt-1 leading-6 text-[#667085]">Not currently generally available.</p></div></div>
-                  <div className="flex gap-3"><Network className="mt-0.5 h-5 w-5 shrink-0 text-[#0A234F]" /><div><strong>Supplier integrations</strong><p className="mt-1 leading-6 text-[#667085]">Partner- and onboarding-based.</p></div></div>
-                  <div className="flex gap-3"><Braces className="mt-0.5 h-5 w-5 shrink-0 text-[#0A234F]" /><div><strong>Webhooks</strong><p className="mt-1 leading-6 text-[#667085]">Availability depends on the approved integration path.</p></div></div>
-                  <div className="flex gap-3"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#0A234F]" /><div><strong>Custom integration discussions</strong><p className="mt-1 leading-6 text-[#667085]">Available for appropriate supplier and technology relationships.</p></div></div>
+                  <div className="flex gap-3"><KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-[#0A234F]" /><div><strong>Public API</strong><p className="mt-1 leading-6 text-[#667085]">Not currently presented as generally available.</p></div></div>
+                  <div className="flex gap-3"><Network className="mt-0.5 h-5 w-5 shrink-0 text-[#0A234F]" /><div><strong>Supplier integrations</strong><p className="mt-1 leading-6 text-[#667085]">Relationship-, evidence- and onboarding-dependent.</p></div></div>
+                  <div className="flex gap-3"><Braces className="mt-0.5 h-5 w-5 shrink-0 text-[#0A234F]" /><div><strong>Webhooks</strong><p className="mt-1 leading-6 text-[#667085]">Availability depends on the authorised integration path and verified provider capability.</p></div></div>
+                  <div className="flex gap-3"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#0A234F]" /><div><strong>Custom connectivity discussions</strong><p className="mt-1 leading-6 text-[#667085]">Can be considered where the commercial relationship and technical evidence support the proposed path.</p></div></div>
                 </div>
               </div>
             </div>
