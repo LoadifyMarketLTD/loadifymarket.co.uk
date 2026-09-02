@@ -5,29 +5,17 @@ Status: ACTIVE / P0 — FINAL OWNER ARCHITECTURE RECORDED
 Branch: `feat/platform-partner-trust-hub-20260902`
 PR: #724 — DRAFT / OPEN / NOT MERGED
 
-## Controlling audit conclusion
-Earlier mixed corporate + marketplace shell is rejected. Correct target is two coordinated, visually distinct environments.
+## Controlling conclusion
+Two coordinated, visually distinct environments are mandatory. `/` is official corporate/platform homepage; `/marketplace` preserves old marketplace. Corporate presentation routes are `/platform`, `/buyers`, `/sellers`, `/trade`, `/suppliers`, `/integrations`, `/partners`, `/developers`, `/how-it-works`, `/trust`. Shopping routes remain marketplace world. Buyer/Seller/Admin workspaces must not be disturbed.
 
-Corporate: `/` official company/platform homepage; presentation routes `/platform`, `/buyers`, `/sellers`, `/trade`, `/suppliers`, `/integrations`, `/partners`, `/developers`, `/how-it-works`, `/trust`. Header is presentation-first; corporate footer is ecosystem/company directory; core presentation pages are visible through navbar/dropdowns, not primarily burger.
+Corporate header is presentation-first and exposes core destinations through navbar/dropdowns; Marketplace is distinct CTA; burger is secondary. Marketplace retains search/categories/cart shopping shell.
 
-Marketplace: `/marketplace` preserves old marketplace homepage. `/catalog`, categories/products, deals, cart and checkout remain shopping world. Marketplace retains shopping header/drawer/footer with search/categories/cart. Buyer/Seller/Admin workspaces must not be disturbed.
+Preserve light Loadify identity: warm-white/light surfaces, navy structure/text, gold/orange accent. Dark/navy rebrand rejected. Homepage must meet/exceed ten presentation pages and use narrative hierarchy, real interface evidence/truthful diagrams rather than flat ten-card directory.
 
-## Visual conclusion
-Preserve light Loadify identity: warm-white/light surfaces, navy structure/text, gold/orange accent. Dark/navy rebrand rejected. Homepage must meet/exceed quality of ten presentation pages. Avoid flat ten-card directory; use narrative hierarchy, varied composition, real interface evidence and truthful diagrams.
+Homepage story: What Loadify is → Platform → Buy → Sell/Supply → Connect → Lifecycle → Trust/Governance → role-specific next step.
 
-## Homepage conversion conclusion
-Homepage is primary business credential/sales surface. It must route Buyers/Trade, Sellers, Suppliers/Brands/Wholesalers, Integration/technology teams, Partners and Marketplace shoppers.
-Story: What Loadify is → Platform → Buy → Sell/Supply → Connect → Lifecycle → Trust/Governance → role-specific next step.
+Only LIVE/CURRENTLY SUPPORTED and SUPPORTED WITH CONDITIONS are normal live marketing claims. Do not publish provider logos/relationships, fabricated counts, testimonials, public APIs, certifications, enterprise/security claims, provider automation or unsupported global reach without verified evidence. Provider application/contact/review/readiness is not partnership.
 
-## Navigation correction
-Corporate target: `Platform | Buyers | Sellers | Business ▾ | Technology ▾ | Partners | How It Works | Trust`; Business → Trade Buyers/Suppliers/Brands & Wholesalers; Technology → Integrations/Developers; right side Marketplace CTA + appropriate account actions. Burger secondary.
+Known contradictions remain: RFQ not marketable; services-marketplace wording unsupported by dominant implementation; pricing needs reconciliation before `/pricing`; no-email-confirmation wording conflicts with verification gates; absolute no-own/store/dispatch wording unsafe.
 
-## Truth conclusion
-Only LIVE/CURRENTLY SUPPORTED and SUPPORTED WITH CONDITIONS are normal live marketing claims. Do not publish provider logos/relationships, fabricated counts, testimonials, public API availability, certifications, enterprise/security claims, automatic provider fulfilment/tracking/refunds or unsupported global reach without verified evidence. Provider application/contact/review/readiness work is not partnership.
-
-Repository capability truth retained: marketplace catalogue/search/category/product discovery, cart/checkout, Stripe-backed processing, order success/tracking, public seller profiles, buyer/seller workspaces, trade registration, seller onboarding/listing/order/shipment/returns/reviews/messages/notifications, admin governance and controlled Supplier Commerce readiness architecture. Verify route/runtime when surfaced.
-
-Known contradictions retained: RFQ not marketable; services-marketplace language unsupported by dominant implementation; pricing needs reconciliation before `/pricing`; no-email-confirmation wording conflicts with verification gates; absolute no-own/store/dispatch wording unsafe.
-
-## Scope and gates
-Desktop-first visual acceptance; keep responsive/non-breaking, full mobile visual acceptance deferred. Do not restart audit. Before merge inspect App diff vs current main, shell separation, `/marketplace` preservation, auth/cart/checkout/workspaces/legal, build/type/lint/tests, Netlify, real desktop preview, Claims Matrix, current main/behind/overlap. PR remains draft/not merged until owner approval.
+Desktop-first visual acceptance; responsive/non-breaking required; full mobile visual acceptance deferred. Do not restart audit. Before merge inspect App diff/current main, shell separation, marketplace preservation, auth/cart/checkout/workspaces/legal, build/type/lint/tests, Netlify, real desktop preview, claims matrix, behind/overlap. PR remains draft/not merged until owner approval.
