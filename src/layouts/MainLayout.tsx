@@ -12,6 +12,7 @@ const presentationPaths = new Set([
   "/business",
   "/trade",
   "/suppliers",
+  "/technology",
   "/integrations",
   "/partners",
   "/developers",
@@ -24,12 +25,6 @@ interface MainLayoutProps { children: ReactNode; }
 export default function MainLayout({ children }: MainLayoutProps) {
   const isMobile = useIsMobile();
   const { pathname } = useLocation();
-
-  if (presentationPaths.has(pathname)) {
-    return <PresentationLayout>{children}</PresentationLayout>;
-  }
-
-  return isMobile
-    ? <MobileAppLayout>{children}</MobileAppLayout>
-    : <DesktopLayout>{children}</DesktopLayout>;
+  if (presentationPaths.has(pathname)) return <PresentationLayout>{children}</PresentationLayout>;
+  return isMobile ? <MobileAppLayout>{children}</MobileAppLayout> : <DesktopLayout>{children}</DesktopLayout>;
 }
