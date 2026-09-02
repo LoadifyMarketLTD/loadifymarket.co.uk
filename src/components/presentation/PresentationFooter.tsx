@@ -17,6 +17,8 @@ export default function PresentationFooter() {
             <Link to="/" className="inline-flex items-center" aria-label="Loadify home">
               <img src={logo} alt="Loadify Market" className="h-12 w-auto max-w-[205px] object-contain" />
             </Link>
+            <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">LOADIFY MARKET</p>
+            <h2 className="mt-3 max-w-md font-serif text-[1.8rem] font-normal leading-[1.08] tracking-[-0.03em] text-white sm:text-[2rem]">Commerce built around clear roles and controlled participation.</h2>
             <p className="mt-5 max-w-sm text-sm leading-7 text-white/70">Explore Loadify's marketplace, buyer and seller environments, business routes and controlled ways to work with the platform.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/marketplace" className="inline-flex rounded-lg bg-[#F5A300] px-5 py-3 text-sm font-extrabold text-[#0A234F]">Open Marketplace</Link>
