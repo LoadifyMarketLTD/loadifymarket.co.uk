@@ -19,10 +19,8 @@ import RequireEmailVerified from './components/auth/RequireEmailVerified';
 import AuthPromptModal from './components/AuthPromptModal';
 import MobileSellGate from './components/MobileSellGate';
 
-// ─── Auth callback — OAuth redirect landing page ──────────────────────────────
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 
-// ─── Mobile standalone pages ──────────────────────────────────────────────────
 const MobileInboxPage = lazy(() => import('./pages/MobileInboxPage'));
 const MobileChatPage = lazy(() => import('./pages/MobileChatPage'));
 const MobileOrdersPage = lazy(() => import('./pages/MobileOrdersPage'));
@@ -35,10 +33,9 @@ const MobileFavouritesPage = lazy(() => import('./pages/MobileFavouritesPage'));
 const MobileSettingsPage = lazy(() => import('./pages/MobileSettingsPage'));
 const MobileSellerPaymentsPage = lazy(() => import('./pages/MobileSellerPaymentsPage'));
 
-// ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home = lazy(() => import('./pages/Home'));
+const MarketplaceHomePage = lazy(() => import('./pages/MarketplaceHomePage'));
 
-// ─── Public platform presentation pages ───────────────────────────────────────
 const PlatformPage = lazy(() => import('./pages/public/PlatformPage'));
 const BuyersPage = lazy(() => import('./pages/public/BuyersPage'));
 const SellersPage = lazy(() => import('./pages/public/SellersPage'));
@@ -50,7 +47,6 @@ const DevelopersPage = lazy(() => import('./pages/public/DevelopersPage'));
 const HowItWorksPage = lazy(() => import('./pages/public/HowItWorksPage'));
 const TrustPage = lazy(() => import('./pages/public/TrustPage'));
 
-// ─── Pixel-perfect pages — standalone (include own Header + Footer) ───────────
 const PPCatalog = lazy(() => import('./pages/pixel-perfect/Catalog'));
 const PPCategoryPage = lazy(() => import('./pages/pixel-perfect/CategoryPage'));
 const PPProductDetail = lazy(() => import('./pages/pixel-perfect/ProductDetail'));
@@ -72,14 +68,12 @@ const PPWholesaleInfo = lazy(() => import('./pages/pixel-perfect/WholesaleInfo')
 const PPCheckoutError = lazy(() => import('./pages/pixel-perfect/CheckoutError'));
 const PPNotFound = lazy(() => import('./pages/pixel-perfect/NotFound'));
 
-// ─── Pixel-perfect auth pages — standalone (full-page designs) ───────────────
 const PPLogin = lazy(() => import('./pages/pixel-perfect/Login'));
 const PPSignup = lazy(() => import('./pages/pixel-perfect/Signup'));
 const PPTradeAccount = lazy(() => import('./pages/pixel-perfect/TradeAccount'));
 const PPForgotPassword = lazy(() => import('./pages/pixel-perfect/ForgotPassword'));
 const PPResetPassword = lazy(() => import('./pages/pixel-perfect/ResetPassword'));
 
-// ─── Functional pages — no pixel-perfect equivalent yet ──────────────────────
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const MobileSellWizard = lazy(() => import('./pages/MobileSellWizard'));
@@ -96,7 +90,6 @@ const SellerOnboarding = lazy(() => import('./pages/onboarding/SellerOnboarding'
 const SellerSetupPage = lazy(() => import('./pages/pixel-perfect/seller/SellerSetupPage'));
 const AppOnboarding = lazy(() => import('./pages/AppOnboarding'));
 
-// ─── Pixel-perfect dashboard shells ──────────────────────────────────────────
 const PPSellerShell = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
 const PPSellerDashboard = lazy(() => import('./pages/pixel-perfect/seller/SellerDashboard'));
 const PPSellerProducts = lazy(() => import('./pages/pixel-perfect/seller/SellerProducts'));
@@ -139,19 +132,11 @@ const PPAdminStripeEvents = lazy(() => import('./pages/pixel-perfect/admin/Admin
 const PPAdminDisputes = lazy(() => import('./pages/pixel-perfect/admin/AdminDisputes'));
 
 function PageLoader() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="mt-4 text-slate-400">Loading...</p>
-      </div>
-    </div>
-  );
+  return <div className="flex items-center justify-center min-h-screen bg-background"><div className="text-center"><div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div><p className="mt-4 text-slate-400">Loading...</p></div></div>;
 }
 
 function DashboardRedirect() {
   const { user, isLoading } = useAuthStore();
-
   if (isLoading) return <PageLoader />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.isActive !== true) return <Navigate to="/login?error=account_inactive" replace />;
@@ -172,48 +157,22 @@ function CategoryRedirect() {
 }
 
 function isTrustedNativeDeepLink(parsed: URL): boolean {
-  if (parsed.protocol === 'loadifymarket:') {
-    return parsed.hostname === 'app' && parsed.pathname.startsWith('/auth/callback');
-  }
+  if (parsed.protocol === 'loadifymarket:') return parsed.hostname === 'app' && parsed.pathname.startsWith('/auth/callback');
   return parsed.protocol === 'https:' && parsed.hostname === 'loadifymarket.co.uk';
 }
 
 function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthStore();
   const [maintenanceMode, setMaintenanceMode] = useState<boolean | null>(null);
-
   useEffect(() => {
-    supabase
-      .from('platform_settings')
-      .select('value')
-      .eq('key', 'maintenance_mode')
-      .maybeSingle()
-      .then(({ data }) => {
-        const val = data?.value;
-        setMaintenanceMode(val === true || val === 'true');
-      }, () => setMaintenanceMode(false));
+    supabase.from('platform_settings').select('value').eq('key', 'maintenance_mode').maybeSingle().then(({ data }) => {
+      const val = data?.value;
+      setMaintenanceMode(val === true || val === 'true');
+    }, () => setMaintenanceMode(false));
   }, []);
-
   if (isLoading || maintenanceMode === null) return <>{children}</>;
   if (maintenanceMode && user && hasAdminAccess(user)) return <>{children}</>;
-  if (maintenanceMode) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-6">
-        <div className="text-center max-w-lg">
-          <div className="text-6xl mb-6">🔧</div>
-          <h1 className="text-3xl font-bold text-white mb-3">We're under maintenance</h1>
-          <p className="text-slate-400 text-base mb-6">
-            Loadify Market is currently undergoing scheduled maintenance. We'll be back shortly.
-            Thank you for your patience.
-          </p>
-          <p className="text-slate-500 text-sm">
-            If you are an admin, please{' '}
-            <a href="/login" className="text-blue-600 underline">sign in</a> to access the platform.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (maintenanceMode) return <div className="min-h-screen bg-background flex items-center justify-center px-6"><div className="text-center max-w-lg"><div className="text-6xl mb-6">🔧</div><h1 className="text-3xl font-bold text-white mb-3">We're under maintenance</h1><p className="text-slate-400 text-base mb-6">Loadify Market is currently undergoing scheduled maintenance. We'll be back shortly. Thank you for your patience.</p><p className="text-slate-500 text-sm">If you are an admin, please <a href="/login" className="text-blue-600 underline">sign in</a> to access the platform.</p></div></div>;
   return <>{children}</>;
 }
 
@@ -238,32 +197,17 @@ function App() {
 
   useEffect(() => {
     if (!isCapacitorNative()) return;
-
     let removeListener: (() => void) | undefined;
-
     import('@capacitor/app').then(({ App: CapApp }) => {
       CapApp.addListener('appUrlOpen', async ({ url }) => {
         try {
           const parsed = new URL(url);
-          if (!isTrustedNativeDeepLink(parsed)) {
-            console.warn('[DeepLink] Ignored untrusted URL origin');
-            return;
-          }
-          if (parsed.pathname.startsWith('/auth/callback')) {
-            await supabase.auth.getSession();
-            navigate('/auth/callback' + parsed.search + parsed.hash, { replace: true });
-            return;
-          }
-          const inAppPath = parsed.pathname + parsed.search + parsed.hash;
-          navigate(inAppPath, { replace: true });
-        } catch {
-          // Malformed URL — ignore.
-        }
-      }).then((handle) => {
-        removeListener = () => handle.remove();
-      });
-    }).catch(() => { /* @capacitor/app not available — no-op */ });
-
+          if (!isTrustedNativeDeepLink(parsed)) { console.warn('[DeepLink] Ignored untrusted URL origin'); return; }
+          if (parsed.pathname.startsWith('/auth/callback')) { await supabase.auth.getSession(); navigate('/auth/callback' + parsed.search + parsed.hash, { replace: true }); return; }
+          navigate(parsed.pathname + parsed.search + parsed.hash, { replace: true });
+        } catch { /* malformed URL — ignore */ }
+      }).then((handle) => { removeListener = () => handle.remove(); });
+    }).catch(() => {});
     return () => removeListener?.();
   }, [navigate]);
 
@@ -276,54 +220,30 @@ function App() {
       }
       delete data['seller_profiles'];
     }
-
     let cleanup: (() => void) | undefined;
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setLoading(true);
-        void Promise.resolve(
-          supabase
-            .from('users')
-            .select('*, seller_profiles(sellerStatus)')
-            .eq('id', session.user.id)
-            .maybeSingle()
-        ).then(({ data, error }) => {
+        void Promise.resolve(supabase.from('users').select('*, seller_profiles(sellerStatus)').eq('id', session.user.id).maybeSingle()).then(({ data, error }) => {
           if (data) {
-            if (data.isActive === false) {
-              supabase.auth.signOut();
-              setUser(null);
-              return;
-            }
+            if (data.isActive === false) { supabase.auth.signOut(); setUser(null); return; }
             normalizeSellerStatus(data as unknown as Record<string, unknown>);
             (data as Record<string, unknown>).isEmailVerified = session.user.email_confirmed_at != null;
             (data as Record<string, unknown>).isAdmin = (data as Record<string, unknown>).role === 'admin';
             setUser(data);
           } else {
-            if (error) {
-              console.warn('[Auth] Authoritative user profile lookup failed; denying protected access:', error.message);
-            } else {
-              console.warn('[Auth] Authoritative user profile is missing; denying protected access');
-            }
-            void supabase.auth.signOut({ scope: 'local' }).catch((signOutError) => {
-              console.warn('[Auth] Local fail-closed sign-out failed', signOutError);
-            });
+            if (error) console.warn('[Auth] Authoritative user profile lookup failed; denying protected access:', error.message);
+            else console.warn('[Auth] Authoritative user profile is missing; denying protected access');
+            void supabase.auth.signOut({ scope: 'local' }).catch((signOutError) => console.warn('[Auth] Local fail-closed sign-out failed', signOutError));
             setUser(null);
           }
         }).catch((err: unknown) => {
           console.error('[Auth] Profile fetch threw unexpectedly:', err);
-          void supabase.auth.signOut({ scope: 'local' }).catch((signOutError) => {
-            console.warn('[Auth] Local fail-closed sign-out failed', signOutError);
-          });
+          void supabase.auth.signOut({ scope: 'local' }).catch((signOutError) => console.warn('[Auth] Local fail-closed sign-out failed', signOutError));
           setUser(null);
         });
-      } else {
-        setUser(null);
-      }
+      } else setUser(null);
     });
-
     cleanup = () => subscription.unsubscribe();
     return () => cleanup?.();
   }, [setUser, setLoading]);
@@ -338,6 +258,7 @@ function App() {
       <MaintenanceModeGate>
         <Routes>
           <Route path="/" element={publicPage(<Home />)} />
+          <Route path="marketplace" element={publicPage(<MarketplaceHomePage />)} />
           <Route path="platform" element={publicPage(<PlatformPage />)} />
           <Route path="buyers" element={publicPage(<BuyersPage />)} />
           <Route path="sellers" element={publicPage(<SellersPage />)} />
@@ -478,7 +399,6 @@ function App() {
           <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
           <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
           <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
-
           <Route path="*" element={publicPage(<PPNotFound />)} />
         </Routes>
       </MaintenanceModeGate>
