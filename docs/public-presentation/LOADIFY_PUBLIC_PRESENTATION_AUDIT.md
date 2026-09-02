@@ -1,237 +1,278 @@
 # Loadify Market — Public Presentation Audit
 
 Date: 2026-09-02
-Status: IN PROGRESS / P0
+Status: ACTIVE / P0 — repository-truth audit substantially advanced
 Branch: `feat/platform-partner-trust-hub-20260902`
 PR: #724
 Base main at audit start: `4d52461823a13ab3412d074db17095df2bbf4fb2`
 
-## Audit objective
+## Objective
 
-Establish repository truth before any new public platform-presentation page is implemented. The audit exists to prevent unsupported marketing claims, preserve current marketplace functionality and convert Loadify's real capabilities into a professional public information architecture.
+Establish repository truth before presentation-page implementation. This audit exists to convert Loadify's real platform capabilities into a credible public information architecture while preventing unsupported claims and regressions.
 
 ## 1. Repository operating contract
 
-`AGENTS.md` has been read.
+`AGENTS.md` has been read. It establishes that Loadify is not a simple seller-only marketplace or generic dropshipping site. Public UI must be evidence-backed, Supplier Commerce/provider capabilities remain gated, no Fake PASS is allowed, and auth/commerce/payments/legal/security truth must not be weakened or duplicated.
 
-Relevant constraints confirmed:
+## 2. Current public navigation — confirmed
 
-- Loadify is not a simple seller-only marketplace and must not be reduced to a generic dropshipping site.
-- public UI must meet the quality of the platform's strongest existing surfaces;
-- unsupported customer-facing claims are prohibited;
-- Supplier Commerce and provider capabilities remain evidence-gated;
-- commerce, auth, payment, legal and security truths must not be duplicated or weakened;
-- no Fake PASS;
-- responsive/mobile/accessibility verification is mandatory;
-- do not write directly to `main` without explicit authorization.
+### Desktop header (`src/components/Header.tsx`)
 
-## 2. Current desktop header / navbar map
+Current top header:
+- burger button;
+- logo -> `/`;
+- search -> `/catalog?q=...`;
+- Marketplace -> `/catalog`;
+- Sell with us -> `/register?type=seller`;
+- Help -> `/help`;
+- Cart -> `/cart`;
+- Sign in / Join Loadify when logged out;
+- role-aware Dashboard / Sign out when logged in.
 
-Source: `src/components/Header.tsx`.
+Current lower bar:
+- Home;
+- Shop all;
+- first six marketplace categories;
+- More categories;
+- category hover menus.
 
-### Top header
+Conclusion: the current header is suitable for basic shopping discovery but does not expose Loadify as a wider platform ecosystem.
 
-Current top header contains:
+### Burger / drawer (`src/components/MobileDrawer.tsx`)
 
-- left burger button opening `MobileDrawer`;
-- Loadify logo linking to `/`;
-- product/category search leading to `/catalog?q=...`;
-- utility links on larger desktop:
-  - `Marketplace` -> `/catalog`
-  - `Sell with us` -> `/register?type=seller`
-  - `Help` -> `/help`
-  - Cart -> `/cart`
-  - Sign in -> `/login` when unauthenticated
-  - Join Loadify -> `/register` when unauthenticated
-  - role-aware Dashboard when authenticated
-  - Sign out when authenticated.
+Current drawer is primarily:
+`account + quick actions + category directory + four support/commercial links`.
 
-### Lower navigation
+It exposes:
+- all marketplace categories/subcategories;
+- Start Selling;
+- Shipping Policy;
+- Marketplace Information;
+- About Us.
 
-Current lower navigation is product-discovery oriented:
+Conclusion: it is not yet a professional platform directory. It needs to become a Loadify Navigation Hub while preserving category/shop access.
 
-- `Home` -> `/`
-- `Shop all` -> `/catalog`
-- first six marketplace categories from `CATEGORY_CONFIG`
-- `More categories` -> `/catalog`
-- category hover menus expose subcategories.
+## 3. Current homepage positioning — confirmed
 
-### Initial conclusion
+Sources: `src/pages/Home.tsx`, `src/components/HeroSection.tsx`, `src/components/FeaturesGrid.tsx`.
 
-Current desktop navigation is correctly useful for shopping, but it does not expose Loadify as a broader platform ecosystem. It currently lacks first-class public destinations for Platform, Buyers, Business/Trade presentation, Suppliers, Integrations, Partners, Developers and Trust.
+The desktop homepage hero currently positions Loadify primarily as:
+- a UK marketplace for independent sellers;
+- built for UK sellers, brands and wholesalers;
+- a sales channel for listing products, managing marketplace orders and following eligible payouts.
 
-The lower category navigation is valuable commerce infrastructure and should not simply be deleted. The likely final architecture is a platform-presentation layer plus a separate product-discovery layer.
+The homepage also contains:
+- marketplace categories;
+- live approved product listings;
+- seller proposition;
+- Stripe Connect-qualified payout wording;
+- marketplace order/tracking trust signals;
+- seller CTA.
 
-## 3. Current burger / drawer map
+This is useful commerce positioning but still under-represents:
+- buyer platform proposition;
+- business/trade buying;
+- supplier participation;
+- supplier/integration programme;
+- commercial/technology partners;
+- developer/integration entry point;
+- institutional trust/governance.
 
-Source: `src/components/MobileDrawer.tsx`.
+Important: this workstream must not casually rewrite the existing homepage while the dedicated presentation family is being built. Homepage convergence comes later, after the destination pages exist and are validated.
 
-The same drawer component is opened by the desktop burger and is also designed as a mobile navigation surface.
+## 4. Footer — confirmed
 
-Current sections:
+Source: `src/components/Footer.tsx`.
 
-### Account block
+Current footer already provides useful legal/company proof:
+- XDrive Logistics Ltd operator identity;
+- company number and VAT number;
+- UK address/contact details;
+- Stripe-powered checkout;
+- order tracking;
+- legal/policy links;
+- Shop, Sell and Loadify columns;
+- Partner With Us currently routes to generic contact with a partnership topic.
 
-Role/account-aware controls via `DrawerAccountBlock`.
+Gap: the footer still describes only a three-part public model — Shop / Sell / Loadify. It does not expose the future public architecture for Platform, Buyers, Business, Suppliers, Integrations, Partners, Developers and Trust. Footer redesign belongs to navigation convergence, not the first code step.
 
-### Quick Actions
+## 5. Public information pages — findings
 
-Rendered via `DrawerCTACards`.
+### About (`src/pages/pixel-perfect/AboutUs.tsx`)
 
-### Browse Categories
+Useful verified-positioning material exists, including operator/company identity and seller-managed fulfilment framing. However the page contains high-risk claims that require reconciliation before reuse:
+- it calls Loadify the UK's "trusted" multi-category marketplace;
+- it markets service-based offerings strongly;
+- it says the platform does not own/store/dispatch any products, which may conflict with the intended Loadify-operated sourcing / supplier-fulfilled architecture if presented as a timeless platform-wide rule;
+- it references a Google 5.0 rating, which must not be used as platform trust proof without current verification and an appropriate evidence basis.
 
-- all categories from `CATEGORY_CONFIG`;
-- category expansion to subcategories;
-- link to `/catalog`;
-- individual category links.
+Conclusion: About should become a concise institutional/company page, not the platform encyclopedia.
 
-### Support links
+### FAQ (`src/pages/pixel-perfect/FAQ.tsx`)
 
-- `Start Selling` -> `/register?type=seller`
-- `Shipping Policy` -> `/shipping-policy`
-- `Marketplace Information` -> `/wholesale-info`
-- `About Us` -> `/about`.
+Confirmed contradictions/stale claims:
+- registration FAQ says no email confirmation is required, while current architecture contains email-verification gates and the Trade Account flow explicitly asks the user to confirm email;
+- RFQ is marketed as live, while the master specification already identified seller `/seller/rfq` as redirecting and therefore not suitable to market as a major live capability;
+- FAQ says Loadify never owns/stores/dispatches any products, a statement that is too absolute for the intended supplier-commerce direction;
+- seller activation descriptions vary between compliance review language and automatic activation language;
+- 7% standard commission / 0% launch promotion appears as current policy and must be reconciled against canonical commercial terms before a permanent Pricing page is published.
 
-### Initial conclusion
+Conclusion: FAQ cannot be copied into the new presentation family without correction.
 
-The current drawer is primarily:
+### Marketplace Information / Wholesale (`src/pages/pixel-perfect/WholesaleInfo.tsx`)
 
-`account + quick actions + categories + four support/commercial links`.
+This page currently mixes buyer information, seller information and wholesale concepts. High-risk claims include:
+- "no category restrictions" despite prohibited/restricted-item governance;
+- "all major product categories" wording that should be grounded in actual taxonomy/listings rather than used as an absolute commercial guarantee;
+- immediate listing visibility after profile verification;
+- 7%/0% fee claims;
+- seller-controlled volume discounts/tiered pricing, which must be verified against real listing/product behaviour before marketing;
+- broad statements about international sellers and fulfilment responsibility.
 
-It does not yet function as a directory of the Loadify ecosystem. The rebuild should preserve category/shop access but add grouped routes for platform understanding, buyer/seller audiences, business/suppliers, integrations/partners/developers and trust/company information.
+Conclusion: `/wholesale-info` should not be used as the future Suppliers/Brands/Trade presentation page. The new architecture should separate those audiences.
 
-## 4. Current route architecture — initial inventory
+### Trade Account (`src/pages/pixel-perfect/TradeAccount.tsx`)
 
-Source: `src/App.tsx` import/routing architecture. Full route table remains to be completed from the route definitions.
+This is a real registration flow, not a marketing page. It supports customer types including:
+- individual;
+- sole trader;
+- limited company;
+- partnership;
+- charity/organisation;
+- other business/trader.
 
-### Public marketplace / commerce surfaces already represented in source
+It captures business/trader details and creates a buyer registration intent, then uses Supabase signup with email confirmation. This strongly supports creating a separate `/trade` presentation page that routes qualified visitors into `/trade-account`.
 
-- homepage;
-- catalogue;
-- category page;
+### Seller Guidelines (`src/pages/SellerGuidelinesPage.tsx`)
+
+This confirms real seller-oriented messaging around:
+- accurate listings;
+- legal/compliant stock;
+- business profile + Stripe setup;
+- fulfilment/tracking responsibility;
+- seller dashboard;
+- marketplace payment path;
+- prohibited-item/legal rules.
+
+But it also repeats the 7%/0% fee claim and contains wording that seller activation is automatic after setup. These need reconciliation before being elevated into permanent acquisition copy.
+
+## 6. Current platform capability inventory — presentation-safe direction
+
+### Public marketplace
+
+Repository source represents:
+- catalogue and category discovery;
 - product detail;
 - cart;
-- checkout;
+- Stripe-backed checkout;
 - deals;
-- order success;
-- checkout error;
 - public order tracking;
+- public seller profiles;
+- buyer/seller/legal information pages.
+
+### Buyer environment
+
+Routes/components represent:
+- dashboard;
+- orders;
+- wishlist/favourites;
+- addresses;
+- payments;
+- reviews;
+- profile/settings;
+- notifications;
+- messages;
+- disputes.
+
+These capabilities support a dedicated Buyers page, but wording must describe benefits rather than mechanically list dashboard menu items.
+
+### Seller environment
+
+Routes/components represent:
+- dashboard;
+- products and create/edit;
+- orders;
+- shipments;
+- returns;
+- profile/settings;
+- reviews;
+- notifications;
+- messages;
+- seller setup/onboarding;
+- Stripe-connected payout path where eligible;
 - public seller profile/store.
 
-### Public information / legal surfaces already represented
+These support a dedicated Sellers page.
 
-- About Us;
-- Contact Us;
-- FAQ;
-- Wholesale Info;
-- Trade Account;
-- Terms and Conditions;
-- Privacy Policy;
-- Cookie Policy;
-- Returns Policy;
-- Shipping Policy;
-- Buyer Terms;
-- Seller Terms;
-- Disclaimer;
-- Acceptable Use Policy;
-- Prohibited Items Policy;
-- Seller Verification Policy;
-- Intellectual Property Complaints;
-- Seller Guidelines.
+### Admin / governance
 
-### Authentication / onboarding surfaces represented
+Routes/components represent governance surfaces for:
+- users/buyers;
+- seller approvals;
+- products/orders;
+- flagged activity;
+- reports/support;
+- payouts;
+- Stripe events;
+- disputes;
+- seller review/detail.
 
-- Login;
-- Signup/Register;
-- Forgot Password;
-- Reset Password;
-- OAuth callback;
-- Role Selection;
-- Seller Onboarding;
-- Seller Setup;
-- App onboarding;
-- mobile sell flow.
+Trust pages may describe governance at a public-safe level, not expose the admin operations manual.
 
-### Buyer workspace surfaces represented
+### Mobile/native
 
-- Buyer Dashboard;
-- Orders;
-- Addresses;
-- Payments;
-- Reviews;
-- Profile;
-- Settings;
-- Wishlist;
-- Notifications;
-- Messages;
-- Disputes.
+Dedicated mobile/native routes exist, but public app-store availability must not be claimed without release-store evidence.
 
-### Seller workspace surfaces represented
+## 7. Supplier Commerce truth — current hard boundary
 
-- Seller Dashboard;
-- Products;
-- product create/edit;
-- Orders;
-- Shipments;
-- Returns;
-- Profile;
-- Settings;
-- Reviews;
-- Notifications;
-- Messages;
-- Seller Setup / onboarding.
+Source: `netlify/functions/_shared/supplierProviderReadiness.ts`.
 
-### Admin governance surfaces represented
+Every provider readiness object currently has `hostedActivation: 'off'`, capability promotion false, provider write activation false, and `platformEngineeringBlocked: false`.
 
-- Admin Dashboard;
-- Users;
-- Buyers;
-- Seller Approvals;
-- Products;
-- Orders;
-- Flagged activity;
-- Reports;
-- Support;
-- Settings;
-- Notifications;
-- Payouts;
-- Stripe Events;
-- Disputes;
-- Seller detail.
+Current provider categories include:
+- Avasam: read-only verified, transactional evidence still required;
+- BigBuy: sandbox evidence required;
+- Direct Supplier: authentic supplier required;
+- AppScenic: retailer-side partner access required;
+- SaleHoo: directory/API approval required;
+- Spocket: contract/resale permission blocked;
+- DSers: developer review underway plus UK import-compliance controls required.
 
-### Mobile/native surfaces represented
+Public implication:
+- do not market provider names as live partners;
+- do not advertise universal automated supplier fulfilment;
+- do not claim public API/webhooks unless generally available and verified;
+- integration pages should explain a controlled programme, capability-scoped validation and status vocabulary.
 
-- Inbox;
-- Chat;
-- Orders;
-- Categories;
-- Profile;
-- Notifications;
-- Security;
-- Balance;
-- Favourites;
-- Settings;
-- Seller Payments;
-- native sell wizard;
-- Capacitor/native deep-link infrastructure.
+## 8. Pricing truth — unresolved / do not publish permanent Pricing page yet
 
-## 5. Current public-presentation gap — confirmed
+Current source contains repeated claims of:
+- standard 7% marketplace commission;
+- 0% seller commission until 31 December 2026;
+- no monthly/listing fees in some pages.
 
-The repository already contains substantial commerce and workspace functionality, but the public navigation does not currently explain this as a coherent platform.
+Historical repository documents also contain incompatible older pricing concepts. Historical docs are not authority, but their presence confirms pricing has changed over time.
 
-The current public exterior therefore creates a discovery problem:
+Gate: a permanent `/pricing` page must not be built until current Seller Terms + actual Stripe/application-fee logic + owner commercial policy are reconciled into one source of truth.
 
-- buyers can find the marketplace;
-- sellers can find a seller registration route;
-- visitors can find a small set of information/legal pages;
-- but suppliers, brands, trade buyers, technology providers, integration teams and commercial partners do not have obvious dedicated public paths explaining why and how they should engage with Loadify.
+## 9. Confirmed stale / contradictory claims to quarantine
 
-This is the primary P0 problem this workstream solves.
+Do not reuse without reconciliation:
+- RFQ as a live marketplace proposition;
+- "no email confirmation required";
+- services marketplace as a major proposition;
+- absolute "Loadify never owns/stores/dispatches products" platform-wide wording;
+- "no category restrictions";
+- Google 5.0 rating as trust proof;
+- automatic seller activation language where it conflicts with readiness/verification controls;
+- permanent pricing/fee claims until reconciled;
+- live supplier/provider automation;
+- public API/webhooks/general developer access;
+- provider logos or partnership claims.
 
-## 6. Proposed architecture direction — provisional until audit completion
+## 10. Proposed public information architecture — audit recommendation
 
-### Presentation layer
-
+### Primary presentation routes
 - `/platform`
 - `/buyers`
 - `/sellers`
@@ -242,88 +283,64 @@ This is the primary P0 problem this workstream solves.
 - `/developers`
 - `/how-it-works`
 - `/trust`
-- `/pricing` after pricing reconciliation
-- `/about` refined as concise company page.
+- `/about` (refined company page)
+- `/pricing` only after commercial reconciliation.
 
-### Shopping layer retained
+### Marketplace routes preserved
+- `/catalog`;
+- `/categories` / category routes;
+- `/deals`;
+- product detail;
+- search;
+- cart;
+- checkout;
+- tracking.
 
-- Marketplace/catalogue
-- Categories
-- Deals
-- Search
-- Cart
+### Recommended desktop hierarchy
 
-### Burger / Navigation Hub target groups
+Primary:
+`Marketplace | Platform | Buyers | Sellers | Business ▾ | Integrations | Partners`
 
-- Explore
-- Discover Loadify
-- Business
-- Connect with Loadify
-- Trust & Company
+Business menu:
+`Trade Buyers | Brands & Wholesalers | Suppliers`
 
-This is not yet implementation approval. It is the working information architecture to be tested against the remaining route/content audit.
+Utility:
+`Trust | Help | Sign in/Dashboard | Join Loadify | Cart`
 
-## 7. Claims taxonomy for the audit
+This is a working architecture; final labels may change during visual implementation if hierarchy/accessibility testing shows a better form.
 
-Every claim found or proposed will be classified as:
+### Recommended burger / Loadify Navigation Hub
 
-- LIVE / CURRENTLY SUPPORTED
-- SUPPORTED WITH CONDITIONS
-- INTERNAL / ADMIN ONLY
-- FOUNDATION PRESENT BUT NOT USER-AVAILABLE
-- PROVIDER-GATED / ACTIVATION OFF
-- STALE / CONTRADICTED / MUST NOT MARKET
-- NEEDS OWNER DECISION
+1. Explore
+   - Marketplace
+   - Categories
+   - Deals
+2. Discover Loadify
+   - Platform
+   - How It Works
+   - Buyers
+   - Sellers
+3. Business
+   - Trade Buyers
+   - Brands & Wholesalers
+   - Suppliers
+4. Connect with Loadify
+   - Partners
+   - Integrations
+   - Developer / Technology Integration
+5. Trust & Company
+   - Trust & Safety
+   - About Loadify
+   - Help
+   - Contact
+   - Policies & Legal
 
-## 8. Known high-risk content areas requiring reconciliation
+## 11. Implementation gate status
 
-The following are already flagged for evidence review before copy is written:
+The evidence base is now sufficient to begin the Page Blueprint and Claims Evidence Matrix. Code implementation of presentation pages remains gated until those documents are present on PR #724.
 
-- RFQ claims versus current seller routing;
-- physical-products marketplace versus any service-marketplace claims;
-- seller commission and launch-promotion wording across homepage/FAQ/terms/guidelines;
-- Stripe Connect / payout eligibility wording;
-- trade account versus dedicated trade presentation;
-- wholesale terminology versus supplier/brand/wholesaler roles;
-- mobile availability versus actual store/release evidence;
-- Supplier Commerce/provider-specific capabilities;
-- public API / webhooks / custom integrations language;
-- provider names/logos/partnership implications;
-- seller verification / trust wording;
-- refund/returns responsibility wording.
-
-## 9. Supplier Commerce public-marketing boundary — initial state
-
-Supplier Commerce is not to be presented as a universally live automated supplier network.
-
-Current workstream rules require:
-
-- provider capabilities to remain capability-scoped;
-- hosted/provider activation may remain OFF;
-- provider writes are not marketed as available without provider-authoritative evidence;
-- an adapter, migration, test or document does not equal a live integration;
-- provider contact or application status does not equal partnership.
-
-Public integration pages should therefore focus on the controlled integration programme and truthful availability states until exact capabilities are revalidated.
-
-## 10. Audit work remaining
-
-- complete exact `App.tsx` route table;
-- inspect `Home.tsx`, Hero/Features/How-It-Works/Security/Seller CTA components;
-- inspect `Footer.tsx`;
-- inspect current About/FAQ/Wholesale/Trade/Seller Guidelines and legal wording;
-- inspect buyer route/components for customer-facing claims;
-- inspect seller route/components and payout/order/shipments/returns truth;
-- inspect relevant admin governance evidence;
-- inspect mobile/native release evidence before any mobile marketing claim;
-- inspect Stripe/checkout/order tracking implementation evidence;
-- inspect current Supplier Commerce readiness files and evidence;
-- identify dead, duplicate or redirected routes;
-- reconcile pricing/commission truth;
-- produce current -> proposed route/navigation map;
-- produce Page Blueprint;
-- seed Claims Evidence Matrix.
-
-## 11. Implementation gate
-
-No new public presentation page should be implemented until this audit and the Page Blueprint contain enough repository evidence to make page construction mechanical rather than speculative.
+Next execution:
+1. create Page Blueprint;
+2. seed Claims Evidence Matrix;
+3. inspect any remaining claim-critical seller/payment/return components as each blueprint claim is finalized;
+4. only then build shared presentation primitives and first P0 pages.
