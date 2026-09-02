@@ -2,11 +2,37 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import fs from 'fs'
 import { configDefaults } from 'vitest/config'
+
+const approvedBrandAssets = [
+  ['favicon.ico', 'favicon.ico'],
+  ['apple-touch-icon-180x180.png', 'apple-touch-icon.png'],
+  ['pwa-icon-192x192.png', 'icon-192.png'],
+  ['pwa-icon-512x512.png', 'icon-512.png'],
+  ['pwa-maskable-512x512.png', 'icon-512-maskable.png'],
+  ['open-graph-brand-card-1200x630.png', 'open-graph-brand-card-1200x630.png'],
+] as const
+
+function copyApprovedBrandAssets() {
+  return {
+    name: 'copy-approved-loadify-brand-assets',
+    closeBundle() {
+      const outputDir = path.resolve(__dirname, 'dist')
+      fs.mkdirSync(outputDir, { recursive: true })
+
+      for (const [sourceName, targetName] of approvedBrandAssets) {
+        const source = path.resolve(__dirname, sourceName)
+        if (!fs.existsSync(source)) continue
+        fs.copyFileSync(source, path.join(outputDir, targetName))
+      }
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), copyApprovedBrandAssets()],
   resolve: {
     alias: {
       '@/assets/LOGO.png': path.resolve(__dirname, './src/assets/loadify-wordmark.svg'),
