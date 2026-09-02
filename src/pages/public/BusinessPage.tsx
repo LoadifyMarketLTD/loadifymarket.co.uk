@@ -19,8 +19,8 @@ export default function BusinessPage() {
   return (
     <MainLayout>
       <SEO title="Loadify Business | Trade Buyers, Suppliers, Brands & Wholesalers" description="Explore Loadify Market's business paths for trade buyers, suppliers, brands and wholesalers." canonical="/business" />
-      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F] pt-[82px]">
-        <SectionNav title="Business" items={businessNav} />
+      <SectionNav title="Business" items={businessNav} />
+      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F]">
         <section className="border-b border-[#0A234F]/10">
           <div className="mx-auto grid max-w-[1480px] gap-12 px-5 py-16 sm:px-7 lg:grid-cols-12 lg:items-center lg:px-10 lg:py-24">
             <div className="lg:col-span-7">
@@ -37,7 +37,6 @@ export default function BusinessPage() {
             </div>
           </div>
         </section>
-
         <section className="bg-white py-16 sm:py-20">
           <div className="mx-auto max-w-[1480px] px-5 sm:px-7 lg:px-10">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Choose your route</p>
@@ -54,7 +53,6 @@ export default function BusinessPage() {
             </div>
           </div>
         </section>
-
         <section className="bg-[#0A234F] py-16 text-white sm:py-20">
           <div className="mx-auto flex max-w-[1280px] flex-col gap-7 px-5 sm:px-7 lg:flex-row lg:items-center lg:justify-between lg:px-10">
             <div><Store className="h-6 w-6 text-[#F5A300]" /><h2 className="mt-4 max-w-3xl font-serif text-3xl tracking-[-0.025em] sm:text-4xl">Looking to buy products rather than explore the business programme?</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-white/70">Enter the marketplace directly for product discovery and purchasing.</p></div>
