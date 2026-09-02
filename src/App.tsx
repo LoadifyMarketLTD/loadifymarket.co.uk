@@ -39,6 +39,7 @@ const MarketplaceHomePage = lazy(() => import('./pages/MarketplaceHomePage'));
 const PlatformPage = lazy(() => import('./pages/public/PlatformPage'));
 const BuyersPage = lazy(() => import('./pages/public/BuyersPage'));
 const SellersPage = lazy(() => import('./pages/public/SellersPage'));
+const BusinessPage = lazy(() => import('./pages/public/BusinessPage'));
 const TradePage = lazy(() => import('./pages/public/TradePage'));
 const SuppliersPage = lazy(() => import('./pages/public/SuppliersPage'));
 const IntegrationsPage = lazy(() => import('./pages/public/IntegrationsPage'));
@@ -262,6 +263,7 @@ function App() {
           <Route path="platform" element={publicPage(<PlatformPage />)} />
           <Route path="buyers" element={publicPage(<BuyersPage />)} />
           <Route path="sellers" element={publicPage(<SellersPage />)} />
+          <Route path="business" element={publicPage(<BusinessPage />)} />
           <Route path="trade" element={publicPage(<TradePage />)} />
           <Route path="suppliers" element={publicPage(<SuppliersPage />)} />
           <Route path="integrations" element={publicPage(<IntegrationsPage />)} />
