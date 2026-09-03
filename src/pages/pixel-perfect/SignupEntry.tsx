@@ -71,7 +71,17 @@ const SignupEntry = () => (
             </Link>
           </div>
 
-          <p className="mt-8 text-center text-xs text-[#64748B]">
+          <div className="mt-7 rounded-2xl border border-[#0A234F]/10 bg-[#F8FAFC] px-5 py-4 text-center sm:flex sm:items-center sm:justify-between sm:gap-5 sm:text-left">
+            <div>
+              <p className="text-sm font-extrabold text-[#0A234F]">Supplier, brand or wholesaler?</p>
+              <p className="mt-1 text-xs leading-5 text-[#64748B]">Supplier Commerce follows a dedicated commercial participation route rather than creating another marketplace account type.</p>
+            </div>
+            <Link to="/business/suppliers" className="mt-3 inline-flex shrink-0 items-center gap-2 text-sm font-extrabold text-[#0E3FA9] hover:underline sm:mt-0">
+              Supplier enquiry <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-[#64748B]">
             Already registered? <Link to="/login" className="font-extrabold text-[#0E3FA9] hover:underline">Sign in</Link>
           </p>
         </div>
