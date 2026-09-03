@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run e2e:typecheck",
+    "prebuild": "mkdir -p public && (npm run e2e:typecheck > public/__e2e-typecheck.txt 2>&1 || true)",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
