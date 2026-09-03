@@ -44,16 +44,23 @@ interface UserProfileRow {
   lastName: string | null;
 }
 
-interface NotificationSettingsRow {
-  orderConfirmation: boolean;
-}
-
 const EMAIL_PREVIEW_MAX_LEN = 120;
 
 function safeMessagePreview(message: string): string {
   const compact = message.replace(/\s+/g, ' ').trim();
   if (compact.length <= EMAIL_PREVIEW_MAX_LEN) return compact;
   return compact.substring(0, EMAIL_PREVIEW_MAX_LEN) + '…';
+}
+
+function isInternalStructuredMessage(message: string): boolean {
+  const trimmed = message.trim();
+  if (!trimmed.startsWith('{')) return false;
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+    return parsed._t === 'offer' || parsed._t === 'system';
+  } catch {
+    return false;
+  }
 }
 
 async function sendInternalEmail(appUrl: string, payload: Record<string, unknown>): Promise<void> {
@@ -151,8 +158,9 @@ export const handler: Handler = async (event) => {
     return { statusCode: 403, body: JSON.stringify({ error: 'You are not a participant of this conversation' }) };
   }
 
-  if (conv.user1Id !== receiverId && conv.user2Id !== receiverId) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Receiver is not a participant of this conversation' }) };
+  const expectedReceiverId = conv.user1Id === callerId ? conv.user2Id : conv.user1Id;
+  if (receiverId !== expectedReceiverId || receiverId === callerId) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Receiver must be the other participant of this conversation' }) };
   }
 
   const { data: inserted, error: insertError } = await supabase
@@ -171,8 +179,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to send message' }) };
   }
 
-  const isStructuredJson = message.trim().startsWith('{');
-  if (!isStructuredJson) {
+  const structuredInternalMessage = isInternalStructuredMessage(message);
+  if (!structuredInternalMessage) {
     const { data: sender } = await supabase
       .from('users')
       .select('id, firstName, lastName, email, role')
@@ -213,36 +221,24 @@ export const handler: Handler = async (event) => {
       });
 
     if (receiver?.role === 'seller' && receiver.email) {
-      let allowEmail = true;
-      const { data: settings } = await supabase
-        .from('notification_settings')
-        .select('orderConfirmation')
-        .eq('userId', receiverId)
-        .maybeSingle<NotificationSettingsRow>();
-      if (settings && settings.orderConfirmation === false) {
-        allowEmail = false;
-      }
-
-      if (allowEmail) {
-        const receiverName = [receiver.firstName, receiver.lastName].filter(Boolean).join(' ') || receiver.email;
-        const subjectListing = conv.subject ? ` · ${conv.subject}` : '';
-        try {
-          await sendInternalEmail(appUrl, {
-            to: receiver.email,
-            subject: `New message from ${senderName}${subjectListing}`,
-            template: 'seller_new_message',
-            data: {
-              sellerName: receiverName,
-              senderName,
-              productTitle: conv.subject,
-              messagePreview: safeMessagePreview(message),
-              conversationId,
-              inboxUrl: `${appUrl}/inbox/${conversationId}`,
-            },
-          });
-        } catch (err) {
-          console.warn('send-message: seller email send failed (non-fatal):', err);
-        }
+      const receiverName = [receiver.firstName, receiver.lastName].filter(Boolean).join(' ') || receiver.email;
+      const subjectListing = conv.subject ? ` · ${conv.subject}` : '';
+      try {
+        await sendInternalEmail(appUrl, {
+          to: receiver.email,
+          subject: `New message from ${senderName}${subjectListing}`,
+          template: 'seller_new_message',
+          data: {
+            sellerName: receiverName,
+            senderName,
+            productTitle: conv.subject,
+            messagePreview: safeMessagePreview(message),
+            conversationId,
+            inboxUrl: `${appUrl}/inbox/${conversationId}`,
+          },
+        });
+      } catch (err) {
+        console.warn('send-message: seller email send failed (non-fatal):', err);
       }
     }
   }
