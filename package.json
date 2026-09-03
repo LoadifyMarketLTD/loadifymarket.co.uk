@@ -17,6 +17,8 @@
     "e2e:typecheck": "tsc -p e2e/tsconfig.json --noEmit",
     "e2e:list": "playwright test --list",
     "e2e": "playwright test",
+    "e2e:release:preflight": "node scripts/verify-e2e-release-env.mjs",
+    "e2e:release": "node scripts/run-e2e-release-gate.mjs",
     "verify:local": "npm run typecheck && npm run lint && npm test && npm run verify:migrations && npm run e2e:setup && npm run e2e:typecheck && npm run e2e && npm run build",
     "generate:icons": "npx @capacitor/assets@3.0.5 generate --iconBackgroundColor '#0A0E1A' --iconBackgroundColorDark '#0A0E1A'"
   },
@@ -83,7 +85,7 @@
     "sonner": "^2.0.7",
     "stripe": "^18.5.0",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss-animate": "^1.0.7",
+    "tailwindcss-animate": "^1.0.0",
     "vaul": "^1.1.2",
     "zod": "^4.1.13",
     "zustand": "^5.0.9"
