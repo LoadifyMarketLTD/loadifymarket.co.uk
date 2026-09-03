@@ -35,19 +35,13 @@ type ShipmentActor = {
   isActive: boolean;
 };
 
-// Helper to get user from Authorization header and resolve current platform state.
 async function getAuthUser(event: HandlerEvent): Promise<ShipmentActor | null> {
   const authHeader = event.headers.authorization || event.headers.Authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
-  }
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
 
   const token = authHeader.substring(7);
   const { data: { user }, error } = await supabase.auth.getUser(token);
-  
-  if (error || !user) {
-    return null;
-  }
+  if (error || !user) return null;
 
   const { data: userData, error: userError } = await supabase
     .from('users')
@@ -65,18 +59,9 @@ async function sendStatusEmail(
   status: string,
 ) {
   const emailTemplates: Record<string, { subject: string; template: string }> = {
-    'Dispatched': {
-      subject: 'Your order has been dispatched',
-      template: 'order_shipped'
-    },
-    'Out for Delivery': {
-      subject: 'Your order is out for delivery',
-      template: 'order_shipped'
-    },
-    'Delivered': {
-      subject: 'Your order has been delivered',
-      template: 'order_delivered'
-    }
+    Dispatched: { subject: 'Your order has been dispatched', template: 'order_shipped' },
+    'Out for Delivery': { subject: 'Your order is out for delivery', template: 'order_shipped' },
+    Delivered: { subject: 'Your order has been delivered', template: 'order_delivered' },
   };
 
   const emailConfig = emailTemplates[status];
@@ -91,7 +76,7 @@ async function sendStatusEmail(
 
     if (!buyer) return;
 
-    const trackingUrl = shipment.tracking_number 
+    const trackingUrl = shipment.tracking_number
       ? `${process.env.VITE_APP_URL || process.env.URL}/track-order?orderNumber=${order.orderNumber}`
       : null;
 
@@ -112,53 +97,29 @@ async function sendStatusEmail(
           trackingNumber: shipment.tracking_number,
           carrier: shipment.courier_name || 'Standard Delivery',
           trackingUrl,
-        }
-      })
+        },
+      }),
     });
   } catch (error) {
     console.error('Failed to send email:', error);
-    // Post-commit notification failure must not roll back canonical shipment state.
   }
 }
 
 export const handler: Handler = async (event) => {
   if (!supabaseUrl || !supabaseServiceRoleKey) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Server configuration error' }),
-    };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Server configuration error' }) };
   }
 
   if (event.httpMethod !== 'PUT') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
     const user = await getAuthUser(event);
-    if (!user) {
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      };
-    }
-
-    // #520 is intentionally the pre-608 runtime. A stale but otherwise valid
-    // token for a suspended actor must stop here before any service-role access.
-    if (user.isActive !== true) {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Account is suspended' }),
-      };
-    }
-
+    if (!user) return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+    if (user.isActive !== true) return { statusCode: 403, body: JSON.stringify({ error: 'Account is suspended' }) };
     if (user.role !== 'seller' && user.role !== 'admin') {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Forbidden – seller or admin role required' }),
-      };
+      return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden – seller or admin role required' }) };
     }
 
     const statusRl = await checkRateLimit({
@@ -169,46 +130,26 @@ export const handler: Handler = async (event) => {
       maxAttempts: 60,
     });
     if (statusRl.exceeded) {
-      return {
-        statusCode: 429,
-        body: JSON.stringify({ error: 'Too many status update requests. Please wait and try again.' }),
-      };
+      return { statusCode: 429, body: JSON.stringify({ error: 'Too many status update requests. Please wait and try again.' }) };
     }
 
     const pathParts = event.path.split('/');
     const shipmentId = pathParts[pathParts.length - 2];
-
-    if (!shipmentId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Shipment ID is required' }),
-      };
-    }
+    if (!shipmentId) return { statusCode: 400, body: JSON.stringify({ error: 'Shipment ID is required' }) };
 
     let body: UpdateStatusRequest;
     try {
       body = JSON.parse(event.body || '{}') as UpdateStatusRequest;
     } catch {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid JSON in request body' }),
-      };
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON in request body' }) };
     }
-    const { status, message } = body;
 
-    if (!status) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'status is required' }),
-      };
-    }
+    const { status, message } = body;
+    if (!status) return { statusCode: 400, body: JSON.stringify({ error: 'status is required' }) };
 
     const validStatuses = ['Pending', 'Processing', 'Dispatched', 'In Transit', 'Out for Delivery', 'Delivered', 'Returned', 'Delivery Failed'];
     if (!validStatuses.includes(status)) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid status' }),
-      };
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid status' }) };
     }
 
     const { data: shipment, error: shipmentError } = await supabase
@@ -217,34 +158,33 @@ export const handler: Handler = async (event) => {
       .eq('id', shipmentId)
       .single();
 
-    if (shipmentError || !shipment) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Shipment not found' }),
-      };
+    if (shipmentError || !shipment) return { statusCode: 404, body: JSON.stringify({ error: 'Shipment not found' }) };
+    if (user.role !== 'admin' && shipment.seller_id !== user.id) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
     }
 
-    if (user.role !== 'admin' && shipment.seller_id !== user.id) {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ error: 'Not authorized' }),
-      };
+    if (!shipment.orders?.id || !shipment.orders?.productId) {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Shipment order context is incomplete.' }) };
+    }
+
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select('id, listingContext')
+      .eq('id', shipment.orders.productId)
+      .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
+
+    if (productError || !product) {
+      return { statusCode: 409, body: JSON.stringify({ error: 'The shipment product could not be verified.' }) };
+    }
+    if (product.listingContext !== 'product') {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Shipment tracking is available only for physical-product orders.' }) };
     }
 
     let targetOrderStatus: GuardedOrderStatus | null = null;
-    if (status === 'Delivered') {
-      targetOrderStatus = 'delivered';
-    } else if (status === 'Dispatched' || status === 'In Transit' || status === 'Out for Delivery') {
-      targetOrderStatus = 'shipped';
-    }
+    if (status === 'Delivered') targetOrderStatus = 'delivered';
+    else if (status === 'Dispatched' || status === 'In Transit' || status === 'Out for Delivery') targetOrderStatus = 'shipped';
 
-    if (targetOrderStatus && shipment.orders?.id && shipment.orders?.productId) {
-      const { data: product } = await supabase
-        .from('products')
-        .select('id, listingContext')
-        .eq('id', shipment.orders.productId)
-        .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
-
+    if (targetOrderStatus) {
       const paymentGuard = await enforcePaymentBackedTransition({
         supabase,
         order: {
@@ -256,19 +196,13 @@ export const handler: Handler = async (event) => {
           rfqId: shipment.orders.rfqId ?? null,
           rfqResponseId: shipment.orders.rfqResponseId ?? null,
         },
-        product: {
-          id: shipment.orders.productId,
-          listingContext: product?.listingContext ?? null,
-        },
+        product,
         nextStatus: targetOrderStatus,
         actorRole: user.role === 'admin' ? 'admin' : 'seller',
       });
 
       if (!paymentGuard.ok) {
-        return {
-          statusCode: paymentGuard.statusCode,
-          body: JSON.stringify({ error: paymentGuard.error }),
-        };
+        return { statusCode: paymentGuard.statusCode, body: JSON.stringify({ error: paymentGuard.error }) };
       }
     }
 
@@ -280,30 +214,19 @@ export const handler: Handler = async (event) => {
     });
 
     if (transitionError) {
-      if (transitionError.code === '42501') {
-        return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
-      }
-      if (transitionError.code === 'P0002') {
-        return { statusCode: 404, body: JSON.stringify({ error: 'Shipment or order not found' }) };
-      }
-      if (transitionError.code === '22023') {
-        return { statusCode: 400, body: JSON.stringify({ error: transitionError.message }) };
-      }
-      if (transitionError.code === 'P0001') {
-        return { statusCode: 409, body: JSON.stringify({ error: transitionError.message }) };
-      }
+      if (transitionError.code === '42501') return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
+      if (transitionError.code === 'P0002') return { statusCode: 404, body: JSON.stringify({ error: 'Shipment or order not found' }) };
+      if (transitionError.code === '22023') return { statusCode: 400, body: JSON.stringify({ error: transitionError.message }) };
+      if (transitionError.code === 'P0001') return { statusCode: 409, body: JSON.stringify({ error: transitionError.message }) };
       throw new Error(`Atomic shipment transition failed: ${transitionError.message}`);
     }
 
     const result = transition as ShipmentTransitionResult | null;
-    if (!result?.shipment) {
-      throw new Error('Atomic shipment transition returned no shipment');
-    }
+    if (!result?.shipment) throw new Error('Atomic shipment transition returned no shipment');
+
     const updatedShipment = result.shipment;
     const changed = result.changed === true;
 
-    // Idempotent retries return success but must not duplicate user-facing side
-    // effects. Only a material canonical state change emits notification/email.
     if (changed) {
       const { error: notificationError } = await supabase
         .from('notifications')
@@ -314,29 +237,24 @@ export const handler: Handler = async (event) => {
           message: `Your order ${shipment.orders?.orderNumber ?? shipment.order_id} shipment status is now: ${status}.`,
           link: '/buyer/orders',
         });
-      if (notificationError) {
-        console.error('Failed to create shipment notification:', notificationError.message);
-      }
-
+      if (notificationError) console.error('Failed to create shipment notification:', notificationError.message);
       await sendStatusEmail(shipment.orders, updatedShipment, status);
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ 
-        success: true, 
+      body: JSON.stringify({
+        success: true,
         shipment: updatedShipment,
         changed,
-        message: changed ? 'Status updated successfully' : 'Shipment already has the requested status'
+        message: changed ? 'Status updated successfully' : 'Shipment already has the requested status',
       }),
     };
   } catch (error) {
     console.error('Error updating shipment status:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Failed to update status',
-      }),
+      body: JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to update status' }),
     };
   }
 };
