@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "vitest run netlify/functions/__tests__/e2e-release-preflight.test.ts && npm run e2e:typecheck",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
