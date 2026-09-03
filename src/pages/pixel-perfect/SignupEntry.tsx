@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, ShoppingBag, Store } from "lucide-react";
+import { ArrowRight, CheckCircle2, PackageSearch, ShoppingBag, Store } from "lucide-react";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
@@ -7,7 +7,7 @@ const SignupEntry = () => (
   <MainLayout>
     <SEO
       title="Choose Account Type | Loadify Market"
-      description="Choose whether you want to join Loadify as a Buyer or begin Marketplace Seller setup before selecting your sign-up method."
+      description="Choose whether you want to join Loadify as a Buyer, begin Marketplace Seller setup, or explore the dedicated Supplier Commerce participation route."
       robots="noindex, nofollow"
     />
 
@@ -15,24 +15,24 @@ const SignupEntry = () => (
       id="main-content"
       className="min-h-screen bg-[#F7F9FC] pb-14 pt-6 text-[#0A234F] md:pt-[150px]"
     >
-      <div className="mx-auto w-full max-w-[920px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8">
         <div className="rounded-[26px] border border-[#0A234F]/10 bg-white p-6 shadow-[0_22px_65px_rgba(10,35,79,0.10)] sm:p-9 lg:p-12">
-          <div className="mx-auto max-w-2xl text-center">
+          <div className="mx-auto max-w-3xl text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0E3FA9]">
-              Create your Loadify account
+              Join Loadify Market
             </p>
             <h1 className="mt-3 text-3xl font-black tracking-[-0.035em] text-[#0A234F] sm:text-4xl">
-              Choose your account type first
+              Choose how you want to participate
             </h1>
             <p className="mt-4 text-sm font-medium leading-6 text-[#64748B] sm:text-base">
-              Your choice is made before Google or email registration. Seller accounts keep Buyer access on the same Loadify identity.
+              Buyer and Marketplace Seller are Loadify account types. Suppliers, brands and wholesalers follow a dedicated commercial participation route.
             </p>
           </div>
 
-          <div className="mt-9 grid gap-5 md:grid-cols-2">
+          <div className="mt-9 grid gap-5 lg:grid-cols-3">
             <Link
               to="/register?type=buyer"
-              className="group rounded-2xl border border-[#0A234F]/12 bg-white p-6 transition hover:-translate-y-0.5 hover:border-[#0E3FA9]/35 hover:shadow-lg"
+              className="group flex h-full flex-col rounded-2xl border border-[#0A234F]/12 bg-white p-6 transition hover:-translate-y-0.5 hover:border-[#0E3FA9]/35 hover:shadow-lg"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0E3FA9]/10">
                 <ShoppingBag className="h-6 w-6 text-[#0E3FA9]" aria-hidden="true" />
@@ -45,14 +45,14 @@ const SignupEntry = () => (
                 <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0E3FA9]" /> Buyer Space access</p>
                 <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0E3FA9]" /> Seller access can be added later</p>
               </div>
-              <span className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold text-[#0E3FA9]">
+              <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-extrabold text-[#0E3FA9]">
                 Continue as Buyer <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </span>
             </Link>
 
             <Link
               to="/register?type=seller"
-              className="group rounded-2xl border border-[#0A234F]/12 bg-white p-6 transition hover:-translate-y-0.5 hover:border-[#F5A300]/55 hover:shadow-lg"
+              className="group flex h-full flex-col rounded-2xl border border-[#0A234F]/12 bg-white p-6 transition hover:-translate-y-0.5 hover:border-[#F5A300]/55 hover:shadow-lg"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F5A300]/15">
                 <Store className="h-6 w-6 text-[#B96D00]" aria-hidden="true" />
@@ -65,23 +65,34 @@ const SignupEntry = () => (
                 <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#B96D00]" /> Buyer + Seller capability on one identity</p>
                 <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#B96D00]" /> Seller readiness remains controlled</p>
               </div>
-              <span className="mt-6 inline-flex items-center gap-2 text-sm font-extrabold text-[#B96D00]">
+              <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-extrabold text-[#B96D00]">
                 Continue as Seller <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+
+            <Link
+              to="/suppliers"
+              className="group flex h-full flex-col rounded-2xl border border-[#0A234F]/12 bg-[#F8FAFC] p-6 transition hover:-translate-y-0.5 hover:border-[#0A234F]/30 hover:bg-white hover:shadow-lg"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0A234F]/8">
+                <PackageSearch className="h-6 w-6 text-[#0A234F]" aria-hidden="true" />
+              </div>
+              <p className="mt-5 text-[10px] font-black uppercase tracking-[0.14em] text-[#B96D00]">Dedicated business route</p>
+              <h2 className="mt-2 text-xl font-black text-[#0A234F]">Supplier, Brand or Wholesaler</h2>
+              <p className="mt-2 text-sm leading-6 text-[#64748B]">
+                Discuss catalogue supply, wholesale participation and controlled commerce integration with Loadify.
+              </p>
+              <div className="mt-5 space-y-2 text-xs font-semibold text-[#475569]">
+                <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0A234F]" /> Commercial participation route</p>
+                <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0A234F]" /> Not another marketplace account type</p>
+              </div>
+              <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-extrabold text-[#0A234F]">
+                Explore supplier route <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </span>
             </Link>
           </div>
 
-          <div className="mt-7 rounded-2xl border border-[#0A234F]/10 bg-[#F8FAFC] px-5 py-4 text-center sm:flex sm:items-center sm:justify-between sm:gap-5 sm:text-left">
-            <div>
-              <p className="text-sm font-extrabold text-[#0A234F]">Supplier, brand or wholesaler?</p>
-              <p className="mt-1 text-xs leading-5 text-[#64748B]">Supplier Commerce follows a dedicated commercial participation route rather than creating another marketplace account type.</p>
-            </div>
-            <Link to="/suppliers" className="mt-3 inline-flex shrink-0 items-center gap-2 text-sm font-extrabold text-[#0E3FA9] hover:underline sm:mt-0">
-              Supplier enquiry <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <p className="mt-6 text-center text-xs text-[#64748B]">
+          <p className="mt-8 text-center text-xs text-[#64748B]">
             Already registered? <Link to="/login" className="font-extrabold text-[#0E3FA9] hover:underline">Sign in</Link>
           </p>
         </div>
