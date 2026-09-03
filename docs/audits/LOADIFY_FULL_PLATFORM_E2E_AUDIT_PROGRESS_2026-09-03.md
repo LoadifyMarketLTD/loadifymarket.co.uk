@@ -42,6 +42,21 @@ The webhook handles checkout completion/expiry, payment-intent success/failure/c
 ### Payment-session read isolation — SOURCE CONFIRMED
 Current RLS source for `payment_sessions` restricts SELECT to the owning `userId` or admin. `OrderSuccessPage` looks up a session by `stripeSessionId`, but source RLS prevents ordinary users from reading another user's payment session solely by knowing a session ID. Hosted-policy parity is not reconfirmed because hosted Supabase read access is currently blocked.
 
+### Buyer order delivery confirmation vs escrow — CRITICAL DEFECT CONFIRMED / SERVER REPAIR APPLIED ON AUDIT BRANCH
+The canonical payment contract in `escrow-release.ts` is clear: marketplace-held funds are transferred only by the scheduled escrow-release boundary after `status='delivered'`, `escrowStatus='held'`, the protection window, and final dispute/refund checks. Before repair, `confirm-delivery.ts` instead changed the order directly to `completed`, set `escrowStatus='released'`, set `escrowReleasedAt`, and told the seller that funds had been released without creating the Stripe Transfer. That simultaneously bypassed the canonical financial state model and made the order ineligible for the scheduled escrow-release query.
+
+Server-side repair applied in audit branch commit `0f9147c5f376b504839e0cf482b1557383ff3942`:
+- buyer confirmation no longer marks escrow released or order completed;
+- a shipped order may advance to delivered, starting the ordinary delivered-state protection path;
+- escrow remains held;
+- seller notification now states that funds remain protected until the release window and final checks complete;
+- response explicitly returns `fundsReleased: false` unless the order was already genuinely released/completed.
+
+The Buyer Orders UI still contains stale local copy/state behavior that says funds were released and locally changes the row to `completed` after a successful confirmation call. That UI defect remains to be repaired before this lane can pass.
+
+### Seller order mutation — SOURCE AUTHORITY BOUNDARY CONFIRMED
+Current `seller-order-status.ts` authenticates an active seller/admin, rate-limits status mutations, verifies order ownership for non-admin sellers, constrains seller transitions, and invokes the payment-backed transition guard before updating the order. Service completion records `serviceCompletedAt` and notifies the Buyer. This remains source evidence until runtime role/fixture execution is completed.
+
 ### Admin surface — SOURCE GUARD CONFIRMED
 Current Admin routes are wrapped by `RequireAdmin`, and the repository contains current cross-platform auth-security tests covering guard files. This is source/test-presence evidence only; Admin runtime workflows and server mutations remain unexecuted in this continuation.
 
@@ -61,4 +76,4 @@ The connected Supabase action currently rejects even the attempted read-only hos
 The continuation branch carries the prior audit artifacts including the source migration that restores `feature_flags.rfqSystem=false`. That migration remains NOT APPLIED to hosted Production in this audit.
 
 ## Next audit lanes
-Continue current-source review and runtime/test evidence for marketplace catalogue/product/cart behavior, Buyer workspace, Seller workspace, Admin operations, messaging/notifications, Netlify functions, remaining payment/order lifecycle, mobile/Capacitor, SEO/legal/accessibility, supplier-commerce fail-closed boundaries, and final release gates.
+Continue current-source review and runtime/test evidence for Buyer Orders UI correction, marketplace catalogue/product/cart behavior, remaining Buyer workspace, Seller workspace, Admin operations, messaging/notifications, Netlify functions, remaining payment/order lifecycle, mobile/Capacitor, SEO/legal/accessibility, supplier-commerce fail-closed boundaries, and final release gates.
