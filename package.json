@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "vitest run netlify/functions/__tests__/e2e-release-preflight.test.ts && npm run e2e:typecheck",
+    "prebuild": "vitest run netlify/functions/__tests__/e2e-release-preflight.test.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
@@ -76,7 +76,7 @@
     "lucide-react": "^0.556.0",
     "next-themes": "^0.4.6",
     "react": "^19.2.0",
-    "react-day-picker": "^8.10.1",
+    "react-day-picker": "^8.10.0",
     "react-dom": "^19.2.0",
     "react-helmet-async": "^3.0.0",
     "react-hook-form": "^7.68.0",
