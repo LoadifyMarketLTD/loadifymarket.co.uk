@@ -201,6 +201,13 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    if (product.listingContext !== 'product') {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({ error: 'Shipment tracking is available only for physical-product orders.' }),
+      };
+    }
+
     const paymentGuard = await enforcePaymentBackedTransition({
       supabase,
       order,
