@@ -76,7 +76,7 @@ const SignupEntry = () => (
               <p className="text-sm font-extrabold text-[#0A234F]">Supplier, brand or wholesaler?</p>
               <p className="mt-1 text-xs leading-5 text-[#64748B]">Supplier Commerce follows a dedicated commercial participation route rather than creating another marketplace account type.</p>
             </div>
-            <Link to="/business/suppliers" className="mt-3 inline-flex shrink-0 items-center gap-2 text-sm font-extrabold text-[#0E3FA9] hover:underline sm:mt-0">
+            <Link to="/suppliers" className="mt-3 inline-flex shrink-0 items-center gap-2 text-sm font-extrabold text-[#0E3FA9] hover:underline sm:mt-0">
               Supplier enquiry <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
