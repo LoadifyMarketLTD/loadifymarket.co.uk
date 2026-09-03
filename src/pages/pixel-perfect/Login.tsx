@@ -37,11 +37,16 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuthStore();
 
+  // True when user just registered and needs to confirm email.
   const justRegistered = searchParams.get("registered") === "1";
+  // True when user has just confirmed their email via the confirmation link.
   const justConfirmed = searchParams.get("confirmed") === "1";
+  // True when OAuth failed on the callback page.
   const oauthFailed = searchParams.get("error") === "oauth_failed";
 
   useEffect(() => {
+    // Only a fully hydrated active platform account may leave the login page.
+    // /dashboard owns canonical role/workspace routing.
     if (!user || user.isActive !== true) return;
 
     const nextUrl = sanitizeRedirectUrl(searchParams.get("next"));
@@ -57,6 +62,13 @@ const Login = () => {
       const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (authError) throw authError;
 
+      // After a successful sign-in, navigate immediately without making extra
+      // DB round-trips.  App.tsx's onAuthStateChange listener already:
+      //   • checks isActive and signs out suspended users
+      //   • fetches the full user profile (role, seller status, etc.)
+      //   • populates the Zustand store
+      // DashboardRedirect at /dashboard waits for isLoading=false and then
+      // routes to the correct role-based hub (/buyer, /seller, /admin).
       const redirectTo = sanitizeRedirectUrl(searchParams.get("next")) ?? "/dashboard";
       navigate(redirectTo, { replace: true });
     } catch (err) {
@@ -71,7 +83,11 @@ const Login = () => {
     setError("");
     setGoogleLoading(true);
     try {
+      // Detect if running inside a Capacitor APK.
       if (isCapacitorNative()) {
+        // In the APK we cannot use a browser redirect back into the WebView.
+        // Use skipBrowserRedirect so signInWithOAuth returns the URL without
+        // opening it, then open it in Chrome Custom Tabs via @capacitor/browser.
         const { data, error: oauthErr } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
@@ -81,10 +97,16 @@ const Login = () => {
         });
         if (oauthErr) throw oauthErr;
         if (data?.url) {
+          // Dynamically import to avoid loading the Capacitor Browser plugin in
+          // web-only builds where the native plugin is not available.
           const { Browser } = await import("@capacitor/browser");
           await Browser.open({ url: data.url, windowName: "_self" });
+          // The auth session is picked up by App.tsx's onAuthStateChange listener
+          // when the app resumes via the deep-link callback.
         }
       } else {
+        // Standard web flow: Supabase redirects the browser to Google, then
+        // back to /auth/callback where the session is picked up.
         const { error: oauthErr } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
@@ -133,6 +155,9 @@ const Login = () => {
     }
   };
 
+  /* Header height: Row1 72px + Row2 50px = 122px, plus iOS safe-area */
+  // Uses --header-h CSS variable (6.875rem on mobile, 7.625rem on md+) so the
+  // page content starts directly below the global Header on every screen size.
   const headerHeight = "calc(var(--header-h, 6.875rem) + env(safe-area-inset-top, 0px))";
 
   return (
@@ -143,6 +168,8 @@ const Login = () => {
         robots="noindex, nofollow"
       />
       <main id="main-content" className="flex bg-background" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
+
+      {/* ── LEFT — hero image (desktop only, 65%) ───────────────────────── */}
       <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
         <img
           src="/hero-marketplace.jpg"
@@ -152,14 +179,21 @@ const Login = () => {
         />
       </div>
 
+      {/* ── RIGHT — login card panel (full height under navbar) ─────────── */}
       <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-background" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
+
+        {/* Centered form — vertically centred inside the right column */}
         <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8">
           <div className="w-full">
+
+            {/* Form card */}
             <div className="rounded-2xl bg-[#0A234F] p-7 sm:p-8" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+
+              {/* Email confirmation banner — shown after successful registration */}
               {justRegistered && (
                 <div className="flex items-start gap-2.5 rounded-lg bg-blue-50 border border-blue-200 px-3.5 py-3 mb-5">
                   <svg className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
                   </svg>
                   <p className="text-[13px] text-blue-700 leading-snug">
                     <strong>Check your email</strong> to confirm your account, then sign in below.
@@ -167,6 +201,7 @@ const Login = () => {
                 </div>
               )}
 
+              {/* Email confirmed banner — shown after clicking the confirmation link */}
               {justConfirmed && (
                 <div className="flex items-start gap-2.5 rounded-lg bg-success/10 border border-success/30 px-3.5 py-3 mb-5">
                   <svg className="h-4 w-4 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -178,6 +213,7 @@ const Login = () => {
                 </div>
               )}
 
+              {/* Heading */}
               <div className="mb-6">
                 <h1 className="text-[22px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.02em" }}>
                   Welcome back
@@ -185,6 +221,7 @@ const Login = () => {
                 <p className="text-slate-400 text-sm mt-1">Sign in to your Loadify Market account</p>
               </div>
 
+              {/* OAuth error banner */}
               {oauthFailed && (
                 <div className="flex items-start gap-2.5 rounded-lg bg-danger/10 border border-danger/30 px-3.5 py-3 mb-5">
                   <svg className="h-4 w-4 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -196,6 +233,7 @@ const Login = () => {
                 </div>
               )}
 
+              {/* Social sign-in */}
               <div className="grid grid-cols-2 gap-3 mb-5">
                 <button
                   type="button"
@@ -233,6 +271,7 @@ const Login = () => {
                 </button>
               </div>
 
+              {/* Divider */}
               <div className="relative mb-5">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-white/10" />
@@ -242,7 +281,10 @@ const Login = () => {
                 </div>
               </div>
 
+              {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+
+                {/* Email */}
                 <div className="space-y-1.5">
                   <label htmlFor="login-email" className="block text-[13px] font-medium text-slate-300">
                     Email address
@@ -262,6 +304,7 @@ const Login = () => {
                   </div>
                 </div>
 
+                {/* Password */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label htmlFor="login-password" className="block text-[13px] font-medium text-slate-300">
@@ -294,6 +337,7 @@ const Login = () => {
                   </div>
                 </div>
 
+                {/* Error */}
                 {error && (
                   <div className="flex items-start gap-2.5 rounded-lg bg-danger/10 border border-danger/30 px-3.5 py-3">
                     <svg className="h-4 w-4 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -303,6 +347,7 @@ const Login = () => {
                   </div>
                 )}
 
+                {/* Submit */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -315,13 +360,17 @@ const Login = () => {
                   {loading ? "Signing in…" : "Sign In"}
                 </button>
 
+                {/* SSL trust */}
                 <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
                   <ShieldCheck className="h-3.5 w-3.5 text-slate-500" />
                   <span>Secured with 256-bit SSL encryption</span>
                 </div>
+
+                {/* TEMPORARY build stamp — remove once APK fetch root cause confirmed. */}
               </form>
             </div>
 
+            {/* Footer */}
             <p className="text-center text-[13px] text-slate-500 mt-5">
               Don't have an account?{" "}
               <Link to="/signup" className="text-primary font-semibold hover:text-primary hover:underline transition-colors">
