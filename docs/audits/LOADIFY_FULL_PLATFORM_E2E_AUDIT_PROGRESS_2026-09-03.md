@@ -27,6 +27,24 @@ This is a current production-source defect, not merely historical documentation.
 
 The same Trade Account page also labels its postcode lookup as a source stub. Its current behavior does not perform an address lookup; after a non-empty postcode it instructs the user to enter the address manually. This must not be represented as a working postcode lookup.
 
+### Checkout / payment creation — SOURCE BOUNDARY CONFIRMED
+Current `netlify/functions/create-checkout.ts` re-reads authoritative Buyer and Seller account state under service-role execution before payment creation. It rejects inactive Buyer/Seller accounts, mismatched buyer IDs, unavailable listings, invalid quantity/stock, invalid seller lifecycle/Stripe Connect state, incomplete seller commercial identity, invalid shipping methods/rates and unsupported mixed-seller carts.
+
+Client-provided item price/title/seller identity and shipping amount are not trusted as payment authority. Product price/seller state and shipping price are re-read from the database. Tax treatment is resolved server-side before Stripe Checkout creation.
+
+Checkout uses a reservation token, records a pending `payment_sessions` snapshot, expires the just-created Stripe Checkout Session if persistence fails, and releases reservations on failure paths. This is strong source evidence, but runtime checkout/payment PASS is still NOT DECLARED because no Stripe test-mode transaction was executed in this audit.
+
+### Stripe webhook / order lifecycle — SOURCE IDEMPOTENCY CONFIRMED
+Current `stripe-webhook.ts` verifies Stripe signatures against configured webhook secrets before processing. Stripe events are claimed in `stripe_events` by event ID, duplicate processed/skipped events short-circuit, processing leases can be reclaimed after staleness, and failed events can be retried. This provides an explicit webhook idempotency boundary at source level.
+
+The webhook handles checkout completion/expiry, payment-intent success/failure/cancel, refunds, disputes, Connect account updates, transfers and payouts. Payment/order mutation runtime remains NOT EXECUTED in this audit.
+
+### Payment-session read isolation — SOURCE CONFIRMED
+Current RLS source for `payment_sessions` restricts SELECT to the owning `userId` or admin. `OrderSuccessPage` looks up a session by `stripeSessionId`, but source RLS prevents ordinary users from reading another user's payment session solely by knowing a session ID. Hosted-policy parity is not reconfirmed because hosted Supabase read access is currently blocked.
+
+### Admin surface — SOURCE GUARD CONFIRMED
+Current Admin routes are wrapped by `RequireAdmin`, and the repository contains current cross-platform auth-security tests covering guard files. This is source/test-presence evidence only; Admin runtime workflows and server mutations remain unexecuted in this continuation.
+
 ### SMS
 The repository explicitly documents SMS as inactive and contains an SMS sending stub. This is acceptable only if the product does not claim live SMS delivery. SMS is NOT ACTIVE / NOT E2E PASS.
 
@@ -43,4 +61,4 @@ The connected Supabase action currently rejects even the attempted read-only hos
 The continuation branch carries the prior audit artifacts including the source migration that restores `feature_flags.rfqSystem=false`. That migration remains NOT APPLIED to hosted Production in this audit.
 
 ## Next audit lanes
-Continue current-source review and runtime/test evidence for marketplace catalogue/product/cart/checkout, Buyer workspace, Seller workspace, Admin control plane, messaging/notifications, Netlify functions, payments/order lifecycle, mobile/Capacitor, SEO/legal/accessibility, supplier-commerce fail-closed boundaries, and final release gates.
+Continue current-source review and runtime/test evidence for marketplace catalogue/product/cart behavior, Buyer workspace, Seller workspace, Admin operations, messaging/notifications, Netlify functions, remaining payment/order lifecycle, mobile/Capacitor, SEO/legal/accessibility, supplier-commerce fail-closed boundaries, and final release gates.
