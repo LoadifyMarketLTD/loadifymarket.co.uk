@@ -13,7 +13,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, RefreshCw, Search, AlertCircle, CheckCircle2, SkipForward, Zap } from "lucide-react";
+import { Loader2, RefreshCw, Search, AlertCircle, CheckCircle2, SkipForward, Zap, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,8 @@ interface StripeEvent {
   error_message: string | null;
   metadata: Record<string, unknown> | null;
 }
+
+type ModeFilter = "all" | "live" | "test";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -77,6 +79,8 @@ const AdminStripeEvents = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [modeFilter, setModeFilter] = useState<ModeFilter>("all");
+  const [eventTypeFilter, setEventTypeFilter] = useState("all");
   const [selected, setSelected] = useState<StripeEvent | null>(null);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
@@ -114,21 +118,45 @@ const AdminStripeEvents = () => {
     void fetchEvents();
   }, [fetchEvents]);
 
-  // ── Filter ─────────────────────────────────────────────────────────────────
+  // ── Filters ────────────────────────────────────────────────────────────────
 
-  const filtered = events.filter(
-    (e) =>
-      e.event_type.toLowerCase().includes(search.toLowerCase()) ||
-      e.event_id.toLowerCase().includes(search.toLowerCase())
+  const eventTypes = Array.from(new Set(events.map((event) => event.event_type))).sort((a, b) =>
+    a.localeCompare(b)
   );
 
-  const byStatus = (s: string) => filtered.filter((e) => e.status === s);
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const filtered = events.filter((event) => {
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      event.event_type.toLowerCase().includes(normalizedSearch) ||
+      event.event_id.toLowerCase().includes(normalizedSearch);
+
+    const matchesMode =
+      modeFilter === "all" ||
+      (modeFilter === "live" && event.livemode) ||
+      (modeFilter === "test" && !event.livemode);
+
+    const matchesEventType =
+      eventTypeFilter === "all" || event.event_type === eventTypeFilter;
+
+    return matchesSearch && matchesMode && matchesEventType;
+  });
+
+  const byStatus = (status: string) => filtered.filter((event) => event.status === status);
+  const processedCount = byStatus("processed").length;
   const failedCount = byStatus("failed").length;
+  const skippedCount = byStatus("skipped").length;
+  const liveCount = filtered.filter((event) => event.livemode).length;
+  const testCount = filtered.filter((event) => !event.livemode).length;
+  const hasActiveFilters =
+    normalizedSearch.length > 0 || modeFilter !== "all" || eventTypeFilter !== "all";
 
-  // ── Stats ──────────────────────────────────────────────────────────────────
-
-  const liveCount = events.filter((e) => e.livemode).length;
-  const testCount = events.filter((e) => !e.livemode).length;
+  const clearFilters = () => {
+    setSearch("");
+    setModeFilter("all");
+    setEventTypeFilter("all");
+  };
 
   // ── Render table ───────────────────────────────────────────────────────────
 
@@ -151,17 +179,23 @@ const AdminStripeEvents = () => {
               <div className="flex flex-col items-center gap-3 max-w-sm mx-auto">
                 <Zap className="h-10 w-10 text-primary/40" />
                 <p className="text-sm font-semibold text-slate-300">
-                  {search || events.length > 0
+                  {hasActiveFilters || events.length > 0
                     ? "No events match your filter"
                     : "No Stripe webhook events recorded yet"}
                 </p>
                 <p className="text-xs text-slate-400 leading-relaxed text-center">
-                  {search
-                    ? "Try clearing the search to see all events."
+                  {hasActiveFilters
+                    ? "Clear or adjust the filters to broaden the event log."
                     : events.length > 0
-                    ? "Try selecting a different tab."
+                    ? "Try selecting a different status tab."
                     : "Events appear here once your Stripe webhook endpoint starts receiving traffic. Make sure your webhook URL is configured in the Stripe Dashboard and that the stripe-webhook Netlify function is deployed."}
                 </p>
+                {hasActiveFilters && (
+                  <Button variant="outline" size="sm" onClick={clearFilters}>
+                    <X className="h-3.5 w-3.5 mr-2" />
+                    Clear filters
+                  </Button>
+                )}
               </div>
             </TableCell>
           </TableRow>
@@ -247,10 +281,10 @@ const AdminStripeEvents = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total",    value: events.length,          accent: "text-white" },
-          { label: "Failed",   value: failedCount,            accent: failedCount > 0 ? "text-danger" : "text-success" },
-          { label: "Live",     value: liveCount,              accent: "text-orange-400" },
-          { label: "Test",     value: testCount,              accent: "text-slate-400" },
+          { label: hasActiveFilters ? "Showing" : "Total", value: filtered.length, accent: "text-white" },
+          { label: "Failed", value: failedCount, accent: failedCount > 0 ? "text-danger" : "text-success" },
+          { label: "Live", value: liveCount, accent: "text-orange-400" },
+          { label: "Test", value: testCount, accent: "text-slate-400" },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -270,15 +304,78 @@ const AdminStripeEvents = () => {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Filter by event type or ID…"
-          className="pl-9"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* Filters */}
+      <div
+        className="rounded-xl p-3 sm:p-4"
+        style={{ border: "1px solid rgba(255,255,255,0.05)" }}
+      >
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.55fr)_minmax(220px,1fr)_auto] lg:items-center">
+          <div className="relative">
+            <label htmlFor="stripe-event-search" className="sr-only">Search Stripe events</label>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="stripe-event-search"
+              placeholder="Filter by event type or ID…"
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="stripe-event-mode" className="sr-only">Filter by mode</label>
+            <select
+              id="stripe-event-mode"
+              value={modeFilter}
+              onChange={(e) => setModeFilter(e.target.value as ModeFilter)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="all">All modes</option>
+              <option value="live">Live only</option>
+              <option value="test">Test only</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="stripe-event-type" className="sr-only">Filter by event type</label>
+            <select
+              id="stripe-event-type"
+              value={eventTypeFilter}
+              onChange={(e) => setEventTypeFilter(e.target.value)}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="all">All event types</option>
+              {eventTypes.map((eventType) => (
+                <option key={eventType} value={eventType}>{eventType}</option>
+              ))}
+            </select>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
+            className="h-10 whitespace-nowrap"
+          >
+            <X className="h-3.5 w-3.5 mr-2" />
+            Clear filters
+          </Button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>
+          <span>{filtered.length} of {events.length} events shown</span>
+          {modeFilter !== "all" && (
+            <Badge variant="outline" className="text-xs">
+              Mode: {modeFilter === "live" ? "Live" : "Test"}
+            </Badge>
+          )}
+          {eventTypeFilter !== "all" && (
+            <Badge variant="outline" className="max-w-full truncate text-xs">
+              Type: {eventTypeFilter}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -289,6 +386,7 @@ const AdminStripeEvents = () => {
           </TabsTrigger>
           <TabsTrigger value="processed" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Processed
+            <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{processedCount}</Badge>
           </TabsTrigger>
           <TabsTrigger value="failed" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Failed
@@ -300,6 +398,7 @@ const AdminStripeEvents = () => {
           </TabsTrigger>
           <TabsTrigger value="skipped" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Skipped
+            <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{skippedCount}</Badge>
           </TabsTrigger>
         </TabsList>
 
