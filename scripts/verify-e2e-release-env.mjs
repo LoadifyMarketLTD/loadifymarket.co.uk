@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 
 const required = [
@@ -36,6 +37,25 @@ function assertUuid(name, value) {
   }
 }
 
+function readLocalHeadSha() {
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    shell: false,
+  });
+
+  if (result.error || result.status !== 0) {
+    throw new Error('Unable to determine local Git HEAD for E2E release certification');
+  }
+
+  const value = result.stdout.trim();
+  if (!/^[0-9a-f]{40}$/i.test(value)) {
+    throw new Error('Local Git HEAD is not a full 40-character Git SHA');
+  }
+
+  return value.toLowerCase();
+}
+
 for (const name of required) requireEnv(name);
 
 const baseUrl = new URL(requireEnv('E2E_BASE_URL'));
@@ -43,9 +63,16 @@ if (baseUrl.protocol !== 'https:') {
   throw new Error('E2E_BASE_URL must use HTTPS for release certification');
 }
 
-const targetSha = requireEnv('E2E_TARGET_SHA');
+const targetSha = requireEnv('E2E_TARGET_SHA').toLowerCase();
 if (!/^[0-9a-f]{40}$/i.test(targetSha)) {
   throw new Error('E2E_TARGET_SHA must be a full 40-character Git SHA');
+}
+
+const localHeadSha = readLocalHeadSha();
+if (targetSha !== localHeadSha) {
+  throw new Error(
+    `E2E_TARGET_SHA must match the local checkout HEAD (${localHeadSha}); refusing to certify a different revision`,
+  );
 }
 
 const releaseTarget = (process.env.E2E_RELEASE_TARGET ?? 'production').trim().toLowerCase();
@@ -84,6 +111,7 @@ console.log('Credentialed E2E release preflight PASS');
 console.log(`target=${releaseTarget}`);
 console.log(`baseURL=${baseUrl.origin}`);
 console.log(`targetSha=${targetSha}`);
+console.log('localHeadSha=matched');
 console.log('roles=buyer,seller,admin');
 console.log('foreignOrderFixture=configured');
 console.log('No credentials were printed.');
