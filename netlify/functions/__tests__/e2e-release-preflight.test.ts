@@ -4,10 +4,20 @@ import { describe, expect, it } from 'vitest';
 
 const script = 'scripts/verify-e2e-release-env.mjs';
 
+function currentHeadSha(): string {
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    shell: false,
+  });
+  if (result.status !== 0) throw new Error('Unable to resolve test checkout HEAD');
+  return result.stdout.trim();
+}
+
 const validEnv: NodeJS.ProcessEnv = {
   ...process.env,
   E2E_BASE_URL: 'https://loadifymarket.co.uk',
-  E2E_TARGET_SHA: 'aa56c9dd2e153a6e76721618175a1d9c134bf8b2',
+  E2E_TARGET_SHA: currentHeadSha(),
   E2E_RELEASE_TARGET: 'production',
   E2E_ALLOW_PRODUCTION_READONLY: 'ALLOW_PRODUCTION_ROLE_E2E',
   E2E_BUYER_EMAIL: 'buyer-e2e@example.test',
@@ -35,6 +45,7 @@ describe('credentialed E2E release preflight', () => {
     expect(result.stdout).toContain('Credentialed E2E release preflight PASS');
     expect(result.stdout).toContain('target=production');
     expect(result.stdout).toContain('baseURL=https://loadifymarket.co.uk');
+    expect(result.stdout).toContain('localHeadSha=matched');
     expect(result.stdout).toContain('foreignOrderFixture=configured');
     expect(result.stdout).not.toContain(validEnv.E2E_BUYER_PASSWORD);
     expect(result.stdout).not.toContain(validEnv.E2E_SELLER_PASSWORD);
@@ -69,5 +80,15 @@ describe('credentialed E2E release preflight', () => {
     const result = run(env);
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain('E2E_FOREIGN_ORDER_ID must be a valid UUID');
+  });
+
+  it('rejects certification when the declared target SHA is not the checkout HEAD', () => {
+    const env = {
+      ...validEnv,
+      E2E_TARGET_SHA: '1111111111111111111111111111111111111111',
+    };
+    const result = run(env);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('E2E_TARGET_SHA must match the local checkout HEAD');
   });
 });
