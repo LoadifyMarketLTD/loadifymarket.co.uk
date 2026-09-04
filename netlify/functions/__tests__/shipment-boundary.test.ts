@@ -154,7 +154,7 @@ describe('canonical shipment write boundary', () => {
     const res = await handler(
       makeEvent('POST', '/.netlify/functions/create-shipment', {
         order_id: 'order-1',
-        courier_name: 'Carrier',
+        courier_name: 'Royal Mail',
         tracking_number: 'TRACK-1',
       }),
       {} as never,
@@ -165,7 +165,7 @@ describe('canonical shipment write boundary', () => {
     expect(rpc).toHaveBeenCalledWith('server_upsert_shipment', {
       p_order_id: 'order-1',
       p_actor_id: 'seller-1',
-      p_courier_name: 'Carrier',
+      p_courier_name: 'Royal Mail',
       p_set_courier_name: true,
       p_tracking_number: 'TRACK-1',
       p_set_tracking_number: true,
@@ -215,6 +215,16 @@ describe('canonical shipment write boundary', () => {
                   buyerId: 'buyer-1',
                 },
               },
+              error: null,
+            }),
+          };
+        }
+        if (table === 'products') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { id: 'product-1', listingContext: 'product' },
               error: null,
             }),
           };

@@ -48,6 +48,7 @@ interface DBProduct {
 
 const STRIPE_CHECKOUT_WINDOW_MINUTES = 30;
 const DB_RESERVATION_FAILSAFE_MINUTES = 60;
+const LOADIFY_SUPPORTED_CARRIERS = new Set(['Royal Mail', 'Evri']);
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -312,7 +313,7 @@ export const handler: Handler = async (event) => {
 
     const { data: productShippingRows, error: psError } = await supabase
       .from('product_shipping')
-      .select('product_id, shipping_methods!method_id(id, active, name, shipping_rates(price))')
+      .select('product_id, shipping_methods!method_id(id, active, name, courier, shipping_rates(price))')
       .eq('method_id', shippingMethodId)
       .in('product_id', goodsProductIds);
 
@@ -334,6 +335,7 @@ export const handler: Handler = async (event) => {
       id: string;
       active: boolean;
       name?: string | null;
+      courier?: string | null;
       shipping_rates: Array<{ price: number }> | null;
     };
     const rawMethod = (productShippingRows[0] as Record<string, unknown>)['shipping_methods'];
@@ -343,6 +345,13 @@ export const handler: Handler = async (event) => {
 
     if (!method || !method.active) {
       return { statusCode: 400, body: JSON.stringify({ error: 'The selected shipping method is no longer available.' }) };
+    }
+
+    if (!method.courier || !LOADIFY_SUPPORTED_CARRIERS.has(method.courier.trim())) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'The selected shipping carrier is not supported. Please choose Royal Mail or Evri.' }),
+      };
     }
 
     const validRates = (Array.isArray(method.shipping_rates) ? method.shipping_rates : [])
