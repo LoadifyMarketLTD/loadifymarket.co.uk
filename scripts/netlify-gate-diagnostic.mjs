@@ -10,14 +10,27 @@ const result = spawnSync('npm', ['test'], {
 const output = `${result.stdout || ''}\n${result.stderr || ''}`;
 const failed = (result.status ?? 1) !== 0;
 
+const candidates = new Set();
+for (const line of output.split(/\r?\n/)) {
+  if (!/(FAIL|❯|\.test\.[cm]?[jt]sx?|\.spec\.[cm]?[jt]sx?)/i.test(line)) continue;
+  const match = line.match(/(?:^|\s)((?:[\w@.-]+\/)*[\w@.-]+\.(?:test|spec)\.[cm]?[jt]sx?)/i);
+  if (match?.[1]) candidates.add(match[1]);
+}
+
+const slug = (value) => value
+  .replace(/[^a-zA-Z0-9._-]+/g, '-')
+  .replace(/^-+|-+$/g, '')
+  .slice(-140) || 'unknown';
+
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/index.html', '<!doctype html><title>test diagnostic</title>');
 writeFileSync('dist/validation-report.txt', `exit=${result.status ?? 1}\n${output}`);
 
-if (failed) {
-  for (let i = 1; i <= 20; i += 1) {
-    writeFileSync(`dist/test-marker-${i}.txt`, 'tests failed\n');
-  }
+if (failed && candidates.size === 0) {
+  writeFileSync('dist/diag-test-failed-no-file-detected.html', '<!doctype html><title>test failure</title>');
+}
+for (const file of candidates) {
+  writeFileSync(`dist/diag-${slug(file)}.html`, `<!doctype html><title>${file}</title>`);
 }
 
 process.exit(0);
