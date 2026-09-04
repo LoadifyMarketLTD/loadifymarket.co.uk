@@ -5,6 +5,7 @@ import { enforcePaymentBackedTransition } from './_shared/orderTransitionGuards'
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPPORTED_CARRIERS = new Set(['Royal Mail', 'Evri']);
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
   console.error('create-shipment: missing required environment variables');
@@ -134,6 +135,17 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    if (Object.prototype.hasOwnProperty.call(body, 'courier_name')) {
+      if (typeof courier_name !== 'string' || !SUPPORTED_CARRIERS.has(courier_name.trim())) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({
+            error: 'Unsupported courier. Loadify currently supports Royal Mail and Evri for new shipments.',
+          }),
+        };
+      }
+    }
+
     if (
       Object.prototype.hasOwnProperty.call(body, 'dispatched_at') &&
       dispatched_at !== null &&
@@ -216,12 +228,13 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    const normalizedCourier = typeof courier_name === 'string' ? courier_name.trim() : null;
     const { data: mutation, error: mutationError } = await supabase.rpc('server_upsert_shipment', {
       p_order_id: order_id,
       p_actor_id: user.id,
-      p_courier_name: typeof courier_name === 'string' ? courier_name : null,
+      p_courier_name: normalizedCourier,
       p_set_courier_name: Object.prototype.hasOwnProperty.call(body, 'courier_name'),
-      p_tracking_number: typeof tracking_number === 'string' ? tracking_number : null,
+      p_tracking_number: typeof tracking_number === 'string' ? tracking_number.trim() : null,
       p_set_tracking_number: Object.prototype.hasOwnProperty.call(body, 'tracking_number'),
       p_dispatched_at: dispatched_at ?? null,
       p_set_dispatched_at: Object.prototype.hasOwnProperty.call(body, 'dispatched_at'),

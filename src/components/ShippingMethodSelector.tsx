@@ -10,6 +10,8 @@ interface ShippingMethodSelectorProps {
   onChange: (selectedIds: string[]) => void;
 }
 
+const LOADIFY_SUPPORTED_CARRIERS = ['Royal Mail', 'Evri'] as const;
+
 export default function ShippingMethodSelector({
   selectedMethodIds,
   onChange,
@@ -24,11 +26,21 @@ export default function ShippingMethodSelector({
           .from('shipping_methods')
           .select('*, shipping_rates(*)')
           .eq('active', true)
-          .eq('courier', 'Royal Mail')
+          .in('courier', [...LOADIFY_SUPPORTED_CARRIERS])
           .order('name', { ascending: true });
 
         if (error) throw error;
-        setMethods(data || []);
+
+        const supported = (data || []).sort((a, b) => {
+          const aRoyalMail = a.courier === 'Royal Mail' ? 0 : 1;
+          const bRoyalMail = b.courier === 'Royal Mail' ? 0 : 1;
+          if (aRoyalMail !== bRoyalMail) return aRoyalMail - bRoyalMail;
+          const aPrice = Number(a.shipping_rates?.[0]?.price ?? Number.POSITIVE_INFINITY);
+          const bPrice = Number(b.shipping_rates?.[0]?.price ?? Number.POSITIVE_INFINITY);
+          return aPrice - bPrice;
+        });
+
+        setMethods(supported);
       } catch (err) {
         console.error('Error fetching shipping methods:', err);
       } finally {
