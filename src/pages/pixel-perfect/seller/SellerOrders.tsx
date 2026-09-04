@@ -22,6 +22,7 @@ interface Order {
   total: number;
   status: string;
   createdAt: string;
+  listingContext: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -55,7 +56,7 @@ const SellerOrders = () => {
       setLoadError(null);
       const { data, error: fetchError } = await supabase
         .from("orders")
-        .select(`id, orderNumber, total, status, createdAt, buyerId, buyerNameSnapshot, commercialSnapshotSource`)
+        .select("id, orderNumber, total, status, createdAt, buyerId, productId, buyerNameSnapshot, commercialSnapshotSource")
         .eq("sellerId", user.id)
         .order("createdAt", { ascending: false });
 
@@ -73,13 +74,11 @@ const SellerOrders = () => {
         status: string;
         createdAt: string;
         buyerId: string;
+        productId: string;
         buyerNameSnapshot: string | null;
         commercialSnapshotSource: string | null;
       }>;
 
-      // Snapshot identity is authoritative for post-cutover orders. Only rows
-      // without an authoritative snapshot may use today's user profile as a
-      // display-only legacy fallback; that fallback is never persisted.
       const legacyBuyerIds = [...new Set(
         rows
           .filter((o) => !o.commercialSnapshotSource || !o.buyerNameSnapshot?.trim())
@@ -98,6 +97,22 @@ const SellerOrders = () => {
         });
       }
 
+      const productIds = [...new Set(rows.map((o) => o.productId).filter(Boolean))];
+      const listingContextByProductId: Record<string, string | null> = {};
+      if (productIds.length > 0) {
+        const { data: products, error: productsError } = await supabase
+          .from("products")
+          .select("id, listingContext")
+          .in("id", productIds);
+        if (productsError) {
+          console.warn("SellerOrders: product context lookup failed", productsError);
+        } else {
+          (products ?? []).forEach((product: { id: string; listingContext: string | null }) => {
+            listingContextByProductId[product.id] = product.listingContext ?? null;
+          });
+        }
+      }
+
       setOrders(
         rows.map((o) => ({
           id: o.id,
@@ -109,6 +124,7 @@ const SellerOrders = () => {
           total: o.total,
           status: o.status,
           createdAt: o.createdAt,
+          listingContext: listingContextByProductId[o.productId] ?? null,
         }))
       );
       setLoading(false);
@@ -152,12 +168,20 @@ const SellerOrders = () => {
       if (!res.ok) throw new Error(json.error ?? "Failed to mark order as delivered");
 
       setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: "delivered" } : o)));
-      toast({ title: "Order marked as delivered", description: "The buyer has been notified to confirm delivery." });
+      toast({ title: "Job marked as completed", description: "The buyer has been notified to confirm completion." });
     } catch (err) {
       toast({ title: "Update failed", description: (err as Error).message, variant: "destructive" });
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const renderShippedAction = (o: Order) => {
+    if (o.status !== "shipped") return null;
+    if (o.listingContext === "service") {
+      return <DropdownMenuItem onClick={() => markDelivered(o.id)}>Mark Job as Completed</DropdownMenuItem>;
+    }
+    return <DropdownMenuItem onClick={() => navigate("/seller/shipments")}>Manage Shipment</DropdownMenuItem>;
   };
 
   return (
@@ -231,7 +255,7 @@ const SellerOrders = () => {
                         <DropdownMenuContent align="end">
                           {o.status === "paid" && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>Mark as Packed</DropdownMenuItem>}
                           {(o.status === "paid" || o.status === "packed") && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark as Shipped</DropdownMenuItem>}
-                          {o.status === "shipped" && <DropdownMenuItem onClick={() => markDelivered(o.id)}>Mark as Delivered</DropdownMenuItem>}
+                          {renderShippedAction(o)}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -285,7 +309,7 @@ const SellerOrders = () => {
                             <DropdownMenuContent align="end">
                               {o.status === "paid" && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>Mark as Packed</DropdownMenuItem>}
                               {(o.status === "paid" || o.status === "packed") && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark as Shipped</DropdownMenuItem>}
-                              {o.status === "shipped" && <DropdownMenuItem onClick={() => markDelivered(o.id)}>Mark as Delivered</DropdownMenuItem>}
+                              {renderShippedAction(o)}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
