@@ -56,7 +56,7 @@ const SellerOrders = () => {
       setLoadError(null);
       const { data, error: fetchError } = await supabase
         .from("orders")
-        .select(`id, orderNumber, total, status, createdAt, buyerId, buyerNameSnapshot, commercialSnapshotSource, products!orders_productId_fkey(listingContext)`)
+        .select("id, orderNumber, total, status, createdAt, buyerId, productId, buyerNameSnapshot, commercialSnapshotSource")
         .eq("sellerId", user.id)
         .order("createdAt", { ascending: false });
 
@@ -74,9 +74,9 @@ const SellerOrders = () => {
         status: string;
         createdAt: string;
         buyerId: string;
+        productId: string;
         buyerNameSnapshot: string | null;
         commercialSnapshotSource: string | null;
-        products: { listingContext: string | null } | null;
       }>;
 
       const legacyBuyerIds = [...new Set(
@@ -97,6 +97,22 @@ const SellerOrders = () => {
         });
       }
 
+      const productIds = [...new Set(rows.map((o) => o.productId).filter(Boolean))];
+      const listingContextByProductId: Record<string, string | null> = {};
+      if (productIds.length > 0) {
+        const { data: products, error: productsError } = await supabase
+          .from("products")
+          .select("id, listingContext")
+          .in("id", productIds);
+        if (productsError) {
+          console.warn("SellerOrders: product context lookup failed", productsError);
+        } else {
+          (products ?? []).forEach((product: { id: string; listingContext: string | null }) => {
+            listingContextByProductId[product.id] = product.listingContext ?? null;
+          });
+        }
+      }
+
       setOrders(
         rows.map((o) => ({
           id: o.id,
@@ -108,7 +124,7 @@ const SellerOrders = () => {
           total: o.total,
           status: o.status,
           createdAt: o.createdAt,
-          listingContext: o.products?.listingContext ?? null,
+          listingContext: listingContextByProductId[o.productId] ?? null,
         }))
       );
       setLoading(false);
