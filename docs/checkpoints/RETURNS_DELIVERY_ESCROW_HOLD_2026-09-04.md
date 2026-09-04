@@ -4,15 +4,18 @@ Branch: `fix/returns-delivery-right-escrow-hold-20260904`
 Base: `034e4a35a48c15ab10d5d5e22a34717ce931ff71`
 
 Current scope:
-- add repository migration aligning `public.can_open_return()` to `delivered`/`completed`;
-- hold escrow release while any non-rejected return exists;
-- re-check active returns after Stripe transfer and compensate before finalisation if a return wins the race;
-- keep refund execution admin-only and unchanged;
+- repository migration aligns `public.can_open_return()` to `delivered`/`completed`;
+- the same DB boundary now requires a verified delivered shipment within the canonical 14-day return window;
+- escrow release is held only while a return is `requested` or `approved`;
+- active returns are re-checked after Stripe transfer and compensated before finalisation if a return wins the race;
+- refund execution remains admin-only and unchanged;
+- Buyer Orders exposes return action from the delivery boundary;
+- focused source-level regression coverage protects both escrow-return and return-eligibility boundaries;
 - no hosted Supabase migration applied;
 - no production payment/refund mutation executed.
 
-Still required before merge:
-- align Buyer Orders return button with the delivery boundary;
-- validate focused tests/build/preview;
-- inspect final diff against current main;
-- only then consider merge.
+Validation required before merge:
+- Netlify preview for the latest HEAD;
+- final diff against current main;
+- confirm no new review blocker;
+- merge only if all available evidence is clean.
