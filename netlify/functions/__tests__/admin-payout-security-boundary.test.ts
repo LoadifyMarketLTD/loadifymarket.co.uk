@@ -21,6 +21,14 @@ describe('admin payout security boundary', () => {
     expect(source).not.toContain("admin.rpc('reject_payout'");
   });
 
+  it('ships the boundary through the active modern Netlify functions directory', () => {
+    const wrapper = read('netlify/functions-modern/admin-payout-action.ts');
+
+    expect(wrapper).toContain("import { handler } from '../functions/admin-payout-action'");
+    expect(wrapper).toContain("import { withLambda } from '../function-runtime/lambdaCompat'");
+    expect(wrapper).toContain('export default withLambda(handler)');
+  });
+
   it('keeps the browser away from privileged payout RPCs', () => {
     const page = read('src/pages/pixel-perfect/admin/AdminPayouts.tsx');
 
