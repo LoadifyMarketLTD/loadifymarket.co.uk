@@ -10,8 +10,7 @@
  *   – JWT is validated via admin.auth.getUser()
  *   – public.users must still exist with role=admin and isActive=true
  *   – stale app_metadata claims are never sufficient
- *   – Only the three canonical keys are accepted: feature_flags,
- *     maintenance_mode, platform_config (unknown keys are rejected)
+ *   – Only the three canonical settings contracts are accepted
  *
  * Method: POST
  * Body:   { settings: Array<{ key: string; value: unknown }> }
@@ -21,11 +20,9 @@ import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { jsonResponse, optionsResponse } from './_shared/http';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { isValidAdminSettingsBatch } from './_shared/adminSettingsContract';
 
 const METHODS = 'POST, OPTIONS';
-
-// Only these keys may be upserted via this endpoint.
-const ALLOWED_KEYS = new Set(['feature_flags', 'maintenance_mode', 'platform_config']);
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -50,27 +47,19 @@ export const handler: Handler = async (event) => {
     return jsonResponse(auth.status, { error: 'Unauthorized' }, METHODS);
   }
 
-  let body: { settings?: Array<{ key: string; value: unknown }> } = {};
+  let body: { settings?: unknown } = {};
   try {
-    body = JSON.parse(event.body || '{}');
+    body = JSON.parse(event.body || '{}') as { settings?: unknown };
   } catch {
     return jsonResponse(400, { error: 'Invalid JSON body' }, METHODS);
   }
 
-  const { settings } = body;
-  if (!Array.isArray(settings) || settings.length === 0) {
-    return jsonResponse(400, { error: 'settings must be a non-empty array' }, METHODS);
-  }
-
-  // Validate all keys before writing anything.
-  for (const row of settings) {
-    if (!ALLOWED_KEYS.has(row.key)) {
-      return jsonResponse(400, { error: `Unknown settings key: ${row.key}` }, METHODS);
-    }
+  if (!isValidAdminSettingsBatch(body.settings)) {
+    return jsonResponse(400, { error: 'Invalid settings payload' }, METHODS);
   }
 
   const errors: string[] = [];
-  for (const row of settings) {
+  for (const row of body.settings) {
     const { error } = await admin
       .from('platform_settings')
       .upsert({ key: row.key, value: row.value }, { onConflict: 'key' });
