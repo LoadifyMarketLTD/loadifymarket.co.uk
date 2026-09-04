@@ -1,0 +1,1 @@
+Temporary note: Loadify validation uses Netlify Deploy Preview, not GitHub Actions. The temporary workflow has been removed. Package lint must be restored to strict `eslint .` before final validation and merge. PR #745 remains draft and fail-closed.
