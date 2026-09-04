@@ -87,6 +87,7 @@ const BuyerOrders = () => {
 
   const [confirmDeliveryOrder, setConfirmDeliveryOrder] = useState<OrderRow | null>(null);
   const [confirmDeliveryLoading, setConfirmDeliveryLoading] = useState(false);
+  const [deliveryConfirmedIds, setDeliveryConfirmedIds] = useState<Set<string>>(() => new Set());
 
   const handleConfirmDelivery = async () => {
     if (!confirmDeliveryOrder || !user) return;
@@ -109,12 +110,12 @@ const BuyerOrders = () => {
         throw new Error(serverMessage ?? `Server error ${res.status}`);
       }
 
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === confirmDeliveryOrder.id ? { ...o, status: "completed" } : o
-        )
-      );
-      toast({ title: "Delivery confirmed", description: "Thank you for confirming. Funds have been released to the seller." });
+      const confirmedOrderId = confirmDeliveryOrder.id;
+      setDeliveryConfirmedIds((prev) => new Set(prev).add(confirmedOrderId));
+      toast({
+        title: "Delivery confirmed",
+        description: "Thank you for confirming. Seller funds remain protected until the escrow release checks and protection window are complete.",
+      });
       setConfirmDeliveryOrder(null);
     } catch (err) {
       toast({ title: "Failed to confirm", description: (err as Error).message, variant: "destructive" });
@@ -283,7 +284,9 @@ const BuyerOrders = () => {
             </TableCell>
           </TableRow>
         ) : (
-          data.map((o) => (
+          data.map((o) => {
+            const deliveryConfirmed = deliveryConfirmedIds.has(o.id);
+            return (
             <TableRow key={o.id}>
               <TableCell className="font-medium text-sm">
                 {o.orderNumber || o.id.slice(0, 8).toUpperCase()}
@@ -315,9 +318,9 @@ const BuyerOrders = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-8 w-8 ${o.status === "delivered" ? "text-emerald-600" : ""}`}
-                    title={o.status === "delivered" ? "Confirm delivery" : o.status === "completed" ? "Delivery confirmed" : "Confirm once the seller marks the order delivered"}
-                    disabled={o.status !== "delivered"}
+                    className={`h-8 w-8 ${o.status === "delivered" && !deliveryConfirmed ? "text-emerald-600" : ""}`}
+                    title={deliveryConfirmed ? "Delivery confirmed — funds remain protected" : o.status === "delivered" ? "Confirm delivery" : o.status === "completed" ? "Delivery confirmed" : "Confirm once the seller marks the order delivered"}
+                    disabled={o.status !== "delivered" || deliveryConfirmed}
                     onClick={() => setConfirmDeliveryOrder(o)}
                   >
                     <CheckCheck className="h-4 w-4" />
@@ -326,7 +329,7 @@ const BuyerOrders = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    title={o.status === "completed" ? "Request return" : "Returns available after delivery confirmation"}
+                    title={o.status === "completed" ? "Request return" : "Returns available after escrow completion"}
                     disabled={o.status !== "completed"}
                     onClick={() => {
                       setReturnOrder(o);
@@ -363,7 +366,8 @@ const BuyerOrders = () => {
                 </div>
               </TableCell>
             </TableRow>
-          ))
+            );
+          })
         )}
       </TableBody>
     </Table>
@@ -522,7 +526,7 @@ const BuyerOrders = () => {
               has been delivered to your satisfaction.
             </p>
             <p className="text-xs text-muted-foreground">
-              Once confirmed, the escrow will be released to the seller. You can still open a dispute if there is a problem.
+              Confirmation records receipt. Seller funds remain protected until the escrow protection window and final dispute/refund checks are complete.
             </p>
           </div>
           <DialogFooter>
