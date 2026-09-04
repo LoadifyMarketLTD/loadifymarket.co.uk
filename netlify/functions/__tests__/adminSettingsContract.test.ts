@@ -57,9 +57,16 @@ describe('admin settings contract', () => {
       },
     ])).toBe(false);
 
-    const { sellerRegistration: _sellerRegistration, ...missingRequiredFlag } = validFeatureFlags;
     expect(isValidAdminSettingsBatch([
-      { key: 'feature_flags', value: missingRequiredFlag },
+      {
+        key: 'feature_flags',
+        value: {
+          buyerRegistration: true,
+          rfqRequests: false,
+          reviewSystem: true,
+          autoApproveProducts: false,
+        },
+      },
     ])).toBe(false);
 
     expect(isValidAdminSettingsBatch([
