@@ -62,6 +62,7 @@ describe('admin payout security boundary', () => {
     expect(sql).toContain('REVOKE ALL ON FUNCTION public.reject_payout(uuid, text)');
     expect(sql).toContain('legacy admin payout RPCs remain directly client-executable');
     expect(sql).toContain('server admin payout boundary is unavailable; closure aborted');
-    expect(sql).not.toContain('request_payout');
+    expect(sql).toContain('Seller request_payout remains an authenticated seller contract');
+    expect(sql).not.toContain('REVOKE ALL ON FUNCTION public.request_payout');
   });
 });
