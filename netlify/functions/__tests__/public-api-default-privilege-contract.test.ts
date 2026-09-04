@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = process.cwd();
-const migrationPath = 'supabase/migrations/20260904223000_public_api_default_privilege_and_duplicate_policy_closure.sql';
+const migrationPath = 'supabase/migrations/20260904224909_public_api_default_privilege_and_duplicate_policy_closure.sql';
 
 function read(path: string): string {
   return readFileSync(join(root, path), 'utf8');
