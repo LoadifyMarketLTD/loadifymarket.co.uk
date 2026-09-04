@@ -286,6 +286,7 @@ const BuyerOrders = () => {
         ) : (
           data.map((o) => {
             const deliveryConfirmed = deliveryConfirmedIds.has(o.id);
+            const returnEligible = ["delivered", "completed"].includes(o.status);
             return (
             <TableRow key={o.id}>
               <TableCell className="font-medium text-sm">
@@ -329,8 +330,8 @@ const BuyerOrders = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    title={o.status === "completed" ? "Request return" : "Returns available after escrow completion"}
-                    disabled={o.status !== "completed"}
+                    title={returnEligible ? "Request return" : "Returns available after delivery"}
+                    disabled={!returnEligible}
                     onClick={() => {
                       setReturnOrder(o);
                       setReturnReason("");
