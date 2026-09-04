@@ -11,7 +11,7 @@ import {
 
 /**
  * Releases marketplace-held funds only after delivery/completion, the configured
- * protection window, and a final open-dispute/refund check. No seller Transfer
+ * protection window, and final open-dispute/return/refund checks. No seller Transfer
  * is made by the payment webhook; this scheduled function is the release point.
  */
 
@@ -44,6 +44,21 @@ async function getOpenDispute(
   return data ?? null;
 }
 
+async function getActiveReturn(
+  sb: import('@supabase/supabase-js').SupabaseClient,
+  orderId: string,
+): Promise<{ id: string } | null> {
+  const { data, error } = await sb
+    .from('returns')
+    .select('id')
+    .eq('orderId', orderId)
+    .neq('status', 'rejected')
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  if (error) throw error;
+  return data ?? null;
+}
+
 async function compensateTransfer(
   stripe: Stripe,
   transfer: Stripe.Transfer,
@@ -52,6 +67,7 @@ async function compensateTransfer(
     orderStatus?: string | null;
     escrowStatus?: string | null;
     disputeId?: string | null;
+    returnId?: string | null;
   },
 ): Promise<Stripe.TransferReversal> {
   if (input.orderStatus === 'refunded' || input.escrowStatus === 'refunded') {
@@ -69,6 +85,15 @@ async function compensateTransfer(
       transfer,
       `order-dispute-transfer:${input.disputeId}`,
       { orderId: input.orderId, disputeId: input.disputeId },
+    );
+  }
+
+  if (input.returnId) {
+    return reverseOrderTransfer(
+      stripe,
+      transfer,
+      `order-return-transfer:${input.returnId}`,
+      { orderId: input.orderId, returnId: input.returnId },
     );
   }
 
@@ -134,8 +159,16 @@ export const handler = schedule('0 2 * * *', async () => {
 
   for (const order of candidates) {
     try {
-      if (await getOpenDispute(supabase, order.id)) {
+      const [openDispute, activeReturn] = await Promise.all([
+        getOpenDispute(supabase, order.id),
+        getActiveReturn(supabase, order.id),
+      ]);
+      if (openDispute) {
         console.log(`escrow-release: ${order.orderNumber} held because a dispute is open`);
+        continue;
+      }
+      if (activeReturn) {
+        console.log(`escrow-release: ${order.orderNumber} held because a return is open or in progress`);
         continue;
       }
 
@@ -209,8 +242,6 @@ export const handler = schedule('0 2 * * *', async () => {
         .maybeSingle<{ id: string; status: string; stripeTransferId: string }>();
       if (payoutLookupError) throw payoutLookupError;
 
-      // A cancelled payout represents a prior clawback/refund/dispute. Never
-      // silently re-pay it; an admin must intentionally resolve that case.
       if (payoutRow?.status === 'cancelled') {
         console.warn(`escrow-release: ${order.orderNumber} has a cancelled prior payout; manual review required`);
         continue;
@@ -263,30 +294,31 @@ export const handler = schedule('0 2 * * *', async () => {
         note: `Released after ${ESCROW_WINDOW_DAYS}-day protection window.`,
       });
 
-      // Re-check BOTH dispute state and order state after the external Stripe
-      // call. If a refund/dispute won the race, compensate the transfer before
-      // ever marking escrow released.
-      const [{ data: latestOrder, error: latestOrderError }, postTransferDispute] = await Promise.all([
+      const [latestOrderResult, postTransferDispute, postTransferReturn] = await Promise.all([
         supabase
           .from('orders')
           .select('status, escrowStatus')
           .eq('id', order.id)
           .maybeSingle<{ status: string; escrowStatus: string }>(),
         getOpenDispute(supabase, order.id),
+        getActiveReturn(supabase, order.id),
       ]);
+      const { data: latestOrder, error: latestOrderError } = latestOrderResult;
       if (latestOrderError) throw latestOrderError;
 
       if (
         !latestOrder ||
         latestOrder.status !== 'delivered' ||
         latestOrder.escrowStatus !== 'held' ||
-        postTransferDispute
+        postTransferDispute ||
+        postTransferReturn
       ) {
         const reversal = await compensateTransfer(stripe, transfer, {
           orderId: order.id,
           orderStatus: latestOrder?.status,
           escrowStatus: latestOrder?.escrowStatus,
           disputeId: postTransferDispute?.id,
+          returnId: postTransferReturn?.id,
         });
         await supabase
           .from('payouts')
@@ -312,21 +344,22 @@ export const handler = schedule('0 2 * * *', async () => {
 
       if (updateError) throw updateError;
       if (!releasedOrder) {
-        // A final race occurred after the post-transfer read. Inspect the newest
-        // state and compensate instead of leaving seller funds out with held DB state.
-        const [{ data: finalOrder }, finalDispute] = await Promise.all([
+        const [finalOrderResult, finalDispute, finalReturn] = await Promise.all([
           supabase
             .from('orders')
             .select('status, escrowStatus')
             .eq('id', order.id)
             .maybeSingle<{ status: string; escrowStatus: string }>(),
           getOpenDispute(supabase, order.id),
+          getActiveReturn(supabase, order.id),
         ]);
+        const finalOrder = finalOrderResult.data;
         const reversal = await compensateTransfer(stripe, transfer, {
           orderId: order.id,
           orderStatus: finalOrder?.status,
           escrowStatus: finalOrder?.escrowStatus,
           disputeId: finalDispute?.id,
+          returnId: finalReturn?.id,
         });
         await supabase
           .from('payouts')
