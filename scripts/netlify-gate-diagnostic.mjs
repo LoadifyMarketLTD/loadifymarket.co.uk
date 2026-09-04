@@ -12,8 +12,8 @@ const failed = (result.status ?? 1) !== 0;
 
 const candidates = new Set();
 for (const line of output.split(/\r?\n/)) {
-  if (!/(FAIL|❯|\.test\.[cm]?[jt]sx?|\.spec\.[cm]?[jt]sx?)/i.test(line)) continue;
-  const match = line.match(/(?:^|\s)((?:[\w@.-]+\/)*[\w@.-]+\.(?:test|spec)\.[cm]?[jt]sx?)/i);
+  if (!/(FAIL|failed)/i.test(line)) continue;
+  const match = line.match(/((?:[\w@.-]+\/)*[\w@.-]+\.(?:test|spec)\.[cm]?[jt]sx?)/i);
   if (match?.[1]) candidates.add(match[1]);
 }
 
