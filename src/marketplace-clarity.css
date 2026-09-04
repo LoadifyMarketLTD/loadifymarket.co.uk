@@ -9,22 +9,22 @@
 
 :root.market-light-root body:not(:has(#login-email))
   :not(header):not(header *):not(footer):not(footer *)[class*="text-muted-foreground"] {
-  color: #52647A !important;
+  color: #3F526A !important;
 }
 
 :root.market-light-root body:not(:has(#login-email))
   :not(header):not(header *):not(footer):not(footer *)[class*="text-slate-400"] {
-  color: #5B6B80 !important;
+  color: #475569 !important;
 }
 
 :root.market-light-root body:not(:has(#login-email))
   :not(header):not(header *):not(footer):not(footer *)[class*="text-slate-500"] {
-  color: #4B5E75 !important;
+  color: #334155 !important;
 }
 
 :root.market-light-root body:not(:has(#login-email))
   :not(header):not(header *):not(footer):not(footer *)[class*="text-slate-600"] {
-  color: #3F526A !important;
+  color: #243B53 !important;
 }
 
 /* Secondary copy should stay visibly secondary, but never look disabled. */
@@ -36,54 +36,49 @@
   main td[class*="text-muted-foreground"],
 :root.market-light-root body:not(:has(#login-email))
   main span[class*="text-muted-foreground"] {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Data-dense UI needs a firmer table hierarchy. */
-:root.market-light-root body:not(:has(#login-email))
-  main th {
-  color: #4B5E75 !important;
+:root.market-light-root body:not(:has(#login-email)) main th {
+  color: #334155 !important;
   font-weight: 700 !important;
 }
 
-:root.market-light-root body:not(:has(#login-email))
-  main td {
-  color: #31445D;
-}
-
-/* Sidebar/navigation copy should read like navigation, not placeholder text. */
-:root.market-light-root body:not(:has(#login-email))
-  aside nav a:not([aria-current="page"]),
-:root.market-light-root body:not(:has(#login-email))
-  aside nav button {
-  color: #52647A;
+:root.market-light-root body:not(:has(#login-email)) main td {
+  color: #243B53 !important;
   font-weight: 500;
 }
 
+/* Sidebar/navigation copy should read like navigation, not placeholder text. */
+:root.market-light-root body:not(:has(#login-email)) aside nav a:not([aria-current="page"]),
+:root.market-light-root body:not(:has(#login-email)) aside nav button {
+  color: #3F526A !important;
+  font-weight: 600;
+}
+
 /* Form hints and placeholders remain softer, but with useful contrast. */
-:root.market-light-root body:not(:has(#login-email))
-  main input::placeholder,
-:root.market-light-root body:not(:has(#login-email))
-  main textarea::placeholder {
-  color: #718096 !important;
+:root.market-light-root body:not(:has(#login-email)) main input::placeholder,
+:root.market-light-root body:not(:has(#login-email)) main textarea::placeholder {
+  color: #64748B !important;
   opacity: 1;
 }
 
-/* Keep intentional navy presentation/identity cards correctly light-on-dark. */
-:root.market-light-root body:not(:has(#login-email))
-  [class~="bg-[#0A234F]"] [class*="text-muted-foreground"],
-:root.market-light-root body:not(:has(#login-email))
-  [class~="bg-[#0A234F]"] [class*="text-slate-400"],
-:root.market-light-root body:not(:has(#login-email))
-  [class~="bg-[#0A234F]"] [class*="text-slate-500"],
-:root.market-light-root body:not(:has(#login-email))
-  [class~="bg-[#0A234F]"] [class*="text-slate-600"] {
-  color: rgba(255, 255, 255, 0.78) !important;
+/* Strengthen compact operational labels without changing hierarchy. */
+:root.market-light-root body:not(:has(#login-email)) main [class*="text-xs"] {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-:root.market-light-root body:not(:has(#login-email))
-  [class~="bg-[#0A234F]"] th,
-:root.market-light-root body:not(:has(#login-email))
-  [class~="bg-[#0A234F]"] td {
-  color: rgba(255, 255, 255, 0.84) !important;
+/* Keep intentional navy presentation/identity cards correctly light-on-dark. */
+:root.market-light-root body:not(:has(#login-email)) [class~="bg-[#0A234F]"] [class*="text-muted-foreground"],
+:root.market-light-root body:not(:has(#login-email)) [class~="bg-[#0A234F]"] [class*="text-slate-400"],
+:root.market-light-root body:not(:has(#login-email)) [class~="bg-[#0A234F]"] [class*="text-slate-500"],
+:root.market-light-root body:not(:has(#login-email)) [class~="bg-[#0A234F]"] [class*="text-slate-600"] {
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+
+:root.market-light-root body:not(:has(#login-email)) [class~="bg-[#0A234F]"] th,
+:root.market-light-root body:not(:has(#login-email)) [class~="bg-[#0A234F]"] td {
+  color: rgba(255, 255, 255, 0.90) !important;
 }
