@@ -112,6 +112,8 @@ BEGIN
       RAISE EXCEPTION 'server_admin_payout_action_v1: unsupported action %', p_action;
   END CASE;
 
+  -- Preserve the existing audit contract exactly so downstream reporting and
+  -- investigations see the same action names/data shape after the boundary move.
   INSERT INTO public.audit_logs (
     "actorId",
     action,
@@ -120,12 +122,16 @@ BEGIN
     "newData"
   ) VALUES (
     p_actor_id,
-    'admin_payout_' || p_action,
+    CASE p_action
+      WHEN 'approve' THEN 'approve_payout'
+      WHEN 'complete' THEN 'complete_payout'
+      WHEN 'reject' THEN 'reject_payout'
+    END,
     'payout_requests',
     p_request_id,
     CASE
-      WHEN p_action = 'reject' THEN jsonb_build_object('status', v_status, 'notes', p_notes)
-      ELSE jsonb_build_object('status', v_status)
+      WHEN p_action = 'reject' THEN jsonb_build_object('notes', p_notes)
+      ELSE NULL
     END
   );
 
