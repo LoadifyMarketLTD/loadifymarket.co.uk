@@ -52,7 +52,7 @@ async function getActiveReturn(
     .from('returns')
     .select('id')
     .eq('orderId', orderId)
-    .neq('status', 'rejected')
+    .in('status', ['requested', 'approved'])
     .limit(1)
     .maybeSingle<{ id: string }>();
   if (error) throw error;
