@@ -5,13 +5,14 @@ import { describe, expect, it } from 'vitest';
 const source = () => readFileSync(resolve(process.cwd(), 'netlify/functions/escrow-release.ts'), 'utf8');
 
 describe('escrow release return hold boundary', () => {
-  it('holds seller release while a customer return remains active', () => {
+  it('holds seller release only while a customer return is requested or approved', () => {
     const escrowRelease = source();
 
     expect(escrowRelease).toContain(".from('returns')");
-    expect(escrowRelease).toContain(".neq('status', 'rejected')");
+    expect(escrowRelease).toContain(".in('status', ['requested', 'approved'])");
     expect(escrowRelease).toContain('getActiveReturn(supabase, order.id)');
     expect(escrowRelease).toContain('held because a return is open or in progress');
+    expect(escrowRelease).not.toContain(".neq('status', 'rejected')");
   });
 
   it('re-checks active returns after the Stripe transfer and compensates the race', () => {
