@@ -116,7 +116,7 @@ describe('Autonomous Supplier Commerce Engine', () => {
 
   it('keeps customer refunds pending receipt and never executes payment mutations', () => {
     const result = evaluateCustomerReturnAutomation({
-      orderStatus: 'delivered',
+      orderStatus: 'completed',
       deliveredAt: '2026-08-25T10:00:00.000Z',
       requestedAt: new Date('2026-08-31T10:00:00.000Z'),
       purchasedQuantity: 2,
@@ -134,7 +134,7 @@ describe('Autonomous Supplier Commerce Engine', () => {
 
   it('routes returns to manual review when provider return capability is unavailable', () => {
     const result = evaluateCustomerReturnAutomation({
-      orderStatus: 'delivered',
+      orderStatus: 'completed',
       deliveredAt: '2026-08-30T10:00:00.000Z',
       requestedAt: new Date('2026-08-31T10:00:00.000Z'),
       purchasedQuantity: 1,
