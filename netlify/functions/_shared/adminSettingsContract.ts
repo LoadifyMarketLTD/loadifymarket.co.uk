@@ -17,17 +17,20 @@ const ADMIN_SETTING_KEY_SET = new Set<string>(ADMIN_SETTING_KEYS);
 const FEATURE_FLAG_KEYS = [
   'sellerRegistration',
   'buyerRegistration',
-  'rfqRequests',
+  'rfqSystem',
   'reviewSystem',
   'autoApproveProducts',
 ] as const;
 const OPTIONAL_FEATURE_FLAG_KEYS = ['requireCompanyApproval'] as const;
 const PLATFORM_CONFIG_KEYS = [
+  'platformName',
+  'supportEmail',
+  'defaultCurrency',
   'commissionRate',
-  'maxFileSize',
-  'autoApproveListings',
+  'maxUploadSizeMb',
+  'productsPerPage',
 ] as const;
-const MAINTENANCE_MODE_KEYS = ['enabled', 'message'] as const;
+const CURRENCIES = new Set(['gbp', 'eur', 'usd']);
 
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -65,29 +68,37 @@ const isPlatformConfig = (value: unknown): boolean => {
     return false;
   }
 
-  const { commissionRate, maxFileSize, autoApproveListings } = value;
-  return typeof commissionRate === 'number'
+  const {
+    platformName,
+    supportEmail,
+    defaultCurrency,
+    commissionRate,
+    maxUploadSizeMb,
+    productsPerPage,
+  } = value;
+
+  const validSupportEmail = typeof supportEmail === 'string'
+    && supportEmail.length <= 320
+    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supportEmail);
+
+  return typeof platformName === 'string'
+    && platformName.trim().length > 0
+    && platformName.length <= 120
+    && validSupportEmail
+    && typeof defaultCurrency === 'string'
+    && CURRENCIES.has(defaultCurrency)
+    && typeof commissionRate === 'number'
     && Number.isFinite(commissionRate)
     && commissionRate >= 0
     && commissionRate <= 100
-    && typeof maxFileSize === 'number'
-    && Number.isInteger(maxFileSize)
-    && maxFileSize >= 1
-    && maxFileSize <= 100
-    && typeof autoApproveListings === 'boolean';
-};
-
-const isMaintenanceMode = (value: unknown): boolean => {
-  if (!isRecord(value)) return false;
-  if (!hasOnlyKeys(value, MAINTENANCE_MODE_KEYS) || !hasRequiredKeys(value, MAINTENANCE_MODE_KEYS)) {
-    return false;
-  }
-
-  const { enabled, message } = value;
-  return typeof enabled === 'boolean'
-    && typeof message === 'string'
-    && message.trim().length > 0
-    && message.length <= 500;
+    && typeof maxUploadSizeMb === 'number'
+    && Number.isSafeInteger(maxUploadSizeMb)
+    && maxUploadSizeMb >= 1
+    && maxUploadSizeMb <= 1024
+    && typeof productsPerPage === 'number'
+    && Number.isSafeInteger(productsPerPage)
+    && productsPerPage >= 1
+    && productsPerPage <= 1000;
 };
 
 const isValidValueForKey = (key: AdminSettingKey, value: unknown): boolean => {
@@ -95,7 +106,7 @@ const isValidValueForKey = (key: AdminSettingKey, value: unknown): boolean => {
     case 'feature_flags':
       return isFeatureFlags(value);
     case 'maintenance_mode':
-      return isMaintenanceMode(value);
+      return typeof value === 'boolean';
     case 'platform_config':
       return isPlatformConfig(value);
   }
