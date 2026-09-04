@@ -1,13 +1,13 @@
 .admin-workspace-contrast {
-  --muted-foreground: 215 28% 32%;
-  --border: 214 28% 80%;
-  --input: 214 28% 76%;
+  --muted-foreground: 215 32% 28%;
+  --border: 214 30% 77%;
+  --input: 214 30% 73%;
   --shadow-card: 0 8px 22px rgba(10, 35, 79, 0.10);
   --shadow-elevated: 0 14px 34px rgba(10, 35, 79, 0.14);
 }
 
 .admin-workspace-contrast [class*="text-muted-foreground"] {
-  color: #475569 !important;
+  color: #3F526A !important;
 }
 
 .admin-workspace-contrast [class*="text-slate-400"] {
@@ -15,30 +15,37 @@
 }
 
 .admin-workspace-contrast [class*="text-slate-500"] {
-  color: #5B677A !important;
-}
-
-.admin-workspace-contrast [class*="text-slate-300"] {
   color: #334155 !important;
 }
 
+.admin-workspace-contrast [class*="text-slate-300"] {
+  color: #243B53 !important;
+}
+
 .admin-workspace-contrast [class*="border-slate-200"] {
-  border-color: #CBD5E1 !important;
+  border-color: #C5D0DE !important;
 }
 
 .admin-workspace-contrast table thead th {
-  color: #52627A !important;
-  font-weight: 700;
+  color: #334155 !important;
+  font-weight: 700 !important;
 }
 
 .admin-workspace-contrast table tbody td {
-  color: #243B63;
+  color: #243B53 !important;
+  font-weight: 500;
+}
+
+.admin-workspace-contrast aside nav a,
+.admin-workspace-contrast aside nav button {
+  font-weight: 600;
 }
 
 .admin-workspace-contrast input,
 .admin-workspace-contrast textarea,
 .admin-workspace-contrast button,
-.admin-workspace-contrast [role="tab"] {
+.admin-workspace-contrast [role="tab"],
+.admin-workspace-contrast table {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
