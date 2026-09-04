@@ -58,16 +58,20 @@ export const handler: Handler = async (event) => {
     return jsonResponse(400, { error: 'Invalid settings payload' }, METHODS);
   }
 
-  const errors: string[] = [];
-  for (const row of body.settings) {
-    const { error } = await admin
-      .from('platform_settings')
-      .upsert({ key: row.key, value: row.value }, { onConflict: 'key' });
-    if (error) errors.push(`${row.key}: ${error.message}`);
-  }
+  const updatedAt = new Date().toISOString();
+  const rows = body.settings.map((row) => ({
+    key: row.key,
+    value: row.value,
+    updatedAt,
+    updatedBy: auth.actor.id,
+  }));
 
-  if (errors.length > 0) {
-    return jsonResponse(500, { error: errors.join('; ') }, METHODS);
+  const { error } = await admin
+    .from('platform_settings')
+    .upsert(rows, { onConflict: 'key' });
+
+  if (error) {
+    return jsonResponse(500, { error: 'Failed to save settings' }, METHODS);
   }
 
   return jsonResponse(200, { ok: true }, METHODS);
