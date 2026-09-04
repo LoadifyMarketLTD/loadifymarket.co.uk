@@ -20,25 +20,31 @@ Classification vocabulary:
 
 Current-main repair merged via PR #733. Buyer delivery confirmation no longer releases seller funds. `confirm-delivery` may move `shipped -> delivered`, while escrow remains held. Scheduled `escrow-release` remains the canonical Stripe Transfer boundary after the protection window and final dispute/refund/eligibility checks.
 
-Verdict: SOURCE + PREVIEW VERIFIED; production deployment of the new merge commit must still be observed before declaring this exact code live.
+Production Netlify now serves exact commit `43f456b103d0465bb58895b0367cd07f3b3b93e8` with state `ready`; the deployed function bundle contains the repaired `confirm-delivery` boundary.
+
+Verdict: PRODUCTION DEPLOY VERIFIED. Financial behavior still requires the later Stripe TEST-mode vertical transaction gate before platform-wide financial E2E PASS.
 
 ## 2. P1-01 Auth
 
 Current-main contains the strict role-first Auth runtime, server-owned registration intent, provider-bound Google registration verification, retired legacy password-receiving registration endpoint, strict overlap-off migration history, and Auth contract coverage.
 
-Historical P1-01 evidence already proves strict cutover mechanics and hosted hook/ACL behavior. Remaining canonical blocker is fresh post-cutover role-bound interactive Google Buyer + Seller certification. Existing observed Google identities predate the final strict cutover and must not be relabelled as fresh evidence.
+Historical P1-01 evidence already proves strict cutover mechanics and hosted hook/ACL behavior. Netlify production configuration has now been rechecked directly: both the browser Google client identifier and server Google client identifier are present in the production context and match. Their actual value is intentionally not recorded in this audit document.
 
-Verdict: PARTIAL / BLOCKED ON FRESH INTERACTIVE GOOGLE EVIDENCE. Do not fabricate or request duplicate accounts until existing historical evidence and accessible runtime sources are exhausted.
+Remaining canonical blocker is fresh post-cutover role-bound interactive Google Buyer + Seller certification. Existing observed Google identities predate the final strict cutover and must not be relabelled as fresh evidence.
+
+Verdict: PARTIAL / BLOCKED ONLY ON FRESH INTERACTIVE GOOGLE BUYER + SELLER EVIDENCE. Do not fabricate or request duplicate accounts until existing historical evidence and accessible runtime sources are exhausted.
 
 ## 3. P1-02 Credentialed E2E
 
-Historical PR #729 is superseded and closed without merge. Replacement PR #735 rebuilds the same six-file gate from a newer main baseline. It is preparation-only and remains draft until P1-01 closes. The gate is fail-closed when activated and requires Buyer, Seller, Admin, target SHA and foreign-order isolation fixture.
+Historical PR #729 is superseded and closed without merge. Replacement PR #735 rebuilds the same six-file gate from the current post-P0 main baseline. Its Deploy Preview is successful. It is preparation-only and remains draft until P1-01 closes. The gate is fail-closed when activated and requires Buyer, Seller, Admin, target SHA and foreign-order isolation fixture.
 
 Verdict: PREPARED / NOT CANONICALLY ACTIVE.
 
 ## 4. Buyer/Seller core commerce
 
 Audit required on current main for: catalog visibility, product detail, cart, single-seller invariant, stock/reservation, Buyer Orders, Seller Orders, order transition ownership, profile capability isolation, seller lifecycle availability, offer/RFQ intersections and immutable commercial history.
+
+Initial branch comparison result: `seller-order-status.ts` is byte-identical between current main and the historical `audit/full-platform-e2e-20260903` branch, so that historical copy is not a recovery delta.
 
 Verdict: IN PROGRESS.
 
@@ -60,9 +66,11 @@ Verdict: PARTIAL / CLEANUP REQUIRED.
 
 ## 7. Returns / disputes / messaging
 
-Current source includes admin refund flow, Stripe refund/transfer-reversal reconciliation, dispute hold behavior, order messaging and notification surfaces. Full cross-role runtime and race/idempotency certification remains required.
+Current source includes admin refund flow, Stripe refund/transfer-reversal reconciliation, dispute hold behavior, order messaging and notification surfaces. A concrete current-main inconsistency is already confirmed: the server-side return eligibility contract permits `delivered` and `completed` orders, while Buyer Orders only enables the return action at `completed`. This can unnecessarily defer the buyer return path until after escrow completion and must be reconciled during the Returns domain.
 
-Verdict: SOURCE-ONLY / E2E NOT YET CERTIFIED.
+Full cross-role runtime and race/idempotency certification remains required.
+
+Verdict: PARTIAL / UI-SERVER CONTRACT DRIFT CONFIRMED.
 
 ## 8. Admin
 
@@ -92,6 +100,8 @@ Verdict: RECOVERY SOURCE / DO NOT MERGE AS-IS.
 
 Required final evidence includes hosted migration/RLS parity, credentialed role isolation, Stripe TEST-mode vertical slice, recovery/rollback proof, mobile certification, accessibility/SEO/legal review and production smoke. Successful builds or isolated previews do not equal platform-wide PASS.
 
+Security note from live configuration audit: secret-class environment variables must be reviewed for correct Netlify secret metadata without changing their values or runtime scopes. No secret value is to be copied into repository documentation or user-facing reports.
+
 Verdict: OPEN.
 
 ## 13. Repo hygiene
@@ -105,6 +115,10 @@ Branch deletion is evidence-driven, not age-driven. Per-domain branches are clas
 - STALE DELETE CANDIDATE
 
 A branch becomes a delete candidate only after unique work is proven absent or safely recovered.
+
+Completed hygiene during this audit:
+- PR #734 diagnostic Auth probe: CLOSED / NOT MERGED after evidence capture.
+- PR #729 historical P1-02 preparation: CLOSED / NOT MERGED / SUPERSEDED BY #735.
 
 ## Active execution order
 
