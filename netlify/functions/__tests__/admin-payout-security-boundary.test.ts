@@ -53,6 +53,16 @@ describe('admin payout security boundary', () => {
     expect(sql).not.toContain('REVOKE ALL ON FUNCTION public.reject_payout(uuid, text)');
   });
 
+  it('preserves the existing payout audit action and payload contract', () => {
+    const sql = read('supabase/migrations/20260904223200_server_admin_payout_rpc_boundary.sql');
+
+    expect(sql).toContain("WHEN 'approve' THEN 'approve_payout'");
+    expect(sql).toContain("WHEN 'complete' THEN 'complete_payout'");
+    expect(sql).toContain("WHEN 'reject' THEN 'reject_payout'");
+    expect(sql).toContain("WHEN p_action = 'reject' THEN jsonb_build_object('notes', p_notes)");
+    expect(sql).not.toContain("'admin_payout_' || p_action");
+  });
+
   it('closes legacy client payout execution only in the post-deploy closure stage', () => {
     const sql = read('supabase/migrations/20260904223400_admin_payout_legacy_client_execute_closure.sql');
 
