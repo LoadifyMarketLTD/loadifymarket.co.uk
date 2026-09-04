@@ -28,12 +28,14 @@ export interface CustomerReturnAutomationResult {
   paymentMutationAllowed: false;
 }
 
-const RETURNABLE_ORDER_STATES = new Set(['delivered', 'completed']);
+const RETURNABLE_ORDER_STATES = new Set(['completed']);
 
 /**
- * Platform return-policy boundary. This does not execute a refund and does not
- * promise a provider label. Provider capability and warehouse receipt remain
- * explicit gates downstream.
+ * Platform return-policy boundary. Customer returns open only after canonical
+ * escrow completion. Delivery confirmation alone must not bypass the protection
+ * window or final dispute/refund checks. This evaluator never executes a refund
+ * and never promises a provider label; provider capability and warehouse receipt
+ * remain explicit downstream gates.
  */
 export function evaluateCustomerReturnAutomation(
   input: CustomerReturnAutomationInput,
@@ -54,7 +56,7 @@ export function evaluateCustomerReturnAutomation(
   }
   if (!input.reasonCode.trim()) return blocked('ineligible', 'return_reason_required');
   if (!RETURNABLE_ORDER_STATES.has(input.orderStatus.trim().toLowerCase())) {
-    return blocked('ineligible', 'order_not_delivered');
+    return blocked('ineligible', 'order_not_completed');
   }
   if (!input.deliveredAt || Number.isNaN(Date.parse(input.deliveredAt))) {
     return blocked('manual_review', 'delivery_date_unverified');
