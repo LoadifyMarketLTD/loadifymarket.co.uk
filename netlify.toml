@@ -5,7 +5,7 @@
 # Deploy Preview is the validation gate: install, lint, unit tests, then production build.
 # Production keeps the normal build command above.
 [context.deploy-preview]
-  command = "npm ci && (npm run lint || exit 41) && (npm test || exit 42) && (npm run build || exit 43)"
+  command = "npm ci && node scripts/netlify-gate-diagnostic.mjs"
 
 # ─── Image CDN — allowed remote sources ──────────────────────────────────────
 # Netlify Image CDN only proxies/transforms images from explicitly allowed
