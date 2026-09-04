@@ -44,7 +44,7 @@ const DEFAULT_CONFIG: PlatformConfig = {
   platformName: "Loadify Market",
   supportEmail: "contact@loadifymarket.co.uk",
   defaultCurrency: "gbp",
-  commissionRate: 8,
+  commissionRate: 7,
   maxUploadSizeMb: 10,
   productsPerPage: 24,
 };
@@ -202,7 +202,26 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[900px]" style={{ background: "transparent", minHeight: "100%" }}>
+    <div data-admin-settings className="p-4 sm:p-6 space-y-6 max-w-[900px]" style={{ background: "transparent", minHeight: "100%" }}>
+      <style>{`
+        [data-admin-settings] .text-white { color: #0f172a !important; }
+        [data-admin-settings] h1,
+        [data-admin-settings] h2,
+        [data-admin-settings] p,
+        [data-admin-settings] label,
+        [data-admin-settings] li { color: #334155 !important; }
+        [data-admin-settings] h1,
+        [data-admin-settings] h2,
+        [data-admin-settings] .font-medium,
+        [data-admin-settings] .font-semibold { color: #0f172a !important; }
+        [data-admin-settings] input,
+        [data-admin-settings] button[role="combobox"] {
+          background: #ffffff !important;
+          color: #0f172a !important;
+          border-color: #cbd5e1 !important;
+        }
+        [data-admin-settings] input[readonly] { color: #475569 !important; }
+      `}</style>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">System Settings</h1>
