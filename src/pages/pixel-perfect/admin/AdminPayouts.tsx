@@ -6,10 +6,8 @@
  * Reads from `payout_requests` table. Each row represents a seller's request
  * to be paid their available balance.
  *
- * Admin actions (all call existing SECURITY DEFINER RPCs from 90_launch_features.sql):
- *   • Approve   → supabase.rpc('approve_payout',  { p_request_id })
- *   • Reject    → supabase.rpc('reject_payout',   { p_request_id, p_notes })
- *   • Complete  → supabase.rpc('complete_payout', { p_request_id })
+ * Privileged payout mutations are routed through the authenticated Netlify
+ * admin boundary; the browser no longer executes financial admin RPCs directly.
  *
  * Lifecycle: requested → approved → paid  (or  requested | approved → rejected)
  */
@@ -29,6 +27,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { toast } from "@/hooks/use-toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -44,6 +43,8 @@ interface PayoutRequest {
   createdAt: string;
   reviewedAt: string | null;
 }
+
+type AdminPayoutAction = "approve" | "complete" | "reject";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -81,6 +82,28 @@ const fmtDate = (iso: string) =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
+async function runAdminPayoutAction(
+  action: AdminPayoutAction,
+  requestId: string,
+  notes?: string | null,
+): Promise<void> {
+  const response = await authorizedFetch('/.netlify/functions/admin-payout-action', {
+    method: 'POST',
+    body: JSON.stringify({ action, requestId, notes: notes ?? null }),
+  });
+
+  let payload: { error?: string } | null = null;
+  try {
+    payload = await response.json() as { error?: string };
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error || 'Payout action failed');
+  }
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -155,10 +178,7 @@ const AdminPayouts = () => {
   const approve = async (req: PayoutRequest) => {
     setActionId(req.id);
     try {
-      const { error: rpcErr } = await supabase.rpc("approve_payout", {
-        p_request_id: req.id,
-      });
-      if (rpcErr) throw rpcErr;
+      await runAdminPayoutAction("approve", req.id);
       setRequests((prev) =>
         prev.map((r) => r.id === req.id ? { ...r, status: "approved" } : r)
       );
@@ -173,10 +193,7 @@ const AdminPayouts = () => {
   const complete = async (req: PayoutRequest) => {
     setActionId(req.id);
     try {
-      const { error: rpcErr } = await supabase.rpc("complete_payout", {
-        p_request_id: req.id,
-      });
-      if (rpcErr) throw rpcErr;
+      await runAdminPayoutAction("complete", req.id);
       setRequests((prev) =>
         prev.map((r) => r.id === req.id ? { ...r, status: "paid" } : r)
       );
@@ -192,11 +209,7 @@ const AdminPayouts = () => {
     if (!rejectTarget) return;
     setActionId(rejectTarget.id);
     try {
-      const { error: rpcErr } = await supabase.rpc("reject_payout", {
-        p_request_id: rejectTarget.id,
-        p_notes: rejectNotes.trim() || null,
-      });
-      if (rpcErr) throw rpcErr;
+      await runAdminPayoutAction("reject", rejectTarget.id, rejectNotes.trim() || null);
       const rejectedId = rejectTarget.id;
       setRequests((prev) =>
         prev.map((r) => r.id === rejectedId ? { ...r, status: "rejected", notes: rejectNotes.trim() || r.notes } : r)
