@@ -5,7 +5,7 @@
 # Deploy Preview is the validation gate: install, lint, unit tests, then production build.
 # Production keeps the normal build command above.
 [context.deploy-preview]
-  command = "npm ci && node scripts/netlify-gate-diagnostic.mjs"
+  command = "npm ci && npm run lint && npm test && npm run build"
 
 # ─── Image CDN — allowed remote sources ──────────────────────────────────────
 # Netlify Image CDN only proxies/transforms images from explicitly allowed
@@ -61,10 +61,10 @@
 # Ensures any request to /api/<name> is served by the matching Netlify Function
 # so the frontend always receives JSON and never gets an HTML 404/redirect.
 [[redirects]]
-  from   = "/api/*"
-  to     = "/.netlify/functions/:splat"
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200
-  force  = true
+  force = true
 
 [functions]
   directory = "netlify/functions-modern"
@@ -130,8 +130,6 @@
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://api.postcodes.io https://fonts.googleapis.com https://fonts.gstatic.com https://accounts.google.com; frame-src https://js.stripe.com https://hooks.stripe.com https://app.netlify.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; report-uri /.netlify/functions/csp-report"
 
 # ─── Cache headers ────────────────────────────────────────────────────────────
-# Vite outputs content-hashed filenames in /assets/ (e.g. index-bPeGMmBf.js).
-# These never change for the same content, so we can cache them aggressively.
 [[headers]]
   for = "/assets/*"
   [headers.values]
