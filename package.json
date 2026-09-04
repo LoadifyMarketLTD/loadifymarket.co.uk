@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vitest run netlify/functions/__tests__/auth-signup-current-main-contract.test.ts netlify/functions/__tests__/auth-strict-cutover-contract.test.ts netlify/functions/__tests__/buyer-onboarding-alignment.test.ts netlify/functions/__tests__/register-intent.test.ts netlify/functions/__tests__/register-social-intent-contract.test.ts netlify/functions/__tests__/register.test.ts netlify/functions/__tests__/signup-native-auth-contract.test.ts netlify/functions/__tests__/signup-newsletter-preference-contract.test.ts netlify/functions/__tests__/signup-role-first-google-web-contract.test.ts && tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "preview": "vite preview",
