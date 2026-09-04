@@ -1,13 +1,13 @@
--- Move privileged payout state mutations behind a service-role-only contract.
+-- Stage A: add the service-role-only admin payout transaction boundary.
 --
--- The browser previously invoked approve_payout / reject_payout / complete_payout
--- directly as an authenticated user. Those functions self-authorize with is_admin(),
--- but keeping privileged financial mutation RPCs directly executable by every
--- authenticated account unnecessarily widens the Data API surface.
+-- This migration is intentionally backward-compatible with the current browser
+-- contract. It creates the replacement RPC without revoking the legacy admin
+-- payout RPCs yet. That allows this migration to be applied before the frontend
+-- and Netlify boundary deploy, avoiding any payout-admin downtime.
 --
--- The replacement RPC below is callable only by service_role. A Netlify Function
--- revalidates the caller against public.users as an active admin and passes that
--- verified actor id into this transaction boundary.
+-- Stage B (separate closure migration) revokes direct authenticated execution of
+-- approve_payout / complete_payout / reject_payout only after the server boundary
+-- is live in production.
 
 CREATE OR REPLACE FUNCTION public.server_admin_payout_action_v1(
   p_actor_id uuid,
@@ -17,6 +17,7 @@ CREATE OR REPLACE FUNCTION public.server_admin_payout_action_v1(
 )
 RETURNS jsonb
 LANGUAGE plpgsql
+SECURITY INVOKER
 SET search_path = ''
 AS $$
 DECLARE
@@ -140,14 +141,6 @@ REVOKE ALL ON FUNCTION public.server_admin_payout_action_v1(uuid, text, uuid, te
 GRANT EXECUTE ON FUNCTION public.server_admin_payout_action_v1(uuid, text, uuid, text)
   TO service_role;
 
--- Browser execution is no longer part of the admin payout contract.
-REVOKE ALL ON FUNCTION public.approve_payout(uuid)
-  FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.complete_payout(uuid)
-  FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.reject_payout(uuid, text)
-  FROM PUBLIC, anon, authenticated;
-
 DO $$
 BEGIN
   IF has_function_privilege(
@@ -168,12 +161,6 @@ BEGIN
     'EXECUTE'
   ) THEN
     RAISE EXCEPTION 'server admin payout RPC is not executable by service_role';
-  END IF;
-
-  IF has_function_privilege('authenticated', 'public.approve_payout(uuid)', 'EXECUTE')
-     OR has_function_privilege('authenticated', 'public.complete_payout(uuid)', 'EXECUTE')
-     OR has_function_privilege('authenticated', 'public.reject_payout(uuid,text)', 'EXECUTE') THEN
-    RAISE EXCEPTION 'legacy admin payout RPCs remain executable by authenticated';
   END IF;
 END;
 $$;
