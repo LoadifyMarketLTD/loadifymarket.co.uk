@@ -56,6 +56,17 @@ function safeMessagePreview(message: string): string {
   return compact.substring(0, EMAIL_PREVIEW_MAX_LEN) + '…';
 }
 
+function isInternalStructuredMessage(message: string): boolean {
+  const trimmed = message.trim();
+  if (!trimmed.startsWith('{')) return false;
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+    return parsed._t === 'offer' || parsed._t === 'system';
+  } catch {
+    return false;
+  }
+}
+
 async function sendInternalEmail(appUrl: string, payload: Record<string, unknown>): Promise<void> {
   const internalHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -151,8 +162,9 @@ export const handler: Handler = async (event) => {
     return { statusCode: 403, body: JSON.stringify({ error: 'You are not a participant of this conversation' }) };
   }
 
-  if (conv.user1Id !== receiverId && conv.user2Id !== receiverId) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Receiver is not a participant of this conversation' }) };
+  const expectedReceiverId = conv.user1Id === callerId ? conv.user2Id : conv.user1Id;
+  if (receiverId !== expectedReceiverId || receiverId === callerId) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Receiver must be the other participant of this conversation' }) };
   }
 
   const { data: inserted, error: insertError } = await supabase
@@ -171,8 +183,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to send message' }) };
   }
 
-  const isStructuredJson = message.trim().startsWith('{');
-  if (!isStructuredJson) {
+  const structuredInternalMessage = isInternalStructuredMessage(message);
+  if (!structuredInternalMessage) {
     const { data: sender } = await supabase
       .from('users')
       .select('id, firstName, lastName, email, role')
