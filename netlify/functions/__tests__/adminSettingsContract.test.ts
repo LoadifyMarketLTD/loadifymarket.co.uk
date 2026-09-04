@@ -4,28 +4,26 @@ import { isValidAdminSettingsBatch } from '../_shared/adminSettingsContract';
 const validFeatureFlags = {
   sellerRegistration: true,
   buyerRegistration: true,
-  rfqRequests: false,
+  rfqSystem: false,
   reviewSystem: true,
-  autoApproveProducts: false,
+  autoApproveProducts: true,
 };
 
 const validPlatformConfig = {
+  platformName: 'Loadify Market',
+  supportEmail: 'contact@loadifymarket.co.uk',
+  defaultCurrency: 'gbp',
   commissionRate: 7,
-  maxFileSize: 20,
-  autoApproveListings: false,
-};
-
-const validMaintenanceMode = {
-  enabled: false,
-  message: 'Temporarily unavailable',
+  maxUploadSizeMb: 15,
+  productsPerPage: 24,
 };
 
 describe('admin settings contract', () => {
-  it('accepts the canonical admin settings batch', () => {
+  it('accepts the canonical live admin settings batch', () => {
     expect(isValidAdminSettingsBatch([
       { key: 'feature_flags', value: validFeatureFlags },
       { key: 'platform_config', value: validPlatformConfig },
-      { key: 'maintenance_mode', value: validMaintenanceMode },
+      { key: 'maintenance_mode', value: false },
     ])).toBe(true);
   });
 
@@ -62,9 +60,9 @@ describe('admin settings contract', () => {
         key: 'feature_flags',
         value: {
           buyerRegistration: true,
-          rfqRequests: false,
+          rfqSystem: false,
           reviewSystem: true,
-          autoApproveProducts: false,
+          autoApproveProducts: true,
         },
       },
     ])).toBe(false);
@@ -88,14 +86,21 @@ describe('admin settings contract', () => {
     expect(isValidAdminSettingsBatch([
       {
         key: 'platform_config',
-        value: { ...validPlatformConfig, maxFileSize: 0 },
+        value: { ...validPlatformConfig, maxUploadSizeMb: 0 },
       },
     ])).toBe(false);
 
     expect(isValidAdminSettingsBatch([
       {
         key: 'platform_config',
-        value: { ...validPlatformConfig, autoApproveListings: 'false' },
+        value: { ...validPlatformConfig, defaultCurrency: 'jpy' },
+      },
+    ])).toBe(false);
+
+    expect(isValidAdminSettingsBatch([
+      {
+        key: 'platform_config',
+        value: { ...validPlatformConfig, supportEmail: 'not-an-email' },
       },
     ])).toBe(false);
 
@@ -107,26 +112,17 @@ describe('admin settings contract', () => {
     ])).toBe(false);
   });
 
-  it('rejects malformed maintenance mode values', () => {
+  it('requires maintenance mode to remain a boolean', () => {
     expect(isValidAdminSettingsBatch([
-      {
-        key: 'maintenance_mode',
-        value: { ...validMaintenanceMode, enabled: 'false' },
-      },
+      { key: 'maintenance_mode', value: false },
+    ])).toBe(true);
+
+    expect(isValidAdminSettingsBatch([
+      { key: 'maintenance_mode', value: 'false' },
     ])).toBe(false);
 
     expect(isValidAdminSettingsBatch([
-      {
-        key: 'maintenance_mode',
-        value: { ...validMaintenanceMode, message: '   ' },
-      },
-    ])).toBe(false);
-
-    expect(isValidAdminSettingsBatch([
-      {
-        key: 'maintenance_mode',
-        value: { ...validMaintenanceMode, unexpectedField: true },
-      },
+      { key: 'maintenance_mode', value: { enabled: false } },
     ])).toBe(false);
   });
 
