@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HandlerEvent } from '@netlify/functions';
 
@@ -83,5 +85,23 @@ describe('Loadify shipping carrier policy', () => {
 
     expect(res.statusCode).toBe(400);
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('keeps checkout and seller shipment creation constrained to Royal Mail and Evri', () => {
+    const checkoutSource = readFileSync(
+      path.resolve(process.cwd(), 'netlify/functions/create-checkout.ts'),
+      'utf8',
+    );
+    const sellerShipmentsSource = readFileSync(
+      path.resolve(process.cwd(), 'src/pages/pixel-perfect/seller/SellerShipments.tsx'),
+      'utf8',
+    );
+
+    expect(checkoutSource).toContain("const LOADIFY_SUPPORTED_CARRIERS = new Set(['Royal Mail', 'Evri'])");
+    expect(checkoutSource).toContain('courier, shipping_rates(price)');
+    expect(checkoutSource).toContain('!LOADIFY_SUPPORTED_CARRIERS.has(method.courier.trim())');
+    expect(sellerShipmentsSource).toContain('<SelectItem value="Royal Mail">Royal Mail</SelectItem>');
+    expect(sellerShipmentsSource).toContain('<SelectItem value="Evri">Evri</SelectItem>');
+    expect(sellerShipmentsSource).not.toContain('Royal Mail, DPD, UPS');
   });
 });
