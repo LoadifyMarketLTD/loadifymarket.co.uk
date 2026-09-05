@@ -76,7 +76,7 @@ describe('verified social registration contract', () => {
   });
 
   it('requires account type before the signup form route', () => {
-    expect(signupEntry).toContain('Choose your account type first');
+    expect(signupEntry).toContain('Choose how you want to participate');
     expect(signupEntry).toContain('/register?type=buyer');
     expect(signupEntry).toContain('/register?type=seller');
   });
