@@ -336,9 +336,14 @@ const SellerProfile = () => {
 
       const [usersRes, sellerRes, storeRes] = await Promise.all([
         supabase.from("users").update({ firstName, lastName }).eq("id", user.id),
-        supabase.from("seller_profiles").upsert(
-          {
-            userId: user.id,
+        // seller_profiles is provisioned server-side when a seller account is created.
+        // Do not use INSERT ... ON CONFLICT here: PostgreSQL runs BEFORE INSERT
+        // triggers before conflict resolution, which strips the server-only Stripe
+        // tax-location evidence from EXCLUDED and causes an otherwise-valid explicit
+        // seller tax declaration to be reset to false on the subsequent UPDATE path.
+        supabase
+          .from("seller_profiles")
+          .update({
             businessName: isIndividual ? "" : form.businessName.trim(),
             vatNumber: isVatRegistered ? form.vatNumber.trim() : "",
             companyRegistrationNumber: sellerType === "company" ? form.companyNumber.trim() : "",
@@ -356,9 +361,10 @@ const SellerProfile = () => {
             // write both true and false here so an edited profile cannot keep a
             // stale client-side completed flag.
             profileCompleted: hasRequiredFields,
-          },
-          { onConflict: "userId" }
-        ),
+          })
+          .eq("userId", user.id)
+          .select("userId")
+          .maybeSingle(),
         supabase.from("seller_stores").upsert(
           { userId: user.id, storeDescription: form.bio },
           { onConflict: "userId" }
@@ -366,6 +372,7 @@ const SellerProfile = () => {
       ]);
       if (usersRes.error) throw usersRes.error;
       if (sellerRes.error) throw sellerRes.error;
+      if (!sellerRes.data) throw new Error("Seller profile is missing. Please contact support before continuing.");
       if (storeRes.error) throw storeRes.error;
 
       // Read back the authoritative persisted result. Migration 615 may reject
