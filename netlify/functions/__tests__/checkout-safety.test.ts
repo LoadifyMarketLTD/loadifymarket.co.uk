@@ -158,6 +158,7 @@ function makeSupabaseMock(opts: {
         id: '11111111-1111-1111-1111-111111111111',
         active: true,
         name: 'Tracked 48',
+        courier: 'Royal Mail',
         shipping_rates: [{ price: 4.99 }],
       },
     }],

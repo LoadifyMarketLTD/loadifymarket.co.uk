@@ -222,7 +222,6 @@ function App() {
       }
       delete data['seller_profiles'];
     }
-    let cleanup: (() => void) | undefined;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setLoading(true);
@@ -246,7 +245,7 @@ function App() {
         });
       } else setUser(null);
     });
-    cleanup = () => subscription.unsubscribe();
+    const cleanup = () => subscription.unsubscribe();
     return () => cleanup?.();
   }, [setUser, setLoading]);
 

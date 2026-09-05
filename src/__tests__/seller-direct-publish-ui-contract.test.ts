@@ -10,7 +10,7 @@ const routeSurfaceClass = read('src/components/RouteSurfaceClass.tsx');
 const editorCss = read('src/seller-listing-editor-light.css');
 const main = read('src/main.tsx');
 const directPublishMigration = read(
-  'supabase/migrations/20260828123500_marketplace_seller_direct_publish.sql',
+  'supabase/migrations/20260828123840_marketplace_seller_direct_publish.sql',
 );
 
 describe('Marketplace Seller direct publication contract', () => {

@@ -44,7 +44,7 @@ const DEFAULT_CONFIG: PlatformConfig = {
   platformName: "Loadify Market",
   supportEmail: "contact@loadifymarket.co.uk",
   defaultCurrency: "gbp",
-  commissionRate: 8,
+  commissionRate: 7,
   maxUploadSizeMb: 10,
   productsPerPage: 24,
 };
@@ -202,7 +202,21 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[900px]" style={{ background: "transparent", minHeight: "100%" }}>
+    <div data-admin-settings className="p-4 sm:p-6 space-y-6 max-w-[900px]" style={{ background: "transparent", minHeight: "100%" }}>
+      <style>{`
+        [data-admin-settings] label {
+          color: rgba(226,232,240,0.92) !important;
+        }
+        [data-admin-settings] input,
+        [data-admin-settings] button[role="combobox"] {
+          background: rgba(15,23,42,0.72) !important;
+          color: #f8fafc !important;
+          border-color: rgba(148,163,184,0.45) !important;
+        }
+        [data-admin-settings] input[readonly] {
+          color: #cbd5e1 !important;
+        }
+      `}</style>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">System Settings</h1>
@@ -217,7 +231,7 @@ const AdminSettings = () => {
             className="w-full sm:w-auto"
             onClick={handleSave}
             disabled={saveLoading || settingsLoading}
-            style={{ background: "rgba(212,175,55,1)", color: "rgba(255,255,255,1)", border: "none" }}
+            style={{ background: "rgba(212,175,55,1)", color: "rgba(15,23,42,1)", border: "none" }}
           >
             {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             {settingsLoading ? "Loading…" : "Save Settings"}
@@ -493,7 +507,7 @@ const AdminSettings = () => {
           className="w-full sm:w-auto"
           onClick={handleSave}
           disabled={saveLoading || settingsLoading}
-          style={{ background: "rgba(212,175,55,1)", color: "rgba(255,255,255,1)", border: "none" }}
+          style={{ background: "rgba(212,175,55,1)", color: "rgba(15,23,42,1)", border: "none" }}
         >
           {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           {settingsLoading ? "Loading…" : "Save Settings"}

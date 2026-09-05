@@ -15,12 +15,12 @@ const navigation = [
 ] as const;
 
 export default function PresentationHeader() {
-  const [mobile, setMobile] = useState(false);
-  const location = useLocation();
+  const { pathname } = useLocation();
+  return <PresentationHeaderContent key={pathname} />;
+}
 
-  useEffect(() => {
-    setMobile(false);
-  }, [location.pathname]);
+function PresentationHeaderContent() {
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
     if (!mobile) return;
