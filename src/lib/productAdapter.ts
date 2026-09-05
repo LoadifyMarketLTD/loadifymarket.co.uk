@@ -8,10 +8,22 @@
 import type { Product as UIProduct } from "@/components/catalog/ProductCard";
 import { categoryImages, DEFAULT_CATEGORY_IMAGE } from "@/data/categoryImages";
 
+export interface PublicSellerCardData {
+  businessName?: string | null;
+  isApproved?: boolean | null;
+  rating?: number | null;
+  userId?: string;
+  businessAddress?: {
+    city?: string | null;
+    country?: string | null;
+  } | null;
+}
+
 /** Shape of a product row from Supabase with optional joined category and seller data */
 export interface DBProduct {
   id: string;
   title: string;
+  description?: string | null;
   price: number;
   priceExVat?: number | null;
   images: string[];
@@ -31,10 +43,7 @@ export interface DBProduct {
   specifications?: Record<string, unknown> | null;
   category?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
   subcategory?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
-  seller?:
-    | { businessName?: string | null; isApproved?: boolean | null; rating?: number | null; userId?: string }
-    | Array<{ businessName?: string | null; isApproved?: boolean | null; rating?: number | null; userId?: string }>
-    | null;
+  seller?: PublicSellerCardData | PublicSellerCardData[] | null;
 }
 
 const DB_TO_UI_CONDITION: Record<string, UIProduct["condition"]> = {
@@ -57,6 +66,29 @@ export function formatRelativeTime(isoDate: string): string {
   if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
   const weeks = Math.floor(days / 7);
   return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+}
+
+function tidyLocationPart(value?: string | null): string {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return "";
+  if (trimmed === trimmed.toUpperCase()) {
+    return trimmed
+      .toLowerCase()
+      .replace(/(^|[\s-])([a-z])/g, (_, prefix: string, letter: string) => `${prefix}${letter.toUpperCase()}`);
+  }
+  return trimmed;
+}
+
+function sellerLocation(seller?: PublicSellerCardData | null): string {
+  const city = tidyLocationPart(seller?.businessAddress?.city);
+  const country = tidyLocationPart(seller?.businessAddress?.country);
+  return [city, country].filter(Boolean).join(", ");
+}
+
+function shortDescription(dbProduct: DBProduct): string {
+  const candidate = dbProduct.specifications?.["shortDescription"];
+  if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+  return dbProduct.description?.replace(/\s+/g, " ").trim() ?? "";
 }
 
 /**
@@ -140,6 +172,7 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     dbProduct.specifications && typeof dbProduct.specifications === "object"
       ? (dbProduct.specifications["location"] as string | undefined) ?? ""
       : "";
+  const location = specLocation.trim() || sellerLocation(seller);
 
   const availability = getDBProductAvailability(dbProduct);
   const maxPurchaseQuantity =
@@ -150,13 +183,14 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
   return {
     id: dbProduct.id,
     title: dbProduct.title,
+    description: shortDescription(dbProduct),
     image,
     price: Number(dbProduct.price),
     originalPrice: dbProduct.priceExVat ? Number(dbProduct.priceExVat) : undefined,
     category: categoryName,
     subcategory: subcategoryName,
     condition,
-    location: specLocation,
+    location,
     seller: sellerName,
     sellerId: dbProduct.sellerId,
     sellerVerified,
@@ -165,6 +199,7 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     reviewCount: dbProduct.reviewCount ?? 0,
     views: dbProduct.views ?? 0,
     listed: formatRelativeTime(dbProduct.createdAt),
+    listingContext: dbProduct.listingContext ?? undefined,
     isAvailable: availability.isAvailable,
     availabilityMessage: availability.message,
     maxPurchaseQuantity,
