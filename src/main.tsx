@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import RouteSurfaceClass from "./components/RouteSurfaceClass.tsx";
 import { initErrorTracking } from "./lib/errorTracking.ts";
 import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
+import { installCheckoutFetchGuard } from "./lib/checkoutFetchGuard.ts";
 import { isCapacitorContext } from "./lib/capacitorUtils.ts";
 import "./index.css";
 import "./light-compat.css";
@@ -34,6 +35,15 @@ if (isCapacitorContext()) {
 // backend.  This patch rewrites them to absolute URLs so every component
 // fetch call reaches the live deployment without any per-file changes.
 patchCapacitorFetch();
+
+// Checkout is a money-moving boundary. Route its POST through the explicit
+// /api/* Netlify proxy and reject unexpected HTML before Checkout.tsx tries to
+// parse it as JSON. Reinstall at window load in case CapacitorHttp injects a
+// replacement fetch implementation after this bootstrap module executes.
+installCheckoutFetchGuard();
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', installCheckoutFetchGuard, { once: true });
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
