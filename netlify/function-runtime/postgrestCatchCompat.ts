@@ -5,12 +5,29 @@ type ThenableWithCatch = PromiseLike<unknown> & {
   catch?: (onRejected: CatchHandler) => Promise<unknown>;
 };
 
+type LegacyMutationCountOptions = {
+  head?: boolean;
+  count?: 'exact' | 'planned' | 'estimated';
+};
+
+type PostgrestResultLike = {
+  data?: unknown;
+  error?: unknown;
+  count?: number | null;
+  [key: string]: unknown;
+};
+
+type BuilderLike = {
+  method?: unknown;
+};
+
+const MUTATION_COUNT_COMPAT_MARKER = Symbol.for('loadify.postgrest.mutation-count-compat');
 let installed = false;
 
 function addCatchToThenablePrototype(value: unknown): void {
   if (!value || (typeof value !== 'object' && typeof value !== 'function')) return;
 
-  let prototype = Object.getPrototypeOf(value) as Record<string, unknown> | null;
+  let prototype = Object.getPrototypeOf(value) as Record<PropertyKey, unknown> | null;
   while (prototype && prototype !== Object.prototype) {
     if (typeof prototype.then === 'function') {
       if (typeof prototype.catch !== 'function') {
@@ -25,7 +42,67 @@ function addCatchToThenablePrototype(value: unknown): void {
       }
       return;
     }
-    prototype = Object.getPrototypeOf(prototype) as Record<string, unknown> | null;
+    prototype = Object.getPrototypeOf(prototype) as Record<PropertyKey, unknown> | null;
+  }
+}
+
+function addLegacyMutationCountCompat(value: unknown): void {
+  if (!value || (typeof value !== 'object' && typeof value !== 'function')) return;
+
+  let prototype = Object.getPrototypeOf(value) as Record<PropertyKey, unknown> | null;
+  while (prototype && prototype !== Object.prototype) {
+    const originalSelect = prototype.select;
+    if (typeof originalSelect === 'function') {
+      if (prototype[MUTATION_COUNT_COMPAT_MARKER] === true) return;
+
+      Object.defineProperty(prototype, 'select', {
+        configurable: true,
+        enumerable: false,
+        writable: true,
+        value(
+          this: BuilderLike,
+          columns?: string,
+          options?: LegacyMutationCountOptions,
+        ) {
+          // PostgREST mutation builders accept select(columns) to request the
+          // affected rows back. Legacy checkout code also passes the read-query
+          // { count, head } options as a second argument; that argument is ignored
+          // by the installed supabase-js version, so a successful PATCH can return
+          // count=null and be mistaken for a lost reservation.
+          const selected = (originalSelect as (this: BuilderLike, columns?: string) => unknown)
+            .call(this, columns);
+          const method = String((selected as BuilderLike | null)?.method ?? this.method ?? '').toUpperCase();
+
+          if (
+            options?.head === true
+            && options.count === 'exact'
+            && method !== 'GET'
+            && method !== 'HEAD'
+          ) {
+            // Keep the mutation's normal return=representation semantics and
+            // derive the affected-row count from the returned rows. This is
+            // exact for the checkout reservation UPDATE because it is filtered
+            // by one product id plus listingStatus='active'. Zero rows remains a
+            // real conflict; one returned row is a successful reservation.
+            return Promise.resolve(selected as PromiseLike<PostgrestResultLike>).then((result) => {
+              if (!result || result.error || !Array.isArray(result.data)) return result;
+              return { ...result, count: result.data.length };
+            });
+          }
+
+          return selected;
+        },
+      });
+
+      Object.defineProperty(prototype, MUTATION_COUNT_COMPAT_MARKER, {
+        configurable: false,
+        enumerable: false,
+        writable: false,
+        value: true,
+      });
+      return;
+    }
+    prototype = Object.getPrototypeOf(prototype) as Record<PropertyKey, unknown> | null;
   }
 }
 
@@ -35,10 +112,15 @@ function addCatchToThenablePrototype(value: unknown): void {
  * number of legacy checkout paths use `.catch` for best-effort cleanup/RPC
  * calls, which otherwise throws synchronously before the query can run.
  *
- * Keep this compatibility shim scoped to the two payment entrypoints that still
- * contain those legacy call sites. It adds normal Promise catch semantics to the
- * shared PostgREST builder prototype and does not change successful query data,
- * database error objects, authentication, or payment behaviour.
+ * The same legacy payment paths use mutation.select('id', { count:'exact',
+ * head:true }) to determine whether an atomic reservation UPDATE matched one
+ * row. In the installed supabase-js version the mutation select overload ignores
+ * that second options object, so count can be null even when the row was updated.
+ * For those mutation-only calls we derive count from the returned representation.
+ *
+ * Keep both compatibility shims scoped to the two payment entrypoints that still
+ * contain those legacy call sites. They do not change database predicates,
+ * authentication, pricing, tax, Stripe ownership or successful mutation data.
  */
 export function installPostgrestCatchCompat(): void {
   if (installed) return;
@@ -52,6 +134,9 @@ export function installPostgrestCatchCompat(): void {
 
   addCatchToThenablePrototype(probe.from('__loadify_probe__').select('*'));
   addCatchToThenablePrototype(probe.rpc('__loadify_probe_rpc__'));
+  addLegacyMutationCountCompat(
+    probe.from('__loadify_probe__').update({ marker: true }).eq('id', '__probe__'),
+  );
 
   installed = true;
 }
