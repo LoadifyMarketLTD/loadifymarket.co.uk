@@ -1,5 +1,5 @@
 /**
- * send-email.ts — Transactional email dispatcher (SendGrid)
+ * send-email.ts — Transactional email dispatcher (Resend)
  *
  * ⚠️  TRANSACTIONAL EMAILS ONLY — NOT FOR MARKETING ⚠️
  * -------------------------------------------------------
@@ -12,27 +12,20 @@
  *   - Newsletters or bulk emails
  *   - Any unsolicited or opt-in-required communication
  *
- * Transactional emails are exempt from PECR soft opt-in rules, but only when
- * they are genuine service messages. Misusing this endpoint for marketing
- * would violate SendGrid's Acceptable Use Policy, PECR, and GDPR, and would
- * risk our sending domain being blacklisted.
- *
- * All emails are sent exclusively from contact@loadifymarket.co.uk via
- * SendGrid. Gmail or any other fallback address must never be used.
+ * All emails are sent exclusively from the verified loadifymarket.co.uk domain
+ * via Resend. Gmail or any other fallback address must never be used.
  * See docs/SUPPORT_SLA.md for the full transactional email policy.
  */
-import sgMail from '@sendgrid/mail';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { getClientIp } from './_shared/getClientIp';
 import { verifyCaptchaToken } from './_shared/verifyCaptcha';
 
-const sendgridApiKey = process.env.SENDGRID_API_KEY;
-if (!sendgridApiKey) {
-  console.error('send-email: SENDGRID_API_KEY is not set');
+const resendApiKey = process.env.RESEND_API_KEY;
+if (!resendApiKey) {
+  console.error('send-email: RESEND_API_KEY is not set');
 }
-sgMail.setApiKey(sendgridApiKey!);
 
 // Templates that public (unauthenticated) users may trigger directly.
 // All other templates require the X-Internal-Secret header.
@@ -77,9 +70,7 @@ interface EmailRequest {
   subject: string;
   template: EmailTemplate;
   data: Record<string, unknown>;
-  // Public anti-spam fields (optional for internal server-to-server calls)
   captchaToken?: string;
-  // Honeypot aliases to support multiple form conventions
   honeypot?: string;
   botField?: string;
   ['bot-field']?: string;
@@ -94,17 +85,13 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (!sendgridApiKey) {
+  if (!resendApiKey) {
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Email service not configured' }),
     };
   }
 
-  // ── Internal-secret gate ─────────────────────────────────────────────────
-  // Function-to-function calls (stripe-webhook, register, connect-status, etc.)
-  // must include the X-Internal-Secret header.  Public callers may only use
-  // templates listed in PUBLIC_TEMPLATES (e.g. the contact form).
   let bodyRaw: unknown;
   try {
     bodyRaw = JSON.parse(event.body || '{}');
@@ -133,10 +120,6 @@ export const handler: Handler = async (event) => {
 
   const internalSecret = process.env.NETLIFY_INTERNAL_SECRET;
   const providedSecret = event.headers['x-internal-secret'];
-  // NETLIFY_DEV is set to 'true' by `netlify dev` when running locally.
-  // Only fail-open in that context so developers don't need to configure the
-  // secret just to test locally.  In every other environment (staging,
-  // production, deploy-preview) the secret MUST be present and correct.
   const isLocalDev = process.env.NETLIFY_DEV === 'true';
 
   if (!internalSecret || internalSecret.length === 0) {
@@ -146,8 +129,6 @@ export const handler: Handler = async (event) => {
         'server-side calls in local dev. Set this variable before deploying.',
       );
     } else {
-      // In production/staging the secret MUST be set.  Return 503 so callers
-      // can distinguish a misconfiguration from an unauthorised request (403).
       console.error(
         'send-email: NETLIFY_INTERNAL_SECRET is not configured. ' +
         'Add this environment variable in the Netlify dashboard.',
@@ -163,9 +144,6 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  // A call is considered internal when:
-  //   a) running in local dev with no secret configured (dev convenience), OR
-  //   b) the caller presents the correct x-internal-secret header value.
   const isInternalCall =
     (isLocalDev && (!internalSecret || internalSecret.length === 0)) ||
     (internalSecret && internalSecret.length > 0 && providedSecret === internalSecret);
@@ -216,11 +194,7 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Captcha verification failed' }) };
     }
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
-  // ── Rate limiting ──────────────────────────────────────────────────────────
-  // Public contact form traffic gets strict quotas by IP + contact email.
-  // Internal server-to-server calls keep a higher threshold.
   if (supabase) {
     const ip = getClientIp(event);
     const isPublicContact = !isInternalCall && template === 'contact_enquiry';
@@ -262,14 +236,19 @@ export const handler: Handler = async (event) => {
       }
     }
   }
-  // ─────────────────────────────────────────────────────────────────────────
 
   try {
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
-    if (!fromEmail) {
+    const fromEmail = (
+      process.env.RESEND_FROM_EMAIL ||
+      process.env.SENDGRID_FROM_EMAIL ||
+      'contact@loadifymarket.co.uk'
+    ).trim();
+
+    if (!isValidEmail(fromEmail)) {
+      console.error('send-email: configured sender email is invalid');
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'SENDGRID_FROM_EMAIL is not configured' }),
+        body: JSON.stringify({ error: 'Email service not configured' }),
       };
     }
 
@@ -282,22 +261,44 @@ export const handler: Handler = async (event) => {
       : subject.trim();
     const replyTo = isPublicContact ? asTrimmed(data.email) || fromEmail : fromEmail;
 
-    const msg = {
-      to: normalizedTo,
-      from: fromEmail,
-      replyTo,
-      subject: normalizedSubject,
-      html: htmlContent,
-    };
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: [normalizedTo],
+        from: fromEmail,
+        reply_to: replyTo,
+        subject: normalizedSubject,
+        html: htmlContent,
+      }),
+    });
 
-    await sgMail.send(msg);
+    if (!response.ok) {
+      const providerBody = await response.text().catch(() => '');
+      console.error('Resend email sending error:', response.status, providerBody.slice(0, 500));
+      return {
+        statusCode: 502,
+        body: JSON.stringify({ error: 'Failed to send email' }),
+      };
+    }
+
+    const providerResult = await response.json().catch(() => ({})) as { id?: string };
+    if (!providerResult.id) {
+      console.error('Resend email sending error: successful response did not include an email id');
+      return {
+        statusCode: 502,
+        body: JSON.stringify({ error: 'Failed to confirm email submission' }),
+      };
+    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, message: 'Email sent' }),
+      body: JSON.stringify({ success: true, message: 'Email sent', id: providerResult.id }),
     };
   } catch (error) {
-    // Log full error server-side but never expose internal details to callers.
     console.error('Email sending error:', error);
     return {
       statusCode: 500,
@@ -349,7 +350,6 @@ function isValidTemplate(value: unknown): value is EmailTemplate {
   ].includes(value);
 }
 
-/** Escape a string for safe embedding in HTML to prevent HTML injection. */
 function escapeHtml(value: unknown): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -686,7 +686,6 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
       `;
       break;
     }
-
 
     default:
       content = `
