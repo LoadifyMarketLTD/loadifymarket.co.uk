@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 
-npm run lint
+npx eslint netlify
