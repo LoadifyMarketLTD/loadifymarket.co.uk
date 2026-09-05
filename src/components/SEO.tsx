@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { getCommercialSeoMeta } from "@/lib/commercialSeo";
 import { buildSeoTitle } from "@/lib/seo";
 
 const SITE_NAME = "Loadify Market";
@@ -42,7 +43,10 @@ export default function SEO({
   ogPriceCurrency = "GBP",
   structuredData,
 }: SEOProps) {
-  const fullTitle = buildSeoTitle(title);
+  const commercialMeta = robots === "index, follow" ? getCommercialSeoMeta(canonical) : undefined;
+  const resolvedTitle = commercialMeta?.title ?? title;
+  const resolvedDescription = commercialMeta?.description ?? description;
+  const fullTitle = buildSeoTitle(resolvedTitle);
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
       ? canonical
@@ -52,7 +56,7 @@ export default function SEO({
   return (
     <Helmet>
       <title>{fullTitle}</title>
-      <meta name="description" content={description} />
+      <meta name="description" content={resolvedDescription} />
       {robots !== "index, follow" && <meta name="robots" content={robots} />}
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 
@@ -60,7 +64,7 @@ export default function SEO({
       <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={resolvedDescription} />
       <meta property="og:image" content={ogImage} />
       {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
 
@@ -77,7 +81,7 @@ export default function SEO({
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:description" content={resolvedDescription} />
       <meta name="twitter:image" content={ogImage} />
 
       {/* JSON-LD structured data */}
