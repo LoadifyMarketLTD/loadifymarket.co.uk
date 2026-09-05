@@ -15,8 +15,8 @@ import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 import { openExternalUrl } from "@/lib/capacitorUtils";
 import { supabase } from "@/lib/supabase";
+import { calculateCheckoutVat } from "@/lib/checkoutTaxDisplay";
 
-// ── Shipping option types ──────────────────────────────────────────────────
 interface ShippingOption {
   methodId: string;
   name: string;
@@ -25,7 +25,6 @@ interface ShippingOption {
   dispatchTime: string | null;
 }
 
-// Sentinel value for the "Seller arranged" fallback (no DB methods configured)
 const SELLER_ARRANGED: ShippingOption = {
   methodId: "seller-arranged",
   name: "Seller Arranged",
@@ -60,30 +59,21 @@ const Checkout = () => {
   });
 
   const [shippingError, setShippingError] = useState<string | null>(null);
-  // Track whether we've already auto-filled the email so we never overwrite
-  // changes the user makes after the initial sync.
   const emailSyncedRef = useRef(false);
 
-  // ── Shipping method state ────────────────────────────────────────────────
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedMethodId, setSelectedMethodId] = useState<string>(SELLER_ARRANGED.methodId);
   const [shippingLoading, setShippingLoading] = useState(false);
 
-  // Derived: the currently selected shipping option
   const selectedOption: ShippingOption =
     shippingOptions.find((o) => o.methodId === selectedMethodId) ?? SELLER_ARRANGED;
   const noDeliveryMethodAvailable = !shippingLoading && shippingOptions.length === 0;
 
-  // Stable sorted cart product IDs — only changes when the product set changes.
-  // This drives the shipping fetch effect without re-triggering on quantity updates.
   const cartProductIds = useMemo(
     () => cartItems.map((i) => i.product.id).sort(),
     [cartItems],
   );
 
-  // Fetch shipping methods that are valid for every product in the cart.
-  // The checkout backend enforces the same intersection, so the UI must not
-  // present a method that will later be rejected by create-checkout.
   useEffect(() => {
     if (cartProductIds.length === 0) return;
     const productIds = cartProductIds;
@@ -168,14 +158,11 @@ const Checkout = () => {
 
     void fetchShippingOptions();
   }, [cartProductIds]);
-  // ────────────────────────────────────────────────────────────────────────
 
-  // Refresh cart prices from DB on checkout load — single batch query
   useEffect(() => {
     void refreshCartPrices();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync email once auth resolves (user may be null at initial render)
   useEffect(() => {
     if (user?.email && !emailSyncedRef.current) {
       emailSyncedRef.current = true;
@@ -188,7 +175,6 @@ const Checkout = () => {
       setShippingError("This seller has not configured a delivery method for the items in your cart yet. Please contact the seller or try again later.");
       return;
     }
-    // Validate required shipping fields before advancing
     if (!shippingData.firstName.trim() || !shippingData.lastName.trim()) {
       setShippingError("Please enter your first and last name.");
       return;
@@ -214,19 +200,15 @@ const Checkout = () => {
     if (shippingError) setShippingError(null);
   };
 
-  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6.
-  // Keep penny precision in the UI; the previous whole-pound rounding could
-  // display a VAT amount inconsistent with the actual VAT-inclusive total.
-  const vat = Math.round((subtotal / 6) * 100) / 100;
+  const vat = useMemo(() => calculateCheckoutVat(cartItems), [cartItems]);
+  const vatLabel = vat === 0 ? "VAT — not charged by seller" : "VAT";
   const shippingAmount = selectedOption.price;
   const total = subtotal + shippingAmount;
 
-  // ── Submit to Stripe via Netlify function ──────────────────────────────────
   const handlePlaceOrder = async () => {
     setIsSubmitting(true);
     setCheckoutError(null);
 
-    // Block purchase of own products
     if (user) {
       const ownProductInCart = cartItems.find(
         (item) => item.product.sellerId && item.product.sellerId === user.id
@@ -240,8 +222,6 @@ const Checkout = () => {
       }
     }
 
-    // P3: Single-seller enforcement — multi-seller checkout is temporarily
-    // disabled. The backend enforces this too; this check gives better UX.
     const sellerIds = new Set(
       cartItems.map((item) => item.product.sellerId).filter((id): id is string => Boolean(id))
     );
@@ -273,8 +253,6 @@ const Checkout = () => {
         quantity: item.quantity,
         price: item.product.price,
         title: item.product.title,
-        // sellerId is overridden server-side from the DB price validation step
-        // in create-checkout.ts, so the client-side value is a safe placeholder.
         sellerId: "",
       }));
 
@@ -282,8 +260,6 @@ const Checkout = () => {
         items,
         buyerId: user?.id ?? "",
         guestEmail: !user ? shippingData.email : undefined,
-        // shippingAmount is intentionally omitted — the server looks it up
-        // from the DB using shippingMethodId to prevent cost tampering.
         shippingMethodId: selectedOption.methodId,
         shippingMethod: selectedOption.methodId === SELLER_ARRANGED.methodId
           ? "Seller arranged"
@@ -292,7 +268,6 @@ const Checkout = () => {
         billingAddress: address,
       };
 
-      // Send the Supabase session token so the server can verify buyerId.
       const { data: { session: authSession } } = await supabase.auth.getSession();
 
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -323,7 +298,6 @@ const Checkout = () => {
     }
   };
 
-  // Redirect to cart if empty
   if (cartItems.length === 0) {
     return (
       <MainLayout>
@@ -344,12 +318,10 @@ const Checkout = () => {
             </Link>
           </div>
         </main>
-    </MainLayout>
+      </MainLayout>
     );
   }
 
-  // P1: Sign-in required wall — shown when cart has items but buyer is not authenticated.
-  // The isLoading check prevents a flash while auth is initialising on page load.
   if (!isLoading && !user) {
     return (
       <MainLayout>
@@ -408,7 +380,6 @@ const Checkout = () => {
             backLabel="Back to Cart"
           />
 
-          {/* Steps */}
           <div className="flex items-center justify-center gap-2 mb-10">
             {steps.map((step, i) => (
               <div key={step.id} className="flex items-center gap-2">
@@ -434,7 +405,6 @@ const Checkout = () => {
           </div>
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
-            {/* Price-changed banner */}
             {priceChangedBanner && (
               <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review the totals below before proceeding.</span>
@@ -443,9 +413,7 @@ const Checkout = () => {
                 </button>
               </div>
             )}
-            {/* Main content */}
             <div>
-              {/* Step 1: Shipping */}
               {currentStep === 0 && (
                 <div className="bg-card rounded-xl border border-border p-6 sm:p-8 space-y-6">
                   <div className="flex items-center gap-3">
@@ -526,7 +494,6 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* Shipping method selection */}
                   <div className="space-y-3">
                     <Label>Delivery Method</Label>
                     {shippingLoading ? (
@@ -589,7 +556,6 @@ const Checkout = () => {
                 </div>
               )}
 
-              {/* Step 2: Payment */}
               {currentStep === 1 && (
                 <div className="bg-card rounded-xl border border-border p-6 sm:p-8 space-y-6">
                   <div className="flex items-center gap-3">
@@ -602,7 +568,6 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* Stripe secure payment notice */}
                   <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 space-y-4">
                     <div className="flex items-center gap-2 text-sm font-medium text-primary">
                       <Lock className="h-4 w-4" />
@@ -636,10 +601,8 @@ const Checkout = () => {
                 </div>
               )}
 
-              {/* Step 3: Review */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  {/* Shipping summary */}
                   <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -665,7 +628,6 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* Payment summary */}
                   <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -681,7 +643,6 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* Items */}
                   <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                     <h3 className="font-display font-semibold text-foreground">Order Items</h3>
                     <div className="space-y-3">
@@ -708,7 +669,6 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* Intermediary notice */}
                   <div className="rounded-lg bg-muted/50 border border-border p-4 text-xs text-muted-foreground leading-relaxed">
                     <span className="font-semibold text-foreground">Marketplace Notice:</span>{" "}
                     You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller.
@@ -740,7 +700,6 @@ const Checkout = () => {
               )}
             </div>
 
-            {/* Order Summary Sidebar */}
             <div className="lg:sticky lg:top-24 h-fit space-y-4">
               <div className="bg-card rounded-xl border border-border p-6 space-y-5">
                 <h2 className="font-display text-lg font-semibold text-foreground">Order Summary</h2>
@@ -777,9 +736,13 @@ const Checkout = () => {
                           : `£${shippingAmount.toFixed(2)}`}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">VAT (20%)</span>
-                    <span className="text-foreground font-medium">£{vat.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">{vatLabel}</span>
+                    <span className="text-foreground font-medium text-right">
+                      {vat == null
+                        ? <span className="italic text-muted-foreground">Verified at payment</span>
+                        : `£${vat.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    </span>
                   </div>
                   <div className="border-t border-border pt-3 flex justify-between">
                     <span className="font-display font-semibold text-foreground">Total</span>
@@ -788,7 +751,6 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {/* Trust badges */}
               <div className="bg-card rounded-xl border border-border p-4 space-y-3">
                 <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-1">Marketplace Assurance</p>
                 <div className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -808,7 +770,6 @@ const Checkout = () => {
           </div>
         </div>
       </main>
-
     </MainLayout>
   );
 };
