@@ -27,6 +27,10 @@ export interface Product {
   views: number;
   listed: string;
   listingContext?: string;
+  /** Canonical tax evidence refreshed from the product record before checkout. */
+  vatRate?: number | null;
+  taxTreatmentStatus?: string | null;
+  taxTreatmentSource?: string | null;
   /** Canonical purchase availability from the underlying listing state. */
   isAvailable?: boolean;
   /** User-facing reason when the listing is not currently purchasable. */
@@ -97,101 +101,51 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
         </div>
         {isOwner && (
           <div className="absolute top-3 left-3">
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/90 text-primary-foreground">
-              Your Listing
-            </span>
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/90 text-primary-foreground">Your listing</span>
           </div>
         )}
       </div>
 
-      <div className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className={`text-xs font-semibold ${light ? "text-[#1F5BD8]" : "text-primary"}`}>{product.category}</span>
-          {product.views > 0 && (
-            <div className={`flex items-center gap-1 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
-              <Eye className="h-3 w-3" />
-              {product.views}
-            </div>
+      <div className="p-4">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+          <span>{product.category}</span>
+          <span>•</span>
+          <span>{product.subcategory}</span>
+        </div>
+
+        <h3 className={`font-semibold line-clamp-2 min-h-[3rem] mb-2 ${light ? "text-slate-950" : "text-foreground"}`}>{product.title}</h3>
+
+        <div className="flex items-baseline gap-2 mb-3">
+          <span className={`text-xl font-bold ${light ? "text-[#1F5BD8]" : "text-primary"}`}>{formatPrice(product.price)}</span>
+          {product.originalPrice && product.originalPrice > product.price && (
+            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
           )}
         </div>
 
-        <h3 className={`font-display text-sm font-semibold line-clamp-2 leading-snug ${light ? "text-[#0A234F]" : "text-foreground"}`}>
-          {product.title}
-        </h3>
-
-        {product.description && (
-          <p className={`min-h-10 text-xs leading-5 line-clamp-2 ${light ? "text-slate-600" : "text-muted-foreground"}`}>
-            {product.description}
-          </p>
-        )}
-
-        <div className={`text-lg font-bold leading-none ${light ? "text-[#0A234F]" : "text-foreground"}`}>
-          {formatPrice(product.price)}
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+          <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" />{availabilityLabel}</span>
+          <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
         </div>
 
-        <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
-          <div className="flex items-center gap-1">
-            <Package className="h-3 w-3" />
-            {availabilityLabel}
-          </div>
-          {product.location && (
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              {product.location}
+        <div className="flex items-center justify-between pt-3 border-t border-border">
+          <div className="min-w-0">
+            <div className={`text-sm font-medium truncate ${light ? "text-slate-900" : "text-foreground"}`}>{product.seller}</div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {product.sellerVerified && <span>Verified</span>}
+              {hasReviews && <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-current" />{product.rating.toFixed(1)}</span>}
+              <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{product.views}</span>
             </div>
-          )}
-        </div>
-
-        <div className={`flex items-center justify-between pt-2 border-t ${light ? "border-slate-200" : "border-border"}`}>
-          <div className="flex items-center gap-1.5">
-            <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.seller}</span>
-            {product.sellerVerified ? (
-              <span
-                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-success bg-success/10 border border-emerald-500/30 rounded-full px-1.5 py-0.5"
-                title="Verified Seller"
-                aria-label="Verified Seller"
-              >
-                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                <span>Verified</span>
-              </span>
-            ) : (
-              <span
-                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 border border-primary/40 rounded-full px-1.5 py-0.5"
-                title="Unverified seller"
-                aria-label="Unverified seller"
-              >
-                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>Unverified</span>
-              </span>
-            )}
           </div>
-          {hasReviews ? (
-            <div className="flex items-center gap-0.5" title={`${product.reviewCount} review${product.reviewCount === 1 ? "" : "s"}`}>
-              <Star className="h-3 w-3 fill-accent text-accent" />
-              <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.rating}</span>
-            </div>
+          {isOwner ? (
+            <Button size="sm" variant="outline" asChild>
+              <Link to={`/seller/products/${product.id}/edit`}><Settings className="w-4 h-4 mr-1" />Manage</Link>
+            </Button>
           ) : (
-            <span className={`text-[11px] ${light ? "text-slate-400" : "text-muted-foreground"}`}>No reviews yet</span>
+            <Button size="sm" asChild>
+              <Link to={`/product/${product.id}`} state={linkState}>View</Link>
+            </Button>
           )}
         </div>
-
-        {isOwner ? (
-          <Link to={`/seller/products/${product.id}/edit`}>
-            <Button variant="outline" className="w-full text-sm" size="sm">
-              <Settings className="mr-1.5 h-3.5 w-3.5" /> Manage Listing
-            </Button>
-          </Link>
-        ) : (
-          <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
-            <Button className={`w-full font-bold transition-all duration-250 text-sm ${light ? "bg-[#F5A300] text-[#0A234F] hover:bg-[#E59600] hover:shadow-[0_8px_18px_rgba(245,163,0,0.22)]" : "bg-primary hover:bg-primary-hover text-black hover:shadow-[0_0_18px_rgba(212,175,55,0.28)] hover:opacity-90"}`} size="sm">
-              View Details
-            </Button>
-          </Link>
-        )}
       </div>
     </div>
   );
