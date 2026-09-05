@@ -6,6 +6,7 @@ import { buildSeoTitle } from "@/lib/seo";
 const SITE_NAME = "Loadify Market";
 const BASE_URL = "https://loadifymarket.co.uk";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
+const PRODUCT_SELLER_PROMO_RE = /\s*Sell with 0% commission on Loadify Market\.?\s*$/i;
 
 interface SEOProps {
   title: string;
@@ -45,6 +46,12 @@ function categoryMeta(canonical?: string) {
   return match ? getCategorySeoLanding(match[1]) : undefined;
 }
 
+function productDescription(description: string, ogType: string): string {
+  if (ogType !== "product") return description;
+  const cleaned = description.replace(PRODUCT_SELLER_PROMO_RE, "").trim();
+  return cleaned || description;
+}
+
 export default function SEO({
   title,
   description,
@@ -60,13 +67,21 @@ export default function SEO({
     ? getCommercialSeoMeta(canonical) ?? categoryMeta(canonical)
     : undefined;
   const resolvedTitle = sharedMeta?.title ?? title;
-  const resolvedDescription = sharedMeta?.description ?? description;
+  const resolvedDescription = productDescription(
+    sharedMeta?.description ?? description,
+    ogType,
+  );
   const fullTitle = buildSeoTitle(resolvedTitle);
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
       ? canonical
       : `${BASE_URL}${canonical}`
     : undefined;
+
+  // Product JSON-LD is injected server-side by product-meta with the canonical
+  // DB-backed product identity. Suppressing the hydrated duplicate prevents two
+  // conflicting Product objects from appearing after JavaScript execution.
+  const shouldRenderStructuredData = Boolean(structuredData && ogType !== "product");
 
   return (
     <Helmet>
@@ -96,7 +111,7 @@ export default function SEO({
       <meta name="twitter:description" content={resolvedDescription} />
       <meta name="twitter:image" content={ogImage} />
 
-      {structuredData && (
+      {shouldRenderStructuredData && structuredData && (
         <script type="application/ld+json">
           {JSON.stringify(structuredData)}
         </script>

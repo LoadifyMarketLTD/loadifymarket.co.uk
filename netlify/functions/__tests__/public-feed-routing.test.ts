@@ -48,9 +48,9 @@ describe('public XML route precedence', () => {
     }
   });
 
-  it('selects the unambiguous primary category relationship', () => {
+  it('selects the unambiguous primary category relationship used for Merchant product_type', () => {
     const source = readFileSync('netlify/functions/product-feed.ts', 'utf8');
-    expect(source).toContain('category:categories!categoryId ( slug )');
-    expect(source).not.toContain('categories ( slug )');
+    expect(source).toContain('category:categories!categoryId ( name )');
+    expect(source).not.toContain('categories ( name )');
   });
 });
