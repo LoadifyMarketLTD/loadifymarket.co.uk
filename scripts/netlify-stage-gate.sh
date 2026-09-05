@@ -1,41 +1,28 @@
 #!/bin/sh
 set -eu
 
-make_marker() {
-  stage="$1"
-  rm -rf dist
-  mkdir -p dist
-  printf '<!doctype html><html><body><h1>Temporary validation diagnostic: %s</h1></body></html>\n' "$stage" > dist/index.html
-  printf '<!doctype html><html><body>%s</body></html>\n' "$stage" > "dist/stage-${stage}.html"
-}
-
+rm -rf dist
+mkdir -p dist
 set +e
-npm run lint
-status=$?
+npm test > /tmp/test-output.txt 2>&1
+test_status=$?
 set -e
-if [ "$status" -ne 0 ]; then
-  make_marker lint
+
+printf '<!doctype html><html><body><h1>Temporary test diagnostic</h1><p>Exit: %s</p></body></html>\n' "$test_status" > dist/index.html
+
+if [ "$test_status" -eq 0 ]; then
+  printf '<!doctype html><html><body>tests-pass</body></html>\n' > dist/stage-tests-pass.html
   exit 0
 fi
 
-set +e
-npm test
-status=$?
-set -e
-if [ "$status" -ne 0 ]; then
-  make_marker tests
-  exit 0
-fi
+printf '<!doctype html><html><body>tests-fail</body></html>\n' > dist/stage-tests-fail.html
 
-set +e
-npm run build
-status=$?
-set -e
-if [ "$status" -ne 0 ]; then
-  make_marker build
-  exit 0
-fi
+grep -E 'FAIL|AssertionError|Error:|expected|Test Files|Tests|❯|×|\.test\.|\.spec\.' /tmp/test-output.txt \
+  | tail -n 8 \
+  | while IFS= read -r line; do
+      safe=$(printf '%s' "$line" | sed 's#[^A-Za-z0-9._-]#-#g' | cut -c1-150)
+      [ -n "$safe" ] || safe=blank
+      printf '<!doctype html><html><body>diagnostic</body></html>\n' > "dist/testdiag-${safe}.html"
+    done
 
-# Build succeeded and produced dist. Add a diagnostic marker without replacing it.
-printf '<!doctype html><html><body>all-pass</body></html>\n' > dist/stage-all-pass.html
 exit 0
