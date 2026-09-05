@@ -36,19 +36,19 @@ export default function WebMobileHeroBanner({ products, loading }: WebMobileHero
 
   return (
     <section
-      aria-label="Loadify Market mobile introduction"
+      aria-label="Loadify Market UK online marketplace"
       className="bg-[#F8F7F4] px-[var(--mob-side,16px)] pb-5 pt-7 text-[#0A234F]"
     >
       <p className="text-[9px] font-semibold uppercase tracking-[0.20em] text-[#8A7351]">
-        Built for UK sellers, brands &amp; wholesalers
+        UK online marketplace for buyers &amp; sellers
       </p>
 
       <h1 className="mt-4 max-w-[390px] font-serif text-[clamp(35px,10.5vw,48px)] font-normal leading-[1.01] tracking-[-0.035em] text-[#0A234F]">
-        The UK marketplace for independent sellers
+        Buy and sell products on a UK online marketplace
       </h1>
 
       <p className="mt-5 max-w-[430px] text-[14px] font-normal leading-[1.65] text-[#5A6578]">
-        A modern UK sales channel for independent sellers, brands and wholesalers. List products, manage marketplace orders and follow eligible payouts from one connected environment.
+        Discover products from marketplace sellers or build your own seller presence. Loadify connects product discovery, checkout, listings, orders and seller operations in one UK-operated marketplace.
       </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -64,7 +64,7 @@ export default function WebMobileHeroBanner({ products, loading }: WebMobileHero
           onClick={() => navigate('/catalog')}
           className="group inline-flex min-h-12 items-center gap-2 border-0 bg-transparent px-0 text-[13px] font-medium text-[#334155]"
         >
-          {hasLiveProducts ? 'Shop marketplace' : 'Explore marketplace'}
+          {hasLiveProducts ? 'Browse products' : 'Explore marketplace'}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
