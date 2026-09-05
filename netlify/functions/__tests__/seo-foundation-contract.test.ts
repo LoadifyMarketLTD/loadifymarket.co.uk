@@ -72,6 +72,16 @@ describe('SEO foundation contract', () => {
     }
   });
 
+  it('discovers active database categories and public seller storefronts without making them mandatory', () => {
+    const sitemapSource = read('netlify/functions/sitemap.ts');
+    expect(sitemapSource).toContain(".from('categories')");
+    expect(sitemapSource).toContain(".from('seller_stores')");
+    expect(sitemapSource).toContain(".from('seller_profiles_public')");
+    expect(sitemapSource).toContain(".eq('isActive', true)");
+    expect(sitemapSource).toContain('publicSellerIds');
+    expect(sitemapSource).toContain('`/seller/${encodeURIComponent(slug)}`');
+  });
+
   it('does not place private application routes into the sitemap', () => {
     const sitemapPaths = new Set(STATIC_PAGES.map((entry) => entry.loc));
     const privatePaths = ['/admin', '/buyer', '/seller', '/checkout', '/cart', '/login', '/register', '/inbox'];
@@ -110,6 +120,14 @@ describe('SEO foundation contract', () => {
       expect(redirectLine, `missing canonical redirect: ${from} -> ${to}`).toBeGreaterThan(-1);
       expect(redirectLine, `redirect must precede SPA fallback: ${from}`).toBeLessThan(spaFallbackLine);
     }
+  });
+
+  it('uses the real public seller name in server-rendered Product structured data', () => {
+    const productMeta = read('netlify/edge-functions/product-meta.ts');
+    expect(productMeta).toContain("seller_profiles_public");
+    expect(productMeta).toContain('fetchPublicSellerName');
+    expect(productMeta).toContain('name: sellerName');
+    expect(productMeta).not.toContain('name: SITE_NAME');
   });
 
   it('adds the site suffix exactly once', () => {
