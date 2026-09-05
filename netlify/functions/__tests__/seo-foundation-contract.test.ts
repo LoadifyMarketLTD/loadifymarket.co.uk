@@ -171,6 +171,15 @@ describe('SEO foundation contract', () => {
     }
   });
 
+  it('keeps desktop and mobile-web marketplace H1 copy aligned for mobile-first indexing', () => {
+    const desktopHero = read('src/components/HeroSection.tsx');
+    const mobileWebHero = read('src/components/WebMobileHeroBanner.tsx');
+    expect(desktopHero).toContain('Buy and sell products on');
+    expect(desktopHero).toContain('a UK online marketplace');
+    expect(mobileWebHero).toContain('Buy and sell products on a UK online marketplace');
+    expect(mobileWebHero).toContain("navigate('/catalog')");
+  });
+
   it('resolves canonical commercial metadata for relative and absolute URLs', () => {
     expect(getCommercialSeoMeta('/marketplace')).toEqual(COMMERCIAL_SEO_META['/marketplace']);
     expect(getCommercialSeoMeta('/marketplace/')).toEqual(COMMERCIAL_SEO_META['/marketplace']);
