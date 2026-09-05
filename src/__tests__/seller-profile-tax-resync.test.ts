@@ -14,6 +14,13 @@ describe('seller profile tax evidence recovery', () => {
     expect(sellerProfile).toContain('taxDeclarationConfirmed: requestedTaxConfirmation');
   });
 
+  it('updates the provisioned seller profile instead of using an ON CONFLICT insert path', () => {
+    expect(sellerProfile).toMatch(/from\("seller_profiles"\)\s*\.update\(/);
+    expect(sellerProfile).not.toMatch(/from\("seller_profiles"\)\s*\.upsert\(/);
+    expect(sellerProfile).toContain('.select("userId")');
+    expect(sellerProfile).toContain('Seller profile is missing. Please contact support before continuing.');
+  });
+
   it('reads back the persisted declaration instead of assuming the database accepted it', () => {
     expect(sellerProfile).toContain('persistedTaxConfirmed');
     expect(sellerProfile).toContain('setTaxDeclarationConfirmed(persistedTaxConfirmed)');
