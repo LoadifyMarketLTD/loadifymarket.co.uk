@@ -27,11 +27,14 @@ describe('admin onboarding reminder delivery contract', () => {
     expect(source).toContain('eligible: sellers.length');
   });
 
-  it('uses the internal email gate and only succeeds after SendGrid resolves', () => {
+  it('uses the internal email gate and only succeeds after Resend accepts the email', () => {
     const email = read('netlify/functions/send-email.ts');
     expect(email).toContain("const internalSecret = process.env.NETLIFY_INTERNAL_SECRET");
     expect(email).toContain("template === 'contact_enquiry'");
-    expect(email).toContain('await sgMail.send(msg)');
+    expect(email).toContain("const resendApiKey = process.env.RESEND_API_KEY");
+    expect(email).toContain("fetch('https://api.resend.com/emails'");
+    expect(email).toContain('if (!response.ok)');
+    expect(email).toContain("if (!providerResult.id)");
     expect(email).toContain("message: 'Email sent'");
   });
 });
