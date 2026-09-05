@@ -3,6 +3,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const apiKey = process.env.SENDGRID_API_KEY || '';
 const fromEmail = process.env.SENDGRID_FROM_EMAIL || '';
 const diagnosticRecipient = process.env.VITE_SUPPORT_EMAIL || 'loadifymarket.co.uk@gmail.com';
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const diagnosticContext = 'sendgrid-sandbox-preflight-20260905';
 
 const output = {
   generatedAt: new Date().toISOString(),
@@ -58,3 +61,43 @@ if (!apiKey || !fromEmail) {
 mkdirSync('public', { recursive: true });
 writeFileSync('public/sendgrid-preflight.json', `${JSON.stringify(output, null, 2)}\n`, 'utf8');
 console.log(`SendGrid sandbox preflight: status=${output.status ?? 'n/a'} ok=${output.ok}`);
+
+// Diagnostic branch only: persist the sanitized provider result to an existing
+// server-only reporting table so it can be read through the connected Supabase
+// management API. No API key, secret or recipient address is stored.
+if (supabaseUrl && serviceRoleKey) {
+  const diagnosticMessage = JSON.stringify({
+    sandboxMode: output.sandboxMode,
+    deliveredEmail: output.deliveredEmail,
+    apiKeyConfigured: output.apiKeyConfigured,
+    fromConfigured: output.fromConfigured,
+    configuredFromDomain: output.configuredFromDomain,
+    status: output.status,
+    ok: output.ok,
+    providerError: output.providerError,
+  });
+
+  try {
+    const persistResponse = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/error_reports`, {
+      method: 'POST',
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        message: diagnosticMessage,
+        url: 'netlify-deploy-preview-sendgrid-sandbox',
+        userAgent: 'netlify-build-diagnostic',
+        context: diagnosticContext,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+    if (!persistResponse.ok) {
+      console.warn(`SendGrid preflight diagnostic persistence failed with HTTP ${persistResponse.status}`);
+    }
+  } catch (error) {
+    console.warn('SendGrid preflight diagnostic persistence failed:', error instanceof Error ? error.message : 'unknown error');
+  }
+}
