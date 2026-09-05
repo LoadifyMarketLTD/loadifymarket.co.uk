@@ -23,6 +23,18 @@ interface SEOProps {
   structuredData?: Record<string, unknown>;
 }
 
+export function buildSeoTitle(title: string): string {
+  const normalized = title.trim();
+  if (
+    normalized === SITE_NAME
+    || normalized.startsWith(`${SITE_NAME} |`)
+    || normalized.endsWith(` | ${SITE_NAME}`)
+  ) {
+    return normalized;
+  }
+  return `${normalized} | ${SITE_NAME}`;
+}
+
 /**
  * SEO — per-page <head> tags via react-helmet-async.
  *
@@ -41,9 +53,7 @@ export default function SEO({
   ogPriceCurrency = "GBP",
   structuredData,
 }: SEOProps) {
-  const fullTitle = title.endsWith(` | ${SITE_NAME}`) || title === SITE_NAME
-    ? title
-    : `${title} | ${SITE_NAME}`;
+  const fullTitle = buildSeoTitle(title);
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
       ? canonical
