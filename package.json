@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run verify:migrations && vitest run netlify/functions/__tests__/admin-payout-security-boundary.test.ts netlify/functions/__tests__/public-api-default-privilege-contract.test.ts && tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "preview": "vite preview",
