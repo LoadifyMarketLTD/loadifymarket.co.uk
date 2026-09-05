@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 const root = process.cwd();
 const stageAPath = 'supabase/migrations/20260904224920_server_admin_payout_rpc_boundary.sql';
+const stageBPath = 'supabase/migrations/20260905193005_admin_payout_legacy_client_execute_closure.sql';
 
 function read(path: string): string {
   return readFileSync(join(root, path), 'utf8');
@@ -52,6 +53,18 @@ describe('admin payout security boundary', () => {
     expect(sql).not.toContain('REVOKE ALL ON FUNCTION public.approve_payout(uuid)');
     expect(sql).not.toContain('REVOKE ALL ON FUNCTION public.complete_payout(uuid)');
     expect(sql).not.toContain('REVOKE ALL ON FUNCTION public.reject_payout(uuid, text)');
+  });
+
+  it('closes authenticated execution of the legacy browser payout RPCs only after the server boundary', () => {
+    const sql = read(stageBPath);
+
+    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.approve_payout(uuid) FROM authenticated');
+    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.complete_payout(uuid) FROM authenticated');
+    expect(sql).toContain('REVOKE EXECUTE ON FUNCTION public.reject_payout(uuid, text) FROM authenticated');
+    expect(sql).toContain("has_function_privilege('authenticated', 'public.approve_payout(uuid)', 'EXECUTE')");
+    expect(sql).toContain("'service_role',");
+    expect(sql).toContain("'public.server_admin_payout_action_v1(uuid,text,uuid,text)',");
+    expect(sql).not.toContain('REVOKE EXECUTE ON FUNCTION public.server_admin_payout_action_v1');
   });
 
   it('preserves the existing payout audit action and payload contract', () => {
