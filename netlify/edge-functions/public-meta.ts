@@ -1,4 +1,5 @@
 import type { Config, Context } from '@netlify/edge-functions';
+import { COMMERCIAL_SEO_META } from '../../src/lib/commercialSeo.ts';
 
 const BASE_URL = 'https://loadifymarket.co.uk';
 
@@ -8,33 +9,10 @@ type PageMeta = {
 };
 
 const PAGE_META: Record<string, PageMeta> = {
-  '/marketplace': {
-    title: 'UK Marketplace for Buyers & Serious Sellers | Loadify Market',
-    description: 'Shop products or start selling on Loadify Market. Stripe-powered checkout, order tracking and seller tools in one UK-operated marketplace.',
-  },
+  ...COMMERCIAL_SEO_META,
   '/platform': {
     title: 'Loadify Market Platform | Marketplace for Buyers, Sellers & Business',
     description: 'Explore Loadify Market — a UK-operated marketplace with connected buyer and seller environments, marketplace ordering, tracking and controlled business integration paths.',
-  },
-  '/buyers': {
-    title: 'Buy on Loadify Market | Buyer Marketplace & Order Management',
-    description: 'Browse products, checkout through Loadify Market and manage orders, tracking, favourites, reviews and account activity from Buyer Space.',
-  },
-  '/sellers': {
-    title: 'Sell on Loadify Market | Marketplace Tools for Sellers',
-    description: "Discover Loadify Market's seller environment for product listings, orders, shipments, returns, reviews, messages and marketplace account management.",
-  },
-  '/business': {
-    title: 'Loadify Business | Trade Buyers, Suppliers, Brands & Wholesalers',
-    description: "Explore Loadify Market's business paths for trade buyers, suppliers, brands and wholesalers.",
-  },
-  '/trade': {
-    title: 'Loadify Trade | Marketplace Access for Business Buyers',
-    description: 'Register a Loadify trade buyer account for business purchasing and access the marketplace through a dedicated buyer registration path.',
-  },
-  '/suppliers': {
-    title: 'Become a Loadify Supplier | Brands, Wholesalers & Product Partners',
-    description: 'Learn how brands, wholesalers, distributors and suppliers can discuss marketplace participation and controlled supplier integration with Loadify Market.',
   },
   '/technology': {
     title: 'Loadify Technology | Integrations & Developer Context',

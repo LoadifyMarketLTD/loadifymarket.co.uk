@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { STATIC_PAGES } from '../sitemap';
+import { COMMERCIAL_SEO_META, getCommercialSeoMeta } from '../../../src/lib/commercialSeo';
 import { buildSeoTitle } from '../../../src/lib/seo';
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
@@ -44,14 +45,19 @@ const PUBLIC_POLICY_ROUTES = [
   '/acceptable-use-policy',
 ] as const;
 
-const PUBLIC_META_ROUTES = [
+const COMMERCIAL_META_ROUTES = [
+  '/',
   '/marketplace',
-  '/platform',
+  '/catalog',
   '/buyers',
   '/sellers',
   '/business',
   '/trade',
   '/suppliers',
+] as const;
+
+const EDGE_ONLY_PUBLIC_META_ROUTES = [
+  '/platform',
   '/technology',
   '/integrations',
   '/partners',
@@ -146,10 +152,47 @@ describe('SEO foundation contract', () => {
     expect(productMeta).not.toContain('name: SITE_NAME');
   });
 
-  it('serves canonical route metadata to non-JavaScript crawlers only on approved public routes', () => {
+  it('keeps Level 2 commercial metadata mapped to distinct public search intents', () => {
+    expect(Object.keys(COMMERCIAL_SEO_META)).toEqual(COMMERCIAL_META_ROUTES);
+
+    expect(COMMERCIAL_SEO_META['/'].title).toContain('UK Online Marketplace');
+    expect(COMMERCIAL_SEO_META['/marketplace'].title).toContain('Buy & Sell Products');
+    expect(COMMERCIAL_SEO_META['/catalog'].title).toContain('Shop Products Online');
+    expect(COMMERCIAL_SEO_META['/buyers'].title).toContain('Buy Products Online');
+    expect(COMMERCIAL_SEO_META['/sellers'].title).toContain('Sell Products Online');
+    expect(COMMERCIAL_SEO_META['/business'].title).toContain('B2B Marketplace UK');
+    expect(COMMERCIAL_SEO_META['/trade'].title).toContain('Trade Buyers');
+    expect(COMMERCIAL_SEO_META['/suppliers'].title).toContain('Suppliers, Brands & Wholesalers');
+
+    for (const [path, meta] of Object.entries(COMMERCIAL_SEO_META)) {
+      expect(meta.title.length, `title too long: ${path}`).toBeLessThanOrEqual(70);
+      expect(meta.description.length, `description too short: ${path}`).toBeGreaterThanOrEqual(120);
+      expect(meta.description.length, `description too long: ${path}`).toBeLessThanOrEqual(165);
+    }
+  });
+
+  it('keeps desktop and mobile-web marketplace H1 copy aligned for mobile-first indexing', () => {
+    const desktopHero = read('src/components/HeroSection.tsx');
+    const mobileWebHero = read('src/components/WebMobileHeroBanner.tsx');
+    expect(desktopHero).toContain('Buy and sell products on');
+    expect(desktopHero).toContain('a UK online marketplace');
+    expect(mobileWebHero).toContain('Buy and sell products on a UK online marketplace');
+    expect(mobileWebHero).toContain("navigate('/catalog')");
+  });
+
+  it('resolves canonical commercial metadata for relative and absolute URLs', () => {
+    expect(getCommercialSeoMeta('/marketplace')).toEqual(COMMERCIAL_SEO_META['/marketplace']);
+    expect(getCommercialSeoMeta('/marketplace/')).toEqual(COMMERCIAL_SEO_META['/marketplace']);
+    expect(getCommercialSeoMeta('https://loadifymarket.co.uk/business?source=test')).toEqual(COMMERCIAL_SEO_META['/business']);
+    expect(getCommercialSeoMeta('/admin')).toBeUndefined();
+  });
+
+  it('serves shared commercial metadata and approved route metadata to non-JavaScript crawlers', () => {
     const publicMeta = read('netlify/edge-functions/public-meta.ts');
-    for (const path of PUBLIC_META_ROUTES) {
-      expect(publicMeta, `missing public metadata route: ${path}`).toContain(`'${path}':`);
+    expect(publicMeta).toContain("COMMERCIAL_SEO_META");
+    expect(publicMeta).toContain('...COMMERCIAL_SEO_META');
+    for (const path of EDGE_ONLY_PUBLIC_META_ROUTES) {
+      expect(publicMeta, `missing edge-only public metadata route: ${path}`).toContain(`'${path}':`);
     }
     expect(publicMeta).toContain('`${BASE_URL}${pathname}`');
     expect(publicMeta).toContain('name="description"');

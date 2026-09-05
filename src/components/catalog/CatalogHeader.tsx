@@ -34,10 +34,10 @@ const CatalogHeader = ({
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
         <h1 className={`text-2xl sm:text-3xl font-display font-bold ${light ? "text-[#0A234F]" : "text-foreground"}`}>
-          Browse Listings
+          Shop Marketplace Products
         </h1>
         <p className={`text-sm mt-1 ${light ? "text-slate-600" : "text-muted-foreground"}`}>
-          {totalResults.toLocaleString()} {totalResults === 1 ? "result" : "results"} found
+          Browse {totalResults.toLocaleString()} {totalResults === 1 ? "live marketplace listing" : "live marketplace listings"}
         </p>
       </div>
 
