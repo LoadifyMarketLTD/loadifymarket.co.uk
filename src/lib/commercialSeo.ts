@@ -29,7 +29,7 @@ export const COMMERCIAL_SEO_META = {
     description: 'Explore Loadify Market for business buying, trade accounts, suppliers, brands and wholesalers, with dedicated routes for each commercial role.',
   },
   '/trade': {
-    title: 'B2B Marketplace for UK Trade Buyers | Loadify Trade',
+    title: 'B2B Marketplace for UK Trade Buyers | Loadify Market',
     description: 'Register as a trade buyer and source products through Loadify Market using a dedicated business purchasing path for traders, companies and organisations.',
   },
   '/suppliers': {
