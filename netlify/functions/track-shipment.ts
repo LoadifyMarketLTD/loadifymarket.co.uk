@@ -47,13 +47,16 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
     }
 
-    const { orderNumber, order_id, email } = body;
-    if (!orderNumber && !order_id) {
+    const normalizedOrderNumber = typeof body.orderNumber === 'string' ? body.orderNumber.trim() : '';
+    const normalizedOrderId = typeof body.order_id === 'string' ? body.order_id.trim() : '';
+    const normalizedEmail = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+
+    if (!normalizedOrderNumber && !normalizedOrderId) {
       return { statusCode: 400, body: JSON.stringify({ error: 'orderNumber or order_id is required' }) };
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
+    if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'A valid email is required to look up an order' }) };
     }
 
@@ -75,7 +78,9 @@ export const handler: Handler = async (event) => {
         users!orders_sellerId_fkey (id, firstName, lastName)
       `);
 
-    query = orderNumber ? query.eq('orderNumber', orderNumber) : query.eq('id', order_id!);
+    query = normalizedOrderNumber
+      ? query.eq('orderNumber', normalizedOrderNumber)
+      : query.eq('id', normalizedOrderId);
     const { data: order, error: orderError } = await query.maybeSingle();
     if (orderError || !order) return genericLookupFailure;
 
@@ -96,7 +101,7 @@ export const handler: Handler = async (event) => {
       expectedBuyerEmail = buyer?.email?.trim() || '';
     }
 
-    if (!expectedBuyerEmail || expectedBuyerEmail.toLowerCase() !== email.toLowerCase()) {
+    if (!expectedBuyerEmail || expectedBuyerEmail.toLowerCase() !== normalizedEmail) {
       return genericLookupFailure;
     }
 
