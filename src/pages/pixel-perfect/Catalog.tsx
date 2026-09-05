@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
-import type { DBProduct } from "@/lib/productAdapter";
+import type { DBProduct, PublicSellerCardData } from "@/lib/productAdapter";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
@@ -25,14 +25,14 @@ const PRODUCT_QUERY = `
 /** Fetch seller info for a list of seller IDs from seller_profiles_public */
 async function fetchSellerMap(
   sellerIds: string[],
-): Promise<Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>> {
-  const map = new Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>();
+): Promise<Map<string, PublicSellerCardData>> {
+  const map = new Map<string, PublicSellerCardData>();
   if (sellerIds.length === 0) return map;
   const { data } = await supabase
     .from("seller_profiles_public")
-    .select("userId, businessName, isApproved, rating")
+    .select("userId, businessName, isApproved, rating, businessAddress")
     .in("userId", sellerIds);
-  (data ?? []).forEach((row: { userId?: string; businessName?: string; isApproved?: boolean; rating?: number }) => {
+  (data ?? []).forEach((row: PublicSellerCardData) => {
     if (row.userId) map.set(row.userId, row);
   });
   return map;
@@ -178,7 +178,7 @@ const Catalog = () => {
       const rows = data || [];
       const sellerIds = [...new Set(rows.map((p: Record<string, unknown>) => p.sellerId as string).filter(Boolean))];
 
-      // Step 3: Fetch seller_profiles by userId
+      // Step 3: Fetch seller_profiles by userId, including public city/country.
       const sellerMap = await fetchSellerMap(sellerIds);
 
       // Step 4: Merge seller data and normalise category arrays
