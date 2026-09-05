@@ -1,4 +1,4 @@
-import type { Handler, HandlerResponse } from '@netlify/functions';
+import type { Handler, HandlerEvent, HandlerResponse } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './activeAccountAuth';
 import {
@@ -66,7 +66,7 @@ function hasAuthoritativeGbTaxLocation(seller: SellerTaxRow): boolean {
 }
 
 async function repairRequestedProductEvidence(
-  event: Parameters<Handler>[0],
+  event: HandlerEvent,
 ): Promise<HandlerResponse | null> {
   if (event.httpMethod !== 'POST') return null;
 
