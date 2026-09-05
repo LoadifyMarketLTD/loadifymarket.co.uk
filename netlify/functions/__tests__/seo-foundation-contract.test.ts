@@ -98,14 +98,17 @@ describe('SEO foundation contract', () => {
 
   it('uses crawler-visible 301 redirects for canonical public aliases before the SPA fallback', () => {
     const redirects = read('public/_redirects');
-    const spaFallbackIndex = redirects.indexOf('/*         /index.html     200');
-    expect(spaFallbackIndex).toBeGreaterThan(-1);
+    const lines = redirects.split('\n');
+    const spaFallbackLine = lines.findIndex((line) => line.trim().startsWith('/*') && line.includes('/index.html'));
+    expect(spaFallbackLine).toBeGreaterThan(-1);
 
     for (const [from, to] of CANONICAL_REDIRECTS) {
-      const redirectPattern = new RegExp(`^${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '\\S+')}\\s+${to.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+301!$`, 'm');
-      expect(redirects, `missing canonical redirect: ${from} -> ${to}`).toMatch(redirectPattern);
-      const redirectIndex = redirects.search(redirectPattern);
-      expect(redirectIndex, `redirect must precede SPA fallback: ${from}`).toBeLessThan(spaFallbackIndex);
+      const redirectLine = lines.findIndex((line) => {
+        const fields = line.trim().split(/\s+/);
+        return fields[0] === from && fields[1] === to && fields[2] === '301!';
+      });
+      expect(redirectLine, `missing canonical redirect: ${from} -> ${to}`).toBeGreaterThan(-1);
+      expect(redirectLine, `redirect must precede SPA fallback: ${from}`).toBeLessThan(spaFallbackLine);
     }
   });
 
