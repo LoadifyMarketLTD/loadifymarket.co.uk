@@ -37,6 +37,22 @@ describe('postgrestCatchCompat', () => {
     expect(typeof tableBuilder.catch).toBe('function');
   });
 
+  it('adds catch to the detached rpc.call shape used by create-checkout', () => {
+    installPostgrestCatchCompat();
+
+    const client = createClient('https://example.supabase.co', 'public-anon-probe-key', {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const detachedRpc = client.rpc as unknown as {
+      call: (receiver: typeof client, fn: string) => { catch?: unknown; then?: unknown };
+    };
+    const rpcBuilder = detachedRpc.call(client, '__loadify_probe_rpc__');
+
+    expect(typeof rpcBuilder.then).toBe('function');
+    expect(typeof rpcBuilder.catch).toBe('function');
+  });
+
   it('derives an exact mutation count from returned reservation rows for the legacy checkout call shape', async () => {
     installPostgrestCatchCompat();
 

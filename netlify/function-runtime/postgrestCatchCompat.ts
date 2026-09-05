@@ -21,7 +21,13 @@ type BuilderLike = {
   method?: unknown;
 };
 
+type RpcFactoryLike = {
+  rpc?: (...args: unknown[]) => unknown;
+  [key: symbol]: unknown;
+};
+
 const MUTATION_COUNT_COMPAT_MARKER = Symbol.for('loadify.postgrest.mutation-count-compat');
+const RPC_CATCH_FACTORY_COMPAT_MARKER = Symbol.for('loadify.postgrest.rpc-catch-factory-compat');
 let installed = false;
 
 function addCatchToThenablePrototype(value: unknown): void {
@@ -43,6 +49,55 @@ function addCatchToThenablePrototype(value: unknown): void {
       return;
     }
     prototype = Object.getPrototypeOf(prototype) as Record<PropertyKey, unknown> | null;
+  }
+}
+
+function addCatchDirectly(value: unknown): void {
+  if (!value || (typeof value !== 'object' && typeof value !== 'function')) return;
+
+  const thenable = value as ThenableWithCatch;
+  if (typeof thenable.then !== 'function' || typeof thenable.catch === 'function') return;
+
+  Object.defineProperty(thenable, 'catch', {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value(this: ThenableWithCatch, onRejected: CatchHandler) {
+      return Promise.resolve(this).catch(onRejected);
+    },
+  });
+}
+
+function installRpcCatchFactoryCompat(client: unknown): void {
+  if (!client || (typeof client !== 'object' && typeof client !== 'function')) return;
+
+  let prototype = Object.getPrototypeOf(client) as RpcFactoryLike | null;
+  while (prototype && prototype !== Object.prototype) {
+    const originalRpc = prototype.rpc;
+    if (typeof originalRpc === 'function') {
+      if (prototype[RPC_CATCH_FACTORY_COMPAT_MARKER] === true) return;
+
+      Object.defineProperty(prototype, 'rpc', {
+        configurable: true,
+        enumerable: false,
+        writable: true,
+        value(this: unknown, ...args: unknown[]) {
+          const result = originalRpc.apply(this, args);
+          addCatchToThenablePrototype(result);
+          addCatchDirectly(result);
+          return result;
+        },
+      });
+
+      Object.defineProperty(prototype, RPC_CATCH_FACTORY_COMPAT_MARKER, {
+        configurable: false,
+        enumerable: false,
+        writable: false,
+        value: true,
+      });
+      return;
+    }
+    prototype = Object.getPrototypeOf(prototype) as RpcFactoryLike | null;
   }
 }
 
@@ -112,6 +167,12 @@ function addLegacyMutationCountCompat(value: unknown): void {
  * number of legacy checkout paths use `.catch` for best-effort cleanup/RPC
  * calls, which otherwise throws synchronously before the query can run.
  *
+ * The RPC factory is wrapped as well as the shared builder prototype. This is
+ * intentionally redundant: Netlify's bundled runtime can materialise an RPC
+ * thenable whose concrete object does not inherit the probe object's patched
+ * prototype. Decorating each rpc() result guarantees the legacy detached
+ * `rpc.call(client, ...)` checkout path receives Promise-style `.catch`.
+ *
  * The same legacy payment paths use mutation.select('id', { count:'exact',
  * head:true }) to determine whether an atomic reservation UPDATE matched one
  * row. In the installed supabase-js version the mutation select overload ignores
@@ -132,8 +193,12 @@ export function installPostgrestCatchCompat(): void {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  installRpcCatchFactoryCompat(probe);
+
+  const rpcProbe = probe.rpc('__loadify_probe_rpc__');
+  addCatchToThenablePrototype(rpcProbe);
+  addCatchDirectly(rpcProbe);
   addCatchToThenablePrototype(probe.from('__loadify_probe__').select('*'));
-  addCatchToThenablePrototype(probe.rpc('__loadify_probe_rpc__'));
   addLegacyMutationCountCompat(
     probe.from('__loadify_probe__').update({ marker: true }).eq('id', '__probe__'),
   );
