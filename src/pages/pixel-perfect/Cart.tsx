@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
+import { calculateCheckoutVat } from "@/lib/checkoutTaxDisplay";
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, subtotal, priceChangedBanner, dismissPriceBanner, refreshCartPrices } = useCart();
@@ -33,9 +34,7 @@ const Cart = () => {
   const isMultiSellerCart = uniqueSellerIds.size > 1;
   const isCheckoutBlocked = isMultiSellerCart || ownProductIds.length > 0;
 
-  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
-  // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
-  const vat = Math.round(subtotal / 6);
+  const vat = calculateCheckoutVat(cartItems);
   const total = subtotal;
 
   if (cartItems.length === 0) {
@@ -230,10 +229,17 @@ const Cart = () => {
                     <span className="text-muted-foreground">Delivery</span>
                     <span className="font-medium text-muted-foreground italic">Set by seller</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">VAT (20%)</span>
-                    <span className="font-medium text-foreground">£{vat.toLocaleString()}</span>
-                  </div>
+                  {vat !== null ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">VAT — not charged by seller</span>
+                      <span className="font-medium text-foreground">£{vat.toFixed(2)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">VAT</span>
+                      <span className="font-medium text-muted-foreground italic">Calculated at checkout</span>
+                    </div>
+                  )}
                   <div className="border-t border-border pt-3 flex items-center justify-between">
                     <span className="font-display font-semibold text-foreground">Total</span>
                     <span className="font-display text-xl font-bold text-foreground">£{total.toLocaleString()}</span>
