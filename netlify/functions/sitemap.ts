@@ -2,7 +2,7 @@
  * GET /.netlify/functions/sitemap   (reachable as /sitemap.xml via netlify.toml redirect)
  *
  * Returns a complete XML sitemap containing:
- *   1. All static pages (identical to the original public/sitemap.xml).
+ *   1. All indexable static/public pages.
  *   2. Every currently sellable, approved product page — /product/:id.
  *
  * Products are fetched with the public anon key. Reserved listings and physical
@@ -22,8 +22,21 @@ const BASE_URL = 'https://loadifymarket.co.uk';
 
 type StaticEntry = { loc: string; changefreq: string; priority: string };
 
-const STATIC_PAGES: StaticEntry[] = [
+export const STATIC_PAGES: StaticEntry[] = [
   { loc: '/',                                       changefreq: 'daily',   priority: '1.0' },
+  { loc: '/marketplace',                            changefreq: 'daily',   priority: '0.9' },
+  { loc: '/platform',                               changefreq: 'weekly',  priority: '0.8' },
+  { loc: '/buyers',                                 changefreq: 'weekly',  priority: '0.8' },
+  { loc: '/sellers',                                changefreq: 'weekly',  priority: '0.8' },
+  { loc: '/business',                               changefreq: 'weekly',  priority: '0.8' },
+  { loc: '/trade',                                  changefreq: 'weekly',  priority: '0.8' },
+  { loc: '/suppliers',                              changefreq: 'weekly',  priority: '0.8' },
+  { loc: '/technology',                             changefreq: 'monthly', priority: '0.7' },
+  { loc: '/integrations',                           changefreq: 'monthly', priority: '0.7' },
+  { loc: '/partners',                               changefreq: 'monthly', priority: '0.7' },
+  { loc: '/developers',                             changefreq: 'monthly', priority: '0.6' },
+  { loc: '/how-it-works',                           changefreq: 'monthly', priority: '0.7' },
+  { loc: '/trust',                                  changefreq: 'monthly', priority: '0.7' },
   { loc: '/catalog',                                changefreq: 'daily',   priority: '0.9' },
   { loc: '/category/large-letter-items',            changefreq: 'weekly',  priority: '0.8' },
   { loc: '/category/garden',                        changefreq: 'weekly',  priority: '0.8' },
@@ -55,6 +68,7 @@ const STATIC_PAGES: StaticEntry[] = [
   { loc: '/faq',                                    changefreq: 'monthly', priority: '0.6' },
   { loc: '/contact',                                changefreq: 'monthly', priority: '0.6' },
   { loc: '/about',                                  changefreq: 'monthly', priority: '0.5' },
+  { loc: '/wholesale-info',                         changefreq: 'monthly', priority: '0.6' },
   { loc: '/track-order',                            changefreq: 'monthly', priority: '0.5' },
   { loc: '/terms',                                  changefreq: 'yearly',  priority: '0.4' },
   { loc: '/privacy',                                changefreq: 'yearly',  priority: '0.4' },
@@ -64,6 +78,9 @@ const STATIC_PAGES: StaticEntry[] = [
   { loc: '/buyer-terms',                            changefreq: 'yearly',  priority: '0.4' },
   { loc: '/seller-terms',                           changefreq: 'yearly',  priority: '0.4' },
   { loc: '/seller-guidelines',                      changefreq: 'yearly',  priority: '0.4' },
+  { loc: '/seller-verification-policy',             changefreq: 'yearly',  priority: '0.4' },
+  { loc: '/prohibited-items-policy',                changefreq: 'yearly',  priority: '0.4' },
+  { loc: '/ip-trademark-complaints',                changefreq: 'yearly',  priority: '0.4' },
   { loc: '/disclaimer',                             changefreq: 'yearly',  priority: '0.4' },
   { loc: '/acceptable-use-policy',                  changefreq: 'yearly',  priority: '0.4' },
 ];
