@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 
-npx eslint src
+npm run lint
