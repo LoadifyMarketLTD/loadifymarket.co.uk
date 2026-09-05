@@ -1,19 +1,52 @@
 User-agent: *
 Allow: /
 
-# Disallow auth-gated dashboard routes — no SEO value and wastes crawl budget.
+# Private dashboards and authenticated app surfaces — no SEO value.
 Disallow: /pp/
 Disallow: /admin
 Disallow: /buyer
-Disallow: /seller
+Disallow: /inbox
+Disallow: /orders
+Disallow: /profile
+Disallow: /welcome
+Disallow: /onboarding
 
-# Disallow transactional and auth-only pages — no SEO value.
+# /seller/:slug is a public seller profile and should remain crawlable.
+# Keep the exact seller dashboard and its reserved private sub-routes blocked.
+Disallow: /seller
+Allow: /seller/
+Disallow: /seller/products
+Disallow: /seller/setup
+Disallow: /seller/analytics
+Disallow: /seller/payouts
+Disallow: /seller/profile
+Disallow: /seller/orders
+Disallow: /seller/shipments
+Disallow: /seller/returns
+Disallow: /seller/rfq
+Disallow: /seller/reviews
+Disallow: /seller/settings
+Disallow: /seller/notifications
+Disallow: /seller/messages
+Disallow: /seller/promote
+Disallow: /seller/mobile-payments
+
+# Transactional, authentication and redirect-only utility routes.
 Disallow: /checkout
 Disallow: /cart
 Disallow: /order-success
 Disallow: /login
 Disallow: /register
+Disallow: /signup
 Disallow: /forgot-password
 Disallow: /reset-password
+Disallow: /auth/
+Disallow: /trade-account
+Disallow: /sell
+Disallow: /tracking/
+Disallow: /dashboard
+Disallow: /seller-register
+Disallow: /seller-dashboard
+Disallow: /admin-dashboard
 
 Sitemap: https://loadifymarket.co.uk/sitemap.xml
