@@ -44,11 +44,18 @@ async function sendInternalEmail(
       ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET }
       : {}),
   };
-  await fetch(`${appUrl}/.netlify/functions/send-email`, {
+  const response = await fetch(`${appUrl}/.netlify/functions/send-email`, {
     method: 'POST',
     headers: internalHeaders,
     body: JSON.stringify(payload),
   });
+
+  // A resolved fetch only proves that an HTTP response was received. The
+  // send-email function returns non-2xx when SendGrid/config/auth fails, so the
+  // admin action must fail closed instead of reporting a false successful send.
+  if (!response.ok) {
+    throw new Error(`send-email failed with HTTP ${response.status}`);
+  }
 }
 
 /** Build a display name from a user row, falling back to email. */
@@ -341,7 +348,26 @@ export const handler: Handler = async (event) => {
           }),
         );
         const sent = results.filter((r) => r.status === 'fulfilled').length;
-        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sent }) };
+        const failed = results.length - sent;
+
+        if (failed > 0) {
+          return {
+            statusCode: 502,
+            headers: JSON_HEADERS,
+            body: JSON.stringify({
+              error: `Failed to send ${failed} of ${sellers.length} onboarding reminder${sellers.length === 1 ? '' : 's'}`,
+              sent,
+              failed,
+              eligible: sellers.length,
+            }),
+          };
+        }
+
+        return {
+          statusCode: 200,
+          headers: JSON_HEADERS,
+          body: JSON.stringify({ sent, failed: 0, eligible: sellers.length }),
+        };
       }
 
       return {
