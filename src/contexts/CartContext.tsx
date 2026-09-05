@@ -5,8 +5,14 @@ import { safeLocalStorage } from "@/lib/safeStorage";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
 import { supabase } from "@/lib/supabase";
 
+type CartTaxProduct = Product & {
+  vatRate?: number | null;
+  taxTreatmentStatus?: string | null;
+  taxTreatmentSource?: string | null;
+};
+
 export interface CartItem {
-  product: Product;
+  product: CartTaxProduct;
   quantity: number;
 }
 
@@ -140,7 +146,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, price, isActive, isApproved, listingStatus, listingContext, stockQuantity")
+        .select("id, price, isActive, isApproved, listingStatus, listingContext, stockQuantity, vatRate, taxTreatmentStatus, taxTreatmentSource")
         .in("id", productIds);
 
       if (error || !data) return;
@@ -153,6 +159,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         listingStatus: string | null;
         listingContext: string | null;
         stockQuantity: number | null;
+        vatRate: number | null;
+        taxTreatmentStatus: string | null;
+        taxTreatmentSource: string | null;
       };
       const dbMap = new Map<string, DBRow>(data.map((row: DBRow) => [row.id, row]));
 
@@ -172,9 +181,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           const maxPurchaseQuantity = row.listingContext === "service"
             ? undefined
             : Math.max(0, Math.floor(Number(row.stockQuantity ?? 0)));
-          const nextProduct: Product = {
+          const nextProduct: CartTaxProduct = {
             ...item.product,
             price: Number(row.price),
+            vatRate: row.vatRate == null ? null : Number(row.vatRate),
+            taxTreatmentStatus: row.taxTreatmentStatus,
+            taxTreatmentSource: row.taxTreatmentSource,
             isAvailable: true,
             availabilityMessage: undefined,
             maxPurchaseQuantity,
