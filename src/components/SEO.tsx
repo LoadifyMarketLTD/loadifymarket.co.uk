@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { buildSeoTitle } from "@/lib/seo";
 
 const SITE_NAME = "Loadify Market";
 const BASE_URL = "https://loadifymarket.co.uk";
@@ -21,18 +22,6 @@ interface SEOProps {
   ogPriceCurrency?: string;
   /** Structured data to inject as a JSON-LD <script> in <head>. */
   structuredData?: Record<string, unknown>;
-}
-
-export function buildSeoTitle(title: string): string {
-  const normalized = title.trim();
-  if (
-    normalized === SITE_NAME
-    || normalized.startsWith(`${SITE_NAME} |`)
-    || normalized.endsWith(` | ${SITE_NAME}`)
-  ) {
-    return normalized;
-  }
-  return `${normalized} | ${SITE_NAME}`;
 }
 
 /**
