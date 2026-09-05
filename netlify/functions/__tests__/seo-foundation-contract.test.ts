@@ -44,6 +44,22 @@ const PUBLIC_POLICY_ROUTES = [
   '/acceptable-use-policy',
 ] as const;
 
+const PUBLIC_META_ROUTES = [
+  '/marketplace',
+  '/platform',
+  '/buyers',
+  '/sellers',
+  '/business',
+  '/trade',
+  '/suppliers',
+  '/technology',
+  '/integrations',
+  '/partners',
+  '/developers',
+  '/how-it-works',
+  '/trust',
+] as const;
+
 const CANONICAL_REDIRECTS = [
   ['/categories/*', '/category/:splat'],
   ['/clearance', '/deals'],
@@ -79,7 +95,7 @@ describe('SEO foundation contract', () => {
     expect(sitemapSource).toContain(".from('seller_profiles_public')");
     expect(sitemapSource).toContain(".eq('isActive', true)");
     expect(sitemapSource).toContain('publicSellerIds');
-    expect(sitemapSource).toContain('`/seller/${encodeURIComponent(slug)}`');
+    expect(sitemapSource).toContain('/seller/${encodeURIComponent(slug)}');
   });
 
   it('does not place private application routes into the sitemap', () => {
@@ -128,6 +144,21 @@ describe('SEO foundation contract', () => {
     expect(productMeta).toContain('fetchPublicSellerName');
     expect(productMeta).toContain('name: sellerName');
     expect(productMeta).not.toContain('name: SITE_NAME');
+  });
+
+  it('serves canonical route metadata to non-JavaScript crawlers only on approved public routes', () => {
+    const publicMeta = read('netlify/edge-functions/public-meta.ts');
+    for (const path of PUBLIC_META_ROUTES) {
+      expect(publicMeta, `missing public metadata route: ${path}`).toContain(`'${path}':`);
+    }
+    expect(publicMeta).toContain('`${BASE_URL}${pathname}`');
+    expect(publicMeta).toContain('name="description"');
+    expect(publicMeta).toContain('property="og:title"');
+    expect(publicMeta).toContain('name="twitter:title"');
+    expect(publicMeta).toContain('path: Object.keys(PAGE_META)');
+    expect(publicMeta).not.toContain("'/admin':");
+    expect(publicMeta).not.toContain("'/checkout':");
+    expect(publicMeta).not.toContain("'/product/':");
   });
 
   it('adds the site suffix exactly once', () => {
