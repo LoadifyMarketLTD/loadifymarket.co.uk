@@ -77,6 +77,11 @@
 [functions."escrow-release"]
   schedule = "0 2 * * *"
 
+# payment-session-cleanup is the canonical reconciliation loop for abandoned
+# Stripe Checkout/PaymentIntent sessions and stale awaiting-payment order locks.
+[functions."payment-session-cleanup"]
+  schedule = "*/5 * * * *"
+
 # ─── Edge Functions ───────────────────────────────────────────────────────────
 # EXECUTION ORDER matters: Netlify runs edge functions in the order declared
 # here.  For /product/:id requests:
