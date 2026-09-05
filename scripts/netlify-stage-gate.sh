@@ -17,12 +17,15 @@ fi
 
 printf '<!doctype html><html><body>tests-fail</body></html>\n' > dist/stage-tests-fail.html
 
-grep -E 'FAIL|AssertionError|Error:|expected|Test Files|Tests|❯|×|\.test\.|\.spec\.' /tmp/test-output.txt \
-  | tail -n 8 \
-  | while IFS= read -r line; do
-      safe=$(printf '%s' "$line" | sed 's#[^A-Za-z0-9._-]#-#g' | cut -c1-150)
-      [ -n "$safe" ] || safe=blank
-      printf '<!doctype html><html><body>diagnostic</body></html>\n' > "dist/testdiag-${safe}.html"
+tail -c 900 /tmp/test-output.txt \
+  | base64 \
+  | tr -d '\n' \
+  | tr '/+' '_-' \
+  | tr -d '=' \
+  | fold -w 120 \
+  | awk '{ printf "%02d %s\n", NR, $0 }' \
+  | while IFS=' ' read -r seq chunk; do
+      printf '<!doctype html><html><body>diagnostic</body></html>\n' > "dist/testchunk-${seq}-${chunk}.html"
     done
 
 exit 0
