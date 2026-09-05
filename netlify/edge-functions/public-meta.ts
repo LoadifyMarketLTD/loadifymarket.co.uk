@@ -52,11 +52,19 @@ function replaceMeta(html: string, selector: RegExp, replacement: string): strin
   return selector.test(html) ? html.replace(selector, replacement) : html;
 }
 
+function setRobots(html: string, robots: string): string {
+  const meta = `<meta name="robots" content="${escapeAttr(robots)}" />`;
+  const selector = /<meta name="robots" content="[^"]*"\s*\/?>/;
+  if (selector.test(html)) return html.replace(selector, meta);
+  return html.replace('</head>', `  ${meta}\n</head>`);
+}
+
 export default async function publicMeta(
   request: Request,
   context: Context,
 ): Promise<Response> {
-  const pathname = new URL(request.url).pathname.replace(/\/$/, '') || '/';
+  const requestUrl = new URL(request.url);
+  const pathname = requestUrl.pathname.replace(/\/$/, '') || '/';
   const meta = PAGE_META[pathname];
   if (!meta) return context.next();
 
@@ -106,6 +114,10 @@ export default async function publicMeta(
     /<meta name="twitter:description" content="[^"]*"\s*\/?>/,
     `<meta name="twitter:description" content="${description}" />`,
   );
+
+  if (pathname === '/catalog' && requestUrl.search.length > 0) {
+    html = setRobots(html, 'noindex, follow');
+  }
 
   if (/<link rel="canonical"/.test(html)) {
     html = html.replace(

@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { getCategorySeoLanding } from "@/lib/categorySeo";
 import { getCommercialSeoMeta } from "@/lib/commercialSeo";
 import { buildSeoTitle } from "@/lib/seo";
 
@@ -25,13 +26,25 @@ interface SEOProps {
   structuredData?: Record<string, unknown>;
 }
 
-/**
- * SEO — per-page <head> tags via react-helmet-async.
- *
- * Renders title, description, canonical link, Open Graph tags, and Twitter
- * card tags for every page that mounts it.  Wrap the app in <HelmetProvider>
- * (see main.tsx) to enable helmet context.
- */
+function canonicalPath(canonical?: string): string | undefined {
+  if (!canonical) return undefined;
+  try {
+    const path = canonical.startsWith("http")
+      ? new URL(canonical).pathname
+      : canonical.split(/[?#]/, 1)[0];
+    if (!path) return undefined;
+    return path === "/" ? "/" : path.replace(/\/$/, "");
+  } catch {
+    return undefined;
+  }
+}
+
+function categoryMeta(canonical?: string) {
+  const path = canonicalPath(canonical);
+  const match = path?.match(/^\/category\/([a-z0-9-]+)$/i);
+  return match ? getCategorySeoLanding(match[1]) : undefined;
+}
+
 export default function SEO({
   title,
   description,
@@ -43,9 +56,11 @@ export default function SEO({
   ogPriceCurrency = "GBP",
   structuredData,
 }: SEOProps) {
-  const commercialMeta = robots === "index, follow" ? getCommercialSeoMeta(canonical) : undefined;
-  const resolvedTitle = commercialMeta?.title ?? title;
-  const resolvedDescription = commercialMeta?.description ?? description;
+  const sharedMeta = robots === "index, follow"
+    ? getCommercialSeoMeta(canonical) ?? categoryMeta(canonical)
+    : undefined;
+  const resolvedTitle = sharedMeta?.title ?? title;
+  const resolvedDescription = sharedMeta?.description ?? description;
   const fullTitle = buildSeoTitle(resolvedTitle);
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
@@ -60,7 +75,6 @@ export default function SEO({
       {robots !== "index, follow" && <meta name="robots" content={robots} />}
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 
-      {/* Open Graph */}
       <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle} />
@@ -68,7 +82,6 @@ export default function SEO({
       <meta property="og:image" content={ogImage} />
       {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
 
-      {/* Product-specific Open Graph (Facebook commerce & rich previews) */}
       {ogType === "product" && ogPrice && (
         <>
           <meta property="og:price:amount" content={ogPrice} />
@@ -78,13 +91,11 @@ export default function SEO({
         </>
       )}
 
-      {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={resolvedDescription} />
       <meta name="twitter:image" content={ogImage} />
 
-      {/* JSON-LD structured data */}
       {structuredData && (
         <script type="application/ld+json">
           {JSON.stringify(structuredData)}
