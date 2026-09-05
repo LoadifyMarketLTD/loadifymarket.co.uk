@@ -1,0 +1,66 @@
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const root = process.cwd();
+const stageAPath = 'supabase/migrations/20260904224920_server_admin_payout_rpc_boundary.sql';
+
+function read(path: string): string {
+  return readFileSync(join(root, path), 'utf8');
+}
+
+describe('admin payout security boundary', () => {
+  it('requires an active admin at the Netlify service-role boundary', () => {
+    const source = read('netlify/functions/admin-payout-action.ts');
+
+    expect(source).toContain("authenticateActiveAccount(event, admin, ['admin'])");
+    expect(source).toContain("const ALLOWED_ACTIONS = new Set(['approve', 'complete', 'reject'])");
+    expect(source).toContain("admin.rpc('server_admin_payout_action_v1'");
+    expect(source).toContain('p_actor_id: auth.actor.id');
+    expect(source).not.toContain("admin.rpc('approve_payout'");
+    expect(source).not.toContain("admin.rpc('complete_payout'");
+    expect(source).not.toContain("admin.rpc('reject_payout'");
+  });
+
+  it('ships the boundary through the active modern Netlify functions directory', () => {
+    const wrapper = read('netlify/functions-modern/admin-payout-action.ts');
+
+    expect(wrapper).toContain("import { handler } from '../functions/admin-payout-action'");
+    expect(wrapper).toContain("import { withLambda } from '../function-runtime/lambdaCompat'");
+    expect(wrapper).toContain('export default withLambda(handler)');
+  });
+
+  it('keeps the browser away from privileged payout RPCs', () => {
+    const page = read('src/pages/pixel-perfect/admin/AdminPayouts.tsx');
+
+    expect(page).toContain("authorizedFetch('/.netlify/functions/admin-payout-action'");
+    expect(page).not.toContain('supabase.rpc("approve_payout"');
+    expect(page).not.toContain('supabase.rpc("complete_payout"');
+    expect(page).not.toContain('supabase.rpc("reject_payout"');
+  });
+
+  it('adds the replacement database contract as a service-role-only additive stage', () => {
+    const sql = read(stageAPath);
+
+    expect(sql).toContain('CREATE OR REPLACE FUNCTION public.server_admin_payout_action_v1');
+    expect(sql).toContain('SECURITY INVOKER');
+    expect(sql).toContain("u.role = 'admin'");
+    expect(sql).toContain('u."isActive" = TRUE');
+    expect(sql).toContain('FOR UPDATE');
+    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.server_admin_payout_action_v1(uuid, text, uuid, text)');
+    expect(sql).toContain('TO service_role');
+    expect(sql).not.toContain('REVOKE ALL ON FUNCTION public.approve_payout(uuid)');
+    expect(sql).not.toContain('REVOKE ALL ON FUNCTION public.complete_payout(uuid)');
+    expect(sql).not.toContain('REVOKE ALL ON FUNCTION public.reject_payout(uuid, text)');
+  });
+
+  it('preserves the existing payout audit action and payload contract', () => {
+    const sql = read(stageAPath);
+
+    expect(sql).toContain("WHEN 'approve' THEN 'approve_payout'");
+    expect(sql).toContain("WHEN 'complete' THEN 'complete_payout'");
+    expect(sql).toContain("WHEN 'reject' THEN 'reject_payout'");
+    expect(sql).toContain("WHEN p_action = 'reject' THEN jsonb_build_object('notes', p_notes)");
+    expect(sql).not.toContain("'admin_payout_' || p_action");
+  });
+});
