@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { STATIC_PAGES } from '../sitemap';
-import { buildSeoTitle } from '../../../src/components/SEO';
+import { buildSeoTitle } from '../../../src/lib/seo';
 
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 
@@ -44,6 +44,19 @@ const PUBLIC_POLICY_ROUTES = [
   '/acceptable-use-policy',
 ] as const;
 
+const CANONICAL_REDIRECTS = [
+  ['/categories/*', '/category/:splat'],
+  ['/clearance', '/deals'],
+  ['/returns', '/returns-policy'],
+  ['/shipping', '/shipping-policy'],
+  ['/help', '/faq'],
+  ['/track', '/track-order'],
+  ['/shop', '/catalog'],
+  ['/products', '/catalog'],
+  ['/blog', '/deals'],
+  ['/intellectual-property-complaints', '/ip-trademark-complaints'],
+] as const;
+
 describe('SEO foundation contract', () => {
   it('keeps indexable public routes in the dynamic sitemap', () => {
     const sitemapPaths = new Set(STATIC_PAGES.map((entry) => entry.loc));
@@ -80,6 +93,19 @@ describe('SEO foundation contract', () => {
     const robots = read('public/robots.txt');
     for (const path of ['/admin', '/buyer', '/inbox', '/orders', '/profile', '/checkout', '/login', '/register', '/auth/']) {
       expect(robots).toContain(`Disallow: ${path}`);
+    }
+  });
+
+  it('uses crawler-visible 301 redirects for canonical public aliases before the SPA fallback', () => {
+    const redirects = read('public/_redirects');
+    const spaFallbackIndex = redirects.indexOf('/*         /index.html     200');
+    expect(spaFallbackIndex).toBeGreaterThan(-1);
+
+    for (const [from, to] of CANONICAL_REDIRECTS) {
+      const redirectPattern = new RegExp(`^${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '\\S+')}\\s+${to.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+301!$`, 'm');
+      expect(redirects, `missing canonical redirect: ${from} -> ${to}`).toMatch(redirectPattern);
+      const redirectIndex = redirects.search(redirectPattern);
+      expect(redirectIndex, `redirect must precede SPA fallback: ${from}`).toBeLessThan(spaFallbackIndex);
     }
   });
 
