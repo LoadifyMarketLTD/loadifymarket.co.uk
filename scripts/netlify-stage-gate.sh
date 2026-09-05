@@ -20,43 +20,36 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const dist = 'dist';
-const reportPath = '/tmp/vitest-netlify.json';
-const writeMarker = (name, body = name) => {
-  fs.writeFileSync(path.join(dist, `${name}.html`), `<!doctype html><html><body>${body}</body></html>\n`);
+const report = JSON.parse(fs.readFileSync('/tmp/vitest-netlify.json', 'utf8'));
+const clean = (value) => String(value ?? 'unknown')
+  .replace(/[^A-Za-z0-9._-]+/g, '-')
+  .replace(/^-+|-+$/g, '')
+  .slice(0, 110);
+const writeMarker = (name) => {
+  fs.writeFileSync(path.join(dist, `${name}.html`), `<!doctype html><html><body>${name}</body></html>\n`);
 };
 
-if (!fs.existsSync(reportPath)) {
-  writeMarker('stage-netlify-reporter-json-missing');
-  fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><html><body>reporter-json-missing</body></html>\n');
-  process.exit(0);
+const failedSuites = (Array.isArray(report.testResults) ? report.testResults : [])
+  .filter((suite) => suite?.status === 'failed');
+let failedAssertions = 0;
+
+for (const suite of failedSuites) {
+  const file = clean(path.basename(String(suite.name ?? 'unknown-file')));
+  const assertions = Array.isArray(suite.assertionResults) ? suite.assertionResults : [];
+  const failed = assertions.filter((assertion) => assertion?.status === 'failed');
+  if (failed.length === 0) {
+    writeMarker(`failedcase-${file}--suite-level`);
+    continue;
+  }
+  for (const assertion of failed) {
+    failedAssertions += 1;
+    const title = clean(assertion.fullName ?? assertion.title ?? 'unknown-assertion');
+    writeMarker(`failedcase-${file}--${title}`);
+  }
 }
 
-let report;
-try {
-  report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-} catch {
-  writeMarker('stage-netlify-reporter-json-invalid');
-  fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><html><body>reporter-json-invalid</body></html>\n');
-  process.exit(0);
-}
-
-const results = Array.isArray(report.testResults) ? report.testResults : [];
-const failed = results.filter((result) => result?.status === 'failed');
-
-if (failed.length === 0) {
-  writeMarker('stage-netlify-fail-without-failed-file');
-  fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><html><body>netlify-fail-without-failed-file</body></html>\n');
-  process.exit(0);
-}
-
-for (const result of failed) {
-  const raw = String(result.name ?? 'unknown-test-file');
-  const base = path.basename(raw).replace(/[^A-Za-z0-9._-]+/g, '-').slice(0, 140);
-  writeMarker(`failed-${base}`);
-}
-
-writeMarker(`stage-netlify-failed-files-${failed.length}`);
-fs.writeFileSync(path.join(dist, 'index.html'), `<!doctype html><html><body>netlify-failed-files-${failed.length}</body></html>\n`);
+writeMarker(`stage-netlify-failed-assertions-${failedAssertions}`);
+fs.writeFileSync(path.join(dist, 'index.html'), `<!doctype html><html><body>failed-assertions-${failedAssertions}</body></html>\n`);
 NODE
 
 exit 0
