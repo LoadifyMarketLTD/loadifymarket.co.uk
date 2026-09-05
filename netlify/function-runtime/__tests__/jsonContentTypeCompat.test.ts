@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ensureJsonContentType } from '../jsonContentTypeCompat';
 
 describe('ensureJsonContentType', () => {
-  it('adds application/json when a checkout response has no content type', async () => {
+  it('forces application/json over the default text/plain Response content type', async () => {
     const response = ensureJsonContentType(
       new Response(JSON.stringify({ url: 'https://checkout.stripe.com/example' }), { status: 200 }),
     );
@@ -14,14 +14,14 @@ describe('ensureJsonContentType', () => {
     });
   });
 
-  it('preserves an explicit content type', () => {
+  it('forces the checkout JSON contract even when an upstream text content type is present', () => {
     const response = ensureJsonContentType(
-      new Response('ok', {
-        status: 200,
-        headers: { 'content-type': 'text/plain' },
+      new Response(JSON.stringify({ error: 'example' }), {
+        status: 400,
+        headers: { 'content-type': 'text/plain;charset=UTF-8' },
       }),
     );
 
-    expect(response.headers.get('content-type')).toBe('text/plain');
+    expect(response.headers.get('content-type')).toBe('application/json; charset=utf-8');
   });
 });
