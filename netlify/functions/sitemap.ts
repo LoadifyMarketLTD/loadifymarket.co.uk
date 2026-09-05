@@ -3,16 +3,12 @@
  *
  * Returns a complete XML sitemap containing:
  *   1. All indexable static/public pages.
- *   2. Every currently sellable, approved product page — /product/:id.
+ *   2. Active database-backed category pages.
+ *   3. Public active seller storefronts.
+ *   4. Every currently sellable, approved product page — /product/:id.
  *
- * Products are fetched with the public anon key. Reserved listings and physical
- * products with no stock are intentionally excluded from discovery surfaces.
- *
- * The response is cached at the CDN edge for 1 hour (Cache-Control: public,
- * max-age=3600) to avoid hitting the database on every crawler request.
- *
- * When Supabase credentials are not configured, the function gracefully falls
- * back to static pages only, ensuring /sitemap.xml never returns an error.
+ * Dynamic rows are fetched with the public anon key. Failures are non-fatal:
+ * /sitemap.xml always falls back to the static route set.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -85,8 +81,21 @@ export const STATIC_PAGES: StaticEntry[] = [
   { loc: '/acceptable-use-policy',                  changefreq: 'yearly',  priority: '0.4' },
 ];
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 function urlEntry(loc: string, changefreq: string, priority: string): string {
-  return `  <url>\n    <loc>${loc}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+  return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))];
 }
 
 export const handler: Handler = async (event) => {
@@ -98,35 +107,88 @@ export const handler: Handler = async (event) => {
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
   let productIds: string[] = [];
+  let categorySlugs: string[] = [];
+  let sellerSlugs: string[] = [];
 
   if (supabaseUrl && supabaseAnonKey) {
     try {
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
-      const { data, error } = await supabase
-        .from('products')
-        .select('id')
-        .eq('isActive', true)
-        .eq('isApproved', true)
-        .eq('listingStatus', 'active')
-        .or('listingContext.eq.service,stockQuantity.gt.0')
-        .limit(50000);
 
-      if (!error && Array.isArray(data)) {
-        productIds = (data as Array<{ id: string }>).map((row) => row.id);
+      const [productsResult, categoriesResult, storesResult, profilesResult] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id')
+          .eq('isActive', true)
+          .eq('isApproved', true)
+          .eq('listingStatus', 'active')
+          .or('listingContext.eq.service,stockQuantity.gt.0')
+          .limit(50000),
+        supabase
+          .from('categories')
+          .select('slug')
+          .eq('isActive', true)
+          .limit(50000),
+        supabase
+          .from('seller_stores')
+          .select('storeSlug,userId')
+          .eq('isActive', true)
+          .limit(50000),
+        supabase
+          .from('seller_profiles_public')
+          .select('userId')
+          .limit(50000),
+      ]);
+
+      if (!productsResult.error && Array.isArray(productsResult.data)) {
+        productIds = uniqueStrings(
+          (productsResult.data as Array<{ id?: string }>).map((row) => row.id ?? ''),
+        );
+      }
+
+      if (!categoriesResult.error && Array.isArray(categoriesResult.data)) {
+        categorySlugs = uniqueStrings(
+          (categoriesResult.data as Array<{ slug?: string }>).map((row) => row.slug?.trim() ?? ''),
+        );
+      }
+
+      if (
+        !storesResult.error
+        && !profilesResult.error
+        && Array.isArray(storesResult.data)
+        && Array.isArray(profilesResult.data)
+      ) {
+        const publicSellerIds = new Set(
+          (profilesResult.data as Array<{ userId?: string }>).map((row) => row.userId).filter(Boolean),
+        );
+        sellerSlugs = uniqueStrings(
+          (storesResult.data as Array<{ storeSlug?: string; userId?: string }>)
+            .filter((row) => row.userId && publicSellerIds.has(row.userId))
+            .map((row) => row.storeSlug?.trim() ?? ''),
+        );
       }
     } catch {
-      // Non-fatal: fall through with static pages only.
+      // Non-fatal: fall through with whichever discovery data was available.
     }
   }
 
+  const staticPathSet = new Set(STATIC_PAGES.map((page) => page.loc));
   const staticUrls = STATIC_PAGES.map((p) =>
     urlEntry(`${BASE_URL}${p.loc}`, p.changefreq, p.priority),
   );
 
+  const dynamicCategoryUrls = categorySlugs
+    .map((slug) => `/category/${encodeURIComponent(slug)}`)
+    .filter((path) => !staticPathSet.has(path))
+    .map((path) => urlEntry(`${BASE_URL}${path}`, 'weekly', '0.7'));
+
+  const sellerUrls = sellerSlugs.map((slug) =>
+    urlEntry(`${BASE_URL}/seller/${encodeURIComponent(slug)}`, 'weekly', '0.6'),
+  );
+
   const productUrls = productIds.map((id) =>
-    urlEntry(`${BASE_URL}/product/${id}`, 'weekly', '0.6'),
+    urlEntry(`${BASE_URL}/product/${encodeURIComponent(id)}`, 'weekly', '0.6'),
   );
 
   const xml = [
@@ -135,6 +197,12 @@ export const handler: Handler = async (event) => {
     '',
     '  <!-- ── Static pages ──────────────────────────────────────────────────── -->',
     ...staticUrls,
+    '',
+    '  <!-- ── Active database-backed categories ─────────────────────────────── -->',
+    ...dynamicCategoryUrls,
+    '',
+    '  <!-- ── Public seller storefronts ─────────────────────────────────────── -->',
+    ...sellerUrls,
     '',
     '  <!-- ── Product pages ─────────────────────────────────────────────────── -->',
     ...productUrls,
