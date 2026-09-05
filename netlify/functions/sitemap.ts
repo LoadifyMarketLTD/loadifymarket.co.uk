@@ -2,21 +2,24 @@
  * GET /.netlify/functions/sitemap   (reachable as /sitemap.xml via netlify.toml redirect)
  *
  * Returns a complete XML sitemap containing:
- *   1. All indexable static/public pages.
- *   2. Active database-backed category pages.
+ *   1. Stable indexable public pages.
+ *   2. Category pages only when at least one public sellable listing exists.
  *   3. Public active seller storefronts.
  *   4. Every currently sellable, approved product page — /product/:id.
  *
  * Dynamic rows are fetched with the public anon key. Failures are non-fatal:
- * /sitemap.xml always falls back to the static route set.
+ * /sitemap.xml always falls back to the stable static route set.
  */
 
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
+import { CATEGORY_SEO_LANDINGS } from '../../src/lib/categorySeo';
 
 const BASE_URL = 'https://loadifymarket.co.uk';
 
 type StaticEntry = { loc: string; changefreq: string; priority: string };
+type CategoryRow = { id?: string; slug?: string };
+type ProductRow = { id?: string; categoryId?: string | null };
 
 export const STATIC_PAGES: StaticEntry[] = [
   { loc: '/',                                       changefreq: 'daily',   priority: '1.0' },
@@ -34,32 +37,6 @@ export const STATIC_PAGES: StaticEntry[] = [
   { loc: '/how-it-works',                           changefreq: 'monthly', priority: '0.7' },
   { loc: '/trust',                                  changefreq: 'monthly', priority: '0.7' },
   { loc: '/catalog',                                changefreq: 'daily',   priority: '0.9' },
-  { loc: '/category/large-letter-items',            changefreq: 'weekly',  priority: '0.8' },
-  { loc: '/category/garden',                        changefreq: 'weekly',  priority: '0.8' },
-  { loc: '/category/diy',                           changefreq: 'weekly',  priority: '0.8' },
-  { loc: '/category/cleaning',                      changefreq: 'weekly',  priority: '0.8' },
-  { loc: '/category/party-gift',                    changefreq: 'weekly',  priority: '0.8' },
-  { loc: '/category/wholesale-pound-lines',         changefreq: 'weekly',  priority: '0.8' },
-  { loc: '/category/toys',                          changefreq: 'weekly',  priority: '0.8' },
-  { loc: '/category/leisure-hobbies',               changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/baby-supplies',                 changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/kitchenware',                   changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/health-beauty',                 changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/homeware',                      changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/electrical',                    changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/pet-supplies',                  changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/stationery',                    changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/seasonal',                      changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/wholesale-clothing',            changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/electronics',                   changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/home-garden',                   changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/clothing-fashion',              changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/toys-games',                    changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/sports-fitness',                changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/automotive',                    changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/pets',                          changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/food-drink',                    changefreq: 'weekly',  priority: '0.7' },
-  { loc: '/category/office-business',               changefreq: 'weekly',  priority: '0.7' },
   { loc: '/deals',                                  changefreq: 'daily',   priority: '0.8' },
   { loc: '/faq',                                    changefreq: 'monthly', priority: '0.6' },
   { loc: '/contact',                                changefreq: 'monthly', priority: '0.6' },
@@ -98,6 +75,25 @@ function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
 
+export function buildLiveCategoryPaths(
+  categories: CategoryRow[],
+  liveCategoryIds: Set<string>,
+): string[] {
+  const liveRows = categories.filter(
+    (row): row is Required<Pick<CategoryRow, 'id' | 'slug'>> =>
+      Boolean(row.id && row.slug && liveCategoryIds.has(row.id)),
+  );
+  const liveSlugSet = new Set(liveRows.map((row) => row.slug));
+  const directPaths = liveRows.map((row) => `/category/${encodeURIComponent(row.slug)}`);
+  const curatedPaths = CATEGORY_SEO_LANDINGS
+    .filter((landing) => {
+      const primaryDbSlug = landing.dbSlugs[0];
+      return Boolean(primaryDbSlug && liveSlugSet.has(primaryDbSlug));
+    })
+    .map((landing) => `/category/${encodeURIComponent(landing.slug)}`);
+  return uniqueStrings([...curatedPaths, ...directPaths]);
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -107,7 +103,7 @@ export const handler: Handler = async (event) => {
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
   let productIds: string[] = [];
-  let categorySlugs: string[] = [];
+  let liveCategoryPaths: string[] = [];
   let sellerSlugs: string[] = [];
 
   if (supabaseUrl && supabaseAnonKey) {
@@ -119,15 +115,16 @@ export const handler: Handler = async (event) => {
       const [productsResult, categoriesResult, storesResult, profilesResult] = await Promise.all([
         supabase
           .from('products')
-          .select('id')
+          .select('id,categoryId')
           .eq('isActive', true)
           .eq('isApproved', true)
           .eq('listingStatus', 'active')
+          .not('type', 'eq', 'logistics')
           .or('listingContext.eq.service,stockQuantity.gt.0')
           .limit(50000),
         supabase
           .from('categories')
-          .select('slug')
+          .select('id,slug')
           .eq('isActive', true)
           .limit(50000),
         supabase
@@ -142,15 +139,14 @@ export const handler: Handler = async (event) => {
       ]);
 
       if (!productsResult.error && Array.isArray(productsResult.data)) {
-        productIds = uniqueStrings(
-          (productsResult.data as Array<{ id?: string }>).map((row) => row.id ?? ''),
+        const productRows = productsResult.data as ProductRow[];
+        productIds = uniqueStrings(productRows.map((row) => row.id ?? ''));
+        const liveCategoryIds = new Set(
+          productRows.map((row) => row.categoryId).filter((id): id is string => Boolean(id)),
         );
-      }
-
-      if (!categoriesResult.error && Array.isArray(categoriesResult.data)) {
-        categorySlugs = uniqueStrings(
-          (categoriesResult.data as Array<{ slug?: string }>).map((row) => row.slug?.trim() ?? ''),
-        );
+        if (!categoriesResult.error && Array.isArray(categoriesResult.data)) {
+          liveCategoryPaths = buildLiveCategoryPaths(categoriesResult.data as CategoryRow[], liveCategoryIds);
+        }
       }
 
       if (
@@ -173,20 +169,15 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const staticPathSet = new Set(STATIC_PAGES.map((page) => page.loc));
-  const staticUrls = STATIC_PAGES.map((p) =>
-    urlEntry(`${BASE_URL}${p.loc}`, p.changefreq, p.priority),
+  const staticUrls = STATIC_PAGES.map((page) =>
+    urlEntry(`${BASE_URL}${page.loc}`, page.changefreq, page.priority),
   );
-
-  const dynamicCategoryUrls = categorySlugs
-    .map((slug) => `/category/${encodeURIComponent(slug)}`)
-    .filter((path) => !staticPathSet.has(path))
-    .map((path) => urlEntry(`${BASE_URL}${path}`, 'weekly', '0.7'));
-
+  const categoryUrls = liveCategoryPaths.map((path) =>
+    urlEntry(`${BASE_URL}${path}`, 'weekly', '0.7'),
+  );
   const sellerUrls = sellerSlugs.map((slug) =>
     urlEntry(`${BASE_URL}/seller/${encodeURIComponent(slug)}`, 'weekly', '0.6'),
   );
-
   const productUrls = productIds.map((id) =>
     urlEntry(`${BASE_URL}/product/${encodeURIComponent(id)}`, 'weekly', '0.6'),
   );
@@ -195,16 +186,16 @@ export const handler: Handler = async (event) => {
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     '',
-    '  <!-- ── Static pages ──────────────────────────────────────────────────── -->',
+    '  <!-- ── Stable public pages ───────────────────────────────────────────── -->',
     ...staticUrls,
     '',
-    '  <!-- ── Active database-backed categories ─────────────────────────────── -->',
-    ...dynamicCategoryUrls,
+    '  <!-- ── Categories with live public inventory ─────────────────────────── -->',
+    ...categoryUrls,
     '',
     '  <!-- ── Public seller storefronts ─────────────────────────────────────── -->',
     ...sellerUrls,
     '',
-    '  <!-- ── Product pages ─────────────────────────────────────────────────── -->',
+    '  <!-- ── Public sellable product pages ─────────────────────────────────── -->',
     ...productUrls,
     '',
     '</urlset>',

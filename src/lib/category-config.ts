@@ -19,6 +19,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { marketplaceTaxonomy, marketplaceCategorySlug, marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
 import { visualForCategory } from "@/data/marketplaceVisuals";
+import { getCategorySeoLanding } from "@/lib/categorySeo";
 
 export interface CategoryChip {
   label: string;
@@ -69,11 +70,12 @@ const iconByLabel: Record<string, LucideIcon> = {
 const CATEGORY_CONFIG: readonly CategoryConfig[] = marketplaceTaxonomy.map((category) => {
   const slug = marketplaceCategorySlug(category.label);
   const visual = visualForCategory(slug);
+  const seo = getCategorySeoLanding(slug);
   return {
     slug,
     label: category.label,
-    title: category.label,
-    subtitle: `Browse ${category.label.toLowerCase()} across six dedicated marketplace subcategories.`,
+    title: seo?.heading ?? category.label,
+    subtitle: seo?.description ?? `Browse ${category.label.toLowerCase()} across six dedicated marketplace subcategories.`,
     icon: iconByLabel[category.label] ?? Tag,
     iconColor: "text-primary",
     accentBg: "bg-primary/10",
@@ -91,7 +93,7 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = marketplaceTaxonomy.map((cate
       title: `No ${category.label} listings found`,
       description: "Live inventory appears only when approved seller listings are available. Try another subcategory or check back later.",
     },
-    productFilter: { categorySlug: slug },
+    productFilter: { categorySlug: seo?.dbSlugs[0] ?? slug },
   };
 });
 
