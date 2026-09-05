@@ -5,7 +5,7 @@
 # Deploy Preview is the validation gate: install, lint, unit tests, then production build.
 # Production keeps the normal build command above.
 [context.deploy-preview]
-  command = "npm ci && npx eslint netlify/functions/_shared/adminSettingsContract.ts netlify/functions/__tests__/adminSettingsContract.test.ts netlify/functions/save-admin-settings.ts src/pages/pixel-perfect/admin/AdminSettings.tsx"
+  command = "npm ci && npx eslint src"
 
 # ─── Image CDN — allowed remote sources ──────────────────────────────────────
 # Netlify Image CDN only proxies/transforms images from explicitly allowed
