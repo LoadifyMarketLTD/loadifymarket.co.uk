@@ -9,6 +9,7 @@ import ProductImagePlaceholder from "@/components/ProductImagePlaceholder";
 export interface Product {
   id: string;
   title: string;
+  description?: string;
   image: string;
   price: number;
   originalPrice?: number;
@@ -25,6 +26,7 @@ export interface Product {
   reviewCount?: number;
   views: number;
   listed: string;
+  listingContext?: string;
   /** Canonical purchase availability from the underlying listing state. */
   isAvailable?: boolean;
   /** User-facing reason when the listing is not currently purchasable. */
@@ -40,11 +42,24 @@ const conditionColor: Record<string, string> = {
   Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
 };
 
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(price) ? price : 0);
+}
+
 const ProductCard = ({ product, linkState, theme = "light" }: { product: Product; linkState?: Record<string, unknown>; theme?: "default" | "light" }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
   const light = theme === "light";
+  const hasReviews = (product.reviewCount ?? 0) > 0 && product.rating > 0;
+  const availabilityLabel = product.listingContext === "service"
+    ? "Service available"
+    : `${product.unitCount} available`;
 
   const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     const target = e.target instanceof Element ? e.target : null;
@@ -92,25 +107,39 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <span className={`text-xs font-semibold ${light ? "text-[#1F5BD8]" : "text-primary"}`}>{product.category}</span>
-          <div className={`flex items-center gap-1 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
-            <Eye className="h-3 w-3" />
-            {product.views}
-          </div>
+          {product.views > 0 && (
+            <div className={`flex items-center gap-1 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
+              <Eye className="h-3 w-3" />
+              {product.views}
+            </div>
+          )}
         </div>
 
         <h3 className={`font-display text-sm font-semibold line-clamp-2 leading-snug ${light ? "text-[#0A234F]" : "text-foreground"}`}>
           {product.title}
         </h3>
 
-        <div className={`flex items-center gap-3 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
+        {product.description && (
+          <p className={`min-h-10 text-xs leading-5 line-clamp-2 ${light ? "text-slate-600" : "text-muted-foreground"}`}>
+            {product.description}
+          </p>
+        )}
+
+        <div className={`text-lg font-bold leading-none ${light ? "text-[#0A234F]" : "text-foreground"}`}>
+          {formatPrice(product.price)}
+        </div>
+
+        <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>
           <div className="flex items-center gap-1">
             <Package className="h-3 w-3" />
-            {product.unitCount} {product.unitCount === 1 ? "lot" : "lots"}
+            {availabilityLabel}
           </div>
-          <div className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            {product.location}
-          </div>
+          {product.location && (
+            <div className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              {product.location}
+            </div>
+          )}
         </div>
 
         <div className={`flex items-center justify-between pt-2 border-t ${light ? "border-slate-200" : "border-border"}`}>
@@ -140,10 +169,14 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
               </span>
             )}
           </div>
-          <div className="flex items-center gap-0.5">
-            <Star className="h-3 w-3 fill-accent text-accent" />
-            <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.rating}</span>
-          </div>
+          {hasReviews ? (
+            <div className="flex items-center gap-0.5" title={`${product.reviewCount} review${product.reviewCount === 1 ? "" : "s"}`}>
+              <Star className="h-3 w-3 fill-accent text-accent" />
+              <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.rating}</span>
+            </div>
+          ) : (
+            <span className={`text-[11px] ${light ? "text-slate-400" : "text-muted-foreground"}`}>No reviews yet</span>
+          )}
         </div>
 
         {isOwner ? (
