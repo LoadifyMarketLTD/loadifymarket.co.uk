@@ -20,6 +20,7 @@ interface ProductRow {
   description?: string;
   images?: unknown;
   price?: number;
+  sellerId?: string | null;
   listingStatus?: string | null;
   listingContext?: string | null;
   stockQuantity?: number | null;
@@ -67,7 +68,7 @@ async function fetchProductData(
       `?${filterColumn}=eq.${encodeURIComponent(productRef)}` +
       `&isActive=eq.true` +
       `&isApproved=eq.true` +
-      `&select=id,title,description,images,price,listingStatus,listingContext,stockQuantity` +
+      `&select=id,title,description,images,price,sellerId,listingStatus,listingContext,stockQuantity` +
       `&limit=1`;
 
     const res = await fetch(url, {
@@ -86,6 +87,38 @@ async function fetchProductData(
     return rows[0] as ProductRow;
   } catch {
     return null;
+  }
+}
+
+async function fetchPublicSellerName(
+  sellerId: string,
+  supabaseUrl: string,
+  anonKey: string,
+): Promise<string | undefined> {
+  try {
+    const url =
+      `${supabaseUrl}/rest/v1/seller_profiles_public` +
+      `?userId=eq.${encodeURIComponent(sellerId)}` +
+      `&select=businessName` +
+      `&limit=1`;
+
+    const res = await fetch(url, {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+      },
+      signal: AbortSignal.timeout(1500),
+    });
+    if (!res.ok) return undefined;
+
+    const rows: unknown = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) return undefined;
+    const businessName = (rows[0] as { businessName?: unknown }).businessName;
+    return typeof businessName === 'string' && businessName.trim()
+      ? businessName.trim()
+      : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -117,6 +150,10 @@ export default async function productMeta(
   const contentType = baseResponse.headers.get('content-type') ?? '';
   if (!contentType.includes('text/html')) return baseResponse;
   if (!product || !product.id || !product.title?.trim()) return baseResponse;
+
+  const sellerName = product.sellerId && supabaseUrl && supabaseAnonKey
+    ? await fetchPublicSellerName(product.sellerId, supabaseUrl, supabaseAnonKey)
+    : undefined;
 
   const title = product.title.trim();
   const rawDesc = (product.description ?? '').replace(/\s+/g, ' ').trim();
@@ -264,10 +301,14 @@ export default async function productMeta(
             priceCurrency: 'GBP',
             availability: schemaAvailability,
             url: canonicalUrl,
-            seller: {
-              '@type': 'Organization',
-              name: SITE_NAME,
-            },
+            ...(sellerName
+              ? {
+                  seller: {
+                    '@type': 'Organization',
+                    name: sellerName,
+                  },
+                }
+              : {}),
           },
         }
       : {}),

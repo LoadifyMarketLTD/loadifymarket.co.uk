@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { buildSeoTitle } from "@/lib/seo";
 
 const SITE_NAME = "Loadify Market";
 const BASE_URL = "https://loadifymarket.co.uk";
@@ -41,9 +42,7 @@ export default function SEO({
   ogPriceCurrency = "GBP",
   structuredData,
 }: SEOProps) {
-  const fullTitle = title.endsWith(` | ${SITE_NAME}`) || title === SITE_NAME
-    ? title
-    : `${title} | ${SITE_NAME}`;
+  const fullTitle = buildSeoTitle(title);
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
       ? canonical

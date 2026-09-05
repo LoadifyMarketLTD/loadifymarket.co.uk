@@ -1,5 +1,18 @@
 /product-feed.xml  /.netlify/functions/product-feed  200!
 /sitemap.xml       /.netlify/functions/sitemap       200!
 /api/*             /.netlify/functions/:splat        200!
+
+# Canonical public-route redirects — keep crawler-visible aliases as real 301s.
+/categories/*                         /category/:splat                301!
+/clearance                            /deals                          301!
+/returns                              /returns-policy                 301!
+/shipping                             /shipping-policy                301!
+/help                                 /faq                            301!
+/track                                /track-order                    301!
+/shop                                 /catalog                        301!
+/products                             /catalog                        301!
+/blog                                 /deals                          301!
+/intellectual-property-complaints     /ip-trademark-complaints        301!
+
 /assets/*  /assets/:splat  200
 /*         /index.html     200
