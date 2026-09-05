@@ -3,11 +3,17 @@
  *
  * Injects product-specific Open Graph / Twitter / canonical / JSON-LD metadata
  * into the SPA HTML before it reaches crawlers that do not execute JavaScript.
+ * Product identity fields are emitted only from evidence-backed listing data.
  */
 import type { Config, Context } from '@netlify/edge-functions';
+import {
+  getProductIdentifiers,
+  productAggregateRating,
+  schemaItemCondition,
+} from '../../src/lib/productSeo.ts';
 
 const BASE_URL = 'https://loadifymarket.co.uk';
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.jpg`;
+const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
 const SITE_NAME = 'Loadify Market';
 
 const UUID_PATTERN =
@@ -19,12 +25,22 @@ interface ProductRow {
   title?: string;
   description?: string;
   images?: unknown;
-  price?: number;
+  price?: number | string;
   sellerId?: string | null;
   listingStatus?: string | null;
   listingContext?: string | null;
   stockQuantity?: number | null;
+  condition?: string | null;
+  specifications?: Record<string, unknown> | null;
+  rating?: number | string | null;
+  reviewCount?: number | null;
+  category?: { name?: string; slug?: string } | null;
 }
+
+type ProductLookup =
+  | { status: 'found'; product: ProductRow }
+  | { status: 'not_found' }
+  | { status: 'unavailable' };
 
 function excerpt(text: string, max = 180): string {
   const s = text.replace(/\s+/g, ' ').trim();
@@ -38,6 +54,13 @@ function escapeAttr(str: string): string {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+function safeJsonLd(value: Record<string, unknown>): string {
+  return JSON.stringify(value)
+    .replace(/&/g, '\\u0026')
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e');
 }
 
 function toAbsoluteUrl(value?: string | null): string | undefined {
@@ -56,19 +79,65 @@ function isAvailable(product: ProductRow): boolean {
   return Number(product.stockQuantity ?? 0) > 0;
 }
 
+function replaceOrInsertNameMeta(html: string, name: string, value: string): string {
+  const escaped = escapeAttr(value);
+  const selector = new RegExp(`<meta name="${name}" content="[^"]*"\\s*\\/?>`, 'i');
+  if (selector.test(html)) {
+    return html.replace(selector, `<meta name="${name}" content="${escaped}" />`);
+  }
+  return html.replace('</head>', `  <meta name="${name}" content="${escaped}" />\n</head>`);
+}
+
+async function noindexHtmlResponse(baseResponse: Response): Promise<Response> {
+  const contentType = baseResponse.headers.get('content-type') ?? '';
+  if (!contentType.includes('text/html')) return baseResponse;
+
+  let html: string;
+  try {
+    html = await baseResponse.text();
+  } catch {
+    return baseResponse;
+  }
+
+  html = replaceOrInsertNameMeta(html, 'robots', 'noindex, nofollow');
+  html = replaceOrInsertNameMeta(html, 'googlebot', 'noindex, nofollow');
+
+  return new Response(html, {
+    status: baseResponse.status,
+    statusText: baseResponse.statusText,
+    headers: new Headers(baseResponse.headers),
+  });
+}
+
 async function fetchProductData(
   productRef: string,
   supabaseUrl: string,
   anonKey: string,
-): Promise<ProductRow | null> {
+): Promise<ProductLookup> {
   try {
     const filterColumn = UUID_PATTERN.test(productRef) ? 'id' : 'slug';
+    const select = [
+      'id',
+      'title',
+      'description',
+      'images',
+      'price',
+      'sellerId',
+      'listingStatus',
+      'listingContext',
+      'stockQuantity',
+      'condition',
+      'specifications',
+      'rating',
+      'reviewCount',
+      'category:categories!categoryId(name,slug)',
+    ].join(',');
     const url =
       `${supabaseUrl}/rest/v1/products` +
       `?${filterColumn}=eq.${encodeURIComponent(productRef)}` +
       `&isActive=eq.true` +
       `&isApproved=eq.true` +
-      `&select=id,title,description,images,price,sellerId,listingStatus,listingContext,stockQuantity` +
+      `&select=${encodeURIComponent(select)}` +
       `&limit=1`;
 
     const res = await fetch(url, {
@@ -79,14 +148,15 @@ async function fetchProductData(
       signal: AbortSignal.timeout(2000),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) return { status: 'unavailable' };
 
     const rows: unknown = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) return null;
+    if (!Array.isArray(rows)) return { status: 'unavailable' };
+    if (rows.length === 0) return { status: 'not_found' };
 
-    return rows[0] as ProductRow;
+    return { status: 'found', product: rows[0] as ProductRow };
   } catch {
-    return null;
+    return { status: 'unavailable' };
   }
 }
 
@@ -129,29 +199,40 @@ export default async function productMeta(
   const requestUrl = new URL(request.url);
   const segments = requestUrl.pathname.split('/').filter(Boolean);
   if (segments.length !== 2 || segments[0] !== 'product') {
-    return context.next();
+    return noindexHtmlResponse(await context.next());
   }
 
   const productRef = segments[1];
   if (!UUID_PATTERN.test(productRef) && !SLUG_PATTERN.test(productRef)) {
-    return context.next();
+    return noindexHtmlResponse(await context.next());
   }
 
   const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL');
   const supabaseAnonKey = Deno.env.get('VITE_SUPABASE_ANON_KEY');
+  const baseResponsePromise = context.next();
 
-  const [baseResponse, product] = await Promise.all([
-    context.next(),
-    supabaseUrl && supabaseAnonKey
-      ? fetchProductData(productRef, supabaseUrl, supabaseAnonKey)
-      : Promise.resolve(null),
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // Configuration or upstream outages must not accidentally deindex valid
+    // products. Preserve the base response when product existence is unknown.
+    return baseResponsePromise;
+  }
+
+  const [baseResponse, lookup] = await Promise.all([
+    baseResponsePromise,
+    fetchProductData(productRef, supabaseUrl, supabaseAnonKey),
   ]);
 
   const contentType = baseResponse.headers.get('content-type') ?? '';
   if (!contentType.includes('text/html')) return baseResponse;
-  if (!product || !product.id || !product.title?.trim()) return baseResponse;
+  if (lookup.status === 'unavailable') return baseResponse;
+  if (lookup.status === 'not_found') return noindexHtmlResponse(baseResponse);
 
-  const sellerName = product.sellerId && supabaseUrl && supabaseAnonKey
+  const product = lookup.product;
+  if (!product.id || !product.title?.trim()) {
+    return noindexHtmlResponse(baseResponse);
+  }
+
+  const sellerName = product.sellerId
     ? await fetchPublicSellerName(product.sellerId, supabaseUrl, supabaseAnonKey)
     : undefined;
 
@@ -166,15 +247,23 @@ export default async function productMeta(
         (x): x is string => typeof x === 'string' && x.trim().length > 0,
       )
     : [];
-  const ogImage = toAbsoluteUrl(images[0]) ?? DEFAULT_OG_IMAGE;
+  const absoluteImages = images
+    .map((imageUrl) => toAbsoluteUrl(imageUrl))
+    .filter((imageUrl): imageUrl is string => Boolean(imageUrl));
+  const ogImage = absoluteImages[0] ?? DEFAULT_OG_IMAGE;
 
   const fullTitle = `${title} | ${SITE_NAME}`;
   const canonicalUrl = `${BASE_URL}/product/${product.id}`;
-  const priceNum = typeof product.price === 'number' ? product.price : undefined;
+  const parsedPrice = Number(product.price);
+  const priceNum = Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : undefined;
   const priceStr = priceNum !== undefined ? priceNum.toFixed(2) : undefined;
   const schemaAvailability = isAvailable(product)
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
+  const itemCondition = schemaItemCondition(product.condition);
+  const identifiers = getProductIdentifiers(product.specifications);
+  const aggregateRating = productAggregateRating(product.rating, product.reviewCount);
+  const categoryName = product.category?.name?.replace(/\s+/g, ' ').trim() || undefined;
 
   const t = escapeAttr(fullTitle);
   const d = escapeAttr(seoDesc);
@@ -211,7 +300,7 @@ export default async function productMeta(
   );
   html = html.replace(
     /<meta property="og:type" content="[^"]*"/,
-    `<meta property="og:type" content="product"`,
+    '<meta property="og:type" content="product"',
   );
 
   if (html.includes('property="og:image:secure_url"')) {
@@ -250,7 +339,7 @@ export default async function productMeta(
   const extraLines: string[] = [];
 
   if (!html.includes('name="twitter:card"')) {
-    extraLines.push(`  <meta name="twitter:card" content="summary_large_image" />`);
+    extraLines.push('  <meta name="twitter:card" content="summary_large_image" />');
     extraLines.push(`  <meta name="twitter:title" content="${t}" />`);
     extraLines.push(`  <meta name="twitter:description" content="${d}" />`);
     extraLines.push(`  <meta name="twitter:image" content="${img}" />`);
@@ -272,11 +361,11 @@ export default async function productMeta(
   if (priceStr) {
     if (!html.includes('property="og:price:amount"')) {
       extraLines.push(`  <meta property="og:price:amount" content="${escapeAttr(priceStr)}" />`);
-      extraLines.push(`  <meta property="og:price:currency" content="GBP" />`);
+      extraLines.push('  <meta property="og:price:currency" content="GBP" />');
     }
     if (!html.includes('property="product:price:amount"')) {
       extraLines.push(`  <meta property="product:price:amount" content="${escapeAttr(priceStr)}" />`);
-      extraLines.push(`  <meta property="product:price:currency" content="GBP" />`);
+      extraLines.push('  <meta property="product:price:currency" content="GBP" />');
     }
   }
 
@@ -290,9 +379,14 @@ export default async function productMeta(
     name: title,
     description: seoDesc,
     url: canonicalUrl,
-    ...(images.length > 0
-      ? { image: images.map((imageUrl) => toAbsoluteUrl(imageUrl)).filter(Boolean) }
+    ...(absoluteImages.length > 0 ? { image: absoluteImages } : {}),
+    ...(categoryName ? { category: categoryName } : {}),
+    ...(identifiers.brand
+      ? { brand: { '@type': 'Brand', name: identifiers.brand } }
       : {}),
+    ...(identifiers.gtin ? { gtin: identifiers.gtin } : {}),
+    ...(identifiers.mpn ? { mpn: identifiers.mpn } : {}),
+    ...(aggregateRating ? { aggregateRating } : {}),
     ...(priceNum !== undefined
       ? {
           offers: {
@@ -301,6 +395,7 @@ export default async function productMeta(
             priceCurrency: 'GBP',
             availability: schemaAvailability,
             url: canonicalUrl,
+            ...(itemCondition ? { itemCondition } : {}),
             ...(sellerName
               ? {
                   seller: {
@@ -314,18 +409,17 @@ export default async function productMeta(
       : {}),
   };
   extraLines.push(
-    `  <script type="application/ld+json">${JSON.stringify(productJsonLd)}</script>`,
+    `  <script type="application/ld+json">${safeJsonLd(productJsonLd)}</script>`,
   );
 
   if (extraLines.length > 0) {
     html = html.replace('</head>', `${extraLines.join('\n')}\n</head>`);
   }
 
-  const headers = new Headers(baseResponse.headers);
   return new Response(html, {
     status: baseResponse.status,
     statusText: baseResponse.statusText,
-    headers,
+    headers: new Headers(baseResponse.headers),
   });
 }
 
