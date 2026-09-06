@@ -69,6 +69,7 @@ export const handler: Handler = async (event) => {
 
   let productId: string;
   let otherUserId: string;
+  let expectedSellerId: string;
   let requireActiveListing = true;
 
   if (body.orderId) {
@@ -97,6 +98,7 @@ export const handler: Handler = async (event) => {
     }
 
     productId = order.productId;
+    expectedSellerId = order.sellerId;
     otherUserId = callerIsBuyer ? order.sellerId : order.buyerId;
     requireActiveListing = false;
   } else {
@@ -112,6 +114,7 @@ export const handler: Handler = async (event) => {
     }
 
     productId = requestedProductId;
+    expectedSellerId = sellerId;
     otherUserId = sellerId;
   }
 
@@ -125,12 +128,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 404, body: JSON.stringify({ error: 'Listing not found' }) };
   }
 
-  if (body.orderId) {
-    if (product.sellerId !== (otherUserId === callerId ? callerId : product.sellerId)) {
-      return { statusCode: 409, body: JSON.stringify({ error: 'Order listing seller mismatch' }) };
-    }
-  } else if (product.sellerId !== otherUserId) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Seller does not match listing seller' }) };
+  if (product.sellerId !== expectedSellerId) {
+    return { statusCode: 409, body: JSON.stringify({ error: 'Listing seller mismatch' }) };
   }
 
   if (requireActiveListing && product.isActive === false) {
