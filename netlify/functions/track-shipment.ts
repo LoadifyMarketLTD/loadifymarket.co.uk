@@ -60,6 +60,9 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'A valid email is required to look up an order' }) };
     }
 
+    // Keep the public lookup deliberately minimal. Embedded PostgREST relations are
+    // resolved only after buyer ownership is verified so a relationship/schema-cache
+    // error cannot be mistaken for a missing order and cannot leak private order data.
     let query = supabase
       .from('orders')
       .select(`
@@ -67,22 +70,29 @@ export const handler: Handler = async (event) => {
         orderNumber,
         buyerId,
         sellerId,
+        productId,
         status,
         total,
         createdAt,
         buyerEmailSnapshot,
         sellerBusinessNameSnapshot,
-        commercialSnapshotSource,
-        products (id, title, images),
-        order_items (productTitleSnapshot, productImageSnapshot, productSnapshotSource),
-        users!orders_sellerId_fkey (id, firstName, lastName)
+        commercialSnapshotSource
       `);
 
     query = normalizedOrderNumber
       ? query.eq('orderNumber', normalizedOrderNumber)
       : query.eq('id', normalizedOrderId);
+
     const { data: order, error: orderError } = await query.maybeSingle();
-    if (orderError || !order) return genericLookupFailure;
+    if (orderError) {
+      console.error('track-shipment order lookup failed', {
+        code: orderError.code,
+        details: orderError.details,
+        hint: orderError.hint,
+      });
+      return genericLookupFailure;
+    }
+    if (!order) return genericLookupFailure;
 
     const hasCommercialSnapshot = Boolean(order.commercialSnapshotSource);
     let expectedBuyerEmail = hasCommercialSnapshot
@@ -105,11 +115,61 @@ export const handler: Handler = async (event) => {
       return genericLookupFailure;
     }
 
-    const { data: shipment } = await supabase
-      .from('shipments')
-      .select('*')
-      .eq('order_id', order.id)
-      .maybeSingle();
+    const [shipmentResult, itemResult, productResult, sellerResult] = await Promise.all([
+      supabase
+        .from('shipments')
+        .select('*')
+        .eq('order_id', order.id)
+        .maybeSingle(),
+      supabase
+        .from('order_items')
+        .select('productTitleSnapshot, productImageSnapshot, productSnapshotSource')
+        .eq('orderId', order.id),
+      order.productId
+        ? supabase
+            .from('products')
+            .select('id, title, images')
+            .eq('id', order.productId)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      !hasCommercialSnapshot && order.sellerId
+        ? supabase
+            .from('users')
+            .select('id, firstName, lastName')
+            .eq('id', order.sellerId)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+
+    const shipment = shipmentResult.data;
+    const orderItems = itemResult.data || [];
+    const productRow = productResult.data;
+    const sellerRow = sellerResult.data;
+
+    if (shipmentResult.error) {
+      console.error('track-shipment shipment lookup failed', {
+        code: shipmentResult.error.code,
+        details: shipmentResult.error.details,
+      });
+    }
+    if (itemResult.error) {
+      console.error('track-shipment order item lookup failed', {
+        code: itemResult.error.code,
+        details: itemResult.error.details,
+      });
+    }
+    if (productResult.error) {
+      console.error('track-shipment product lookup failed', {
+        code: productResult.error.code,
+        details: productResult.error.details,
+      });
+    }
+    if (sellerResult.error) {
+      console.error('track-shipment seller lookup failed', {
+        code: sellerResult.error.code,
+        details: sellerResult.error.details,
+      });
+    }
 
     let shipmentEvents: unknown[] = [];
     let signedProofUrl: string | null = null;
@@ -132,7 +192,7 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    const snapshotItem = (order.order_items ?? []).find(
+    const snapshotItem = orderItems.find(
       (item: { productSnapshotSource?: string | null }) => item.productSnapshotSource != null,
     ) ?? null;
     const product = snapshotItem
@@ -141,17 +201,17 @@ export const handler: Handler = async (event) => {
           // An authoritative NULL means there was no image at checkout.
           image: snapshotItem.productImageSnapshot ?? null,
         }
-      : order.products
+      : productRow
         ? {
-            title: order.products.title,
-            image: order.products.images?.[0] || null,
+            title: productRow.title,
+            image: productRow.images?.[0] || null,
           }
         : null;
 
     const seller = hasCommercialSnapshot
       ? { name: String(order.sellerBusinessNameSnapshot || 'Seller') }
-      : order.users
-        ? { name: `${order.users.firstName || ''} ${order.users.lastName || ''}`.trim() || 'Seller' }
+      : sellerRow
+        ? { name: `${sellerRow.firstName || ''} ${sellerRow.lastName || ''}`.trim() || 'Seller' }
         : null;
 
     const response = {
