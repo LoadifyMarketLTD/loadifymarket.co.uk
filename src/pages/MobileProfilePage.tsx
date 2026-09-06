@@ -23,6 +23,7 @@ import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_BlackGold.svg';
 import { useUnreadNotificationsCount } from '@/hooks/useUnreadNotificationsCount';
 
 interface SectionItem {
@@ -159,8 +160,12 @@ export default function MobileProfilePage() {
         }}
       >
         <header className="px-[var(--mob-side,16px)] pb-3 pt-5">
-          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">Account</p>
-          <h1 className="mt-1 text-[24px] font-black leading-none tracking-[-0.03em] text-[#0A234F]">Profile</h1>
+          <img
+            src={officialLoadifyMarketLogo}
+            alt="Loadify Market"
+            className="h-[34px] w-auto max-w-[190px] object-contain object-left"
+          />
+          <h1 className="mt-2 text-[24px] font-black leading-none tracking-[-0.03em] text-[#0A234F]">Profile</h1>
         </header>
 
         {!user ? (

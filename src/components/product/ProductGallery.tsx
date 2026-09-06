@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { productHero, productThumbnail } from "@/lib/imageOptimization";
 import NativeImg from "@/components/NativeImg";
@@ -10,6 +10,10 @@ interface ProductGalleryProps {
 
 const ProductGallery = ({ images, title }: ProductGalleryProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [images]);
 
   return (
     <div className="space-y-3">
@@ -26,19 +30,19 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
           <>
             <button
               onClick={() => setActiveIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-card/80 border border-border flex items-center justify-center text-foreground hover:bg-card transition-colors"
+              className="absolute left-3 top-1/2 -translate-y-1/2 hidden md:flex w-9 h-9 rounded-full bg-card/80 border border-border items-center justify-center text-foreground hover:bg-card transition-colors"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => setActiveIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-card/80 border border-border flex items-center justify-center text-foreground hover:bg-card transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex w-9 h-9 rounded-full bg-card/80 border border-border items-center justify-center text-foreground hover:bg-card transition-colors"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </>
         )}
-        <div className="absolute bottom-3 right-3 bg-card/80 text-xs font-medium text-foreground px-2.5 py-1 rounded-full border border-border">
+        <div className="absolute bottom-3 right-3 hidden md:block bg-card/80 text-xs font-medium text-foreground px-2.5 py-1 rounded-full border border-border">
           {activeIndex + 1} / {images.length}
         </div>
       </div>

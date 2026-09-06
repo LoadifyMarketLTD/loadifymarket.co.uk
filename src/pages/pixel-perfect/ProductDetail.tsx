@@ -139,6 +139,10 @@ const ProductDetail = () => {
   const [descExpanded, setDescExpanded] = useState(false);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [id]);
+
+  useEffect(() => {
     if (!id) return;
 
     const fetchProduct = async () => {
@@ -675,7 +679,7 @@ const ProductDetail = () => {
           <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_420px]">
             {/* Gallery — edge-to-edge on mobile (overlay header sits above it), in-flow on desktop */}
             <div className="order-1 lg:col-start-1 lg:row-start-1 -mx-4 md:mx-0">
-              <ProductGallery images={galleryImages} title={product.title} />
+              <ProductGallery key={product.id} images={galleryImages} title={product.title} />
             </div>
 
             {/* ── Mobile-only inline product info card ── */}
@@ -891,9 +895,7 @@ const ProductDetail = () => {
               <h2 className="font-display text-xl font-bold text-foreground mb-6">Similar Listings</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {related.map((p) => (
-                  <Link key={p.id} to={`/product/${p.id}`}>
-                    <ProductCard product={p} theme="light" />
-                  </Link>
+                  <ProductCard key={p.id} product={p} theme="light" />
                 ))}
               </div>
             </div>
