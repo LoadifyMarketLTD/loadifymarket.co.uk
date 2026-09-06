@@ -47,12 +47,8 @@ function buildSections(role: string | undefined): Section[] {
       items: [
         ...(canSell ? [{ label: 'Sell an item', to: '/sell', icon: Store }] : []),
         { label: 'Favourite items', to: '/profile/favourites', icon: Heart },
-        ...(canSell
-          ? [
-              { label: 'Purchases', to: '/orders?mode=buy', icon: Package },
-              { label: 'Sales', to: '/orders?mode=sell', icon: Store },
-            ]
-          : [{ label: 'Orders', to: '/orders?mode=buy', icon: Package }]),
+        { label: 'Purchases', to: '/orders?mode=buy', icon: Package },
+        { label: 'Sales', to: '/orders?mode=sell', icon: Store },
         { label: 'Balance', to: '/profile/balance', icon: Wallet },
       ],
     },
