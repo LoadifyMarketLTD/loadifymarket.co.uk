@@ -16,7 +16,7 @@ def releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
     taskName.toLowerCase().contains('release')
 }
 
-if (loadifyReleaseSigningPartiallyConfigured) {
+if (releaseTaskRequested && loadifyReleaseSigningPartiallyConfigured) {
     throw new GradleException('Loadify release signing is partially configured. Set all four LOADIFY_UPLOAD_* properties or none of them.')
 }
 
