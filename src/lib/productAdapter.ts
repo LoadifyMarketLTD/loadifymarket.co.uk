@@ -158,7 +158,7 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
   const categoryName = cat?.name ?? "Other";
   const subcategoryName = subcat?.name ?? categoryName;
 
-  const sellerName = seller?.businessName ?? "Loadify Seller";
+  const sellerName = seller?.businessName?.trim() || "Independent Seller";
   const sellerVerified = seller?.isApproved ?? false;
 
   const rating =

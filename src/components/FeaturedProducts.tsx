@@ -57,7 +57,7 @@ const FeaturedProducts = () => {
       if (!cancelled) {
         setProducts(rows.map((item) => ({
           ...item,
-          sellerName: (item.sellerId && sellerNames.get(item.sellerId)) || "Loadify Seller",
+          sellerName: (item.sellerId && sellerNames.get(item.sellerId)?.trim()) || "Independent Seller",
         })));
         setLoading(false);
       }
