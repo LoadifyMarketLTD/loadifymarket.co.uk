@@ -1,7 +1,7 @@
 /**
- * MobileOrdersPage — native buyer order history.
- * Preserves authoritative order/snapshot loading and deep-link behaviour while
- * presenting a compact, light marketplace-native experience.
+ * MobileOrdersPage — native marketplace order history for purchases and sales.
+ * Keeps buyer and seller views separated while preserving authoritative
+ * order/snapshot loading and buyer deep-link behaviour.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -24,6 +24,7 @@ interface OrderRow {
 }
 
 type Tab = "all" | "pending" | "shipped" | "delivered" | "cancelled";
+type OrderMode = "buy" | "sell";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "all", label: "All" },
@@ -61,24 +62,29 @@ function statusCfg(status: string) {
   return STATUS_CONFIG[status] ?? { label: status.replace(/_/g, " "), className: "bg-[#EEF2F7] text-[#667085]" };
 }
 
-function OrderCard({ order, highlighted, cardRef }: {
+function OrderCard({ order, highlighted, cardRef, mode }: {
   order: OrderRow;
   highlighted: boolean;
   cardRef?: React.RefObject<HTMLDivElement | null>;
+  mode: OrderMode;
 }) {
   const navigate = useNavigate();
   const cfg = statusCfg(order.status);
+  const interactive = mode === "buy";
+  const openOrder = () => {
+    if (interactive) navigate(`/buyer/orders?orderId=${order.id}`);
+  };
 
   return (
     <div
       ref={cardRef as React.RefObject<HTMLDivElement>}
-      role="button"
-      tabIndex={0}
-      onClick={() => navigate(`/buyer/orders?orderId=${order.id}`)}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={openOrder}
       onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") navigate(`/buyer/orders?orderId=${order.id}`);
+        if (interactive && (event.key === "Enter" || event.key === " ")) openOrder();
       }}
-      className={`flex cursor-pointer items-start gap-3 rounded-[18px] border bg-white p-3.5 shadow-[0_7px_22px_rgba(10,35,79,0.06)] transition ${highlighted ? 'border-[#F5A300] ring-2 ring-[#F5A300]/20' : 'border-[#0A234F]/[0.08]'}`}
+      className={`flex items-start gap-3 rounded-[18px] border bg-white p-3.5 shadow-[0_7px_22px_rgba(10,35,79,0.06)] transition ${interactive ? "cursor-pointer" : ""} ${highlighted ? 'border-[#F5A300] ring-2 ring-[#F5A300]/20' : 'border-[#0A234F]/[0.08]'}`}
     >
       <div className="flex h-[78px] w-[78px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#EEF2F7]">
         {order.productImage ? (
@@ -99,7 +105,7 @@ function OrderCard({ order, highlighted, cardRef }: {
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
           <span className="text-[14px] font-black text-[#0A234F]">£{order.total.toFixed(2)}</span>
-          <ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" />
+          {interactive ? <ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" /> : null}
         </div>
       </div>
     </div>
@@ -108,14 +114,25 @@ function OrderCard({ order, highlighted, cardRef }: {
 
 export default function MobileOrdersPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkOrderId = searchParams.get("orderId");
+  const requestedMode = searchParams.get("mode");
   const { user } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
+  const canSell = user?.role === "seller" || user?.role === "admin";
+  const mode: OrderMode = requestedMode === "sell" && canSell ? "sell" : "buy";
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const cardRefs = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(new Map());
+
+  const changeMode = (nextMode: OrderMode) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("mode", nextMode);
+    next.delete("orderId");
+    setActiveTab("all");
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     if (!user?.id) {
@@ -132,13 +149,14 @@ export default function MobileOrdersPage() {
           return;
         }
 
-        const { data } = await supabase
+        const ownerColumn = mode === "sell" ? "sellerId" : "buyerId";
+        const { data, error } = await supabase
           .from("orders")
           .select(`id, orderNumber, total, status, createdAt, quantity, products:productId(title, images), order_items(productTitleSnapshot, productImageSnapshot, productSnapshotSource)`)
-          .eq("buyerId", user.id)
+          .eq(ownerColumn, user.id)
           .order("createdAt", { ascending: false });
 
-        if (!data) {
+        if (error || !data) {
           setOrders([]);
           return;
         }
@@ -172,7 +190,7 @@ export default function MobileOrdersPage() {
     };
 
     void load();
-  }, [user?.id, promptAuth]);
+  }, [user?.id, mode, promptAuth]);
 
   useEffect(() => {
     if (!deepLinkOrderId || loading) return;
@@ -181,7 +199,7 @@ export default function MobileOrdersPage() {
   }, [deepLinkOrderId, loading]);
 
   const visibleOrders = activeTab === "all" ? orders : orders.filter((order) => TAB_STATUSES[activeTab].includes(order.status));
-  const hasAwaitingPayment = orders.some((order) => order.status === "awaiting_payment");
+  const hasAwaitingPayment = mode === "buy" && orders.some((order) => order.status === "awaiting_payment");
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden">
@@ -189,8 +207,28 @@ export default function MobileOrdersPage() {
         className="sticky top-0 z-30 border-b border-[#0A234F]/[0.08] bg-white/95 px-[var(--mob-side,16px)]"
         style={{ paddingTop: "calc(0.9rem + env(safe-area-inset-top, 0px))", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }}
       >
-        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">Purchases</p>
-        <h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">My orders</h1>
+        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">{mode === "sell" ? "Sales" : "Purchases"}</p>
+        <div className="flex items-end justify-between gap-3">
+          <h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">{mode === "sell" ? "Sold items" : "My orders"}</h1>
+          {canSell ? (
+            <div className="mb-0.5 flex rounded-full bg-[#EEF2F7] p-1">
+              <button
+                type="button"
+                onClick={() => changeMode("buy")}
+                className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "buy" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}
+              >
+                Purchases
+              </button>
+              <button
+                type="button"
+                onClick={() => changeMode("sell")}
+                className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "sell" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}
+              >
+                Sales
+              </button>
+            </div>
+          ) : null}
+        </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((tab) => {
             const active = activeTab === tab.id;
@@ -216,15 +254,15 @@ export default function MobileOrdersPage() {
         ) : visibleOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-[20px] border border-[#0A234F]/[0.08] bg-white px-6 py-14 text-center shadow-sm">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF2F7]"><Package className="h-7 w-7 text-[#94A3B8]" aria-hidden="true" /></div>
-            <p className="mt-4 text-[15px] font-extrabold text-[#0A234F]">{activeTab === "all" ? "No orders yet" : "Nothing in this section"}</p>
-            <p className="mt-1 text-[12px] leading-[1.45] text-[#7A8493]">{activeTab === "all" ? "Items you buy on Loadify will appear here." : "Try another order status."}</p>
-            {activeTab === "all" && <Link to="/catalog" className="mt-5 rounded-[13px] bg-[#0A234F] px-4 py-2.5 text-[12px] font-extrabold text-white no-underline">Browse marketplace</Link>}
+            <p className="mt-4 text-[15px] font-extrabold text-[#0A234F]">{activeTab === "all" ? (mode === "sell" ? "No sales yet" : "No orders yet") : "Nothing in this section"}</p>
+            <p className="mt-1 text-[12px] leading-[1.45] text-[#7A8493]">{activeTab === "all" ? (mode === "sell" ? "Items sold through Loadify will appear here." : "Items you buy on Loadify will appear here.") : "Try another order status."}</p>
+            {activeTab === "all" && mode === "buy" && <Link to="/catalog" className="mt-5 rounded-[13px] bg-[#0A234F] px-4 py-2.5 text-[12px] font-extrabold text-white no-underline">Browse marketplace</Link>}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             {visibleOrders.map((order) => {
               if (!cardRefs.current.has(order.id)) cardRefs.current.set(order.id, { current: null });
-              return <OrderCard key={order.id} order={order} highlighted={order.id === deepLinkOrderId} cardRef={cardRefs.current.get(order.id)} />;
+              return <OrderCard key={order.id} order={order} mode={mode} highlighted={order.id === deepLinkOrderId} cardRef={cardRefs.current.get(order.id)} />;
             })}
           </div>
         )}
