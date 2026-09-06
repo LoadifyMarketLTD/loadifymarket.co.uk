@@ -98,6 +98,12 @@ type ReturnEligibilityResponse = {
   };
 };
 
+type ConversationResolveResponse = {
+  conversationId?: string;
+  created?: boolean;
+  error?: string;
+};
+
 type Tab = "all" | "pending" | "shipped" | "delivered" | "cancelled";
 type OrderMode = "buy" | "sell";
 
@@ -204,6 +210,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [messageOpening, setMessageOpening] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -352,6 +359,26 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
     }
   };
 
+  const openOrderConversation = async () => {
+    if (!detail || messageOpening) return;
+    setMessageOpening(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/conversation-get-or-create", {
+        method: "POST",
+        body: JSON.stringify({ orderId: detail.id }),
+      });
+      const payload = await response.json() as ConversationResolveResponse;
+      if (!response.ok || !payload.conversationId) {
+        throw new Error(payload.error || "Conversation could not be opened.");
+      }
+      navigate(`/inbox/${encodeURIComponent(payload.conversationId)}`);
+    } catch (err) {
+      toast({ title: "Could not open conversation", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setMessageOpening(false);
+    }
+  };
+
   if (loading) {
     return <div className="min-h-screen bg-[#F7F9FC] px-[var(--mob-side,16px)] pt-8 md:hidden"><div className="h-12 animate-pulse rounded-[14px] bg-[#E8EDF3]" /><div className="mt-4 h-36 animate-pulse rounded-[20px] bg-[#E8EDF3]" /><div className="mt-3 h-48 animate-pulse rounded-[20px] bg-[#E8EDF3]" /></div>;
   }
@@ -415,7 +442,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           </section>
         ) : null}
 
-        <section className="overflow-hidden rounded-[18px] border border-[#0A234F]/[0.08] bg-white shadow-[0_6px_22px_rgba(10,35,79,0.05)]"><button onClick={() => navigate("/inbox")} className="flex min-h-14 w-full items-center gap-3 px-4 text-left"><MessageSquare className="h-[18px] w-[18px] text-[#0A234F]" /><span className="flex-1 text-[13px] font-extrabold text-[#26354A]">Message {mode === "sell" ? "buyer" : "seller"}</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" /></button><div className="ml-[52px] h-px bg-[#0A234F]/[0.07]" /><button onClick={() => navigate("/faq")} className="flex min-h-14 w-full items-center gap-3 px-4 text-left"><CircleHelp className="h-[18px] w-[18px] text-[#0A234F]" /><span className="flex-1 text-[13px] font-extrabold text-[#26354A]">Returns, refunds &amp; order help</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" /></button></section>
+        <section className="overflow-hidden rounded-[18px] border border-[#0A234F]/[0.08] bg-white shadow-[0_6px_22px_rgba(10,35,79,0.05)]"><button type="button" disabled={messageOpening} onClick={() => { void openOrderConversation(); }} className="flex min-h-14 w-full items-center gap-3 px-4 text-left disabled:opacity-60">{messageOpening ? <Loader2 className="h-[18px] w-[18px] animate-spin text-[#0A234F]" /> : <MessageSquare className="h-[18px] w-[18px] text-[#0A234F]" />}<span className="flex-1 text-[13px] font-extrabold text-[#26354A]">Message {mode === "sell" ? "buyer" : "seller"}</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" /></button><div className="ml-[52px] h-px bg-[#0A234F]/[0.07]" /><button onClick={() => navigate("/faq")} className="flex min-h-14 w-full items-center gap-3 px-4 text-left"><CircleHelp className="h-[18px] w-[18px] text-[#0A234F]" /><span className="flex-1 text-[13px] font-extrabold text-[#26354A]">Returns, refunds &amp; order help</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" /></button></section>
       </main>
       <MobileBottomNav />
     </div>
