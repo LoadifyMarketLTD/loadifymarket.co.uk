@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store";
 import { productThumbnail } from "@/lib/imageOptimization";
 import NativeImg from "@/components/NativeImg";
 import ProductImagePlaceholder from "@/components/ProductImagePlaceholder";
+import { isCapacitorContext } from "@/lib/capacitorUtils";
 
 export interface Product {
   id: string;
@@ -54,6 +55,7 @@ function formatPrice(price: number): string {
 const ProductCard = ({ product, linkState, theme = "light" }: { product: Product; linkState?: Record<string, unknown>; theme?: "default" | "light" }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const isNative = isCapacitorContext();
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
   const light = theme === "light";
   const hasReviews = (product.reviewCount ?? 0) > 0 && product.rating > 0;
@@ -65,7 +67,7 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
     const target = e.target instanceof Element ? e.target : null;
     if (!target) return;
     if (target.closest("a") || target.closest("button")) return;
-    if (isOwner) {
+    if (isOwner && !isNative) {
       navigate(`/seller/products/${product.id}/edit`);
     } else {
       navigate(`/product/${product.id}`, { state: linkState ?? undefined });
@@ -179,7 +181,7 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
           )}
         </div>
 
-        {isOwner ? (
+        {isOwner && !isNative ? (
           <Link to={`/seller/products/${product.id}/edit`}>
             <Button variant="outline" className="w-full text-sm" size="sm">
               <Settings className="mr-1.5 h-3.5 w-3.5" /> Manage Listing
@@ -188,7 +190,7 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
         ) : (
           <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
             <Button className={`w-full font-bold transition-all duration-250 text-sm ${light ? "bg-[#F5A300] text-[#0A234F] hover:bg-[#E59600] hover:shadow-[0_8px_18px_rgba(245,163,0,0.22)]" : "bg-primary hover:bg-primary-hover text-black hover:shadow-[0_0_18px_rgba(212,175,55,0.28)] hover:opacity-90"}`} size="sm">
-              View Details
+              {isOwner ? "View Listing" : "View Details"}
             </Button>
           </Link>
         )}
