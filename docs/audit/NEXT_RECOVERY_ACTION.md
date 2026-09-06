@@ -1,0 +1,1 @@
+Selective recovery only: rebuild Seller Orders shipped-action distinction on current main. No stale branch merge.
