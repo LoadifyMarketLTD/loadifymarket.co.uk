@@ -403,19 +403,34 @@ const ProductDetail = () => {
     }
   };
 
-  const handleBuyNow = () => {
+  const addCurrentProductToCart = () => {
     if (product.isAvailable === false) {
       toast({
         title: "Listing unavailable",
         description: product.availabilityMessage || "This listing is not currently available for purchase.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
-    if (!user) { promptAuth('buy'); return; }
+    if (!user) {
+      promptAuth('buy');
+      return false;
+    }
     trackAddToCart(product.id, product.title, product.price);
     addToCart(product, mobileQty);
-    navigate("/checkout");
+    return true;
+  };
+
+  const handleAddToCart = () => {
+    if (addCurrentProductToCart()) {
+      toast({ title: "Added to cart" });
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (addCurrentProductToCart()) {
+      navigate("/checkout");
+    }
   };
 
   const handleMessage = async () => {
@@ -425,8 +440,10 @@ const ProductDetail = () => {
     }
   };
 
-  // True when the logged-in user is the seller/owner of this product
-  const isMobileCtaVisible = !!(productSellerId && (!user || user.id !== productSellerId));
+  // Purchase/message actions are hidden only for the seller's own listing.
+  // Product information itself must remain fully visible for every listing.
+  const isOwnListing = !!(productSellerId && user?.id === productSellerId);
+  const isMobileCtaVisible = !isOwnListing;
   const mobileBottomNavOffset = "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))";
   const mobileQuantityLimit = Math.max(1, Math.min(10, product.maxPurchaseQuantity ?? 10));
 
@@ -683,7 +700,6 @@ const ProductDetail = () => {
             </div>
 
             {/* ── Mobile-only inline product info card ── */}
-            {isMobileCtaVisible && (
               <div
                 className="order-2 md:hidden"
                 style={{
@@ -807,7 +823,6 @@ const ProductDetail = () => {
                   </div>
                 )}
               </div>
-            )}
 
             <div className="order-2 hidden md:block lg:col-start-2 lg:row-start-1 lg:row-span-2 space-y-6">
               <div className="lg:sticky lg:top-24 space-y-6">
@@ -1015,6 +1030,30 @@ const ProductDetail = () => {
                     Message
                   </>
                 )}
+              </button>
+
+              <button
+                onClick={handleAddToCart}
+                style={{
+                  flex: 1,
+                  padding: "14px 8px",
+                  borderRadius: "12px",
+                  background: "#FFFFFF",
+                  color: "#0A234F",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  border: "1px solid #CBD5E1",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "5px",
+                }}
+                className="active:bg-slate-100 transition-colors"
+                aria-label="Add to cart"
+              >
+                <ShoppingCart style={{ width: "15px", height: "15px" }} />
+                Cart
               </button>
 
               <button
