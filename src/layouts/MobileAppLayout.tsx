@@ -6,7 +6,7 @@
  * its separate device-update gate is complete.
  */
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import WebMobileBottomNav from "@/components/WebMobileBottomNav";
 import { isCapacitorContext } from "@/lib/capacitorUtils";
@@ -18,8 +18,22 @@ interface MobileAppLayoutProps {
 export default function MobileAppLayout({ children }: MobileAppLayoutProps) {
   const isNativeApp = isCapacitorContext();
 
+  useEffect(() => {
+    if (!isNativeApp || typeof document === 'undefined') return;
+
+    // Mark the document so the installed app can suppress WebView document
+    // overscroll without changing normal marketplace scrolling or mobile web.
+    document.documentElement.classList.add('native-marketplace-app');
+    document.body.classList.add('native-marketplace-app');
+
+    return () => {
+      document.documentElement.classList.remove('native-marketplace-app');
+      document.body.classList.remove('native-marketplace-app');
+    };
+  }, [isNativeApp]);
+
   return (
-    <div className={`min-h-screen ${isNativeApp ? 'bg-background' : 'bg-[#F8F7F4] text-[#0A234F]'}`}>
+    <div className={`min-h-screen ${isNativeApp ? 'native-marketplace-scroll-root bg-background' : 'bg-[#F8F7F4] text-[#0A234F]'}`}>
       <a
         href="#main-content"
         className={isNativeApp
