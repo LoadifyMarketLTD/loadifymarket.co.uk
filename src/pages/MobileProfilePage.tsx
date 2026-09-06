@@ -39,13 +39,13 @@ interface Section {
 }
 
 function buildSections(role: string | undefined): Section[] {
-  const isSellerOrAdmin = role === 'seller' || role === 'admin';
+  const canSell = role === 'seller' || role === 'admin';
 
   return [
     {
       title: 'Marketplace',
       items: [
-        ...(isSellerOrAdmin ? [{ label: 'My listings', to: '/seller/products', icon: Store }] : []),
+        ...(canSell ? [{ label: 'Sell an item', to: '/sell', icon: Store }] : []),
         { label: 'Favourite items', to: '/profile/favourites', icon: Heart },
         { label: 'Orders', to: '/orders', icon: Package },
         { label: 'Balance', to: '/profile/balance', icon: Wallet },
@@ -144,7 +144,7 @@ export default function MobileProfilePage() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/');
+    navigate('/marketplace');
   };
 
   return (
@@ -173,10 +173,10 @@ export default function MobileProfilePage() {
                 <p className="truncate text-[17px] font-black leading-tight text-[#0A234F]">{displayName}</p>
                 <p className="mt-1 truncate text-[11px] font-medium text-[#7A8493]">{user.email}</p>
                 <Link
-                  to={user.role === 'seller' || user.role === 'admin' ? '/seller/products' : '/catalog'}
+                  to={user.role === 'seller' || user.role === 'admin' ? '/sell' : '/catalog'}
                   className="mt-2 inline-flex items-center gap-1 text-[11px] font-extrabold text-[#1D57D8] no-underline"
                 >
-                  {user.role === 'seller' || user.role === 'admin' ? 'Manage listings' : 'Browse marketplace'}
+                  {user.role === 'seller' || user.role === 'admin' ? 'Sell an item' : 'Browse marketplace'}
                   <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </Link>
               </div>
