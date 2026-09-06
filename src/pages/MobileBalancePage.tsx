@@ -1,7 +1,7 @@
 /**
  * MobileBalancePage — /profile/balance
  *
- * Displays the seller's current balance and links to seller settings for payouts.
+ * Displays the seller's current balance and links to the native seller payments hub.
  * Buyers see a placeholder since they don't hold a balance.
  */
 
@@ -103,7 +103,7 @@ export default function MobileBalancePage() {
             }}
           >
             <button
-              onClick={() => navigate('/seller/settings')}
+              onClick={() => navigate('/seller/mobile-payments')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
