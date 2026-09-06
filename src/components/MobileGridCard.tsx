@@ -16,6 +16,7 @@ interface MobileGridCardProps {
   price: number;
   image?: string;
   location?: string;
+  seller?: string;
   priority?: boolean;
 }
 
@@ -28,7 +29,7 @@ const lightPlaceholder = (
   </div>
 );
 
-export default function MobileGridCard({ id, title, price, image, location, priority = false }: MobileGridCardProps) {
+export default function MobileGridCard({ id, title, price, image, location, seller, priority = false }: MobileGridCardProps) {
   return (
     <Link
       to={`/product/${id}`}
@@ -66,6 +67,9 @@ export default function MobileGridCard({ id, title, price, image, location, prio
         >
           {title}
         </p>
+        {seller && (
+          <p className="mt-1 text-[10px] font-semibold text-[#0A234F] truncate">Sold by {seller}</p>
+        )}
         {location && (
           <p className="mt-1.5 flex min-w-0 items-center gap-1 text-[10px] font-medium text-[#7A8493]">
             <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />

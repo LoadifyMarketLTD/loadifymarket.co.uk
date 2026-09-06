@@ -8,6 +8,8 @@ interface ShowcaseProduct {
   title: string;
   price: number;
   images: string[] | null;
+  sellerId?: string | null;
+  sellerName?: string;
   category: { name: string; slug: string } | null;
 }
 
@@ -16,19 +18,53 @@ const FeaturedProducts = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("products")
-      .select("id, title, price, images, category:categories!categoryId(name, slug)")
-      .eq("isActive", true)
-      .eq("isApproved", true)
-      .eq("listingStatus", "active")
-      .or("listingContext.eq.service,stockQuantity.gt.0")
-      .order("createdAt", { ascending: false })
-      .limit(10)
-      .then(({ data, error }) => {
-        if (!error && data) setProducts(data as unknown as ShowcaseProduct[]);
+    let cancelled = false;
+
+    const loadProducts = async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, title, price, images, sellerId, category:categories!categoryId(name, slug)")
+        .eq("isActive", true)
+        .eq("isApproved", true)
+        .eq("listingStatus", "active")
+        .or("listingContext.eq.service,stockQuantity.gt.0")
+        .order("createdAt", { ascending: false })
+        .limit(10);
+
+      if (cancelled) return;
+      if (error || !data) {
         setLoading(false);
-      });
+        return;
+      }
+
+      const rows = data as unknown as ShowcaseProduct[];
+      const sellerIds = [...new Set(rows.map((item) => item.sellerId).filter((id): id is string => Boolean(id)))];
+      const sellerNames = new Map<string, string>();
+
+      if (sellerIds.length > 0) {
+        const { data: sellers } = await supabase
+          .from("seller_profiles_public")
+          .select("userId, businessName")
+          .in("userId", sellerIds);
+
+        (sellers ?? []).forEach((seller: { userId?: string | null; businessName?: string | null }) => {
+          if (seller.userId && seller.businessName?.trim()) {
+            sellerNames.set(seller.userId, seller.businessName.trim());
+          }
+        });
+      }
+
+      if (!cancelled) {
+        setProducts(rows.map((item) => ({
+          ...item,
+          sellerName: (item.sellerId && sellerNames.get(item.sellerId)) || "Loadify Seller",
+        })));
+        setLoading(false);
+      }
+    };
+
+    void loadProducts();
+    return () => { cancelled = true; };
   }, []);
 
   return (
@@ -112,6 +148,9 @@ const FeaturedProducts = () => {
 
                     <p className="mt-2 line-clamp-2 flex-1 text-[13px] font-semibold leading-5 text-[#1A202C] sm:text-sm">
                       {item.title}
+                    </p>
+                    <p className="mt-2 truncate text-[11px] font-semibold text-[#0A234F]">
+                      Sold by {item.sellerName}
                     </p>
 
                     <div className="mt-4 flex items-center justify-between gap-2 border-t border-black/[0.06] pt-3.5">

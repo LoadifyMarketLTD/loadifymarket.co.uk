@@ -18,6 +18,7 @@ const CONTEXT_MESSAGES: Record<NonNullable<AuthPromptContext>, string> = {
   message: 'Create an account to message the seller.',
   buy: 'Create an account to checkout safely.',
   save: 'Create an account to save items.',
+  review: 'Sign in to review a product you purchased and received through Loadify Market.',
 };
 
 const DEFAULT_MESSAGE = 'Sign up in seconds to buy, sell, or message safely.';

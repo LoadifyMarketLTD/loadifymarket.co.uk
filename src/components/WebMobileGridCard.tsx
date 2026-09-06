@@ -14,6 +14,7 @@ interface WebMobileGridCardProps {
   price: number;
   image?: string;
   location?: string;
+  seller?: string;
   priority?: boolean;
 }
 
@@ -33,7 +34,7 @@ const lightPlaceholder = (
   </div>
 );
 
-export default function WebMobileGridCard({ id, title, price, image, location, priority = false }: WebMobileGridCardProps) {
+export default function WebMobileGridCard({ id, title, price, image, location, seller, priority = false }: WebMobileGridCardProps) {
   return (
     <Link
       to={`/product/${id}`}
@@ -90,6 +91,11 @@ export default function WebMobileGridCard({ id, title, price, image, location, p
         >
           {formatPrice(price)}
         </p>
+        {seller && (
+          <p className="text-[#0A234F]" style={{ fontSize: 10.5, fontWeight: 600, margin: '5px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            Sold by {seller}
+          </p>
+        )}
         {location && (
           <p
             className="text-[#7A8492]"

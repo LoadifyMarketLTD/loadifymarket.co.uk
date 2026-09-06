@@ -45,7 +45,7 @@ function MobileProductGrid({ products, startIndex = 0, premium = false }: {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)' }}>
       {products.map((p, i) => (
-        <Card key={p.id} id={p.id} title={p.title} price={p.price} image={p.image} location={p.location} priority={startIndex + i < 4} />
+        <Card key={p.id} id={p.id} title={p.title} price={p.price} image={p.image} location={p.location} seller={p.seller} priority={startIndex + i < 4} />
       ))}
     </div>
   );

@@ -5,7 +5,7 @@ import { STATIC_PAGES } from '../sitemap';
 import { COMMERCIAL_SEO_META, getCommercialSeoMeta } from '../../../src/lib/commercialSeo';
 import { buildSeoTitle } from '../../../src/lib/seo';
 
-const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
+const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8').replace(/\r\n/g, '\n');
 
 const PUBLIC_MARKETING_ROUTES = [
   '/',
