@@ -1,8 +1,6 @@
 /**
  * MobileFavouritesPage — /profile/favourites
- *
- * Shows saved (wishlisted) items for all logged-in users.
- * Guests see a sign-in prompt.
+ * Saved-item collection for the native marketplace app.
  */
 
 import { useEffect, useState } from 'react';
@@ -43,7 +41,6 @@ export default function MobileFavouritesPage() {
         .maybeSingle();
 
       const productIds: string[] = (wishlist as { productIds?: string[] } | null)?.productIds ?? [];
-
       if (productIds.length === 0) {
         if (!cancelled) { setItems([]); setLoading(false); }
         return;
@@ -62,172 +59,66 @@ export default function MobileFavouritesPage() {
     }
 
     void loadFavourites();
-
     return () => { cancelled = true; };
   }, [user]);
 
-  const formatPrice = (p: number) =>
-    p.toLocaleString('en-GB', { style: 'currency', currency: 'GBP' });
+  const formatPrice = (price: number) => price.toLocaleString('en-GB', { style: 'currency', currency: 'GBP' });
 
   return (
     <div
-      className="md:hidden min-h-screen bg-background"
+      className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden"
       style={{
         paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
+        paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))',
       }}
     >
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 16,
-          paddingBottom: 12,
-        }}
-      >
-        <button
-          onClick={() => navigate('/profile')}
-          aria-label="Back"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
-        >
-          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
-        </button>
-        <h1 className="text-xl font-extrabold text-foreground m-0">Favourite Items</h1>
-      </div>
+      <header className="sticky top-0 z-20 border-b border-[#0A234F]/[0.08] bg-white/95 px-[var(--mob-side,16px)] py-3" style={{ backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)' }}>
+        <div className="flex items-center gap-2">
+          <button onClick={() => navigate('/profile')} aria-label="Back to profile" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#0A234F]/10 bg-[#F7F9FC]">
+            <ChevronLeft className="h-5 w-5 text-[#0A234F]" aria-hidden="true" />
+          </button>
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">Saved</p>
+            <h1 className="mt-0.5 text-[20px] font-black tracking-[-0.03em] text-[#0A234F]">Favourites</h1>
+          </div>
+        </div>
+      </header>
 
       {!user ? (
-        /* Guest state */
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            paddingTop: 48,
-            paddingInline: 'var(--mob-side, 16px)',
-            gap: 16,
-            textAlign: 'center',
-          }}
-        >
-          <Heart className="text-foreground/20" style={{ width: 40, height: 40 }} aria-hidden="true" />
-          <p className="text-[15px] text-muted-foreground m-0">
-            Sign in to see your saved items.
-          </p>
-          <button
-            onClick={() => navigate('/login')}
-            className="text-sm font-bold"
-            style={{
-              height: 44,
-              paddingInline: 32,
-              borderRadius: 9999,
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            Sign in
-          </button>
+        <div className="mx-[var(--mob-side,16px)] mt-5 flex flex-col items-center rounded-[20px] border border-[#0A234F]/[0.08] bg-white px-6 py-14 text-center shadow-sm">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF3D6]"><Heart className="h-7 w-7 text-[#C98200]" aria-hidden="true" /></div>
+          <p className="mt-4 text-[15px] font-extrabold text-[#0A234F]">Keep your favourite finds together</p>
+          <p className="mt-1 text-[12px] leading-[1.5] text-[#7A8493]">Sign in to view the items you have saved.</p>
+          <button onClick={() => navigate('/login')} className="mt-5 h-11 rounded-[13px] bg-[#0A234F] px-6 text-[12px] font-extrabold text-white">Sign in</button>
         </div>
       ) : loading ? (
-        /* Loading skeleton */
-        <div style={{ paddingInline: 'var(--mob-side, 16px)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-white/[0.05]"
-              style={{ borderRadius: 12, height: 200 }}
-            />
-          ))}
+        <div className="grid grid-cols-2 gap-3 px-[var(--mob-side,16px)] pt-4">
+          {Array.from({ length: 6 }).map((_, index) => <div key={index} className="aspect-[0.78] animate-pulse rounded-[16px] bg-[#E8EDF3]" />)}
         </div>
       ) : items.length === 0 ? (
-        /* Empty state */
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            paddingTop: 48,
-            gap: 12,
-            textAlign: 'center',
-            paddingInline: 'var(--mob-side, 16px)',
-          }}
-        >
-          <Heart className="text-foreground/20" style={{ width: 40, height: 40 }} aria-hidden="true" />
-          <p className="text-base font-bold text-foreground m-0">No saved items yet</p>
-          <p className="text-sm text-muted-foreground m-0">
-            Tap the heart on any listing to save it here.
-          </p>
-          <button
-            onClick={() => navigate('/catalog')}
-            className="text-sm font-semibold text-foreground/80 bg-white/[0.07]"
-            style={{
-              height: 44,
-              paddingInline: 28,
-              borderRadius: 9999,
-              border: '1px solid rgba(255,255,255,0.12)',
-              cursor: 'pointer',
-              marginTop: 8,
-            }}
-          >
-            Browse listings
-          </button>
+        <div className="mx-[var(--mob-side,16px)] mt-5 flex flex-col items-center rounded-[20px] border border-[#0A234F]/[0.08] bg-white px-6 py-14 text-center shadow-sm">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF2F7]"><Heart className="h-7 w-7 text-[#94A3B8]" aria-hidden="true" /></div>
+          <p className="mt-4 text-[15px] font-extrabold text-[#0A234F]">No saved items yet</p>
+          <p className="mt-1 max-w-[270px] text-[12px] leading-[1.5] text-[#7A8493]">Save useful listings and they will be waiting for you here.</p>
+          <button onClick={() => navigate('/catalog')} className="mt-5 h-11 rounded-[13px] bg-[#0A234F] px-6 text-[12px] font-extrabold text-white">Browse marketplace</button>
         </div>
       ) : (
-        /* Items grid */
-        <div
-          style={{
-            paddingInline: 'var(--mob-side, 16px)',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 12,
-            marginTop: 8,
-          }}
-        >
+        <main className="grid grid-cols-2 gap-3 px-[var(--mob-side,16px)] py-4">
           {items.map((item) => (
-            <Link
-              key={item.id}
-              to={`/product/${item.id}`}
-              style={{ textDecoration: 'none', display: 'block' }}
-            >
-              <div
-                className="bg-white/[0.04]"
-                style={{
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                }}
-              >
-                {/* Image */}
-                <div className="bg-white/[0.06]" style={{ aspectRatio: '1', overflow: 'hidden' }}>
-                  {item.images?.[0] ? (
-                    <img
-                      src={item.images[0]}
-                      alt={item.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Heart className="text-foreground/15" style={{ width: 24, height: 24 }} aria-hidden="true" />
-                    </div>
-                  )}
-                </div>
-                {/* Details */}
-                <div style={{ padding: '10px 10px 12px' }}>
-                  <p
-                    className="text-[13px] font-medium text-foreground/85 m-0 overflow-hidden text-ellipsis whitespace-nowrap"
-                  >
-                    {item.title}
-                  </p>
-                  <p className="text-sm font-bold m-0" style={{ marginTop: '4px' }}>
-                    {formatPrice(item.price)}
-                  </p>
-                </div>
+            <Link key={item.id} to={`/product/${item.id}`} className="block overflow-hidden rounded-[16px] border border-[#0A234F]/[0.08] bg-white no-underline shadow-[0_6px_20px_rgba(10,35,79,0.06)]">
+              <div className="relative aspect-square overflow-hidden bg-[#EEF2F7]">
+                {item.images?.[0] ? (
+                  <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center"><Heart className="h-6 w-6 text-[#A0A8B4]" aria-hidden="true" /></div>
+                )}
+                <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-[#C98200] shadow-sm" aria-hidden="true"><Heart className="h-4 w-4 fill-current" /></span>
+                <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-1 text-[10px] font-black text-[#0A234F] shadow-sm">{formatPrice(item.price)}</span>
               </div>
+              <div className="px-2.5 pb-3 pt-2"><p className="line-clamp-2 text-[12px] font-semibold leading-[1.35] text-[#26354A]">{item.title}</p></div>
             </Link>
           ))}
-        </div>
+        </main>
       )}
 
       <MobileBottomNav />
