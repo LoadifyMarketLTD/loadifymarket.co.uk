@@ -1,13 +1,25 @@
 /**
- * MobileProfilePage — mobile profile / account hub.
+ * MobileProfilePage — native account hub.
  *
- * Sections: TOP (user card) / MAIN / TOOLS / SETTINGS / SUPPORT
- * Unauthenticated users see a login/register CTA.
- * Simple list rows with chevron — no descriptions or clutter.
+ * Keeps role/capability boundaries intact while presenting a simple marketplace
+ * account surface: identity, high-frequency shortcuts, settings and support.
  */
 
 import { useNavigate, Link } from 'react-router-dom';
-import { ChevronRight, LogOut, User } from 'lucide-react';
+import {
+  Bell,
+  ChevronRight,
+  Heart,
+  HelpCircle,
+  LogOut,
+  Package,
+  Settings,
+  ShieldCheck,
+  Store,
+  User,
+  Wallet,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -16,6 +28,7 @@ import { useUnreadNotificationsCount } from '@/hooks/useUnreadNotificationsCount
 interface SectionItem {
   label: string;
   to: string;
+  icon: LucideIcon;
   external?: boolean;
   badgeCount?: number;
 }
@@ -30,195 +43,100 @@ function buildSections(role: string | undefined): Section[] {
 
   return [
     {
-      title: 'Main',
+      title: 'Marketplace',
       items: [
-        // "My listings" is only meaningful for sellers and admins — hide for buyers
-        ...(isSellerOrAdmin
-          ? [{ label: 'My listings', to: '/seller/products' }]
-          : []),
-        { label: 'Favourite items', to: '/profile/favourites' },
-        { label: 'Orders', to: '/orders' },
-        { label: 'Balance', to: '/profile/balance' },
+        ...(isSellerOrAdmin ? [{ label: 'My listings', to: '/seller/products', icon: Store }] : []),
+        { label: 'Favourite items', to: '/profile/favourites', icon: Heart },
+        { label: 'Orders', to: '/orders', icon: Package },
+        { label: 'Balance', to: '/profile/balance', icon: Wallet },
       ],
     },
     {
-      title: 'Settings',
+      title: 'Account',
       items: [
-        { label: 'Settings', to: '/profile/settings' },
-        { label: 'Security', to: '/profile/security' },
-        { label: 'Activity', to: '/profile/notifications' },
+        { label: 'Settings', to: '/profile/settings', icon: Settings },
+        { label: 'Security', to: '/profile/security', icon: ShieldCheck },
+        { label: 'Activity', to: '/profile/notifications', icon: Bell },
       ],
     },
     {
       title: 'Support',
-      items: [
-        { label: 'Help Centre', to: '/faq' },
-      ],
+      items: [{ label: 'Help Centre', to: '/faq', icon: HelpCircle }],
     },
   ];
 }
 
-// ── Row component ──────────────────────────────────────────────────────────────
-function MenuRow({ label, to, external, badgeCount }: SectionItem) {
+function MenuRow({ label, to, external, badgeCount, icon: Icon }: SectionItem) {
   const inner = (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingInline: 'var(--mob-side, 16px)',
-        paddingTop: 14,
-        paddingBottom: 14,
-        cursor: 'pointer',
-      }}
-    >
-      <span className="text-[15px] font-medium text-foreground/90">
-        {label}
-      </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div className="flex min-h-[56px] items-center justify-between gap-3 px-3.5 py-2.5">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#F4F6F8] text-[#0A234F]">
+          <Icon className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+        </span>
+        <span className="truncate text-[14px] font-bold text-[#26354A]">{label}</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
         {badgeCount && badgeCount > 0 ? (
-          <span
-            className="bg-primary text-background text-[11px] font-bold inline-flex items-center justify-center"
-            style={{
-              minWidth: 20,
-              height: 20,
-              borderRadius: 999,
-              paddingInline: 6,
-            }}
-          >
+          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F5A300] px-1.5 text-[10px] font-black text-[#0A234F]">
             {badgeCount > 99 ? '99+' : badgeCount}
           </span>
         ) : null}
-        <ChevronRight className="text-foreground/30" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
+        <ChevronRight className="h-[17px] w-[17px] text-[#A0A8B4]" aria-hidden="true" />
       </div>
     </div>
   );
 
   if (external) {
     return (
-      <a href={to} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none' }}>
+      <a href={to} target="_blank" rel="noopener noreferrer" className="block no-underline">
         {inner}
       </a>
     );
   }
 
-  return (
-    <Link to={to} style={{ display: 'block', textDecoration: 'none' }}>
-      {inner}
-    </Link>
-  );
+  return <Link to={to} className="block no-underline">{inner}</Link>;
 }
 
-// ── Section component ──────────────────────────────────────────────────────────
 function MenuSection({ title, items }: Section) {
   return (
-    <div style={{ marginBottom: 8 }}>
-      <p
-        className="text-xs font-semibold text-foreground/35 uppercase tracking-[0.07em] m-0"
-        style={{
-          paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 20,
-          paddingBottom: 4,
-        }}
-      >
-        {title}
-      </p>
-      <div
-        className="bg-white/[0.04]"
-        style={{
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
-        {items.map((item, i) => (
+    <section className="mb-4 px-[var(--mob-side,16px)]">
+      <p className="mb-2 px-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#7A8493]">{title}</p>
+      <div className="overflow-hidden rounded-[18px] border border-[#0A234F]/[0.08] bg-white shadow-[0_6px_22px_rgba(10,35,79,0.05)]">
+        {items.map((item, index) => (
           <div key={item.to}>
             <MenuRow {...item} />
-            {i < items.length - 1 && (
-              <div
-                aria-hidden="true"
-                className="bg-white/[0.05]"
-                style={{ height: 1, marginInlineStart: 'var(--mob-side, 16px)' }}
-              />
-            )}
+            {index < items.length - 1 && <div className="ml-[58px] h-px bg-[#0A234F]/[0.07]" aria-hidden="true" />}
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
-// ── Guest CTA ──────────────────────────────────────────────────────────────────
 function GuestView() {
   const navigate = useNavigate();
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: 64,
-        paddingInline: 'var(--mob-side, 16px)',
-        gap: 16,
-        textAlign: 'center',
-      }}
-    >
-      <div
-        className="bg-white/[0.06] flex items-center justify-center"
-        style={{ width: 72, height: 72, borderRadius: '50%' }}
-      >
-        <User className="text-foreground/40" style={{ width: 32, height: 32 }} aria-hidden="true" />
+    <div className="px-[var(--mob-side,16px)] pt-7 text-center">
+      <div className="mx-auto flex h-[76px] w-[76px] items-center justify-center rounded-full bg-[#EEF2F7]">
+        <User className="h-8 w-8 text-[#667085]" aria-hidden="true" />
       </div>
-      <h2 className="text-xl font-bold text-foreground m-0">
-        Sign in to your account
-      </h2>
-      <p className="text-sm text-foreground/50 m-0" style={{ maxWidth: 280 }}>
-        Access your listings, orders, messages and more.
-      </p>
-      <button
-        onClick={() => navigate('/login')}
-        className="text-[15px] font-bold text-surface"
-        style={{
-          height: 48,
-          paddingInline: 40,
-          borderRadius: 9999,
-          background: 'hsl(var(--primary))',
-          border: 'none',
-          cursor: 'pointer',
-          marginTop: 8,
-        }}
-      >
-        Sign in
-      </button>
-      <button
-        onClick={() => navigate('/register')}
-        className="text-[15px] font-semibold text-foreground/80"
-        style={{
-          height: 48,
-          paddingInline: 40,
-          borderRadius: 9999,
-          background: 'transparent',
-          border: '1.5px solid rgba(255,255,255,0.18)',
-          cursor: 'pointer',
-        }}
-      >
-        Create account
-      </button>
+      <h2 className="mt-4 text-[20px] font-black tracking-[-0.02em] text-[#0A234F]">Your Loadify account</h2>
+      <p className="mx-auto mt-2 max-w-[290px] text-[13px] leading-[1.5] text-[#667085]">Sign in to manage purchases, favourites, conversations and selling activity.</p>
+      <button onClick={() => navigate('/login')} className="mt-6 h-12 w-full rounded-[14px] bg-[#0A234F] text-[14px] font-extrabold text-white shadow-[0_8px_20px_rgba(10,35,79,0.18)]">Sign in</button>
+      <button onClick={() => navigate('/register')} className="mt-2.5 h-12 w-full rounded-[14px] border border-[#0A234F]/15 bg-white text-[14px] font-extrabold text-[#0A234F]">Create account</button>
     </div>
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────────
 export default function MobileProfilePage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  const displayName = user
-    ? ((user as { firstName?: string; lastName?: string }).firstName ?? user.email?.split('@')[0] ?? 'You')
-    : null;
-
+  const firstName = user ? (user as { firstName?: string }).firstName : undefined;
+  const lastName = user ? (user as { lastName?: string }).lastName : undefined;
+  const displayName = user ? (firstName || user.email?.split('@')[0] || 'You') : null;
   const initials = user
-    ? (((user as { firstName?: string }).firstName?.[0] ?? '') +
-       ((user as { lastName?: string }).lastName?.[0] ?? '')).toUpperCase() || displayName?.[0]?.toUpperCase() || '?'
+    ? `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || displayName?.[0]?.toUpperCase() || '?'
     : null;
 
   const sections = buildSections(user?.role as string | undefined);
@@ -231,104 +149,57 @@ export default function MobileProfilePage() {
 
   return (
     <div
-      className="md:hidden min-h-screen bg-background"
+      className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden"
       style={{
         paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
+        paddingBottom: 'calc(82px + env(safe-area-inset-bottom, 0px))',
       }}
     >
-      {/* ── Page title ──────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 20,
-          paddingBottom: 8,
-        }}
-      >
-        <h1 className="text-[22px] font-extrabold text-foreground m-0">Profile</h1>
-      </div>
+      <header className="px-[var(--mob-side,16px)] pb-3 pt-5">
+        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">Account</p>
+        <h1 className="mt-1 text-[24px] font-black leading-none tracking-[-0.03em] text-[#0A234F]">Profile</h1>
+      </header>
 
       {!user ? (
         <GuestView />
       ) : (
         <>
-          {/* ── Profile header ──────────────────────────────────────────────── */}
-          <div
-            style={{
-              paddingInline: 'var(--mob-side, 16px)',
-              paddingTop: 12,
-              paddingBottom: 20,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-            }}
-          >
-            {/* Avatar */}
-            <div
-              style={{
-                width: 60,
-                height: 60,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-              className="bg-primary"
-            >
-              <span style={{ fontSize: 22, fontWeight: 700 }} className="text-surface">
+          <section className="px-[var(--mob-side,16px)] pb-5 pt-2">
+            <div className="flex items-center gap-3.5 rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_8px_24px_rgba(10,35,79,0.06)]">
+              <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full bg-[#0A234F] text-[20px] font-black text-white ring-2 ring-[#F5A300]/70 ring-offset-2 ring-offset-white">
                 {initials}
-              </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[17px] font-black leading-tight text-[#0A234F]">{displayName}</p>
+                <p className="mt-1 truncate text-[11px] font-medium text-[#7A8493]">{user.email}</p>
+                <Link
+                  to={user.role === 'seller' || user.role === 'admin' ? '/seller/products' : '/catalog'}
+                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-extrabold text-[#1D57D8] no-underline"
+                >
+                  {user.role === 'seller' || user.role === 'admin' ? 'Manage listings' : 'Browse marketplace'}
+                  <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </div>
             </div>
+          </section>
 
-            {/* Name + listings link */}
-            <div style={{ minWidth: 0 }}>
-              <p className="text-[18px] font-bold text-foreground m-0" style={{ lineHeight: 1.2 }}>
-                {displayName}
-              </p>
-              <Link
-                to={user.role === 'seller' || user.role === 'admin' ? '/seller/products' : '/catalog'}
-                style={{ fontSize: 13, textDecoration: 'none', fontWeight: 600 }}
-                className="text-primary"
-              >
-                View my listings →
-              </Link>
-            </div>
-          </div>
-
-          {/* ── Sections ────────────────────────────────────────────────────── */}
           {sections.map((section) => (
             <MenuSection
               key={section.title}
               {...section}
               items={section.items.map((item) =>
-                item.to === '/profile/notifications'
-                  ? { ...item, badgeCount: unreadNotifications }
-                  : item,
+                item.to === '/profile/notifications' ? { ...item, badgeCount: unreadNotifications } : item,
               )}
             />
           ))}
 
-          {/* ── Sign out ────────────────────────────────────────────────────── */}
-          <div style={{ marginTop: 8, marginBottom: 8 }}>
+          <div className="px-[var(--mob-side,16px)] pb-3">
             <button
               onClick={handleSignOut}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                width: '100%',
-                paddingInline: 'var(--mob-side, 16px)',
-                paddingTop: 16,
-                paddingBottom: 16,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-red-200 bg-white text-[13px] font-extrabold text-red-600"
             >
-              <LogOut className="text-danger" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
-              <span className="text-[15px] font-medium text-danger">Sign out</span>
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Sign out
             </button>
           </div>
         </>

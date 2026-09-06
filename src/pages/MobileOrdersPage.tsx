@@ -1,9 +1,7 @@
 /**
- * MobileOrdersPage — /orders
- *
- * Standalone full-screen orders list for mobile users (buyers).
- * Accessible from Profile or from a push notification deep-link
- * with ?orderId=… in the URL.
+ * MobileOrdersPage — native buyer order history.
+ * Preserves authoritative order/snapshot loading and deep-link behaviour while
+ * presenting a compact, light marketplace-native experience.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -44,30 +42,23 @@ const TAB_STATUSES: Record<Tab, string[]> = {
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  awaiting_payment: { label: "Awaiting payment", className: "bg-primary/15 text-primary" },
-  paid:             { label: "Paid",              className: "bg-admin/15 text-admin" },
-  packed:           { label: "Packed",            className: "bg-primary/15 text-primary" },
-  shipped:          { label: "Shipped",           className: "bg-secondary/15 text-secondary" },
-  delivered:        { label: "Delivered",         className: "bg-accent/15 text-accent" },
-  completed:        { label: "Completed",         className: "bg-accent/15 text-accent" },
-  cancelled:        { label: "Cancelled",         className: "bg-danger/15 text-danger" },
-  refunded:         { label: "Refunded",          className: "bg-white/[0.08] text-foreground/75" },
-  invoice_requested:{ label: "Invoice requested", className: "bg-secondary/15 text-secondary" },
+  awaiting_payment: { label: "Awaiting payment", className: "bg-[#FFF5DF] text-[#8A5A00]" },
+  paid: { label: "Paid", className: "bg-[#EAF1FF] text-[#1D57D8]" },
+  packed: { label: "Packed", className: "bg-[#EEF2F7] text-[#475569]" },
+  shipped: { label: "Shipped", className: "bg-[#EAF1FF] text-[#1D57D8]" },
+  delivered: { label: "Delivered", className: "bg-emerald-50 text-emerald-700" },
+  completed: { label: "Completed", className: "bg-emerald-50 text-emerald-700" },
+  cancelled: { label: "Cancelled", className: "bg-red-50 text-red-600" },
+  refunded: { label: "Refunded", className: "bg-[#EEF2F7] text-[#667085]" },
+  invoice_requested: { label: "Invoice requested", className: "bg-violet-50 text-violet-700" },
 };
 
 function statusCfg(status: string) {
-  return STATUS_CONFIG[status] ?? {
-    label: status.replace(/_/g, " "),
-    className: "bg-white/[0.08] text-foreground/75",
-  };
+  return STATUS_CONFIG[status] ?? { label: status.replace(/_/g, " "), className: "bg-[#EEF2F7] text-[#667085]" };
 }
 
 function OrderCard({ order, highlighted, cardRef }: {
@@ -84,39 +75,31 @@ function OrderCard({ order, highlighted, cardRef }: {
       role="button"
       tabIndex={0}
       onClick={() => navigate(`/buyer/orders?orderId=${order.id}`)}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(`/buyer/orders?orderId=${order.id}`); }}
-      className={`flex items-start gap-3 rounded-2xl p-3.5 cursor-pointer border transition-shadow ${highlighted ? 'bg-primary/[0.06] border-primary/35 shadow-[0_0_16px_rgba(212,175,55,0.12)]' : 'bg-card border-white/[0.07]'}`}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") navigate(`/buyer/orders?orderId=${order.id}`);
+      }}
+      className={`flex cursor-pointer items-start gap-3 rounded-[18px] border bg-white p-3.5 shadow-[0_7px_22px_rgba(10,35,79,0.06)] transition ${highlighted ? 'border-[#F5A300] ring-2 ring-[#F5A300]/20' : 'border-[#0A234F]/[0.08]'}`}
     >
-      <div className="w-20 h-20 rounded-xl bg-white shrink-0 overflow-hidden flex items-center justify-center">
+      <div className="flex h-[78px] w-[78px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#EEF2F7]">
         {order.productImage ? (
-          <img
-            src={order.productImage}
-            alt={order.productTitle ?? "Product"}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+          <img src={order.productImage} alt={order.productTitle ?? "Product"} className="h-full w-full object-cover" />
         ) : (
-          <Package className="w-8 h-8 text-muted-foreground" />
+          <Package className="h-8 w-8 text-[#A0A8B4]" aria-hidden="true" />
         )}
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-          <span className="text-[11px] text-foreground/70 font-mono">#{order.orderNumber}</span>
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-[20px] shrink-0 ${cfg.className}`}>
-            {cfg.label}
-          </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate font-mono text-[10px] font-semibold text-[#7A8493]">#{order.orderNumber}</span>
+          <span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black ${cfg.className}`}>{cfg.label}</span>
         </div>
-
-        <p className="text-sm font-bold text-foreground line-clamp-2" style={{ lineHeight: 1.3, marginBottom: "5px" }}>
-          {order.productTitle ?? "Order"}
-        </p>
-        <p className="text-xs text-foreground/70" style={{ marginBottom: "3px" }}>Qty: {order.quantity}</p>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span className="text-xs text-foreground/70">Order placed on {formatDate(order.createdAt)}</span>
+        <p className="mt-1.5 line-clamp-2 text-[13px] font-extrabold leading-[1.3] text-[#26354A]">{order.productTitle ?? "Order"}</p>
+        <div className="mt-1.5 flex items-center gap-2 text-[10px] font-medium text-[#7A8493]">
+          <span>Qty {order.quantity}</span><span aria-hidden="true">•</span><span>{formatDate(order.createdAt)}</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "6px" }}>
-          <span className="text-[15px] font-extrabold text-primary">£{order.total.toFixed(2)}</span>
-          <ChevronRight className="text-foreground/25" style={{ width: "16px", height: "16px", flexShrink: 0 }} />
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-[14px] font-black text-[#0A234F]">£{order.total.toFixed(2)}</span>
+          <ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" />
         </div>
       </div>
     </div>
@@ -129,7 +112,6 @@ export default function MobileOrdersPage() {
   const deepLinkOrderId = searchParams.get("orderId");
   const { user } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
-
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("all");
@@ -152,11 +134,7 @@ export default function MobileOrdersPage() {
 
         const { data } = await supabase
           .from("orders")
-          .select(
-            `id, orderNumber, total, status, createdAt, quantity,
-             products:productId(title, images),
-             order_items(productTitleSnapshot, productImageSnapshot, productSnapshotSource)`
-          )
+          .select(`id, orderNumber, total, status, createdAt, quantity, products:productId(title, images), order_items(productTitleSnapshot, productImageSnapshot, productSnapshotSource)`)
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
 
@@ -165,41 +143,28 @@ export default function MobileOrdersPage() {
           return;
         }
 
-        const rows: OrderRow[] = (
-          data as unknown as Array<{
-            id: string;
-            orderNumber: string;
-            total: number;
-            status: string;
-            createdAt: string;
-            quantity: number;
-            products: { title: string; images: string[] | null } | null;
-            order_items: Array<{
-              productTitleSnapshot: string | null;
-              productImageSnapshot: string | null;
-              productSnapshotSource: string | null;
-            }> | null;
-          }>
-        ).map((o) => {
-          const snapshotItem = o.order_items?.find((item) => item.productSnapshotSource != null) ?? null;
+        const rows: OrderRow[] = (data as unknown as Array<{
+          id: string;
+          orderNumber: string;
+          total: number;
+          status: string;
+          createdAt: string;
+          quantity: number;
+          products: { title: string; images: string[] | null } | null;
+          order_items: Array<{ productTitleSnapshot: string | null; productImageSnapshot: string | null; productSnapshotSource: string | null }> | null;
+        }>).map((order) => {
+          const snapshotItem = order.order_items?.find((item) => item.productSnapshotSource != null) ?? null;
           return {
-            id: o.id,
-            orderNumber: o.orderNumber,
-            total: o.total,
-            status: o.status,
-            createdAt: o.createdAt,
-            quantity: o.quantity ?? 1,
-            productTitle: snapshotItem
-              ? snapshotItem.productTitleSnapshot
-              : o.products?.title ?? null,
-            // A NULL image in an authoritative snapshot means no image existed at
-            // checkout; do not replace that historical fact with a later live image.
-            productImage: snapshotItem
-              ? snapshotItem.productImageSnapshot
-              : (o.products?.images ?? [])[0] ?? null,
+            id: order.id,
+            orderNumber: order.orderNumber,
+            total: order.total,
+            status: order.status,
+            createdAt: order.createdAt,
+            quantity: order.quantity ?? 1,
+            productTitle: snapshotItem ? snapshotItem.productTitleSnapshot : order.products?.title ?? null,
+            productImage: snapshotItem ? snapshotItem.productImageSnapshot : (order.products?.images ?? [])[0] ?? null,
           };
         });
-
         setOrders(rows);
       } finally {
         setLoading(false);
@@ -212,124 +177,73 @@ export default function MobileOrdersPage() {
   useEffect(() => {
     if (!deepLinkOrderId || loading) return;
     const ref = cardRefs.current.get(deepLinkOrderId);
-    if (ref?.current) {
-      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    if (ref?.current) ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [deepLinkOrderId, loading]);
 
-  const visibleOrders = activeTab === "all"
-    ? orders
-    : orders.filter((o) => TAB_STATUSES[activeTab].includes(o.status));
-
-  const hasAwaitingPayment = orders.some((o) => o.status === "awaiting_payment");
+  const visibleOrders = activeTab === "all" ? orders : orders.filter((order) => TAB_STATUSES[activeTab].includes(order.status));
+  const hasAwaitingPayment = orders.some((order) => order.status === "awaiting_payment");
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <div
-        className="shrink-0 px-4 sticky top-0 z-10 bg-background/[0.97]"
-        style={{
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-          paddingTop: "calc(1rem + env(safe-area-inset-top, 0px))",
-          paddingBottom: "0",
-        }}
+    <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden">
+      <header
+        className="sticky top-0 z-30 border-b border-[#0A234F]/[0.08] bg-white/95 px-[var(--mob-side,16px)]"
+        style={{ paddingTop: "calc(0.9rem + env(safe-area-inset-top, 0px))", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }}
       >
-        <h1 className="text-[22px] font-extrabold text-foreground" style={{ marginBottom: "12px" }}>My Orders</h1>
-        <div
-          style={{
-            display: "flex",
-            overflowX: "auto",
-            gap: "0",
-            scrollbarWidth: "none",
-            WebkitOverflowScrolling: "touch",
-          }}
-          className="[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-        >
+        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">Purchases</p>
+        <h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">My orders</h1>
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
+            const active = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`text-[13px] whitespace-nowrap bg-transparent border-none cursor-pointer shrink-0 transition-colors duration-200 ${isActive ? 'text-primary font-bold border-b-2 border-primary' : 'text-foreground/65 font-normal border-b-2 border-transparent'}`}
-                style={{ padding: "10px 14px" }}
+                className={`min-h-9 shrink-0 rounded-full px-3 text-[11px] font-extrabold ${active ? 'bg-[#0A234F] text-white' : 'border border-[#0A234F]/10 bg-[#F7F9FC] text-[#667085]'}`}
               >
                 {tab.label}
               </button>
             );
           })}
         </div>
-      </div>
+      </header>
 
-      <div
-        className="flex-1 overflow-y-auto px-4 py-4"
-        style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}
-      >
+      <main className="px-[var(--mob-side,16px)] py-4" style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}>
         {loading ? (
-          [1, 2, 3].map((n) => (
-            <div key={n} className="animate-pulse bg-white/[0.05]" style={{ height: "108px", borderRadius: "16px", marginBottom: "12px" }} />
-          ))
+          <div className="flex flex-col gap-3">
+            {[1, 2, 3].map((n) => <div key={n} className="h-[108px] animate-pulse rounded-[18px] bg-[#E8EDF3]" />)}
+          </div>
         ) : visibleOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
-              <Package className="h-8 w-8 text-white/20" />
-            </div>
-            <p className="text-white/75 text-sm">{activeTab === "all" ? "No orders yet" : "No orders in this category"}</p>
-            {activeTab === "all" && (
-              <Link to="/catalog" className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold">
-                Start browsing
-              </Link>
-            )}
+          <div className="flex flex-col items-center justify-center rounded-[20px] border border-[#0A234F]/[0.08] bg-white px-6 py-14 text-center shadow-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF2F7]"><Package className="h-7 w-7 text-[#94A3B8]" aria-hidden="true" /></div>
+            <p className="mt-4 text-[15px] font-extrabold text-[#0A234F]">{activeTab === "all" ? "No orders yet" : "Nothing in this section"}</p>
+            <p className="mt-1 text-[12px] leading-[1.45] text-[#7A8493]">{activeTab === "all" ? "Items you buy on Loadify will appear here." : "Try another order status."}</p>
+            {activeTab === "all" && <Link to="/catalog" className="mt-5 rounded-[13px] bg-[#0A234F] px-4 py-2.5 text-[12px] font-extrabold text-white no-underline">Browse marketplace</Link>}
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div className="flex flex-col gap-3">
             {visibleOrders.map((order) => {
-              if (!cardRefs.current.has(order.id)) {
-                cardRefs.current.set(order.id, { current: null });
-              }
-              return (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  highlighted={order.id === deepLinkOrderId}
-                  cardRef={cardRefs.current.get(order.id)}
-                />
-              );
+              if (!cardRefs.current.has(order.id)) cardRefs.current.set(order.id, { current: null });
+              return <OrderCard key={order.id} order={order} highlighted={order.id === deepLinkOrderId} cardRef={cardRefs.current.get(order.id)} />;
             })}
           </div>
         )}
 
         {!loading && hasAwaitingPayment && (
-          <div className="flex items-start gap-2 rounded-xl bg-primary/10 border border-primary/40 p-3 mt-3">
-            <AlertCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-            <p className="text-primary text-xs leading-relaxed">
-              You have orders awaiting payment. Tap an order to complete checkout before the reservation expires.
-            </p>
+          <div className="mt-3 flex items-start gap-2 rounded-[14px] border border-[#F5A300]/40 bg-[#FFF8E8] p-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#C98200]" aria-hidden="true" />
+            <p className="text-[11px] leading-relaxed text-[#795300]">You have orders awaiting payment. Open the order to complete checkout before the reservation expires.</p>
           </div>
         )}
 
         {!loading && (
-          <button
-            onClick={() => navigate("/buyer/profile")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              width: "100%",
-              padding: "16px 4px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              marginTop: "8px",
-            }}
-          >
-            <HelpCircle className="text-foreground/60" style={{ width: "20px", height: "20px", flexShrink: 0 }} />
-            <span className="text-sm text-foreground/75" style={{ flex: 1, textAlign: "left" }}>Need help with your order?</span>
-            <ChevronRight className="text-foreground/25" style={{ width: "16px", height: "16px" }} />
+          <button onClick={() => navigate("/buyer/profile")} className="mt-4 flex h-12 w-full items-center gap-2 rounded-[14px] border border-[#0A234F]/10 bg-white px-3 text-left">
+            <HelpCircle className="h-4 w-4 shrink-0 text-[#667085]" aria-hidden="true" />
+            <span className="flex-1 text-[12px] font-bold text-[#475569]">Need help with an order?</span>
+            <ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" />
           </button>
         )}
-      </div>
+      </main>
 
       <MobileBottomNav />
     </div>

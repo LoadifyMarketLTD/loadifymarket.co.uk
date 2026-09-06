@@ -1,9 +1,10 @@
 /**
- * MobileGridCard — minimal 2-column grid card for the mobile home feed.
- * Shows: image (square) + title + price + optional location. No badges/ratings.
+ * MobileGridCard — compact two-column native marketplace card.
+ * Product-first density, restrained metadata and large tap targets.
  */
 
 import { Link } from 'react-router-dom';
+import { MapPin } from 'lucide-react';
 import { formatPrice } from '@/lib/formatPrice';
 import { productThumbnail } from '@/lib/imageOptimization';
 import NativeImg from '@/components/NativeImg';
@@ -15,22 +16,15 @@ interface MobileGridCardProps {
   price: number;
   image?: string;
   location?: string;
-  /** Set to true for above-the-fold cards to avoid lazy-loading the LCP image. */
   priority?: boolean;
 }
 
-const darkPlaceholder = (
+const lightPlaceholder = (
   <div
     aria-hidden="true"
-    style={{
-      position: 'absolute',
-      inset: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}
+    className="absolute inset-0 flex items-center justify-center bg-[#EEF1F5]"
   >
-    <ProductImagePlaceholder theme="dark" />
+    <ProductImagePlaceholder theme="light" />
   </div>
 );
 
@@ -38,70 +32,44 @@ export default function MobileGridCard({ id, title, price, image, location, prio
   return (
     <Link
       to={`/product/${id}`}
-      style={{ display: 'block', textDecoration: 'none' }}
-      aria-label={title}
+      className="block min-w-0 overflow-hidden rounded-[16px] border border-[#0A234F]/[0.08] bg-white no-underline shadow-[0_6px_20px_rgba(10,35,79,0.06)] active:scale-[0.99]"
+      aria-label={`${title}, ${formatPrice(price)}`}
     >
-      {/* Image */}
-      <div
-        className="bg-white/[0.05]"
-        style={{
-          width: '100%',
-          aspectRatio: '1 / 1',
-          borderRadius: 12,
-          overflow: 'hidden',
-          position: 'relative',
-        }}
-      >
+      <div className="relative aspect-square w-full overflow-hidden bg-[#EEF1F5]">
         <NativeImg
           src={image ? productThumbnail(image) : undefined}
           alt={title}
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : undefined}
           decoding={priority ? 'auto' : 'async'}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          fallback={darkPlaceholder}
+          className="block h-full w-full object-cover"
+          fallback={lightPlaceholder}
         />
+        <span
+          className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-1 text-[10px] font-black text-[#0A234F] shadow-sm"
+          style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        >
+          {formatPrice(price)}
+        </span>
       </div>
 
-      {/* Info */}
-      <div style={{ paddingTop: 8, paddingBottom: 4 }}>
+      <div className="px-2.5 pb-2.5 pt-2">
         <p
-          className="text-foreground/90"
+          className="m-0 text-[12px] font-semibold leading-[1.35] text-[#26354A]"
           style={{
-            fontSize: 'clamp(12px, 3.2vw, 13px)',
-            fontWeight: 500,
-            margin: 0,
-            lineHeight: 1.35,
             overflow: 'hidden',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
+            minHeight: 32,
           }}
         >
           {title}
         </p>
-        <p
-          className="text-foreground"
-          style={{
-            fontSize: 'clamp(13px, 3.8vw, 15px)',
-            fontWeight: 700,
-            margin: '4px 0 0',
-          }}
-        >
-          {formatPrice(price)}
-        </p>
         {location && (
-          <p
-            className="text-foreground/50"
-            style={{
-              fontSize: 11,
-              margin: '3px 0 0',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {location}
+          <p className="mt-1.5 flex min-w-0 items-center gap-1 text-[10px] font-medium text-[#7A8493]">
+            <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
+            <span className="truncate">{location}</span>
           </p>
         )}
       </div>
