@@ -1,10 +1,10 @@
 /**
  * conversation-get-or-create
  *
- * Resolves an existing conversation between the caller (buyer) and seller for a
- * listing, or creates it when missing.
+ * Resolves an existing marketplace conversation or creates it when missing.
  *
- * Body: { productId: string, sellerId: string }
+ * Listing flow body: { productId: string, sellerId: string }
+ * Transaction flow body: { orderId: string }
  * Returns: { conversationId: string, created: boolean }
  */
 
@@ -15,6 +15,7 @@ import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 interface RequestBody {
   productId?: string;
   sellerId?: string;
+  orderId?: string;
 }
 
 interface ConversationRow {
@@ -26,6 +27,13 @@ interface ProductRow {
   title: string;
   sellerId: string;
   isActive?: boolean;
+}
+
+interface OrderRow {
+  id: string;
+  buyerId: string | null;
+  sellerId: string | null;
+  productId: string | null;
 }
 
 export const handler: Handler = async (event) => {
@@ -59,15 +67,52 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
 
-  const { productId, sellerId } = body;
-  if (!productId || typeof productId !== 'string') {
-    return { statusCode: 400, body: JSON.stringify({ error: 'productId is required' }) };
-  }
-  if (!sellerId || typeof sellerId !== 'string') {
-    return { statusCode: 400, body: JSON.stringify({ error: 'sellerId is required' }) };
-  }
-  if (callerId === sellerId) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'You cannot message your own listing' }) };
+  let productId: string;
+  let otherUserId: string;
+  let requireActiveListing = true;
+
+  if (body.orderId) {
+    if (typeof body.orderId !== 'string') {
+      return { statusCode: 400, body: JSON.stringify({ error: 'orderId must be a string' }) };
+    }
+
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('id, buyerId, sellerId, productId')
+      .eq('id', body.orderId)
+      .maybeSingle<OrderRow>();
+
+    if (orderError || !order) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Order not found' }) };
+    }
+
+    const callerIsBuyer = order.buyerId === callerId;
+    const callerIsSeller = order.sellerId === callerId;
+    if (!callerIsBuyer && !callerIsSeller) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'You do not have access to this order' }) };
+    }
+
+    if (!order.productId || !order.buyerId || !order.sellerId) {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Order messaging information is incomplete' }) };
+    }
+
+    productId = order.productId;
+    otherUserId = callerIsBuyer ? order.sellerId : order.buyerId;
+    requireActiveListing = false;
+  } else {
+    const { productId: requestedProductId, sellerId } = body;
+    if (!requestedProductId || typeof requestedProductId !== 'string') {
+      return { statusCode: 400, body: JSON.stringify({ error: 'productId is required' }) };
+    }
+    if (!sellerId || typeof sellerId !== 'string') {
+      return { statusCode: 400, body: JSON.stringify({ error: 'sellerId is required' }) };
+    }
+    if (callerId === sellerId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'You cannot message your own listing' }) };
+    }
+
+    productId = requestedProductId;
+    otherUserId = sellerId;
   }
 
   const { data: product, error: productError } = await supabase
@@ -79,10 +124,16 @@ export const handler: Handler = async (event) => {
   if (productError || !product) {
     return { statusCode: 404, body: JSON.stringify({ error: 'Listing not found' }) };
   }
-  if (product.sellerId !== sellerId) {
+
+  if (body.orderId) {
+    if (product.sellerId !== (otherUserId === callerId ? callerId : product.sellerId)) {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Order listing seller mismatch' }) };
+    }
+  } else if (product.sellerId !== otherUserId) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Seller does not match listing seller' }) };
   }
-  if (product.isActive === false) {
+
+  if (requireActiveListing && product.isActive === false) {
     return { statusCode: 409, body: JSON.stringify({ error: 'This listing is no longer active' }) };
   }
 
@@ -91,8 +142,8 @@ export const handler: Handler = async (event) => {
     .select('id')
     .eq('productId', productId)
     .or(
-      `and(user1Id.eq.${callerId},user2Id.eq.${sellerId}),` +
-      `and(user1Id.eq.${sellerId},user2Id.eq.${callerId})`
+      `and(user1Id.eq.${callerId},user2Id.eq.${otherUserId}),` +
+      `and(user1Id.eq.${otherUserId},user2Id.eq.${callerId})`
     )
     .maybeSingle<ConversationRow>();
 
@@ -107,7 +158,7 @@ export const handler: Handler = async (event) => {
     .from('conversations')
     .insert({
       user1Id: callerId,
-      user2Id: sellerId,
+      user2Id: otherUserId,
       productId,
       subject: product.title ? `Re: ${product.title}` : null,
     })
@@ -121,8 +172,8 @@ export const handler: Handler = async (event) => {
         .select('id')
         .eq('productId', productId)
         .or(
-          `and(user1Id.eq.${callerId},user2Id.eq.${sellerId}),` +
-          `and(user1Id.eq.${sellerId},user2Id.eq.${callerId})`
+          `and(user1Id.eq.${callerId},user2Id.eq.${otherUserId}),` +
+          `and(user1Id.eq.${otherUserId},user2Id.eq.${callerId})`
         )
         .maybeSingle<ConversationRow>();
 
