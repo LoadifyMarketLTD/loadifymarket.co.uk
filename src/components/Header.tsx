@@ -28,7 +28,6 @@ const nativeProfessionalPaths = new Set([
   "/seller/analytics",
   "/seller/payouts",
   "/seller/promote",
-  "/seller/mobile-payments",
 ]);
 
 const nativeProfessionalPrefixes = [
