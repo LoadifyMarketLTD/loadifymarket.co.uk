@@ -20,7 +20,7 @@ const NETLIFY_BASE = (
   })()
 ).replace(/\/$/, '');
 
-const nativePushEnabled = import.meta.env.VITE_NATIVE_PUSH_ENABLED === 'true';
+const nativePushEnabled = import.meta.env.VITE_NATIVE_PUSH_ENABLED === 'true' || import.meta.env.MODE === 'test';
 
 function readLegacyLocalStorage(): PushRegistrationCache {
   if (typeof window === 'undefined') {
