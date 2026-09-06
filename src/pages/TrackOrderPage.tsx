@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import { useSearchParams } from 'react-router-dom';
-import { Package, Search, Truck, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Package, Search, Truck, CheckCircle, AlertCircle, Clock, ExternalLink } from 'lucide-react';
 import type { ShipmentEvent } from '../types/shipping';
 
 interface TrackingData {
@@ -32,6 +32,23 @@ interface TrackingData {
   state: 'tracked' | 'being_prepared';
 }
 
+const getCarrierTrackingDestination = (courierName: string | null) => {
+  if (!courierName) return null;
+  const carrier = courierName.trim().toLowerCase();
+
+  if (carrier.includes('royal mail')) {
+    return { label: 'Track with Royal Mail', url: 'https://www.royalmail.com/track-your-item' };
+  }
+  if (carrier.includes('dpd')) {
+    return { label: 'Track with DPD', url: 'https://track.dpd.co.uk/' };
+  }
+  if (carrier.includes('evri') || carrier.includes('hermes')) {
+    return { label: 'Track with Evri', url: 'https://www.evri.com/track-a-parcel' };
+  }
+
+  return null;
+};
+
 export default function TrackOrderPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [orderNumber, setOrderNumber] = useState(searchParams.get('orderNumber') || '');
@@ -41,8 +58,8 @@ export default function TrackOrderPage() {
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
 
   const handleTrack = async (orderNum?: string, orderEmail?: string) => {
-    const trackOrderNumber = orderNum || orderNumber;
-    const trackEmail = orderEmail !== undefined ? orderEmail : email;
+    const trackOrderNumber = (orderNum || orderNumber).trim();
+    const trackEmail = (orderEmail !== undefined ? orderEmail : email).trim();
 
     if (!trackOrderNumber) {
       setError('Please enter an order number');
@@ -73,6 +90,8 @@ export default function TrackOrderPage() {
       }
 
       setTrackingData(data);
+      setOrderNumber(trackOrderNumber);
+      setEmail(trackEmail);
       setSearchParams({ orderNumber: trackOrderNumber });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to track order');
@@ -123,6 +142,10 @@ export default function TrackOrderPage() {
       minute: '2-digit',
     });
   };
+
+  const carrierTracking = trackingData?.shipment?.tracking_number
+    ? getCarrierTrackingDestination(trackingData.shipment.courier_name)
+    : null;
 
   return (
     <MainLayout>
@@ -275,9 +298,26 @@ export default function TrackOrderPage() {
                     {trackingData.shipment.tracking_number && (
                       <div>
                         <p className="text-sm text-gray-600">Tracking Number</p>
-                        <p className="font-semibold font-mono">{trackingData.shipment.tracking_number}</p>
+                        <p className="font-semibold font-mono break-all">{trackingData.shipment.tracking_number}</p>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {carrierTracking && (
+                  <div className="mb-4">
+                    <a
+                      href={carrierTracking.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 bg-navy-800 text-white px-4 py-2 rounded-lg hover:bg-navy-900 transition-colors"
+                    >
+                      {carrierTracking.label}
+                      <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                    </a>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Opens the courier's official tracking page. Your tracking number is shown above.
+                    </p>
                   </div>
                 )}
 
