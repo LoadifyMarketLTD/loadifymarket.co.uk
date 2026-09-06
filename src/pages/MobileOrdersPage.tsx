@@ -11,15 +11,18 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleHelp,
+  FileCheck2,
   Loader2,
   MessageSquare,
   Package,
   RotateCcw,
   Truck,
+  Upload,
 } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import { openExternalUrl } from "@/lib/capacitorUtils";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
@@ -47,6 +50,7 @@ type ShipmentRow = {
   status: string;
   courier_name: string | null;
   tracking_number: string | null;
+  proof_of_delivery_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -104,6 +108,22 @@ type ConversationResolveResponse = {
   error?: string;
 };
 
+type FunctionResponse = {
+  success?: boolean;
+  error?: string;
+  message?: string;
+};
+
+type ProofUploadResponse = FunctionResponse & {
+  uploadUrl?: string;
+  path?: string;
+};
+
+type ProofViewResponse = {
+  url?: string;
+  error?: string;
+};
+
 type Tab = "all" | "pending" | "shipped" | "delivered" | "cancelled";
 type OrderMode = "buy" | "sell";
 
@@ -130,6 +150,11 @@ const RETURN_REASONS = [
   { value: "wrong_item", label: "Wrong item received" },
   { value: "other", label: "Other" },
 ] as const;
+
+const COURIERS = ["Royal Mail", "Evri"] as const;
+const TERMINAL_FULFILMENT_ORDER_STATUSES = new Set(["cancelled", "refunded", "disputed", "delivered", "completed"]);
+const PROOF_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"]);
+const MAX_PROOF_BYTES = 10 * 1024 * 1024;
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   awaiting_payment: { label: "Awaiting payment", className: "bg-[#FFF5DF] text-[#8A5A00]" },
@@ -167,6 +192,18 @@ function formatDateTime(iso: string) {
 function fullName(row: BuyerLookup | null | undefined) {
   if (!row) return null;
   return [row.firstName, row.lastName].filter(Boolean).join(" ").trim() || null;
+}
+
+function nextShipmentStatuses(status: string): string[] {
+  switch (status) {
+    case "Pending": return ["Processing", "Dispatched"];
+    case "Processing": return ["Dispatched"];
+    case "Dispatched": return ["In Transit", "Out for Delivery", "Delivered", "Delivery Failed"];
+    case "In Transit": return ["Out for Delivery", "Delivered", "Delivery Failed"];
+    case "Out for Delivery": return ["Delivered", "Delivery Failed"];
+    case "Delivery Failed": return ["Dispatched"];
+    default: return [];
+  }
 }
 
 function OrderCard({ order, mode }: { order: OrderRow; mode: OrderMode }) {
@@ -211,6 +248,13 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const [returnDescription, setReturnDescription] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
   const [messageOpening, setMessageOpening] = useState(false);
+  const [shipmentEditing, setShipmentEditing] = useState(false);
+  const [shipmentCourier, setShipmentCourier] = useState("");
+  const [shipmentTracking, setShipmentTracking] = useState("");
+  const [shipmentSaving, setShipmentSaving] = useState(false);
+  const [shipmentStatusSaving, setShipmentStatusSaving] = useState<string | null>(null);
+  const [proofUploading, setProofUploading] = useState(false);
+  const [proofOpening, setProofOpening] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -226,19 +270,10 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         if (orderError || !orderData) { setError("This order could not be loaded."); return; }
 
         const raw = orderData as unknown as {
-          id: string;
-          orderNumber: string;
-          total: number;
-          status: string;
-          createdAt: string;
-          quantity: number;
-          buyerId: string | null;
-          sellerId: string | null;
-          buyerNameSnapshot: string | null;
-          sellerBusinessNameSnapshot: string | null;
-          commercialSnapshotSource: string | null;
-          products: { title: string; images: string[] | null } | null;
-          order_items: OrderItemRow[] | null;
+          id: string; orderNumber: string; total: number; status: string; createdAt: string; quantity: number;
+          buyerId: string | null; sellerId: string | null; buyerNameSnapshot: string | null;
+          sellerBusinessNameSnapshot: string | null; commercialSnapshotSource: string | null;
+          products: { title: string; images: string[] | null } | null; order_items: OrderItemRow[] | null;
         };
 
         const isBuyer = raw.buyerId === user.id;
@@ -255,7 +290,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           counterpartName = fullName(display as BuyerLookup | null);
         }
 
-        const { data: shipmentData } = await supabase.from("shipments").select("id, status, courier_name, tracking_number, created_at, updated_at").eq("order_id", raw.id).maybeSingle();
+        const { data: shipmentData } = await supabase.from("shipments").select("id, status, courier_name, tracking_number, proof_of_delivery_url, created_at, updated_at").eq("order_id", raw.id).maybeSingle();
         let events: ShipmentEventRow[] = [];
         if (shipmentData?.id) {
           const { data: eventRows } = await supabase.from("shipment_events").select("id, status, message, created_at").eq("shipment_id", shipmentData.id).order("created_at", { ascending: true });
@@ -264,26 +299,22 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
 
         const { data: returnRows } = await supabase.from("returns").select("id, status, reason, refundAmount, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1);
         const snapshotItem = raw.order_items?.find((item) => item.productSnapshotSource != null) ?? raw.order_items?.[0] ?? null;
+        const shipment = (shipmentData as ShipmentRow | null) ?? null;
 
         setDetail({
-          id: raw.id,
-          orderNumber: raw.orderNumber,
-          total: raw.total,
-          status: raw.status,
-          createdAt: raw.createdAt,
+          id: raw.id, orderNumber: raw.orderNumber, total: raw.total, status: raw.status, createdAt: raw.createdAt,
           quantity: raw.quantity ?? 1,
           productTitle: snapshotItem ? snapshotItem.productTitleSnapshot : raw.products?.title ?? null,
           productImage: snapshotItem ? snapshotItem.productImageSnapshot : (raw.products?.images ?? [])[0] ?? null,
           buyerName: actualMode === "sell" ? counterpartName ?? "Customer" : null,
           sellerName: actualMode === "buy" ? counterpartName ?? "Seller" : null,
-          buyerId: raw.buyerId,
-          sellerId: raw.sellerId,
-          shipment: (shipmentData as ShipmentRow | null) ?? null,
-          events,
+          buyerId: raw.buyerId, sellerId: raw.sellerId, shipment, events,
           returnRequest: ((returnRows ?? [])[0] as ReturnRow | undefined) ?? null,
           orderItemId: snapshotItem?.id ?? null,
           orderItemQuantity: snapshotItem?.quantity ?? raw.quantity ?? 1,
         });
+        setShipmentCourier(shipment?.courier_name ?? "");
+        setShipmentTracking(shipment?.tracking_number ?? "");
       } catch {
         setError("This order could not be loaded.");
       } finally {
@@ -292,6 +323,23 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
     };
     void load();
   }, [orderId, requestedMode, user?.id]);
+
+  const refreshFulfilment = async () => {
+    if (!detail) return;
+    const [{ data: orderState }, { data: shipmentState }] = await Promise.all([
+      supabase.from("orders").select("status").eq("id", detail.id).maybeSingle(),
+      supabase.from("shipments").select("id, status, courier_name, tracking_number, proof_of_delivery_url, created_at, updated_at").eq("order_id", detail.id).maybeSingle(),
+    ]);
+    let events: ShipmentEventRow[] = [];
+    if (shipmentState?.id) {
+      const { data: eventRows } = await supabase.from("shipment_events").select("id, status, message, created_at").eq("shipment_id", shipmentState.id).order("created_at", { ascending: true });
+      events = (eventRows ?? []) as ShipmentEventRow[];
+    }
+    const shipment = (shipmentState as ShipmentRow | null) ?? null;
+    setDetail((current) => current ? { ...current, status: orderState?.status ?? current.status, shipment, events } : current);
+    setShipmentCourier(shipment?.courier_name ?? "");
+    setShipmentTracking(shipment?.tracking_number ?? "");
+  };
 
   const submitReturn = async () => {
     if (!detail || !user?.id || mode !== "buy" || returnSubmitting) return;
@@ -312,15 +360,9 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         setReturnOpen(false);
         return;
       }
-
       const eligibilityResponse = await authorizedFetch("/.netlify/functions/customer-return-eligibility", {
         method: "POST",
-        body: JSON.stringify({
-          orderId: detail.id,
-          orderItemId: detail.orderItemId,
-          quantity: detail.orderItemQuantity,
-          reasonCode: returnReason,
-        }),
+        body: JSON.stringify({ orderId: detail.id, orderItemId: detail.orderItemId, quantity: detail.orderItemQuantity, reasonCode: returnReason }),
       });
       const eligibility = await eligibilityResponse.json() as ReturnEligibilityResponse;
       if (!eligibilityResponse.ok) throw new Error(eligibility.error || "Return eligibility could not be checked.");
@@ -329,29 +371,17 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         toast({ title: "Return not available", description: "This order is outside the current return eligibility boundary.", variant: "destructive" });
         return;
       }
-
       if (eligibility.result?.automaticRefundExecutionAllowed !== false || eligibility.result?.paymentMutationAllowed !== false) {
         throw new Error("Unsafe return policy response. No return was created.");
       }
-
       const { data: created, error: insertError } = await supabase.from("returns").insert({
-        orderId: detail.id,
-        buyerId: user.id,
-        sellerId: detail.sellerId,
-        reason: returnReason,
-        description: returnDescription.trim(),
-        status: "requested",
+        orderId: detail.id, buyerId: user.id, sellerId: detail.sellerId,
+        reason: returnReason, description: returnDescription.trim(), status: "requested",
       }).select("id, status, reason, refundAmount, createdAt").single();
       if (insertError) throw insertError;
-
       setDetail((current) => current ? { ...current, returnRequest: created as ReturnRow } : current);
-      setReturnOpen(false);
-      setReturnReason("");
-      setReturnDescription("");
-      toast({
-        title: "Return requested",
-        description: decision === "manual_review" ? "Your request was submitted for manual review. No refund has been executed." : "Your return request was submitted. No refund has been executed.",
-      });
+      setReturnOpen(false); setReturnReason(""); setReturnDescription("");
+      toast({ title: "Return requested", description: decision === "manual_review" ? "Your request was submitted for manual review. No refund has been executed." : "Your return request was submitted. No refund has been executed." });
     } catch (err) {
       toast({ title: "Failed to submit return", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
@@ -363,19 +393,104 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
     if (!detail || messageOpening) return;
     setMessageOpening(true);
     try {
-      const response = await authorizedFetch("/.netlify/functions/conversation-get-or-create", {
-        method: "POST",
-        body: JSON.stringify({ orderId: detail.id }),
-      });
+      const response = await authorizedFetch("/.netlify/functions/conversation-get-or-create", { method: "POST", body: JSON.stringify({ orderId: detail.id }) });
       const payload = await response.json() as ConversationResolveResponse;
-      if (!response.ok || !payload.conversationId) {
-        throw new Error(payload.error || "Conversation could not be opened.");
-      }
+      if (!response.ok || !payload.conversationId) throw new Error(payload.error || "Conversation could not be opened.");
       navigate(`/inbox/${encodeURIComponent(payload.conversationId)}`);
     } catch (err) {
       toast({ title: "Could not open conversation", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setMessageOpening(false);
+    }
+  };
+
+  const saveShipment = async (markDispatched: boolean) => {
+    if (!detail || !user?.id || mode !== "sell" || detail.sellerId !== user.id || shipmentSaving) return;
+    if (!shipmentCourier) {
+      toast({ title: "Choose a courier", description: "Select Royal Mail or Evri before saving shipping details.", variant: "destructive" });
+      return;
+    }
+    setShipmentSaving(true);
+    try {
+      const body: Record<string, unknown> = {
+        order_id: detail.id,
+        courier_name: shipmentCourier,
+        tracking_number: shipmentTracking.trim(),
+      };
+      if (markDispatched) body.dispatched_at = new Date().toISOString();
+      const response = await authorizedFetch("/.netlify/functions/create-shipment", { method: "POST", body: JSON.stringify(body) });
+      const payload = await response.json() as FunctionResponse;
+      if (!response.ok) throw new Error(payload.error || "Shipment details could not be saved.");
+      await refreshFulfilment();
+      setShipmentEditing(false);
+      toast({ title: markDispatched ? "Shipment dispatched" : "Shipping details saved", description: payload.message || "The order delivery details are up to date." });
+    } catch (err) {
+      toast({ title: "Could not save shipment", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setShipmentSaving(false);
+    }
+  };
+
+  const updateShipmentStatus = async (nextStatus: string) => {
+    if (!detail?.shipment || !user?.id || mode !== "sell" || detail.sellerId !== user.id || shipmentStatusSaving) return;
+    setShipmentStatusSaving(nextStatus);
+    try {
+      const response = await authorizedFetch(`/.netlify/functions/update-shipment-status/${encodeURIComponent(detail.shipment.id)}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const payload = await response.json() as FunctionResponse;
+      if (!response.ok) throw new Error(payload.error || "Shipment status could not be updated.");
+      await refreshFulfilment();
+      toast({ title: "Shipment updated", description: payload.message || `Status changed to ${nextStatus}.` });
+    } catch (err) {
+      toast({ title: "Could not update shipment", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setShipmentStatusSaving(null);
+    }
+  };
+
+  const uploadProof = async (file: File) => {
+    if (!detail?.shipment || !user?.id || mode !== "sell" || detail.sellerId !== user.id || proofUploading) return;
+    const contentType = file.type.toLowerCase();
+    if (!PROOF_TYPES.has(contentType) || file.size <= 0 || file.size > MAX_PROOF_BYTES) {
+      toast({ title: "Invalid proof file", description: "Use JPG, PNG, WebP or PDF up to 10 MB.", variant: "destructive" });
+      return;
+    }
+    setProofUploading(true);
+    try {
+      const endpoint = `/.netlify/functions/upload-proof-of-delivery/${encodeURIComponent(detail.shipment.id)}/proof`;
+      const prepareResponse = await authorizedFetch(endpoint, { method: "POST", body: JSON.stringify({ contentType, fileSize: file.size }) });
+      const prepare = await prepareResponse.json() as ProofUploadResponse;
+      if (!prepareResponse.ok || !prepare.uploadUrl || !prepare.path) throw new Error(prepare.error || "Secure proof upload could not be prepared.");
+
+      const uploadResponse = await fetch(prepare.uploadUrl, { method: "PUT", headers: { "Content-Type": contentType }, body: file });
+      if (!uploadResponse.ok) throw new Error("Proof file upload failed.");
+
+      const confirmResponse = await authorizedFetch(endpoint, { method: "PUT", body: JSON.stringify({ filePath: prepare.path }) });
+      const confirm = await confirmResponse.json() as FunctionResponse;
+      if (!confirmResponse.ok) throw new Error(confirm.error || "Proof upload could not be confirmed.");
+      await refreshFulfilment();
+      toast({ title: "Proof of delivery saved", description: "The proof is attached to the delivered shipment." });
+    } catch (err) {
+      toast({ title: "Could not upload proof", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setProofUploading(false);
+    }
+  };
+
+  const openProof = async () => {
+    if (!detail?.shipment || proofOpening) return;
+    setProofOpening(true);
+    try {
+      const response = await authorizedFetch(`/.netlify/functions/upload-proof-of-delivery/${encodeURIComponent(detail.shipment.id)}/proof`, { method: "GET" });
+      const payload = await response.json() as ProofViewResponse;
+      if (!response.ok || !payload.url) throw new Error(payload.error || "Proof of delivery could not be opened.");
+      await openExternalUrl(payload.url);
+    } catch (err) {
+      toast({ title: "Could not open proof", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setProofOpening(false);
     }
   };
 
@@ -396,6 +511,9 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const cfg = statusCfg(detail.status);
   const counterpart = mode === "sell" ? detail.buyerName ?? "Customer" : detail.sellerName ?? "Seller";
   const returnCanStart = mode === "buy" && !detail.returnRequest && ["delivered", "completed"].includes(detail.status);
+  const isSellerView = mode === "sell" && detail.sellerId === user?.id;
+  const shipmentMutable = isSellerView && !TERMINAL_FULFILMENT_ORDER_STATUSES.has(detail.status);
+  const nextStatuses = detail.shipment ? nextShipmentStatuses(detail.shipment.status) : [];
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden">
@@ -418,11 +536,48 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
 
         <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
           <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Delivery</h2></div>
+
           {detail.shipment ? (
             <>
-              <div className="mt-3 rounded-[14px] bg-[#F7F9FC] p-3"><div className="flex items-center justify-between gap-2"><span className="text-[11px] font-semibold text-[#667085]">Shipment status</span><span className="text-[11px] font-extrabold capitalize text-[#0A234F]">{detail.shipment.status}</span></div>{detail.shipment.courier_name ? <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[11px] font-semibold text-[#667085]">Courier</span><span className="text-[11px] font-extrabold text-[#0A234F]">{detail.shipment.courier_name}</span></div> : null}{detail.shipment.tracking_number ? <div className="mt-2"><p className="text-[11px] font-semibold text-[#667085]">Tracking number</p><p className="mt-1 break-all font-mono text-[11px] font-extrabold text-[#0A234F]">{detail.shipment.tracking_number}</p></div> : null}</div>
-              {detail.events.length > 0 ? <div className="mt-4"><p className="mb-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Delivery history</p><div className="space-y-3">{detail.events.map((event, index) => <div key={event.id} className="flex gap-3"><div className="flex flex-col items-center"><span className={`mt-1 h-2.5 w-2.5 rounded-full ${index === detail.events.length - 1 ? "bg-[#F5A300]" : "bg-[#B8C1CD]"}`} />{index < detail.events.length - 1 ? <span className="mt-1 h-full min-h-7 w-px bg-[#D9DEE6]" /> : null}</div><div className="min-w-0 flex-1 pb-1"><p className="text-[11px] font-extrabold capitalize text-[#26354A]">{event.status}</p>{event.message ? <p className="mt-0.5 text-[10px] leading-[1.45] text-[#667085]">{event.message}</p> : null}<p className="mt-1 text-[9px] font-medium text-[#98A2B3]">{formatDateTime(event.created_at)}</p></div></div>)}</div></div> : null}
+              <div className="mt-3 rounded-[14px] bg-[#F7F9FC] p-3">
+                <div className="flex items-center justify-between gap-2"><span className="text-[11px] font-semibold text-[#667085]">Shipment status</span><span className="text-[11px] font-extrabold text-[#0A234F]">{detail.shipment.status}</span></div>
+                {detail.shipment.courier_name ? <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[11px] font-semibold text-[#667085]">Courier</span><span className="text-[11px] font-extrabold text-[#0A234F]">{detail.shipment.courier_name}</span></div> : null}
+                {detail.shipment.tracking_number ? <div className="mt-2"><p className="text-[11px] font-semibold text-[#667085]">Tracking number</p><p className="mt-1 break-all font-mono text-[11px] font-extrabold text-[#0A234F]">{detail.shipment.tracking_number}</p></div> : null}
+              </div>
+
+              {isSellerView && shipmentMutable ? (
+                <div className="mt-3 rounded-[14px] border border-[#0A234F]/[0.08] bg-white p-3">
+                  <div className="flex items-center justify-between gap-3"><div><p className="text-[11px] font-black text-[#26354A]">Seller fulfilment</p><p className="mt-0.5 text-[9px] text-[#7A8493]">Tracking and delivery status for this sale</p></div><button type="button" onClick={() => setShipmentEditing((value) => !value)} className="rounded-full bg-[#EEF2F7] px-3 py-1.5 text-[10px] font-extrabold text-[#475569]">{shipmentEditing ? "Close" : "Edit"}</button></div>
+                  {shipmentEditing ? (
+                    <div className="mt-3 space-y-2.5">
+                      <select value={shipmentCourier} onChange={(event) => setShipmentCourier(event.target.value)} className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[11px] font-bold text-[#26354A]"><option value="">Choose courier</option>{COURIERS.map((courier) => <option key={courier} value={courier}>{courier}</option>)}</select>
+                      <input value={shipmentTracking} onChange={(event) => setShipmentTracking(event.target.value)} maxLength={120} placeholder="Tracking number" className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[11px] font-bold text-[#26354A] outline-none" />
+                      <button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(false); }} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">{shipmentSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Save shipping details</button>
+                    </div>
+                  ) : null}
+                  {nextStatuses.length > 0 ? <div className="mt-3"><p className="mb-2 text-[9px] font-black uppercase tracking-[0.1em] text-[#7A8493]">Update delivery</p><div className="flex flex-wrap gap-2">{nextStatuses.map((status) => <button key={status} type="button" disabled={Boolean(shipmentStatusSaving)} onClick={() => { void updateShipmentStatus(status); }} className="flex min-h-9 items-center gap-1.5 rounded-full border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[10px] font-extrabold text-[#0A234F] disabled:opacity-50">{shipmentStatusSaving === status ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}{status}</button>)}</div></div> : null}
+                </div>
+              ) : null}
+
+              {detail.shipment.status === "Delivered" ? (
+                <div className="mt-3 rounded-[14px] border border-[#0A234F]/[0.08] bg-white p-3">
+                  <div className="flex items-center gap-2"><FileCheck2 className="h-4 w-4 text-[#1D57D8]" /><p className="text-[11px] font-black text-[#26354A]">Proof of delivery</p></div>
+                  {detail.shipment.proof_of_delivery_url ? <button type="button" disabled={proofOpening} onClick={() => { void openProof(); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#EEF2F7] text-[11px] font-extrabold text-[#0A234F] disabled:opacity-60">{proofOpening ? <Loader2 className="h-4 w-4 animate-spin" /> : null}View proof of delivery</button> : isSellerView ? <label className="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] px-3 text-[11px] font-extrabold text-white"><Upload className="h-4 w-4" />{proofUploading ? "Uploading proof…" : "Upload proof"}<input type="file" disabled={proofUploading} accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadProof(file); event.currentTarget.value = ""; }} /></label> : <p className="mt-2 text-[10px] text-[#7A8493]">Proof has not been uploaded yet.</p>}
+                  {!detail.shipment.proof_of_delivery_url && isSellerView ? <p className="mt-2 text-[9px] leading-[1.45] text-[#7A8493]">JPG, PNG, WebP or PDF, maximum 10 MB. Proof can only be attached once.</p> : null}
+                </div>
+              ) : null}
+
+              {detail.events.length > 0 ? <div className="mt-4"><p className="mb-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Delivery history</p><div className="space-y-3">{detail.events.map((event, index) => <div key={event.id} className="flex gap-3"><div className="flex flex-col items-center"><span className={`mt-1 h-2.5 w-2.5 rounded-full ${index === detail.events.length - 1 ? "bg-[#F5A300]" : "bg-[#B8C1CD]"}`} />{index < detail.events.length - 1 ? <span className="mt-1 h-full min-h-7 w-px bg-[#D9DEE6]" /> : null}</div><div className="min-w-0 flex-1 pb-1"><p className="text-[11px] font-extrabold text-[#26354A]">{event.status}</p>{event.message ? <p className="mt-0.5 text-[10px] leading-[1.45] text-[#667085]">{event.message}</p> : null}<p className="mt-1 text-[9px] font-medium text-[#98A2B3]">{formatDateTime(event.created_at)}</p></div></div>)}</div></div> : null}
             </>
+          ) : isSellerView && shipmentMutable ? (
+            <div className="mt-3 rounded-[14px] border border-[#F5A300]/30 bg-[#FFF8E8] p-3">
+              <p className="text-[11px] font-black text-[#795300]">Set up shipping</p><p className="mt-1 text-[10px] leading-[1.45] text-[#8A6A25]">Add the courier and tracking number. Mark dispatched only when the parcel has actually left you.</p>
+              <div className="mt-3 space-y-2.5">
+                <select value={shipmentCourier} onChange={(event) => setShipmentCourier(event.target.value)} className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A]"><option value="">Choose courier</option>{COURIERS.map((courier) => <option key={courier} value={courier}>{courier}</option>)}</select>
+                <input value={shipmentTracking} onChange={(event) => setShipmentTracking(event.target.value)} maxLength={120} placeholder="Tracking number" className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A] outline-none" />
+                <div className="grid grid-cols-2 gap-2"><button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(false); }} className="min-h-11 rounded-[12px] border border-[#0A234F]/10 bg-white text-[10px] font-extrabold text-[#0A234F] disabled:opacity-60">Save only</button><button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(true); }} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[12px] bg-[#0A234F] text-[10px] font-extrabold text-white disabled:opacity-60">{shipmentSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}Mark dispatched</button></div>
+              </div>
+            </div>
           ) : <div className="mt-3 rounded-[14px] bg-[#FFF8E8] p-3"><p className="text-[11px] font-extrabold text-[#795300]">Preparing for shipment</p><p className="mt-1 text-[10px] leading-[1.45] text-[#8A6A25]">Tracking information will appear here when a shipment is created.</p></div>}
         </section>
 
@@ -431,14 +586,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         ) : returnCanStart ? (
           <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
             <div className="flex items-center gap-2"><RotateCcw className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Return this order</h2></div>
-            {!returnOpen ? <button type="button" onClick={() => setReturnOpen(true)} className="mt-3 flex min-h-12 w-full items-center justify-center rounded-[14px] bg-[#0A234F] px-4 text-[12px] font-extrabold text-white">Request a return</button> : (
-              <div className="mt-3 space-y-3">
-                <select value={returnReason} onChange={(event) => setReturnReason(event.target.value)} className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold text-[#26354A] outline-none"><option value="">Choose a reason</option>{RETURN_REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select>
-                <textarea value={returnDescription} onChange={(event) => setReturnDescription(event.target.value)} rows={4} maxLength={1000} placeholder="Tell us what happened" className="w-full resize-none rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] p-3 text-[12px] font-medium text-[#26354A] outline-none placeholder:text-[#98A2B3]" />
-                <p className="text-[10px] leading-[1.45] text-[#667085]">Submitting a request does not execute a refund. Eligibility is checked first and manual review may be required.</p>
-                <div className="flex gap-2"><button type="button" disabled={returnSubmitting} onClick={() => setReturnOpen(false)} className="min-h-11 flex-1 rounded-[13px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#475569]">Cancel</button><button type="button" disabled={returnSubmitting} onClick={() => { void submitReturn(); }} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[13px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">{returnSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Submit return</button></div>
-              </div>
-            )}
+            {!returnOpen ? <button type="button" onClick={() => setReturnOpen(true)} className="mt-3 flex min-h-12 w-full items-center justify-center rounded-[14px] bg-[#0A234F] px-4 text-[12px] font-extrabold text-white">Request a return</button> : <div className="mt-3 space-y-3"><select value={returnReason} onChange={(event) => setReturnReason(event.target.value)} className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold text-[#26354A] outline-none"><option value="">Choose a reason</option>{RETURN_REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select><textarea value={returnDescription} onChange={(event) => setReturnDescription(event.target.value)} rows={4} maxLength={1000} placeholder="Tell us what happened" className="w-full resize-none rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] p-3 text-[12px] font-medium text-[#26354A] outline-none placeholder:text-[#98A2B3]" /><p className="text-[10px] leading-[1.45] text-[#667085]">Submitting a request does not execute a refund. Eligibility is checked first and manual review may be required.</p><div className="flex gap-2"><button type="button" disabled={returnSubmitting} onClick={() => setReturnOpen(false)} className="min-h-11 flex-1 rounded-[13px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#475569]">Cancel</button><button type="button" disabled={returnSubmitting} onClick={() => { void submitReturn(); }} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[13px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">{returnSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Submit return</button></div></div>}
           </section>
         ) : null}
 
@@ -462,17 +610,12 @@ export default function MobileOrdersPage() {
   const [activeTab, setActiveTab] = useState<Tab>("all");
 
   const changeMode = (nextMode: OrderMode) => {
-    const next = new URLSearchParams(searchParams);
-    next.set("mode", nextMode);
-    next.delete("orderId");
-    setActiveTab("all");
-    setSearchParams(next, { replace: true });
+    const next = new URLSearchParams(searchParams); next.set("mode", nextMode); next.delete("orderId");
+    setActiveTab("all"); setSearchParams(next, { replace: true });
   };
 
   const closeDetail = () => {
-    const next = new URLSearchParams(searchParams);
-    next.delete("orderId");
-    setSearchParams(next, { replace: true });
+    const next = new URLSearchParams(searchParams); next.delete("orderId"); setSearchParams(next, { replace: true });
   };
 
   useEffect(() => {
@@ -485,21 +628,7 @@ export default function MobileOrdersPage() {
         const ownerColumn = mode === "sell" ? "sellerId" : "buyerId";
         const { data, error } = await supabase.from("orders").select(`id, orderNumber, total, status, createdAt, quantity, buyerId, buyerNameSnapshot, commercialSnapshotSource, products:productId(title, images), order_items(productTitleSnapshot, productImageSnapshot, productSnapshotSource)`).eq(ownerColumn, user.id).order("createdAt", { ascending: false });
         if (error || !data) { setOrders([]); return; }
-
-        const sourceRows = data as unknown as Array<{
-          id: string;
-          orderNumber: string;
-          total: number;
-          status: string;
-          createdAt: string;
-          quantity: number;
-          buyerId: string | null;
-          buyerNameSnapshot: string | null;
-          commercialSnapshotSource: string | null;
-          products: { title: string; images: string[] | null } | null;
-          order_items: Array<{ productTitleSnapshot: string | null; productImageSnapshot: string | null; productSnapshotSource: string | null }> | null;
-        }>;
-
+        const sourceRows = data as unknown as Array<{ id: string; orderNumber: string; total: number; status: string; createdAt: string; quantity: number; buyerId: string | null; buyerNameSnapshot: string | null; commercialSnapshotSource: string | null; products: { title: string; images: string[] | null } | null; order_items: Array<{ productTitleSnapshot: string | null; productImageSnapshot: string | null; productSnapshotSource: string | null }> | null }>;
         const buyerNameById: Record<string, string> = {};
         if (mode === "sell") {
           const legacyBuyerIds = [...new Set(sourceRows.filter((order) => !order.commercialSnapshotSource || !order.buyerNameSnapshot?.trim()).map((order) => order.buyerId).filter((id): id is string => Boolean(id)))];
@@ -508,25 +637,12 @@ export default function MobileOrdersPage() {
             (buyers as BuyerLookup[] | null)?.forEach((buyer) => { buyerNameById[buyer.id] = fullName(buyer) || "Customer"; });
           }
         }
-
         setOrders(sourceRows.map((order) => {
           const snapshotItem = order.order_items?.find((item) => item.productSnapshotSource != null) ?? null;
           const snapshotBuyerName = order.buyerNameSnapshot?.trim();
-          return {
-            id: order.id,
-            orderNumber: order.orderNumber,
-            total: order.total,
-            status: order.status,
-            createdAt: order.createdAt,
-            quantity: order.quantity ?? 1,
-            productTitle: snapshotItem ? snapshotItem.productTitleSnapshot : order.products?.title ?? null,
-            productImage: snapshotItem ? snapshotItem.productImageSnapshot : (order.products?.images ?? [])[0] ?? null,
-            buyerName: mode === "sell" ? (snapshotBuyerName || (order.buyerId ? buyerNameById[order.buyerId] : null) || "Customer") : null,
-          };
+          return { id: order.id, orderNumber: order.orderNumber, total: order.total, status: order.status, createdAt: order.createdAt, quantity: order.quantity ?? 1, productTitle: snapshotItem ? snapshotItem.productTitleSnapshot : order.products?.title ?? null, productImage: snapshotItem ? snapshotItem.productImageSnapshot : (order.products?.images ?? [])[0] ?? null, buyerName: mode === "sell" ? (snapshotBuyerName || (order.buyerId ? buyerNameById[order.buyerId] : null) || "Customer") : null };
         }));
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     };
     void load();
   }, [user?.id, mode, promptAuth]);
@@ -543,7 +659,6 @@ export default function MobileOrdersPage() {
         <div className="flex items-end justify-between gap-3"><h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">{mode === "sell" ? "Sold items" : "My orders"}</h1><div className="mb-0.5 flex rounded-full bg-[#EEF2F7] p-1"><button type="button" onClick={() => changeMode("buy")} className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "buy" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}>Purchases</button><button type="button" onClick={() => changeMode("sell")} className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "sell" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}>Sales</button></div></div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{TABS.map((tab) => { const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`min-h-9 shrink-0 rounded-full px-3 text-[11px] font-extrabold ${active ? "bg-[#0A234F] text-white" : "border border-[#0A234F]/10 bg-[#F7F9FC] text-[#667085]"}`}>{tab.label}</button>; })}</div>
       </header>
-
       <main className="px-[var(--mob-side,16px)] py-4" style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}>
         {loading ? <div className="flex flex-col gap-3">{[1, 2, 3].map((n) => <div key={n} className="h-[108px] animate-pulse rounded-[18px] bg-[#E8EDF3]" />)}</div> : visibleOrders.length === 0 ? <div className="flex flex-col items-center justify-center rounded-[20px] border border-[#0A234F]/[0.08] bg-white px-6 py-14 text-center shadow-sm"><div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF2F7]"><Package className="h-7 w-7 text-[#94A3B8]" aria-hidden="true" /></div><p className="mt-4 text-[15px] font-extrabold text-[#0A234F]">{activeTab === "all" ? (mode === "sell" ? "No sales yet" : "No orders yet") : "Nothing in this section"}</p><p className="mt-1 text-[12px] leading-[1.45] text-[#7A8493]">{activeTab === "all" ? (mode === "sell" ? "Items sold through Loadify will appear here." : "Items you buy on Loadify will appear here.") : "Try another order status."}</p>{activeTab === "all" && mode === "buy" ? <Link to="/catalog" className="mt-5 rounded-[13px] bg-[#0A234F] px-4 py-2.5 text-[12px] font-extrabold text-white no-underline">Browse marketplace</Link> : null}</div> : <div className="flex flex-col gap-3">{visibleOrders.map((order) => <OrderCard key={order.id} order={order} mode={mode} />)}</div>}
         {!loading && hasAwaitingPayment ? <div className="mt-3 flex items-start gap-2 rounded-[14px] border border-[#F5A300]/40 bg-[#FFF8E8] p-3"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#C98200]" aria-hidden="true" /><p className="text-[11px] leading-relaxed text-[#795300]">You have orders awaiting payment. Open the order to complete checkout before the reservation expires.</p></div> : null}
