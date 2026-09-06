@@ -59,41 +59,20 @@
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
 
-    /* ── Mobile spacing system ────────────────────────────────────────────
-     * --mob-side    : consistent horizontal gutter on mobile screens
-     * --mob-nav-h   : visible height of MobileBottomNav (excl. safe-area)
-     * Use these in calc() expressions alongside env(safe-area-inset-bottom)
-     * to ensure content is never hidden behind the bottom nav bar.
-     * ─────────────────────────────────────────────────────────────────── */
     --mob-side: clamp(12px, 4vw, 20px);
     --mob-nav-h: 68px;
-
-    /* ── Responsive global Header height ──────────────────────────────────
-     * Header Row 1: h-[60px] (mobile) / h-[72px] (md+)
-     * Header Row 2: h-[50px] (all sizes, category nav)
-     * Mobile total: 60 + 50 = 110px = 6.875rem
-     * Desktop total: 72 + 50 = 122px = 7.625rem
-     *
-     * --header-h   → used by non-shell pages (Login, Register, Catalog, etc.)
-     * --shell-offset-h → used by dashboard shells (/seller, /admin, /buyer).
-     *   On mobile the global Header is hidden on shell paths, so the offset
-     *   is 0 (only safe-area-inset-top is needed).
-     * ─────────────────────────────────────────────────────────────────── */
-    --header-h: 6.875rem;       /* 110px — mobile header height */
-    --shell-offset-h: 0px;      /* shells hide global header on mobile */
+    --header-h: 6.875rem;
+    --shell-offset-h: 0px;
   }
 
   @media (min-width: 768px) {
     :root {
-      --header-h: 7.625rem;     /* 122px — desktop header height */
-      --shell-offset-h: 7.625rem; /* desktop: shells sit below the global header */
+      --header-h: 7.625rem;
+      --shell-offset-h: 7.625rem;
     }
   }
 }
 
-/* Light workspace identity. Dashboard shells toggle this class on <html> so
-   semantic UI tokens, including portalled menus and dialogs, stay consistent
-   without changing public dark-detail surfaces outside an authenticated hub. */
 .market-light-root {
   --background: 210 20% 98%;
   --foreground: 215 68% 18%;
@@ -132,9 +111,6 @@
   background: #F7F9FC;
 }
 
-/* Public marketplace light identity. Keep the navy navigation chrome, while
-   catalog, category and listing-detail content uses the same bright surface
-   language as the homepage. */
 .market-public-light {
   --background: 216 33% 97%;
   --foreground: 218 76% 18%;
@@ -163,8 +139,6 @@
   color: #0A234F;
 }
 
-/* Compatibility layer for legacy authenticated workspace surfaces that still
-   carry literal dark-era utility classes. */
 .market-workspace-light [class*="text-white"] {
   color: #0A234F !important;
 }
@@ -186,7 +160,6 @@
   * {
     @apply border-border;
   }
-  /* Prevent any overflowing element from creating horizontal page scroll on mobile */
   html {
     overflow-x: hidden;
   }
@@ -194,7 +167,6 @@
     @apply text-foreground;
     font-family: var(--font-body);
     overflow-x: hidden;
-    /* Ensure full-width on all devices */
     min-width: 320px;
     position: relative;
     background: radial-gradient(circle at top, #182235, #0A0E1A);
@@ -209,6 +181,30 @@
   }
 }
 
+/* Installed Capacitor app only: keep the document anchored at its scroll
+   boundaries. This complements Android WebView OVER_SCROLL_NEVER. Normal
+   vertical scrolling remains enabled inside the marketplace, but dragging
+   beyond the top/bottom cannot move/stretch the entire document. */
+html.native-marketplace-app,
+body.native-marketplace-app {
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body.native-marketplace-app {
+  min-height: 100dvh;
+  background: #F7F9FC;
+}
+
+.native-marketplace-scroll-root {
+  min-height: 100dvh;
+  overscroll-behavior: none;
+  overflow-x: clip;
+  touch-action: pan-y pinch-zoom;
+}
+
 @layer utilities {
   .text-gradient-hero {
     background: var(--gradient-hero);
@@ -218,271 +214,5 @@
   }
   .bg-gradient-hero {
     background: var(--gradient-hero);
-  }
-  .bg-gradient-accent {
-    background: var(--gradient-accent);
-  }
-  .shadow-card {
-    box-shadow: var(--shadow-card);
-  }
-  .shadow-elevated {
-    box-shadow: var(--shadow-elevated);
-  }
-}
-
-/* ── Existing brand utilities preserved from main project ─────────────────── */
-@layer components {
-  .container-market {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-}
-
-
-/* Cookie-banner safe-area offset: clears the mobile bottom nav plus any iOS
-   home-indicator / Android gesture bar. Uses the same --mob-nav-h token (68px)
-   that MobileBottomNav and the product CTA bar use, so the value stays in sync
-   if the nav height ever changes. Reset to 0 at sm+ breakpoint via sm:mb-0
-   (see CookieConsent.tsx). */
-.mb-safearea-nav {
-  margin-bottom: calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px));
-}
-
-@layer utilities {
-  .scrollbar-none {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .font-display {
-    font-family: var(--font-display);
-  }
-  .break-inside-avoid {
-    break-inside: avoid;
-    -webkit-column-break-inside: avoid;
-    page-break-inside: avoid;
-  }
-}
-
-section {
-  scroll-margin-top: 80px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   AMBIENT INTERACTION LAYER
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Gold cursor glow — follows --cursor-x / --cursor-y set by JS ─────────── */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 41;
-
-  background: radial-gradient(
-    400px circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
-    rgba(212, 175, 55, 0.08),
-    transparent 60%
-  );
-}
-
-/* ── Noise texture overlay — fine grain, barely perceptible ───────────────── */
-.noise-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 40;
-
-  /* SVG feTurbulence noise tile — no separate file needed */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 200px 200px;
-  opacity: 0.025;
-}
-
-/* ── Card 3D parallax ─────────────────────────────────────────────────────── */
-[data-parallax] {
-  transform-style: preserve-3d;
-  transition: transform 0.25s ease;
-}
-
-/* ── Magnetic button ──────────────────────────────────────────────────────── */
-[data-magnetic] {
-  transition: transform 0.2s ease;
-}
-
-/* ── Gold icon pulse — applied only to card icon wrappers via .icon-pulse ─── */
-@keyframes goldPulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.25));
-  }
-  50% {
-    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
-  }
-}
-
-/* ── Typing indicator bounce dots ─────────────────────────────────────────── */
-@keyframes bounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-  40%           { transform: translateY(-4px); opacity: 1; }
-}
-
-.icon-pulse {
-  animation: goldPulse 3s ease-in-out infinite;
-}
-
-/* Disable GPU-intensive animations on touch/mobile devices */
-@media (max-width: 767px) {
-  /* Disable gold icon pulse — reduces continuous GPU work in the WebView */
-  .icon-pulse {
-    animation: none;
-    filter: none;
-  }
-
-  /* Disable cursor glow overlay — cursor events don't fire on touch screens */
-  body::before {
-    display: none;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   PREMIUM PAYMENT & SOCIAL CARDS
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Shared shine sweep (::after moves from left → right on hover) ────────── */
-.payment-card,
-.social-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.payment-card::after,
-.social-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  transform: translateX(-120%);
-  background: linear-gradient(
-    120deg,
-    transparent,
-    rgba(255, 255, 255, 0.10),
-    transparent
-  );
-  transition: transform 0.6s ease;
-}
-
-.payment-card:hover::after,
-.social-card:hover::after {
-  transform: translateX(120%);
-}
-
-/* ── Platform-specific hover glow (subtle brand tint + gold base) ─────────── */
-.social-card.facebook:hover {
-  box-shadow:
-    0 0 20px rgba(24, 119, 242, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.social-card.twitter:hover {
-  box-shadow:
-    0 0 20px rgba(29, 161, 242, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.social-card.instagram:hover {
-  box-shadow:
-    0 0 20px rgba(225, 48, 108, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.social-card.linkedin:hover {
-  box-shadow:
-    0 0 20px rgba(10, 102, 194, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.social-card.tiktok:hover {
-  box-shadow:
-    0 0 20px rgba(105, 201, 208, 0.18),
-    0 0 22px rgba(212, 175, 55, 0.10),
-    0 16px 34px rgba(0, 0, 0, 0.52),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   NAVBAR — PRIMARY CATEGORY LINK ANIMATED UNDERLINE
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-.nav-cat-link {
-  position: relative;
-}
-
-.nav-cat-link::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -6px;
-  width: 0%;
-  height: 2px;
-  background: #D4AF37;
-  border-radius: 999px;
-  transition: width 0.3s ease;
-}
-
-.nav-cat-link:hover::after,
-.nav-cat-link.active::after {
-  width: 100%;
-}
-
-/* ── Safe-area inset utilities (Capacitor / notch phones) ─────────────────── */
-/* Use these on any fixed/sticky element that must clear the OS status bar or
-   bottom navigation bar.  In a browser the env() values resolve to 0.          */
-@layer utilities {
-  /* Padding helpers */
-  .pt-safe  { padding-top:    env(safe-area-inset-top,    0px); }
-  .pr-safe  { padding-right:  env(safe-area-inset-right,  0px); }
-  .pb-safe  { padding-bottom: env(safe-area-inset-bottom, 0px); }
-  .pl-safe  { padding-left:   env(safe-area-inset-left,   0px); }
-
-  /* Margin helpers (for absolute/fixed children that need to push down) */
-  .mt-safe  { margin-top:    env(safe-area-inset-top,    0px); }
-  .mb-safe  { margin-bottom: env(safe-area-inset-bottom, 0px); }
-
-  /* Min-height helper so full-screen containers clear the status bar */
-  .min-h-screen-safe {
-    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-  }
-
-  /* Combined utility: base 0.75rem (py-3) top padding plus the status-bar
-     safe-area inset. Use on mobile app-shell headers so content clears the
-     Android / iOS status bar without duplicating the calc() in every file. */
-  .pt-header-safe {
-    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
-  }
-
-  /* pt-header-spacer: clears the fixed public Header on all viewports.
-   * Uses --header-h CSS variable (6.875rem on mobile, 7.625rem on md+).
-   * Plus env(safe-area-inset-top) for iOS notch / Dynamic Island.
-   * Use on the spacer div below <Header /> on pages that use the global header. */
-  .pt-header-spacer {
-    padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
   }
 }

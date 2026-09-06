@@ -20,6 +20,8 @@ const NETLIFY_BASE = (
   })()
 ).replace(/\/$/, '');
 
+const nativePushEnabled = import.meta.env.VITE_NATIVE_PUSH_ENABLED === 'true' || import.meta.env.MODE === 'test';
+
 function readLegacyLocalStorage(): PushRegistrationCache {
   if (typeof window === 'undefined') {
     return { token: null, userId: null, version: null };
@@ -159,6 +161,15 @@ export async function clearPushRegistrationCache(): Promise<void> {
  */
 export async function protectCurrentDevicePushBeforeSignOut(accessToken?: string): Promise<void> {
   if (!isCapacitorNative() || typeof window === 'undefined') return;
+
+  // Debug/local APKs deliberately fail closed when native push is disabled.
+  // Calling PushNotifications.unregister() without Firebase/APNs configuration
+  // is process-fatal on Android, just like register(). With push disabled there
+  // is no active native registration to revoke, so only clear stale local cache.
+  if (!nativePushEnabled) {
+    await clearPushRegistrationCache();
+    return;
+  }
 
   const cache = await getPushRegistrationCache();
   const token = cache.token?.trim() ?? '';

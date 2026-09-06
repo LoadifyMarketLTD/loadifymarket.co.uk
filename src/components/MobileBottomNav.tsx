@@ -170,7 +170,7 @@ export default function MobileBottomNav() {
       }}
     >
       <div className="mx-auto flex w-full max-w-[640px] items-end justify-between px-1" style={{ minHeight: 62 }}>
-        <NavItem to="/" icon={Home} label="Home" isActive={location.pathname === '/'} />
+        <NavItem to="/marketplace" icon={Home} label="Home" isActive={location.pathname === '/marketplace'} />
         <NavItem to="/categories" icon={Search} label="Search" isActive={isActive('/categories') || isActive('/catalog')} />
 
         <button

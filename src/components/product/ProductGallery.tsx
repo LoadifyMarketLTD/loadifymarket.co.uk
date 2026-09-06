@@ -11,6 +11,7 @@ interface ProductGalleryProps {
 const ProductGallery = ({ images, title }: ProductGalleryProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
+
   return (
     <div className="space-y-3">
       {/* Main image */}
@@ -26,19 +27,19 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
           <>
             <button
               onClick={() => setActiveIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-card/80 border border-border flex items-center justify-center text-foreground hover:bg-card transition-colors"
+              className="absolute left-3 top-1/2 -translate-y-1/2 flex w-10 h-10 md:w-9 md:h-9 rounded-full bg-[#0A234F]/95 border border-white/80 items-center justify-center text-white shadow-lg hover:bg-[#0A234F] transition-colors" aria-label="Previous image"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => setActiveIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-card/80 border border-border flex items-center justify-center text-foreground hover:bg-card transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex w-10 h-10 md:w-9 md:h-9 rounded-full bg-[#0A234F]/95 border border-white/80 items-center justify-center text-white shadow-lg hover:bg-[#0A234F] transition-colors" aria-label="Next image"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </>
         )}
-        <div className="absolute bottom-3 right-3 bg-card/80 text-xs font-medium text-foreground px-2.5 py-1 rounded-full border border-border">
+        <div className="absolute bottom-3 right-3 block bg-[#0A234F]/95 text-sm font-bold text-white px-3 py-1.5 rounded-full border border-white/80 shadow-lg">
           {activeIndex + 1} / {images.length}
         </div>
       </div>

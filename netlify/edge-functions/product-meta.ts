@@ -207,8 +207,8 @@ export default async function productMeta(
     return noindexHtmlResponse(await context.next());
   }
 
-  const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL');
-  const supabaseAnonKey = Deno.env.get('VITE_SUPABASE_ANON_KEY');
+  const supabaseUrl = Netlify.env.get('VITE_SUPABASE_URL');
+  const supabaseAnonKey = Netlify.env.get('VITE_SUPABASE_ANON_KEY');
   const baseResponsePromise = context.next();
 
   if (!supabaseUrl || !supabaseAnonKey) {

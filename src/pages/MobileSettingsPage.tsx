@@ -2,7 +2,7 @@
  * MobileSettingsPage — /profile/settings
  *
  * Simple mobile settings hub accessible to all logged-in users.
- * Links to profile sub-pages without forcing role-based redirects.
+ * Keeps native users inside marketplace-safe mobile routes.
  */
 
 import { useNavigate, Link } from 'react-router-dom';
@@ -24,19 +24,21 @@ export default function MobileSettingsPage() {
   const rows: SettingsRow[] = [
     {
       label: 'Profile details',
-      to: isSeller ? '/seller/profile' : '/buyer/profile',
+      to: '/profile',
     },
     {
       label: 'Account settings',
-      to: isSeller ? '/seller/settings' : '/buyer/settings',
+      to: '/profile/security',
     },
-    {
-      label: 'Payments',
-      to: isSeller ? '/seller/mobile-payments' : '/buyer/payments',
-    },
+    ...(isSeller
+      ? [{
+          label: 'Payments',
+          to: '/seller/mobile-payments',
+        }]
+      : []),
     {
       label: 'Postage',
-      to: isSeller ? '/seller/shipments' : '/buyer/orders',
+      to: isSeller ? '/orders?mode=sell' : '/orders?mode=buy',
     },
     {
       label: 'Security',

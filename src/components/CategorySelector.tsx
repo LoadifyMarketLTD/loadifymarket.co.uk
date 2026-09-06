@@ -8,6 +8,7 @@ interface CategorySelectorProps {
   selectedSubcategoryId?: string;
   onCategoryChange: (categoryId: string) => void;
   onSubcategoryChange?: (subcategoryId: string) => void;
+  theme?: 'dark' | 'light';
 }
 
 type DbCategory = Category & {
@@ -31,10 +32,18 @@ export default function CategorySelector({
   selectedSubcategoryId,
   onCategoryChange,
   onSubcategoryChange,
+  theme = 'dark',
 }: CategorySelectorProps) {
   const [categories, setCategories] = useState<DbCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLevel2Id, setSelectedLevel2Id] = useState('');
+  const isLight = theme === 'light';
+  const selectClass = isLight
+    ? 'w-full h-12 rounded-[14px] border border-[#DCE3ED] bg-white text-[#0A234F] text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25 focus:border-[#2563EB] transition-all'
+    : SELECT_CLASS;
+  const selectStyle: React.CSSProperties = isLight ? { colorScheme: 'light' } : SELECT_STYLE;
+  const placeholderStyle: React.CSSProperties = isLight ? { background: '#FFFFFF', color: '#7A8493' } : OPTION_PLACEHOLDER_STYLE;
+  const optionStyle: React.CSSProperties = isLight ? { background: '#FFFFFF', color: '#0A234F' } : OPTION_ITEM_STYLE;
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -120,7 +129,7 @@ export default function CategorySelector({
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor="main-category-select" className="block text-sm font-medium text-slate-300 mb-2">Main Category *</label>
+        <label htmlFor="main-category-select" className={isLight ? "block text-sm font-semibold text-[#0A234F] mb-2" : "block text-sm font-medium text-slate-300 mb-2"}>Main Category *</label>
         <select
           id="main-category-select"
           aria-label="Main category"
@@ -130,12 +139,12 @@ export default function CategorySelector({
             onCategoryChange(e.target.value);
             if (onSubcategoryChange) onSubcategoryChange('');
           }}
-          className={SELECT_CLASS}
-          style={SELECT_STYLE}
+          className={selectClass}
+          style={selectStyle}
         >
-          <option value="" style={OPTION_PLACEHOLDER_STYLE}>Select a category</option>
+          <option value="" style={placeholderStyle}>Select a category</option>
           {level1Categories.map((category) => (
-            <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
+            <option key={category.id} value={category.id} style={optionStyle}>
               {category.name}
             </option>
           ))}
@@ -144,7 +153,7 @@ export default function CategorySelector({
 
       {selectedCategoryId && level2Categories.length > 0 && (
         <div>
-          <label htmlFor="subcategory-select" className="block text-sm font-medium text-slate-300 mb-2">Subcategory</label>
+          <label htmlFor="subcategory-select" className={isLight ? "block text-sm font-semibold text-[#0A234F] mb-2" : "block text-sm font-medium text-slate-300 mb-2"}>Subcategory</label>
           <select
             id="subcategory-select"
             aria-label="Subcategory"
@@ -159,9 +168,9 @@ export default function CategorySelector({
             className={SELECT_CLASS}
             style={SELECT_STYLE}
           >
-            <option value="" style={OPTION_PLACEHOLDER_STYLE}>None</option>
+            <option value="" style={placeholderStyle}>None</option>
             {level2Categories.map((category) => (
-              <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
+              <option key={category.id} value={category.id} style={optionStyle}>
                 {category.name}
               </option>
             ))}
@@ -171,7 +180,7 @@ export default function CategorySelector({
 
       {selectedLevel2Id && level3Categories.length > 0 && (
         <div>
-          <label htmlFor="nested-subcategory-select" className="block text-sm font-medium text-slate-300 mb-2">Nested Subcategory</label>
+          <label htmlFor="nested-subcategory-select" className={isLight ? "block text-sm font-semibold text-[#0A234F] mb-2" : "block text-sm font-medium text-slate-300 mb-2"}>Nested Subcategory</label>
           <select
             id="nested-subcategory-select"
             aria-label="Nested subcategory"
@@ -182,9 +191,9 @@ export default function CategorySelector({
             className={SELECT_CLASS}
             style={SELECT_STYLE}
           >
-            <option value="" style={OPTION_PLACEHOLDER_STYLE}>Select nested subcategory</option>
+            <option value="" style={placeholderStyle}>Select nested subcategory</option>
             {level3Categories.map((category) => (
-              <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
+              <option key={category.id} value={category.id} style={optionStyle}>
                 {category.name}
               </option>
             ))}
@@ -193,7 +202,7 @@ export default function CategorySelector({
       )}
 
       {selectedCategory && (
-        <nav aria-label="Category breadcrumb" className="text-xs text-slate-500">
+        <nav aria-label="Category breadcrumb" className={isLight ? "text-xs text-[#64748B]" : "text-xs text-slate-500"}>
           <ol className="flex flex-wrap items-center gap-1">
             <li>{selectedCategory.name}</li>
             {selectedLevel2Id && (
