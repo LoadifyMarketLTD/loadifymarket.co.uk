@@ -86,14 +86,14 @@ export default function MobileAppHeader() {
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => navigate('/')}
-            className="flex min-w-0 items-center gap-2 border-0 bg-transparent p-0 text-left"
+            onClick={() => navigate('/marketplace')}
+            className="flex min-w-0 items-center gap-2.5 border-0 bg-transparent p-0 text-left"
             aria-label="Loadify Market home"
           >
-            <img src={logo} alt="" aria-hidden="true" width={34} height={34} className="h-[34px] w-[34px] shrink-0" />
-            <span className="min-w-0">
-              <span className="block truncate text-[17px] font-black leading-none tracking-[-0.02em] text-[#0A234F]">Loadify</span>
-              <span className="mt-1 block text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C98200]">Market</span>
+            <img src={logo} alt="" aria-hidden="true" width={38} height={38} className="h-[38px] w-[38px] shrink-0" />
+            <span className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap text-[13px] font-black uppercase leading-none tracking-[0.11em]">
+              <span className="text-[#0A234F]">Loadify</span>
+              <span className="text-[#C98200]">Market</span>
             </span>
           </button>
 
