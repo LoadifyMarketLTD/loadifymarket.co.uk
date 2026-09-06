@@ -12,7 +12,7 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import { MOBILE_NOTIFICATION_QUERY_TYPES } from '@/lib/notificationUtils';
 import MobileSearchOverlay from '@/components/MobileSearchOverlay';
-import logo from '@/assets/loadify-logo.svg';
+import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_BlackGold.svg';
 
 export default function MobileAppHeader() {
   const navigate = useNavigate();
@@ -87,14 +87,16 @@ export default function MobileAppHeader() {
           <button
             type="button"
             onClick={() => navigate('/marketplace')}
-            className="flex min-w-0 items-center gap-2.5 border-0 bg-transparent p-0 text-left"
+            className="flex min-w-0 items-center border-0 bg-transparent p-0 text-left"
             aria-label="Loadify Market home"
           >
-            <img src={logo} alt="" aria-hidden="true" width={38} height={38} className="h-[38px] w-[38px] shrink-0" />
-            <span className="flex min-w-0 items-baseline gap-1.5 whitespace-nowrap text-[13px] font-black uppercase leading-none tracking-[0.11em]">
-              <span className="text-[#0A234F]">Loadify</span>
-              <span className="text-[#C98200]">Market</span>
-            </span>
+            <img
+              src={officialLoadifyMarketLogo}
+              alt="Loadify Market"
+              width={150}
+              height={50}
+              className="h-[42px] w-auto max-w-[150px] object-contain object-left"
+            />
           </button>
 
           <button
