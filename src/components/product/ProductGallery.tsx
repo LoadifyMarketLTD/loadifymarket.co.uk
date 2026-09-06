@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { productHero, productThumbnail } from "@/lib/imageOptimization";
 import NativeImg from "@/components/NativeImg";
@@ -11,9 +11,6 @@ interface ProductGalleryProps {
 const ProductGallery = ({ images, title }: ProductGalleryProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [images]);
 
   return (
     <div className="space-y-3">
