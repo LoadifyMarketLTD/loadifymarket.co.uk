@@ -14,5 +14,8 @@
 /blog                                 /deals                          301!
 /intellectual-property-complaints     /ip-trademark-complaints        301!
 
+# Legacy transactional-email order links. Keep old delivered emails working.
+/orders/*                             /buyer/orders                   302!
+
 /assets/*  /assets/:splat  200
 /*         /index.html     200
