@@ -1,13 +1,7 @@
 /**
  * MobileInboxPage — /inbox
- *
- * Standalone full-screen conversation list for mobile users.
- * Accessible from MobileBottomNav "Messages" tab.
- *
- * Tabs: Inbox | Unread | Sent | Archive
- * Search bar filters by participant name or product title.
- * Clicking a conversation navigates to /inbox/:conversationId.
- * Unauthenticated users are redirected to /login.
+ * Native marketplace conversation list. Data access, RLS boundaries, realtime
+ * refresh and archive behaviour remain unchanged; presentation is mobile-first.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -20,8 +14,6 @@ import { toast } from "@/hooks/use-toast";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import type { ConversationParticipant, InboxConversation } from "@/types";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface ConversationRow {
   id: string;
   subject: string | null;
@@ -33,7 +25,6 @@ interface ConversationRow {
 }
 
 type Conversation = InboxConversation & ConversationRow;
-
 type Tab = "all" | "unread" | "buyers" | "sellers";
 
 const TABS: { id: Tab; label: string }[] = [
@@ -43,12 +34,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "sellers", label: "Sellers" },
 ];
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-/** Fallback name shown when a participant has not set a display name. */
 const DEFAULT_DISPLAY_NAME = "Loadify User";
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -65,26 +51,19 @@ function participantName(p: ConversationParticipant) {
   return name || DEFAULT_DISPLAY_NAME;
 }
 
-/** Decode archived/system messages to a human-readable preview. */
 function previewText(raw: string | null): string {
   if (!raw) return "";
   if (raw.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
-      if (parsed._t === "offer") {
-        return "💬 Offer (archived)";
-      }
-      if (parsed._t === "system" && parsed.event === "listing_unavailable") {
-        return "🔒 Listing unavailable";
-      }
+      if (parsed._t === "offer") return "Offer update";
+      if (parsed._t === "system" && parsed.event === "listing_unavailable") return "Listing unavailable";
     } catch {
-      // ignore invalid JSON; fall back to raw preview
+      // Ignore invalid JSON and display the plain message preview.
     }
   }
   return raw.length > 60 ? raw.slice(0, 60) + "…" : raw;
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function MobileInboxPage() {
   const navigate = useNavigate();
@@ -96,23 +75,17 @@ export default function MobileInboxPage() {
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [archivingConversationId, setArchivingConversationId] = useState<string | null>(null);
-  // Retry counter and one-shot post-hydration re-fetch gate
   const hydrationRetryRef = useRef(0);
   const postHydrationRefetchFired = useRef(false);
-  // Show debug state panel when ?debug=1 is in the URL (or in dev mode)
   const showDebug = new URLSearchParams(location.search).get("debug") === "1" || import.meta.env.DEV;
 
-  // Auth gate — show prompt modal instead of hard redirect to /login
   useEffect(() => {
-    if (!isLoading && !user) {
-      promptAuth('message');
-    }
+    if (!isLoading && !user) promptAuth('message');
   }, [user, isLoading, promptAuth]);
 
   const loadConversations = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
-    // Force-verify auth session before RLS-protected queries.
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     console.info("[MobileInboxPage] session check", {
       userId: user.id,
@@ -131,6 +104,7 @@ export default function MobileInboxPage() {
       setLoading(false);
       return;
     }
+
     try {
       const { data: rows, error } = await supabase
         .from("conversations")
@@ -155,7 +129,6 @@ export default function MobileInboxPage() {
         });
       }
 
-      // Resolve other participants
       const otherIds = [...new Set(convRows.map((r) => r.user1Id === user.id ? r.user2Id : r.user1Id))];
       const userMap = new Map<string, ConversationParticipant>();
       if (otherIds.length > 0) {
@@ -166,7 +139,6 @@ export default function MobileInboxPage() {
         (users ?? []).forEach((u: ConversationParticipant) => userMap.set(u.id, u));
       }
 
-      // Unread counts
       const { data: unreadRows } = await supabase
         .from("messages")
         .select("conversationId")
@@ -177,7 +149,6 @@ export default function MobileInboxPage() {
         unreadMap.set(r.conversationId, (unreadMap.get(r.conversationId) ?? 0) + 1);
       });
 
-      // Last message per conversation (with senderId for "Sent" tab)
       const convIds = convRows.map((r) => r.id);
       const lastMsgMap = new Map<string, string>();
       const lastMsgSenderMap = new Map<string, string>();
@@ -196,7 +167,6 @@ export default function MobileInboxPage() {
         });
       }
 
-      // Product images for conversation thumbnails
       const productIds = [...new Set(convRows.map((r) => r.productId).filter((x): x is string => x != null))];
       const productImageMap = new Map<string, string>();
       if (productIds.length > 0) {
@@ -231,59 +201,33 @@ export default function MobileInboxPage() {
     }
   }, [user?.id]);
 
-  // Fetch conversations
   useEffect(() => {
     void loadConversations();
   }, [loadConversations]);
 
-  // Realtime refresh for inbox list (new messages + read-state changes + new conversations)
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase
       .channel(`mobile-inbox-live:${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `receiverId=eq.${user.id}` },
-        () => { void loadConversations(); },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `senderId=eq.${user.id}` },
-        () => { void loadConversations(); },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages", filter: `receiverId=eq.${user.id}` },
-        () => { void loadConversations(); },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "conversations", filter: `user1Id=eq.${user.id}` },
-        () => { void loadConversations(); },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "conversations", filter: `user2Id=eq.${user.id}` },
-        () => { void loadConversations(); },
-      )
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `receiverId=eq.${user.id}` }, () => { void loadConversations(); })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `senderId=eq.${user.id}` }, () => { void loadConversations(); })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages", filter: `receiverId=eq.${user.id}` }, () => { void loadConversations(); })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "conversations", filter: `user1Id=eq.${user.id}` }, () => { void loadConversations(); })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "conversations", filter: `user2Id=eq.${user.id}` }, () => { void loadConversations(); })
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
   }, [user?.id, loadConversations]);
 
-  // ── Timeout protection — prevent infinite loading spinner ───────────────────
   useEffect(() => {
     if (!loading) return;
     const timeout = setTimeout(() => {
-      console.warn("[MobileInboxPage] Loading timeout — forcing off after 10s", {
-        userId: user?.id,
-      });
+      console.warn("[MobileInboxPage] Loading timeout — forcing off after 10s", { userId: user?.id });
       setLoading(false);
     }, 10_000);
     return () => clearTimeout(timeout);
   }, [loading, user?.id]);
 
-  // ── Post-auth-hydration delayed re-fetch (catches auth race conditions) ──────
   useEffect(() => {
     if (!user?.id || postHydrationRefetchFired.current) return;
     postHydrationRefetchFired.current = true;
@@ -298,7 +242,6 @@ export default function MobileInboxPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Filter by tab
   const tabFiltered = conversations.filter((c) => {
     if (activeTab === "all") return !c.isArchived;
     if (activeTab === "unread") return !c.isArchived && c.unreadCount > 0;
@@ -307,14 +250,10 @@ export default function MobileInboxPage() {
     return true;
   });
 
-  // Filter by search query
   const filtered = searchQuery.trim()
     ? tabFiltered.filter((c) => {
         const q = searchQuery.toLowerCase();
-        return (
-          participantName(c.other).toLowerCase().includes(q) ||
-          (c.productTitle ?? "").toLowerCase().includes(q)
-        );
+        return participantName(c.other).toLowerCase().includes(q) || (c.productTitle ?? "").toLowerCase().includes(q);
       })
     : tabFiltered;
 
@@ -340,277 +279,132 @@ export default function MobileInboxPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F7F9FC]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0A234F]/15 border-b-[#0A234F]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* ── Header ── */}
-      <div
-        className="shrink-0 sticky top-0 z-40 bg-background/[0.97]"
-        style={{
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-        }}
+    <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden">
+      <header
+        className="sticky top-0 z-40 border-b border-[#0A234F]/[0.08] bg-white/95"
+        style={{ backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
-        {/* Title row */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 16px",
-            paddingTop: "calc(1rem + env(safe-area-inset-top, 0px))",
-            paddingBottom: "10px",
-          }}
-        >
-          <h1 className="text-2xl font-extrabold text-foreground">Messages</h1>
+        <div className="flex items-center justify-between gap-3 px-[var(--mob-side,16px)] pb-2 pt-4">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">Conversations</p>
+            <h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">Inbox</h1>
+          </div>
           <button
-            className="p-2 rounded-xl active:bg-white/10 transition-colors bg-white/[0.05]"
-            aria-label="New message"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#0A234F]/10 bg-[#F7F9FC]"
+            aria-label="Start a new conversation"
             onClick={() => navigate("/catalog")}
           >
-            <SquarePen className="text-foreground/75" style={{ width: "20px", height: "20px" }} />
+            <SquarePen className="h-[19px] w-[19px] text-[#0A234F]" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Search bar */}
-        <div style={{ padding: "0 16px 10px" }}>
-          <div
-            className="bg-white/[0.06] flex items-center gap-2"
-            style={{
-              border: "1px solid rgba(255,255,255,0.09)",
-              borderRadius: "12px",
-              padding: "10px 14px",
-            }}
-          >
-            <Search className="text-foreground/55" style={{ width: "16px", height: "16px", flexShrink: 0 }} />
+        <div className="px-[var(--mob-side,16px)] pb-2">
+          <label className="flex h-11 items-center gap-2.5 rounded-[14px] border border-[#0A234F]/10 bg-[#F4F6F8] px-3.5">
+            <Search className="h-4 w-4 shrink-0 text-[#667085]" aria-hidden="true" />
             <input
               type="search"
-              placeholder="Search messages..."
+              placeholder="Search conversations"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-foreground text-sm placeholder:text-white/35"
-              style={{
-                flex: 1,
-                background: "transparent",
-                border: "none",
-                outline: "none",
-              }}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="min-w-0 flex-1 border-0 bg-transparent text-[13px] font-medium text-[#26354A] outline-none placeholder:text-[#98A2B3]"
             />
-          </div>
+          </label>
         </div>
 
-        {/* Tabs */}
-        <div
-          style={{
-            display: "flex",
-            overflowX: "auto",
-            scrollbarWidth: "none",
-            WebkitOverflowScrolling: "touch",
-          }}
-          className="[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-        >
+        <div className="flex gap-2 overflow-x-auto px-[var(--mob-side,16px)] pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
+            const active = activeTab === tab.id;
             const badge = tab.id === "unread" && inboxUnread > 0 ? inboxUnread : 0;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`text-[13px] whitespace-nowrap bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-1.5 transition-colors duration-200 ${isActive ? 'text-primary font-bold border-b-2 border-primary' : 'text-foreground/65 font-normal border-b-2 border-transparent'}`}
-                style={{
-                  padding: "10px 18px",
-                  transition: "color 0.2s, border-color 0.2s",
-                }}
+                className={`flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[11px] font-extrabold ${active ? 'bg-[#0A234F] text-white' : 'border border-[#0A234F]/10 bg-[#F7F9FC] text-[#667085]'}`}
               >
                 {tab.label}
-                {badge > 0 && (
-                  <span
-                    className="bg-primary text-surface text-[10px] font-extrabold flex items-center justify-center"
-                    style={{
-                      minWidth: "18px",
-                      height: "18px",
-                      borderRadius: "9px",
-                      padding: "0 4px",
-                    }}
-                  >
-                    {badge > 9 ? "9+" : badge}
-                  </span>
-                )}
+                {badge > 0 && <span className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[8px] font-black ${active ? 'bg-[#F5A300] text-[#0A234F]' : 'bg-[#0A234F] text-white'}`}>{badge > 9 ? "9+" : badge}</span>}
               </button>
             );
           })}
         </div>
-      </div>
+      </header>
 
-      {/* ── Debug state panel — activate with ?debug=1 in the URL ── */}
       {showDebug && (
-        <div
-          style={{ padding: "6px 12px", background: "rgba(234,179,8,0.08)", borderBottom: "1px solid rgba(234,179,8,0.18)" }}
-          className="text-[10px] font-mono text-yellow-400"
-        >
+        <div className="border-b border-amber-200 bg-amber-50 px-3 py-1.5 font-mono text-[9px] text-amber-700">
           uid: {user?.id ?? "—"} | convs: {conversations.length} | loading: {String(loading)}
         </div>
       )}
 
-      {/* ── List ── */}
-      <div style={{ flex: 1, paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}>
+      <main style={{ paddingBottom: "calc(86px + env(safe-area-inset-bottom, 0px))" }}>
         {loading ? (
-          <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse bg-white/[0.05]" style={{ height: "72px", borderRadius: "12px" }} />
-            ))}
+          <div className="flex flex-col gap-2.5 p-[var(--mob-side,16px)]">
+            {[...Array(6)].map((_, index) => <div key={index} className="h-[82px] animate-pulse rounded-[18px] bg-[#E8EDF3]" />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center px-6">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-              <MessageSquare className="h-7 w-7 text-white/30" />
-            </div>
-            <p className="text-base font-semibold text-white mb-1">
-              {searchQuery ? "No results found" : "No conversations yet"}
-            </p>
-            <p className="text-sm text-white/75 mb-6">
-              {searchQuery ? "Try a different search term." : "Contact a seller from a product page to start chatting."}
-            </p>
-            {!searchQuery && (
-              <Link
-                to="/catalog"
-                className="px-5 py-2.5 rounded-full text-sm font-semibold bg-primary text-black"
-              >
-                Browse listings
-              </Link>
-            )}
+          <div className="mx-[var(--mob-side,16px)] mt-5 flex flex-col items-center rounded-[20px] border border-[#0A234F]/[0.08] bg-white px-6 py-14 text-center shadow-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF2F7]"><MessageSquare className="h-7 w-7 text-[#94A3B8]" aria-hidden="true" /></div>
+            <p className="mt-4 text-[15px] font-extrabold text-[#0A234F]">{searchQuery ? "No results found" : "No conversations yet"}</p>
+            <p className="mt-1 max-w-[280px] text-[12px] leading-[1.5] text-[#7A8493]">{searchQuery ? "Try another name or listing." : "Contact a seller from a product page to start a conversation."}</p>
+            {!searchQuery && <Link to="/catalog" className="mt-5 rounded-[13px] bg-[#0A234F] px-4 py-2.5 text-[12px] font-extrabold text-white no-underline">Browse marketplace</Link>}
           </div>
         ) : (
-          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          <ul className="m-0 list-none p-0">
             {filtered.map((conv) => (
-              <li key={conv.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", paddingRight: "10px" }}>
+              <li key={conv.id} className="border-b border-[#0A234F]/[0.06] bg-white">
+                <div className="flex items-center pr-2">
                   <button
+                    type="button"
                     onClick={() => navigate(`/inbox/${conv.id}`)}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      padding: "14px 16px",
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                    className="active:bg-white/5 transition-colors"
+                    className="flex min-w-0 flex-1 items-center gap-3 border-0 bg-transparent px-[var(--mob-side,16px)] py-3.5 text-left active:bg-[#F4F6F8]"
                   >
-                    {/* Avatar with online indicator */}
-                    <div style={{ position: "relative", flexShrink: 0 }}>
-                      <div
-                        className="bg-white/[0.08] flex items-center justify-center"
-                        style={{
-                          width: "48px",
-                          height: "48px",
-                          borderRadius: "50%",
-                          border: "1px solid rgba(255,255,255,0.10)",
-                        }}
-                      >
-                        <User className="text-foreground/60" style={{ width: "22px", height: "22px" }} />
+                    <div className="relative shrink-0">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[#0A234F]/10 bg-[#EEF2F7]">
+                        {conv.productImage ? (
+                          <img src={conv.productImage} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+                        ) : (
+                          <User className="h-5 w-5 text-[#667085]" aria-hidden="true" />
+                        )}
                       </div>
-                      {conv.unreadCount > 0 && (
-                        <span
-                          aria-hidden="true"
-                          className="bg-success border-background"
-                          style={{
-                            position: "absolute",
-                            bottom: "1px",
-                            right: "1px",
-                            width: "11px",
-                            height: "11px",
-                            borderRadius: "50%",
-                            borderWidth: "2px",
-                            borderStyle: "solid",
-                          }}
-                        />
-                      )}
+                      {conv.unreadCount > 0 && <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#F5A300]" aria-hidden="true" />}
                     </div>
 
-                    {/* Content */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "2px" }}>
-                        <span
-                          className={`text-sm overflow-hidden text-ellipsis whitespace-nowrap ${conv.unreadCount > 0 ? 'font-bold text-foreground' : 'font-semibold text-foreground/80'}`}
-                        >
-                          {participantName(conv.other)}
-                        </span>
-                        <span className="text-[11px] text-foreground/65 shrink-0">
-                          {formatDate(conv.lastMessageAt)}
-                        </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`truncate text-[13px] ${conv.unreadCount > 0 ? 'font-black text-[#0A234F]' : 'font-bold text-[#344054]'}`}>{participantName(conv.other)}</span>
+                        <span className="shrink-0 text-[9.5px] font-semibold text-[#98A2B3]">{formatDate(conv.lastMessageAt)}</span>
                       </div>
-                      {conv.lastMessagePreview && (
-                        <p
-                          className={`text-xs overflow-hidden text-ellipsis whitespace-nowrap ${conv.unreadCount > 0 ? 'text-foreground/80' : 'text-foreground/60'}`}
-                        >
-                          {previewText(conv.lastMessagePreview)}
-                        </p>
-                      )}
+                      {conv.productTitle && <p className="mt-0.5 truncate text-[10px] font-bold text-[#1D57D8]">{conv.productTitle}</p>}
+                      <div className="mt-1 flex items-center gap-2">
+                        <p className={`min-w-0 flex-1 truncate text-[11px] ${conv.unreadCount > 0 ? 'font-semibold text-[#475467]' : 'font-medium text-[#7A8493]'}`}>{previewText(conv.lastMessagePreview)}</p>
+                        {conv.unreadCount > 0 && <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#0A234F] px-1.5 text-[9px] font-black text-white">{conv.unreadCount > 99 ? "99+" : conv.unreadCount}</span>}
+                      </div>
                     </div>
-
-                    {/* Unread badge */}
-                    {conv.unreadCount > 0 && (
-                      <span
-                        className="bg-primary text-surface text-[11px] font-extrabold flex items-center justify-center shrink-0"
-                        style={{
-                          minWidth: "22px",
-                          height: "22px",
-                          borderRadius: "11px",
-                          padding: "0 5px",
-                        }}
-                      >
-                        {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
-                      </span>
-                    )}
-
-                    {/* Product thumbnail */}
-                    {conv.productImage && (
-                      <div
-                        className="bg-white/[0.06] shrink-0 overflow-hidden"
-                        style={{
-                          width: "48px",
-                          height: "48px",
-                          borderRadius: "10px",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                        }}
-                      >
-                        <img
-                          src={conv.productImage}
-                          alt={conv.productTitle ?? "Product"}
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        />
-                      </div>
-                    )}
                   </button>
+
                   <button
                     type="button"
                     aria-label="Archive conversation"
                     disabled={archivingConversationId === conv.id}
-                    onClick={() => {
-                      void archiveConversation(conv.id);
-                    }}
-                    className="rounded-md border border-white/10 bg-white/[0.04] text-foreground/75 hover:text-foreground h-8 w-8 inline-flex items-center justify-center shrink-0"
+                    onClick={() => { void archiveConversation(conv.id); }}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#0A234F]/10 bg-[#F7F9FC] text-[#667085] disabled:opacity-50"
                   >
-                    <Archive className="h-4 w-4" />
+                    <Archive className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </main>
 
-      {/* Mobile bottom nav */}
       <MobileBottomNav />
     </div>
   );
