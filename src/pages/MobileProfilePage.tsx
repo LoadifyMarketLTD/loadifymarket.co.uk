@@ -148,62 +148,65 @@ export default function MobileProfilePage() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden"
-      style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'calc(82px + env(safe-area-inset-bottom, 0px))',
-      }}
-    >
-      <header className="px-[var(--mob-side,16px)] pb-3 pt-5">
-        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">Account</p>
-        <h1 className="mt-1 text-[24px] font-black leading-none tracking-[-0.03em] text-[#0A234F]">Profile</h1>
-      </header>
+    <div className="relative h-[100dvh] overflow-hidden bg-[#F7F9FC] text-[#0A234F] md:hidden">
+      <div
+        className="h-full overflow-y-auto overflow-x-hidden overscroll-y-contain"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
+        }}
+      >
+        <header className="px-[var(--mob-side,16px)] pb-3 pt-5">
+          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">Account</p>
+          <h1 className="mt-1 text-[24px] font-black leading-none tracking-[-0.03em] text-[#0A234F]">Profile</h1>
+        </header>
 
-      {!user ? (
-        <GuestView />
-      ) : (
-        <>
-          <section className="px-[var(--mob-side,16px)] pb-5 pt-2">
-            <div className="flex items-center gap-3.5 rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_8px_24px_rgba(10,35,79,0.06)]">
-              <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full bg-[#0A234F] text-[20px] font-black text-white ring-2 ring-[#F5A300]/70 ring-offset-2 ring-offset-white">
-                {initials}
+        {!user ? (
+          <GuestView />
+        ) : (
+          <>
+            <section className="px-[var(--mob-side,16px)] pb-5 pt-2">
+              <div className="flex items-center gap-3.5 rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_8px_24px_rgba(10,35,79,0.06)]">
+                <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full bg-[#0A234F] text-[20px] font-black text-white ring-2 ring-[#F5A300]/70 ring-offset-2 ring-offset-white">
+                  {initials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[17px] font-black leading-tight text-[#0A234F]">{displayName}</p>
+                  <p className="mt-1 truncate text-[11px] font-medium text-[#7A8493]">{user.email}</p>
+                  <Link
+                    to={user.role === 'seller' || user.role === 'admin' ? '/sell' : '/catalog'}
+                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-extrabold text-[#1D57D8] no-underline"
+                  >
+                    {user.role === 'seller' || user.role === 'admin' ? 'Sell an item' : 'Browse marketplace'}
+                    <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Link>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[17px] font-black leading-tight text-[#0A234F]">{displayName}</p>
-                <p className="mt-1 truncate text-[11px] font-medium text-[#7A8493]">{user.email}</p>
-                <Link
-                  to={user.role === 'seller' || user.role === 'admin' ? '/sell' : '/catalog'}
-                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-extrabold text-[#1D57D8] no-underline"
-                >
-                  {user.role === 'seller' || user.role === 'admin' ? 'Sell an item' : 'Browse marketplace'}
-                  <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-                </Link>
-              </div>
+            </section>
+
+            {sections.map((section) => (
+              <MenuSection
+                key={section.title}
+                {...section}
+                items={section.items.map((item) =>
+                  item.to === '/profile/notifications' ? { ...item, badgeCount: unreadNotifications } : item,
+                )}
+              />
+            ))}
+
+            <div className="px-[var(--mob-side,16px)] pb-3">
+              <button
+                onClick={handleSignOut}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-red-200 bg-white text-[13px] font-extrabold text-red-600"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                Sign out
+              </button>
             </div>
-          </section>
-
-          {sections.map((section) => (
-            <MenuSection
-              key={section.title}
-              {...section}
-              items={section.items.map((item) =>
-                item.to === '/profile/notifications' ? { ...item, badgeCount: unreadNotifications } : item,
-              )}
-            />
-          ))}
-
-          <div className="px-[var(--mob-side,16px)] pb-3">
-            <button
-              onClick={handleSignOut}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-red-200 bg-white text-[13px] font-extrabold text-red-600"
-            >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              Sign out
-            </button>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
 
       <MobileBottomNav />
     </div>
