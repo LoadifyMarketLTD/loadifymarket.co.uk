@@ -21,7 +21,14 @@ interface OrderRow {
   quantity: number;
   productTitle: string | null;
   productImage: string | null;
+  buyerName: string | null;
 }
+
+type BuyerLookup = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+};
 
 type Tab = "all" | "pending" | "shipped" | "delivered" | "cancelled";
 type OrderMode = "buy" | "sell";
@@ -70,21 +77,24 @@ function OrderCard({ order, highlighted, cardRef, mode }: {
 }) {
   const navigate = useNavigate();
   const cfg = statusCfg(order.status);
-  const interactive = mode === "buy";
   const openOrder = () => {
-    if (interactive) navigate(`/buyer/orders?orderId=${order.id}`);
+    if (mode === "sell") {
+      navigate(`/tracking/${order.orderNumber || order.id}`);
+      return;
+    }
+    navigate(`/buyer/orders?orderId=${order.id}`);
   };
 
   return (
     <div
       ref={cardRef as React.RefObject<HTMLDivElement>}
-      role={interactive ? "button" : undefined}
-      tabIndex={interactive ? 0 : undefined}
+      role="button"
+      tabIndex={0}
       onClick={openOrder}
       onKeyDown={(event) => {
-        if (interactive && (event.key === "Enter" || event.key === " ")) openOrder();
+        if (event.key === "Enter" || event.key === " ") openOrder();
       }}
-      className={`flex items-start gap-3 rounded-[18px] border bg-white p-3.5 shadow-[0_7px_22px_rgba(10,35,79,0.06)] transition ${interactive ? "cursor-pointer" : ""} ${highlighted ? 'border-[#F5A300] ring-2 ring-[#F5A300]/20' : 'border-[#0A234F]/[0.08]'}`}
+      className={`flex cursor-pointer items-start gap-3 rounded-[18px] border bg-white p-3.5 shadow-[0_7px_22px_rgba(10,35,79,0.06)] transition ${highlighted ? 'border-[#F5A300] ring-2 ring-[#F5A300]/20' : 'border-[#0A234F]/[0.08]'}`}
     >
       <div className="flex h-[78px] w-[78px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#EEF2F7]">
         {order.productImage ? (
@@ -100,12 +110,15 @@ function OrderCard({ order, highlighted, cardRef, mode }: {
           <span className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-black ${cfg.className}`}>{cfg.label}</span>
         </div>
         <p className="mt-1.5 line-clamp-2 text-[13px] font-extrabold leading-[1.3] text-[#26354A]">{order.productTitle ?? "Order"}</p>
+        {mode === "sell" ? (
+          <p className="mt-1 truncate text-[10px] font-semibold text-[#667085]">Buyer: {order.buyerName ?? "Customer"}</p>
+        ) : null}
         <div className="mt-1.5 flex items-center gap-2 text-[10px] font-medium text-[#7A8493]">
           <span>Qty {order.quantity}</span><span aria-hidden="true">•</span><span>{formatDate(order.createdAt)}</span>
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
           <span className="text-[14px] font-black text-[#0A234F]">£{order.total.toFixed(2)}</span>
-          {interactive ? <ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" /> : null}
+          <ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" />
         </div>
       </div>
     </div>
@@ -119,8 +132,7 @@ export default function MobileOrdersPage() {
   const requestedMode = searchParams.get("mode");
   const { user } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
-  const canSell = user?.role === "seller" || user?.role === "admin";
-  const mode: OrderMode = requestedMode === "sell" && canSell ? "sell" : "buy";
+  const mode: OrderMode = requestedMode === "sell" ? "sell" : "buy";
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("all");
@@ -152,7 +164,7 @@ export default function MobileOrdersPage() {
         const ownerColumn = mode === "sell" ? "sellerId" : "buyerId";
         const { data, error } = await supabase
           .from("orders")
-          .select(`id, orderNumber, total, status, createdAt, quantity, products:productId(title, images), order_items(productTitleSnapshot, productImageSnapshot, productSnapshotSource)`)
+          .select(`id, orderNumber, total, status, createdAt, quantity, buyerId, buyerNameSnapshot, commercialSnapshotSource, products:productId(title, images), order_items(productTitleSnapshot, productImageSnapshot, productSnapshotSource)`)
           .eq(ownerColumn, user.id)
           .order("createdAt", { ascending: false });
 
@@ -161,17 +173,45 @@ export default function MobileOrdersPage() {
           return;
         }
 
-        const rows: OrderRow[] = (data as unknown as Array<{
+        const sourceRows = data as unknown as Array<{
           id: string;
           orderNumber: string;
           total: number;
           status: string;
           createdAt: string;
           quantity: number;
+          buyerId: string | null;
+          buyerNameSnapshot: string | null;
+          commercialSnapshotSource: string | null;
           products: { title: string; images: string[] | null } | null;
           order_items: Array<{ productTitleSnapshot: string | null; productImageSnapshot: string | null; productSnapshotSource: string | null }> | null;
-        }>).map((order) => {
+        }>;
+
+        const buyerNameById: Record<string, string> = {};
+        if (mode === "sell") {
+          const legacyBuyerIds = [...new Set(
+            sourceRows
+              .filter((order) => !order.commercialSnapshotSource || !order.buyerNameSnapshot?.trim())
+              .map((order) => order.buyerId)
+              .filter((id): id is string => Boolean(id)),
+          )];
+
+          if (legacyBuyerIds.length > 0) {
+            const { data: buyers } = await supabase
+              .from("users")
+              .select("id, firstName, lastName")
+              .in("id", legacyBuyerIds);
+
+            (buyers as BuyerLookup[] | null)?.forEach((buyer) => {
+              const name = [buyer.firstName, buyer.lastName].filter(Boolean).join(" ").trim();
+              buyerNameById[buyer.id] = name || "Customer";
+            });
+          }
+        }
+
+        const rows: OrderRow[] = sourceRows.map((order) => {
           const snapshotItem = order.order_items?.find((item) => item.productSnapshotSource != null) ?? null;
+          const snapshotBuyerName = order.buyerNameSnapshot?.trim();
           return {
             id: order.id,
             orderNumber: order.orderNumber,
@@ -181,6 +221,9 @@ export default function MobileOrdersPage() {
             quantity: order.quantity ?? 1,
             productTitle: snapshotItem ? snapshotItem.productTitleSnapshot : order.products?.title ?? null,
             productImage: snapshotItem ? snapshotItem.productImageSnapshot : (order.products?.images ?? [])[0] ?? null,
+            buyerName: mode === "sell"
+              ? (snapshotBuyerName || (order.buyerId ? buyerNameById[order.buyerId] : null) || "Customer")
+              : null,
           };
         });
         setOrders(rows);
@@ -210,24 +253,22 @@ export default function MobileOrdersPage() {
         <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">{mode === "sell" ? "Sales" : "Purchases"}</p>
         <div className="flex items-end justify-between gap-3">
           <h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">{mode === "sell" ? "Sold items" : "My orders"}</h1>
-          {canSell ? (
-            <div className="mb-0.5 flex rounded-full bg-[#EEF2F7] p-1">
-              <button
-                type="button"
-                onClick={() => changeMode("buy")}
-                className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "buy" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}
-              >
-                Purchases
-              </button>
-              <button
-                type="button"
-                onClick={() => changeMode("sell")}
-                className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "sell" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}
-              >
-                Sales
-              </button>
-            </div>
-          ) : null}
+          <div className="mb-0.5 flex rounded-full bg-[#EEF2F7] p-1">
+            <button
+              type="button"
+              onClick={() => changeMode("buy")}
+              className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "buy" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}
+            >
+              Purchases
+            </button>
+            <button
+              type="button"
+              onClick={() => changeMode("sell")}
+              className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "sell" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}
+            >
+              Sales
+            </button>
+          </div>
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((tab) => {
