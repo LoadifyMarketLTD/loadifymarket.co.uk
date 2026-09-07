@@ -7,11 +7,15 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Bell, Archive, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Archive, Trash2, MessageSquare, Package, Truck, WalletCards, RotateCcw, ShieldAlert, Tag, LifeBuoy } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import {
   MOBILE_NOTIFICATION_QUERY_TYPES,
+  extractOrderNumber,
+  formatActivityTypeLabel,
+  normalizeMobileNotificationLink,
   normalizeNotification,
+  notificationOrderMode,
 } from '@/lib/notificationUtils';
 import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
@@ -27,6 +31,19 @@ function formatDate(iso: string) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function ActivityIcon({ type }: { type: string }) {
+  let Icon = Bell;
+  if (type === 'message' || type === 'product_question' || type === 'question_answered') Icon = MessageSquare;
+  else if (type.startsWith('offer_')) Icon = Tag;
+  else if (type === 'shipment') Icon = Truck;
+  else if (type === 'delivery' || type === 'order') Icon = Package;
+  else if (type === 'payment') Icon = WalletCards;
+  else if (type === 'return') Icon = RotateCcw;
+  else if (type === 'dispute') Icon = ShieldAlert;
+  else if (type === 'support_ticket') Icon = LifeBuoy;
+  return <Icon aria-hidden="true" style={{ width: 17, height: 17 }} />;
 }
 
 export default function MobileNotificationsPage() {
@@ -108,7 +125,26 @@ export default function MobileNotificationsPage() {
     setOpeningNotificationId(item.id);
     try {
       if (!item.isRead) await markRead(item.id);
-      if (item.link) navigate(item.link);
+
+      const orderMode = notificationOrderMode(item.link);
+      let orderId: string | null = null;
+      if (orderMode && user?.id) {
+        const orderNumber = extractOrderNumber(item.title, item.message);
+        if (orderNumber) {
+          const ownerColumn = orderMode === 'sell' ? 'sellerId' : 'buyerId';
+          const { data } = await supabase
+            .from('orders')
+            .select('id')
+            .eq(ownerColumn, user.id)
+            .eq('orderNumber', orderNumber)
+            .limit(1)
+            .maybeSingle<{ id: string }>();
+          orderId = data?.id ?? null;
+        }
+      }
+
+      const target = normalizeMobileNotificationLink(item.link, orderId);
+      if (target) navigate(target);
     } finally {
       setOpeningNotificationId((prev) => (prev === item.id ? null : prev));
     }
@@ -152,199 +188,124 @@ export default function MobileNotificationsPage() {
 
   return (
     <div
-      className="md:hidden min-h-screen bg-background"
+      className="md:hidden min-h-screen bg-[#EEF3F8] text-[#0A234F]"
       style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 16,
-          paddingBottom: 12,
-        }}
+      <header
+        className="sticky top-0 z-40 bg-[#0A234F] text-white shadow-[0_5px_22px_rgba(10,35,79,0.18)]"
+        style={{ paddingTop: 'calc(0.65rem + env(safe-area-inset-top, 0px))' }}
       >
-        <button
-          onClick={() => navigate('/profile')}
-          aria-label="Back"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
-        >
-          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
-        </button>
-        <h1 className="text-xl font-extrabold text-foreground m-0">Activity</h1>
-      </div>
-
-      {loading ? (
-        <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: 32 }}>
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white/[0.05]"
-              style={{ height: 56, borderRadius: 12, marginBottom: 8 }}
-            />
-          ))}
+        <div className="flex items-center gap-3 px-[var(--mob-side,16px)] pb-4 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate('/profile')}
+            aria-label="Back to profile"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white"
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="m-0 text-[9px] font-black uppercase tracking-[0.16em] text-[#F5A300]">Loadify Market</p>
+            <h1 className="m-0 mt-0.5 text-[23px] font-black tracking-[-0.03em] text-white">Activity</h1>
+            <p className="m-0 mt-0.5 text-[11px] font-medium text-white/65">Orders, messages and account updates</p>
+          </div>
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#0A234F]">
+            <Bell className="h-5 w-5" aria-hidden="true" />
+            {items.some((item) => !item.isRead) ? (
+              <span className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full border-2 border-[#0A234F] bg-[#F5A300] px-1 text-[9px] font-black text-[#0A234F]" style={{ height: 18 }}>
+                {Math.min(items.filter((item) => !item.isRead).length, 9)}
+              </span>
+            ) : null}
+          </div>
         </div>
-      ) : items.length === 0 ? (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            paddingTop: 64,
-            gap: 12,
-            textAlign: 'center',
-          }}
-        >
-          <Bell className="text-foreground/20" style={{ width: 36, height: 36 }} aria-hidden="true" />
-          <p className="text-[15px] font-semibold text-foreground/40 m-0">
-            No notifications yet
-          </p>
-          <p className="text-[13px] text-foreground/25 m-0" style={{ maxWidth: 240 }}>
-            Messages, orders, and account activity will appear here.
-          </p>
-        </div>
-      ) : (
-        <div
-          className="bg-white/[0.04]"
-          style={{
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
-          {items.map((item, i) => (
-            <div key={item.id}>
-              <div
-                className={item.isRead ? 'bg-transparent' : 'bg-primary/[0.04]'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'stretch',
-                  width: '100%',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    void handleTap(item);
-                  }}
-                  disabled={openingNotificationId === item.id}
-                  aria-label={`Open notification: ${item.title}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    flex: 1,
-                    minWidth: 0,
-                    paddingInlineStart: 'var(--mob-side, 16px)',
-                    paddingInlineEnd: 8,
-                    paddingTop: 14,
-                    paddingBottom: 14,
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: openingNotificationId === item.id ? 'wait' : (item.link ? 'pointer' : 'default'),
-                    opacity: openingNotificationId === item.id ? 0.85 : 1,
-                    textAlign: 'left',
-                    gap: 10,
-                  }}
-                >
-                  <div
-                    className={item.isRead ? '' : 'bg-primary'}
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: item.isRead ? 'transparent' : undefined,
-                      flexShrink: 0,
-                      marginTop: 6,
-                    }}
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className={`text-sm text-foreground/90 m-0 ${item.isRead ? 'font-medium' : 'font-bold'}`} style={{ lineHeight: 1.3 }}>
-                      {item.title}
-                    </p>
-                    {item.message ? (
-                      <p
-                        className="text-[13px] text-muted-foreground"
-                        style={{
-                          margin: '3px 0 0',
-                          lineHeight: 1.4,
-                          overflow: 'hidden',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {item.message}
-                      </p>
-                    ) : null}
-                    <p className="text-[11px] text-foreground/25" style={{ margin: '4px 0 0' }}>
-                      {formatDate(item.createdAt)}
-                    </p>
-                  </div>
-                </button>
+      </header>
 
-                <div
-                  className="flex items-center gap-1 shrink-0"
-                  style={{ paddingInlineEnd: 'var(--mob-side, 16px)' }}
-                >
-                  <button
-                    type="button"
-                    aria-label="Archive notification"
-                    disabled={archivingId === item.id}
-                    onClick={() => {
-                      void archiveNotification(item.id);
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      minWidth: 44,
-                      minHeight: 44,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      opacity: archivingId === item.id ? 0.5 : 0.85,
-                    }}
-                  >
-                    <Archive style={{ width: 16, height: 16 }} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Delete notification"
-                    disabled={deletingId === item.id}
-                    onClick={() => {
-                      void deleteNotification(item.id);
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      minWidth: 44,
-                      minHeight: 44,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      opacity: deletingId === item.id ? 0.5 : 0.85,
-                    }}
-                  >
-                    <Trash2 style={{ width: 16, height: 16 }} />
-                  </button>
-                </div>
-              </div>
-
-              {i < items.length - 1 && (
-                <div
-                  aria-hidden="true"
-                  className="bg-white/[0.05]"
-                  style={{ height: 1, marginInlineStart: 'var(--mob-side, 16px)' }}
-                />
-              )}
+      <main className="px-[var(--mob-side,16px)] py-4">
+        {loading ? (
+          <div className="flex flex-col gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-[118px] animate-pulse rounded-[18px] border border-[#0A234F]/[0.06] bg-white/80" />
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white px-6 py-14 text-center shadow-[0_8px_24px_rgba(10,35,79,0.05)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EEF3F8] text-[#0A234F]">
+              <Bell className="h-6 w-6" aria-hidden="true" />
             </div>
-          ))}
-        </div>
-      )}
+            <p className="mb-0 mt-4 text-[15px] font-extrabold text-[#0A234F]">No activity yet</p>
+            <p className="mx-auto mb-0 mt-1 max-w-[250px] text-[12px] leading-relaxed text-[#667085]">
+              Orders, messages, offers and account updates will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {items.map((item) => (
+              <article
+                key={item.id}
+                className={`overflow-hidden rounded-[18px] border bg-white shadow-[0_7px_20px_rgba(10,35,79,0.05)] ${item.isRead ? 'border-[#0A234F]/[0.07]' : 'border-[#F5A300]/45'}`}
+              >
+                <div className="flex items-stretch">
+                  <button
+                    type="button"
+                    onClick={() => void handleTap(item)}
+                    disabled={openingNotificationId === item.id}
+                    aria-label={`Open notification: ${item.title}`}
+                    className="flex min-w-0 flex-1 items-start gap-3 border-0 bg-transparent p-4 text-left"
+                    style={{ cursor: openingNotificationId === item.id ? 'wait' : (item.link ? 'pointer' : 'default') }}
+                  >
+                    <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#EEF3F8] text-[#0A234F]">
+                      <ActivityIcon type={item.type} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="mb-1 flex items-center gap-2">
+                        <span className="text-[9px] font-black uppercase tracking-[0.13em] text-[#C98200]">
+                          {formatActivityTypeLabel(item.type)}
+                        </span>
+                        {!item.isRead ? (
+                          <span className="rounded-full bg-[#FFF4D6] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-[#9A6500]">New</span>
+                        ) : null}
+                      </span>
+                      <span className="block text-[14px] font-extrabold leading-[1.3] text-[#0A234F]">{item.title}</span>
+                      {item.message ? (
+                        <span className="mt-1 block text-[12px] leading-[1.45] text-[#667085]" style={{ overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          {item.message}
+                        </span>
+                      ) : null}
+                      <span className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#98A2B3]">
+                        {formatDate(item.createdAt)}
+                        {item.link ? <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                      </span>
+                    </span>
+                  </button>
+
+                  <div className="flex w-[48px] shrink-0 flex-col items-center justify-center gap-2 border-l border-[#0A234F]/[0.06] bg-[#F9FBFD] py-3">
+                    <button
+                      type="button"
+                      aria-label="Archive notification"
+                      disabled={archivingId === item.id}
+                      onClick={() => void archiveNotification(item.id)}
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-[#0A234F]/[0.08] bg-white text-[#667085] disabled:opacity-40"
+                    >
+                      <Archive className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete notification"
+                      disabled={deletingId === item.id}
+                      onClick={() => void deleteNotification(item.id)}
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-[#0A234F]/[0.08] bg-white text-[#667085] disabled:opacity-40"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </main>
 
       <MobileBottomNav />
     </div>

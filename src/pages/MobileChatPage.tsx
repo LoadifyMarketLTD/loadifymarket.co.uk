@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import officialLoadifyMarketLogo from "../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -72,9 +73,9 @@ function SystemEventCard({ event }: { event?: string }) {
 
   return (
     <div className="flex justify-center">
-      <div className="max-w-[80%] rounded-2xl px-4 py-2.5 bg-white/5 border border-white/10 text-center">
+      <div className="max-w-[84%] rounded-2xl border border-[#D8E0EA] bg-white px-4 py-2.5 text-center shadow-sm">
         <span className="mr-1">🔒</span>
-        <span className="text-xs text-white/75">This listing has been purchased. It is no longer available.</span>
+        <span className="text-xs font-medium text-[#667085]">This listing has been purchased. It is no longer available.</span>
       </div>
     </div>
   );
@@ -445,169 +446,149 @@ export default function MobileChatPage() {
 
   return (
     <div
-      className="flex flex-col bg-background"
+      className="flex flex-col bg-[#F3F6FA] text-[#0A234F]"
       data-is-seller={isSeller ? "true" : "false"}
-      style={{
-        height: "100dvh",
-      }}
+      style={{ height: "100dvh" }}
     >
-      {/* Sub-header — paddingTop includes safe-area-inset-top so the background
-          fills the status-bar area and content starts cleanly below it. */}
-      <div
-        className="border-b border-white/10 shrink-0 bg-background/[0.97]"
-        style={{
-          paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
-          paddingBottom: "0",
-        }}
+      <header
+        className="shrink-0 bg-[#0A234F] text-white shadow-[0_5px_22px_rgba(10,35,79,0.18)]"
+        style={{ paddingTop: "calc(0.55rem + env(safe-area-inset-top, 0px))" }}
       >
-        {/* Row 1: back + name */}
-        <div className="flex items-center gap-3 px-4 pb-3">
+        <div className="flex items-center gap-3 px-4 pb-2 pt-2">
           <button
+            type="button"
             onClick={() => navigate("/inbox")}
-            className="text-white/80 hover:text-white transition-colors p-1 -ml-1"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white"
             aria-label="Back to Inbox"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{otherName}</p>
-            {convMeta?.subject && !productPreview && (
-              <p className="text-xs text-primary/70 truncate">{convMeta.subject}</p>
-            )}
-          </div>
+          <img
+            src={officialLoadifyMarketLogo}
+            alt="Loadify Market"
+            className="h-[36px] w-auto max-w-[170px] object-contain object-left"
+          />
         </div>
 
-        {/* Row 2: product preview strip (when conversation is linked to a listing) */}
-        {productPreview && (
-          <div
-            className="flex items-center gap-2 px-4 pb-3"
-            style={{
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              paddingTop: "10px",
-            }}
+        <div className="px-4 pb-3 pt-1">
+          <p className="m-0 text-[9px] font-black uppercase tracking-[0.16em] text-[#F5A300]">
+            {isSeller ? "Buyer" : "Seller"}
+          </p>
+          <p className="m-0 mt-0.5 truncate text-[18px] font-black tracking-[-0.02em] text-white">
+            {otherName}
+          </p>
+          {convMeta?.subject && !productPreview ? (
+            <p className="m-0 mt-0.5 truncate text-[11px] font-medium text-white/65">{convMeta.subject}</p>
+          ) : null}
+        </div>
+
+        {productPreview ? (
+          <button
+            type="button"
+            onClick={() => convMeta?.productId && navigate(`/product/${convMeta.productId}`)}
+            className="flex w-full items-center gap-3 border-0 border-t border-white/10 bg-white/[0.06] px-4 py-3 text-left"
+            aria-label={`Open listing: ${productPreview.title}`}
           >
             {productPreview.image ? (
               <img
                 src={productPreview.image}
                 alt={productPreview.title}
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "8px",
-                  objectFit: "cover" as const,
-                  flexShrink: 0,
-                }}
-                className="bg-elevated"
+                className="h-12 w-12 shrink-0 rounded-[12px] border border-white/20 object-cover"
               />
             ) : (
-              <div
-                className="bg-white/[0.05] flex items-center justify-center"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "8px",
-                  flexShrink: 0,
-                }}
-              >
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30">
-                  Item
-                </span>
-              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-white/10 text-[9px] font-black uppercase tracking-wide text-white/60">
+                Item
+              </span>
             )}
-            <p
-              className="text-xs text-white/70 truncate"
-              style={{ flex: 1, minWidth: 0, fontWeight: 500 }}
-            >
-              {productPreview.title}
-            </p>
-          </div>
-        )}
-      </div>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-[#F5A300]">Listing</span>
+              <span className="mt-0.5 block truncate text-[13px] font-bold text-white">{productPreview.title}</span>
+            </span>
+          </button>
+        ) : null}
+      </header>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {loadingMsgs ? (
-          <div className="space-y-3 pt-4">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className={`h-10 rounded-2xl bg-white/5 animate-pulse max-w-[65%] ${i % 2 === 0 ? "ml-auto" : ""}`}
-              />
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mb-3">
-              <Send className="h-6 w-6 text-white/20" />
-            </div>
-            <p className="text-sm text-white/40">No messages yet. Say hello! 👋</p>
-          </div>
-        ) : (
-          messages.map((msg) => {
-            const isMine = msg.senderId === user?.id;
-            const parsed = parseMessage(msg.message);
-
-            if (parsed.type === "system") {
-              return <SystemEventCard key={msg.id} event={parsed.event} />;
-            }
-
-            return (
-              <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+      <div className="flex-1 overflow-y-auto bg-[#F3F6FA] px-4 py-4">
+        <div className="space-y-3">
+          {loadingMsgs ? (
+            <div className="space-y-3 pt-4">
+              {[...Array(5)].map((_, i) => (
                 <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
-                    isMine
-                      ? "bg-primary text-black rounded-br-sm"
-                      : "bg-white/10 text-white rounded-bl-sm"
-                  }`}
-                >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {parsed.text}
-                  </p>
-                  <p className={`text-[10px] mt-1 ${isMine ? "text-background/60" : "text-white/40"}`}>
-                    {formatTime(msg.createdAt)}
-                  </p>
-                </div>
+                  key={i}
+                  className={`h-11 max-w-[68%] animate-pulse rounded-2xl bg-[#DDE5EE] ${i % 2 === 0 ? "ml-auto" : ""}`}
+                />
+              ))}
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex min-h-[46vh] flex-col items-center justify-center text-center">
+              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm">
+                <Send className="h-6 w-6 text-[#98A2B3]" aria-hidden="true" />
               </div>
-            );
-          })
-        )}
-        <div ref={bottomRef} />
+              <p className="m-0 text-[14px] font-extrabold text-[#0A234F]">No messages yet</p>
+              <p className="m-0 mt-1 text-[12px] text-[#667085]">Start the conversation with this {isSeller ? "buyer" : "seller"}.</p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isMine = msg.senderId === user?.id;
+              const parsed = parseMessage(msg.message);
+
+              if (parsed.type === "system") {
+                return <SystemEventCard key={msg.id} event={parsed.event} />;
+              }
+
+              return (
+                <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-[78%] rounded-[18px] px-4 py-2.5 shadow-sm ${
+                      isMine
+                        ? "rounded-br-[5px] bg-[#2F6FED] text-white"
+                        : "rounded-bl-[5px] border border-[#D8E0EA] bg-white text-[#0A234F]"
+                    }`}
+                  >
+                    <p className="m-0 whitespace-pre-wrap break-words text-[14px] leading-relaxed">
+                      {parsed.text}
+                    </p>
+                    <p className={`m-0 mt-1 text-[10px] font-medium ${isMine ? "text-white/70" : "text-[#98A2B3]"}`}>
+                      {formatTime(msg.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      {/* Typing indicator + seen receipt */}
-      <div className="shrink-0 px-4 h-5 flex items-center gap-3">
-        {otherTyping && (
+      <div className="flex h-6 shrink-0 items-center gap-3 bg-[#F3F6FA] px-4">
+        {otherTyping ? (
           <div className="flex items-center gap-1.5">
             <span className="flex gap-0.5">
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-white/40"
+                  className="h-1.5 w-1.5 rounded-full bg-[#0A234F]/35"
                   style={{ animation: `bounce 1.2s infinite ${i * 0.2}s` }}
                 />
               ))}
             </span>
-            <span className="text-[11px] text-white/40">{otherName} is typing…</span>
+            <span className="text-[11px] font-medium text-[#667085]">{otherName} is typing…</span>
           </div>
-        )}
-        {!otherTyping && lastSentRead && (
-          <p className="text-[11px] text-white/35 ml-auto">Seen ✓</p>
-        )}
+        ) : null}
+        {!otherTyping && lastSentRead ? (
+          <p className="ml-auto m-0 text-[11px] font-medium text-[#667085]">Seen ✓</p>
+        ) : null}
       </div>
 
-      {/* Debug state panel — activate with ?debug=1 in the URL */}
-      {showDebug && (
-        <div className="shrink-0 px-3 py-1 bg-yellow-500/10 border-t border-yellow-500/20 text-[10px] font-mono text-yellow-400">
+      {showDebug ? (
+        <div className="shrink-0 border-t border-yellow-500/20 bg-yellow-50 px-3 py-1 text-[10px] font-mono text-yellow-800">
           uid: {user?.id ?? "—"} | conv: {conversationId ?? "—"} | msgs: {messages.length}
         </div>
-      )}
+      ) : null}
 
-      {/* Compose bar */}
       <div
-        className="shrink-0 px-4 py-3 border-t border-white/10 bg-background/[0.97]"
-        style={{
-          paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
-        }}
+        className="shrink-0 border-t border-[#0A234F]/10 bg-white px-4 py-3 shadow-[0_-4px_18px_rgba(10,35,79,0.05)]"
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <div className="flex items-end gap-2">
           <textarea
@@ -617,20 +598,20 @@ export default function MobileChatPage() {
             onKeyDown={handleKeyDown}
             placeholder="Type a message…"
             rows={1}
-            className="flex-1 resize-none rounded-2xl border border-white/15 bg-white/5 text-white placeholder:text-white/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/60 max-h-32"
+            className="max-h-32 flex-1 resize-none rounded-[18px] border border-[#C9D3E0] bg-[#F7F9FC] px-4 py-2.5 text-[14px] text-[#0A234F] placeholder:text-[#98A2B3] focus:border-[#2F6FED] focus:outline-none focus:ring-2 focus:ring-[#2F6FED]/15"
             style={{ lineHeight: "1.4" }}
           />
           <button
+            type="button"
             onClick={() => void handleSend()}
             disabled={!draft.trim() || sending}
-            className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0A234F] text-white shadow-sm transition-opacity disabled:opacity-35"
             aria-label="Send message"
           >
-            <Send className="h-4 w-4 text-background" />
+            <Send className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>
-
     </div>
   );
 }
