@@ -13,7 +13,6 @@
  * promise stalls.
  */
 
-import { supabase } from './supabase';
 import { isCapacitorContext } from './capacitorUtils';
 
 /**
@@ -116,6 +115,8 @@ export async function authorizedFetch(
   }, AUTHORIZED_FETCH_TIMEOUT_MS);
 
   try {
+    const { supabase } = await import('./supabase');
+
     // Rewrite relative Netlify function paths to absolute URLs on Capacitor APK.
     // This is a defensive duplicate of the rewrite in patchCapacitorFetch; it
     // ensures correctness even if CapacitorHttp's own JS injection overwrites our

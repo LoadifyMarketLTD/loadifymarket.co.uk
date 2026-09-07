@@ -31,7 +31,7 @@ describe('Stage 7 cross-platform auth/security contract', () => {
   });
 
   it('delegates dashboard Seller readiness to canonical route guards', () => {
-    const app = source('src/App.tsx');
+    const app = source('src/AppRoutes.tsx');
 
     expect(app).toContain(
       'if (hasSellerAccess(user))',

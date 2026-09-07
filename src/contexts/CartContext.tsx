@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import type { Product } from "@/components/catalog/ProductCard";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
-import { supabase } from "@/lib/supabase";
 
 type CartTaxProduct = Product & {
   vatRate?: number | null;
@@ -144,6 +143,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const productIds = snapshot.map((i) => i.product.id);
 
     try {
+      const { supabase } = await import('@/lib/supabase');
       const { data, error } = await supabase
         .from("products")
         .select("id, price, isActive, isApproved, listingStatus, listingContext, stockQuantity, vatRate, taxTreatmentStatus, taxTreatmentSource")

@@ -12,6 +12,7 @@ import { toast } from '../hooks/use-toast';
 import { copyToClipboard } from '../lib/clipboard';
 import { trackPublishListing, trackStartListing, trackShareProduct, trackCopyLink } from '../lib/analytics';
 import { authorizedFetch } from '../lib/authorizedFetch';
+import '../seller-listing-editor-density.css';
 import {
   deriveSellerListingLocks,
   formatSellerListingLockReason,

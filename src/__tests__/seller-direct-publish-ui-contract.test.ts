@@ -9,6 +9,7 @@ const platformFlags = read('netlify/functions/_shared/platformFlags.ts');
 const routeSurfaceClass = read('src/components/RouteSurfaceClass.tsx');
 const editorCss = read('src/seller-listing-editor-light.css');
 const main = read('src/main.tsx');
+const appRoutes = read('src/AppRoutes.tsx');
 const directPublishMigration = read(
   'supabase/migrations/20260828123840_marketplace_seller_direct_publish.sql',
 );
@@ -31,7 +32,7 @@ describe('Marketplace Seller direct publication contract', () => {
 describe('Seller listing editor light surface contract', () => {
   it('loads a route-scoped light editor stylesheet', () => {
     expect(main).toContain('RouteSurfaceClass');
-    expect(main).toContain('seller-listing-editor-light.css');
+    expect(appRoutes).toContain('seller-listing-editor-light.css');
     expect(editorCss).toContain('.loadify-seller-listing-route');
     expect(editorCss).toContain('background: #f8fafc !important');
     expect(editorCss).toContain('background: #ffffff !important');

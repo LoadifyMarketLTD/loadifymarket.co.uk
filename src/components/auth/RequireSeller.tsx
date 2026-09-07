@@ -4,7 +4,6 @@ import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasAdminAccess, hasSellerAccess, isActiveSellerAccess } from '../../lib/roleUtils';
 import { authorizedFetch } from '../../lib/authorizedFetch';
-import { supabase } from '../../lib/supabase';
 
 interface Props {
   children: ReactNode;
@@ -114,6 +113,7 @@ export default function RequireSeller({ children }: Props) {
     let cancelled = false;
 
     const verifySeller = async () => {
+      const { supabase } = await import('../../lib/supabase');
       const [profileRes, userRes] = await Promise.all([
         supabase
           .from('seller_profiles')

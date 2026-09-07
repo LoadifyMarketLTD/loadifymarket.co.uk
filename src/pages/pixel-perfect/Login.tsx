@@ -6,6 +6,7 @@ import { isCapacitorNative } from "@/lib/capacitorUtils";
 import { sanitizeRedirectUrl } from "@/lib/sanitizeRedirectUrl";
 import SEO from "@/components/SEO";
 import { supabase } from "@/lib/supabase";
+import "@/native.css";
 
 const GoogleIcon = () => (
   <svg className="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" aria-hidden="true">

@@ -1,6 +1,8 @@
 import { Navigate, useLocation } from "react-router-dom";
-import MarketplaceHeader from "@/components/marketplace/MarketplaceHeader";
+import { lazy, Suspense } from "react";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
+
+const MarketplaceHeader = lazy(() => import("@/components/marketplace/MarketplaceHeader"));
 
 const presentationPaths = new Set([
   "/",
@@ -55,5 +57,5 @@ export default function Header() {
   }
 
   if (presentationPaths.has(pathname)) return null;
-  return <MarketplaceHeader />;
+  return <Suspense fallback={null}><MarketplaceHeader /></Suspense>;
 }
