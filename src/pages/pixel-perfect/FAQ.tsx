@@ -1,3 +1,5 @@
+import { useMemo, useState } from "react";
+import { ArrowRight, ChevronDown, CircleHelp, Search } from "lucide-react";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import MainLayout from "@/layouts/MainLayout";
 import { Link } from "react-router-dom";
@@ -291,54 +293,124 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
 ];
 
 const FAQ = () => {
+  const [query, setQuery] = useState("");
+  const [activeSection, setActiveSection] = useState("All");
+
+  const visibleSections = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return FAQS.map((section) => ({
+      ...section,
+      items: section.items.filter((item) => {
+        const matchesSection = activeSection === "All" || section.section === activeSection;
+        const matchesQuery = !normalizedQuery
+          || item.question.toLowerCase().includes(normalizedQuery)
+          || section.section.toLowerCase().includes(normalizedQuery);
+        return matchesSection && matchesQuery;
+      }),
+    })).filter((section) => section.items.length > 0);
+  }, [activeSection, query]);
+
   return (
     <MainLayout>
       <SEO title="FAQ | Loadify Market" description="Answers to the most common questions about buying and selling on Loadify Market." canonical="/faq" />
-      <main id="main-content" className="min-h-screen bg-[#F7F9FC] pt-4 pb-20 text-[#0A234F] md:pt-28">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <BreadcrumbNav
-            items={[{ label: "Home", to: "/" }, { label: "FAQ" }]}
-            backTo="/"
-          />
-          <h1 className="mb-4 font-display text-3xl font-bold text-[#0A234F] sm:text-4xl">
-            Frequently Asked Questions
-          </h1>
-          <p className="mb-10 text-lg leading-relaxed text-slate-600">
-            Everything you need to know about using Loadify Market. Can't find an answer?{" "}
-            <Link to="/contact" className="text-primary underline">
-              Get in touch
-            </Link>
-            .
-          </p>
+      <main id="main-content" className="min-h-screen bg-[#F7F9FC] pb-20 pt-4 text-[#0A234F] md:pt-28">
+        <div className="container mx-auto max-w-5xl px-4">
+          <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Help Centre" }]} backTo="/" />
 
-          <div className="space-y-10">
-            {FAQS.map((section) => (
+          <section className="overflow-hidden rounded-[26px] bg-[#0A234F] px-5 py-7 text-white shadow-[0_18px_50px_rgba(10,35,79,0.14)] sm:px-8 sm:py-9">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-white/10 text-[#F5A300]">
+                <CircleHelp className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">Loadify support</p>
+                <h1 className="m-0 mt-2 font-display text-[30px] font-black leading-[1.05] tracking-[-0.035em] text-white sm:text-[38px]">Help Centre</h1>
+                <p className="m-0 mt-3 max-w-2xl text-[13px] leading-6 text-white/75 sm:text-[15px]">
+                  Clear answers for buying, selling, orders, accounts and marketplace safety.
+                </p>
+              </div>
+            </div>
+
+            <label className="mt-6 flex h-12 items-center gap-3 rounded-[14px] bg-white px-4 text-[#0A234F] shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+              <Search className="h-[18px] w-[18px] shrink-0 text-[#667085]" aria-hidden="true" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search the Help Centre"
+                className="min-w-0 flex-1 border-0 bg-transparent text-[13px] font-semibold text-[#0A234F] outline-none placeholder:font-medium placeholder:text-[#98A2B3]"
+                aria-label="Search Help Centre"
+              />
+            </label>
+          </section>
+
+          <div className="-mx-1 mt-5 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {["All", ...FAQS.map((section) => section.section)].map((section) => (
+              <button
+                key={section}
+                type="button"
+                onClick={() => setActiveSection(section)}
+                className={`shrink-0 rounded-full border px-3.5 py-2 text-[11px] font-extrabold transition-colors ${activeSection === section
+                  ? "border-[#0A234F] bg-[#0A234F] text-white"
+                  : "border-[#0A234F]/10 bg-white text-[#526071]"}`}
+              >
+                {section}
+              </button>
+            ))}
+          </div>
+          <div className="mt-8 space-y-8">
+            {visibleSections.map((section) => (
               <section key={section.section}>
-                <h2 className="mb-4 border-b border-slate-200 pb-2 font-display text-xl font-semibold text-[#0A234F]">
-                  {section.section}
-                </h2>
-                <dl className="space-y-6">
+                <div className="mb-3 flex items-center gap-3 px-1">
+                  <span className="h-6 w-1 rounded-full bg-[#F5A300]" aria-hidden="true" />
+                  <div>
+                    <p className="m-0 text-[9px] font-black uppercase tracking-[0.14em] text-[#7A8493]">Help topic</p>
+                    <h2 className="m-0 mt-0.5 font-display text-[19px] font-black tracking-[-0.02em] text-[#0A234F]">{section.section}</h2>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
                   {section.items.map((item) => (
-                    <div key={item.question}>
-                      <dt className="mb-1 font-semibold text-[#0A234F]">{item.question}</dt>
-                      <dd className="leading-relaxed text-slate-600">{item.answer}</dd>
-                    </div>
+                    <details
+                      key={item.question}
+                      className="group overflow-hidden rounded-[17px] border border-[#0A234F]/[0.08] bg-white shadow-[0_6px_20px_rgba(10,35,79,0.045)]"
+                    >
+                      <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-4 text-left [&::-webkit-details-marker]:hidden">
+                        <span className="min-w-0 flex-1 text-[14px] font-extrabold leading-[1.35] text-[#0A234F] sm:text-[15px]">
+                          {item.question}
+                        </span>
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EEF3F8] text-[#0A234F]">
+                          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
+                        </span>
+                      </summary>
+                      <div className="border-t border-[#0A234F]/[0.07] bg-[#FBFCFE] px-4 py-4">
+                        <div className="text-[13px] leading-[1.75] text-[#5F6B7A] [&_a]:font-bold [&_a]:text-[#1D57D8] [&_li]:my-1 [&_strong]:font-extrabold [&_strong]:text-[#24364F]">
+                          {item.answer}
+                        </div>
+                      </div>
+                    </details>
                   ))}
-                </dl>
+                </div>
               </section>
             ))}
           </div>
 
-          <div className="mt-12 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-600">
-              <strong className="text-[#0A234F]">Still have a question?</strong> Our support
-              team is available Monday to Friday, 09:00–17:00 (GMT).{" "}
-              <Link to="/contact" className="text-primary underline">
-                Contact us
-              </Link>
-              .
-            </p>
-          </div>
+          {visibleSections.length === 0 ? (
+            <section className="mt-8 rounded-[18px] border border-[#0A234F]/[0.08] bg-white px-5 py-8 text-center shadow-[0_6px_20px_rgba(10,35,79,0.04)]">
+              <p className="m-0 text-[14px] font-extrabold text-[#0A234F]">No matching help article found</p>
+              <p className="m-0 mt-1 text-[12px] text-[#7A8493]">Try another phrase or browse all Help Centre topics.</p>
+              <button type="button" onClick={() => { setQuery(""); setActiveSection("All"); }} className="mt-4 text-[12px] font-extrabold text-[#1D57D8]">Show all topics</button>
+            </section>
+          ) : null}
+          <section className="mt-10 rounded-[20px] border border-[#F5A300]/30 bg-[#FFF9EC] p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div>
+              <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-[#9A6500]">Still need help?</p>
+              <p className="m-0 mt-1 text-[15px] font-black text-[#0A234F]">Talk to the Loadify support team</p>
+              <p className="m-0 mt-1 text-[12px] leading-6 text-[#667085]">Use the contact page when you need help with a specific account, order or marketplace issue.</p>
+            </div>
+            <Link to="/contact" className="mt-4 inline-flex h-11 items-center gap-2 rounded-[12px] bg-[#0A234F] px-4 text-[12px] font-extrabold text-white no-underline sm:mt-0">
+              Contact support <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </section>
         </div>
       </main>
     </MainLayout>
