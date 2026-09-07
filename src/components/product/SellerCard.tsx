@@ -8,14 +8,17 @@ interface SellerCardProps {
   rating: number;
   location: string;
   totalListings: number;
-  /** The seller's store slug — used to link to the public seller profile page */
+  /** The seller's store slug — preferred public seller profile route. */
   storeSlug?: string | null;
+  /** Stable seller id — fallback public route when a legacy store has no slug yet. */
+  sellerId?: string | null;
   /** ISO date string for when the seller joined */
   joinDate?: string | null;
 }
 
-const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug, joinDate }: SellerCardProps) => {
+const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug, sellerId, joinDate }: SellerCardProps) => {
   const joinYear = joinDate ? new Date(joinDate).getFullYear() : null;
+  const profilePath = storeSlug ? `/seller/${storeSlug}` : sellerId ? `/seller/${sellerId}` : null;
 
   return (
     <div className="bg-card rounded-xl border border-border p-5 space-y-4">
@@ -39,7 +42,7 @@ const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
             <span className="flex items-center gap-0.5">
               <Star className="h-3 w-3 fill-accent text-accent" />
-              {rating}
+              {rating > 0 ? rating.toFixed(1) : 'No reviews yet'}
             </span>
             <span>·</span>
             <span className="flex items-center gap-0.5">
@@ -63,8 +66,8 @@ const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug
         )}
       </div>
 
-      {storeSlug ? (
-        <Link to={`/seller/${storeSlug}`}>
+      {profilePath ? (
+        <Link to={profilePath}>
           <Button variant="outline" size="sm" className="w-full text-sm">
             View Seller Profile <ExternalLink className="ml-2 h-3.5 w-3.5" />
           </Button>

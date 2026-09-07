@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { schedule } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { hasActiveAccountCapability } from './_shared/activeAccountAuth';
 import { sendPushToUser } from './_shared/pushNotifications';
 import {
   findOrderTransfer,
@@ -197,10 +198,14 @@ export const handler = schedule('0 2 * * *', async () => {
 
       if (sellerAccountError) throw sellerAccountError;
       if (sellerError) throw sellerError;
+      const sellerHasCapability = Boolean(
+        sellerAccount &&
+        sellerAccount.role !== 'admin' &&
+        sellerAccount.isActive === true &&
+        await hasActiveAccountCapability(supabase, order.sellerId, 'seller')
+      );
       if (
-        !sellerAccount ||
-        sellerAccount.role !== 'seller' ||
-        sellerAccount.isActive !== true ||
+        !sellerHasCapability ||
         !sellerProfile?.stripeAccountId ||
         sellerProfile.stripeConnectStatus !== 'active' ||
         sellerProfile.sellerStatus !== 'active' ||

@@ -9,19 +9,10 @@ interface Props {
 }
 
 /**
- * Route guard for seller onboarding pages (profile edit).
- * Allows any user with the seller role regardless of activation status,
- * plus admins for inspection. Buyers and unauthenticated users are blocked.
+ * Seller onboarding/profile guard.
  *
- * Use this guard (not RequireSeller) for:
- *   - /onboarding  — draft/submitted sellers complete onboarding here
- *   - /seller/profile — sellers can edit their profile at any status
- *
- * Access rules:
- *   admin              → render children (inspection access)
- *   seller (any status) → render children
- *   buyer              → show "seller account required" prompt
- *   unauthenticated    → redirect to /login
+ * Seller access comes from the server-governed Seller capability. Admin
+ * privilege is not a substitute for Seller identity or payout capability.
  */
 export default function RequireSellerAny({ children }: Props) {
   const { user, isLoading } = useAuthStore();
@@ -44,35 +35,30 @@ export default function RequireSellerAny({ children }: Props) {
   }
 
   if (!user) return null;
-
   if (user.isActive !== true) {
     return <Navigate to="/login?error=account_inactive" replace />;
   }
 
-  // Admin can access for inspection
-  if (hasAdminAccess(user)) return <>{children}</>;
-
-  // Any Marketplace Seller context can access onboarding/profile surfaces.
-  // Keep this boundary aligned with the full Seller Workspace guard.
   if (hasSellerAccess(user)) return <>{children}</>;
 
-  // Buyer or any other authenticated non-seller — show access denied
+  const isAdminOnly = hasAdminAccess(user);
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="rounded-xl p-10 max-w-md w-full text-center" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
-        <p className="text-5xl mb-4">🏪</p>
-        <h2 className="text-2xl font-bold text-white mb-2">Seller Account Required</h2>
+      <div className="rounded-xl p-10 max-w-md w-full text-center" style={{ border: '1px solid rgba(255,255,255,0.05)' }}>
+        <p className="text-5xl mb-4">??</p>
+        <h2 className="text-2xl font-bold text-white mb-2">Seller Access Required</h2>
         <p className="text-slate-400 mb-6">
-          You need a seller account to access this page. Sign up as a seller to start
-          listing products on Loadify Market.
+          {isAdminOnly
+            ? 'Administrative authority stays separate from Marketplace Seller identity and payout setup.'
+            : 'Enable selling on this Loadify account. Your Buyer access and purchase history stay on the same identity.'}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/signup?type=seller" className="btn-primary">
-            Create Seller Account
-          </Link>
-          <Link to="/dashboard" className="btn-secondary">
-            Back to Dashboard
-          </Link>
+          {isAdminOnly ? (
+            <Link to="/admin" className="btn-primary">Back to Admin Hub</Link>
+          ) : (
+            <Link to="/onboarding/role-selection" className="btn-primary">Enable Selling</Link>
+          )}
+          <Link to="/dashboard" className="btn-secondary">Back to Dashboard</Link>
         </div>
       </div>
     </div>

@@ -92,10 +92,10 @@ describe('Stage 4 Buyer onboarding alignment contract', () => {
   });
 
   it('keeps Buyer Space behind verified-email enforcement', () => {
-    const app = source('src/App.tsx');
+    const routes = source('src/AppRoutes.tsx');
 
-    expect(app).toContain('<RequireBuyer>');
-    expect(app).toContain('<RequireEmailVerified>');
-    expect(app).toContain('<PPBuyerShell />');
+    expect(routes).toContain('<RequireBuyer>');
+    expect(routes).toContain('<RequireEmailVerified>');
+    expect(routes).toContain('<PPBuyerShell />');
   });
 });

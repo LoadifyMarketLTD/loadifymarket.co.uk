@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import { hasAdminAccess, hasSellerAccess } from "@/lib/roleUtils";
 
 /**
  * Legacy compatibility route.
@@ -18,6 +19,8 @@ const RoleSelection = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const sellerEnabled = hasSellerAccess(user);
+  const adminOnly = hasAdminAccess(user);
 
   const handleContinue = async () => {
     if (!selected || !user?.id) {
@@ -30,12 +33,21 @@ const RoleSelection = () => {
       return;
     }
 
+    if (adminOnly) {
+      toast({
+        title: "Admin Hub is separate",
+        description: "Administrative authority does not impersonate Buyer or Marketplace Seller capabilities.",
+      });
+      navigate("/admin", { replace: true });
+      return;
+    }
+
     if (selected === "buyer") {
       navigate("/buyer", { replace: true });
       return;
     }
 
-    if (user.role === "seller") {
+    if (sellerEnabled) {
       navigate(user.onboardingCompleted === false ? "/onboarding" : "/seller", { replace: true });
       return;
     }
@@ -134,9 +146,9 @@ const RoleSelection = () => {
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
               <Store className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-lg font-bold text-foreground">Seller {user.role === "seller" ? "Workspace" : "Setup"}</h2>
+            <h2 className="text-lg font-bold text-foreground">Seller {sellerEnabled ? "Workspace" : "Setup"}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {user.role === "seller"
+              {sellerEnabled
                 ? "Continue managing your Marketplace Seller relationship."
                 : "Add Marketplace Seller access without losing Buyer access."}
             </p>

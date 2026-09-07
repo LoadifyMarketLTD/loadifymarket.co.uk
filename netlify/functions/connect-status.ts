@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { authenticateActiveCapability } from './_shared/activeAccountAuth';
 import {
   isOutsideP1GreatBritainPostcode,
   normaliseMarketplaceCountry,
@@ -37,7 +37,7 @@ export const handler: Handler = async (event) => {
   });
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
-  const auth = await authenticateActiveAccount(event, supabase, ['seller']);
+  const auth = await authenticateActiveCapability(event, supabase, 'seller');
   if (!auth.ok) {
     return {
       statusCode: auth.status,

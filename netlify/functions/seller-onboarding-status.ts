@@ -1,6 +1,6 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { authenticateActiveCapability } from './_shared/activeAccountAuth';
 import { isProfileComplete, tryAutoActivateSeller } from './_shared/sellerActivation';
 import { deriveSellerOnboardingReadiness } from './_shared/sellerOnboarding';
 
@@ -29,7 +29,7 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const auth = await authenticateActiveAccount(event, supabase, ['seller']);
+  const auth = await authenticateActiveCapability(event, supabase, 'seller');
   if (!auth.ok) {
     return {
       statusCode: auth.status,

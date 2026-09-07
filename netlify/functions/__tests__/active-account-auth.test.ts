@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { HandlerEvent } from '@netlify/functions';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { authenticateActiveAccount } from '../_shared/activeAccountAuth';
+import {
+  authenticateActiveAccount,
+  authenticateActiveCapability,
+  authenticateSellerCapabilityOrAdmin,
+} from '../_shared/activeAccountAuth';
 
 function event(token?: string): HandlerEvent {
   return {
@@ -23,15 +27,22 @@ function client(options: {
   authError?: unknown;
   account?: { id: string; role: string; isActive: boolean } | null;
   accountError?: unknown;
+  capability?: 'buyer' | 'seller' | null;
+  capabilityError?: unknown;
 }) {
-  const maybeSingle = vi.fn().mockResolvedValue({
+  const accountMaybeSingle = vi.fn().mockResolvedValue({
     data: options.account ?? null,
     error: options.accountError ?? null,
   });
-  const from = vi.fn(() => ({
+  const capabilityMaybeSingle = vi.fn().mockResolvedValue({
+    data: options.capability ? { capability: options.capability } : null,
+    error: options.capabilityError ?? null,
+  });
+  const from = vi.fn((table: string) => ({
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    maybeSingle,
+    is: vi.fn().mockReturnThis(),
+    maybeSingle: table === 'account_capabilities' ? capabilityMaybeSingle : accountMaybeSingle,
   }));
   const getUser = vi.fn().mockResolvedValue({
     data: { user: options.authUser ?? null },
@@ -42,7 +53,8 @@ function client(options: {
     api: { auth: { getUser }, from } as unknown as SupabaseClient,
     getUser,
     from,
-    maybeSingle,
+    accountMaybeSingle,
+    capabilityMaybeSingle,
   };
 }
 
@@ -107,5 +119,53 @@ describe('authenticateActiveAccount', () => {
         appMetadata: { role: 'seller', marker: 'kept' },
       },
     });
+  });
+});
+
+
+describe('capability account guards', () => {
+  it('accepts Seller capability on the same active identity even when the default role is Buyer', async () => {
+    const c = client({
+      authUser: { id: 'user-1', email: 'buyer-seller@example.com' },
+      account: { id: 'user-1', role: 'buyer', isActive: true },
+      capability: 'seller',
+    });
+
+    const result = await authenticateActiveCapability(event('token'), c.api, 'seller');
+    expect(result.ok).toBe(true);
+  });
+
+  it('fails closed when Seller capability is absent', async () => {
+    const c = client({
+      authUser: { id: 'user-1', email: 'buyer@example.com' },
+      account: { id: 'user-1', role: 'buyer', isActive: true },
+      capability: null,
+    });
+
+    const result = await authenticateActiveCapability(event('token'), c.api, 'seller');
+    expect(result).toEqual({ ok: false, status: 403 });
+  });
+
+  it('never converts Admin authority into ordinary Seller capability', async () => {
+    const c = client({
+      authUser: { id: 'admin-1', email: 'admin@example.com' },
+      account: { id: 'admin-1', role: 'admin', isActive: true },
+      capability: 'seller',
+    });
+
+    const result = await authenticateActiveCapability(event('token'), c.api, 'seller');
+    expect(result).toEqual({ ok: false, status: 403 });
+    expect(c.capabilityMaybeSingle).not.toHaveBeenCalled();
+  });
+
+  it('permits Admin only on the explicit seller-or-admin management guard', async () => {
+    const c = client({
+      authUser: { id: 'admin-1', email: 'admin@example.com' },
+      account: { id: 'admin-1', role: 'admin', isActive: true },
+    });
+
+    const result = await authenticateSellerCapabilityOrAdmin(event('token'), c.api);
+    expect(result.ok).toBe(true);
+    expect(c.capabilityMaybeSingle).not.toHaveBeenCalled();
   });
 });

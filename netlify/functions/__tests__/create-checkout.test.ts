@@ -212,6 +212,16 @@ describe('create-checkout handler – request validation', () => {
         rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
         from: vi.fn((table: string) => {
           if (table === 'users') return accountQuery();
+          if (table === 'account_capabilities') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { capability: 'seller', revoked_at: null },
+                error: null,
+              }),
+            };
+          }
           if (table === 'products') {
             return {
               select: vi.fn().mockReturnThis(),
@@ -313,6 +323,16 @@ describe('create-checkout handler – request validation', () => {
         rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
         from: vi.fn((table: string) => {
           if (table === 'users') return accountQuery();
+          if (table === 'account_capabilities') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { capability: 'seller', revoked_at: null },
+                error: null,
+              }),
+            };
+          }
           if (table === 'products') {
             return {
               select: vi.fn().mockReturnThis(),

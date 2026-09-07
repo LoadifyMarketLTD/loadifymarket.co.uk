@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Camera,
+  Images,
   X,
   Loader2,
   CheckCircle2,
@@ -89,7 +90,9 @@ function FieldInput({
 }) {
   const baseStyle: React.CSSProperties = {
     width: '100%',
-    border: `1px solid ${error ? 'hsl(var(--danger))' : 'rgba(255,255,255,0.12)'}`,
+    border: `1px solid ${error ? 'hsl(var(--danger))' : '#DCE3ED'}`,
+    background: '#FFFFFF',
+    color: '#0A234F',
     borderRadius: '14px',
     fontSize: '15px',
     padding: '14px 16px',
@@ -98,11 +101,11 @@ function FieldInput({
     resize: 'none',
     boxSizing: 'border-box',
   };
-  const inputClass = 'text-foreground bg-surface';
+  const inputClass = 'text-[#0A234F] bg-white placeholder:text-[#7A8493]';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       {label && (
-        <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
+        <label className="text-[#0A234F]" style={{ fontSize: '13px', fontWeight: 700 }}>
           {label}
           {required && <span style={{ marginLeft: '3px' }}>*</span>}
         </label>
@@ -233,7 +236,8 @@ function SuccessSheet({
             width: '100%',
             padding: '16px',
             borderRadius: '16px',
-            border: '1px solid rgba(255,255,255,0.10)',
+            border: '1px solid #DCE3ED',
+            background: '#FFFFFF',
             fontSize: '15px',
             fontWeight: 600,
             cursor: 'pointer',
@@ -295,7 +299,8 @@ const INITIAL_FORM: FormState = {
 export default function MobileSellWizard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const photoInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -448,7 +453,7 @@ export default function MobileSellWizard() {
   const busy = publishing || photoUploading;
 
   return (
-    <div className="bg-background" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: '#F7F9FC', color: '#0A234F' }}>
       {/* ── Header ── */}
       <div
         style={{
@@ -457,7 +462,8 @@ export default function MobileSellWizard() {
           zIndex: 10,
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          borderBottom: '1px solid rgba(10,35,79,0.12)',
+          background: '#0A234F',
           paddingTop: 'calc(0.875rem + env(safe-area-inset-top, 0px))',
           paddingBottom: '0.875rem',
           paddingLeft: '16px',
@@ -467,13 +473,13 @@ export default function MobileSellWizard() {
           alignItems: 'center',
           gap: '12px',
         }}
-        className="bg-background/[0.97]"
+        className="bg-[#0A234F]"
       >
         <button
           aria-label="Go back"
           onClick={() => navigate(-1)}
           disabled={busy}
-          className="bg-white/[0.07] flex items-center justify-center"
+          className="bg-white flex items-center justify-center"
           style={{
             width: '36px',
             height: '36px',
@@ -483,9 +489,9 @@ export default function MobileSellWizard() {
             flexShrink: 0,
           }}
         >
-          <ArrowLeft className="text-foreground" style={{ width: '18px', height: '18px' }} />
+          <ArrowLeft className="text-[#0A234F]" style={{ width: '18px', height: '18px' }} />
         </button>
-        <h1 className="text-foreground" style={{ fontSize: '17px', fontWeight: 700, flex: 1 }}>
+        <h1 className="text-white" style={{ fontSize: '17px', fontWeight: 700, flex: 1 }}>
           Sell an item
         </h1>
       </div>
@@ -504,7 +510,7 @@ export default function MobileSellWizard() {
       >
         {/* Photos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
+          <label className="text-[#0A234F]" style={{ fontSize: '13px', fontWeight: 700 }}>
             Photos <span className="text-primary">*</span>
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
@@ -535,23 +541,12 @@ export default function MobileSellWizard() {
             ))}
 
             {form.photos.length < MAX_PHOTOS && (
+              <>
               <button
-                aria-label="Add photo"
-                onClick={() => photoInputRef.current?.click()}
+                aria-label="Take photo"
+                onClick={() => cameraInputRef.current?.click()}
                 disabled={photoUploading}
-                style={{
-                  aspectRatio: '1',
-                  borderRadius: '14px',
-                  border: `2px dashed ${fieldErrors.photos ? 'hsl(var(--danger))' : 'rgba(212,175,55,0.35)'}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  cursor: photoUploading ? 'not-allowed' : 'pointer',
-                  opacity: photoUploading ? 0.6 : 1,
-                }}
-                className={fieldErrors.photos ? 'bg-danger/[0.04]' : 'bg-primary/[0.04]'}
+                style={{ aspectRatio: '1', borderRadius: '14px', border: '2px dashed #C9D5E5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: photoUploading ? 'not-allowed' : 'pointer', opacity: photoUploading ? 0.6 : 1, background: '#FFFFFF' }}
               >
                 {photoUploading ? (
                   <Loader2
@@ -563,13 +558,16 @@ export default function MobileSellWizard() {
                   />
                 ) : (
                   <>
-                    <Camera className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ width: '24px', height: '24px' }} />
-                    <span className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ fontSize: '11px', fontWeight: 600 }}>
-                      Add photo
-                    </span>
+                    <Camera className="text-[#2563EB]" style={{ width: '24px', height: '24px' }} />
+                    <span className="text-[#2563EB]" style={{ fontSize: '11px', fontWeight: 700 }}>Take photo</span>
                   </>
                 )}
               </button>
+              <button aria-label="Choose from gallery" onClick={() => galleryInputRef.current?.click()} disabled={photoUploading} style={{ aspectRatio: '1', borderRadius: '14px', border: '2px dashed #C9D5E5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: photoUploading ? 'not-allowed' : 'pointer', opacity: photoUploading ? 0.6 : 1, background: '#FFFFFF' }}>
+                <Images className="text-[#2563EB]" style={{ width: '24px', height: '24px' }} />
+                <span className="text-[#2563EB]" style={{ fontSize: '11px', fontWeight: 700 }}>Gallery</span>
+              </button>
+              </>
             )}
           </div>
 
@@ -592,17 +590,17 @@ export default function MobileSellWizard() {
           )}
 
           <input
-            ref={photoInputRef}
+            ref={galleryInputRef}
             type="file"
             accept="image/*"
             multiple
-            capture="environment"
             style={{ display: 'none' }}
             onChange={(e) => {
               if (e.target.files && e.target.files.length > 0) handleAddPhotos(e.target.files);
               e.target.value = '';
             }}
           />
+          <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={(e) => { if (e.target.files && e.target.files.length > 0) void handleAddPhotos(e.target.files); e.target.value = ''; }} />
         </div>
 
         {/* Title */}
@@ -635,7 +633,7 @@ export default function MobileSellWizard() {
 
         {/* ── More details (collapsible) ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
+          <label className="text-[#0A234F]" style={{ fontSize: '13px', fontWeight: 700 }}>
             Shipping method <span className="text-primary">*</span>
           </label>
           <ShippingMethodSelector
@@ -661,14 +659,15 @@ export default function MobileSellWizard() {
 
         <div
           style={{
-            border: '1px solid rgba(255,255,255,0.10)',
+            border: '1px solid #DCE3ED',
+            background: '#FFFFFF',
             borderRadius: '16px',
             overflow: 'hidden',
           }}
         >
           <button
             onClick={() => setMoreDetailsOpen((o) => !o)}
-            className="text-foreground bg-white/[0.03]"
+            className="text-[#0A234F] bg-white"
             style={{
               width: '100%',
               display: 'flex',
@@ -683,7 +682,7 @@ export default function MobileSellWizard() {
           >
             <span>More details</span>
             <ChevronDown
-              className="text-foreground/50"
+              className="text-[#64748B]"
               style={{
                 width: '18px',
                 height: '18px',
@@ -713,7 +712,7 @@ export default function MobileSellWizard() {
 
               {/* Category */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
+                <label className="text-[#0A234F]" style={{ fontSize: '13px', fontWeight: 700 }}>
                   Category
                 </label>
                 <CategorySelector
@@ -721,21 +720,24 @@ export default function MobileSellWizard() {
                   selectedSubcategoryId={form.subcategoryId}
                   onCategoryChange={(v) => setForm((p) => ({ ...p, categoryId: v, subcategoryId: '' }))}
                   onSubcategoryChange={(v) => setForm((p) => ({ ...p, subcategoryId: v }))}
+                  theme="light"
                 />
               </div>
 
               {/* Condition */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
+                <label className="text-[#0A234F]" style={{ fontSize: '13px', fontWeight: 700 }}>
                   Condition
                 </label>
                 <select
                   value={form.condition}
                   onChange={(e) => setForm((p) => ({ ...p, condition: e.target.value }))}
-                  className={`bg-surface ${form.condition ? 'text-foreground' : 'text-foreground/40'}`}
+                  className={form.condition ? 'bg-white text-[#0A234F]' : 'bg-white text-[#7A8493]'}
                   style={{
                     width: '100%',
-                    border: '1px solid rgba(255,255,255,0.12)',
+                    border: '1px solid #DCE3ED',
+                    background: '#FFFFFF',
+                    color: form.condition ? '#0A234F' : '#7A8493',
                     borderRadius: '14px',
                     fontSize: '15px',
                     padding: '14px 16px',
@@ -746,7 +748,7 @@ export default function MobileSellWizard() {
                   }}
                 >
                   {CONDITION_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="bg-surface text-foreground">
+                    <option key={opt.value} value={opt.value} className="bg-white text-[#0A234F]">
                       {opt.label}
                     </option>
                   ))}
@@ -759,13 +761,13 @@ export default function MobileSellWizard() {
 
       {/* ── Sticky CTA ── */}
       <div
-        className="bg-background/[0.97]"
+        className="bg-white/[0.98]"
         style={{
           position: 'sticky',
           bottom: 0,
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
+          borderTop: '1px solid rgba(10,35,79,0.10)',
           padding: '16px 20px',
           paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
           flexShrink: 0,
@@ -778,7 +780,7 @@ export default function MobileSellWizard() {
         )}
 
         <button
-          className={`text-base font-bold text-black flex items-center justify-center gap-2 w-full py-4 rounded-2xl border-none transition-colors ${busy ? 'bg-primary/40 cursor-not-allowed' : 'bg-primary cursor-pointer hover:bg-primary-hover'}`}
+          className={`text-base font-bold text-white flex items-center justify-center gap-2 w-full py-4 rounded-2xl border-none transition-colors ${busy ? 'bg-[#0A234F]/40 cursor-not-allowed' : 'bg-[#0A234F] cursor-pointer hover:bg-[#123B75]'}`}
           onClick={handlePublish}
           disabled={busy}
         >

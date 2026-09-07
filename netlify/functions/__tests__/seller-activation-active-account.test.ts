@@ -24,6 +24,7 @@ function client(options: {
   account?: { role: string; isActive: boolean } | null;
   accountError?: { message: string } | null;
   profile?: typeof completeProfile;
+  sellerCapability?: boolean;
 }) {
   const profile = options.profile ?? completeProfile;
   const sellerUpdateEq = vi.fn().mockResolvedValue({ error: null });
@@ -38,6 +39,21 @@ function client(options: {
           }),
         }),
         update: sellerUpdate,
+      };
+    }
+
+    if (table === 'account_capabilities') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: options.sellerCapability === false ? null : { capability: 'seller', revoked_at: null },
+                error: null,
+              }),
+            }),
+          }),
+        }),
       };
     }
 
@@ -86,6 +102,15 @@ describe('tryAutoActivateSeller active-account gate', () => {
 
     expect(result?.sellerStatus).toBe('suspended');
     expect(result?.firstActivation).toBe(false);
+    expect(c.sellerUpdate).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the active account has no live Seller capability', async () => {
+    const c = client({ account: { role: 'seller', isActive: true }, sellerCapability: false });
+
+    const result = await tryAutoActivateSeller(c.api, 'seller-1', 'active');
+
+    expect(result).toMatchObject({ sellerStatus: 'suspended', changed: false, firstActivation: false });
     expect(c.sellerUpdate).not.toHaveBeenCalled();
   });
 

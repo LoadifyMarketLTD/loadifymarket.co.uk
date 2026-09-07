@@ -453,6 +453,13 @@ describe('canonical shipment write boundary', () => {
             maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
           };
         }
+        if (table === 'account_capabilities') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { capability: 'seller', revoked_at: null }, error: null }),
+          };
+        }
         if (table === 'shipments') {
           return {
             select: vi.fn().mockReturnThis(),
@@ -508,6 +515,13 @@ describe('canonical shipment write boundary', () => {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
             maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
+          };
+        }
+        if (table === 'account_capabilities') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { capability: 'seller', revoked_at: null }, error: null }),
           };
         }
         if (table === 'shipments') {
@@ -574,6 +588,13 @@ describe('canonical shipment write boundary', () => {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
             maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'seller-1', role: 'seller', isActive: true }, error: null }),
+          };
+        }
+        if (table === 'account_capabilities') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { capability: 'seller', revoked_at: null }, error: null }),
           };
         }
         if (table === 'shipments') {

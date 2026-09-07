@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useAuthPromptStore } from "@/store/authPromptStore";
 
 interface DBReview {
   id: string;
@@ -77,11 +78,14 @@ interface ProductReviewsProps {
 
 const ProductReviews = ({ productId, productRating, reviewCount }: ProductReviewsProps) => {
   const { user } = useAuthStore();
+  const promptAuth = useAuthPromptStore((state) => state.open);
   const [showForm, setShowForm] = useState(false);
   const [newRating, setNewRating] = useState(0);
   const [newTitle, setNewTitle] = useState("");
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [checkingEligibility, setCheckingEligibility] = useState(false);
+  const [eligibleOrderId, setEligibleOrderId] = useState<string | null>(null);
 
   const [reviews, setReviews] = useState<DBReview[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
@@ -130,6 +134,85 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
     if (productId) fetchReviews();
   }, [productId, fetchReviews]);
 
+  useEffect(() => {
+    setShowForm(false);
+    setEligibleOrderId(null);
+  }, [productId, user?.id]);
+
+  const findEligibleOrder = useCallback(async (): Promise<string | null> => {
+    if (!user) return null;
+
+    const [singleOrderRes, multiOrderRes] = await Promise.all([
+      supabase
+        .from("orders")
+        .select("id")
+        .eq("buyerId", user.id)
+        .eq("productId", productId)
+        .in("status", ["delivered", "completed"])
+        .order("createdAt", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("order_items")
+        .select("orderId, orders!inner(id, buyerId, status)")
+        .eq("productId", productId)
+        .eq("orders.buyerId", user.id)
+        .in("orders.status", ["delivered", "completed"])
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    if (singleOrderRes.error) throw singleOrderRes.error;
+    if (multiOrderRes.error) throw multiOrderRes.error;
+
+    if (singleOrderRes.data?.id) return singleOrderRes.data.id;
+
+    const multiOrder = multiOrderRes.data as { orderId?: string } | null;
+    return multiOrder?.orderId ?? null;
+  }, [productId, user]);
+
+  const handleWriteReview = async () => {
+    if (!user) {
+      promptAuth("review");
+      return;
+    }
+
+    setCheckingEligibility(true);
+    try {
+      const { data: existingReview, error: existingReviewError } = await supabase
+        .from("reviews")
+        .select("id")
+        .eq("productId", productId)
+        .eq("userId", user.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingReviewError) throw existingReviewError;
+      if (existingReview) {
+        toast({ title: "Already reviewed", description: "You have already submitted a review for this product." });
+        return;
+      }
+
+      const orderId = await findEligibleOrder();
+      if (!orderId) {
+        toast({
+          title: "Verified purchase required",
+          description: "Only buyers who purchased and received this product through Loadify Market can review it.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setEligibleOrderId(orderId);
+      setShowForm(true);
+    } catch (error) {
+      console.error("Failed to verify review eligibility:", error);
+      toast({ title: "Could not verify purchase", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setCheckingEligibility(false);
+    }
+  };
+
   const handleHelpful = async (review: DBReview) => {
     if (!user) {
       toast({ title: "Sign in required", description: "Please sign in to mark reviews as helpful." });
@@ -171,53 +254,22 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
 
     setSubmitting(true);
     try {
-      // Find a completed order where this user purchased this specific product
-      // Check single-product orders (orders.productId) and multi-item orders (order_items)
-      const [singleOrderRes, multiOrderRes] = await Promise.all([
-        supabase
-          .from("orders")
-          .select("id")
-          .eq("buyerId", user.id)
-          .eq("productId", productId)
-          .in("status", ["delivered", "completed"])
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("order_items")
-          .select("orderId, orders!inner(id, buyerId, status)")
-          .eq("productId", productId)
-          .limit(1)
-          .maybeSingle(),
-      ]);
+      const orderId = eligibleOrderId ?? await findEligibleOrder();
 
-      // Accept from single-product orders; for multi-item orders verify ownership + status
-      const orderData =
-        singleOrderRes.data ??
-        (() => {
-          const item = multiOrderRes.data as { orderId: string; orders: { id: string; buyerId: string; status: string } } | null;
-          if (
-            item?.orders &&
-            item.orders.buyerId === user.id &&
-            ["delivered", "completed"].includes(item.orders.status)
-          ) {
-            return { id: item.orderId };
-          }
-          return null;
-        })();
-
-      if (!orderData) {
+      if (!orderId) {
         toast({
-          title: "Purchase required",
-          description: "You can only review products you have purchased and received.",
+          title: "Verified purchase required",
+          description: "Only buyers who purchased and received this product through Loadify Market can review it.",
           variant: "destructive",
         });
+        setShowForm(false);
         return;
       }
 
       const { error } = await supabase.from("reviews").insert({
         productId,
         userId: user.id,
-        orderId: orderData.id,
+        orderId,
         rating: newRating,
         title: newTitle.trim() || null,
         comment: newComment.trim() || null,
@@ -256,9 +308,9 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
         <h2 className="font-display text-lg font-semibold text-foreground">
           Reviews & Ratings
         </h2>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
-          <MessageSquare className="h-4 w-4 mr-1" />
-          Write a Review
+        <Button size="sm" onClick={showForm ? () => setShowForm(false) : handleWriteReview} disabled={checkingEligibility}>
+          {checkingEligibility ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-1" />}
+          {showForm ? "Cancel Review" : "Write a Review"}
         </Button>
       </div>
 
@@ -279,6 +331,10 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
           ))}
         </div>
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        Reviews can only be submitted by signed-in buyers with a verified delivered or completed purchase of this product.
+      </p>
 
       {/* Write Review Form */}
       {showForm && (
@@ -354,7 +410,7 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
                         <span className="text-sm font-medium text-foreground">{authorName}</span>
                         {review.isVerifiedPurchase && (
                           <Badge variant="outline" className="text-[10px] bg-success/10 text-success border-success/40">
-                            Confirmed Purchase
+                            Verified Purchase
                           </Badge>
                         )}
                       </div>

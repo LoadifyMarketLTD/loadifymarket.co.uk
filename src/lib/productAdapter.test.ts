@@ -78,6 +78,12 @@ describe('adaptProduct', () => {
       adaptProduct(product({ listingContext: 'service', stockQuantity: 0 })).maxPurchaseQuantity,
     ).toBeUndefined();
   });
+
+  it('uses a neutral public seller label when businessName is blank', () => {
+    expect(
+      adaptProduct(product({ seller: { userId: 'seller-1', businessName: '   ', isApproved: true } })).seller,
+    ).toBe('Independent Seller');
+  });
 });
 
 describe('adaptProducts', () => {

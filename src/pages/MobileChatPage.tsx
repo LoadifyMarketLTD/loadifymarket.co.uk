@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Ban, MoreVertical, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import officialLoadifyMarketLogo from "../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,13 @@ interface ConversationMeta {
   user2Id: string;
   subject: string | null;
   productId: string | null;
+}
+
+interface BlockStatusResponse {
+  available?: boolean;
+  blockedByMe?: boolean;
+  messagingBlocked?: boolean;
+  error?: string;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -72,9 +80,9 @@ function SystemEventCard({ event }: { event?: string }) {
 
   return (
     <div className="flex justify-center">
-      <div className="max-w-[80%] rounded-2xl px-4 py-2.5 bg-white/5 border border-white/10 text-center">
+      <div className="max-w-[84%] rounded-2xl border border-[#D8E0EA] bg-white px-4 py-2.5 text-center shadow-sm">
         <span className="mr-1">🔒</span>
-        <span className="text-xs text-white/75">This listing has been purchased. It is no longer available.</span>
+        <span className="text-xs font-medium text-[#667085]">This listing has been purchased. It is no longer available.</span>
       </div>
     </div>
   );
@@ -107,6 +115,11 @@ export default function MobileChatPage() {
   const [lastSentRead, setLastSentRead] = useState(false);
   // Product preview in chat header
   const [productPreview, setProductPreview] = useState<{ title: string; image: string | null } | null>(null);
+  const [safetyOpen, setSafetyOpen] = useState(false);
+  const [blockFeatureAvailable, setBlockFeatureAvailable] = useState(false);
+  const [blockedByMe, setBlockedByMe] = useState(false);
+  const [messagingBlocked, setMessagingBlocked] = useState(false);
+  const [blockUpdating, setBlockUpdating] = useState(false);
 
   // How long to show the typing indicator after the last heartbeat (ms)
   const TYPING_INDICATOR_TIMEOUT_MS = 4000;
@@ -218,6 +231,26 @@ export default function MobileChatPage() {
     load();
     return () => { cancelled = true; };
   }, [conversationId, user?.id, navigate]);
+
+  useEffect(() => {
+    if (!otherId || !user?.id) return;
+    let cancelled = false;
+
+    void authorizedFetch("/.netlify/functions/user-block", {
+      method: "POST",
+      body: JSON.stringify({ userId: otherId, action: "status" }),
+    }).then(async (response) => {
+      const payload = await response.json().catch(() => ({})) as BlockStatusResponse;
+      if (cancelled || !response.ok || payload.available !== true) return;
+      setBlockFeatureAvailable(true);
+      setBlockedByMe(payload.blockedByMe === true);
+      setMessagingBlocked(payload.messagingBlocked === true);
+    }).catch(() => {
+      // The feature remains hidden until its database migration is available.
+    });
+
+    return () => { cancelled = true; };
+  }, [otherId, user?.id]);
 
   // Load messages
   useEffect(() => {
@@ -382,9 +415,42 @@ export default function MobileChatPage() {
     return () => { void supabase.removeChannel(readChannel); };
   }, [conversationId, user?.id]);
 
+  const handleToggleBlock = async () => {
+    if (!otherId || blockUpdating) return;
+    setBlockUpdating(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/user-block", {
+        method: "POST",
+        body: JSON.stringify({ userId: otherId, action: blockedByMe ? "unblock" : "block" }),
+      });
+      const payload = await response.json().catch(() => ({})) as BlockStatusResponse;
+      if (!response.ok) throw new Error(payload.error || "Unable to update conversation safety.");
+      setBlockFeatureAvailable(payload.available === true);
+      setBlockedByMe(payload.blockedByMe === true);
+      setMessagingBlocked(payload.messagingBlocked === true);
+      setSafetyOpen(false);
+      toast({
+        title: payload.blockedByMe ? "User blocked" : "User unblocked",
+        description: payload.blockedByMe
+          ? "Marketplace messaging between these accounts is now blocked."
+          : payload.messagingBlocked
+            ? "Your block was removed, but messaging remains unavailable."
+            : "Marketplace messaging is available again.",
+      });
+    } catch (err) {
+      toast({ title: "Safety action failed", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setBlockUpdating(false);
+    }
+  };
+
   // Send message
   const handleSend = async () => {
     if (!draft.trim() || !conversationId || !otherId || !user?.id) return;
+    if (messagingBlocked) {
+      toast({ title: "Messaging unavailable", description: "This conversation is blocked for marketplace messaging.", variant: "destructive" });
+      return;
+    }
     setSending(true);
     const text = draft.trim();
     setDraft("");
@@ -445,192 +511,219 @@ export default function MobileChatPage() {
 
   return (
     <div
-      className="flex flex-col bg-background"
+      className="flex flex-col bg-[#F3F6FA] text-[#0A234F]"
       data-is-seller={isSeller ? "true" : "false"}
-      style={{
-        height: "100dvh",
-      }}
+      style={{ height: "100dvh" }}
     >
-      {/* Sub-header — paddingTop includes safe-area-inset-top so the background
-          fills the status-bar area and content starts cleanly below it. */}
-      <div
-        className="border-b border-white/10 shrink-0 bg-background/[0.97]"
-        style={{
-          paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
-          paddingBottom: "0",
-        }}
+      <header
+        className="shrink-0 bg-[#0A234F] text-white shadow-[0_5px_22px_rgba(10,35,79,0.18)]"
+        style={{ paddingTop: "calc(0.55rem + env(safe-area-inset-top, 0px))" }}
       >
-        {/* Row 1: back + name */}
-        <div className="flex items-center gap-3 px-4 pb-3">
+        <div className="flex items-center gap-3 px-4 pb-2 pt-2">
           <button
+            type="button"
             onClick={() => navigate("/inbox")}
-            className="text-white/80 hover:text-white transition-colors p-1 -ml-1"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white"
             aria-label="Back to Inbox"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{otherName}</p>
-            {convMeta?.subject && !productPreview && (
-              <p className="text-xs text-primary/70 truncate">{convMeta.subject}</p>
-            )}
-          </div>
+          <img
+            src={officialLoadifyMarketLogo}
+            alt="Loadify Market"
+            className="mr-auto h-[36px] w-auto max-w-[170px] object-contain object-left"
+          />
+          {blockFeatureAvailable ? (
+            <button
+              type="button"
+              onClick={() => setSafetyOpen(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white"
+              aria-label="Conversation safety"
+            >
+              <MoreVertical className="h-5 w-5" aria-hidden="true" />
+            </button>
+          ) : null}
         </div>
 
-        {/* Row 2: product preview strip (when conversation is linked to a listing) */}
-        {productPreview && (
-          <div
-            className="flex items-center gap-2 px-4 pb-3"
-            style={{
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              paddingTop: "10px",
-            }}
+        <div className="px-4 pb-3 pt-1">
+          <p className="m-0 text-[9px] font-black uppercase tracking-[0.16em] text-[#F5A300]">
+            {isSeller ? "Buyer" : "Seller"}
+          </p>
+          <p className="m-0 mt-0.5 truncate text-[18px] font-black tracking-[-0.02em] text-white">
+            {otherName}
+          </p>
+          {convMeta?.subject && !productPreview ? (
+            <p className="m-0 mt-0.5 truncate text-[11px] font-medium text-white/65">{convMeta.subject}</p>
+          ) : null}
+        </div>
+
+        {productPreview ? (
+          <button
+            type="button"
+            onClick={() => convMeta?.productId && navigate(`/product/${convMeta.productId}`)}
+            className="flex w-full items-center gap-3 border-0 border-t border-white/10 bg-white/[0.06] px-4 py-3 text-left"
+            aria-label={`Open listing: ${productPreview.title}`}
           >
             {productPreview.image ? (
               <img
                 src={productPreview.image}
                 alt={productPreview.title}
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "8px",
-                  objectFit: "cover" as const,
-                  flexShrink: 0,
-                }}
-                className="bg-elevated"
+                className="h-12 w-12 shrink-0 rounded-[12px] border border-white/20 object-cover"
               />
             ) : (
-              <div
-                className="bg-white/[0.05] flex items-center justify-center"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "8px",
-                  flexShrink: 0,
-                }}
-              >
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30">
-                  Item
-                </span>
-              </div>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] border border-white/15 bg-white/10 text-[9px] font-black uppercase tracking-wide text-white/60">
+                Item
+              </span>
             )}
-            <p
-              className="text-xs text-white/70 truncate"
-              style={{ flex: 1, minWidth: 0, fontWeight: 500 }}
-            >
-              {productPreview.title}
-            </p>
-          </div>
-        )}
-      </div>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-[#F5A300]">Listing</span>
+              <span className="mt-0.5 block truncate text-[13px] font-bold text-white">{productPreview.title}</span>
+            </span>
+          </button>
+        ) : null}
+      </header>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {loadingMsgs ? (
-          <div className="space-y-3 pt-4">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className={`h-10 rounded-2xl bg-white/5 animate-pulse max-w-[65%] ${i % 2 === 0 ? "ml-auto" : ""}`}
-              />
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mb-3">
-              <Send className="h-6 w-6 text-white/20" />
-            </div>
-            <p className="text-sm text-white/40">No messages yet. Say hello! 👋</p>
-          </div>
-        ) : (
-          messages.map((msg) => {
-            const isMine = msg.senderId === user?.id;
-            const parsed = parseMessage(msg.message);
-
-            if (parsed.type === "system") {
-              return <SystemEventCard key={msg.id} event={parsed.event} />;
-            }
-
-            return (
-              <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
-                    isMine
-                      ? "bg-primary text-black rounded-br-sm"
-                      : "bg-white/10 text-white rounded-bl-sm"
-                  }`}
-                >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                    {parsed.text}
-                  </p>
-                  <p className={`text-[10px] mt-1 ${isMine ? "text-background/60" : "text-white/40"}`}>
-                    {formatTime(msg.createdAt)}
-                  </p>
-                </div>
+      {blockFeatureAvailable && safetyOpen ? (
+        <div className="fixed inset-0 z-[10020]">
+          <button type="button" aria-label="Close conversation safety" onClick={() => setSafetyOpen(false)} className="absolute inset-0 border-0 bg-[#0A234F]/40" />
+          <section
+            className="absolute bottom-0 left-0 right-0 rounded-t-[24px] bg-white px-5 pt-5 shadow-[0_-18px_45px_rgba(10,35,79,0.18)]"
+            style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
+            aria-label="Conversation safety options"
+          >
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#D8E0EA]" aria-hidden="true" />
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#FFF0EE] text-[#A53A2A]">
+                <Ban className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="m-0 text-[16px] font-black text-[#0A234F]">Conversation safety</h2>
+                <p className="m-0 mt-1 text-[11px] leading-[1.55] text-[#667085]">Existing messages remain visible. Blocking prevents marketplace messages between these two accounts until the block is removed.</p>
               </div>
-            );
-          })
-        )}
-        <div ref={bottomRef} />
+            </div>
+            <button
+              type="button"
+              disabled={blockUpdating}
+              onClick={() => void handleToggleBlock()}
+              className={`mt-5 flex min-h-12 w-full items-center justify-center rounded-[14px] px-4 text-[12px] font-extrabold disabled:opacity-50 ${blockedByMe ? "border border-[#0A234F]/10 bg-white text-[#0A234F]" : "border-0 bg-[#A53A2A] text-white"}`}
+            >
+              {blockUpdating ? "Updating..." : blockedByMe ? `Unblock ${otherName}` : `Block ${otherName}`}
+            </button>
+            <button type="button" onClick={() => setSafetyOpen(false)} className="mt-2 min-h-11 w-full rounded-[13px] border-0 bg-[#F3F6FA] text-[11px] font-extrabold text-[#667085]">Cancel</button>
+          </section>
+        </div>
+      ) : null}
+
+      <div className="flex-1 overflow-y-auto bg-[#F3F6FA] px-4 py-4">
+        <div className="space-y-3">
+          {loadingMsgs ? (
+            <div className="space-y-3 pt-4">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-11 max-w-[68%] animate-pulse rounded-2xl bg-[#DDE5EE] ${i % 2 === 0 ? "ml-auto" : ""}`}
+                />
+              ))}
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex min-h-[46vh] flex-col items-center justify-center text-center">
+              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm">
+                <Send className="h-6 w-6 text-[#98A2B3]" aria-hidden="true" />
+              </div>
+              <p className="m-0 text-[14px] font-extrabold text-[#0A234F]">No messages yet</p>
+              <p className="m-0 mt-1 text-[12px] text-[#667085]">Start the conversation with this {isSeller ? "buyer" : "seller"}.</p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isMine = msg.senderId === user?.id;
+              const parsed = parseMessage(msg.message);
+
+              if (parsed.type === "system") {
+                return <SystemEventCard key={msg.id} event={parsed.event} />;
+              }
+
+              return (
+                <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-[78%] rounded-[18px] px-4 py-2.5 shadow-sm ${
+                      isMine
+                        ? "rounded-br-[5px] bg-[#2F6FED] text-white"
+                        : "rounded-bl-[5px] border border-[#D8E0EA] bg-white text-[#0A234F]"
+                    }`}
+                  >
+                    <p className="m-0 whitespace-pre-wrap break-words text-[14px] leading-relaxed">
+                      {parsed.text}
+                    </p>
+                    <p className={`m-0 mt-1 text-[10px] font-medium ${isMine ? "text-white/70" : "text-[#98A2B3]"}`}>
+                      {formatTime(msg.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      {/* Typing indicator + seen receipt */}
-      <div className="shrink-0 px-4 h-5 flex items-center gap-3">
-        {otherTyping && (
+      <div className="flex h-6 shrink-0 items-center gap-3 bg-[#F3F6FA] px-4">
+        {otherTyping ? (
           <div className="flex items-center gap-1.5">
             <span className="flex gap-0.5">
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-white/40"
+                  className="h-1.5 w-1.5 rounded-full bg-[#0A234F]/35"
                   style={{ animation: `bounce 1.2s infinite ${i * 0.2}s` }}
                 />
               ))}
             </span>
-            <span className="text-[11px] text-white/40">{otherName} is typing…</span>
+            <span className="text-[11px] font-medium text-[#667085]">{otherName} is typing…</span>
           </div>
-        )}
-        {!otherTyping && lastSentRead && (
-          <p className="text-[11px] text-white/35 ml-auto">Seen ✓</p>
-        )}
+        ) : null}
+        {!otherTyping && lastSentRead ? (
+          <p className="ml-auto m-0 text-[11px] font-medium text-[#667085]">Seen ✓</p>
+        ) : null}
       </div>
 
-      {/* Debug state panel — activate with ?debug=1 in the URL */}
-      {showDebug && (
-        <div className="shrink-0 px-3 py-1 bg-yellow-500/10 border-t border-yellow-500/20 text-[10px] font-mono text-yellow-400">
+      {showDebug ? (
+        <div className="shrink-0 border-t border-yellow-500/20 bg-yellow-50 px-3 py-1 text-[10px] font-mono text-yellow-800">
           uid: {user?.id ?? "—"} | conv: {conversationId ?? "—"} | msgs: {messages.length}
         </div>
-      )}
+      ) : null}
 
-      {/* Compose bar */}
       <div
-        className="shrink-0 px-4 py-3 border-t border-white/10 bg-background/[0.97]"
-        style={{
-          paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
-        }}
+        className="shrink-0 border-t border-[#0A234F]/10 bg-white px-4 py-3 shadow-[0_-4px_18px_rgba(10,35,79,0.05)]"
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
       >
+        {messagingBlocked ? (
+          <div className="mb-2 rounded-[12px] border border-[#0A234F]/[0.08] bg-[#F3F6FA] px-3 py-2.5 text-[11px] font-semibold leading-[1.45] text-[#667085]">
+            {blockedByMe ? "You blocked this user. Unblock them from Conversation safety to send messages again." : "Messaging is unavailable for this conversation."}
+          </div>
+        ) : null}
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}
             value={draft}
             onChange={handleDraftChange}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message…"
+            disabled={messagingBlocked}
+            placeholder={messagingBlocked ? "Messaging unavailable" : "Type a message..."}
             rows={1}
-            className="flex-1 resize-none rounded-2xl border border-white/15 bg-white/5 text-white placeholder:text-white/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/60 max-h-32"
+            className="max-h-32 flex-1 resize-none rounded-[18px] border border-[#C9D3E0] bg-[#F7F9FC] px-4 py-2.5 text-[14px] text-[#0A234F] placeholder:text-[#98A2B3] focus:border-[#2F6FED] focus:outline-none focus:ring-2 focus:ring-[#2F6FED]/15"
             style={{ lineHeight: "1.4" }}
           />
           <button
+            type="button"
             onClick={() => void handleSend()}
-            disabled={!draft.trim() || sending}
-            className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity"
+            disabled={messagingBlocked || !draft.trim() || sending}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0A234F] text-white shadow-sm transition-opacity disabled:opacity-35"
             aria-label="Send message"
           >
-            <Send className="h-4 w-4 text-background" />
+            <Send className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>
-
     </div>
   );
 }

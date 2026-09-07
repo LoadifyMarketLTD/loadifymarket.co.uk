@@ -263,7 +263,7 @@ export const handler: Handler = async (event) => {
 
   await supabase.from('notifications').insert({
     userId: order.buyerId,
-    type: 'order_refunded',
+    type: 'order',
     title: 'Refund Issued',
     message: `Your refund for order ${order.orderNumber} has been processed. It may take several business days to appear in your account.`,
     isRead: false,

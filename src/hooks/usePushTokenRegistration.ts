@@ -16,6 +16,8 @@ import {
   persistPushRegistrationCache,
 } from '@/lib/secureSignOut';
 
+const nativePushEnabled = import.meta.env.VITE_NATIVE_PUSH_ENABLED === 'true';
+
 function getPushPlatform(): 'android' | 'ios' {
   const platform = (
     window as Window & {
@@ -70,16 +72,21 @@ export function usePushTokenRegistration(userId?: string): void {
   const navigate = useNavigate();
   const previousUserIdRef = useRef<string | undefined>(userId);
 
-  // Fallback for session loss that did not pass through secureSignOut (for
-  // example an expired/revoked session). User-initiated logout uses the stronger
-  // server + native boundary while the JWT is still valid. If native unregister
-  // fails here, retain the durable cache so the next authenticated registration
-  // can still reconcile device ownership instead of erasing recovery evidence.
+  // Native push must only be enabled in Android/iOS builds that actually bundle
+  // their Firebase/APNs configuration. Calling register() without Firebase on
+  // Android is process-fatal inside the native plugin and cannot be recovered by
+  // a JavaScript promise catch. Debug/local APKs therefore fail closed here.
   useEffect(() => {
     const previousUserId = previousUserIdRef.current;
     previousUserIdRef.current = userId;
 
-    if (!previousUserId || userId || !isCapacitorNative() || typeof window === 'undefined') {
+    if (
+      !nativePushEnabled ||
+      !previousUserId ||
+      userId ||
+      !isCapacitorNative() ||
+      typeof window === 'undefined'
+    ) {
       return;
     }
 
@@ -94,7 +101,7 @@ export function usePushTokenRegistration(userId?: string): void {
   }, [userId]);
 
   useEffect(() => {
-    if (!userId || !isCapacitorNative() || typeof window === 'undefined') {
+    if (!nativePushEnabled || !userId || !isCapacitorNative() || typeof window === 'undefined') {
       return;
     }
 

@@ -112,6 +112,7 @@ const ProductDetail = () => {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
+  const [sellerProducts, setSellerProducts] = useState<Product[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [productDescription, setProductDescription] = useState("");
   const [sellerListingCount, setSellerListingCount] = useState(0);
@@ -137,6 +138,10 @@ const ProductDetail = () => {
   const [mobileQty, setMobileQty] = useState(1);
   // Mobile description expand/collapse (collapsed by default)
   const [descExpanded, setDescExpanded] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -265,6 +270,17 @@ const ProductDetail = () => {
               .maybeSingle(),
           ]);
           setSellerListingCount(countRes.count ?? 0);
+          const { data: sellerProductData } = await supabase
+            .from("products").select(PRODUCT_QUERY)
+            .eq("sellerId", data.sellerId).eq("isActive", true).eq("isApproved", true)
+            .eq("listingStatus", "active").or("listingContext.eq.service,stockQuantity.gt.0")
+            .neq("id", data.id).order("createdAt", { ascending: false }).limit(4);
+          const sameSellerInfo = sellerMap.get(data.sellerId) ?? null;
+          setSellerProducts(adaptProducts(((sellerProductData ?? []).map((p: Record<string, unknown>) => ({
+            ...p, category: Array.isArray(p.category) ? p.category[0] : p.category,
+            subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
+            seller: sameSellerInfo,
+          }))) as unknown as DBProduct[]));
           setSellerStoreSlug((storeRes.data as { storeSlug?: string } | null)?.storeSlug ?? null);
           setSellerJoinDate((joinRes.data as { createdAt?: string } | null)?.createdAt ?? null);
         }
@@ -399,19 +415,34 @@ const ProductDetail = () => {
     }
   };
 
-  const handleBuyNow = () => {
+  const addCurrentProductToCart = () => {
     if (product.isAvailable === false) {
       toast({
         title: "Listing unavailable",
         description: product.availabilityMessage || "This listing is not currently available for purchase.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
-    if (!user) { promptAuth('buy'); return; }
+    if (!user) {
+      promptAuth('buy');
+      return false;
+    }
     trackAddToCart(product.id, product.title, product.price);
     addToCart(product, mobileQty);
-    navigate("/checkout");
+    return true;
+  };
+
+  const handleAddToCart = () => {
+    if (addCurrentProductToCart()) {
+      toast({ title: "Added to cart" });
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (addCurrentProductToCart()) {
+      navigate("/checkout");
+    }
   };
 
   const handleMessage = async () => {
@@ -421,8 +452,10 @@ const ProductDetail = () => {
     }
   };
 
-  // True when the logged-in user is the seller/owner of this product
-  const isMobileCtaVisible = !!(productSellerId && (!user || user.id !== productSellerId));
+  // Purchase/message actions are hidden only for the seller's own listing.
+  // Product information itself must remain fully visible for every listing.
+  const isOwnListing = !!(productSellerId && user?.id === productSellerId);
+  const isMobileCtaVisible = !isOwnListing;
   const mobileBottomNavOffset = "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))";
   const mobileQuantityLimit = Math.max(1, Math.min(10, product.maxPurchaseQuantity ?? 10));
 
@@ -675,11 +708,10 @@ const ProductDetail = () => {
           <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_420px]">
             {/* Gallery — edge-to-edge on mobile (overlay header sits above it), in-flow on desktop */}
             <div className="order-1 lg:col-start-1 lg:row-start-1 -mx-4 md:mx-0">
-              <ProductGallery images={galleryImages} title={product.title} />
+              <ProductGallery key={product.id} images={galleryImages} title={product.title} />
             </div>
 
             {/* ── Mobile-only inline product info card ── */}
-            {isMobileCtaVisible && (
               <div
                 className="order-2 md:hidden"
                 style={{
@@ -803,7 +835,6 @@ const ProductDetail = () => {
                   </div>
                 )}
               </div>
-            )}
 
             <div className="order-2 hidden md:block lg:col-start-2 lg:row-start-1 lg:row-span-2 space-y-6">
               <div className="lg:sticky lg:top-24 space-y-6">
@@ -839,6 +870,7 @@ const ProductDetail = () => {
                   location={product.location}
                   totalListings={sellerListingCount}
                   storeSlug={sellerStoreSlug}
+                  sellerId={productSellerId}
                   joinDate={sellerJoinDate}
                 />
 
@@ -855,6 +887,23 @@ const ProductDetail = () => {
             </div>
 
             <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8">
+              {!isOwnListing ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) {
+                      promptAuth();
+                      return;
+                    }
+                    setReportOpen(true);
+                  }}
+                  className="md:hidden flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-[#0A234F]/10 bg-white px-4 text-[12px] font-extrabold text-[#667085] shadow-[0_5px_18px_rgba(10,35,79,0.04)]"
+                >
+                  <Flag className="h-4 w-4" aria-hidden="true" />
+                  Report this listing
+                </button>
+              ) : null}
+
               {productDescription.trim().length > 0 && (
                 <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                   <div className="flex items-center justify-between">
@@ -886,14 +935,21 @@ const ProductDetail = () => {
             </div>
           </div>
 
+          {sellerProducts.length > 0 && (
+            <div className="mt-16">
+              <h2 className="font-display text-xl font-bold text-foreground mb-6">More from this seller</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {sellerProducts.map((p) => (<ProductCard key={p.id} product={p} theme="light" />))}
+              </div>
+            </div>
+          )}
+
           {related.length > 0 && (
             <div className="mt-16">
               <h2 className="font-display text-xl font-bold text-foreground mb-6">Similar Listings</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {related.map((p) => (
-                  <Link key={p.id} to={`/product/${p.id}`}>
-                    <ProductCard product={p} theme="light" />
-                  </Link>
+                  <ProductCard key={p.id} product={p} theme="light" />
                 ))}
               </div>
             </div>
@@ -1013,6 +1069,30 @@ const ProductDetail = () => {
                     Message
                   </>
                 )}
+              </button>
+
+              <button
+                onClick={handleAddToCart}
+                style={{
+                  flex: 1,
+                  padding: "14px 8px",
+                  borderRadius: "12px",
+                  background: "#FFFFFF",
+                  color: "#0A234F",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  border: "1px solid #CBD5E1",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "5px",
+                }}
+                className="active:bg-slate-100 transition-colors"
+                aria-label="Add to cart"
+              >
+                <ShoppingCart style={{ width: "15px", height: "15px" }} />
+                Cart
               </button>
 
               <button

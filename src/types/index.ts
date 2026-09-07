@@ -1,4 +1,5 @@
 export type UserRole = 'buyer' | 'seller' | 'admin';
+export type AccountCapability = 'buyer' | 'seller';
 
 // Marketplace roles for sellers/users
 export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;
@@ -25,6 +26,8 @@ export interface User {
    * Admin is a system-level flag — it cannot be assigned from the UI.
    */
   isAdmin?: boolean;
+  /** Active server-governed marketplace capabilities for this identity. */
+  capabilities?: AccountCapability[];
   marketplaceRole?: MarketplaceRole;
   firstName?: string;
   lastName?: string;
@@ -406,21 +409,13 @@ export interface NotificationSettings {
 }
 
 export type AppNotificationType =
-  | 'order'
-  | 'payment'
-  | 'shipment'
-  | 'delivery'
-  | 'return'
-  | 'dispute'
-  | 'message'
-  | 'system'
-  | 'general'
-  | 'product_question'
-  | 'listing_published'
-  | 'listing_sold'
-  | 'share_reminder'
-  | 'rfq'
-  | 'review';
+  | 'order' | 'payment' | 'shipment' | 'delivery' | 'return' | 'dispute'
+  | 'message' | 'review' | 'product_question' | 'question_answered' | 'rfq'
+  | 'promotion' | 'system' | 'general' | 'support_ticket'
+  | 'seller_approved' | 'seller_rejected' | 'product_approved' | 'product_rejected'
+  | 'offer_received' | 'offer_accepted' | 'offer_rejected'
+  // Retained for legacy UI compatibility; the live DB contract no longer emits these.
+  | 'listing_published' | 'listing_sold' | 'share_reminder';
 
 export interface AppNotification {
   id: string;

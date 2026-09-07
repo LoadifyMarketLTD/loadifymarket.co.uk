@@ -100,6 +100,7 @@ function makeSupabaseMock(opts: {
   authError?: Error | null;
   buyerActive?: boolean;
   sellerAccount?: { id: string; role: string; isActive: boolean };
+  sellerCapability?: boolean;
   products?: MockProduct[];
   productsError?: Error | null;
   sellerProfile?: MockSellerProfile | null;
@@ -116,6 +117,7 @@ function makeSupabaseMock(opts: {
     authError = null,
     buyerActive = true,
     sellerAccount = { id: 's1', role: 'seller', isActive: true },
+    sellerCapability = true,
     products = [
       {
         id: 'p1',
@@ -217,6 +219,15 @@ function makeSupabaseMock(opts: {
               select: vi.fn().mockReturnThis(),
               eq: vi.fn().mockReturnThis(),
               in: vi.fn().mockResolvedValue({ data: productShippingRows, error: null }),
+            };
+          case 'account_capabilities':
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: sellerCapability ? { capability: 'seller', revoked_at: null } : null,
+                error: null,
+              }),
             };
           case 'seller_profiles':
             return {
@@ -408,6 +419,20 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
 
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.body as string).error).toMatch(/not currently available to accept payments/i);
+  });
+
+  it('Test 4c: legacy seller role without an active Seller capability is blocked', async () => {
+    vi.doMock('@supabase/supabase-js', () => makeSupabaseMock({ sellerCapability: false }));
+    vi.doMock('stripe', () => ({ default: vi.fn() }));
+
+    const { handler } = await import('../create-checkout');
+    const res = await handler(
+      makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
+      {} as never,
+    );
+
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body as string).error).toMatch(/seller.*not currently available/i);
   });
 
   it('Test 5: seller with no Stripe account is blocked with 400 (P2)', async () => {

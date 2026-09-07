@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
-import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { authenticateActiveAccount, hasActiveAccountCapability } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { resolveMarketplaceTaxV1 } from './_shared/marketplaceTax';
@@ -254,7 +254,13 @@ export const handler: Handler = async (event) => {
     console.error('create-checkout: seller account query failed:', sellerAccountError.message);
     return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller account. Please try again.' }) };
   }
-  if (!sellerAccount || sellerAccount.role !== 'seller' || sellerAccount.isActive !== true) {
+  const sellerHasCapability = Boolean(
+    sellerAccount &&
+    sellerAccount.role !== 'admin' &&
+    sellerAccount.isActive === true &&
+    await hasActiveAccountCapability(supabase, checkoutSellerId, 'seller')
+  );
+  if (!sellerHasCapability) {
     return { statusCode: 400, body: JSON.stringify({ error: 'This seller is not currently available to accept payments.' }) };
   }
 

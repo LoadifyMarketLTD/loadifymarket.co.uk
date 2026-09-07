@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { hasActiveAccountCapability } from './_shared/activeAccountAuth';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -96,9 +97,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 403, body: JSON.stringify({ error: 'Account is suspended' }) };
   }
 
-  if (user.role !== 'seller' && user.role !== 'admin' && user.role !== 'buyer') {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden' }) };
-  }
 
   const pathParts = event.path.split('/');
   const shipmentId = pathParts[pathParts.length - 2];
@@ -128,6 +126,9 @@ export const handler: Handler = async (event) => {
   if (!isAdmin && !isSeller && !isBuyer) {
     return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized for this shipment' }) };
   }
+  const sellerAuthority = isAdmin || (
+    isSeller && await hasActiveAccountCapability(supabase, user.id, 'seller')
+  );
 
   // GET returns a short-lived signed URL. The database stores only the private
   // object path; private bucket objects are never exposed via getPublicUrl().
@@ -148,9 +149,10 @@ export const handler: Handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ url: data.signedUrl, expiresIn: 600 }) };
   }
 
-  // Only the seller responsible for the shipment or an admin may upload/confirm.
-  if (!isAdmin && !isSeller) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Only the seller or admin may upload proof of delivery' }) };
+  // Only the seller responsible for the shipment with a live Seller capability,
+  // or an Admin acting as Admin, may upload/confirm commercial evidence.
+  if (!sellerAuthority) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Only the active seller or admin may upload proof of delivery' }) };
   }
 
   const uploadRl = await checkRateLimit({

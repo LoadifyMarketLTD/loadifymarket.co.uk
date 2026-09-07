@@ -12,9 +12,18 @@ def loadifyReleaseSigningValues = [
 ]
 def loadifyReleaseSigningConfigured = loadifyReleaseSigningValues.every { value -> value != null && value.toString().trim() }
 def loadifyReleaseSigningPartiallyConfigured = loadifyReleaseSigningValues.any { value -> value != null && value.toString().trim() } && !loadifyReleaseSigningConfigured
+def releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.toLowerCase().contains('release')
+}
 
-if (loadifyReleaseSigningPartiallyConfigured) {
+if (releaseTaskRequested && loadifyReleaseSigningPartiallyConfigured) {
     throw new GradleException('Loadify release signing is partially configured. Set all four LOADIFY_UPLOAD_* properties or none of them.')
+}
+
+if (releaseTaskRequested && !loadifyReleaseSigningConfigured) {
+    throw new GradleException(
+        'Loadify Android release builds must be signed. Set all four LOADIFY_UPLOAD_* properties before assembleRelease or bundleRelease.'
+    )
 }
 
 android {
@@ -29,7 +38,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+             // Default: https://android.googlesource.com/platforms/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
@@ -76,9 +85,6 @@ apply from: 'capacitor.build.gradle'
 
 def servicesJSON = file('google-services.json')
 def googleServicesConfigured = servicesJSON.exists() && servicesJSON.length() > 0
-def releaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
-    taskName.toLowerCase().contains('release')
-}
 
 if (googleServicesConfigured) {
     apply plugin: 'com.google.gms.google-services'
