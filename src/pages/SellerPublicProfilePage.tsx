@@ -16,6 +16,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '../store';
 import SEO from '@/components/SEO';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 interface SellerData extends SellerProfile {
   createdAt?: string;
   store?: SellerStore;
@@ -26,6 +28,7 @@ export default function SellerPublicProfilePage() {
   const { user } = useAuthStore();
   const [seller, setSeller] = useState<SellerData | null>(null);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [activeListingCount, setActiveListingCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,12 +39,14 @@ export default function SellerPublicProfilePage() {
         setLoading(true);
 
         // Step 1: Get the store to find the userId
-        const { data: storeData, error: storeError } = await supabase
+        const storeQuery = supabase
           .from('seller_stores')
           .select('*')
-          .eq('storeSlug', slug)
-          .eq('isActive', true)
-          .single();
+          .eq('isActive', true);
+        const { data: storeData, error: storeError } = await (UUID_RE.test(slug)
+          ? storeQuery.eq('userId', slug)
+          : storeQuery.eq('storeSlug', slug)
+        ).maybeSingle();
 
         if (storeError || !storeData) {
           console.error('Store not found:', storeError);
@@ -67,16 +72,19 @@ export default function SellerPublicProfilePage() {
         setSeller(combinedData);
 
         // Step 3: Fetch active products with category joins
-        const { data: rawProducts, error: productsError } = await supabase
+        const { data: rawProducts, error: productsError, count: activeCount } = await supabase
           .from('products')
-          .select('*, category:categories!categoryId(name, slug), subcategory:categories!subcategoryId(name, slug)')
+          .select('*, category:categories!categoryId(name, slug), subcategory:categories!subcategoryId(name, slug)', { count: 'exact' })
           .eq('sellerId', storeData.userId)
           .eq('isActive', true)
           .eq('isApproved', true)
+          .eq('listingStatus', 'active')
+          .or('listingContext.eq.service,stockQuantity.gt.0')
           .order('createdAt', { ascending: false })
           .limit(12);
 
         if (productsError) throw productsError;
+        setActiveListingCount(activeCount ?? 0);
 
         // Step 4: Merge seller info and adapt to UI shape
         const merged = (rawProducts ?? []).map((product) => ({
@@ -249,15 +257,19 @@ export default function SellerPublicProfilePage() {
               {/* Stats */}
               <div className="flex flex-wrap gap-6 pt-4 border-t border-gray-200 mb-5">
                 <div>
-                  <p className="text-2xl font-bold text-gold">{(seller.rating || 0).toFixed(1)}</p>
-                  <p className="text-xs text-gray-500">Seller Rating</p>
+                  <p className="text-2xl font-bold text-gold">
+                    {(seller.rating ?? 0) > 0 ? Number(seller.rating).toFixed(1) : '—'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(seller.rating ?? 0) > 0 ? 'Seller Rating' : 'No reviews yet'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gold">{seller.totalSales || 0}</p>
                   <p className="text-xs text-gray-500">Total Sales</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gold">{products.length}</p>
+                  <p className="text-2xl font-bold text-gold">{activeListingCount}</p>
                   <p className="text-xs text-gray-500">Active Listings</p>
                 </div>
                 {seller.createdAt && (

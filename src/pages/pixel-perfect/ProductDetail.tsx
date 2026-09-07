@@ -112,6 +112,7 @@ const ProductDetail = () => {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
+  const [sellerProducts, setSellerProducts] = useState<Product[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [productDescription, setProductDescription] = useState("");
   const [sellerListingCount, setSellerListingCount] = useState(0);
@@ -269,6 +270,17 @@ const ProductDetail = () => {
               .maybeSingle(),
           ]);
           setSellerListingCount(countRes.count ?? 0);
+          const { data: sellerProductData } = await supabase
+            .from("products").select(PRODUCT_QUERY)
+            .eq("sellerId", data.sellerId).eq("isActive", true).eq("isApproved", true)
+            .eq("listingStatus", "active").or("listingContext.eq.service,stockQuantity.gt.0")
+            .neq("id", data.id).order("createdAt", { ascending: false }).limit(4);
+          const sameSellerInfo = sellerMap.get(data.sellerId) ?? null;
+          setSellerProducts(adaptProducts(((sellerProductData ?? []).map((p: Record<string, unknown>) => ({
+            ...p, category: Array.isArray(p.category) ? p.category[0] : p.category,
+            subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
+            seller: sameSellerInfo,
+          }))) as unknown as DBProduct[]));
           setSellerStoreSlug((storeRes.data as { storeSlug?: string } | null)?.storeSlug ?? null);
           setSellerJoinDate((joinRes.data as { createdAt?: string } | null)?.createdAt ?? null);
         }
@@ -858,6 +870,7 @@ const ProductDetail = () => {
                   location={product.location}
                   totalListings={sellerListingCount}
                   storeSlug={sellerStoreSlug}
+                  sellerId={productSellerId}
                   joinDate={sellerJoinDate}
                 />
 
@@ -904,6 +917,15 @@ const ProductDetail = () => {
 
             </div>
           </div>
+
+          {sellerProducts.length > 0 && (
+            <div className="mt-16">
+              <h2 className="font-display text-xl font-bold text-foreground mb-6">More from this seller</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {sellerProducts.map((p) => (<ProductCard key={p.id} product={p} theme="light" />))}
+              </div>
+            </div>
+          )}
 
           {related.length > 0 && (
             <div className="mt-16">
