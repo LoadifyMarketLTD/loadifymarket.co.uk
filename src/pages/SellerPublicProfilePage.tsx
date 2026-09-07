@@ -26,6 +26,7 @@ interface SellerData extends SellerProfile {
 export default function SellerPublicProfilePage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuthStore();
+  const userId = user?.id;
   const [seller, setSeller] = useState<SellerData | null>(null);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [activeListingCount, setActiveListingCount] = useState(0);
@@ -38,35 +39,56 @@ export default function SellerPublicProfilePage() {
       try {
         setLoading(true);
 
-        // Step 1: Get the store to find the userId
-        const storeQuery = supabase
-          .from('seller_stores')
-          .select('*')
-          .eq('isActive', true);
-        const { data: storeData, error: storeError } = await (UUID_RE.test(slug)
-          ? storeQuery.eq('userId', slug)
-          : storeQuery.eq('storeSlug', slug)
-        ).maybeSingle();
+        // Step 1: Resolve the public seller identity. UUID routes are the safe
+        // fallback for legacy stores without a slug and do not require guest
+        // access to seller_stores (whose admin-aware policy is authenticated-only).
+        let sellerUserId = slug;
+        let storeData: SellerStore | null = null;
 
-        if (storeError || !storeData) {
-          console.error('Store not found:', storeError);
+        if (!UUID_RE.test(slug)) {
+          const { data, error } = await supabase
+            .from('seller_stores')
+            .select('*')
+            .eq('storeSlug', slug)
+            .eq('isActive', true)
+            .maybeSingle();
+          if (error || !data) {
+            console.error('Store not found:', error);
+            setLoading(false);
+            return;
+          }
+          storeData = data as SellerStore;
+          sellerUserId = data.userId;
+        }
+
+        // Step 2: Fetch the seller's explicitly public profile.
+        const { data: profileData, error: profileError } = await supabase
+          .from('seller_profiles_public')
+          .select('*')
+          .eq('userId', sellerUserId)
+          .maybeSingle();
+
+        if (profileError || !profileData) {
+          console.error('Seller profile not found:', profileError);
           setLoading(false);
           return;
         }
 
-        // Step 2: Fetch seller profile from seller_profiles_public
-        const { data: profileData, error: profileError } = await supabase
-          .from('seller_profiles_public')
-          .select('*')
-          .eq('userId', storeData.userId)
-          .single();
+        // Authenticated users may also read active store metadata. For signed-out
+        // UUID routes this remains intentionally optional so RLS stays fail-closed.
+        if (!storeData && userId) {
+          const { data } = await supabase
+            .from('seller_stores')
+            .select('*')
+            .eq('userId', sellerUserId)
+            .eq('isActive', true)
+            .maybeSingle();
+          storeData = (data as SellerStore | null) ?? null;
+        }
 
-        if (profileError) throw profileError;
-
-        // Combine store and profile data
         const combinedData: SellerData = {
           ...profileData,
-          store: storeData,
+          ...(storeData ? { store: storeData } : {}),
         };
 
         setSeller(combinedData);
@@ -75,7 +97,7 @@ export default function SellerPublicProfilePage() {
         const { data: rawProducts, error: productsError, count: activeCount } = await supabase
           .from('products')
           .select('*, category:categories!categoryId(name, slug), subcategory:categories!subcategoryId(name, slug)', { count: 'exact' })
-          .eq('sellerId', storeData.userId)
+          .eq('sellerId', sellerUserId)
           .eq('isActive', true)
           .eq('isApproved', true)
           .eq('listingStatus', 'active')
@@ -106,7 +128,7 @@ export default function SellerPublicProfilePage() {
     };
 
     fetchSellerProfile();
-  }, [slug]);
+  }, [slug, userId]);
 
   if (loading) {
     return (
@@ -140,7 +162,7 @@ export default function SellerPublicProfilePage() {
     );
   }
 
-  const sellerName = seller.businessName || seller.store?.storeName || 'Seller';
+  const sellerName = seller.businessName || seller.store?.storeName || 'Independent Seller';
   const sellerDescription = seller.store?.storeDescription
     ? seller.store.storeDescription
     : `Browse products from ${sellerName} on Loadify Market — a UK multi-category marketplace.`;
@@ -204,7 +226,7 @@ export default function SellerPublicProfilePage() {
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 <h1 className="text-3xl font-bold text-gray-900">
-                  {seller.businessName || seller.store?.storeName || 'Seller'}
+                  {sellerName}
                 </h1>
                 <VerificationBadge isVerified={seller.isApproved} size="md" />
                 {seller.marketplaceRole && <RoleBadge role={seller.marketplaceRole} size="md" />}

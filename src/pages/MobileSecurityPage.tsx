@@ -1,17 +1,23 @@
 /**
  * MobileSecurityPage — /profile/security
- *
- * Simple security hub: Email · Password · 2FA (placeholder) · Login activity.
+ * Personal-account security for the native marketplace app.
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Mail, Lock } from 'lucide-react';
+import {
+  BadgeCheck,
+  ChevronLeft,
+  ChevronRight,
+  KeyRound,
+  Lock,
+  Mail,
+  ShieldCheck,
+} from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
-// ── Change-email inline form ───────────────────────────────────────────────────
 function EmailSection({ currentEmail }: { currentEmail: string }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -19,227 +25,262 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSave = async () => {
-    if (!value || value === currentEmail) return;
+    const nextEmail = value.trim();
+    if (!nextEmail || nextEmail.toLowerCase() === currentEmail.toLowerCase()) return;
     setStatus('saving');
-    const { error } = await supabase.auth.updateUser({ email: value });
+    setErrorMsg('');
+    const { error } = await supabase.auth.updateUser({ email: nextEmail });
     if (error) {
       setErrorMsg(error.message);
       setStatus('error');
-    } else {
-      setStatus('done');
+      return;
     }
+    setStatus('done');
   };
 
   return (
-    <div>
+    <div className="overflow-hidden rounded-[18px] border border-[#0A234F]/[0.08] bg-white shadow-[0_7px_20px_rgba(10,35,79,0.05)]">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
-          paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 14,
-          paddingBottom: 14,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          gap: 12,
-          textAlign: 'left',
-        }}
+        className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-4 text-left"
       >
-        <Mail className="text-muted-foreground" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p className="text-[15px] font-medium text-foreground/90 m-0">Email</p>
-          <p className="text-xs text-muted-foreground m-0">{currentEmail}</p>
-        </div>
-        <ChevronRight className="text-foreground/30" style={{ width: 18, height: 18, flexShrink: 0, transform: open ? 'rotate(90deg)' : undefined, transition: 'transform 0.15s' }} aria-hidden="true" />
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#EEF3F8] text-[#0A234F]">
+          <Mail className="h-[18px] w-[18px]" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-extrabold text-[#0A234F]">Email address</span>
+          <span className="mt-0.5 block truncate text-[11px] font-medium text-[#7A8493]">{currentEmail}</span>
+        </span>
+        <ChevronRight
+          className="h-[18px] w-[18px] shrink-0 text-[#A0A8B4] transition-transform"
+          style={{ transform: open ? 'rotate(90deg)' : undefined }}
+          aria-hidden="true"
+        />
       </button>
 
-      {open && (
-        <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingBottom: 16 }}>
+      {open ? (
+        <div className="border-t border-[#0A234F]/[0.07] bg-[#F9FBFD] px-4 py-4">
           {status === 'done' ? (
-            <p className="text-[13px] text-success m-0">
-              Confirmation sent to your new address. Check your inbox.
-            </p>
+            <div className="rounded-[12px] border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-[12px] font-semibold text-emerald-700">
+              Confirmation sent to your new email address. Check your inbox to complete the change.
+            </div>
           ) : (
             <>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.1em] text-[#667085]">New email address</label>
               <input
                 type="email"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                placeholder="New email address"
-                className="text-foreground text-sm bg-white/[0.05]"
-                style={{
-                  width: '100%',
-                  height: 44,
-                  borderRadius: 10,
-                  border: '1.5px solid rgba(255,255,255,0.14)',
-                  paddingInline: 14,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  marginBottom: 10,
-                }}
+                placeholder="name@example.com"
+                className="h-11 w-full rounded-[12px] border border-[#CBD5E1] bg-white px-3 text-[13px] font-medium text-[#0A234F] outline-none focus:border-[#1D57D8]"
               />
-              {status === 'error' && (
-                <p className="text-xs text-danger" style={{ margin: '0 0 8px' }}>{errorMsg}</p>
-              )}
+              {status === 'error' ? (
+                <p className="mb-0 mt-2 text-[11px] font-semibold text-red-600">{errorMsg}</p>
+              ) : null}
               <button
-                onClick={handleSave}
-                disabled={status === 'saving'}
-                className="text-sm font-bold"
-                style={{
-                  height: 40,
-                  paddingInline: 20,
-                  borderRadius: 9999,
-                  border: 'none',
-                  cursor: 'pointer',
-                  opacity: status === 'saving' ? 0.6 : 1,
-                }}
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={status === 'saving' || !value.trim()}
+                className="mt-3 h-11 w-full rounded-[12px] border-0 bg-[#0A234F] text-[13px] font-extrabold text-white disabled:opacity-50"
               >
-                {status === 'saving' ? 'Saving…' : 'Update email'}
+                {status === 'saving' ? 'Updating…' : 'Update email'}
               </button>
             </>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
 
-// ── Change-password inline form ────────────────────────────────────────────────
-function PasswordSection() {
+function PasswordSection({ email }: { email: string }) {
   const [open, setOpen] = useState(false);
-  const [pw, setPw] = useState('');
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
   const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSave = async () => {
-    if (pw.length < 8) { setErrorMsg('Password must be at least 8 characters.'); setStatus('error'); return; }
-    if (pw !== confirm) { setErrorMsg('Passwords do not match.'); setStatus('error'); return; }
+    if (!current) { setErrorMsg('Enter your current password.'); setStatus('error'); return; }
+    if (next.length < 8) { setErrorMsg('New password must be at least 8 characters.'); setStatus('error'); return; }
+    if (next !== confirm) { setErrorMsg('New passwords do not match.'); setStatus('error'); return; }
     setStatus('saving');
-    const { error } = await supabase.auth.updateUser({ password: pw });
+    setErrorMsg('');
+
+    const { error: reauthError } = await supabase.auth.signInWithPassword({ email, password: current });
+    if (reauthError) {
+      setErrorMsg('Current password is incorrect.');
+      setStatus('error');
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: next });
     if (error) {
       setErrorMsg(error.message);
       setStatus('error');
-    } else {
-      setStatus('done');
-      setPw('');
-      setConfirm('');
+      return;
     }
+
+    setCurrent('');
+    setNext('');
+    setConfirm('');
+    setStatus('done');
   };
 
   return (
-    <div>
+    <div className="overflow-hidden rounded-[18px] border border-[#0A234F]/[0.08] bg-white shadow-[0_7px_20px_rgba(10,35,79,0.05)]">
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
-          paddingInline: 'var(--mob-side, 16px)',
-          paddingTop: 14,
-          paddingBottom: 14,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          gap: 12,
-          textAlign: 'left',
-        }}
+        className="flex w-full items-center gap-3 border-0 bg-transparent px-4 py-4 text-left"
       >
-        <Lock className="text-muted-foreground" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
-        <p className="text-[15px] font-medium text-foreground/90 m-0" style={{ flex: 1 }}>Password</p>
-        <ChevronRight className="text-foreground/30" style={{ width: 18, height: 18, flexShrink: 0, transform: open ? 'rotate(90deg)' : undefined, transition: 'transform 0.15s' }} aria-hidden="true" />
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#EEF3F8] text-[#0A234F]">
+          <KeyRound className="h-[18px] w-[18px]" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-extrabold text-[#0A234F]">Password</span>
+          <span className="mt-0.5 block text-[11px] font-medium text-[#7A8493]">Change your sign-in password securely</span>
+        </span>
+        <ChevronRight
+          className="h-[18px] w-[18px] shrink-0 text-[#A0A8B4] transition-transform"
+          style={{ transform: open ? 'rotate(90deg)' : undefined }}
+          aria-hidden="true"
+        />
       </button>
 
-      {open && (
-        <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingBottom: 16 }}>
+      {open ? (
+        <div className="border-t border-[#0A234F]/[0.07] bg-[#F9FBFD] px-4 py-4">
           {status === 'done' ? (
-            <p className="text-[13px] text-success m-0">Password updated successfully.</p>
+            <div className="rounded-[12px] border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-[12px] font-semibold text-emerald-700">
+              Password updated successfully.
+            </div>
           ) : (
             <>
-              <input
-                type="password"
-                value={pw}
-                onChange={(e) => setPw(e.target.value)}
-                placeholder="New password"
-                className="text-foreground text-sm bg-white/[0.05]"
-                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
-              />
-              <input
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                placeholder="Confirm new password"
-                className="text-foreground text-sm bg-white/[0.05]"
-                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
-              />
-              {status === 'error' && (
-                <p className="text-xs text-danger" style={{ margin: '0 0 8px' }}>{errorMsg}</p>
-              )}
+              <div className="space-y-2.5">
+                <input
+                  type="password"
+                  value={current}
+                  onChange={(e) => setCurrent(e.target.value)}
+                  placeholder="Current password"
+                  className="h-11 w-full rounded-[12px] border border-[#CBD5E1] bg-white px-3 text-[13px] font-medium text-[#0A234F] outline-none focus:border-[#1D57D8]"
+                />
+                <input
+                  type="password"
+                  value={next}
+                  onChange={(e) => setNext(e.target.value)}
+                  placeholder="New password"
+                  className="h-11 w-full rounded-[12px] border border-[#CBD5E1] bg-white px-3 text-[13px] font-medium text-[#0A234F] outline-none focus:border-[#1D57D8]"
+                />
+                <input
+                  type="password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="Confirm new password"
+                  className="h-11 w-full rounded-[12px] border border-[#CBD5E1] bg-white px-3 text-[13px] font-medium text-[#0A234F] outline-none focus:border-[#1D57D8]"
+                />
+              </div>
+              {status === 'error' ? (
+                <p className="mb-0 mt-2 text-[11px] font-semibold text-red-600">{errorMsg}</p>
+              ) : null}
               <button
-                onClick={handleSave}
+                type="button"
+                onClick={() => void handleSave()}
                 disabled={status === 'saving'}
-                className="text-sm font-bold"
-                style={{ height: 40, paddingInline: 20, borderRadius: 9999, border: 'none', cursor: 'pointer', opacity: status === 'saving' ? 0.6 : 1 }}
+                className="mt-3 h-11 w-full rounded-[12px] border-0 bg-[#0A234F] text-[13px] font-extrabold text-white disabled:opacity-50"
               >
-                {status === 'saving' ? 'Saving…' : 'Update password'}
+                {status === 'saving' ? 'Updating…' : 'Update password'}
               </button>
             </>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
 
-// ── Main page ──────────────────────────────────────────────────────────────────
 export default function MobileSecurityPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const email = user?.email ?? '';
-
-  const dividerStyle: React.CSSProperties = {
-    height: 1,
-    marginInlineStart: 'var(--mob-side, 16px)',
-  };
+  const roleLabel = user?.role === 'admin'
+    ? 'Administrator account'
+    : user?.role === 'seller'
+      ? 'Seller account'
+      : 'Buyer account';
 
   return (
     <div
-      className="md:hidden min-h-screen bg-background"
-      style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
-      }}
+      className="md:hidden min-h-screen bg-[#EEF3F8] text-[#0A234F]"
+      style={{ paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))' }}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingInline: 'var(--mob-side, 16px)', paddingTop: 16, paddingBottom: 12 }}>
-        <button
-          onClick={() => navigate('/profile')}
-          aria-label="Back"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
-        >
-          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
-        </button>
-        <h1 className="text-xl font-extrabold text-foreground m-0">Security</h1>
-      </div>
-
-      <div
-        className="bg-white/[0.04]"
-        style={{
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}
+      <header
+        className="sticky top-0 z-40 bg-[#0A234F] text-white shadow-[0_5px_22px_rgba(10,35,79,0.18)]"
+        style={{ paddingTop: 'calc(0.65rem + env(safe-area-inset-top, 0px))' }}
       >
-        {/* Email */}
-        <EmailSection currentEmail={email} />
+        <div className="flex items-center gap-3 px-[var(--mob-side,16px)] pb-4 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate('/profile')}
+            aria-label="Back to profile"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white"
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="m-0 text-[9px] font-black uppercase tracking-[0.16em] text-[#F5A300]">Loadify Market</p>
+            <h1 className="m-0 mt-0.5 text-[23px] font-black tracking-[-0.03em] text-white">Security</h1>
+            <p className="m-0 mt-0.5 text-[11px] font-medium text-white/65">Protect your account and sign-in details</p>
+          </div>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#0A234F]">
+            <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+          </div>
+        </div>
+      </header>
 
-        <div aria-hidden="true" className="bg-white/[0.05]" style={dividerStyle} />
+      <main className="px-[var(--mob-side,16px)] py-4">
+        <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_8px_24px_rgba(10,35,79,0.05)]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0A234F] text-white ring-2 ring-[#F5A300]/60 ring-offset-2 ring-offset-white">
+              <Lock className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="m-0 text-[15px] font-black text-[#0A234F]">{roleLabel}</p>
+              <p className="m-0 mt-1 truncate text-[11px] font-medium text-[#7A8493]">{email}</p>
+            </div>
+            {user?.isEmailVerified ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.06em] text-emerald-700">
+                <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                Verified
+              </span>
+            ) : null}
+          </div>
+          <p className="mb-0 mt-3 text-[11px] leading-relaxed text-[#667085]">
+            These settings belong to your personal Loadify account. Administrative tools remain separate from marketplace account security.
+          </p>
+        </section>
 
-        {/* Password */}
-        <PasswordSection />
-      </div>
+        <p className="mb-2 mt-5 px-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#7A8493]">Sign-in details</p>
+        <div className="space-y-3">
+          <EmailSection currentEmail={email} />
+          <PasswordSection email={email} />
+        </div>
+
+        <section className="mt-4 rounded-[18px] border border-[#0A234F]/[0.08] bg-white px-4 py-4 shadow-[0_7px_20px_rgba(10,35,79,0.05)]">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#EEF3F8] text-[#0A234F]">
+              <ShieldCheck className="h-[18px] w-[18px]" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="m-0 text-[13px] font-extrabold text-[#0A234F]">Account protection</p>
+              <p className="m-0 mt-1 text-[11px] leading-relaxed text-[#667085]">
+                Password changes require your current password. Email changes are completed only after confirmation through your inbox.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
 
       <MobileBottomNav />
     </div>
