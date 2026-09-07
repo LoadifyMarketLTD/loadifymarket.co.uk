@@ -1,4 +1,4 @@
-﻿-- Enforce one verified review per buyer and product.
+-- Enforce one verified review per buyer and product.
 -- The previous UNIQUE(orderId, userId) constraint incorrectly blocked reviews
 -- for a second product purchased in the same multi-item order, while allowing a
 -- repeat review of the same product through a different order.
