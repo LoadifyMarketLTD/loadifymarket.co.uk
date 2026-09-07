@@ -1,5 +1,5 @@
 /**
- * MobileBalancePage â€” /profile/balance
+ * MobileBalancePage ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â /profile/balance
  * Native marketplace balance and payout status.
  */
 
@@ -18,6 +18,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg';
 
 type ConnectStatus = 'active' | 'pending' | 'restricted' | null;
 
@@ -116,12 +117,13 @@ export default function MobileBalancePage() {
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="m-0 text-[9px] font-black uppercase tracking-[0.16em] text-[#F5A300]">Loadify Market</p>
-            <h1 className="m-0 mt-0.5 text-[23px] font-black tracking-[-0.03em] text-white">Balance</h1>
+            <img
+              src={officialLoadifyMarketLogo}
+              alt="Loadify Market"
+              className="h-[28px] w-auto max-w-[150px] object-contain object-left"
+            />
+            <h1 className="m-0 mt-1.5 text-[22px] font-black tracking-[-0.03em] text-white">Balance</h1>
             <p className="m-0 mt-0.5 text-[11px] font-medium text-white/65">Seller funds and payout access</p>
-          </div>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#0A234F]">
-            <Wallet className="h-5 w-5" aria-hidden="true" />
           </div>
         </div>
       </header>
@@ -182,7 +184,7 @@ export default function MobileBalancePage() {
                     <StatusIcon className="h-[18px] w-[18px]" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="m-0 text-[13px] font-extrabold text-[#0A234F]">{loading ? 'Checking payout statusâ€¦' : statusMeta.label}</p>
+                    <p className="m-0 text-[13px] font-extrabold text-[#0A234F]">{loading ? 'Checking payout statusÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦' : statusMeta.label}</p>
                     <p className="m-0 mt-1 text-[11px] leading-[1.5] text-[#7A8493]">{statusMeta.description}</p>
                   </div>
                 </div>
