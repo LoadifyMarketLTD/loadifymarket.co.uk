@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { authenticateActiveCapability } from './_shared/activeAccountAuth';
 
 /**
  * POST /.netlify/functions/recheck-activation
@@ -23,26 +23,11 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const auth = await authenticateActiveAccount(event, supabase, ['seller', 'admin']);
+  const auth = await authenticateActiveCapability(event, supabase, 'seller');
   if (!auth.ok) {
     return {
       statusCode: auth.status,
       body: JSON.stringify({ error: auth.status === 401 ? 'Authentication required' : 'Active seller account required' }),
-    };
-  }
-
-  if (auth.actor.role === 'admin') {
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        ok: true,
-        sellerStatus: 'active',
-        profileComplete: true,
-        stripeConnected: true,
-        chargesEnabled: true,
-        payoutsEnabled: true,
-        changed: false,
-      }),
     };
   }
 

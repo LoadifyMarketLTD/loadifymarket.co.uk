@@ -177,10 +177,12 @@ describe('release-hardening security contracts', () => {
       read('netlify/functions/create-checkout.ts'),
       read('netlify/functions/create-payment-intent.ts'),
     ]) {
-      expect(source).toContain("import { authenticateActiveAccount } from './_shared/activeAccountAuth'");
+      expect(source).toContain('authenticateActiveAccount');
+      expect(source).toContain('hasActiveAccountCapability');
       expect(source).toContain('const buyerAuth = await authenticateActiveAccount(event, supabase)');
-      expect(source).toContain('sellerAccount.role !== \'seller\'');
-      expect(source).toContain('sellerAccount.isActive !== true');
+      expect(source).toContain("sellerAccount.role !== 'admin'");
+      expect(source).toContain('sellerAccount.isActive === true');
+      expect(source).toContain("await hasActiveAccountCapability(supabase, checkoutSellerId, 'seller')");
       expect(source).toContain(".select('id, role, isActive')");
     }
   });

@@ -13,6 +13,31 @@ export type ActiveAccountAuthResult =
   | { ok: true; actor: ActiveAccountActor }
   | { ok: false; status: 401 | 403 };
 
+export type AccountCapability = 'buyer' | 'seller';
+
+/**
+ * Service-role capability lookup used only after a live public.users account has
+ * been established. Capability rows are server-governed and revocation-aware.
+ */
+export async function hasActiveAccountCapability(
+  admin: SupabaseClient,
+  userId: string,
+  capability: AccountCapability,
+): Promise<boolean> {
+  const { data, error } = await admin
+    .from('account_capabilities')
+    .select('capability, revoked_at')
+    .eq('user_id', userId)
+    .eq('capability', capability)
+    .maybeSingle<{ capability: string; revoked_at: string | null }>();
+
+  if (error) {
+    console.warn('activeAccountAuth: capability lookup failed closed:', error.message);
+    return false;
+  }
+  return data?.capability === capability && data.revoked_at == null;
+}
+
 /**
  * Canonical guard for user-authenticated server functions that operate with a
  * service-role Supabase client. A valid JWT is necessary but is never sufficient:
@@ -64,4 +89,41 @@ export async function authenticateActiveAccount(
       appMetadata: (authData.user.app_metadata as Record<string, unknown> | undefined) ?? {},
     },
   };
+}
+
+/**
+ * Canonical ordinary-commerce guard. Admin is deliberately excluded even if a
+ * stale capability row somehow exists: privileged platform authority must never
+ * impersonate Buyer/Seller commerce authority.
+ */
+export async function authenticateActiveCapability(
+  event: HandlerEvent,
+  admin: SupabaseClient,
+  capability: AccountCapability,
+): Promise<ActiveAccountAuthResult> {
+  const auth = await authenticateActiveAccount(event, admin);
+  if (!auth.ok) return auth;
+  if (auth.actor.role === 'admin') return { ok: false, status: 403 };
+  if (!(await hasActiveAccountCapability(admin, auth.actor.id, capability))) {
+    return { ok: false, status: 403 };
+  }
+  return auth;
+}
+
+/**
+ * Seller-commerce guard for server boundaries that also permit explicit Admin
+ * moderation/operations. Ordinary accounts must hold a live Seller capability;
+ * Admin is allowed only as Admin, never by pretending to be a Seller.
+ */
+export async function authenticateSellerCapabilityOrAdmin(
+  event: HandlerEvent,
+  admin: SupabaseClient,
+): Promise<ActiveAccountAuthResult> {
+  const auth = await authenticateActiveAccount(event, admin);
+  if (!auth.ok) return auth;
+  if (auth.actor.role === 'admin') return auth;
+  if (!(await hasActiveAccountCapability(admin, auth.actor.id, 'seller'))) {
+    return { ok: false, status: 403 };
+  }
+  return auth;
 }

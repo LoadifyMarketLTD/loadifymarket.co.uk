@@ -2,7 +2,7 @@
  * Shared seller auto-activation helper.
  *
  * A seller's account becomes ACTIVE only when ALL of the following are true:
- *   1. Their live public.users row has role = 'seller' and isActive = true
+ *   1. Their live public.users row is active and the Seller capability is active
  *   2. Profile is complete for the seller's legal/profile type:
  *      - individual: phone + address postcode (personal identity lives on public.users)
  *      - sole trader/company/legacy: business/store name + phone + postcode
@@ -19,6 +19,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { hasActiveAccountCapability } from './activeAccountAuth';
 
 export interface SellerProfileSnapshot {
   userId: string;
@@ -157,8 +158,9 @@ export interface ActivationResult {
  * Safe to call multiple times — only writes to the DB when the status changes.
  * Returns null if the seller profile cannot be found.
  *
- * public.users is the account-authorization source of truth. An absent,
- * non-seller, inactive, or unreadable live account fails closed and can never be
+ * public.users plus account_capabilities are the account-authorization source of
+ * truth. An absent, inactive, non-capable, Admin, or unreadable account fails
+ * closed and can never be
  * auto-promoted by a Stripe webhook or background/server-side activation path.
  *
  * @param liveStripeConnectStatus - When provided, this live value is used instead
@@ -199,7 +201,12 @@ export async function tryAutoActivateSeller(
     .eq('id', sellerId)
     .maybeSingle<{ role: string | null; isActive: boolean | null }>();
 
-  if (accountError || !account || account.role !== 'seller' || account.isActive !== true) {
+  const sellerCapability =
+    !accountError && account && account.isActive === true && account.role !== 'admin'
+      ? await hasActiveAccountCapability(supabase, sellerId, 'seller')
+      : false;
+
+  if (accountError || !account || account.role === 'admin' || account.isActive !== true || !sellerCapability) {
     if (accountError) {
       console.warn('tryAutoActivateSeller: live account lookup failed for', sellerId, accountError.message);
     }

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
-import { hasSellerAccess, hasAdminAccess, isActiveSellerAccess } from '../../lib/roleUtils';
+import { hasAdminAccess, hasSellerAccess, isActiveSellerAccess } from '../../lib/roleUtils';
 import { authorizedFetch } from '../../lib/authorizedFetch';
 import { supabase } from '../../lib/supabase';
 
@@ -60,8 +60,7 @@ function hasCanonicalOnboardingTruth(
  * Do not trust a hydrated onboardingCompleted=true by itself. Historical rows
  * may contain legacy completion flags created before Stage 3 canonical truth.
  *
- * Admin bypass is allowed only through hasAdminAccess(), which itself requires
- * DB-hydrated isAdmin=true.
+ * Admin authority never bypasses Seller capability or Seller lifecycle checks.
  *
  * Stage 3 exception: draft/submitted/active-but-incomplete Marketplace Sellers
  * may enter only the product create/edit route so they can prepare a catalogue
@@ -83,31 +82,25 @@ export default function RequireSeller({ children }: Props) {
 
   const [fetchState, setFetchState] = useState<FetchState>(() => {
     if (!user) return 'loading';
-    if (hasAdminAccess(user)) return 'active';
     if (isActiveSellerAccess(user)) return 'active';
     if (user.sellerStatus === 'suspended') return 'suspended';
     if (user.sellerStatus === 'submitted') return 'submitted';
     if (user.sellerStatus === 'draft') return 'draft';
     return 'loading';
   });
-  const [onboardingComplete, setOnboardingComplete] = useState<boolean>(
-    () => Boolean(user && hasAdminAccess(user)),
-  );
-  const [onboardingChecked, setOnboardingChecked] = useState<boolean>(
-    () => Boolean(user && hasAdminAccess(user)),
-  );
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean>(false);
+  const [onboardingChecked, setOnboardingChecked] = useState<boolean>(false);
 
   useEffect(() => {
     if (!user) return;
-    if (hasAdminAccess(user)) {
+    if (!hasSellerAccess(user)) {
       queueMicrotask(() => {
-        setFetchState('active');
-        setOnboardingComplete(true);
+        setFetchState('loading');
+        setOnboardingComplete(false);
         setOnboardingChecked(true);
       });
       return;
     }
-    if (!hasSellerAccess(user)) return;
 
     if (user.sellerStatus === 'suspended') {
       queueMicrotask(() => {
@@ -196,7 +189,7 @@ export default function RequireSeller({ children }: Props) {
 
   const loading = isLoading || (
     user?.isActive === true &&
-    user?.role === 'seller' &&
+    hasSellerAccess(user) &&
     (fetchState === 'loading' || !onboardingChecked)
   );
 
@@ -213,14 +206,23 @@ export default function RequireSeller({ children }: Props) {
     return <Navigate to="/login?error=account_inactive" replace />;
   }
 
-  if (!hasSellerAccess(user) && !hasAdminAccess(user)) {
+  if (!hasSellerAccess(user)) {
+    const isAdminOnly = hasAdminAccess(user);
     return (
       <CardShell>
-        <p className="text-5xl mb-4">🏪</p>
-        <h2 className="text-2xl font-bold text-white mb-2">Seller Account Required</h2>
-        <p className="text-slate-400 mb-6">You need a seller account to access this page.</p>
+        <p className="text-5xl mb-4">??</p>
+        <h2 className="text-2xl font-bold text-white mb-2">Seller Access Required</h2>
+        <p className="text-slate-400 mb-6">
+          {isAdminOnly
+            ? 'Admin authority does not impersonate a Marketplace Seller or a Stripe Connect account.'
+            : 'Enable selling on this Loadify account without creating another login or losing Buyer access.'}
+        </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/signup?type=seller" className="btn-primary">Create Seller Account</Link>
+          {isAdminOnly ? (
+            <Link to="/admin" className="btn-primary">Back to Admin Hub</Link>
+          ) : (
+            <Link to="/onboarding/role-selection" className="btn-primary">Enable Selling</Link>
+          )}
           <Link to="/dashboard" className="btn-secondary">Back to Dashboard</Link>
         </div>
       </CardShell>

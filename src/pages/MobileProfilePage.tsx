@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
+import { hasAdminAccess, hasBuyerAccess, hasSellerAccess } from '@/lib/roleUtils';
+import type { User as LoadifyUser } from '@/types';
 import { supabase } from '@/lib/supabase';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_BlackGold.svg';
@@ -39,18 +41,23 @@ interface Section {
   items: SectionItem[];
 }
 
-function buildSections(role: string | undefined): Section[] {
-  const canSell = role === 'seller' || role === 'admin';
+function buildSections(user: LoadifyUser | null | undefined): Section[] {
+  const canSell = hasSellerAccess(user);
+  const canBuy = hasBuyerAccess(user);
+  const isAdminOnly = hasAdminAccess(user);
 
   return [
     {
       title: 'Marketplace',
       items: [
         ...(canSell ? [{ label: 'Sell an item', to: '/sell', icon: Store }] : []),
+        ...(!canSell && !isAdminOnly ? [{ label: 'Start selling', to: '/onboarding/role-selection', icon: Store }] : []),
         { label: 'Favourite items', to: '/profile/favourites', icon: Heart },
-        { label: 'Purchases', to: '/orders?mode=buy', icon: Package },
-        { label: 'Sales', to: '/orders?mode=sell', icon: Store },
-        { label: 'Balance', to: '/profile/balance', icon: Wallet },
+        ...(canBuy ? [{ label: 'Purchases', to: '/orders?mode=buy', icon: Package }] : []),
+        ...(canSell ? [
+          { label: 'Sales', to: '/orders?mode=sell', icon: Store },
+          { label: 'Balance', to: '/profile/balance', icon: Wallet },
+        ] : []),
       ],
     },
     {
@@ -141,7 +148,7 @@ export default function MobileProfilePage() {
     ? `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || displayName?.[0]?.toUpperCase() || '?'
     : null;
 
-  const sections = buildSections(user?.role as string | undefined);
+  const sections = buildSections(user);
   const unreadNotifications = useUnreadNotificationsCount(user?.id);
 
   const handleSignOut = async () => {
@@ -181,10 +188,10 @@ export default function MobileProfilePage() {
                   <p className="truncate text-[17px] font-black leading-tight text-[#0A234F]">{displayName}</p>
                   <p className="mt-1 truncate text-[11px] font-medium text-[#7A8493]">{user.email}</p>
                   <Link
-                    to={user.role === 'seller' || user.role === 'admin' ? '/sell' : '/catalog'}
+                    to={hasSellerAccess(user) ? '/sell' : '/catalog'}
                     className="mt-2 inline-flex items-center gap-1 text-[11px] font-extrabold text-[#1D57D8] no-underline"
                   >
-                    {user.role === 'seller' || user.role === 'admin' ? 'Sell an item' : 'Browse marketplace'}
+                    {hasSellerAccess(user) ? 'Sell an item' : 'Browse marketplace'}
                     <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
                 </div>

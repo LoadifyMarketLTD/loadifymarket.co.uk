@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
+import { hasSellerAccess } from '@/lib/roleUtils';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg';
 
@@ -30,7 +31,7 @@ interface BalanceProfile {
 export default function MobileBalancePage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const isSeller = user?.role === 'seller' || user?.role === 'admin';
+  const isSeller = hasSellerAccess(user);
   const userId = user?.id;
 
   const [balance, setBalance] = useState<number | null>(null);

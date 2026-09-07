@@ -1,4 +1,5 @@
 export type UserRole = 'buyer' | 'seller' | 'admin';
+export type AccountCapability = 'buyer' | 'seller';
 
 // Marketplace roles for sellers/users
 export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;
@@ -25,6 +26,8 @@ export interface User {
    * Admin is a system-level flag — it cannot be assigned from the UI.
    */
   isAdmin?: boolean;
+  /** Active server-governed marketplace capabilities for this identity. */
+  capabilities?: AccountCapability[];
   marketplaceRole?: MarketplaceRole;
   firstName?: string;
   lastName?: string;

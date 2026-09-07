@@ -225,10 +225,29 @@ function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setLoading(true);
-        void Promise.resolve(supabase.from('users').select('*, seller_profiles(sellerStatus)').eq('id', session.user.id).maybeSingle()).then(({ data, error }) => {
+        void Promise.all([
+          Promise.resolve(supabase.from('users').select('*, seller_profiles(sellerStatus)').eq('id', session.user.id).maybeSingle()),
+          Promise.resolve(
+            supabase
+              .from('account_capabilities')
+              .select('capability')
+              .eq('user_id', session.user.id)
+              .is('revoked_at', null),
+          ),
+        ]).then(([profileResult, capabilityResult]) => {
+          const { data, error } = profileResult;
           if (data) {
             if (data.isActive === false) { supabase.auth.signOut(); setUser(null); return; }
             normalizeSellerStatus(data as unknown as Record<string, unknown>);
+            if (!capabilityResult.error) {
+              const capabilities = (capabilityResult.data ?? [])
+                .map((row) => (row as { capability?: unknown }).capability)
+                .filter((capability): capability is 'buyer' | 'seller' => capability === 'buyer' || capability === 'seller');
+              (data as Record<string, unknown>).capabilities = [...new Set(capabilities)];
+            } else {
+              (data as Record<string, unknown>).capabilities = [];
+              console.warn('[Auth] Capability projection lookup failed; protected capability access stays fail-closed:', capabilityResult.error.message);
+            }
             (data as Record<string, unknown>).isEmailVerified = session.user.email_confirmed_at != null;
             (data as Record<string, unknown>).isAdmin = (data as Record<string, unknown>).role === 'admin';
             setUser(data);

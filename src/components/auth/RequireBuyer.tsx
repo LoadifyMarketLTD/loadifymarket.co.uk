@@ -46,9 +46,9 @@ export default function RequireBuyer({ children }: Props) {
     return <Navigate to="/login?error=account_inactive" replace />;
   }
 
-  if (hasAdminAccess(user)) return <Navigate to="/admin" replace />;
-
   if (hasBuyerAccess(user)) return <>{children}</>;
+
+  if (hasAdminAccess(user)) return <Navigate to="/admin" replace />;
 
   return <Navigate to="/login" replace />;
 }
