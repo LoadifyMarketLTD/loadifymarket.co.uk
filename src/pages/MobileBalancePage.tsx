@@ -1,5 +1,5 @@
 /**
- * MobileBalancePage ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â /profile/balance
+ * MobileBalancePage - /profile/balance
  * Native marketplace balance and payout status.
  */
 
@@ -184,7 +184,7 @@ export default function MobileBalancePage() {
                     <StatusIcon className="h-[18px] w-[18px]" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="m-0 text-[13px] font-extrabold text-[#0A234F]">{loading ? 'Checking payout statusÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦' : statusMeta.label}</p>
+                    <p className="m-0 text-[13px] font-extrabold text-[#0A234F]">{loading ? 'Checking payout status...' : statusMeta.label}</p>
                     <p className="m-0 mt-1 text-[11px] leading-[1.5] text-[#7A8493]">{statusMeta.description}</p>
                   </div>
                 </div>

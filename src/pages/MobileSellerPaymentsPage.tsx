@@ -1,5 +1,5 @@
 /**
- * MobileSellerPaymentsPage ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â /seller/mobile-payments
+ * MobileSellerPaymentsPage - /seller/mobile-payments
  * Native Stripe Connect payout hub for marketplace sellers.
  */
 
@@ -164,7 +164,7 @@ export default function MobileSellerPaymentsPage() {
               <StatusIcon className="h-[18px] w-[18px]" aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="m-0 text-[13px] font-extrabold text-[#0A234F]">{loadingStatus ? 'Checking payout accountÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦' : statusMeta.label}</p>
+              <p className="m-0 text-[13px] font-extrabold text-[#0A234F]">{loadingStatus ? 'Checking payout account...' : statusMeta.label}</p>
               <p className="m-0 mt-1 text-[11px] leading-[1.5] text-[#7A8493]">{statusMeta.description}</p>
             </div>
           </div>
@@ -176,7 +176,7 @@ export default function MobileSellerPaymentsPage() {
             className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[13px] border-0 bg-[#0A234F] px-4 text-[12px] font-extrabold text-white shadow-[0_7px_18px_rgba(10,35,79,0.14)] disabled:cursor-default disabled:opacity-60"
           >
             {opening ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ExternalLink className="h-4 w-4" aria-hidden="true" />}
-            {opening ? 'Opening securelyÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦' : actionLabel}
+            {opening ? 'Opening securely...' : actionLabel}
           </button>
 
           {error ? (
