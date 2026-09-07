@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { getUserBlockRelationship } from './_shared/userBlocks';
 
 interface RequestBody {
   conversationId?: string;
@@ -165,6 +166,16 @@ export const handler: Handler = async (event) => {
   const expectedReceiverId = conv.user1Id === callerId ? conv.user2Id : conv.user1Id;
   if (receiverId !== expectedReceiverId || receiverId === callerId) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Receiver must be the other participant of this conversation' }) };
+  }
+
+  try {
+    const block = await getUserBlockRelationship(supabase, callerId, receiverId);
+    if (block.available && block.blocked) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'Messaging is unavailable between these accounts' }) };
+    }
+  } catch (error) {
+    console.error('send-message: block check failed:', error);
+    return { statusCode: 503, body: JSON.stringify({ error: 'Messaging safety check unavailable' }) };
   }
 
   const { data: inserted, error: insertError } = await supabase

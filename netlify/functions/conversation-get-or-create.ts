@@ -11,6 +11,7 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
+import { getUserBlockRelationship } from './_shared/userBlocks';
 
 interface RequestBody {
   productId?: string;
@@ -134,6 +135,16 @@ export const handler: Handler = async (event) => {
 
   if (requireActiveListing && product.isActive === false) {
     return { statusCode: 409, body: JSON.stringify({ error: 'This listing is no longer active' }) };
+  }
+
+  try {
+    const block = await getUserBlockRelationship(supabase, callerId, otherUserId);
+    if (block.available && block.blocked) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'Messaging is unavailable between these accounts' }) };
+    }
+  } catch (error) {
+    console.error('conversation-get-or-create: block check failed:', error);
+    return { statusCode: 503, body: JSON.stringify({ error: 'Messaging safety check unavailable' }) };
   }
 
   const { data: existing } = await supabase

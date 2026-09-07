@@ -887,6 +887,23 @@ const ProductDetail = () => {
             </div>
 
             <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8">
+              {!isOwnListing ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) {
+                      promptAuth();
+                      return;
+                    }
+                    setReportOpen(true);
+                  }}
+                  className="md:hidden flex min-h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-[#0A234F]/10 bg-white px-4 text-[12px] font-extrabold text-[#667085] shadow-[0_5px_18px_rgba(10,35,79,0.04)]"
+                >
+                  <Flag className="h-4 w-4" aria-hidden="true" />
+                  Report this listing
+                </button>
+              ) : null}
+
               {productDescription.trim().length > 0 && (
                 <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                   <div className="flex items-center justify-between">

@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Package,
   RotateCcw,
+  ShieldAlert,
   Truck,
   Upload,
 } from "lucide-react";
@@ -70,6 +71,17 @@ type ReturnRow = {
   createdAt: string;
 };
 
+type DisputeRow = {
+  id: string;
+  status: "open" | "in_review" | "resolved" | "closed";
+  subject: string;
+  description: string;
+  protectionReason: string | null;
+  resolution: string | null;
+  resolutionType: string | null;
+  createdAt: string;
+};
+
 type OrderItemRow = {
   id: string;
   quantity: number | null;
@@ -85,6 +97,7 @@ type OrderDetail = OrderRow & {
   shipment: ShipmentRow | null;
   events: ShipmentEventRow[];
   returnRequest: ReturnRow | null;
+  dispute: DisputeRow | null;
   orderItemId: string | null;
   orderItemQuantity: number;
 };
@@ -150,6 +163,22 @@ const RETURN_REASONS = [
   { value: "wrong_item", label: "Wrong item received" },
   { value: "other", label: "Other" },
 ] as const;
+
+const DISPUTE_REASONS = [
+  { value: "item_not_received", label: "Item not received" },
+  { value: "not_as_described", label: "Item not as described" },
+  { value: "item_damaged", label: "Item damaged" },
+  { value: "defective_product", label: "Defective product" },
+  { value: "seller_not_responding", label: "Seller not responding" },
+  { value: "other", label: "Other" },
+] as const;
+
+const DISPUTE_STATUS_LABELS: Record<DisputeRow["status"], string> = {
+  open: "Open",
+  in_review: "In review",
+  resolved: "Resolved",
+  closed: "Closed",
+};
 
 const COURIERS = ["Royal Mail", "Evri"] as const;
 const TERMINAL_FULFILMENT_ORDER_STATUSES = new Set(["cancelled", "refunded", "disputed", "delivered", "completed"]);
@@ -247,6 +276,11 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [disputeOpen, setDisputeOpen] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputeSubject, setDisputeSubject] = useState("");
+  const [disputeDescription, setDisputeDescription] = useState("");
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false);
   const [messageOpening, setMessageOpening] = useState(false);
   const [shipmentEditing, setShipmentEditing] = useState(false);
   const [shipmentCourier, setShipmentCourier] = useState("");
@@ -297,7 +331,10 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           events = (eventRows ?? []) as ShipmentEventRow[];
         }
 
-        const { data: returnRows } = await supabase.from("returns").select("id, status, reason, refundAmount, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1);
+        const [{ data: returnRows }, { data: disputeRows }] = await Promise.all([
+          supabase.from("returns").select("id, status, reason, refundAmount, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
+          supabase.from("disputes").select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
+        ]);
         const snapshotItem = raw.order_items?.find((item) => item.productSnapshotSource != null) ?? raw.order_items?.[0] ?? null;
         const shipment = (shipmentData as ShipmentRow | null) ?? null;
 
@@ -310,6 +347,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           sellerName: actualMode === "buy" ? counterpartName ?? "Seller" : null,
           buyerId: raw.buyerId, sellerId: raw.sellerId, shipment, events,
           returnRequest: ((returnRows ?? [])[0] as ReturnRow | undefined) ?? null,
+          dispute: ((disputeRows ?? [])[0] as DisputeRow | undefined) ?? null,
           orderItemId: snapshotItem?.id ?? null,
           orderItemQuantity: snapshotItem?.quantity ?? raw.quantity ?? 1,
         });
@@ -386,6 +424,60 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
       toast({ title: "Failed to submit return", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setReturnSubmitting(false);
+    }
+  };
+
+  const submitDispute = async () => {
+    if (!detail || !user?.id || mode !== "buy" || disputeSubmitting) return;
+    if (!detail.sellerId) {
+      toast({ title: "Cannot open dispute", description: "Seller information is unavailable. Please contact support.", variant: "destructive" });
+      return;
+    }
+    if (!disputeSubject.trim() || !disputeDescription.trim()) {
+      toast({ title: "Complete dispute details", description: "Add a subject and describe the issue before submitting.", variant: "destructive" });
+      return;
+    }
+
+    setDisputeSubmitting(true);
+    try {
+      const { data: existing } = await supabase
+        .from("disputes")
+        .select("id, status")
+        .eq("orderId", detail.id)
+        .in("status", ["open", "in_review", "resolved"])
+        .order("createdAt", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existing) {
+        toast({ title: "Dispute already exists", description: "This order already has a dispute record." });
+        setDisputeOpen(false);
+        return;
+      }
+
+      const { data: created, error: insertError } = await supabase
+        .from("disputes")
+        .insert({
+          orderId: detail.id,
+          buyerId: user.id,
+          sellerId: detail.sellerId,
+          subject: disputeSubject.trim(),
+          description: disputeDescription.trim(),
+          protectionReason: disputeReason || null,
+        })
+        .select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt")
+        .single();
+      if (insertError) throw insertError;
+
+      setDetail((current) => current ? { ...current, dispute: created as DisputeRow } : current);
+      setDisputeOpen(false);
+      setDisputeReason("");
+      setDisputeSubject("");
+      setDisputeDescription("");
+      toast({ title: "Dispute opened", description: "Your case has been submitted for review. No refund is executed by opening a dispute." });
+    } catch (err) {
+      toast({ title: "Failed to open dispute", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setDisputeSubmitting(false);
     }
   };
 
@@ -511,6 +603,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const cfg = statusCfg(detail.status);
   const counterpart = mode === "sell" ? detail.buyerName ?? "Customer" : detail.sellerName ?? "Seller";
   const returnCanStart = mode === "buy" && !detail.returnRequest && ["delivered", "completed"].includes(detail.status);
+  const disputeCanStart = mode === "buy" && !detail.dispute && ["paid", "packed", "shipped", "delivered", "completed"].includes(detail.status);
   const isSellerView = mode === "sell" && detail.sellerId === user?.id;
   const shipmentMutable = isSellerView && !TERMINAL_FULFILMENT_ORDER_STATUSES.has(detail.status);
   const nextStatuses = detail.shipment ? nextShipmentStatuses(detail.shipment.status) : [];
@@ -587,6 +680,59 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
             <div className="flex items-center gap-2"><RotateCcw className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Return this order</h2></div>
             {!returnOpen ? <button type="button" onClick={() => setReturnOpen(true)} className="mt-3 flex min-h-12 w-full items-center justify-center rounded-[14px] bg-[#0A234F] px-4 text-[12px] font-extrabold text-white">Request a return</button> : <div className="mt-3 space-y-3"><select value={returnReason} onChange={(event) => setReturnReason(event.target.value)} className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold text-[#26354A] outline-none"><option value="">Choose a reason</option>{RETURN_REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select><textarea value={returnDescription} onChange={(event) => setReturnDescription(event.target.value)} rows={4} maxLength={1000} placeholder="Tell us what happened" className="w-full resize-none rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] p-3 text-[12px] font-medium text-[#26354A] outline-none placeholder:text-[#98A2B3]" /><p className="text-[10px] leading-[1.45] text-[#667085]">Submitting a request does not execute a refund. Eligibility is checked first and manual review may be required.</p><div className="flex gap-2"><button type="button" disabled={returnSubmitting} onClick={() => setReturnOpen(false)} className="min-h-11 flex-1 rounded-[13px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#475569]">Cancel</button><button type="button" disabled={returnSubmitting} onClick={() => { void submitReturn(); }} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[13px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">{returnSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Submit return</button></div></div>}
+          </section>
+        ) : null}
+
+        {detail.dispute ? (
+          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#EEF3F8] text-[#0A234F]">
+                <ShieldAlert className="h-[18px] w-[18px]" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[13px] font-black text-[#0A234F]">Dispute</p>
+                  <span className="rounded-full bg-[#FFF4D6] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.05em] text-[#8A5A00]">
+                    {DISPUTE_STATUS_LABELS[detail.dispute.status]}
+                  </span>
+                </div>
+                <p className="mt-1 text-[12px] font-extrabold text-[#26354A]">{detail.dispute.subject}</p>
+                <p className="mt-1 whitespace-pre-wrap text-[10px] leading-[1.5] text-[#667085]">{detail.dispute.description}</p>
+                <p className="mt-2 text-[9px] font-semibold text-[#98A2B3]">Opened {formatDate(detail.dispute.createdAt)}</p>
+              </div>
+            </div>
+            {detail.dispute.resolution ? (
+              <div className="mt-3 rounded-[13px] border border-emerald-100 bg-emerald-50 px-3 py-3">
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700">Resolution</p>
+                <p className="mt-1 text-[11px] leading-[1.5] text-emerald-800">{detail.dispute.resolution}</p>
+                {detail.dispute.resolutionType ? <p className="mt-1 text-[9px] font-bold capitalize text-emerald-700">{detail.dispute.resolutionType.replace(/_/g, " ")}</p> : null}
+              </div>
+            ) : (
+              <p className="mt-3 rounded-[13px] bg-[#F7F9FC] px-3 py-2.5 text-[10px] leading-[1.5] text-[#667085]">The case is being tracked in Loadify. Any payment or refund action remains subject to the dispute review process.</p>
+            )}
+          </section>
+        ) : disputeCanStart ? (
+          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
+            <div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Problem with this order?</h2></div>
+            <p className="mt-1 text-[10px] leading-[1.5] text-[#667085]">Open a dispute when the issue needs formal review. This does not automatically issue a refund.</p>
+            {!disputeOpen ? (
+              <button type="button" onClick={() => setDisputeOpen(true)} className="mt-3 flex min-h-12 w-full items-center justify-center rounded-[14px] border border-[#0A234F]/10 bg-white px-4 text-[12px] font-extrabold text-[#0A234F]">Open a dispute</button>
+            ) : (
+              <div className="mt-3 space-y-3">
+                <select value={disputeReason} onChange={(event) => setDisputeReason(event.target.value)} className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold text-[#26354A] outline-none">
+                  <option value="">Choose a reason (optional)</option>
+                  {DISPUTE_REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}
+                </select>
+                <input value={disputeSubject} onChange={(event) => setDisputeSubject(event.target.value)} maxLength={200} placeholder="Short subject" className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold text-[#26354A] outline-none placeholder:text-[#98A2B3]" />
+                <textarea value={disputeDescription} onChange={(event) => setDisputeDescription(event.target.value)} rows={4} maxLength={4000} placeholder="Describe the problem clearly" className="w-full resize-none rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] p-3 text-[12px] font-medium text-[#26354A] outline-none placeholder:text-[#98A2B3]" />
+                <div className="flex gap-2">
+                  <button type="button" disabled={disputeSubmitting} onClick={() => setDisputeOpen(false)} className="min-h-11 flex-1 rounded-[13px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#475569]">Cancel</button>
+                  <button type="button" disabled={disputeSubmitting || !disputeSubject.trim() || !disputeDescription.trim()} onClick={() => { void submitDispute(); }} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[13px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-50">
+                    {disputeSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Submit dispute
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         ) : null}
 
