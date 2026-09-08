@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import SafetyReportDialog from "@/components/safety/SafetyReportDialog";
 import officialLoadifyMarketLogo from "../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -609,6 +610,16 @@ export default function MobileChatPage() {
             >
               {blockUpdating ? "Updating..." : blockedByMe ? `Unblock ${otherName}` : `Block ${otherName}`}
             </button>
+            {otherId ? (
+              <SafetyReportDialog
+                targetType="user"
+                targetId={otherId}
+                context="message"
+                contextId={conversationId}
+                triggerLabel={`Report ${otherName}`}
+                className="mt-2 min-h-11 w-full rounded-[13px] border border-[#A53A2A]/15 bg-[#FFF7F5] text-[11px] font-extrabold text-[#A53A2A]"
+              />
+            ) : null}
             <button type="button" onClick={() => setSafetyOpen(false)} className="mt-2 min-h-11 w-full rounded-[13px] border-0 bg-[#F3F6FA] text-[11px] font-extrabold text-[#667085]">Cancel</button>
           </section>
         </div>

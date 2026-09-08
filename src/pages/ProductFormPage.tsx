@@ -195,10 +195,14 @@ export default function ProductFormPage() {
       if (data) {
         setLoadedIsActive(Boolean(data.isActive));
 
-        // Restore listing context from the saved product.
-        // Production physical listings use listingContext='product'.
-        // Any non-service legacy value is treated as physical product.
-        setListingContext(data.listingContext === 'service' ? 'service' : 'product');
+        // Google Play v1 is physical-goods-only. Legacy service rows cannot be edited
+        // through this seller surface; the server boundary rejects them as well.
+        if (data.listingContext === 'service') {
+          toast({ title: 'Service listings are unavailable', description: 'Loadify Market currently supports physical product listings only.', variant: 'destructive' });
+          navigate('/seller/products');
+          return;
+        }
+        setListingContext('product');
         const specs = data.specifications || {};
         setFormData({
           title: data.title || '',
@@ -779,36 +783,13 @@ export default function ProductFormPage() {
             {!id && (
               <div className="bg-surface border border-white/10 rounded-xl p-6 mb-6">
                 <h2 className="text-lg font-semibold text-white mb-1">Listing Type</h2>
-                <p className="text-sm text-slate-400 mb-4">Choose whether you are listing a service or a physical product.</p>
-                <div className="flex gap-4">
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
-                    <input
-                      type="radio"
-                      name="listingContext"
-                      value="service"
-                      checked={listingContext === 'service'}
-                      onChange={() => setListingContext('service')}
-                      className="mt-0.5 accent-[#D4AF37]"
-                    />
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">Service</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
-                    </div>
-                  </label>
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'product' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
-                    <input
-                      type="radio"
-                      name="listingContext"
-                      value="product"
-                      checked={listingContext === 'product'}
-                      onChange={() => setListingContext('product')}
-                      className="mt-0.5 accent-[#D4AF37]"
-                    />
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">Physical Product</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Tangible goods — requires stock quantity and shipping setup.</p>
-                    </div>
-                  </label>
+                <p className="text-sm text-slate-400 mb-4">Loadify Market currently supports physical goods only.</p>
+                <div className="flex items-start gap-3 rounded-xl border-2 border-primary bg-primary/10 p-4">
+                  <input type="radio" name="listingContext" value="product" checked readOnly className="mt-0.5 accent-[#D4AF37]" />
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">Physical Product</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Tangible goods with stock quantity and shipping setup.</p>
+                  </div>
                 </div>
               </div>
             )}

@@ -15,6 +15,7 @@ import BreadcrumbNav from '../components/BreadcrumbNav';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '../store';
 import SEO from '@/components/SEO';
+import SafetyReportDialog from '@/components/safety/SafetyReportDialog';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -340,6 +341,14 @@ export default function SellerPublicProfilePage() {
                       <ArrowRight className="w-4 h-4" />
                       Browse All Listings
                     </Link>
+                    <SafetyReportDialog
+                      targetType="user"
+                      targetId={seller.userId}
+                      context="seller_profile"
+                      contextId={seller.userId}
+                      triggerLabel="Report seller"
+                      className="btn-glass h-auto inline-flex items-center gap-2 text-sm"
+                    />
                   </>
                 )}
               </div>

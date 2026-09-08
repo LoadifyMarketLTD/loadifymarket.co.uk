@@ -146,17 +146,20 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: '"title" and a positive "price" are required' }) };
   }
 
+  if (listingContext === 'service') {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Loadify Market currently supports physical goods only.', code: 'PHYSICAL_GOODS_ONLY' }),
+    };
+  }
+
   const normalizedListingContext =
-    listingContext === 'service'
-      ? 'service'
-      : listingContext === 'product' || listingContext === 'goods' || listingContext == null
-        ? 'product'
-        : null;
+    listingContext === 'product' || listingContext === 'goods' || listingContext == null ? 'product' : null;
 
   if (!normalizedListingContext) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Invalid listingContext. Allowed values: product, service.' }),
+      body: JSON.stringify({ error: 'Invalid listingContext. Allowed value: product.' }),
     };
   }
 
