@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
+import SafetyReportDialog from "@/components/safety/SafetyReportDialog";
 
 interface DBReview {
   id: string;
@@ -18,6 +19,7 @@ interface DBReview {
   helpfulCount: number;
   helpfulVoters: string[];
   createdAt: string;
+  userId: string;
   users: { firstName: string | null; lastName: string | null } | null;
 }
 
@@ -99,7 +101,7 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
         .from("reviews")
         .select(`
           id, rating, title, comment, isVerifiedPurchase,
-          helpfulCount, helpfulVoters, createdAt,
+          helpfulCount, helpfulVoters, createdAt, userId,
           users(firstName, lastName)
         `)
         .eq("productId", productId)
@@ -427,19 +429,39 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
                 {review.comment && (
                   <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
                 )}
-                <button
-                  type="button"
-                  onClick={() => handleHelpful(review)}
-                  disabled={alreadyVoted || helpfulVoting.has(review.id)}
-                  className={`flex items-center gap-1.5 text-xs transition-colors ${
-                    alreadyVoted
-                      ? "text-primary cursor-default"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <ThumbsUp className="h-3.5 w-3.5" />
-                  Helpful ({review.helpfulCount})
-                </button>
+                <div className="flex flex-wrap items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleHelpful(review)}
+                    disabled={alreadyVoted || helpfulVoting.has(review.id)}
+                    className={`flex items-center gap-1.5 px-2 py-1 text-xs transition-colors ${
+                      alreadyVoted
+                        ? "text-primary cursor-default"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <ThumbsUp className="h-3.5 w-3.5" />
+                    Helpful ({review.helpfulCount})
+                  </button>
+                  {user?.id !== review.userId && (
+                    <>
+                      <SafetyReportDialog
+                        targetType="review"
+                        targetId={review.id}
+                        triggerLabel="Report review"
+                        className="h-auto px-2 py-1 text-xs text-muted-foreground"
+                      />
+                      <SafetyReportDialog
+                        targetType="user"
+                        targetId={review.userId}
+                        context="review"
+                        contextId={review.id}
+                        triggerLabel="Report user"
+                        className="h-auto px-2 py-1 text-xs text-muted-foreground"
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}

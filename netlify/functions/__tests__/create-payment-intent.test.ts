@@ -35,7 +35,7 @@ const productRow = {
   listingStatus: 'active',
 };
 
-describe('create-payment-intent – shipping tamper protection', () => {
+describe('create-payment-intent â€“ shipping tamper protection', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -229,14 +229,19 @@ describe('create-payment-intent – shipping tamper protection', () => {
     vi.doMock('../_shared/rateLimiter', () => ({
       checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
     }));
+    const shippingMethodId = '11111111-1111-1111-1111-111111111111';
     mockCommonSupabase({
-      productRows: [{ ...productRow, listingContext: 'service' }],
+      productRows: [{ ...productRow, listingContext: 'product' }],
+      productShippingRows: [{
+        product_id: 'p1',
+        shipping_methods: { id: shippingMethodId, active: true, name: 'Standard', shipping_rates: [{ price: 4.99 }] },
+      }],
       sellerAccount: { id: 'seller-1', role: 'seller', isActive: false },
     });
 
     const { handler } = await import('../create-payment-intent');
     const res = await handler(
-      makeEvent(baseBody, 'POST', { authorization: 'Bearer valid-token' }),
+      makeEvent({ ...baseBody, shippingMethodId }, 'POST', { authorization: 'Bearer valid-token' }),
       {} as never,
     );
 

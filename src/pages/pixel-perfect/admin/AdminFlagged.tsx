@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import SafetyReportQueue from "@/components/admin/SafetyReportQueue";
 
 interface FlaggedItem {
   id: string;
@@ -301,6 +302,8 @@ const AdminFlagged = () => {
           </TabsContent>
         ))}
       </Tabs>
+
+      <SafetyReportQueue />
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         {selected && (

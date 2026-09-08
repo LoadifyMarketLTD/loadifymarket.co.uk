@@ -166,7 +166,10 @@ export const handler: Handler = async (event) => {
     hasOwn(updateData, 'listingContext') ? updateData.listingContext : existingProduct.listingContext ?? 'product',
   );
   if (!nextContext) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'listingContext must be either "product" or "service"' }) };
+    return { statusCode: 400, body: JSON.stringify({ error: 'listingContext must be "product"' }) };
+  }
+  if (nextContext === 'service') {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Loadify Market currently supports physical goods only.', code: 'PHYSICAL_GOODS_ONLY' }) };
   }
   if (hasOwn(updateData, 'listingContext')) updateData.listingContext = nextContext;
 

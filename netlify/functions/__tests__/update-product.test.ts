@@ -243,7 +243,7 @@ describe('update-product', () => {
     });
   });
 
-  it('normalizes service listings to zero stock and in_stock status', async () => {
+  it('rejects service listings because Play v1 is physical-goods-only', async () => {
     const { productUpdates } = mockSupabase({
       productRow: {
         listingContext: 'goods',
@@ -254,23 +254,13 @@ describe('update-product', () => {
     const { handler } = await import('../update-product');
 
     const res = await handler(
-      makeEvent({
-        id: 'product-1',
-        listingContext: 'service',
-        stockQuantity: 99,
-        stockStatus: 'out_of_stock',
-      }),
+      makeEvent({ id: 'product-1', listingContext: 'service', stockQuantity: 99 }),
       {} as never,
     );
 
-    expect(res.statusCode).toBe(200);
-    expect(productUpdates[0]).toMatchObject({
-      listingContext: 'service',
-      stockQuantity: 0,
-      stockStatus: 'in_stock',
-      vatRate: null,
-      taxTreatmentStatus: null,
-    });
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body as string)).toMatchObject({ code: 'PHYSICAL_GOODS_ONLY' });
+    expect(productUpdates).toHaveLength(0);
   });
 
   it('rejects invalid goods stock quantities', async () => {

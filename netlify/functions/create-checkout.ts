@@ -193,6 +193,12 @@ export const handler: Handler = async (event) => {
     if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
       return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" has an invalid price.` }) };
     }
+    if (dbProduct.listingContext === 'service') {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Only physical goods can be purchased through Loadify Market.', code: 'PHYSICAL_GOODS_ONLY' }),
+      };
+    }
     if (dbProduct.listingContext !== 'service') {
       if (typeof dbProduct.stockQuantity !== 'number' || dbProduct.stockQuantity <= 0) {
         return { statusCode: 400, body: JSON.stringify({ error: `Item "${dbProduct.title}" is out of stock` }) };
