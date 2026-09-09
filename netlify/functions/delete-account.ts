@@ -111,6 +111,27 @@ export const handler: Handler = async (event) => {
   const anonEmail = `deleted_${shortId}@removed.invalid`;
   const emailHash = `sha256:${createHash('sha256').update(targetUser.email.trim().toLowerCase()).digest('hex')}`;
 
+
+  const removeSellerProductMedia = async (): Promise<Error | null> => {
+    const bucket = supabase.storage.from('product-images');
+    const prefix = `sellers/${targetUserId}`;
+
+    for (let page = 0; page < 100; page += 1) {
+      const { data: entries, error: listError } = await bucket.list(prefix, { limit: 1000 });
+      if (listError) return listError;
+
+      const paths = (entries ?? [])
+        .filter((entry) => Boolean(entry.id))
+        .map((entry) => `${prefix}/${entry.name}`);
+      if (paths.length === 0) return null;
+
+      const { error: removeError } = await bucket.remove(paths);
+      if (removeError) return removeError;
+      if (paths.length < 1000) return null;
+    }
+    return new Error('Product-media cleanup exceeded the safety page limit');
+  };
+
   // Every operation in this set is core anonymisation. The Auth identity is
   // removed only after all of them succeed, so a partial failure can be retried.
   const coreOperations = [
@@ -157,6 +178,10 @@ export const handler: Handler = async (event) => {
         addressLine2: null,
         city: null,
         postcode: null,
+        taxCountry: null,
+        taxPostcode: null,
+        taxCountrySource: null,
+        taxCountryCapturedAt: null,
         isApproved: false,
         isVerified: false,
         isPaused: true,
@@ -165,9 +190,38 @@ export const handler: Handler = async (event) => {
       })
       .eq('userId', targetUserId),
 
+    await supabase.from('account_capabilities').delete().eq('user_id', targetUserId),
+    await supabase.from('carts').delete().eq('userId', targetUserId),
+    await supabase.from('recently_viewed').delete().eq('userId', targetUserId),
+    await supabase.from('wishlists').delete().eq('userId', targetUserId),
+    await supabase.from('saved_searches').delete().eq('userId', targetUserId),
+    await supabase.from('notifications').delete().eq('userId', targetUserId),
+    await supabase.from('notification_settings').delete().eq('userId', targetUserId),
+    await supabase.from('reviews').delete().eq('userId', targetUserId),
+    await supabase.from('product_questions').delete().eq('userId', targetUserId),
+    await supabase
+      .from('product_questions')
+      .update({ answer: null, answerUserId: null, answerUserName: null, isAnswered: false, answeredAt: null })
+      .eq('answerUserId', targetUserId),
+    await supabase
+      .from('product_offers')
+      .delete()
+      .or(`buyerId.eq.${targetUserId},sellerId.eq.${targetUserId}`),
+    await supabase
+      .from('conversations')
+      .delete()
+      .or(`user1Id.eq.${targetUserId},user2Id.eq.${targetUserId}`)
+      .is('orderId', null),
+    await supabase
+      .from('user_blocks')
+      .delete()
+      .or(`blockerId.eq.${targetUserId},blockedId.eq.${targetUserId}`),
+    await supabase.from('push_tokens').delete().eq('userId', targetUserId),
+    await supabase.from('payment_sessions').update({ userId: null }).eq('userId', targetUserId),
+
     await supabase
       .from('products')
-      .update({ isActive: false })
+      .update({ isActive: false, images: [] })
       .eq('sellerId', targetUserId),
 
     await supabase
@@ -196,8 +250,15 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const { error: tokenDeleteError } = await supabase.from('push_tokens').delete().eq('userId', targetUserId);
-  if (tokenDeleteError) console.warn('delete-account: push token cleanup failed:', tokenDeleteError.message);
+  const productMediaError = await removeSellerProductMedia();
+  if (productMediaError) {
+    console.error('delete-account: product media cleanup failed:', productMediaError.message);
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Account data was anonymised, but uploaded product media could not be removed. Please try again.' }),
+    };
+  }
 
   const { error: auditError } = await supabase
     .from('user_deletion_log')
@@ -232,7 +293,7 @@ export const handler: Handler = async (event) => {
     headers: corsHeaders,
     body: JSON.stringify({
       success: true,
-      message: 'Account deleted. Profile, contact and storefront data was removed; transaction records required for accounting, fraud prevention, disputes and payment reconciliation are retained.',
+      message: 'Account deleted. Profile, contact, non-retained marketplace activity and uploaded product media were removed or anonymised; transaction-linked records required for accounting, fraud prevention, disputes and payment reconciliation are retained.',
     }),
   };
 };

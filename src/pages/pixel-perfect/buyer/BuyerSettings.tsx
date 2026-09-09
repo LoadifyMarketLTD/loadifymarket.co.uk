@@ -198,20 +198,21 @@ const BuyerSettings = () => {
     }
     setDeletingAccount(true);
     try {
-      const response = await authorizedFetch("/.netlify/functions/deactivate-account", {
-        method: "POST",
+      const response = await authorizedFetch("/.netlify/functions/delete-account", {
+        method: "DELETE",
       });
-      let payload: { error?: string; deactivated?: boolean } = {};
+      let payload: { error?: string; success?: boolean } = {};
       try { payload = await response.json(); } catch { /* non-JSON response */ }
 
-      // Once the server has committed deactivation, clear the local session even
-      // if a secondary cleanup step reported that support intervention is needed.
-      if (!response.ok && payload.deactivated !== true) {
-        throw new Error(payload.error || "Unable to deactivate your account.");
+      if (!response.ok || payload.success !== true) {
+        throw new Error(payload.error || "Unable to delete your account.");
       }
 
       await supabase.auth.signOut();
-      toast({ title: "Account deactivated", description: "Your account has been deactivated. Contact support to restore it." });
+      toast({
+        title: "Account deleted",
+        description: "Your Loadify account has been deleted. Limited transaction records may be retained where legally required.",
+      });
     } catch (err) {
       toast({ title: "Deletion failed", description: err instanceof Error ? err.message : "Unable to delete your account. Please contact support.", variant: "destructive" });
     } finally {
@@ -376,9 +377,9 @@ const BuyerSettings = () => {
           <Separator />
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-medium text-foreground">Deactivate Account</p>
+              <p className="text-sm font-medium text-foreground">Delete Account</p>
               <p className="text-xs text-muted-foreground">
-                This will deactivate your account and sign you out immediately. Your access will be removed, but your data is retained according to our data retention policy. To request permanent deletion or restore your account, contact support. Type <strong>DELETE</strong> to confirm.
+                This permanently deletes your Loadify account. Profile, contact and storefront data is removed or anonymised; limited transaction records required for accounting, fraud prevention, disputes and payment reconciliation may be retained. This cannot be undone. Type <strong>DELETE</strong> to confirm.
               </p>
             </div>
             <div className="flex gap-2">
