@@ -74,15 +74,19 @@ export default function DeleteAccount() {
             <ul>
               <li>remove the authentication account;</li>
               <li>remove or anonymise profile, contact and storefront information;</li>
-              <li>deactivate seller product listings associated with the deleted account;</li>
+              <li>remove wishlist, saved-search, notification and other non-retained account activity;</li>
+              <li>remove reviews and non-transaction marketplace conversations;</li>
+              <li>deactivate seller product listings and remove uploaded product media associated with the deleted account;</li>
               <li>remove push-notification tokens associated with the account.</li>
             </ul>
 
             <h2>Data we may retain</h2>
             <p>
-              Some transaction and audit records may be retained where necessary for accounting,
-              fraud prevention, disputes, payment reconciliation or other legal and regulatory
-              obligations. Where required, these records may be retained for up to six years.
+              Some order, payment, delivery, return/dispute, transaction-linked listing or
+              communication, moderation, fraud-prevention and audit records may be retained where
+              necessary for accounting, security, disputes, payment reconciliation or other legal
+              and regulatory obligations. Where required, these records may be retained for up to
+              six years and linked only to an anonymised account record where necessary.
             </p>
             <p>
               Loadify Market does not store your payment card details. Payment card processing is
