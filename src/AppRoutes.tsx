@@ -52,6 +52,7 @@ const PPContactUs = lazy(() => import('./pages/pixel-perfect/ContactUs'));
 const PPDeals = lazy(() => import('./pages/pixel-perfect/Deals'));
 const PPTerms = lazy(() => import('./pages/pixel-perfect/TermsAndConditions'));
 const PPPrivacy = lazy(() => import('./pages/pixel-perfect/PrivacyPolicy'));
+const PPDeleteAccount = lazy(() => import('./pages/pixel-perfect/DeleteAccount'));
 const PPCookies = lazy(() => import('./pages/pixel-perfect/CookiePolicy'));
 const PPReturnsPolicy = lazy(() => import('./pages/pixel-perfect/ReturnsPolicy'));
 const PPShippingPolicy = lazy(() => import('./pages/pixel-perfect/ShippingPolicy'));
@@ -183,6 +184,7 @@ export default function AppRoutes() {
           <Route path="clearance" element={<Navigate to="/deals" replace />} />
           <Route path="terms" element={publicPage(<PPTerms />)} />
           <Route path="privacy" element={publicPage(<PPPrivacy />)} />
+          <Route path="delete-account" element={publicPage(<PPDeleteAccount />)} />
           <Route path="cookies" element={publicPage(<PPCookies />)} />
           <Route path="returns-policy" element={publicPage(<PPReturnsPolicy />)} />
           <Route path="returns" element={publicPage(<PPReturnsPolicy />)} />
