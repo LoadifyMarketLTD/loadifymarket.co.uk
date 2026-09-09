@@ -178,6 +178,10 @@ export const handler: Handler = async (event) => {
         addressLine2: null,
         city: null,
         postcode: null,
+        taxCountry: null,
+        taxPostcode: null,
+        taxCountrySource: null,
+        taxCountryCapturedAt: null,
         isApproved: false,
         isVerified: false,
         isPaused: true,
@@ -186,7 +190,9 @@ export const handler: Handler = async (event) => {
       })
       .eq('userId', targetUserId),
 
+    await supabase.from('account_capabilities').delete().eq('user_id', targetUserId),
     await supabase.from('carts').delete().eq('userId', targetUserId),
+    await supabase.from('recently_viewed').delete().eq('userId', targetUserId),
     await supabase.from('wishlists').delete().eq('userId', targetUserId),
     await supabase.from('saved_searches').delete().eq('userId', targetUserId),
     await supabase.from('notifications').delete().eq('userId', targetUserId),

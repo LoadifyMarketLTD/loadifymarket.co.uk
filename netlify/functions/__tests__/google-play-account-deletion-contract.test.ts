@@ -35,11 +35,12 @@ describe("Google Play account deletion compliance contract", () => {
   });
 
   it("removes non-retained account data before deleting authentication", () => {
-    for (const table of ["carts", "wishlists", "saved_searches", "notifications", "notification_settings", "reviews", "product_questions", "product_offers", "conversations", "user_blocks", "push_tokens"]) {
+    for (const table of ["account_capabilities", "carts", "recently_viewed", "wishlists", "saved_searches", "notifications", "notification_settings", "reviews", "product_questions", "product_offers", "conversations", "user_blocks", "push_tokens"]) {
       expect(deleteAccount).toContain(`from('${table}')`);
     }
     expect(deleteAccount).toContain("removeSellerProductMedia");
     expect(deleteAccount).toContain("images: []");
+    expect(deleteAccount).toContain("taxPostcode: null");
     expect(deleteAccount).toContain("auth.admin.deleteUser(targetUserId)");
     expect(deleteAccountPage).toContain("remove reviews and non-transaction marketplace conversations");
   });
