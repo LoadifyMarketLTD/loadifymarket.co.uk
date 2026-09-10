@@ -160,6 +160,10 @@ describe('Stage 7 cross-platform auth/security contract', () => {
       '"package_name": "co.uk.loadifymarket.app"',
     );
 
+    expect(assetLinks).toContain(
+      'C6:E5:40:B4:B9:9D:B2:52:0E:37:1F:64:CE:C0:3A:5A:B2:48:AB:9F:B8:C8:C0:F4:92:B2:17:39:4C:B3:94:0D',
+    );
+
     expect(capacitor).toContain(
       "appId: 'co.uk.loadifymarket.app'",
     );
