@@ -1,404 +1,187 @@
-# Shipping & Tracking Feature Documentation
+# Loadify Market — Shipping & Tracking
 
-## Overview
+**Status:** current architectural/operational guide  
+**Reconciled:** 2026-09-10  
+**Authority:** current handlers, migrations, UI and production evidence win if volatile implementation details drift.
 
-This document describes the DHL-like shipping and tracking feature implementation for Loadify Market. The feature provides comprehensive shipment management for sellers, tracking capabilities for buyers, and administrative oversight.
+---
 
-## Database Changes
+## 1. Scope
 
-### New Tables
-
-#### `shipments`
-Stores shipment information for orders.
+Loadify shipping/tracking connects the customer order to seller or authorised fulfilment activity while preserving one canonical customer-facing order truth.
 
-**Columns:**
-- `id` (UUID, PRIMARY KEY) - Unique shipment identifier
-- `order_id` (UUID, NOT NULL) - References orders table
-- `seller_id` (UUID, NOT NULL) - References users table
-- `buyer_id` (UUID, NOT NULL) - References users table
-- `courier_name` (TEXT) - Name of courier service (e.g., DHL, Royal Mail, DPD)
-- `tracking_number` (TEXT) - AWB/tracking number
-- `status` (TEXT, NOT NULL) - Current shipment status (default: 'Pending')
-  - Valid values: 'Pending', 'Processing', 'Dispatched', 'In Transit', 'Out for Delivery', 'Delivered', 'Returned', 'Delivery Failed'
-- `proof_of_delivery_url` (TEXT) - URL to proof of delivery image
-- `created_at` (TIMESTAMP WITH TIME ZONE) - Creation timestamp
-- `updated_at` (TIMESTAMP WITH TIME ZONE) - Last update timestamp
-
-**Indexes:**
-- `idx_shipments_order_id` on `order_id`
-- `idx_shipments_seller_id` on `seller_id`
-- `idx_shipments_buyer_id` on `buyer_id`
-
-#### `shipment_events`
-Stores the history of status changes and events for shipments.
-
-**Columns:**
-- `id` (UUID, PRIMARY KEY) - Unique event identifier
-- `shipment_id` (UUID, NOT NULL) - References shipments table
-- `status` (TEXT, NOT NULL) - Status at this event
-- `message` (TEXT) - Optional message/note about the event
-- `changed_by` (UUID) - References users table (who made the change)
-- `created_at` (TIMESTAMP WITH TIME ZONE) - Event timestamp
-
-**Indexes:**
-- `idx_shipment_events_shipment_id` on `shipment_id`
-
-### Modified Tables
-
-#### `orders`
-Added shipping-related columns:
-- `shipping_method` (TEXT) - Selected shipping method (e.g., 'Standard', 'Express', 'Pallet')
-- `shipping_cost` (DECIMAL(10,2)) - Cost of shipping (default: 0)
-
-### Data Migration
-
-Existing orders with `trackingNumber` or `proofOfDelivery` are automatically migrated to the new shipments table:
-- Creates shipment records with appropriate status mapping
-- Inserts initial shipment_event with message 'Migrated from orders table'
-- Original columns preserved for backward compatibility
-
-### Row Level Security (RLS)
-
-RLS policies are included in the migration file as SQL comments. When enabled:
-- **Buyers**: Can view shipments for their orders
-- **Sellers**: Can view, insert, and update their shipments
-- **Admins**: Full access to all shipments and events
-
-## API Endpoints
-
-All endpoints are implemented as Netlify serverless functions.
-
-### POST `/.netlify/functions/create-shipment`
-
-Creates or updates a shipment for an order.
-
-**Authentication:** Required (seller or admin)
-
-**Request Body:**
-```json
-{
-  "order_id": "uuid",
-  "courier_name": "DHL",
-  "tracking_number": "ABC123456789",
-  "shipping_method": "Express",
-  "shipping_cost": 12.00
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "shipment": { ... },
-  "message": "Shipment created"
-}
-```
-
-### PUT `/.netlify/functions/update-shipment-status/:shipmentId/status`
-
-Updates the status of a shipment and creates a status event.
-
-**Authentication:** Required (seller or admin)
-
-**Request Body:**
-```json
-{
-  "status": "Dispatched",
-  "message": "Package handed over to courier"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "shipment": { ... },
-  "message": "Status updated successfully"
-}
-```
-
-**Email Notifications:**
-Automatically sends email notifications for these statuses:
-- `Dispatched` - Order shipped notification
-- `Out for Delivery` - Out for delivery notification
-- `Delivered` - Delivery confirmation
-
-### POST `/.netlify/functions/upload-proof-of-delivery/:shipmentId/proof`
-
-Generates a signed upload URL for proof of delivery.
-
-**Authentication:** Required (seller or admin)
-
-**Request Body:**
-```json
-{
-  "contentType": "image/jpeg",
-  "fileSize": 204800
-}
-```
-
-> Both `contentType` and `fileSize` are **required**. Allowed MIME types: `image/jpeg`, `image/jpg`, `image/png`, `image/webp`. Maximum file size: **10 MB**.
-
-**Response:**
-```json
-{
-  "success": true,
-  "uploadUrl": "https://...",
-  "path": "shipment-id/file.jpg",
-  "token": "..."
-}
-```
-
-### PUT `/.netlify/functions/upload-proof-of-delivery/:shipmentId/proof`
-
-Confirms the upload and saves the public URL.
-
-**Request Body:**
-```json
-{
-  "filePath": "shipment-id/file.jpg"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "shipment": { ... },
-  "message": "Proof of delivery uploaded successfully"
-}
-```
-
-### POST `/.netlify/functions/track-shipment`
-
-Public endpoint for tracking shipments.
-
-**Request Body (JSON):**
-- `orderNumber` (required if order_id not provided) - Order number to track
-- `order_id` (required if orderNumber not provided) - Order UUID
-- `email` (required) - Buyer email address used when placing the order
-
-> **Security note:** email is sent in the POST body (never in the URL) to prevent PII leakage via browser history, server access logs, or Referer headers. Both fields must match a real order — the endpoint always returns a generic 404 when lookup fails to prevent order enumeration.
-
-**Response:**
-```json
-{
-  "order": {
-    "orderNumber": "ORD-...",
-    "createdAt": "2024-01-01T00:00:00Z",
-    "total": 100.00,
-    "status": "shipped",
-    "product": { "title": "...", "image": "..." },
-    "seller": { "name": "..." }
-  },
-  "shipment": {
-    "id": "uuid",
-    "status": "In Transit",
-    "courier_name": "DHL",
-    "tracking_number": "ABC123",
-    "proof_of_delivery_url": null,
-    "created_at": "...",
-    "updated_at": "..."
-  },
-  "events": [
-    {
-      "id": "uuid",
-      "status": "Dispatched",
-      "message": "Package dispatched",
-      "created_at": "..."
-    }
-  ],
-  "state": "tracked"
-}
-```
-
-## Frontend Routes
-
-### `/track-order` - Public Tracking Page
-- Search for orders by order number
-- Optional email verification
-- View order summary, shipment status, and event timeline
-- Shows "being prepared" state if no shipment exists
-
-### `/seller/shipments` - Seller Shipments Management
-- List all shipments for seller's orders
-- Create shipments for orders without tracking
-- Update shipment details (courier, tracking number)
-- Update shipment status
-- Upload proof of delivery
-
-### `/admin/shipments` - Admin Shipments Overview
-- View all shipments across the platform
-- Filter by status
-- Search by order number, tracking number, or courier
-- Override shipment status
-- View proof of delivery
-- Statistics dashboard
-
-## Frontend Components
-
-### `SellerShipmentForm`
-Modal form component for managing shipments:
-- Create/update shipment details
-- Update status with optional message
-- Upload proof of delivery via drag-and-drop
-
-## Checkout Integration
-
-### Shipping Options
-Three shipping methods available at checkout:
-- **Standard** - £5.00 (3-5 business days)
-- **Express** - £12.00 (1-2 business days)
-- **Pallet** - £50.00 (For large/pallet orders)
-
-Shipping cost is included in VAT calculation and added to order total.
-
-## Environment Variables
-
-Required environment variables (add to `.env`):
-
-```env
-# Supabase
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# SendGrid (for email notifications)
-SENDGRID_API_KEY=your_sendgrid_api_key
-
-# Supabase Storage
-SUPABASE_BUCKET_NAME=proof-of-delivery
-
-# App URLs
-VITE_APP_URL=https://loadifymarket.co.uk
-URL=https://loadifymarket.co.uk
-```
-
-## Supabase Storage Setup
-
-1. Create a storage bucket named `proof-of-delivery` (or use custom name in env)
-2. Configure bucket policies:
-   - Allow authenticated sellers to upload
-   - Allow public read access for proof of delivery images
-
-## Migration Notes
-
-### Running Migrations
-
-Execute the migration SQL file against your Supabase database:
-
-```bash
-psql -h your-db-host -U postgres -d your-db-name -f database-migrations.sql
-```
-
-Or use Supabase Dashboard SQL Editor to run the migrations.
-
-### Data Migration
-
-The migration automatically:
-1. Creates new tables and indexes
-2. Migrates existing tracking data from orders table
-3. Preserves backward compatibility by keeping original columns
-
-### Enabling RLS
-
-After migration, review and uncomment the RLS policies in the migration file, then apply them:
-
-```sql
-ALTER TABLE shipments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE shipment_events ENABLE ROW LEVEL SECURITY;
-
--- Apply policies (uncomment in migration file)
-```
-
-## Usage Examples
-
-### Seller Workflow
-
-1. Navigate to `/seller/shipments`
-2. Find order without shipment and click "Create Shipment"
-3. Enter courier name and tracking number
-4. Click "Create Shipment"
-5. Update status as shipment progresses
-6. Upload proof of delivery when delivered
-
-### Buyer Workflow
-
-1. Navigate to `/track-order`
-2. Enter order number and the email address used when placing the order (both required)
-3. View shipment status and timeline
-4. Check tracking events history
-
-### Admin Workflow
-
-1. Navigate to `/admin/shipments`
-2. View all shipments with statistics
-3. Filter by status or search
-4. Override status if needed
-5. View proof of delivery documents
-
-## TypeScript Types
-
-All types are exported from `src/types/shipping.ts`:
-
-```typescript
-import { ShipmentStatus, Shipment, ShipmentEvent } from './types/shipping';
-```
-
-## Testing
-
-### Manual Testing Steps
-
-1. **Create Order**: Complete checkout with shipping method selection
-2. **Create Shipment**: As seller, create shipment for the order
-3. **Update Status**: Change status and verify email notification sent
-4. **Track Order**: As buyer, track order on public page
-5. **Upload Proof**: Upload proof of delivery image
-6. **Admin View**: Verify shipment appears in admin dashboard
-
-### Test Scenarios
-
-- Order without shipment shows "being prepared"
-- Status updates trigger email notifications
-- Proof of delivery upload and display
-- Admin status override functionality
-- Search and filter functionality
-
-## Troubleshooting
-
-### Email Notifications Not Sending
-
-- Verify `SENDGRID_API_KEY` is set correctly
-- Check SendGrid account status
-- Review logs in Netlify functions
-- Ensure `send-email` function is deployed
-
-### Storage Upload Failing
-
-- Verify `SUPABASE_BUCKET_NAME` matches actual bucket
-- Check bucket exists and has correct policies
-- Verify service role key has storage permissions
-
-### Authentication Issues
-
-- Ensure user tokens are being passed correctly
-- Check Supabase auth configuration
-- Verify RLS policies if enabled
-
-## Future Enhancements
-
-Potential improvements:
-- Integration with courier APIs for real-time tracking
-- Automatic tracking number validation
-- SMS notifications for status updates
-- Delivery address validation
-- Multi-parcel shipments
-- Returns tracking integration
-- Label printing functionality
-
-## Support
-
-For issues or questions:
-- Email: contact@loadifymarket.co.uk
-- Review server logs in Netlify dashboard
-- Check Supabase logs for database errors
+Current marketplace capabilities include, as applicable:
+
+- seller-selected shipping methods during listing/checkout;
+- shipment records associated with orders;
+- courier/tracking information;
+- shipment events/status progression;
+- buyer order visibility;
+- public order tracking with identity/email verification;
+- proof-of-delivery upload;
+- seller/admin shipment management;
+- carrier-aware tracking links where supported;
+- return/dispute flows connected to order state.
+
+Supplier Commerce may introduce additional fulfilment legs/provider shipping evidence, but those remain governed by the canonical Supplier Commerce contract and provider capability state.
+
+---
+
+## 2. Core data concepts
+
+### Customer order
+
+The customer order is the canonical buyer-facing commerce record.
+
+### Shipment / fulfilment evidence
+
+Shipment data can include:
+
+- order/seller/buyer relationship;
+- courier/carrier context;
+- tracking number;
+- status;
+- proof-of-delivery reference;
+- timestamps/events.
+
+### Supplier Commerce
+
+For supplier-fulfilled commerce, customer order, fulfilment leg, consignment and supplier/provider state are distinct concepts. Do not collapse provider raw state into the customer order or tax/financial truth.
+
+---
+
+## 3. Public tracking privacy boundary
+
+The current `track-shipment` server function accepts a POST request and requires:
+
+- an order number or order ID; and
+- the buyer email associated with the authoritative order identity/snapshot.
+
+The function deliberately:
+
+- normalises lookup inputs;
+- validates email format;
+- rate limits public lookup;
+- verifies ownership/identity before resolving related private data;
+- returns a generic lookup failure when order/email details do not match.
+
+Do not move buyer email into the URL or expose order-existence-specific errors that weaken enumeration protection.
+
+---
+
+## 4. Shipment management
+
+Seller/admin shipment workflows use authorised server/database boundaries for operations such as:
+
+- creating or associating a shipment;
+- adding/updating courier and tracking context;
+- transitioning shipment status;
+- recording shipment events;
+- attaching proof of delivery.
+
+Exact allowed transitions and actor permissions must be derived from current server/RLS/RPC code and tests, not from an old static status list in this document.
+
+---
+
+## 5. Proof of delivery
+
+The current proof-of-delivery path uses `upload-proof-of-delivery` and Supabase Storage.
+
+The server flow validates applicable actor access and upload metadata, prepares/handles the storage upload and associates the resulting proof with the authorised shipment through the current server boundary.
+
+Current mobile order and seller shipment surfaces call this server path. MIME/size rules are implementation details that must be checked in the current handler/migrations before changing UI or policy.
+
+Do not expose private upload tokens or storage authority to unauthorised clients.
+
+---
+
+## 6. Shipping methods and price
+
+Do **not** treat historical fixed examples such as “Standard £5 / Express £12 / Pallet £50” as universal current truth.
+
+Shipping availability/cost must come from the current listing/shipping-method/checkout contract and, for Supplier Commerce, from the applicable provider/canonical shipping evidence.
+
+Customer-facing checkout must consume the authoritative calculated shipping amount and preserve price transparency. Do not invent shipping prices in UI or documentation.
+
+---
+
+## 7. Notifications
+
+Shipment/order state can trigger transactional notifications according to current server templates and event logic.
+
+Transactional email currently uses the server email boundary backed by Resend. Do not use this document to infer that every shipment transition sends an email; verify the exact current event/template behavior.
+
+SMS must not be described as active unless an actual provider, runtime credentials, consent/compliance controls and sending path are verified.
+
+---
+
+## 8. Carrier links and external tracking
+
+Where Loadify provides links to carrier tracking pages, they are navigation to the relevant external carrier experience and do not make that carrier's system the canonical Loadify order ledger.
+
+Carrier/API capability must be treated as external, potentially volatile evidence.
+
+---
+
+## 9. Supplier-fulfilled shipping
+
+For Supplier Commerce:
+
+- supplier/fulfilment provider may hold stock and dispatch directly to the buyer;
+- Loadify maintains the customer-facing order/tracking/support boundary according to the controlling business contract;
+- provider raw shipping capability and Loadify sellable/deliverable truth are distinct;
+- postcode/region capability must fail safely when required provider evidence is absent;
+- supplier fallback must not silently change the customer delivery promise;
+- dispatch origin, customs/tax or fulfiller disclosure must remain accurate where material/required.
+
+Current Supplier Commerce phase/readiness is governed by the canonical Phase O → P → Q plan; this document does not authorise provider activation.
+
+---
+
+## 10. Testing expectations
+
+A credible shipping release gate should cover the affected path, as applicable:
+
+- seller creates/updates shipment through an authorised boundary;
+- actor cannot mutate another party's shipment;
+- status transition rules;
+- public tracking valid and invalid email/order combinations;
+- enumeration-safe failures;
+- proof-of-delivery upload/access controls;
+- buyer/mobile visibility;
+- carrier link generation;
+- inactive/suspended account behavior;
+- return/dispute interaction;
+- Supplier Commerce provider failure/stale-evidence behavior where relevant.
+
+Build success alone is not shipping E2E evidence.
+
+---
+
+## 11. Operational troubleshooting
+
+When a shipping/tracking problem is reported:
+
+1. establish the exact order and actor using authorised access;
+2. inspect canonical order/shipment state;
+3. check the relevant server logs and current function behavior;
+4. verify storage/proof state if involved;
+5. verify carrier/provider evidence if external state is involved;
+6. do not manually rewrite order/shipment truth merely to make the UI look correct;
+7. repair through an authorised, auditable path.
+
+---
+
+## 12. Related current sources
+
+Use these as starting points and verify current HEAD:
+
+- `netlify/functions/track-shipment.ts`
+- `netlify/functions/upload-proof-of-delivery.ts`
+- shipment/status server functions and tests
+- `src/pages/MobileOrdersPage.tsx`
+- `src/pages/pixel-perfect/seller/SellerShipments.tsx`
+- `supabase/migrations/`
+- canonical Supplier Commerce documentation for supplier-fulfilled paths
+
+Historical shipping documents/examples do not override current code or production evidence.
