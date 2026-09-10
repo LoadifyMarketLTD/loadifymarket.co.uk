@@ -5,7 +5,7 @@
 >
 > For Supplier Commerce / product-model work, also read [`docs/canonical/loadify-supplier-commerce-2026-08-19/README.md`](./docs/canonical/loadify-supplier-commerce-2026-08-19/README.md) and follow its exact controlling read order.
 >
-> **Historical README text, old PR descriptions and stale branches do not override the canonical contract or current repository truth.**
+> **Historical README text, old PR descriptions, legacy design documents and stale branches do not override the canonical contract, current repository state or current production evidence.**
 
 Loadify Market is a UK-operated commerce platform under XDrive Logistics Ltd (Co. No. 13171804, VAT GB375949535).
 
@@ -25,15 +25,21 @@ Loadify does not require its own warehouse for Supplier-Fulfilled Commerce. No w
 
 ## Current controlling execution boundary
 
-The canonical sequence is:
+The canonical sequence remains:
 
 **CRITICAL FOUNDATION → CHECKPOINT A → ATOMIC CHECKPOINT A PASS → FOUNDATION BASELINE FREEZE → HARD STOP OLD EXTENSIVE HARDENING → GATE B BUSINESS CONTRACT → GATE B PASS → PHASE C → Q.**
 
-Checkpoint A and Foundation Baseline Freeze are recorded historical gates. The next controlling business gate is **Gate B**, unless a newer canonical clarification explicitly supersedes this.
+Current canonical status on `main`:
 
-**No Supplier Commerce migration/runtime implementation is authorised before Gate B PASS.**
+- Checkpoint A and Foundation Baseline Freeze are historical completed gates;
+- Gate B Business Contract and Gate B PASS are completed;
+- Phases C through N are completed according to the canonical evidence ledger;
+- **current canonical execution phase: PHASE O — CONTROLLED PILOT**;
+- remaining sequence: **O → P → Q**.
 
-Prepared implementation planning exists on branch `parallel/supplier-commerce-preparation` under `docs/parallel/supplier-commerce-preparation/`. Read that branch's `README.md` and then `33_PRODUCT_DIRECTION_RECONCILIATION_2026-08-20.md`. Canonical always wins over preparation artifacts.
+Do not use the obsolete statement that Gate B is the next business gate. Before any Phase O/P/Q write, read the controlling canonical README and `10_CANONICAL_CONTINUATION_PLAN_PHASE_O_TO_Q_2026-08-21.md`, then verify current GitHub, Supabase and provider evidence.
+
+A Phase O label does not itself mean a provider, pilot, sales channel or production mutation is approved. Activation remains capability-, evidence- and gate-dependent.
 
 ---
 
@@ -61,41 +67,55 @@ External roles are distinct:
 
 ---
 
+## Current platform surfaces
+
+### Public platform and marketplace
+
+Current routes include the public Loadify platform, marketplace, buyers, sellers, business/trade, suppliers, technology, integrations, partners, developers, trust and how-it-works surfaces, plus catalogue, product, cart, checkout and legal/support pages.
+
+### Buyers
+
+Current repository capabilities include product browsing/search, checkout/payment flows, buyer accounts, order history/tracking, addresses, payment/account surfaces, messaging, reviews, favourites/wishlist, notifications and return/dispute flows.
+
+### Sellers
+
+Current repository capabilities include seller onboarding/account lifecycle, product listing and stock management, marketplace orders, shipments/tracking, returns, messages, reviews and Stripe Connect/balance/payout-related surfaces.
+
+### Admin
+
+Current repository capabilities include seller/product/user/order governance, moderation, disputes, support, platform settings, notifications, payouts and Stripe-event visibility. **Do not redesign Workspace or Super Admin merely as collateral to another implementation.**
+
+### Supplier Commerce / operator commerce
+
+The repository also contains the governed Supplier Commerce architecture for Loadify-operated sourcing/import, canonical products, supplier offers, supplier-fulfilled commerce, provider capability evidence, product discovery/opportunity intelligence and AI merchandising under AI Facts Lock. Treat current activation/readiness per provider and per capability as evidence-dependent, not implied by architecture existence.
+
+### Native Android scope
+
+The Capacitor Android app is intentionally marketplace-first. Its native navigation and mobile routes focus on Home, Search, Sell, Inbox, Profile, orders, notifications, security, favourites, seller balance/payments and marketplace safety/account flows. Professional public platform sections and web/admin workspaces are not automatically exposed as native-app screens.
+
+---
+
 ## Documentation
 
 | Doc | Purpose |
 |---|---|
-| [`AGENTS.md`](./AGENTS.md) | Mandatory agent operating contract, responsibilities, product direction and Branch Guard rules |
-| [`docs/canonical/loadify-supplier-commerce-2026-08-19/README.md`](./docs/canonical/loadify-supplier-commerce-2026-08-19/README.md) | Controlling Supplier Commerce contract read order and execution boundary |
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Existing system architecture and domain model |
-| [`docs/openapi.yaml`](./docs/openapi.yaml) | API reference |
-| [`docs/SHIPPING.md`](./docs/SHIPPING.md) | Shipment and tracking system |
+| [`AGENTS.md`](./AGENTS.md) | Mandatory agent operating contract and current phase pointer |
+| [`docs/canonical/loadify-supplier-commerce-2026-08-19/README.md`](./docs/canonical/loadify-supplier-commerce-2026-08-19/README.md) | Controlling Supplier Commerce contract read order and execution status |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Current architecture map and current-vs-legacy boundaries |
+| [`docs/openapi.yaml`](./docs/openapi.yaml) | API reference; verify against current implementation before relying on volatile details |
+| [`docs/SHIPPING.md`](./docs/SHIPPING.md) | Shipping/tracking documentation; verify runtime and current functions for volatile details |
 | [`docs/audit/MASTER_FRAMEWORK.md`](./docs/audit/MASTER_FRAMEWORK.md) | Audit operating model and evidence standards |
 | [`docs/audit/COVERAGE_MATRIX.md`](./docs/audit/COVERAGE_MATRIX.md) | Critical-flow coverage and control gaps |
 
----
-
-## Existing platform surfaces
-
-### Buyers
-
-Current repository capabilities include product browsing/search, checkout/payment flows, buyer accounts, order history/tracking, messaging/RFQ-related functionality, reviews, wishlist/saved-search style features, and return/dispute surfaces. Treat current implementation as repository state to verify, not as permission to invent unsupported future claims.
-
-### Sellers
-
-Current repository capabilities include seller onboarding/account lifecycle, product listing/stock management, order handling, shipment/tracking flows, Stripe Connect payout integration, marketplace communication and return/dispute-related functionality.
-
-### Admin
-
-Current repository capabilities include seller and product governance, platform order/user management, dispute/support surfaces and platform analytics. **Do not redesign Workspace or Super Admin merely as collateral to another implementation.**
+Historical documents remain evidence only unless explicitly marked controlling. A date in a filename does not by itself make a document safe to use as current truth.
 
 ---
 
 ## Commerce / tax warning
 
-Do not rely on legacy README statements as a tax, VAT, commission, Merchant-of-Record, invoice or fulfilment contract.
+Do not rely on legacy README statements, old architecture notes or historical design plans as a tax, VAT, commission, Merchant-of-Record, invoice or fulfilment contract.
 
-Those matters must follow the controlling Gate B/canonical evidence and current verified implementation. In particular, do not assume universal 20% VAT, automatic reverse charge, a universal seller-only fulfilment model, or any other historical shortcut without current evidence.
+Those matters must follow the controlling canonical business contract, current code and current verified production evidence. In particular, do not assume universal 20% VAT, automatic reverse charge, universal seller-only fulfilment, immediate transfer timing, fixed payout schedules or historical promotional claims without current evidence.
 
 ---
 
@@ -108,10 +128,11 @@ Those matters must follow the controlling Gate B/canonical evidence and current 
 | State | Zustand |
 | Database | Supabase (PostgreSQL + Auth + Storage) |
 | API | Supabase PostgREST + Netlify Functions |
-| Payments | Stripe Checkout + Stripe Connect Express |
-| Email | SendGrid |
+| Payments | Stripe Checkout + Stripe Connect |
+| Email | SendGrid plus Supabase Auth email where applicable |
 | Hosting | Netlify |
-| CI | GitHub Actions (`.github/workflows/ci.yml`) |
+| Mobile | Capacitor Android |
+| Testing | Vitest + Playwright |
 
 ---
 
@@ -127,7 +148,7 @@ npm run dev
 
 Set the required development environment variables in `.env`.
 
-For database changes, `supabase/migrations/` is the authoritative ordered migration source. Do not run `supabase/00_consolidated_schema.sql`; it is a deprecated non-executable tombstone.
+For database changes, `supabase/migrations/` is the authoritative ordered migration source. Do not treat legacy numbered SQL copies or historical schema/audit files as a substitute for current migration truth.
 
 ---
 
@@ -137,37 +158,42 @@ For database changes, `supabase/migrations/` is the authoritative ordered migrat
 npm run dev
 npm run build
 npm run lint
+npm run typecheck
 npm test
-npm run test:watch
+npm run verify:migrations
+npm run e2e
+npm run verify:local
 ```
 
-Local Netlify Functions:
-
-```bash
-npm install -g netlify-cli
-netlify dev
-```
+Local Netlify Functions can be run through the Netlify CLI when the required development environment is configured.
 
 ---
 
 ## Key project structure
 
 ```text
-├── AGENTS.md                       # Mandatory agent entrypoint
+├── AGENTS.md
+├── android/                         # Capacitor Android project
 ├── src/
-│   ├── pages/pixel-perfect/        # Strong existing UI benchmark surfaces
-│   │   ├── seller/
-│   │   ├── buyer/
-│   │   └── admin/
+│   ├── pages/
+│   │   ├── pixel-perfect/
+│   │   │   ├── seller/
+│   │   │   ├── buyer/
+│   │   │   └── admin/
+│   │   ├── public/                 # Public platform/business/technology surfaces
+│   │   └── Mobile*.tsx             # Native/mobile marketplace surfaces
 │   ├── components/
+│   ├── hooks/
 │   └── lib/
-├── netlify/functions/              # Serverless API handlers
+├── netlify/functions/              # Function implementations
+├── netlify/functions-modern/       # Netlify runtime wrappers
 ├── supabase/migrations/            # Authoritative ordered DB migrations
 ├── docs/
-│   ├── canonical/                  # Controlling product/execution contracts
+│   ├── canonical/
+│   ├── architecture/
 │   ├── audit/
-│   ├── ARCHITECTURE.md
-│   └── openapi.yaml
+│   ├── checkpoints/
+│   └── supplier-commerce/
 └── public/
 ```
 
@@ -179,7 +205,7 @@ Before writes, inspect current `main`, relevant branch HEAD, open PRs, relevant 
 
 Before merge, inspect exact diff, branch staleness, unrelated changes, integration risk and real evidence.
 
-No Fake PASS. A documented claim is not a test. A preview is not visual approval. CI that did not execute steps is not evidence of a software failure or PASS.
+No Fake PASS. A documented claim is not a test. A preview is not visual approval. Build success is not full business-flow success. A historical PASS does not prove current runtime state.
 
 The default loop is:
 
@@ -190,6 +216,8 @@ The default loop is:
 ## Deployment
 
 The project deploys to Netlify according to `netlify.toml`. Production environment variables include Supabase, Stripe and other server-side credentials. Never expose server secrets to client code.
+
+Deploy Preview is a validation surface, not proof by itself that production, database state or external provider capability is correct.
 
 ---
 
@@ -204,7 +232,8 @@ Security work must verify, as applicable:
 - storage permissions;
 - webhook verification;
 - idempotency/replay protection;
-- fail-closed behaviour for security and money-related paths.
+- account capability and privileged Admin boundaries;
+- fail-closed behaviour for security, tax and money-related paths.
 
 Repository claims are not a substitute for current runtime evidence.
 
