@@ -38,39 +38,35 @@ Core invariants:
 - no drip-price architecture;
 - no silent supplier substitution that changes the customer promise.
 
-## 2. Mandatory canonical read order
+## 2. Mandatory canonical read order and current phase
 
 Before Supplier Commerce, product-model, tax, fulfilment, supplier, marketplace-control or related implementation work, read:
 
 `docs/canonical/loadify-supplier-commerce-2026-08-19/README.md`
 
-Then follow its exact order:
+**Follow the exact read order maintained in that canonical README. Do not copy a shorter list from this file or from an older handoff.** The canonical README is the maintained pointer and wins if this summary ever drifts.
 
-1. `00_PRODUCT_DIRECTION_UPDATE_2026-08-19.md`
-2. `06_PRODUCT_DIRECTION_CLARIFICATION_2026-08-20.md`
-3. `01_CANONICAL_EXECUTION_CONTRACT_LINES_0001_0750.md`
-4. `02_CANONICAL_EXECUTION_CONTRACT_LINES_0751_1250.md`
-5. `03_CANONICAL_EXECUTION_CONTRACT_LINES_1251_1750.md`
-6. `04_CANONICAL_EXECUTION_CONTRACT_LINES_1751_2210.md`
-7. `05_FOUNDATION_BASELINE_FREEZE_2026-08-20.md`
-
-The current canonical execution sequence is:
+The canonical execution sequence remains:
 
 **CRITICAL FOUNDATION → CHECKPOINT A → ATOMIC CHECKPOINT A PASS → FOUNDATION BASELINE FREEZE → HARD STOP OLD EXTENSIVE HARDENING → GATE B BUSINESS CONTRACT → GATE B PASS → PHASE C → Q.**
 
-Checkpoint A and Foundation Baseline Freeze are historical completed gates. Gate B is the controlling next business gate unless a newer canonical file explicitly changes that fact.
+Current status recorded by the controlling canonical README on `main`:
 
-**No Supplier Commerce migration/runtime implementation is authorised before Gate B PASS.**
+- Checkpoint A and Foundation Baseline Freeze are historical completed gates;
+- Gate B Business Contract and Gate B PASS are completed;
+- Phases C through N are completed according to the canonical ledger evidence;
+- **current canonical execution phase: PHASE O — CONTROLLED PILOT**;
+- remaining sequence: **O → P → Q**.
 
-For the prepared implementation plan, use branch:
+The former statement that “Gate B is the controlling next business gate” is obsolete and must not be used for current decisions.
 
-`parallel/supplier-commerce-preparation`
+Before any Phase O/P/Q write, also read:
 
-folder:
+`docs/canonical/loadify-supplier-commerce-2026-08-19/10_CANONICAL_CONTINUATION_PLAN_PHASE_O_TO_Q_2026-08-21.md`
 
-`docs/parallel/supplier-commerce-preparation/`
+Then verify live GitHub, Supabase and provider evidence required by the relevant gate. A Phase O label does not itself authorise provider activation, production mutation or a controlled-pilot PASS.
 
-Read its `README.md`, then immediately read `33_PRODUCT_DIRECTION_RECONCILIATION_2026-08-20.md`. The canonical contract always wins over preparation artifacts.
+The `parallel/supplier-commerce-preparation` branch and its preparation documents may provide historical implementation context, but they are not independently authoritative over the canonical contract or current repository/runtime evidence.
 
 ## 3. Permanent roles expected from an implementation agent
 

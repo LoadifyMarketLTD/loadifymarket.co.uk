@@ -1,45 +1,97 @@
 # Loadify Market — Coverage Matrix
 
-**Purpose:** single source of truth for critical-flow audit coverage.  
-**Status key:** ✅ covered · 🟡 partial · ❌ missing
+**Purpose:** living map of critical product/control areas.  
+**Reconciled:** 2026-09-10.  
+**Important:** this matrix is not itself proof of PASS. Exact test/runtime evidence must be collected for the SHA/release being audited.
 
 ---
 
-## 1. Critical-flow matrix
+## 1. Critical-flow control map
 
-| Critical flow | Primary surface | Build evidence | Test evidence | Permissions evidence | Error-handling evidence | Production evidence | Owner lane | Current status | Priority | Current gap summary |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Signup / login / reset password | Public frontend + auth | ✅ CI lint/typecheck/build in `.github/workflows/ci.yml` | 🟡 `netlify/functions/__tests__/register.test.ts`; no direct login/reset UI tests | 🟡 route guards in `src/App.tsx`, auth wrappers in `src/components/auth/` | 🟡 global `ErrorBoundary` and `error-report`, but no flow-specific auth telemetry | 🟡 `error-report` can capture client failures; no dedicated auth health probe | Frontend Public + Platform API | 🟡 | P0 | Registration is tested, but login/reset-password journeys do not have direct smoke coverage |
-| Create product / edit product | Seller journeys | ✅ CI build validates seller product pages compile | ❌ no direct ProductForm automated tests found | ✅ seller-only guards in `src/App.tsx` via `RequireSeller` + `RequireEmailVerified` | 🟡 generic error boundary only; no product-CRUD failure assertions | 🟡 generic client error reporting only | Frontend Seller | 🟡 | P0 | Product CRUD is business-critical but currently lacks direct automated tests and explicit telemetry |
-| Catalog / product detail | Public frontend | ✅ CI build validates routes | 🟡 `src/components/product/ProductInfo.test.tsx`; no catalog/page-level smoke test | ✅ public read path with route wiring in `src/App.tsx` | 🟡 generic error boundary only | 🟡 client error reporting; no route-specific search/detail telemetry | Frontend Public | 🟡 | P1 | Product CTA component is tested, but browse/search/detail journey coverage is still thin |
-| Wishlist / chat / offer | Buyer + seller messaging | ✅ CI build validates message/offer UI and functions compile | ❌ no direct tests found for wishlist, chat creation, or offer flow | 🟡 auth gating exists and conversation creation is routed through functions | 🟡 generic error capture only | 🟡 notifications and error reports exist, but no explicit journey-level monitoring | Frontend Buyer / Seller + Platform Messaging | ❌ | P0 | Messaging and offer flows are high-risk and currently under-tested |
-| Checkout / payment / webhook | Buyer + payments | ✅ CI lint/typecheck/build + `smoke-critical` | ✅ `create-checkout.test.ts`, `create-payment-intent.test.ts`, `checkout-safety.test.ts`, `stripe-webhook-commission.test.ts` | ✅ auth-protected checkout route, Stripe webhook verification, rate limits | ✅ documented consistent function errors and Stripe failure handling in `docs/ERROR-HANDLING.md` | ✅ Stripe event persistence, Netlify logs, client error reporting | Payments | ✅ | P0 | Strongest-controlled critical flow in the repo today |
-| Buyer orders / seller orders | Buyer + seller dashboards | ✅ CI build validates pages compile | ❌ no direct automated tests found | ✅ role-based route protection in `src/App.tsx` | 🟡 generic UI boundary only | 🟡 generic client error reporting; no explicit order-flow telemetry document | Frontend Buyer / Seller | 🟡 | P1 | Order dashboards exist but lack direct evidence beyond build success |
-| Seller onboarding | Seller journeys + Stripe Connect | ✅ CI build validates onboarding pages compile | 🟡 registration and checkout safety tests touch adjacent onboarding/payment states; no direct onboarding page test | ✅ `RequireSellerAny`, `RequireEmailVerified`, seller lifecycle migrations | 🟡 generic error boundary only | 🟡 health can reveal env/db issues; no onboarding-specific telemetry | Frontend Seller + Payments | 🟡 | P0 | Seller onboarding is central to supply growth but lacks direct scenario coverage |
-| Support tickets | Support / Netlify function | ✅ CI build validates contact/support code compiles | ❌ no direct support-ticket tests found | ✅ support flow routed through `/.netlify/functions/support-ticket-create` with RLS restriction and rate-limits | 🟡 function-level validation exists, but no automated assertions present | 🟡 generic error reporting only | Platform API + Frontend Public | 🟡 | P1 | Control design exists, but coverage proof is missing because the flow is not directly tested |
-| Admin approvals / disputes / settings | Admin journeys | ✅ CI build validates admin pages compile | ❌ no direct admin-flow tests found | ✅ admin access enforced with `RequireAdmin` / `hasAdminAccess` | 🟡 generic error boundary only | 🟡 production evidence depends on logs and user reports; no explicit admin telemetry matrix | Frontend Admin + Security | 🟡 | P0 | Admin flows are privileged and sensitive but have little direct automated evidence |
-| Product feed / sitemap / SEO rendering | SEO / Netlify functions / edge | ✅ CI build validates routes and functions compile | ❌ no direct tests found for `product-feed`, `sitemap`, or page metadata rendering | 🟡 public endpoints; protection is mostly correctness rather than auth | 🟡 failures would surface through generic function logs | 🟡 function logs exist; no SEO health or crawlability assertions in CI | SEO / Growth + Platform API | ❌ | P1 | Discovery surfaces are implemented but not yet controlled by dedicated automated checks |
-
----
-
-## 2. Cross-cutting control matrix
-
-| Control area | Current state | Evidence | Gap |
+| Flow/domain | Primary surface | Required evidence before release decisions | Current audit priority |
 |---|---|---|---|
-| L0 build integrity | ✅ | `.github/workflows/ci.yml` | none |
-| L1 unit/integration | 🟡 | Vitest covers selected libs/functions only | expand direct flow coverage |
-| L2 smoke coverage | 🟡 | `smoke-critical` focuses on payments/auth backend | add UI and role-based journey smokes |
-| L3 security / RLS / schema | 🟡 | `FULL_SCHEMA_AUDIT.sql`, migration health, CSP, rate limits | keep mapping findings back to flows |
-| L4 production telemetry | 🟡 | `health`, `error-report`, `csp-report`, Stripe events | add flow-oriented interpretation and review cadence |
+| Signup / login / verification / reset | Public auth + server auth | route/auth tests, capability provisioning, inactive-account behavior, email path, E2E where release-critical | P0 |
+| Buyer/Seller capability coexistence | Auth + Buyer/Seller workspaces | server authorization, DB capability state, Seller readiness separation, role-routing regression tests | P0 |
+| Product create/edit/publish | Seller + API + DB/storage | auth/readiness, physical-product boundary, media/storage, tax/compliance gates, direct test/E2E | P0 |
+| Marketplace browse/search/product | Public + native | current catalogue query semantics, product visibility, search/category/detail behavior, mobile/native checks | P1 |
+| Cart / checkout / payment | Buyer + Stripe | pricing/tax evidence, reservation, Stripe session/payment path, webhook/idempotency, failure recovery, E2E | P0 |
+| Orders | Buyer/Seller/Admin | order ownership, canonical snapshots/state transitions, role isolation, mobile/web visibility | P0 |
+| Shipping / tracking / proof | Buyer/Seller/Admin + public tracking | shipment authorization, transition rules, public lookup privacy, proof upload/storage, tracking links | P0 |
+| Returns / refunds / disputes | Buyer/Seller/Admin + payments | eligibility rules, money boundary, audit trail, authorization, customer/seller state consistency | P0 |
+| Messaging | Buyer/Seller/native | conversation ownership, blocking, inactive-account behavior, abuse/privacy controls, realtime behavior | P0 |
+| Reviews / UGC / reports | Public/Buyer/Admin/native | verified-purchase/provenance rules, report/block/moderation paths, hidden/deleted state, Play UGC requirements | P0 |
+| Seller Stripe Connect / balance / payouts | Seller/Admin + Stripe | Connect readiness, server privilege boundary, payout/financial truth, no unsafe direct RPC authority | P0 |
+| Support | Public/account/Admin | request validation, privacy, support-ticket permissions, escalation path, transactional email | P1 |
+| Account deletion / privacy | Web/native + API/data | authenticated deletion behavior, public deletion resource, retention/anonymisation, Privacy/Data Safety consistency | P0 |
+| Push notifications | Native + Supabase/Firebase | device-token ownership, logout/account switch cleanup, permissions, delivery/deep-link behavior | P1 |
+| Android release | Capacitor/Gradle/Play Console | version/signing/package, production assets, permissions, Data Safety, store listing, AAB, device smoke | P0 |
+| SEO / sitemap / feeds | Public/edge/functions | current physical-product filtering, canonical/meta correctness, crawlability, no unsupported service exposure | P1 |
+| Admin governance | Admin + server/DB | privileged auth, least privilege, moderation/actions, no Buyer/Seller privilege leakage | P0 |
+| Supplier Commerce | internal/provider/server/DB | canonical phase, provider capability/legal evidence, pilot policy, allowlists/caps/kill switch, exact runtime evidence | P0 |
+| Product Discovery / AI Builder | internal | canonical supplier-data prerequisite, recommendation-only boundary, AI Facts Lock, rights/compliance provenance | P1 |
+| Tax/VAT/customs | checkout/product/supplier/finance | current business contract, versioned tax evidence, fail-closed unsupported cases, no hard-coded universal rate | P0 |
+| Recovery/rollback | platform/data/payments | restore/rollback evidence appropriate to changed systems, not just Netlify deploy history | P0 for sensitive releases |
 
 ---
 
-## 3. Rules for updating this matrix
+## 2. Evidence layers
 
-When a new issue is found or fixed:
+| Level | Evidence type | What it can prove |
+|---|---|---|
+| L0 | typecheck/lint/build/migration verification | static/build integrity only |
+| L1 | unit/integration tests | asserted code/contract scenarios |
+| L2 | Playwright/device/browser E2E | tested user flow in tested environment |
+| L3 | RLS/privilege/webhook/idempotency/security checks | tested security/data boundary |
+| L4 | production/service/provider observations | current external/runtime state observed |
+| L5 | canonical/business/legal evidence | authority for business/legal/commercial behavior |
 
-1. update the affected critical-flow row
-2. tag the issue with defect class and level in the audit report
-3. change the status only when new evidence exists
-4. prefer upgrading evidence over adding new disconnected audit files
-5. keep unresolved gaps visible until a real guardrail exists
+A lower level cannot silently substitute for a required higher level.
+
+---
+
+## 3. Current repository validation entrypoints
+
+Use `package.json` as the authority. Current commands include:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run verify:migrations
+npm run e2e
+npm run build
+npm run verify:local
+```
+
+Netlify Deploy Preview currently runs lint + unit tests + production build according to `netlify.toml`.
+
+There is no current `.github/workflows/ci.yml` on `main` at the time of this reconciliation, so this matrix must not cite that historical file as current build evidence.
+
+---
+
+## 4. Current product-boundary corrections
+
+The following stale assumptions have been removed from this matrix:
+
+- RFQ/service commerce as a current Buyer critical flow;
+- old `/dashboard`/`src/App.tsx` route inventory as current routing truth;
+- SendGrid as the current general transactional-email dispatcher;
+- a historical GitHub Actions workflow as current CI authority;
+- historical fixed commission/VAT/payout models as universal current truth.
+
+The active Google Play/native v1 commerce boundary is physical products. Legacy service/RFQ schema or query compatibility remnants must be audited as legacy seams, not advertised as active product capability.
+
+---
+
+## 5. Release-use rule
+
+Before using this matrix to call a release PASS:
+
+1. record exact branch/SHA;
+2. inventory current routes/functions/tests for the affected flows;
+3. collect actual L0–L5 evidence required by those flows;
+4. verify production/external state where the release depends on it;
+5. run Branch Guard against unrelated product/security/payment regressions;
+6. record unknowns as unknowns.
+
+A green row without current evidence is not a PASS.

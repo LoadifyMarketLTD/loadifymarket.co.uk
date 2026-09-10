@@ -2,163 +2,256 @@
 
 **Platform:** Loadify Market  
 **Operator:** XDrive Logistics Ltd  
-**Audience:** UK buyers and independent sellers  
-**Updated:** March 2026
+**Audience:** buyers, marketplace sellers, trade/business buyers, suppliers, partners and technology organisations  
+**Reconciled:** 10 September 2026
 
 ---
 
-## 1. Brand Personality
+## 1. Brand position
 
-Loadify Market speaks like a **trusted UK professional** — someone who knows their industry, respects their customers, and never oversells. Think: a sharp, modern British retail brand that combines the credibility of John Lewis with the energy of a curated independent marketplace.
+Loadify Market is a UK-operated commerce platform with a marketplace at its customer-facing core. It should not be described as only an independent-seller marketplace or as a generic dropshipping service.
 
-### Five Personality Traits
+The controlling product direction includes:
 
-| Trait | What it means in practice |
-|-------|---------------------------|
-| **Premium** | Every word is chosen. No filler. No hype. |
-| **Modern** | Direct, active voice. No corporate waffle. |
-| **Transparent** | Say what things cost, how long things take, what buyers are protected by. |
-| **UK Professional** | Consistent British English. Respectful, not stiff. |
-| **Empowering** | Both sellers and buyers feel capable and in control. |
+**Marketplace + Loadify-operated sourcing/import + supplier-fulfilled commerce + product discovery/opportunity intelligence + AI Product Builder + canonical commerce control.**
+
+Public copy must distinguish between what is live for a given audience and what is controlled, evidence-gated or not yet activated. Do not turn architecture, a provider conversation or a technical scaffold into a customer-facing promise.
 
 ---
 
-## 2. Tone of Voice
+## 2. Core voice
 
-### 2.1 Core Tone
-**Clear. Direct. Confident.**
+**Clear. Direct. Precise. Credible.**
 
-We do not:
-- Over-promise ("life-changing deals!")
-- Use American idioms ("awesome", "amazing value", "super easy")
-- Speak down to sellers or buyers
-- Use passive voice where active is possible
+Loadify should sound like a modern UK commerce operator that understands both customer experience and operational responsibility.
 
 We do:
-- State facts plainly
-- Lead with benefits, not features
-- Use second person ("you", "your")
-- Keep sentences short (maximum 20 words in marketing copy)
 
-### 2.2 Tone by Context
+- state established facts plainly;
+- use British English consistently;
+- explain the user's next action clearly;
+- distinguish buyer, seller, trade, supplier and partner contexts;
+- qualify claims when eligibility, readiness or provider capability matters;
+- keep legal, tax, fulfilment and payment wording evidence-based;
+- use confident language without inventing scale, guarantees or commercial terms.
 
-| Context | Tone | Example |
-|---------|------|---------|
-| Homepage hero | Bold, aspirational | "The UK's Premium Marketplace for Independent Sellers" |
-| Product listing | Factual, informative | "Dispatched within 2 working days from the UK" |
-| Error messages | Calm, helpful | "Something went wrong. Please try again or contact support." |
-| Seller onboarding | Encouraging, clear | "You're one step away from reaching thousands of UK buyers." |
-| Email subject lines | Direct, personal | "Your order from [Seller] has been dispatched" |
-| Push notifications | Brief, actionable | "Price drop on your wishlist item — now £19.99" |
-| Legal / T&Cs | Precise, plain English | "You have 14 days to return eligible items for a full refund." |
+We do not:
 
----
-
-## 3. Writing Principles
-
-### 3.1 Headlines
-- Lead with the strongest word
-- Use numerals, not words ("3 sellers" not "three sellers")
-- Avoid questions where a statement is stronger
-- Maximum 8 words for display headlines
-
-**Good:** "Shop from verified UK sellers"  
-**Bad:** "Are you looking for trusted online shopping?"
-
-### 3.2 CTAs (Calls to Action)
-- Use imperative verbs: Shop, Sell, Join, Start, Browse, Discover
-- Be specific: "Start Selling Free" not "Click Here"
-- Pair primary (filled, gold) with secondary (outlined, white)
-
-| Primary CTA | Secondary CTA |
-|-------------|---------------|
-| Shop Now | Browse Categories |
-| Start Selling | See How It Works |
-| Add to Cart | Save to Wishlist |
-| Complete Order | Continue Shopping |
-
-### 3.3 Product Descriptions
-- Open with the most important benefit
-- List specifications in bullet points, not paragraphs
-- Include: dispatch time, origin (UK/other), condition (new/used)
-- Avoid: "high quality", "best product", "you won't be disappointed"
-
-### 3.4 Emails
-- Subject lines: max 50 characters, no ALL CAPS
-- Opening: address by first name where possible
-- Body: one primary action per email
-- Sign-off: "The Loadify Market Team" — not "Us" or "The Team"
+- reduce Loadify to “the UK's marketplace for independent sellers” as the universal platform definition;
+- call Loadify a dropshipping site;
+- claim a provider/integration is live because code, documentation or an API exists;
+- invent seller counts, buyer counts, GMV, payout totals, ratings or testimonials;
+- promise fixed payout timing, response SLAs, discounts, credit or commercial terms without a current approved policy;
+- present external reviews as Loadify customer reviews;
+- use unsupported superlatives such as “best”, “#1” or “guaranteed”.
 
 ---
 
-## 4. Before vs After — Copywriting Examples
+## 3. Tone by audience
 
-### 4.1 Homepage Hero
-
-| Before | After |
-|--------|-------|
-| "Welcome to Loadify Market — the best place to shop online!" | "The UK's Premium Marketplace for Independent Sellers" |
-| "Find amazing deals every day" | "Verified sellers. Secure payments. UK-based support." |
-| "Click here to get started" | "Shop Now" / "Start Selling" |
-
-### 4.2 Seller Onboarding
-
-| Before | After |
-|--------|-------|
-| "Sign up and start selling your products to customers" | "Create your store in minutes — no listing fees to start" |
-| "Your account has been created successfully. You can now login." | "You're in. Let's build your store." |
-| "Please fill in all required fields to complete your profile." | "Tell buyers who you are — a complete profile builds trust." |
-
-### 4.3 Product Card
-
-| Before | After |
-|--------|-------|
-| "Good quality headphones, great sound" | "Over-ear Wireless Headphones — 30hr battery, UK stock" |
-| "In stock" | "🚚 Dispatched within 1 working day" |
-| "Add to cart" | "Add to Cart" (sentence case, not all caps) |
-
-### 4.4 Error Messages
-
-| Before | After |
-|--------|-------|
-| "Error 500 — something went wrong" | "Something went wrong on our end. Please try again." |
-| "Invalid email" | "Please enter a valid email address (e.g. name@email.com)" |
-| "Your session has expired" | "You've been logged out for security. Please sign in again." |
-
-### 4.5 Buyer Protection
-
-| Before | After |
-|--------|-------|
-| "We offer buyer protection" | "Shop with confidence — money-back guarantee on eligible orders" |
-| "Contact us if you have problems" | "Not right? We'll make it right. Open a dispute in one click." |
+| Context | Tone | Example direction |
+|---|---|---|
+| Marketplace buyer | simple, reassuring, product-led | “Browse products, buy through Loadify and track your order.” |
+| Marketplace seller | practical, enabling, operational | “Create listings and manage orders, shipping and seller activity.” |
+| Trade/business buyer | professional, procurement-aware | “Register the buyer context that matches your business or organisation.” |
+| Supplier/brand/wholesaler | commercial, controlled | “Discuss marketplace participation, catalogue requirements and fulfilment responsibilities.” |
+| Technology/integration partner | precise, evidence-led | “Connectivity is assessed by authorised capability, commercial fit and technical evidence.” |
+| Support/error | calm, actionable | “We couldn't complete that action. Check the details and try again.” |
+| Legal/compliance | exact, plain English | State obligations and conditions without marketing language. |
 
 ---
 
-## 5. UK English Standards
+## 4. Public platform language
 
-| Use | Not |
-|-----|-----|
+### Platform-level description
+
+Prefer language that reflects the connected platform, for example:
+
+> A UK-operated commerce platform connecting marketplace buying and selling with business, supplier and controlled integration routes.
+
+This is a positioning pattern, not mandatory verbatim copy.
+
+### Marketplace-level description
+
+On marketplace-specific surfaces it is appropriate to be narrower:
+
+> Buy and sell physical products through the Loadify marketplace.
+
+Do not automatically import the full Supplier Commerce/AI/platform architecture into a consumer marketplace screen when it is not relevant to that user action.
+
+### Android app description
+
+The native Android app is marketplace-first. Its store listing should describe the functions actually exposed in the APK, not every web, Admin, Supplier Commerce or technology capability in the wider platform.
+
+---
+
+## 5. Claims discipline
+
+Before publishing a factual marketing claim, establish its source.
+
+### Claims that require evidence
+
+- seller/buyer counts;
+- sales/GMV/payout totals;
+- conversion or performance claims;
+- delivery speeds;
+- dispute-resolution time;
+- support response time;
+- “verified” status and what verification actually means;
+- product origin or stock location;
+- provider/integration status;
+- guarantees or money-back language;
+- commission/fee/payout terms;
+- tax/VAT claims;
+- certifications, sustainability, safety or authenticity claims.
+
+If current evidence is unavailable, remove the number/guarantee rather than inventing a placeholder.
+
+---
+
+## 6. Product and AI copy
+
+Product presentation must preserve factual provenance.
+
+AI Product Builder may improve:
+
+- titles;
+- descriptions;
+- benefits presentation;
+- FAQ structure;
+- SEO structure;
+- variant presentation;
+- merchandising copy;
+- marketing presentation where rights permit.
+
+But the invariant is:
+
+**VERIFIED FACTS → AI PRESENTATION**
+
+Never:
+
+**AI INVENTION → PRODUCT FACT**
+
+Do not invent materials, dimensions, certifications, origin, compatibility, safety, warranty, delivery, performance or environmental claims.
+
+---
+
+## 7. Supplier and integration wording
+
+Keep external roles distinct:
+
+**Discovery Source ≠ Catalog Source ≠ Supplier ≠ Fulfilment Provider ≠ Carrier ≠ Sales/Channel Connector.**
+
+Use wording such as:
+
+- “integration path” rather than “integration” when activation is not established;
+- “discuss supplier participation” rather than “connect your supplier account” if no self-service path is live;
+- “capability under evaluation” rather than “supported” when evidence is incomplete;
+- “approved supplier/fulfilment path” only when approval is factual.
+
+Do not name a provider as production-active unless current provider capability evidence and platform activation support the claim.
+
+---
+
+## 8. Buyer/seller responsibility wording
+
+Customer-facing copy should keep the Loadify journey connected while accurately disclosing material seller/fulfilment facts where required.
+
+Avoid wording that implies:
+
+- Loadify physically warehouses every product;
+- every product is sold by an independent marketplace seller;
+- every product is sold directly by Loadify;
+- supplier fulfilment eliminates Loadify governance/responsibility;
+- one fulfilment model applies to every order.
+
+Transaction-specific seller, fulfilment, delivery and return terms may differ and should be communicated accurately.
+
+---
+
+## 9. CTAs
+
+Use specific action verbs:
+
+- Browse Marketplace
+- Start Selling
+- Register a Trade Account
+- Explore Supplier Paths
+- Explore Integrations
+- Contact Loadify
+- Track Order
+- View Orders
+- Add to Cart
+- Save to Favourites
+- Report Listing
+
+Avoid generic CTAs such as “Click Here” or vague promises such as “Unlock Success”.
+
+---
+
+## 10. Error and support messages
+
+Error copy should:
+
+- say what failed without exposing sensitive internals;
+- tell the user what they can do next;
+- avoid blame;
+- avoid claiming success until the server confirms it;
+- preserve generic responses where privacy/security requires them.
+
+Examples:
+
+- “We couldn't find an order matching those details.”
+- “Photo upload failed. Please try again.”
+- “Your seller setup needs attention before this item can be published.”
+
+Security/privacy boundaries may intentionally use less-specific error wording.
+
+---
+
+## 11. UK English standards
+
+| Use | Avoid in UK-facing copy |
+|---|---|
 | colour | color |
-| catalogue | catalog |
+| catalogue | catalog, except where an API/provider uses that exact technical term |
 | organisation | organization |
-| dispatch | ship (in context of UK delivery) |
+| fulfilment | fulfillment |
+| dispatch | ship where dispatch is the more precise UK commerce term |
 | favourite | favorite |
-| £ | $ or € (UK context) |
-| VAT | Sales Tax |
 | postcode | zip code |
+| VAT | sales tax |
+| £ | other currency symbols unless the transaction/context requires them |
+
+Technical identifiers, provider field names and code symbols should not be “British-English corrected”.
 
 ---
 
-## 6. What We Never Say
+## 12. What Loadify should never say without current evidence
 
-- "Crazy deals" / "Insane prices"
-- "Don't miss out!!!" (multiple exclamation marks)
-- "CLICK HERE NOW"
-- "100% satisfaction guaranteed" (unless legally backed)
-- "World's best" / "Number one"
-- "Cheap" (use "affordable", "great value", or give the actual price)
-- "ASAP" in formal communications
+- “The UK's #1 marketplace”
+- “Thousands of buyers”
+- “500+ active sellers”
+- “£1M+ paid to sellers”
+- “Every seller is verified”
+- “Guaranteed refund”
+- “48-hour dispute resolution”
+- “Weekly payouts”
+- “All products are UK stock”
+- “Any named supplier/provider is fully integrated”
+
+These examples appear in historical materials and must not be recycled automatically.
 
 ---
 
-*This guide applies to: website copy, email campaigns, push notifications, social media, seller communications, product descriptions, and in-app messaging.*
+## 13. Source-of-truth rule for copy
+
+When copy conflicts with implementation or canonical product direction, use:
+
+1. controlling canonical contract/business decision;
+2. current product/runtime truth;
+3. current verified operational/commercial evidence;
+4. this voice guide;
+5. historical marketing/design documents.
+
+This guide controls tone and claims discipline; it does not create new commercial, legal or technical capabilities.
