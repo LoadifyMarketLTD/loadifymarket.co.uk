@@ -6,7 +6,8 @@
  *
  *  - maintenanceMode  → 503 for non-admin sellers
  *  - seller activation → only fully active sellers may publish public listings
- *  - product approval → automatic; moderation happens after publication
+ *  - prohibited-item gate → high-confidence restricted products fail closed before publication
+ *  - product approval → automatic only after server-side publication guards; moderation remains available after publication
  */
 
 import type { Handler } from '@netlify/functions';
@@ -19,6 +20,10 @@ import {
   hasExplicitSellerNonVatDeclaration,
   normaliseMarketplaceCountry,
 } from './_shared/marketplaceTax';
+import {
+  getMarketplaceProhibitedItemViolation,
+  marketplaceProhibitedItemResponseBody,
+} from './_shared/marketplaceProhibitedItems';
 
 const CREATE_ALLOWED_FIELDS = [
   'description',
@@ -161,6 +166,17 @@ export const handler: Handler = async (event) => {
       statusCode: 400,
       body: JSON.stringify({ error: 'Invalid listingContext. Allowed value: product.' }),
     };
+  }
+
+  if (isActive) {
+    const prohibitedItem = getMarketplaceProhibitedItemViolation({
+      title,
+      description: rest.description,
+      specifications: rest.specifications,
+    });
+    if (prohibitedItem) {
+      return { statusCode: 422, body: JSON.stringify(marketplaceProhibitedItemResponseBody(prohibitedItem)) };
+    }
   }
 
   if (Boolean(isActive) && normalizedListingContext === 'product' && (!Array.isArray(shippingMethodIds) || shippingMethodIds.length === 0)) {
