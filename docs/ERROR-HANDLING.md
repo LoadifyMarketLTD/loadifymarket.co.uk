@@ -1,138 +1,184 @@
 # Error Handling — Loadify Market
 
-This document describes the complete error-handling and observability strategy for the Loadify Market platform.
+**Status:** current architectural guidance  
+**Rule:** current code and tests win if implementation details drift from this document.
 
 ---
 
-## 1. Client-side (React SPA)
+## 1. Principles
 
-### 1.1 Global ErrorBoundary
+Loadify error handling must:
 
-`src/components/ErrorBoundary.tsx` wraps the entire React tree in `src/main.tsx`.
-
-- Catches any unhandled render error thrown by any component.
-- Calls `captureError()` from `src/lib/errorTracking.ts` so the error is forwarded to the `error-report` Netlify function in production.
-- Shows a friendly fallback page with a "Go to Home Page" button that performs a full page reload to reset all state.
-
-```tsx
-// main.tsx — global wrapper
-<ErrorBoundary>
-  <App />
-</ErrorBoundary>
-```
-
-### 1.2 SectionErrorBoundary
-
-`src/components/SectionErrorBoundary.tsx` is a lightweight boundary for **individual below-the-fold sections**.
-
-Use it around any `React.lazy()` chunk or data-fetching section that should not crash the entire page:
-
-```tsx
-import SectionErrorBoundary from '@/components/SectionErrorBoundary';
-import { lazy, Suspense } from 'react';
-
-const TrendingProducts = lazy(() => import('@/components/TrendingProducts'));
-
-<SectionErrorBoundary>
-  <Suspense fallback={<div className="h-40 animate-pulse bg-gray-100 rounded-xl" />}>
-    <TrendingProducts />
-  </Suspense>
-</SectionErrorBoundary>
-```
-
-If the chunk fails to load (network error, stale deploy), the section shows a non-intrusive inline error instead of crashing the page.
-
-### 1.3 Route-level Suspense
-
-All page-level lazy imports in `src/App.tsx` are wrapped in `<Suspense fallback={<PageLoader />}>`. This prevents a blank screen while the JS chunk is being fetched.
-
-### 1.4 Client-side error tracking (`src/lib/errorTracking.ts`)
-
-Captures:
-- `window.onerror` — unhandled JavaScript errors
-- `window.unhandledrejection` — unhandled Promise rejections
-- `ErrorBoundary.componentDidCatch` — React render errors
-
-In **production**, every captured error is sent to `/.netlify/functions/error-report` using `navigator.sendBeacon` (fire-and-forget, survives page unload). In **development**, errors are logged to the console only.
+- fail closed where security, authorization, tax, money or provider capability is uncertain;
+- avoid exposing private/internal details to users;
+- preserve actionable server-side logging/evidence;
+- distinguish retryable operational failures from business-rule rejections;
+- never report success before the authoritative server/database action succeeds;
+- preserve generic responses where a more specific error could leak account/order existence.
 
 ---
 
-## 2. Server-side (Netlify Functions)
+## 2. Client-side boundaries
 
-### 2.1 Consistent error response shape
+The React application uses global and section/page-level error handling plus explicit loading/error states in individual flows.
 
-Every Netlify function returns errors in a consistent shape:
+Current route composition is primarily maintained in `src/AppRoutes.tsx`; do not use the historical statement that all routing lives in `src/App.tsx` as a current route inventory.
 
-```json
-{
-  "error": "Human-readable message here"
-}
-```
+Client errors may be captured through `src/lib/errorTracking.ts` and the server error-reporting boundary where configured.
 
-With an appropriate HTTP status code:
+For user-facing errors:
 
-| Status | Meaning |
+- explain the recoverable next action;
+- do not expose stack traces, SQL details, Supabase service errors or secrets;
+- keep marketplace/account wording appropriate to the current native/web surface;
+- preserve privacy-safe generic failures for public lookup/auth-related cases.
+
+---
+
+## 3. Netlify function responses
+
+Functions should return JSON with an appropriate HTTP status and a safe error message/code as required by the flow.
+
+Common semantics:
+
+| Status | Typical meaning |
 |---|---|
-| 400 | Missing or invalid request body |
-| 401 | Missing or invalid auth token |
-| 403 | Authenticated but insufficient role |
-| 404 | Resource not found |
-| 405 | Wrong HTTP method |
-| 409 | Conflict (e.g. duplicate email) |
-| 429 | Rate limit exceeded |
-| 500 | Unexpected server error |
-| 503 | Service not configured (missing env vars) |
+| 400 | invalid/missing request data |
+| 401 | authentication required/invalid |
+| 403 | authenticated but not authorised |
+| 404 | not found or intentionally generic privacy-safe lookup failure |
+| 405 | unsupported HTTP method |
+| 409 | business/state conflict |
+| 429 | rate limit / abuse control |
+| 500 | unexpected server/configuration failure |
+| 503 | required service/configuration unavailable |
 
-### 2.2 Rate limiting
-
-`netlify/functions/_shared/rateLimiter.ts` provides IP-based rate limiting for:
-- `register` — prevents mass account creation
-- `send-email` — prevents email flooding
-- `error-report` — prevents log flooding (60 reports/hour/IP)
-
-### 2.3 CSP violation reporting
-
-`netlify/functions/csp-report.ts` receives browser Content-Security-Policy violation reports. Reports are logged to the function console and optionally persisted to the `csp_reports` table.
-
-### 2.4 Stripe webhook safety
-
-`netlify/functions/stripe-webhook.ts` verifies the Stripe signature on every incoming event. The `stripe_events` table provides idempotency — a `23505 UNIQUE` constraint prevents double-processing. Failed events are marked `status='failed'` for admin visibility.
+Do not force every function into an identical payload if the current contract requires a stable structured code/state; preserve backwards compatibility and tests.
 
 ---
 
-## 3. Debugging: JS chunk failed to load
+## 4. Authentication and authorization failures
 
-**Symptom:** Browser console shows `Failed to fetch dynamically imported module: SomeComponent-abc123.js`.
+Authorization must be established by current trusted boundaries, not UI state alone.
 
-**Cause:** A stale browser cache is requesting a chunk hash that no longer exists after a new deploy.
+Relevant controls include:
 
-### Resolution steps
+- active/suspended account state;
+- server-governed Buyer/Seller capabilities;
+- Seller lifecycle/readiness;
+- privileged Admin authority;
+- RLS/service-role boundaries;
+- transaction/resource ownership.
 
-1. **Verify the chunk URL**: paste the URL from the error into a browser tab.
-   - `404` → stale cache; hard-reload (`Ctrl+Shift+R`) clears it.
-   - `403` → server/CDN permissions issue.
-   - `500` → CDN/origin configuration issue.
-
-2. **Hard-reload in browser** (`Ctrl+Shift+R` / `Cmd+Shift+R`) to bypass the cache.
-
-3. **Confirm a full build and deploy was completed**: incremental deploys can leave stale chunk references. Run:
-   ```bash
-   rm -rf dist
-   npm run build
-   ```
-   Then redeploy.
-
-4. **Wrap the section in SectionErrorBoundary** so the failure degrades gracefully rather than crashing the whole page (see section 1.2 above).
+If authoritative authorization state cannot be established for a sensitive action, fail closed.
 
 ---
 
-## 4. Observability summary
+## 5. Payments, tax and financial failures
 
-| Signal | Collection mechanism | Storage |
-|---|---|---|
-| React render errors | `ErrorBoundary.componentDidCatch` → `captureError()` | `error_reports` table |
-| Unhandled JS errors | `window.error` → `captureError()` | `error_reports` table |
-| Unhandled rejections | `window.unhandledrejection` → `captureError()` | `error_reports` table |
-| CSP violations | Browser `report-uri` → `csp-report` function | `csp_reports` table |
-| Stripe failures | Webhook → `stripe_events` table | `stripe_events` table |
-| Function errors | Netlify function logs | Netlify dashboard |
+Payment/tax errors require special handling because retrying an apparently failed operation can create duplicate or inconsistent state.
+
+Protect:
+
+- checkout reservation state;
+- Stripe session/payment creation;
+- webhook signature verification;
+- idempotency/replay handling;
+- order/payment separation;
+- payout/refund/reconciliation separation;
+- tax-evidence fail-closed behavior.
+
+A client transport/UI error does not prove Stripe or database mutation did not already occur. Investigate canonical state before retrying potentially mutating financial actions.
+
+---
+
+## 6. Public order tracking privacy
+
+The current public tracking boundary intentionally requires order identity plus buyer email verification and returns a generic lookup failure when details do not match.
+
+This is a privacy/security behavior, not a UX defect. Do not replace it with order-existence-specific errors that enable enumeration.
+
+---
+
+## 7. Supplier/provider failures
+
+Provider/network errors must not silently become commerce truth.
+
+Supplier Commerce should distinguish, where applicable:
+
+- provider unavailable;
+- auth/permission denied;
+- stale stock/price evidence;
+- unsupported capability;
+- order submission not acknowledged;
+- provider kill switch/incident state;
+- policy/pilot rejection.
+
+Do not interpret provider authentication success as authority to place orders or activate a capability.
+
+---
+
+## 8. Upload/storage failures
+
+Product media, proof-of-delivery and other uploads must validate applicable ownership, MIME/size rules and storage authority before persisting references.
+
+Failed or uncommitted upload objects should be cleaned up where the current server flow supports that behavior. Never expose private storage paths/tokens unnecessarily.
+
+---
+
+## 9. Rate limiting and abuse handling
+
+Public/auth-sensitive functions may use the shared rate limiter and other anti-abuse controls.
+
+The appropriate fail-open/fail-soft/fail-closed policy depends on the endpoint risk. Security-sensitive/public-enumeration boundaries should not weaken protection merely because telemetry/storage for rate limiting is degraded.
+
+---
+
+## 10. CSP and browser security reporting
+
+`netlify.toml` and the edge/security-header implementation define the current browser security policy. CSP violations may be reported to the current CSP reporting function.
+
+Do not copy historical CSP snippets into new documentation without checking current Netlify/edge configuration.
+
+---
+
+## 11. Operational evidence
+
+Useful evidence may include:
+
+- client error reports;
+- Netlify function logs;
+- CSP reports;
+- Stripe event/idempotency records;
+- Supabase/database state;
+- provider/API response evidence;
+- device/browser reproduction;
+- current tests for the exact failure path.
+
+Never expose secrets or unrelated personal data while collecting evidence.
+
+---
+
+## 12. Debugging deploy/chunk failures
+
+For a suspected stale frontend chunk or deploy mismatch:
+
+1. verify the failing asset/route against the current deploy;
+2. confirm which commit/deploy is actually serving production;
+3. reproduce with cache bypass/new session where appropriate;
+4. verify the current production build/deploy rather than assuming a local build represents production;
+5. preserve user work/state where possible.
+
+A hard reload can help with a stale client cache but is not a substitute for proving the deployed artifact is correct.
+
+---
+
+## 13. No Fake PASS
+
+A resolved UI symptom is not proof that the underlying server/data issue is resolved.
+
+Before closing an error with meaningful security/commerce impact, verify the relevant vertical path:
+
+**client → auth → server/API → database/external service → side effect → user-visible state → audit evidence.**
+
+*Reconciled with current repository architecture: 2026-09-10.*
