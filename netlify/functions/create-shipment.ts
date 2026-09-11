@@ -173,7 +173,7 @@ export const handler: Handler = async (event) => {
 
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, orderNumber, status, productId, sellerId, buyerId, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus')
+      .select('id, orderNumber, status, productId, sellerId, buyerId, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus, shippingAddress')
       .eq('id', order_id)
       .single();
 
@@ -211,6 +211,20 @@ export const handler: Handler = async (event) => {
         statusCode: 409,
         body: JSON.stringify({ error: 'The order product could not be verified for fulfilment.' }),
       };
+    }
+
+    if (dispatched_at && product.listingContext !== 'service') {
+      const address = order.shippingAddress as Record<string, unknown> | null | undefined;
+      const hasAddress = Boolean(address && (address.line1 || address.city || address.postcode || address.postal_code));
+      if (!hasAddress) {
+        return { statusCode: 409, body: JSON.stringify({ error: 'Delivery address missing. Physical orders cannot be dispatched without an order delivery address.' }) };
+      }
+      if (typeof tracking_number !== 'string' || !tracking_number.trim()) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'Tracking number is required before dispatching a physical order.' }) };
+      }
+      if (typeof courier_name !== 'string' || !SUPPORTED_CARRIERS.has(courier_name.trim())) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'Royal Mail or Evri must be selected before dispatching a physical order.' }) };
+      }
     }
 
     const paymentGuard = await enforcePaymentBackedTransition({

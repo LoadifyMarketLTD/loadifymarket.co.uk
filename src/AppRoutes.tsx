@@ -90,6 +90,7 @@ const PPSellerShell = lazy(() => import('./pages/pixel-perfect/seller/SellerShel
 const PPSellerDashboard = lazy(() => import('./pages/pixel-perfect/seller/SellerDashboard'));
 const PPSellerProducts = lazy(() => import('./pages/pixel-perfect/seller/SellerProducts'));
 const PPSellerOrders = lazy(() => import('./pages/pixel-perfect/seller/SellerOrders'));
+const PPSellerOrderDetails = lazy(() => import('./pages/pixel-perfect/seller/SellerOrderDetails'));
 const PPSellerShipments = lazy(() => import('./pages/pixel-perfect/seller/SellerShipments'));
 const PPSellerReturns = lazy(() => import('./pages/pixel-perfect/seller/SellerReturns'));
 const PPSellerProfile = lazy(() => import('./pages/pixel-perfect/seller/SellerProfile'));
@@ -220,6 +221,7 @@ export default function AppRoutes() {
             <Route index element={publicPage(<PPSellerDashboard />)} />
             <Route path="products" element={publicPage(<PPSellerProducts />)} />
             <Route path="orders" element={publicPage(<PPSellerOrders />)} />
+            <Route path="orders/:orderId" element={publicPage(<PPSellerOrderDetails />)} />
             <Route path="shipments" element={publicPage(<PPSellerShipments />)} />
             <Route path="returns" element={publicPage(<PPSellerReturns />)} />
             <Route path="rfq" element={<Navigate to="/seller" replace />} />
