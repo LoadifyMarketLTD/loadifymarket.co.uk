@@ -12,6 +12,7 @@ import {
   Heart,
   HelpCircle,
   LogOut,
+  MapPin,
   Package,
   Settings,
   ShieldCheck,
@@ -53,7 +54,10 @@ function buildSections(user: LoadifyUser | null | undefined): Section[] {
         ...(canSell ? [{ label: 'Sell an item', to: '/sell', icon: Store }] : []),
         ...(!canSell && !isAdminOnly ? [{ label: 'Start selling', to: '/onboarding/role-selection', icon: Store }] : []),
         { label: 'Favourite items', to: '/profile/favourites', icon: Heart },
-        ...(canBuy ? [{ label: 'Purchases', to: '/orders?mode=buy', icon: Package }] : []),
+        ...(canBuy ? [
+          { label: 'Purchases', to: '/orders?mode=buy', icon: Package },
+          { label: 'Delivery addresses', to: '/buyer/addresses', icon: MapPin },
+        ] : []),
         ...(canSell ? [
           { label: 'Sales', to: '/orders?mode=sell', icon: Store },
           { label: 'Balance', to: '/profile/balance', icon: Wallet },

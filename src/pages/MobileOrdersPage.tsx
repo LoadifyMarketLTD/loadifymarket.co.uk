@@ -56,6 +56,18 @@ type ShipmentRow = {
   updated_at: string;
 };
 
+type DeliveryAddress = {
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  county?: string | null;
+  state?: string | null;
+  postcode?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  countryCode?: string | null;
+};
+
 type ShipmentEventRow = {
   id: string;
   status: string;
@@ -94,6 +106,8 @@ type OrderDetail = OrderRow & {
   buyerId: string | null;
   sellerId: string | null;
   sellerName: string | null;
+  listingContext: string | null;
+  shippingAddress: DeliveryAddress | null;
   shipment: ShipmentRow | null;
   events: ShipmentEventRow[];
   returnRequest: ReturnRow | null;
@@ -223,6 +237,20 @@ function fullName(row: BuyerLookup | null | undefined) {
   return [row.firstName, row.lastName].filter(Boolean).join(" ").trim() || null;
 }
 
+const hasDeliveryAddress = (address?: DeliveryAddress | null) =>
+  Boolean(address && (address.line1 || address.city || address.postcode || address.postal_code));
+
+function deliveryAddressLines(address?: DeliveryAddress | null): string[] {
+  return [
+    address?.line1,
+    address?.line2,
+    address?.city,
+    address?.county ?? address?.state,
+    address?.postcode ?? address?.postal_code,
+    address?.countryCode === "GB" ? "United Kingdom" : address?.country,
+  ].filter((value): value is string => Boolean(value));
+}
+
 function nextShipmentStatuses(status: string): string[] {
   switch (status) {
     case "Pending": return ["Processing", "Dispatched"];
@@ -298,7 +326,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
       try {
         const { data: orderData, error: orderError } = await supabase
           .from("orders")
-          .select(`id, orderNumber, total, status, createdAt, quantity, buyerId, sellerId, buyerNameSnapshot, sellerBusinessNameSnapshot, commercialSnapshotSource, products:productId(title, images), order_items(id, quantity, productTitleSnapshot, productImageSnapshot, productSnapshotSource)`)
+          .select(`id, orderNumber, total, status, createdAt, quantity, buyerId, sellerId, buyerNameSnapshot, sellerBusinessNameSnapshot, commercialSnapshotSource, shippingAddress, products:productId(title, images, listingContext), order_items(id, quantity, productTitleSnapshot, productImageSnapshot, productSnapshotSource)`)
           .eq("id", orderId)
           .maybeSingle();
         if (orderError || !orderData) { setError("This order could not be loaded."); return; }
@@ -307,7 +335,9 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           id: string; orderNumber: string; total: number; status: string; createdAt: string; quantity: number;
           buyerId: string | null; sellerId: string | null; buyerNameSnapshot: string | null;
           sellerBusinessNameSnapshot: string | null; commercialSnapshotSource: string | null;
-          products: { title: string; images: string[] | null } | null; order_items: OrderItemRow[] | null;
+          shippingAddress: DeliveryAddress | null;
+          products: { title: string; images: string[] | null; listingContext: string | null } | null;
+          order_items: OrderItemRow[] | null;
         };
 
         const isBuyer = raw.buyerId === user.id;
@@ -346,6 +376,8 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           buyerName: actualMode === "sell" ? counterpartName ?? "Customer" : null,
           sellerName: actualMode === "buy" ? counterpartName ?? "Seller" : null,
           buyerId: raw.buyerId, sellerId: raw.sellerId, shipment, events,
+          listingContext: raw.products?.listingContext ?? null,
+          shippingAddress: raw.shippingAddress ?? null,
           returnRequest: ((returnRows ?? [])[0] as ReturnRow | undefined) ?? null,
           dispute: ((disputeRows ?? [])[0] as DisputeRow | undefined) ?? null,
           orderItemId: snapshotItem?.id ?? null,
@@ -498,6 +530,14 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
 
   const saveShipment = async (markDispatched: boolean) => {
     if (!detail || !user?.id || mode !== "sell" || detail.sellerId !== user.id || shipmentSaving) return;
+    if (markDispatched && detail.listingContext !== "service" && !hasDeliveryAddress(detail.shippingAddress)) {
+      toast({
+        title: "Cannot dispatch order",
+        description: "This physical order cannot be dispatched without the order delivery address. Ask the buyer to contact support so the address can be corrected.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!shipmentCourier) {
       toast({ title: "Choose a courier", description: "Select Royal Mail or Evri before saving shipping details.", variant: "destructive" });
       return;
@@ -606,6 +646,10 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const disputeCanStart = mode === "buy" && !detail.dispute && ["paid", "packed", "shipped", "delivered", "completed"].includes(detail.status);
   const isSellerView = mode === "sell" && detail.sellerId === user?.id;
   const shipmentMutable = isSellerView && !TERMINAL_FULFILMENT_ORDER_STATUSES.has(detail.status);
+  const isPhysicalOrder = detail.listingContext !== "service";
+  const shipToLines = deliveryAddressLines(detail.shippingAddress);
+  const deliveryAddressKnown = hasDeliveryAddress(detail.shippingAddress);
+  const dispatchBlocked = isPhysicalOrder && !deliveryAddressKnown;
   const nextStatuses = detail.shipment ? nextShipmentStatuses(detail.shipment.status) : [];
 
   return (
@@ -630,6 +674,28 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
           <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Delivery</h2></div>
 
+          {isPhysicalOrder ? (
+            <div className={`mt-3 rounded-[14px] border p-3 ${deliveryAddressKnown ? "border-[#0A234F]/[0.08] bg-[#F7F9FC]" : "border-red-200 bg-red-50"}`}>
+              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Ship to</p>
+              {deliveryAddressKnown ? (
+                <address className="mt-1.5 not-italic text-[12px] font-bold leading-[1.5] text-[#26354A]">
+                  {isSellerView ? <span className="block">{detail.buyerName ?? "Customer"}</span> : null}
+                  {shipToLines.map((line) => <span key={line} className="block">{line}</span>)}
+                </address>
+              ) : (
+                <>
+                  <p className="mt-1.5 text-[12px] font-extrabold text-red-700">Delivery address missing</p>
+                  <p className="mt-1 text-[10px] leading-[1.45] text-[#8A2B2B]">
+                    {isSellerView
+                      ? "This physical order cannot be dispatched without the order delivery address. Ask the buyer to contact support so the address can be corrected."
+                      : "Contact support so the delivery address for this order can be corrected before dispatch."}
+                  </p>
+                </>
+              )}
+              <p className="mt-2 text-[9px] leading-[1.4] text-[#7A8493]">This is the delivery address captured on the order and cannot be edited here.</p>
+            </div>
+          ) : null}
+
           {detail.shipment ? (
             <>
               <div className="mt-3 rounded-[14px] bg-[#F7F9FC] p-3">
@@ -648,7 +714,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
                       <button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(false); }} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">{shipmentSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Save shipping details</button>
                     </div>
                   ) : null}
-                  {nextStatuses.length > 0 ? <div className="mt-3"><p className="mb-2 text-[9px] font-black uppercase tracking-[0.1em] text-[#7A8493]">Update delivery</p><div className="flex flex-wrap gap-2">{nextStatuses.map((status) => <button key={status} type="button" disabled={Boolean(shipmentStatusSaving)} onClick={() => { void updateShipmentStatus(status); }} className="flex min-h-9 items-center gap-1.5 rounded-full border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[10px] font-extrabold text-[#0A234F] disabled:opacity-50">{shipmentStatusSaving === status ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}{status}</button>)}</div></div> : null}
+                  {nextStatuses.length > 0 ? <div className="mt-3"><p className="mb-2 text-[9px] font-black uppercase tracking-[0.1em] text-[#7A8493]">Update delivery</p><div className="flex flex-wrap gap-2">{nextStatuses.map((status) => <button key={status} type="button" disabled={Boolean(shipmentStatusSaving) || (dispatchBlocked && status === "Dispatched")} onClick={() => { void updateShipmentStatus(status); }} className="flex min-h-9 items-center gap-1.5 rounded-full border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[10px] font-extrabold text-[#0A234F] disabled:opacity-50">{shipmentStatusSaving === status ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}{status}</button>)}</div></div> : null}
                 </div>
               ) : null}
 
@@ -668,7 +734,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
               <div className="mt-3 space-y-2.5">
                 <select value={shipmentCourier} onChange={(event) => setShipmentCourier(event.target.value)} className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A]"><option value="">Choose courier</option>{COURIERS.map((courier) => <option key={courier} value={courier}>{courier}</option>)}</select>
                 <input value={shipmentTracking} onChange={(event) => setShipmentTracking(event.target.value)} maxLength={120} placeholder="Tracking number" className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A] outline-none" />
-                <div className="grid grid-cols-2 gap-2"><button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(false); }} className="min-h-11 rounded-[12px] border border-[#0A234F]/10 bg-white text-[10px] font-extrabold text-[#0A234F] disabled:opacity-60">Save only</button><button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(true); }} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[12px] bg-[#0A234F] text-[10px] font-extrabold text-white disabled:opacity-60">{shipmentSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}Mark dispatched</button></div>
+                <div className="grid grid-cols-2 gap-2"><button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(false); }} className="min-h-11 rounded-[12px] border border-[#0A234F]/10 bg-white text-[10px] font-extrabold text-[#0A234F] disabled:opacity-60">Save only</button><button type="button" disabled={shipmentSaving || dispatchBlocked} onClick={() => { void saveShipment(true); }} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[12px] bg-[#0A234F] text-[10px] font-extrabold text-white disabled:opacity-60">{shipmentSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}Mark dispatched</button></div>
               </div>
             </div>
           ) : <div className="mt-3 rounded-[14px] bg-[#FFF8E8] p-3"><p className="text-[11px] font-extrabold text-[#795300]">Preparing for shipment</p><p className="mt-1 text-[10px] leading-[1.45] text-[#8A6A25]">Tracking information will appear here when a shipment is created.</p></div>}
