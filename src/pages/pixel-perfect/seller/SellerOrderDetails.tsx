@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Clock3, MapPin, Package, RefreshCw, Truck } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Clock3, Copy, History, MapPin, MessageSquare, Package, RefreshCw, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,6 +51,7 @@ interface OrderDetails {
   createdAt: string;
   shippingAddress: Address | null;
   shippingMethod: string | null;
+  escrowStatus?: string | null;
   order_items: OrderItemSnapshot[] | null;
 }
 
@@ -60,6 +61,21 @@ interface ShipmentSummary {
   courier_name: string | null;
   tracking_number: string | null;
   dispatched_at: string | null;
+  created_at: string;
+}
+
+interface OrderLifecycleSummary {
+  paidAt: string | null;
+  returnStatus: string | null;
+  disputeStatus: string | null;
+  payoutStatus: string | null;
+}
+
+interface ShipmentEvent {
+  id: string;
+  status: string;
+  message: string | null;
+  source: string;
   created_at: string;
 }
 const hasAddress = (address?: Address | null) => Boolean(
@@ -76,6 +92,8 @@ export default function SellerOrderDetails() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [shipment, setShipment] = useState<ShipmentSummary | null>(null);
+  const [shipmentEvents, setShipmentEvents] = useState<ShipmentEvent[]>([]);
+  const [lifecycle, setLifecycle] = useState<OrderLifecycleSummary>({ paidAt: null, returnStatus: null, disputeStatus: null, payoutStatus: null });
   const [carrier, setCarrier] = useState("Royal Mail");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [loading, setLoading] = useState(true);
@@ -83,13 +101,13 @@ export default function SellerOrderDetails() {
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!user?.id || !orderId) return;
     setLoading(true);
     setError("");
     const { data, error: orderError } = await supabase
       .from("orders")
-      .select("id, orderNumber, buyerId, sellerId, buyerNameSnapshot, buyerEmailSnapshot, total, subtotal, vatAmount, shippingAmount, status, createdAt, shippingAddress, shippingMethod, order_items(id, productId, quantity, pricePerUnit, productTitleSnapshot, productImageSnapshot, listingContextSnapshot)")
+      .select("id, orderNumber, buyerId, sellerId, buyerNameSnapshot, buyerEmailSnapshot, total, subtotal, vatAmount, shippingAmount, status, createdAt, shippingAddress, shippingMethod, escrowStatus, order_items(id, productId, quantity, pricePerUnit, productTitleSnapshot, productImageSnapshot, listingContextSnapshot)")
       .eq("id", orderId)
       .eq("sellerId", user.id)
       .maybeSingle();
@@ -99,6 +117,19 @@ export default function SellerOrderDetails() {
       return;
     }
     setOrder(data as unknown as OrderDetails);
+
+    const [{ data: paymentRow }, { data: returnRow }, { data: disputeRow }, { data: payoutRow }] = await Promise.all([
+      supabase.from("payment_sessions").select("status, updatedAt").eq("orderId", orderId).eq("status", "completed").order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("returns").select("status").eq("orderId", orderId).order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("disputes").select("status").eq("orderId", orderId).order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("payouts").select("status").eq("orderId", orderId).order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    setLifecycle({
+      paidAt: (paymentRow as { updatedAt?: string } | null)?.updatedAt ?? (data.status !== "pending" ? data.createdAt : null),
+      returnStatus: (returnRow as { status?: string } | null)?.status ?? null,
+      disputeStatus: (disputeRow as { status?: string } | null)?.status ?? null,
+      payoutStatus: (payoutRow as { status?: string } | null)?.status ?? null,
+    });
 
     const { data: shipmentData } = await supabase
       .from("shipments")
@@ -112,10 +143,22 @@ export default function SellerOrderDetails() {
     setShipment(current);
     setCarrier(current?.courier_name === "Evri" ? "Evri" : "Royal Mail");
     setTrackingNumber(current?.tracking_number ?? "");
-    setLoading(false);
-  };
 
-  useEffect(() => { void load(); }, [orderId, user?.id]);
+    if (current?.id) {
+      const { data: eventRows } = await supabase
+        .from("shipment_events")
+        .select("id, status, message, source, created_at")
+        .eq("shipment_id", current.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setShipmentEvents((eventRows as ShipmentEvent[] | null) ?? []);
+    } else {
+      setShipmentEvents([]);
+    }
+    setLoading(false);
+  }, [orderId, user?.id]);
+
+  useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60_000);
     return () => window.clearInterval(timer);
@@ -135,6 +178,15 @@ export default function SellerOrderDetails() {
     const minutes = Math.floor((diff % 3_600_000) / 60_000);
     return `${hours}h ${minutes}m remaining`;
   }, [trackingDeadline, isDispatched, now]);
+
+  const copyText = async (label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast({ title: `${label} copied` });
+    } catch {
+      toast({ title: "Copy failed", description: "Your browser did not allow clipboard access.", variant: "destructive" });
+    }
+  };
 
   const dispatchShipment = async () => {
     if (!order || busy) return;
@@ -200,6 +252,7 @@ export default function SellerOrderDetails() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/seller/orders")}><ArrowLeft className="mr-1.5 h-4 w-4" />Orders</Button>
         <h1 className="mt-2 text-2xl font-bold">{order.orderNumber}</h1>
         <p className="text-sm text-muted-foreground">Placed {new Date(order.createdAt).toLocaleString("en-GB")}</p>
+        {lifecycle.paidAt ? <p className="text-sm text-muted-foreground">Paid {new Date(lifecycle.paidAt).toLocaleString("en-GB")}</p> : null}
       </div>
       <Badge variant="outline" className="w-fit capitalize">{order.status}</Badge>
     </div>
@@ -208,7 +261,7 @@ export default function SellerOrderDetails() {
       <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Operational status</p><p className="mt-1 font-semibold">{isDispatched ? "Dispatched" : "Processing / ready to ship"}</p></div>
       <div className="rounded-lg bg-slate-950 px-4 py-3 text-white">
         <div className="flex items-center gap-2 text-xs text-slate-300"><Clock3 className="h-4 w-4" />Tracking SLA (48h)</div>
-        <p className={`mt-1 font-mono text-sm font-bold ${deadlineLabel === "SLA BREACHED" ? "text-red-400" : "text-emerald-400"}`}>{deadlineLabel}</p>
+        <p className={`mt-1 font-mono text-sm font-bold ${deadlineLabel === "SLA BREACHED" ? "text-red-400" : "text-emerald-400"}`}>{deadlineLabel}</p>{trackingDeadline && !isDispatched ? <p className="mt-1 text-[11px] text-slate-300">Dispatch by {trackingDeadline.toLocaleString("en-GB")}</p> : null}
       </div>
     </CardContent></Card>
 
@@ -219,7 +272,9 @@ export default function SellerOrderDetails() {
           {hasAddress(address) ? <div className="grid gap-4 sm:grid-cols-2">
             <div className="text-sm leading-6">
               <p className="font-semibold">{recipient}</p>
+              {order.buyerEmailSnapshot ? <p className="break-all text-xs text-muted-foreground">{order.buyerEmailSnapshot}</p> : null}
               {phone ? <p>Phone: {phone}</p> : <p className="text-xs text-muted-foreground">No courier phone stored on this order.</p>}
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/seller/messages")}><MessageSquare className="mr-2 h-4 w-4" />Message buyer</Button>
             </div>
             <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm leading-6">
               <p>{address?.line1}</p>
@@ -228,6 +283,10 @@ export default function SellerOrderDetails() {
               <p className="font-semibold">{address?.postcode ?? address?.postal_code}</p>
               <p>{address?.countryCode === "GB" || address?.country === "GB" ? "United Kingdom" : address?.country}</p>
               {order.shippingMethod ? <p className="mt-2 border-t pt-2 text-xs text-muted-foreground">Delivery method: <strong className="text-foreground">{order.shippingMethod}</strong></p> : null}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => void copyText("Address", [address?.name || recipient, address?.line1, address?.line2, [address?.city, address?.county ?? address?.state].filter(Boolean).join(", "), address?.postcode ?? address?.postal_code, address?.countryCode === "GB" || address?.country === "GB" ? "United Kingdom" : address?.country].filter(Boolean).join("\n"))}><Copy className="mr-2 h-3.5 w-3.5" />Copy address</Button>
+                <Button variant="outline" size="sm" onClick={() => void copyText("Postcode", String(address?.postcode ?? address?.postal_code ?? ""))}><Copy className="mr-2 h-3.5 w-3.5" />Copy postcode</Button>
+              </div>
             </div>
           </div> : <div className="flex gap-2 text-red-700"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><div><p className="font-semibold">Delivery address missing</p><p className="text-sm">Do not dispatch this physical order until a valid order delivery snapshot exists.</p></div></div>}
         </CardContent></Card>
@@ -260,15 +319,26 @@ export default function SellerOrderDetails() {
       <div className="space-y-5">
         <Card><CardContent className="p-5">
           <div className="mb-4 flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /><h2 className="font-semibold">Shipment management</h2></div>
+          <div className="mb-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4 lg:grid-cols-2">
+            <div className="rounded-lg border p-2"><span className="text-muted-foreground">Return</span><p className="mt-1 font-semibold capitalize">{lifecycle.returnStatus ?? "None"}</p></div>
+            <div className="rounded-lg border p-2"><span className="text-muted-foreground">Dispute</span><p className="mt-1 font-semibold capitalize">{lifecycle.disputeStatus ?? "None"}</p></div>
+            <div className="rounded-lg border p-2"><span className="text-muted-foreground">Payout</span><p className="mt-1 font-semibold capitalize">{lifecycle.payoutStatus ?? (order.escrowStatus === "released" ? "Released" : "Pending")}</p></div>
+            <div className="rounded-lg border p-2"><span className="text-muted-foreground">Escrow</span><p className="mt-1 font-semibold capitalize">{order.escrowStatus ?? "Held"}</p></div>
+          </div>
           {shipment ? <div className="mb-4 space-y-1 rounded-lg border bg-muted/30 p-3 text-sm"><p>Status: <strong>{shipment.status}</strong></p><p>Carrier: <strong>{shipment.courier_name || "—"}</strong></p><p>Tracking: <strong>{shipment.tracking_number || "—"}</strong></p>{shipment.dispatched_at ? <p>Dispatched: <strong>{new Date(shipment.dispatched_at).toLocaleString("en-GB")}</strong></p> : null}</div> : null}
           {!isDispatched ? <div className="space-y-4">
+            {shipment ? <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900"><p className="font-semibold">Existing shipment</p><p>Update carrier or tracking below. This order keeps the same shipment record; a second shipment will not be created.</p></div> : null}
             <div><Label className="text-xs">Approved carrier</Label><Select value={carrier} onValueChange={setCarrier}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Royal Mail">Royal Mail</SelectItem><SelectItem value="Evri">Evri</SelectItem></SelectContent></Select></div>
             <div><Label className="text-xs">Tracking number</Label><Input className="mt-1" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder="Enter official tracking code" /></div>
-            <Button className="w-full" disabled={busy || !hasAddress(address) || !trackingNumber.trim()} onClick={() => void dispatchShipment()}>{busy ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Truck className="mr-2 h-4 w-4" />}Confirm shipment & dispatch</Button>
+            <Button className="w-full" disabled={busy || !hasAddress(address) || !trackingNumber.trim()} onClick={() => void dispatchShipment()}>{busy ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Truck className="mr-2 h-4 w-4" />}{shipment ? "Update details & dispatch" : "Confirm shipment & dispatch"}</Button>
             {!hasAddress(address) ? <p className="text-xs font-semibold text-red-600">Dispatch blocked: delivery address missing.</p> : null}
           </div> : null}
           {shipment?.status === "Dispatched" ? <Button variant="outline" className="w-full border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100" disabled={busy} onClick={() => void undoDispatch()}><RefreshCw className="mr-2 h-4 w-4" />Correct accidental dispatch</Button> : null}
           {isDispatched && shipment?.status !== "Dispatched" ? <Button variant="outline" className="w-full" onClick={() => navigate("/seller/shipments")}>Open shipment history</Button> : null}
+          {shipment ? <div className="mt-5 border-t pt-4">
+            <div className="mb-3 flex items-center gap-2"><History className="h-4 w-4 text-primary" /><h3 className="text-sm font-semibold">Shipment history</h3></div>
+            {shipmentEvents.length === 0 ? <p className="text-xs text-muted-foreground">No shipment events recorded yet.</p> : <div className="space-y-3">{shipmentEvents.map((event) => <div key={event.id} className="border-l-2 border-muted pl-3"><div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold">{event.status}</p><span className="text-[11px] text-muted-foreground">{new Date(event.created_at).toLocaleString("en-GB")}</span></div>{event.message ? <p className="mt-0.5 text-xs text-muted-foreground">{event.message}</p> : null}<p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{event.source.replace("_", " ")}</p></div>)}</div>}
+          </div> : null}
         </CardContent></Card>
       </div>
     </div>
