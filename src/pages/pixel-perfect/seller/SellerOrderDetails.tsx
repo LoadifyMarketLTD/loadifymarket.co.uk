@@ -98,6 +98,7 @@ export default function SellerOrderDetails() {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [messageOpening, setMessageOpening] = useState(false);
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
 
@@ -188,6 +189,26 @@ export default function SellerOrderDetails() {
     }
   };
 
+  const openBuyerConversation = async () => {
+    if (!order || messageOpening) return;
+    setMessageOpening(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/conversation-get-or-create", {
+        method: "POST",
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      const payload = await response.json() as { conversationId?: string; error?: string };
+      if (!response.ok || !payload.conversationId) {
+        throw new Error(payload.error ?? "Could not open the buyer conversation");
+      }
+      navigate(`/seller/messages?conversationId=${encodeURIComponent(payload.conversationId)}`);
+    } catch (err) {
+      toast({ title: "Could not open buyer conversation", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setMessageOpening(false);
+    }
+  };
+
   const dispatchShipment = async () => {
     if (!order || busy) return;
     if (!hasAddress(order.shippingAddress)) {
@@ -274,7 +295,7 @@ export default function SellerOrderDetails() {
               <p className="font-semibold">{recipient}</p>
               {order.buyerEmailSnapshot ? <p className="break-all text-xs text-muted-foreground">{order.buyerEmailSnapshot}</p> : null}
               {phone ? <p>Phone: {phone}</p> : <p className="text-xs text-muted-foreground">No courier phone stored on this order.</p>}
-              <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/seller/messages")}><MessageSquare className="mr-2 h-4 w-4" />Message buyer</Button>
+              <Button variant="outline" size="sm" className="mt-3" disabled={messageOpening} onClick={() => void openBuyerConversation()}>{messageOpening ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}Message buyer</Button>
             </div>
             <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm leading-6">
               <p>{address?.line1}</p>
