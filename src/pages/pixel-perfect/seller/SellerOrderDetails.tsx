@@ -98,6 +98,7 @@ export default function SellerOrderDetails() {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [messageOpening, setMessageOpening] = useState(false);
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
 
@@ -188,6 +189,43 @@ export default function SellerOrderDetails() {
     }
   };
 
+  const openBuyerConversation = async () => {
+    if (!order || messageOpening) return;
+    setMessageOpening(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/conversation-get-or-create", {
+        method: "POST",
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      const payload = await response.json() as { conversationId?: string; error?: string };
+      if (!response.ok || !payload.conversationId) throw new Error(payload.error || "Conversation could not be opened.");
+      navigate(`/seller/messages?conversationId=${encodeURIComponent(payload.conversationId)}`);
+    } catch (err) {
+      toast({ title: "Could not message buyer", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setMessageOpening(false);
+    }
+  };
+
+  const markPacked = async () => {
+    if (!order || order.status !== "paid" || busy) return;
+    setBusy(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/seller-order-status", {
+        method: "POST",
+        body: JSON.stringify({ orderId: order.id, status: "packed" }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Could not mark order as packed.");
+      toast({ title: "Order packed", description: "The order is ready for shipment details." });
+      await load();
+    } catch (err) {
+      toast({ title: "Update failed", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const dispatchShipment = async () => {
     if (!order || busy) return;
     if (!hasAddress(order.shippingAddress)) {
@@ -250,15 +288,14 @@ export default function SellerOrderDetails() {
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <Button variant="ghost" size="sm" onClick={() => navigate("/seller/orders")}><ArrowLeft className="mr-1.5 h-4 w-4" />Orders</Button>
-        <h1 className="mt-2 text-2xl font-bold">{order.orderNumber}</h1>
-        <p className="text-sm text-muted-foreground">Placed {new Date(order.createdAt).toLocaleString("en-GB")}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2"><h1 className="text-2xl font-bold">{order.orderNumber}</h1><span className="text-muted-foreground">·</span><Badge variant="outline" className="capitalize">{order.status}</Badge></div>
+        <p className="text-sm text-muted-foreground">Order date {new Date(order.createdAt).toLocaleString("en-GB")}</p>
         {lifecycle.paidAt ? <p className="text-sm text-muted-foreground">Paid {new Date(lifecycle.paidAt).toLocaleString("en-GB")}</p> : null}
       </div>
-      <Badge variant="outline" className="w-fit capitalize">{order.status}</Badge>
     </div>
 
     <Card><CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Operational status</p><p className="mt-1 font-semibold">{isDispatched ? "Dispatched" : "Processing / ready to ship"}</p></div>
+      <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Operational status</p><p className="mt-1 font-semibold">{isDispatched ? "Dispatched" : order.status === "packed" ? "Packed / ready to dispatch" : "Processing"}</p>{order.status === "paid" ? <Button size="sm" className="mt-2" disabled={busy} onClick={() => void markPacked()}><Package className="mr-2 h-4 w-4" />Pack order</Button> : null}</div>
       <div className="rounded-lg bg-slate-950 px-4 py-3 text-white">
         <div className="flex items-center gap-2 text-xs text-slate-300"><Clock3 className="h-4 w-4" />Tracking SLA (48h)</div>
         <p className={`mt-1 font-mono text-sm font-bold ${deadlineLabel === "SLA BREACHED" ? "text-red-400" : "text-emerald-400"}`}>{deadlineLabel}</p>{trackingDeadline && !isDispatched ? <p className="mt-1 text-[11px] text-slate-300">Dispatch by {trackingDeadline.toLocaleString("en-GB")}</p> : null}
@@ -274,7 +311,7 @@ export default function SellerOrderDetails() {
               <p className="font-semibold">{recipient}</p>
               {order.buyerEmailSnapshot ? <p className="break-all text-xs text-muted-foreground">{order.buyerEmailSnapshot}</p> : null}
               {phone ? <p>Phone: {phone}</p> : <p className="text-xs text-muted-foreground">No courier phone stored on this order.</p>}
-              <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/seller/messages")}><MessageSquare className="mr-2 h-4 w-4" />Message buyer</Button>
+              <Button variant="outline" size="sm" className="mt-3" disabled={messageOpening} onClick={() => void openBuyerConversation()}><MessageSquare className="mr-2 h-4 w-4" />{messageOpening ? "Opening chat..." : "Message buyer"}</Button>
             </div>
             <div className="rounded-lg border border-dashed bg-muted/30 p-3 text-sm leading-6">
               <p>{address?.line1}</p>
