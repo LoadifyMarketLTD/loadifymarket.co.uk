@@ -16,8 +16,9 @@ const supabase = createClient(
 );
 
 interface UpdateStatusRequest {
-  status: string;
+  status?: string;
   message?: string;
+  correction?: 'undo_dispatch';
 }
 
 type ShipmentTransitionResult = {
@@ -144,11 +145,16 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON in request body' }) };
     }
 
-    const { status, message } = body;
-    if (!status) return { statusCode: 400, body: JSON.stringify({ error: 'status is required' }) };
+    const { status, message, correction } = body;
+    if (correction && correction !== 'undo_dispatch') {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid correction action' }) };
+    }
+    if (!correction && !status) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'status is required' }) };
+    }
 
     const validStatuses = ['Pending', 'Processing', 'Dispatched', 'In Transit', 'Out for Delivery', 'Delivered', 'Returned', 'Delivery Failed'];
-    if (!validStatuses.includes(status)) {
+    if (status && !validStatuses.includes(status)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid status' }) };
     }
 
@@ -180,9 +186,42 @@ export const handler: Handler = async (event) => {
       return { statusCode: 409, body: JSON.stringify({ error: 'Shipment tracking is available only for physical-product orders.' }) };
     }
 
+    if (correction === 'undo_dispatch') {
+      const { data: corrected, error: correctionError } = await supabase.rpc('server_correct_shipment_dispatch', {
+        p_shipment_id: shipmentId,
+        p_actor_id: user.id,
+        p_message: typeof message === 'string' ? message : null,
+      });
+
+      if (correctionError) {
+        if (correctionError.code === '42501') return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
+        if (correctionError.code === 'P0002') return { statusCode: 404, body: JSON.stringify({ error: 'Shipment or order not found' }) };
+        if (correctionError.code === 'P0001') return { statusCode: 409, body: JSON.stringify({ error: correctionError.message }) };
+        throw new Error(`Atomic shipment correction failed: ${correctionError.message}`);
+      }
+
+      const result = corrected as ShipmentTransitionResult | null;
+      if (!result?.shipment) throw new Error('Atomic shipment correction returned no shipment');
+
+      const { error: notificationError } = await supabase.from('notifications').insert({
+        userId: shipment.buyer_id,
+        type: 'shipment',
+        title: 'Shipping status corrected',
+        message: `Order ${shipment.orders?.orderNumber ?? shipment.order_id} was marked as dispatched by mistake. The seller is still preparing it for shipment.`,
+        link: '/buyer/orders',
+      });
+      if (notificationError) console.error('Failed to create shipment correction notification:', notificationError.message);
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ success: true, shipment: result.shipment, changed: true, message: 'Dispatch status corrected' }),
+      };
+    }
+
+    const requestedStatus = status as string;
     let targetOrderStatus: GuardedOrderStatus | null = null;
-    if (status === 'Delivered') targetOrderStatus = 'delivered';
-    else if (status === 'Dispatched' || status === 'In Transit' || status === 'Out for Delivery') targetOrderStatus = 'shipped';
+    if (requestedStatus === 'Delivered') targetOrderStatus = 'delivered';
+    else if (requestedStatus === 'Dispatched' || requestedStatus === 'In Transit' || requestedStatus === 'Out for Delivery') targetOrderStatus = 'shipped';
 
     if (targetOrderStatus) {
       const paymentGuard = await enforcePaymentBackedTransition({
@@ -209,7 +248,7 @@ export const handler: Handler = async (event) => {
     const { data: transition, error: transitionError } = await supabase.rpc('server_transition_shipment', {
       p_shipment_id: shipmentId,
       p_actor_id: user.id,
-      p_status: status,
+      p_status: requestedStatus,
       p_message: typeof message === 'string' ? message : null,
     });
 
@@ -234,11 +273,11 @@ export const handler: Handler = async (event) => {
           userId: shipment.buyer_id,
           type: 'shipment',
           title: 'Shipment update',
-          message: `Your order ${shipment.orders?.orderNumber ?? shipment.order_id} shipment status is now: ${status}.`,
+          message: `Your order ${shipment.orders?.orderNumber ?? shipment.order_id} shipment status is now: ${requestedStatus}.`,
           link: '/buyer/orders',
         });
       if (notificationError) console.error('Failed to create shipment notification:', notificationError.message);
-      await sendStatusEmail(shipment.orders, updatedShipment, status);
+      await sendStatusEmail(shipment.orders, updatedShipment, requestedStatus);
     }
 
     return {

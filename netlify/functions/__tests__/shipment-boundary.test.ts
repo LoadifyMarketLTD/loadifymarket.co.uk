@@ -637,6 +637,23 @@ describe('canonical shipment write boundary', () => {
     expect(remove).toHaveBeenCalledWith([filePath]);
   });
 
+  it('keeps accidental dispatch correction narrow, audited, and service-role-only', () => {
+    const sql = readFileSync(
+      path.resolve(process.cwd(), 'supabase/migrations/20260911114500_add_safe_dispatch_correction.sql'),
+      'utf8',
+    );
+
+    expect(sql).toContain('CREATE OR REPLACE FUNCTION public.server_correct_shipment_dispatch');
+    expect(sql).toContain("v_shipment.status <> 'Dispatched' OR v_order_status <> 'shipped'");
+    expect(sql).toContain("SET status = 'Processing'");
+    expect(sql).toContain("SET status = 'paid'");
+    expect(sql).toContain("'shipment_dispatch_corrected'");
+    expect(sql).toContain("v_latest_source = 'courier_api'");
+    expect(sql).toContain("shipment has progressed beyond dispatch");
+    expect(sql).toContain('FROM PUBLIC, anon, authenticated;');
+    expect(sql).toContain('TO service_role;');
+  });
+
   it('keeps the DB migration service-role-only, atomic, idempotent and one-shipment-per-order', () => {
     const sql = readFileSync(
       path.resolve(process.cwd(), 'supabase/607_lock_shipment_writes_to_server.sql'),

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Truck, Search, Clock, Plus, Loader2, RefreshCw, ExternalLink } from "lucide-react";
+import { Truck, Search, Clock, Plus, Loader2, RefreshCw, ExternalLink, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,10 +21,20 @@ import { authorizedFetch } from "@/lib/authorizedFetch";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
+interface DeliveryAddress {
+  line1?: string | null; line2?: string | null; city?: string | null;
+  county?: string | null; state?: string | null; postcode?: string | null; postal_code?: string | null;
+  country?: string | null; countryCode?: string | null;
+}
+
+const hasDeliveryAddress = (address?: DeliveryAddress | null) => Boolean(address && (address.line1 || address.city || address.postcode || address.postal_code));
+
 interface ShipmentRow extends Shipment {
   orders?: {
     orderNumber?: string;
-    products?: { title?: string } | null;
+    shippingAddress?: DeliveryAddress | null;
+    shippingMethod?: string | null;
+    products?: { title?: string; listingContext?: string | null } | null;
   } | null;
 }
 
@@ -54,10 +64,11 @@ const SellerShipments = () => {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ShipmentRow | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [sellerOrders, setSellerOrders] = useState<{ id: string; orderNumber: string; status: string }[]>([]);
+  const [sellerOrders, setSellerOrders] = useState<{ id: string; orderNumber: string; status: string; shippingAddress: DeliveryAddress | null; listingContext: string | null }[]>([]);
   const [createForm, setCreateForm] = useState({ orderId: "", courierName: "Royal Mail", trackingNumber: "", dispatchedAt: "" });
   const [creating, setCreating] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [correctingDispatch, setCorrectingDispatch] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [uploadingPod, setUploadingPod] = useState(false);
   const [openingPod, setOpeningPod] = useState(false);
@@ -67,7 +78,7 @@ const SellerShipments = () => {
     try {
       const { data, error } = await supabase
         .from("shipments")
-        .select(`*, orders!shipments_order_id_fkey(orderNumber, products!orders_productId_fkey(title))`)
+        .select(`*, orders!shipments_order_id_fkey(orderNumber, shippingAddress, shippingMethod, products!orders_productId_fkey(title, listingContext))`)
         .eq("seller_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -110,17 +121,29 @@ const SellerShipments = () => {
     if (!user) return;
     const { data } = await supabase
       .from("orders")
-      .select("id, orderNumber, status")
+      .select("id, orderNumber, status, shippingAddress, products:productId(listingContext)")
       .eq("sellerId", user.id)
       .in("status", ["paid", "packed", "shipped"])
       .order("createdAt", { ascending: false });
-    setSellerOrders((data ?? []) as { id: string; orderNumber: string; status: string }[]);
+    const rows = (data ?? []) as unknown as Array<{ id: string; orderNumber: string; status: string; shippingAddress: DeliveryAddress | null; products: { listingContext?: string | null } | null }>;
+    setSellerOrders(rows.map((row) => ({ id: row.id, orderNumber: row.orderNumber, status: row.status, shippingAddress: row.shippingAddress ?? null, listingContext: row.products?.listingContext ?? null })));
     setCreateForm({ orderId: "", courierName: "Royal Mail", trackingNumber: "", dispatchedAt: "" });
     setCreateOpen(true);
   };
 
   const handleCreateShipment = async () => {
     if (!createForm.orderId) return;
+    const selectedOrder = sellerOrders.find((order) => order.id === createForm.orderId);
+    if (createForm.dispatchedAt && selectedOrder?.listingContext !== "service") {
+      if (!hasDeliveryAddress(selectedOrder?.shippingAddress)) {
+        toast({ title: "Delivery address missing", description: "This physical order cannot be dispatched until the buyer delivery address is present on the order.", variant: "destructive" });
+        return;
+      }
+      if (!createForm.trackingNumber.trim()) {
+        toast({ title: "Tracking number required", description: "Enter the Royal Mail or Evri tracking number before marking this physical order as dispatched.", variant: "destructive" });
+        return;
+      }
+    }
     setCreating(true);
     try {
       const payload: Record<string, unknown> = { order_id: createForm.orderId };
@@ -224,6 +247,41 @@ const SellerShipments = () => {
     }
   };
 
+  const handleCorrectDispatch = async (shipment: ShipmentRow) => {
+    if (shipment.status !== "Dispatched" || correctingDispatch) return;
+    const confirmed = window.confirm("Correct accidental dispatch? Use this only if the parcel has not actually been handed to the courier. The buyer will be notified and the correction will remain in history.");
+    if (!confirmed) return;
+
+    setCorrectingDispatch(true);
+    try {
+      const res = await authorizedFetch(`/.netlify/functions/update-shipment-status/${shipment.id}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ correction: "undo_dispatch", message: "Dispatch corrected by seller: parcel was not handed to the courier" }),
+      });
+      const json = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed to correct dispatch");
+      toast({ title: "Dispatch corrected", description: "Shipment returned to Processing and buyer was notified." });
+      setPendingStatus("");
+      setSelected(null);
+      await loadShipments();
+    } catch (err) {
+      toast({ title: "Failed to correct dispatch", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setCorrectingDispatch(false);
+    }
+  };
+
+  const handlePrintLabel = (shipment: ShipmentRow) => {
+    const a = shipment.orders?.shippingAddress;
+    if (!hasDeliveryAddress(a)) { toast({ title: "Cannot print label", description: "Delivery address is missing.", variant: "destructive" }); return; }
+    const esc = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch] ?? ch));
+    const lines = [buyerNames[shipment.buyer_id] ?? "Customer", a?.line1, a?.line2, a?.city, a?.county ?? a?.state, a?.postcode ?? a?.postal_code, a?.countryCode === "GB" ? "United Kingdom" : a?.country].filter(Boolean).map(esc);
+    const html = `<!doctype html><html><head><title>Shipping label ${esc(shipment.orders?.orderNumber)}</title><style>@page{size:100mm 150mm;margin:8mm}body{font:16px Arial,sans-serif;color:#111}.box{border:2px solid #111;padding:18px}.brand{font-weight:800;font-size:20px}.to{font-size:12px;margin-top:18px;text-transform:uppercase}.address{font-size:20px;line-height:1.45;margin-top:6px}.meta{margin-top:22px;border-top:1px solid #999;padding-top:10px;font-size:12px}.note{margin-top:12px;font-size:10px;color:#555}@media print{button{display:none}}</style></head><body><div class="box"><div class="brand">Loadify Market</div><div class="to">Ship to</div><div class="address">${lines.join("<br>")}</div><div class="meta"><b>Order:</b> ${esc(shipment.orders?.orderNumber ?? shipment.order_id)}<br><b>Carrier:</b> ${esc(shipment.courier_name ?? shipment.orders?.shippingMethod ?? "")}${shipment.tracking_number ? `<br><b>Tracking:</b> ${esc(shipment.tracking_number)}` : ""}</div><div class="note">Dispatch address label only. Carrier postage must be purchased separately.</div></div><script>window.onload=()=>window.print()<\/script></body></html>`;
+    const blob = new Blob([html], { type: "text/html" }); const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank", "noopener,noreferrer"); if (!win) toast({ title:"Pop-up blocked", description:"Allow pop-ups to print the shipping label.", variant:"destructive" });
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+  };
+
   const filtered = shipments.filter((s) => {
     const q = search.toLowerCase();
     return s.id.toLowerCase().includes(q)
@@ -307,6 +365,24 @@ const SellerShipments = () => {
                   <div><span className="text-muted-foreground">Dispatched</span><p className="font-medium text-foreground">{selected.dispatched_at ? new Date(selected.dispatched_at).toLocaleDateString("en-GB") : "—"}</p></div>
                 </div>
 
+                {selected.orders?.products?.listingContext !== "service" ? (
+                  <div className={`rounded-lg border p-3 ${hasDeliveryAddress(selected.orders?.shippingAddress) ? "border-border bg-muted/50" : "border-red-200 bg-red-50"}`}>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">Ship to address</p>
+                    {hasDeliveryAddress(selected.orders?.shippingAddress) ? (
+                      <>
+                        <p className="text-sm font-semibold text-foreground">{buyerNames[selected.buyer_id] ?? "Customer"}</p>
+                        <p className="text-sm text-foreground">
+                          {[selected.orders?.shippingAddress?.line1, selected.orders?.shippingAddress?.line2, selected.orders?.shippingAddress?.city, selected.orders?.shippingAddress?.county ?? selected.orders?.shippingAddress?.state, selected.orders?.shippingAddress?.postcode ?? selected.orders?.shippingAddress?.postal_code, selected.orders?.shippingAddress?.countryCode === "GB" ? "United Kingdom" : selected.orders?.shippingAddress?.country].filter(Boolean).join(", ")}
+                        </p>
+                        {selected.orders?.shippingMethod ? <p className="mt-2 text-xs text-muted-foreground">Delivery method: <span className="font-semibold text-foreground">{selected.orders.shippingMethod}</span></p> : null}
+                        <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => handlePrintLabel(selected)}><Printer className="mr-1.5 h-3.5 w-3.5" />Print shipping label</Button>
+                      </>
+                    ) : (
+                      <p className="text-sm font-semibold text-red-700">Delivery address missing - do not dispatch this order.</p>
+                    )}
+                  </div>
+                ) : null}
+
                 {selected.proof_of_delivery_url ? (
                   <div className="rounded-lg bg-muted/50 border border-border p-3">
                     <p className="text-xs font-semibold text-muted-foreground mb-2">PROOF OF DELIVERY</p>
@@ -337,8 +413,9 @@ const SellerShipments = () => {
                         <SelectItem value="Pending">Pending</SelectItem><SelectItem value="Processing">Processing</SelectItem><SelectItem value="Dispatched">Dispatched</SelectItem><SelectItem value="In Transit">In Transit</SelectItem><SelectItem value="Out for Delivery">Out for Delivery</SelectItem><SelectItem value="Delivered">Delivered</SelectItem><SelectItem value="Delivery Failed">Delivery Failed</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button size="sm" disabled={!pendingStatus || pendingStatus === selected.status || updatingStatus} onClick={() => void handleUpdateStatus(selected, pendingStatus)}>{updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</Button>
+                    <Button size="sm" disabled={!pendingStatus || pendingStatus === selected.status || updatingStatus || correctingDispatch} onClick={() => void handleUpdateStatus(selected, pendingStatus)}>{updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</Button>
                   </div>
+                  {selected.status === "Dispatched" ? <Button type="button" variant="outline" className="w-full border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100" disabled={correctingDispatch || updatingStatus} onClick={() => void handleCorrectDispatch(selected)}>{correctingDispatch ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}Correct accidental dispatch</Button> : null}
                 </div>
               </div>
             </DialogContent>

@@ -60,6 +60,7 @@ const Checkout = () => {
 
   const [shippingError, setShippingError] = useState<string | null>(null);
   const emailSyncedRef = useRef(false);
+  const addressPrefilledRef = useRef(false);
 
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedMethodId, setSelectedMethodId] = useState<string>(SELLER_ARRANGED.methodId);
@@ -170,6 +171,30 @@ const Checkout = () => {
     }
   }, [user?.email]);
 
+  useEffect(() => {
+    if (!user?.id || addressPrefilledRef.current) return;
+    addressPrefilledRef.current = true;
+    void Promise.all([
+      supabase.from("buyer_profiles").select("shippingAddress").eq("userId", user.id).maybeSingle(),
+      supabase.from("users").select("firstName, lastName").eq("id", user.id).maybeSingle(),
+    ]).then(([profileResult, userResult]) => {
+      const saved = profileResult.data?.shippingAddress as Record<string, unknown> | null | undefined;
+      const identity = userResult.data as { firstName?: string | null; lastName?: string | null } | null;
+      const savedName = String(saved?.name ?? "").trim().split(/\s+/);
+      setShippingData((prev) => ({
+        ...prev,
+        firstName: prev.firstName || identity?.firstName || savedName[0] || "",
+        lastName: prev.lastName || identity?.lastName || savedName.slice(1).join(" ") || "",
+        phone: prev.phone || String(saved?.phone ?? saved?.phoneNumber ?? ""),
+        address1: prev.address1 || String(saved?.line1 ?? ""),
+        address2: prev.address2 || String(saved?.line2 ?? ""),
+        city: prev.city || String(saved?.city ?? ""),
+        county: prev.county || String(saved?.county ?? saved?.state ?? ""),
+        postcode: prev.postcode || String(saved?.postcode ?? saved?.postal_code ?? ""),
+      }));
+    }).catch(() => {});
+  }, [user?.id]);
+
   const handleContinueToPayment = () => {
     if (noDeliveryMethodAvailable) {
       setShippingError("This seller has not configured a delivery method for the items in your cart yet. Please contact the seller or try again later.");
@@ -241,12 +266,34 @@ const Checkout = () => {
 
     try {
       const address = {
+        name: `${shippingData.firstName.trim()} ${shippingData.lastName.trim()}`.trim(),
+        ...(shippingData.phone.trim() ? { phone: shippingData.phone.trim() } : {}),
         line1: shippingData.address1,
         ...(shippingData.address2 ? { line2: shippingData.address2 } : {}),
         city: shippingData.city,
+        ...(shippingData.county ? { county: shippingData.county } : {}),
         postal_code: shippingData.postcode,
         country: "GB",
       };
+
+      if (user?.id) {
+        const savedShippingAddress = {
+          name: `${shippingData.firstName.trim()} ${shippingData.lastName.trim()}`.trim(),
+          phone: shippingData.phone.trim(),
+          line1: shippingData.address1.trim(),
+          line2: shippingData.address2.trim(),
+          city: shippingData.city.trim(),
+          county: shippingData.county.trim(),
+          postcode: shippingData.postcode.trim().toUpperCase(),
+          country: "United Kingdom",
+          countryCode: "GB",
+          isDefault: true,
+        };
+        const { error: saveAddressError } = await supabase
+          .from("buyer_profiles")
+          .upsert({ userId: user.id, shippingAddress: savedShippingAddress }, { onConflict: "userId" });
+        if (saveAddressError) throw new Error("Your delivery address could not be saved. Please try again before paying.");
+      }
 
       const items = cartItems.map((item) => ({
         productId: item.product.id,
