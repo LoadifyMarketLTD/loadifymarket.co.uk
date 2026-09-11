@@ -249,7 +249,7 @@ const SellerOrders = () => {
             </div>
           ) : (
             filtered.map((o) => (
-              <div key={o.id} className="p-4 space-y-2">
+              <div key={o.id} role="button" tabIndex={0} onClick={() => navigate(`/seller/orders/${o.id}`)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/seller/orders/${o.id}`); } }} className="p-4 space-y-2 cursor-pointer hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-foreground truncate">{o.orderNumber}</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize shrink-0 ${statusColors[o.status] ?? "bg-muted text-muted-foreground"}`}>
@@ -270,7 +270,7 @@ const SellerOrders = () => {
                 ) : null}
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
                     <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => navigate(`/seller/orders/${o.id}`)}>View</Button>
                     {["paid", "packed", "shipped"].includes(o.status) && (
                       <DropdownMenu>
@@ -320,14 +320,14 @@ const SellerOrders = () => {
                 </tr>
               ) : (
                 filtered.map((o) => (
-                  <tr key={o.id} className="hover:bg-muted/20 transition-colors">
+                  <tr key={o.id} tabIndex={0} onClick={() => navigate(`/seller/orders/${o.id}`)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/seller/orders/${o.id}`); } }} className="cursor-pointer hover:bg-muted/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50">
                     <td className="p-4 text-sm font-medium text-foreground">{o.orderNumber}</td>
                     <td className="p-4 text-sm text-foreground">{o.buyerName}</td>
                     <td className="p-4 text-xs text-muted-foreground">{o.listingContext === "service" ? "Service order" : hasDeliveryAddress(o.shippingAddress) ? [o.shippingAddress?.line1, o.shippingAddress?.city, o.shippingAddress?.postcode ?? o.shippingAddress?.postal_code].filter(Boolean).join(", ") : <span className="font-semibold text-red-600">Address missing</span>}</td>
                     <td className="p-4 text-sm font-semibold text-foreground">£{o.total.toLocaleString()}</td>
                     <td className="p-4"><span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${statusColors[o.status] ?? "bg-muted text-muted-foreground"}`}>{o.status}</span></td>
                     <td className="p-4 text-sm text-muted-foreground">{formatDate(o.createdAt)}</td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate(`/seller/orders/${o.id}`)}>View</Button>
                         {["paid", "packed", "shipped"].includes(o.status) && (
