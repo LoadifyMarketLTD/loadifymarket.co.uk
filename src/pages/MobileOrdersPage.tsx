@@ -14,6 +14,7 @@ import {
   FileCheck2,
   Loader2,
   MessageSquare,
+  MapPin,
   Package,
   RotateCcw,
   ShieldAlert,
@@ -82,12 +83,28 @@ type DisputeRow = {
   createdAt: string;
 };
 
+type DeliveryAddress = {
+  name?: string | null;
+  phone?: string | null;
+  phoneNumber?: string | null;
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  county?: string | null;
+  state?: string | null;
+  postcode?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  countryCode?: string | null;
+};
+
 type OrderItemRow = {
   id: string;
   quantity: number | null;
   productTitleSnapshot: string | null;
   productImageSnapshot: string | null;
   productSnapshotSource: string | null;
+  listingContextSnapshot?: string | null;
 };
 
 type OrderDetail = OrderRow & {
@@ -100,6 +117,8 @@ type OrderDetail = OrderRow & {
   dispute: DisputeRow | null;
   orderItemId: string | null;
   orderItemQuantity: number;
+  shippingAddress: DeliveryAddress | null;
+  listingContext: string | null;
 };
 
 type ReturnDecision = "eligible_for_return_request" | "manual_review" | "ineligible";
@@ -218,6 +237,10 @@ function formatDateTime(iso: string) {
   });
 }
 
+function hasDeliveryAddress(address: DeliveryAddress | null | undefined) {
+  return Boolean(address?.line1?.trim() && address?.city?.trim() && (address?.postcode?.trim() || address?.postal_code?.trim()));
+}
+
 function fullName(row: BuyerLookup | null | undefined) {
   if (!row) return null;
   return [row.firstName, row.lastName].filter(Boolean).join(" ").trim() || null;
@@ -298,7 +321,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
       try {
         const { data: orderData, error: orderError } = await supabase
           .from("orders")
-          .select(`id, orderNumber, total, status, createdAt, quantity, buyerId, sellerId, buyerNameSnapshot, sellerBusinessNameSnapshot, commercialSnapshotSource, products:productId(title, images), order_items(id, quantity, productTitleSnapshot, productImageSnapshot, productSnapshotSource)`)
+          .select(`id, orderNumber, total, status, createdAt, quantity, buyerId, sellerId, buyerNameSnapshot, sellerBusinessNameSnapshot, commercialSnapshotSource, shippingAddress, products:productId(title, images, listingContext), order_items(id, quantity, productTitleSnapshot, productImageSnapshot, productSnapshotSource, listingContextSnapshot)`)
           .eq("id", orderId)
           .maybeSingle();
         if (orderError || !orderData) { setError("This order could not be loaded."); return; }
@@ -306,8 +329,8 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         const raw = orderData as unknown as {
           id: string; orderNumber: string; total: number; status: string; createdAt: string; quantity: number;
           buyerId: string | null; sellerId: string | null; buyerNameSnapshot: string | null;
-          sellerBusinessNameSnapshot: string | null; commercialSnapshotSource: string | null;
-          products: { title: string; images: string[] | null } | null; order_items: OrderItemRow[] | null;
+          sellerBusinessNameSnapshot: string | null; commercialSnapshotSource: string | null; shippingAddress: DeliveryAddress | null;
+          products: { title: string; images: string[] | null; listingContext?: string | null } | null; order_items: OrderItemRow[] | null;
         };
 
         const isBuyer = raw.buyerId === user.id;
@@ -350,6 +373,8 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           dispute: ((disputeRows ?? [])[0] as DisputeRow | undefined) ?? null,
           orderItemId: snapshotItem?.id ?? null,
           orderItemQuantity: snapshotItem?.quantity ?? raw.quantity ?? 1,
+          shippingAddress: raw.shippingAddress ?? null,
+          listingContext: snapshotItem?.listingContextSnapshot ?? raw.products?.listingContext ?? null,
         });
         setShipmentCourier(shipment?.courier_name ?? "");
         setShipmentTracking(shipment?.tracking_number ?? "");
@@ -498,6 +523,15 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
 
   const saveShipment = async (markDispatched: boolean) => {
     if (!detail || !user?.id || mode !== "sell" || detail.sellerId !== user.id || shipmentSaving) return;
+    const isPhysicalOrder = detail.listingContext !== "service";
+    if (markDispatched && isPhysicalOrder && !hasDeliveryAddress(detail.shippingAddress)) {
+      toast({ title: "Delivery address missing", description: "This physical order cannot be dispatched until a valid delivery address is stored on the order.", variant: "destructive" });
+      return;
+    }
+    if (markDispatched && isPhysicalOrder && !shipmentTracking.trim()) {
+      toast({ title: "Tracking number required", description: "This physical order cannot be dispatched without a tracking number.", variant: "destructive" });
+      return;
+    }
     if (!shipmentCourier) {
       toast({ title: "Choose a courier", description: "Select Royal Mail or Evri before saving shipping details.", variant: "destructive" });
       return;
@@ -627,6 +661,27 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#0A234F]/[0.07] pt-3 text-[11px]"><div><p className="font-semibold text-[#98A2B3]">Order date</p><p className="mt-0.5 font-bold text-[#475569]">{formatDate(detail.createdAt)}</p></div><div><p className="font-semibold text-[#98A2B3]">Order status</p><p className="mt-0.5 font-bold capitalize text-[#475569]">{cfg.label}</p></div></div>
         </section>
 
+        {isSellerView ? (
+          <section className={`rounded-[20px] border bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)] ${hasDeliveryAddress(detail.shippingAddress) ? "border-[#0A234F]/[0.08]" : "border-red-200"}`}>
+            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Ship to</h2></div>
+            {hasDeliveryAddress(detail.shippingAddress) ? (
+              <div className="mt-3 rounded-[14px] bg-[#F7F9FC] p-3 text-[11px] leading-[1.6] text-[#475569]">
+                {detail.shippingAddress?.name ? <p className="font-extrabold text-[#26354A]">{detail.shippingAddress.name}</p> : null}
+                <p>{detail.shippingAddress?.line1}</p>
+                {detail.shippingAddress?.line2 ? <p>{detail.shippingAddress.line2}</p> : null}
+                <p>{[detail.shippingAddress?.city, detail.shippingAddress?.county ?? detail.shippingAddress?.state].filter(Boolean).join(", ")}</p>
+                <p className="font-extrabold text-[#26354A]">{detail.shippingAddress?.postcode ?? detail.shippingAddress?.postal_code}</p>
+                <p>{detail.shippingAddress?.countryCode === "GB" || detail.shippingAddress?.country === "GB" ? "United Kingdom" : detail.shippingAddress?.country}</p>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-[14px] bg-red-50 p-3">
+                <p className="text-[11px] font-black text-red-700">Delivery address missing</p>
+                <p className="mt-1 text-[10px] leading-[1.5] text-red-600">This physical order cannot be dispatched until a valid delivery address is stored on the order.</p>
+              </div>
+            )}
+          </section>
+        ) : null}
+
         <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
           <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Delivery</h2></div>
 
@@ -668,7 +723,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
               <div className="mt-3 space-y-2.5">
                 <select value={shipmentCourier} onChange={(event) => setShipmentCourier(event.target.value)} className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A]"><option value="">Choose courier</option>{COURIERS.map((courier) => <option key={courier} value={courier}>{courier}</option>)}</select>
                 <input value={shipmentTracking} onChange={(event) => setShipmentTracking(event.target.value)} maxLength={120} placeholder="Tracking number" className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A] outline-none" />
-                <div className="grid grid-cols-2 gap-2"><button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(false); }} className="min-h-11 rounded-[12px] border border-[#0A234F]/10 bg-white text-[10px] font-extrabold text-[#0A234F] disabled:opacity-60">Save only</button><button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(true); }} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[12px] bg-[#0A234F] text-[10px] font-extrabold text-white disabled:opacity-60">{shipmentSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}Mark dispatched</button></div>
+                <div className="grid grid-cols-2 gap-2"><button type="button" disabled={shipmentSaving} onClick={() => { void saveShipment(false); }} className="min-h-11 rounded-[12px] border border-[#0A234F]/10 bg-white text-[10px] font-extrabold text-[#0A234F] disabled:opacity-60">Save only</button><button type="button" disabled={shipmentSaving || (detail.listingContext !== "service" && (!hasDeliveryAddress(detail.shippingAddress) || !shipmentTracking.trim()))} onClick={() => { void saveShipment(true); }} className="flex min-h-11 items-center justify-center gap-1.5 rounded-[12px] bg-[#0A234F] text-[10px] font-extrabold text-white disabled:opacity-60">{shipmentSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}Mark dispatched</button></div>
               </div>
             </div>
           ) : <div className="mt-3 rounded-[14px] bg-[#FFF8E8] p-3"><p className="text-[11px] font-extrabold text-[#795300]">Preparing for shipment</p><p className="mt-1 text-[10px] leading-[1.45] text-[#8A6A25]">Tracking information will appear here when a shipment is created.</p></div>}
