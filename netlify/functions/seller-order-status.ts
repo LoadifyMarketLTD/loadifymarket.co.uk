@@ -21,6 +21,7 @@ interface OrderRow {
   stripePaymentIntentId?: string | null;
   rfqId?: string | null;
   rfqResponseId?: string | null;
+  shippingAddress?: Record<string, unknown> | null;
 }
 
 interface ProductRow {
@@ -35,7 +36,7 @@ function isAllowedTransition(currentStatus: string, nextStatus: SellerStatusUpda
     case 'packed':
       return currentStatus === 'paid';
     case 'shipped':
-      return currentStatus === 'paid' || currentStatus === 'packed';
+      return listingContext === 'service' && (currentStatus === 'paid' || currentStatus === 'packed');
     case 'delivered':
       return listingContext === 'service' && (currentStatus === 'paid' || currentStatus === 'packed' || currentStatus === 'shipped');
     default:
@@ -96,7 +97,7 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select('id, orderNumber, buyerId, sellerId, status, productId, stripePaymentIntentId, rfqId, rfqResponseId')
+    .select('id, orderNumber, buyerId, sellerId, status, productId, stripePaymentIntentId, rfqId, rfqResponseId, shippingAddress')
     .eq('id', orderId)
     .maybeSingle<OrderRow>();
 
@@ -117,6 +118,12 @@ export const handler: Handler = async (event) => {
     .maybeSingle<ProductRow>();
 
   const listingContext = product?.listingContext ?? null;
+  if (status === 'shipped' && listingContext !== 'service') {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({ error: 'Physical orders must be dispatched through Seller Shipments with an approved carrier and tracking number.' }),
+    };
+  }
   if (!isAllowedTransition(order.status, status, listingContext)) {
     return {
       statusCode: 409,

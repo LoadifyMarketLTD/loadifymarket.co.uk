@@ -14,6 +14,14 @@ import type { User } from "@/types";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
+interface ShippingAddress {
+  line1?: string | null; line2?: string | null; city?: string | null;
+  county?: string | null; state?: string | null; postcode?: string | null; postal_code?: string | null;
+  country?: string | null; countryCode?: string | null;
+}
+
+const hasDeliveryAddress = (address?: ShippingAddress | null) => Boolean(address && (address.line1 || address.city || address.postcode || address.postal_code));
+
 interface Order {
   id: string;
   orderNumber: string;
@@ -23,6 +31,8 @@ interface Order {
   status: string;
   createdAt: string;
   listingContext: string | null;
+  shippingAddress: ShippingAddress | null;
+  shippingMethod: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -56,7 +66,7 @@ const SellerOrders = () => {
       setLoadError(null);
       const { data, error: fetchError } = await supabase
         .from("orders")
-        .select("id, orderNumber, total, status, createdAt, buyerId, productId, buyerNameSnapshot, commercialSnapshotSource")
+        .select("id, orderNumber, total, status, createdAt, buyerId, productId, buyerNameSnapshot, commercialSnapshotSource, shippingAddress, shippingMethod")
         .eq("sellerId", user.id)
         .order("createdAt", { ascending: false });
 
@@ -77,6 +87,8 @@ const SellerOrders = () => {
         productId: string;
         buyerNameSnapshot: string | null;
         commercialSnapshotSource: string | null;
+        shippingAddress: ShippingAddress | null;
+        shippingMethod: string | null;
       }>;
 
       const legacyBuyerIds = [...new Set(
@@ -125,6 +137,8 @@ const SellerOrders = () => {
           status: o.status,
           createdAt: o.createdAt,
           listingContext: listingContextByProductId[o.productId] ?? null,
+          shippingAddress: o.shippingAddress ?? null,
+          shippingMethod: o.shippingMethod ?? null,
         }))
       );
       setLoading(false);
@@ -139,6 +153,11 @@ const SellerOrders = () => {
   );
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    const target = orders.find((order) => order.id === orderId);
+    if (newStatus === "shipped" && target?.listingContext !== "service" && !hasDeliveryAddress(target?.shippingAddress)) {
+      toast({ title: "Delivery address missing", description: "This physical order cannot be marked as shipped until the buyer delivery address is present on the order.", variant: "destructive" });
+      return;
+    }
     setActionLoading(orderId);
     try {
       const res = await authorizedFetch("/.netlify/functions/seller-order-status", {
@@ -241,10 +260,18 @@ const SellerOrders = () => {
                   <span className="text-xs text-muted-foreground">{o.buyerName}</span>
                   <span className="text-sm font-bold text-foreground">£{o.total.toLocaleString()}</span>
                 </div>
+                {o.listingContext !== "service" ? (
+                  hasDeliveryAddress(o.shippingAddress) ? (
+                    <div className="rounded-lg bg-muted/40 p-2 text-xs text-muted-foreground">
+                      <div className="font-semibold text-foreground">Ship to</div>
+                      <div>{[o.shippingAddress?.line1, o.shippingAddress?.line2, o.shippingAddress?.city, o.shippingAddress?.county ?? o.shippingAddress?.state, o.shippingAddress?.postcode ?? o.shippingAddress?.postal_code, o.shippingAddress?.countryCode === "GB" ? "United Kingdom" : o.shippingAddress?.country].filter(Boolean).join(", ")}</div>
+                    </div>
+                  ) : <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-semibold text-red-700">Delivery address missing - do not dispatch.</div>
+                ) : null}
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</span>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}>View</Button>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => navigate(`/seller/orders/${o.id}`)}>View</Button>
                     {["paid", "packed", "shipped"].includes(o.status) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -254,8 +281,8 @@ const SellerOrders = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {o.status === "paid" && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>Mark as Packed</DropdownMenuItem>}
-                          {(o.status === "paid" || o.status === "packed") && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark as Shipped</DropdownMenuItem>}
-                          {renderShippedAction(o)}
+                          {o.listingContext !== "service" && (o.status === "packed" || o.status === "shipped") && <DropdownMenuItem onClick={() => navigate("/seller/shipments")}>Manage Shipment</DropdownMenuItem>}
+                          {o.listingContext === "service" ? renderShippedAction(o) : null}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -272,6 +299,7 @@ const SellerOrders = () => {
               <tr className="border-b border-border bg-muted/30">
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Order</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Buyer</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground p-4">Ship to</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Total</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Status</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Date</th>
@@ -280,12 +308,12 @@ const SellerOrders = () => {
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">Loading orders…</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">Loading orders…</td></tr>
               ) : loadError ? (
-                <tr><td colSpan={6} className="p-8 text-center text-sm text-red-500">{loadError}</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-sm text-red-500">{loadError}</td></tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">
                     <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-40" />
                     {search ? "No orders match your search." : "No orders yet. Start by listing your first product."}
                   </td>
@@ -295,12 +323,13 @@ const SellerOrders = () => {
                   <tr key={o.id} className="hover:bg-muted/20 transition-colors">
                     <td className="p-4 text-sm font-medium text-foreground">{o.orderNumber}</td>
                     <td className="p-4 text-sm text-foreground">{o.buyerName}</td>
+                    <td className="p-4 text-xs text-muted-foreground">{o.listingContext === "service" ? "Service order" : hasDeliveryAddress(o.shippingAddress) ? [o.shippingAddress?.line1, o.shippingAddress?.city, o.shippingAddress?.postcode ?? o.shippingAddress?.postal_code].filter(Boolean).join(", ") : <span className="font-semibold text-red-600">Address missing</span>}</td>
                     <td className="p-4 text-sm font-semibold text-foreground">£{o.total.toLocaleString()}</td>
                     <td className="p-4"><span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${statusColors[o.status] ?? "bg-muted text-muted-foreground"}`}>{o.status}</span></td>
                     <td className="p-4 text-sm text-muted-foreground">{formatDate(o.createdAt)}</td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}>View</Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate(`/seller/orders/${o.id}`)}>View</Button>
                         {["paid", "packed", "shipped"].includes(o.status) && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -308,8 +337,8 @@ const SellerOrders = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {o.status === "paid" && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>Mark as Packed</DropdownMenuItem>}
-                              {(o.status === "paid" || o.status === "packed") && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark as Shipped</DropdownMenuItem>}
-                              {renderShippedAction(o)}
+                              {o.listingContext !== "service" && (o.status === "packed" || o.status === "shipped") && <DropdownMenuItem onClick={() => navigate("/seller/shipments")}>Manage Shipment</DropdownMenuItem>}
+                              {o.listingContext === "service" ? renderShippedAction(o) : null}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
