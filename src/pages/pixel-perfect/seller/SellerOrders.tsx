@@ -14,6 +14,20 @@ import type { User } from "@/types";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
+interface ShippingAddress {
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  county?: string | null;
+  state?: string | null;
+  postcode?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  countryCode?: string | null;
+}
+
+const hasDeliveryAddress = (address?: ShippingAddress | null) => Boolean(address && (address.line1 || address.city || address.postcode || address.postal_code));
+
 interface Order {
   id: string;
   orderNumber: string;
@@ -23,6 +37,8 @@ interface Order {
   status: string;
   createdAt: string;
   listingContext: string | null;
+  shippingAddress: ShippingAddress | null;
+  shippingMethod: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -56,7 +72,7 @@ const SellerOrders = () => {
       setLoadError(null);
       const { data, error: fetchError } = await supabase
         .from("orders")
-        .select("id, orderNumber, total, status, createdAt, buyerId, productId, buyerNameSnapshot, commercialSnapshotSource")
+        .select("id, orderNumber, total, status, createdAt, buyerId, productId, buyerNameSnapshot, commercialSnapshotSource, shippingAddress, shippingMethod")
         .eq("sellerId", user.id)
         .order("createdAt", { ascending: false });
 
@@ -77,6 +93,8 @@ const SellerOrders = () => {
         productId: string;
         buyerNameSnapshot: string | null;
         commercialSnapshotSource: string | null;
+        shippingAddress: ShippingAddress | null;
+        shippingMethod: string | null;
       }>;
 
       const legacyBuyerIds = [...new Set(
@@ -125,6 +143,8 @@ const SellerOrders = () => {
           status: o.status,
           createdAt: o.createdAt,
           listingContext: listingContextByProductId[o.productId] ?? null,
+          shippingAddress: o.shippingAddress ?? null,
+          shippingMethod: o.shippingMethod ?? null,
         }))
       );
       setLoading(false);
@@ -241,10 +261,11 @@ const SellerOrders = () => {
                   <span className="text-xs text-muted-foreground">{o.buyerName}</span>
                   <span className="text-sm font-bold text-foreground">£{o.total.toLocaleString()}</span>
                 </div>
+                {o.listingContext !== "service" ? (hasDeliveryAddress(o.shippingAddress) ? <div className="rounded-lg bg-muted/40 p-2 text-xs text-muted-foreground"><span className="font-semibold text-foreground">Ship to: </span>{[o.shippingAddress?.line1, o.shippingAddress?.city, o.shippingAddress?.postcode ?? o.shippingAddress?.postal_code].filter(Boolean).join(", ")}</div> : <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-semibold text-red-700">Delivery address missing - do not dispatch.</div>) : null}
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</span>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}>View</Button>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => navigate(`/seller/orders/${o.id}`)}>View</Button>
                     {["paid", "packed", "shipped"].includes(o.status) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -254,7 +275,7 @@ const SellerOrders = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {o.status === "paid" && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>Mark as Packed</DropdownMenuItem>}
-                          {(o.status === "paid" || o.status === "packed") && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark as Shipped</DropdownMenuItem>}
+                          {(o.status === "paid" || o.status === "packed") && (o.listingContext === "service" ? <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark Job as Started</DropdownMenuItem> : <DropdownMenuItem onClick={() => navigate(`/seller/orders/${o.id}`)}>Add tracking & dispatch</DropdownMenuItem>)}
                           {renderShippedAction(o)}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -300,7 +321,7 @@ const SellerOrders = () => {
                     <td className="p-4 text-sm text-muted-foreground">{formatDate(o.createdAt)}</td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}>View</Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate(`/seller/orders/${o.id}`)}>View</Button>
                         {["paid", "packed", "shipped"].includes(o.status) && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -308,7 +329,7 @@ const SellerOrders = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {o.status === "paid" && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>Mark as Packed</DropdownMenuItem>}
-                              {(o.status === "paid" || o.status === "packed") && <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark as Shipped</DropdownMenuItem>}
+                              {(o.status === "paid" || o.status === "packed") && (o.listingContext === "service" ? <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>Mark Job as Started</DropdownMenuItem> : <DropdownMenuItem onClick={() => navigate(`/seller/orders/${o.id}`)}>Add tracking & dispatch</DropdownMenuItem>)}
                               {renderShippedAction(o)}
                             </DropdownMenuContent>
                           </DropdownMenu>
