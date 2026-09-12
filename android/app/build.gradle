@@ -54,8 +54,6 @@ android {
     }
     buildTypes {
         debug {
-            applicationIdSuffix ".pixeltest"
-            versionNameSuffix "-pixeltest"
         }
         release {
             if (loadifyReleaseSigningConfigured) {
