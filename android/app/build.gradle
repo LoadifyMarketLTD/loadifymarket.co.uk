@@ -33,7 +33,7 @@ android {
         applicationId "co.uk.loadifymarket.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
+        versionCode 5
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -53,6 +53,10 @@ android {
         }
     }
     buildTypes {
+        debug {
+            applicationIdSuffix ".pixeltest"
+            versionNameSuffix "-pixeltest"
+        }
         release {
             if (loadifyReleaseSigningConfigured) {
                 signingConfig signingConfigs.release
@@ -96,3 +100,4 @@ if (googleServicesConfigured) {
 } else {
     logger.info("google-services.json not found, google-services plugin not applied for non-release task")
 }
+

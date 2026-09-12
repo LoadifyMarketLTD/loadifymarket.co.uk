@@ -214,8 +214,17 @@ export const handler: Handler = async (event) => {
 
   const isServiceOnlyCart = items.every((item) => productMap.get(item.productId)?.listingContext === 'service');
   const effectiveShippingAddress = shippingAddress ?? {};
-  if (!isServiceOnlyCart && (!shippingAddress || Object.keys(shippingAddress).length === 0)) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Shipping address is required for physical product orders.' }) };
+  const hasCompleteShippingAddress = Boolean(
+    shippingAddress
+    && typeof shippingAddress.line1 === 'string' && shippingAddress.line1.trim()
+    && typeof shippingAddress.city === 'string' && shippingAddress.city.trim()
+    && typeof (shippingAddress.postal_code ?? shippingAddress.postcode) === 'string'
+    && String(shippingAddress.postal_code ?? shippingAddress.postcode).trim()
+    && typeof (shippingAddress.country ?? shippingAddress.countryCode) === 'string'
+    && String(shippingAddress.country ?? shippingAddress.countryCode).trim()
+  );
+  if (!isServiceOnlyCart && !hasCompleteShippingAddress) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'A complete shipping address is required for physical product orders.' }) };
   }
 
   const enrichedItems = items.map((item) => {

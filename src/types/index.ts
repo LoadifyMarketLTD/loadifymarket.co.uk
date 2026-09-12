@@ -283,7 +283,18 @@ export type ReturnReason =
   | 'changed_mind'
   | 'other';
 
-export type ReturnStatus = 'requested' | 'approved' | 'rejected' | 'completed';
+export type ReturnStatus =
+  | 'requested'
+  | 'approved'
+  | 'awaiting_buyer_dispatch'
+  | 'in_transit_to_seller'
+  | 'awaiting_seller_reception'
+  | 'received'
+  | 'refund_pending'
+  | 'refunded'
+  | 'rejected'
+  | 'completed'
+  | 'cancelled';
 
 export interface Return {
   id: string;
@@ -297,6 +308,10 @@ export interface Return {
   refundAmount?: number;
   buyerTrackingNumber?: string;
   sellerTrackingNumber?: string;
+  buyerReturnCarrier?: 'Royal Mail' | 'Evri';
+  returnAddressSnapshot?: Record<string, string | null>;
+  returnReceivedAt?: string;
+  refundProcessedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

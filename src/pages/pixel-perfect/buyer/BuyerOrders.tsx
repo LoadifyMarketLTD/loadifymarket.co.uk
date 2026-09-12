@@ -16,11 +16,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown, CheckCheck } from "lucide-react";
+import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown, CheckCheck, MapPin, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import type { Return as ReturnRecord } from "@/types";
 
 interface OrderRow {
   id: string;
@@ -31,6 +32,8 @@ interface OrderRow {
   sellerId: string | null;
   products: { title: string } | null;
   order_items: Array<{ productTitleSnapshot: string | null }> | null;
+  shippingAddress: { line1?: string; line2?: string; city?: string; county?: string; state?: string; postcode?: string; postal_code?: string; country?: string; countryCode?: string } | null;
+  shippingMethod: string | null;
 }
 
 function orderProductTitle(order: OrderRow): string {
@@ -73,11 +76,17 @@ const BuyerOrders = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [addressOrder, setAddressOrder] = useState<OrderRow | null>(null);
+  const [cancelOrder, setCancelOrder] = useState<OrderRow | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const [returnOrder, setReturnOrder] = useState<OrderRow | null>(null);
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnLoading, setReturnLoading] = useState(false);
+  const [returnRecord, setReturnRecord] = useState<ReturnRecord | null>(null);
+  const [returnCarrier, setReturnCarrier] = useState<'Royal Mail' | 'Evri'>('Royal Mail');
+  const [returnTracking, setReturnTracking] = useState("");
 
   const [disputeOrder, setDisputeOrder] = useState<OrderRow | null>(null);
   const [disputeSubject, setDisputeSubject] = useState("");
@@ -124,6 +133,21 @@ const BuyerOrders = () => {
     }
   };
 
+
+  const handleCancelOrder = async () => {
+    if (!cancelOrder) return;
+    setCancelLoading(true);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/buyer-cancel-order", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({orderId:cancelOrder.id,reason:"Ordered by mistake"}) });
+      const data = await res.json().catch(()=>({})) as {error?:string};
+      if (!res.ok) throw new Error(data.error || "Cancellation failed");
+      setOrders(prev=>prev.map(o=>o.id===cancelOrder.id?{...o,status:"refunded"}:o));
+      toast({title:"Order cancelled",description:"Your payment is being returned to the original payment method."});
+      setCancelOrder(null);
+    } catch(e) { toast({title:"Could not cancel order",description:(e as Error).message,variant:"destructive"}); }
+    finally { setCancelLoading(false); }
+  };
+
   const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
     try {
       const res = await authorizedFetch('/.netlify/functions/generate-invoice', {
@@ -164,7 +188,7 @@ const BuyerOrders = () => {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("id, orderNumber, total, status, createdAt, sellerId, products(title), order_items(productTitleSnapshot)")
+          .select("id, orderNumber, total, status, createdAt, sellerId, shippingAddress, shippingMethod, products(title), order_items(productTitleSnapshot)")
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
@@ -186,6 +210,42 @@ const BuyerOrders = () => {
   );
 
   const byStatus = (status: string) => filtered.filter((o) => o.status === status);
+
+  const openReturnFlow = async (order: OrderRow) => {
+    const { data: existing } = await supabase
+      .from("returns")
+      .select("*")
+      .eq("orderId", order.id)
+      .neq("status", "rejected")
+      .maybeSingle();
+    if (existing) {
+      setReturnRecord(existing as ReturnRecord);
+      setReturnCarrier((existing.buyerReturnCarrier as 'Royal Mail' | 'Evri') || 'Royal Mail');
+      setReturnTracking(existing.buyerTrackingNumber || "");
+      return;
+    }
+    setReturnOrder(order);
+    setReturnReason("");
+    setReturnDescription("");
+  };
+
+  const handleReturnDispatch = async () => {
+    if (!returnRecord || !returnTracking.trim()) return;
+    setReturnLoading(true);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/buyer-return-dispatch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ returnId: returnRecord.id, carrier: returnCarrier, trackingNumber: returnTracking.trim() }),
+      });
+      const payload = await res.json().catch(() => ({})) as { error?: string; status?: ReturnRecord['status'] };
+      if (!res.ok) throw new Error(payload.error || "Could not register return shipment");
+      setReturnRecord({ ...returnRecord, status: payload.status || 'awaiting_seller_reception', buyerReturnCarrier: returnCarrier, buyerTrackingNumber: returnTracking.trim() });
+      toast({ title: "Return shipment registered", description: "The seller has been notified and can confirm receipt when the parcel arrives." });
+    } catch (err) {
+      toast({ title: "Could not update return", description: (err as Error).message, variant: "destructive" });
+    } finally { setReturnLoading(false); }
+  };
 
   const handleReturnSubmit = async () => {
     if (!returnOrder || !user || !returnReason || !returnDescription.trim()) return;
@@ -332,11 +392,7 @@ const BuyerOrders = () => {
                     className="h-8 w-8"
                     title={returnEligible ? "Request return" : "Returns available after delivery"}
                     disabled={!returnEligible}
-                    onClick={() => {
-                      setReturnOrder(o);
-                      setReturnReason("");
-                      setReturnDescription("");
-                    }}
+                    onClick={() => void openReturnFlow(o)}
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -355,6 +411,8 @@ const BuyerOrders = () => {
                   >
                     <AlertTriangle className="h-4 w-4" />
                   </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" title="Delivery address" onClick={() => setAddressOrder(o)}><MapPin className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title={o.status==="paid"?"Cancel order":"Cancellation only available before fulfilment"} disabled={o.status!=="paid"} onClick={()=>setCancelOrder(o)}><XCircle className="h-4 w-4" /></Button>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -407,6 +465,16 @@ const BuyerOrders = () => {
         <TabsContent value="completed"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("completed"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
+      <Dialog open={!!cancelOrder} onOpenChange={(open) => { if (!open) setCancelOrder(null); }}>
+        <DialogContent><DialogHeader><DialogTitle>Cancel this order?</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Use this when the order was placed by mistake. Cancellation is only available before the seller starts fulfilment. The payment will be returned to the original payment method.</p><DialogFooter><Button variant="outline" onClick={()=>setCancelOrder(null)} disabled={cancelLoading}>Keep order</Button><Button variant="destructive" onClick={handleCancelOrder} disabled={cancelLoading}>{cancelLoading?"Cancellingâ€¦":"Cancel order"}</Button></DialogFooter></DialogContent>
+      </Dialog>
+
+      <Dialog open={!!addressOrder} onOpenChange={(open) => { if (!open) setAddressOrder(null); }}>
+        <DialogContent><DialogHeader><DialogTitle>Delivery address</DialogTitle></DialogHeader>
+          {addressOrder?.shippingAddress && Object.keys(addressOrder.shippingAddress).length ? <div className="rounded-lg bg-muted p-4 text-sm leading-6"><p className="font-semibold">Order {addressOrder.orderNumber}</p><p>{addressOrder.shippingAddress.line1}</p>{addressOrder.shippingAddress.line2?<p>{addressOrder.shippingAddress.line2}</p>:null}<p>{[addressOrder.shippingAddress.city,addressOrder.shippingAddress.county||addressOrder.shippingAddress.state].filter(Boolean).join(", ")}</p><p className="font-semibold">{addressOrder.shippingAddress.postcode||addressOrder.shippingAddress.postal_code}</p><p>{addressOrder.shippingAddress.countryCode==="GB"?"United Kingdom":addressOrder.shippingAddress.country}</p>{addressOrder.shippingMethod?<p className="mt-2 border-t pt-2">Delivery method: <strong>{addressOrder.shippingMethod}</strong></p>:null}</div>:<p className="text-sm text-destructive">Delivery address is unavailable for this order. Please contact support before dispatch.</p>}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!returnOrder} onOpenChange={(open) => { if (!open) setReturnOrder(null); }}>
         <DialogContent>
           <DialogHeader>
@@ -451,6 +519,42 @@ const BuyerOrders = () => {
               {returnLoading ? "Submitting…" : "Submit Return Request"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!returnRecord} onOpenChange={(open) => { if (!open) setReturnRecord(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Return status</DialogTitle></DialogHeader>
+          <div className="space-y-4 text-sm">
+            <p>Status: <strong className="capitalize">{returnRecord?.status.replaceAll('_', ' ')}</strong></p>
+            {returnRecord?.returnAddressSnapshot && (
+              <div className="rounded-lg border border-border bg-muted/40 p-3 leading-6">
+                <p className="font-semibold">Return directly to seller</p>
+                {returnRecord.returnAddressSnapshot.recipientOrBusinessName && <p>{returnRecord.returnAddressSnapshot.recipientOrBusinessName}</p>}
+                <p>{returnRecord.returnAddressSnapshot.line1}</p>
+                {returnRecord.returnAddressSnapshot.line2 && <p>{returnRecord.returnAddressSnapshot.line2}</p>}
+                <p>{[returnRecord.returnAddressSnapshot.city, returnRecord.returnAddressSnapshot.county].filter(Boolean).join(', ')}</p>
+                <p className="font-semibold">{returnRecord.returnAddressSnapshot.postcode}</p>
+                <p>{returnRecord.returnAddressSnapshot.country || 'United Kingdom'}</p>
+              </div>
+            )}
+            {returnRecord?.status === 'awaiting_buyer_dispatch' && (
+              <div className="space-y-3">
+                <p className="text-muted-foreground">Send the parcel using an approved tracked service and keep proof of postage until the refund is complete.</p>
+                <Select value={returnCarrier} onValueChange={(v) => setReturnCarrier(v as 'Royal Mail' | 'Evri')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="Royal Mail">Royal Mail</SelectItem><SelectItem value="Evri">Evri</SelectItem></SelectContent>
+                </Select>
+                <Input placeholder="Return tracking number" value={returnTracking} onChange={(e) => setReturnTracking(e.target.value)} />
+                <Button className="w-full" disabled={returnLoading || !returnTracking.trim()} onClick={handleReturnDispatch}>
+                  {returnLoading ? 'Saving…' : 'I have dispatched the return'}
+                </Button>
+              </div>
+            )}
+            {returnRecord?.buyerTrackingNumber && <p>Tracking: <strong>{returnRecord.buyerReturnCarrier} · {returnRecord.buyerTrackingNumber}</strong></p>}
+            {returnRecord?.status === 'awaiting_seller_reception' && <p className="text-muted-foreground">The seller has been notified. Your refund will be processed after the seller confirms receipt.</p>}
+            {returnRecord?.status === 'refunded' && <p className="text-emerald-700">Refund processed to the original payment method.</p>}
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -9,14 +9,21 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { useAuthStore } from "@/store";
 import type { Return } from "@/types";
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  requested:  { label: "Requested",  className: "bg-primary/10 text-primary",   icon: AlertCircle },
-  approved:   { label: "Approved",   className: "bg-blue-500/10 text-blue-700",     icon: CheckCircle2 },
-  completed:  { label: "Completed",  className: "bg-success/10 text-success", icon: CheckCircle2 },
-  rejected:   { label: "Rejected",   className: "bg-danger/100/10 text-danger",       icon: XCircle },
+  requested:  { label: "Requested", className: "bg-primary/10 text-primary", icon: AlertCircle },
+  approved:   { label: "Approved", className: "bg-blue-500/10 text-blue-700", icon: CheckCircle2 },
+  awaiting_buyer_dispatch: { label: "Awaiting buyer dispatch", className: "bg-blue-500/10 text-blue-700", icon: CheckCircle2 },
+  in_transit_to_seller: { label: "Return in transit", className: "bg-purple-500/10 text-purple-700", icon: RotateCcw },
+  awaiting_seller_reception: { label: "Awaiting receipt", className: "bg-amber-500/10 text-amber-700", icon: AlertCircle },
+  received: { label: "Received", className: "bg-emerald-500/10 text-emerald-700", icon: CheckCircle2 },
+  refund_pending: { label: "Refund pending", className: "bg-amber-500/10 text-amber-700", icon: AlertCircle },
+  refunded: { label: "Refunded", className: "bg-success/10 text-success", icon: CheckCircle2 },
+  completed: { label: "Completed", className: "bg-success/10 text-success", icon: CheckCircle2 },
+  rejected: { label: "Rejected", className: "bg-danger/100/10 text-danger", icon: XCircle },
 };
 
 function formatDate(dateStr: string): string {
@@ -56,32 +63,46 @@ const SellerReturns = () => {
 
   const byStatus = (status: string) => filtered.filter((r) => r.status === status);
 
-  const handleApprove = async () => {
+  const decideReturn = async (decision: "approve" | "reject") => {
     if (!selected) return;
     setSubmitting(true);
     setError("");
     try {
-      const { error: dbError } = await supabase.from("returns").update({ status: "approved" }).eq("id", selected.id);
-      if (dbError) { setError(dbError.message); return; }
-      // Buyer notification is emitted by the database return-decision trigger,
-      // keeping status and notification delivery on one authoritative path.
+      const response = await authorizedFetch("/.netlify/functions/seller-return-decision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ returnId: selected.id, decision }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string; status?: string };
+      if (!response.ok) throw new Error(payload.error || "Unable to update return request");
       await load();
       setSelected(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update return request");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleReject = async () => {
+  const handleApprove = () => void decideReturn("approve");
+  const handleReject = () => void decideReturn("reject");
+
+  const handleConfirmReceiptAndRefund = async () => {
     if (!selected) return;
     setSubmitting(true);
     setError("");
     try {
-      const { error: dbError } = await supabase.from("returns").update({ status: "rejected" }).eq("id", selected.id);
-      if (dbError) { setError(dbError.message); return; }
-      // Buyer notification is emitted by the database return-decision trigger.
+      const response = await authorizedFetch("/.netlify/functions/create-refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ returnId: selected.id, reason: "requested_by_customer" }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string; warning?: string };
+      if (!response.ok) throw new Error(payload.error || "Unable to confirm receipt and refund");
       await load();
       setSelected(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to confirm receipt and refund");
     } finally {
       setSubmitting(false);
     }
@@ -169,8 +190,8 @@ const SellerReturns = () => {
         </TabsList>
         <TabsContent value="all"><Card><CardContent className="p-0">{renderList(filtered)}</CardContent></Card></TabsContent>
         <TabsContent value="requested"><Card><CardContent className="p-0">{renderList(byStatus("requested"))}</CardContent></Card></TabsContent>
-        <TabsContent value="approved"><Card><CardContent className="p-0">{renderList(byStatus("approved"))}</CardContent></Card></TabsContent>
-        <TabsContent value="completed"><Card><CardContent className="p-0">{renderList(byStatus("completed"))}</CardContent></Card></TabsContent>
+        <TabsContent value="approved"><Card><CardContent className="p-0">{renderList(filtered.filter((r) => ["approved", "awaiting_buyer_dispatch", "in_transit_to_seller", "awaiting_seller_reception", "received", "refund_pending"].includes(r.status)))}</CardContent></Card></TabsContent>
+        <TabsContent value="completed"><Card><CardContent className="p-0">{renderList(filtered.filter((r) => ["completed", "refunded"].includes(r.status)))}</CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Return Detail Dialog */}
@@ -218,6 +239,14 @@ const SellerReturns = () => {
                 </Button>
                 <Button disabled={submitting} onClick={handleApprove}>
                   <CheckCircle2 className="h-4 w-4 mr-1" /> {submitting ? "Processing…" : "Approve Return"}
+                </Button>
+              </DialogFooter>
+            )}
+            {selected.status === "awaiting_seller_reception" && (
+              <DialogFooter>
+                <Button disabled={submitting} onClick={handleConfirmReceiptAndRefund}>
+                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                  {submitting ? "Processing refund…" : "Confirm receipt & refund buyer"}
                 </Button>
               </DialogFooter>
             )}

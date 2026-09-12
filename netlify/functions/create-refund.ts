@@ -37,24 +37,24 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Refunds mutate Stripe and financial history through service_role. A stale
-  // admin JWT is never sufficient; the caller must still be an active admin in
-  // the live platform account table before rate limiting or any financial read.
-  const auth = await authenticateActiveAccount(event, supabase, ['admin']);
+  // Refunds mutate Stripe and financial history through service_role. Admins may
+  // refund an eligible order directly; sellers may only trigger a refund through
+  // an owned return that is awaiting confirmed reception.
+  const auth = await authenticateActiveAccount(event, supabase, ['admin', 'seller']);
   if (!auth.ok) {
     return {
       statusCode: auth.status,
       headers: corsHeaders,
-      body: JSON.stringify({ error: auth.status === 401 ? 'Unauthorized' : 'Admin access required' }),
+      body: JSON.stringify({ error: auth.status === 401 ? 'Unauthorized' : 'Seller or admin access required' }),
     };
   }
 
-  const adminId = auth.actor.id;
+  const actorId = auth.actor.id;
 
   const refundRl = await checkRateLimit({
     supabase,
     tableName: 'create_refund_rate_limits',
-    identifier: adminId,
+    identifier: actorId,
     windowMinutes: 60,
     maxAttempts: 10,
     policy: 'fail-closed',
@@ -67,14 +67,34 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  let body: { orderId?: string; reason?: string };
+  let body: { orderId?: string; returnId?: string; reason?: string };
   try {
-    body = JSON.parse(event.body || '{}') as { orderId?: string; reason?: string };
+    body = JSON.parse(event.body || '{}') as { orderId?: string; returnId?: string; reason?: string };
   } catch {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { orderId, reason = 'requested_by_customer' } = body;
+  let orderId = body.orderId;
+  const returnId = body.returnId;
+  const reason = body.reason ?? 'requested_by_customer';
+
+  if (auth.actor.role === 'seller') {
+    if (!returnId || typeof returnId !== 'string') {
+      return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'returnId is required for seller refund confirmation' }) };
+    }
+    const { data: returnRow, error: returnError } = await supabase
+      .from('returns')
+      .select('id, orderId, sellerId, status')
+      .eq('id', returnId)
+      .maybeSingle<{ id: string; orderId: string; sellerId: string; status: string }>();
+    if (returnError || !returnRow) return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Return not found' }) };
+    if (returnRow.sellerId !== actorId) return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Not authorized for this return' }) };
+    if (!['awaiting_seller_reception', 'received', 'refund_pending'].includes(returnRow.status)) {
+      return { statusCode: 409, headers: corsHeaders, body: JSON.stringify({ error: `Return status '${returnRow.status}' is not eligible for seller-confirmed refund` }) };
+    }
+    orderId = returnRow.orderId;
+  }
+
   if (!orderId || typeof orderId !== 'string') {
     return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'orderId is required' }) };
   }
@@ -157,7 +177,9 @@ export const handler: Handler = async (event) => {
         metadata: {
           orderId,
           orderNumber: order.orderNumber,
-          issuedByAdminId: adminId,
+          issuedByActorId: actorId,
+          issuedByActorRole: auth.actor.role,
+          ...(returnId ? { returnId } : {}),
         },
       },
       { idempotencyKey: `order-refund:${orderId}` },
@@ -270,15 +292,32 @@ export const handler: Handler = async (event) => {
     link: '/buyer/orders',
   }).catch((error: unknown) => console.warn('create-refund: buyer notification failed:', error));
 
+  if (returnId) {
+    await supabase.from('returns').update({
+      status: 'refunded',
+      returnReceivedAt: new Date().toISOString(),
+      refundProcessedAt: new Date().toISOString(),
+    }).eq('id', returnId).in('status', ['awaiting_seller_reception', 'received', 'refund_pending']);
+  }
+
   if (transferRecoveryWarning) {
-    await supabase.from('notifications').insert({
-      userId: adminId,
+    const { data: admins } = await supabase
+      .from('users')
+      .select('id')
+      .eq('role', 'admin')
+      .eq('isActive', true);
+    const adminNotifications = (admins ?? []).map((admin: { id: string }) => ({
+      userId: admin.id,
       type: 'payment',
       title: 'Refund requires payout review',
       message: `${order.orderNumber}: ${transferRecoveryWarning}`,
       isRead: false,
       link: '/admin/payouts',
-    }).catch((error: unknown) => console.warn('create-refund: admin warning notification failed:', error));
+    }));
+    if (adminNotifications.length > 0) {
+      await supabase.from('notifications').insert(adminNotifications)
+        .catch((error: unknown) => console.warn('create-refund: admin warning notification failed:', error));
+    }
   }
 
   return {

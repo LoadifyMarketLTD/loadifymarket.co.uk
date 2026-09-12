@@ -1,5 +1,5 @@
-/**
- * MobileSellWizard — /sell
+﻿/**
+ * MobileSellWizard â€” /sell
  *
  * Single-screen fast-list form for mobile. Goal: list an item in under 15 seconds.
  *
@@ -13,6 +13,8 @@
 
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { Camera as NativeCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import {
   ArrowLeft,
   Camera,
@@ -30,7 +32,7 @@ import { trackStartListing, trackPublishListing } from '@/lib/analytics';
 import CategorySelector from '@/components/CategorySelector';
 import ShippingMethodSelector from '@/components/ShippingMethodSelector';
 
-// ── Constants ──────────────────────────────────────────────────────────────────
+// â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const STORAGE_BUCKET = 'product-images';
 const MAX_PHOTOS = 6;
@@ -46,7 +48,7 @@ const CONDITION_OPTIONS = [
 
 type ListingResultMode = 'published' | 'draft';
 
-// ── Upload helper ──────────────────────────────────────────────────────────────
+// â”€â”€ Upload helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function uploadPhoto(file: File, userId: string): Promise<string> {
   const ts = Date.now();
@@ -63,7 +65,7 @@ async function uploadPhoto(file: File, userId: string): Promise<string> {
   return supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
-// ── Input primitive ────────────────────────────────────────────────────────────
+// â”€â”€ Input primitive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function FieldInput({
   label,
@@ -138,7 +140,7 @@ function FieldInput({
   );
 }
 
-// ── Success sheet ──────────────────────────────────────────────────────────────
+// â”€â”€ Success sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SuccessSheet({
   productId,
@@ -188,7 +190,7 @@ function SuccessSheet({
           marginBottom: '10px',
         }}
       >
-        {isDraft ? 'Item saved as draft' : 'Your item is live! 🎉'}
+        {isDraft ? 'Item saved as draft' : 'Your item is live! ðŸŽ‰'}
       </h2>
       <p
         className="text-foreground/55"
@@ -272,7 +274,7 @@ function SuccessSheet({
   );
 }
 
-// ── Form state ─────────────────────────────────────────────────────────────────
+// â”€â”€ Form state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface FormState {
   photos: string[];
@@ -294,7 +296,7 @@ const INITIAL_FORM: FormState = {
   condition: '',
 };
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function MobileSellWizard() {
   const navigate = useNavigate();
@@ -321,8 +323,61 @@ export default function MobileSellWizard() {
     trackStartListing();
   }
 
-  // ── Photo handlers ────────────────────────────────────────────────────────
+  // â”€â”€ Photo handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+  const handleTakePhoto = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    if (!user?.id) return;
+
+    setPhotoUploading(true);
+    setPhotoError(null);
+
+    try {
+      const photo = await NativeCamera.getPhoto({
+        source: CameraSource.Camera,
+        resultType: CameraResultType.Uri,
+        quality: 90,
+        correctOrientation: true,
+      });
+
+      if (!photo.webPath) {
+        throw new Error('Camera did not return an image.');
+      }
+
+      const response = await fetch(photo.webPath);
+      const blob = await response.blob();
+      const extension = photo.format || 'jpeg';
+      const file = new File(
+        [blob],
+        `camera-${Date.now()}.${extension}`,
+        { type: blob.type || `image/${extension}` },
+      );
+
+      const url = await uploadPhoto(file, user.id);
+
+      setForm((prev) => ({
+        ...prev,
+        photos: [...prev.photos, url].slice(0, MAX_PHOTOS),
+      }));
+
+      if (fieldErrors.photos) {
+        setFieldErrors((prev) => ({ ...prev, photos: undefined }));
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Camera failed. Please try again.';
+
+      if (!message.toLowerCase().includes('cancel')) {
+        setPhotoError(message);
+      }
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
   const handleAddPhotos = async (files: FileList) => {
     if (!user?.id) return;
     setPhotoUploading(true);
@@ -344,7 +399,7 @@ export default function MobileSellWizard() {
     setForm((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== idx) }));
   };
 
-  // ── Publish ───────────────────────────────────────────────────────────────
+  // â”€â”€ Publish â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handlePublish = async () => {
     const errs: typeof fieldErrors = {};
@@ -352,7 +407,7 @@ export default function MobileSellWizard() {
     if (!form.title.trim()) errs.title = 'Please enter a title.';
     const price = parseFloat(form.price);
     if (!form.price || isNaN(price) || price <= 0)
-      errs.price = 'Please enter a valid price greater than £0.';
+      errs.price = 'Please enter a valid price greater than Â£0.';
     if (selectedShippingMethodIds.length === 0)
       errs.shipping = 'Please select at least one shipping method.';
     if (Object.keys(errs).length > 0) {
@@ -431,7 +486,7 @@ export default function MobileSellWizard() {
     }
   };
 
-  // ── Reset ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleSellAnother = () => {
     setForm(INITIAL_FORM);
@@ -444,7 +499,7 @@ export default function MobileSellWizard() {
     setMoreDetailsOpen(false);
   };
 
-  // ── Success screen ────────────────────────────────────────────────────────
+  // â”€â”€ Success screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (publishedId) {
     return <SuccessSheet productId={publishedId} mode={listingResultMode} onSellAnother={handleSellAnother} />;
@@ -454,7 +509,7 @@ export default function MobileSellWizard() {
 
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: '#F7F9FC', color: '#0A234F' }}>
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <div
         style={{
           position: 'sticky',
@@ -496,7 +551,7 @@ export default function MobileSellWizard() {
         </h1>
       </div>
 
-      {/* ── Scrollable form ── */}
+      {/* â”€â”€ Scrollable form â”€â”€ */}
       <div
         style={{
           flex: 1,
@@ -544,7 +599,7 @@ export default function MobileSellWizard() {
               <>
               <button
                 aria-label="Take photo"
-                onClick={() => cameraInputRef.current?.click()}
+                onClick={() => { void handleTakePhoto(); }}
                 disabled={photoUploading}
                 style={{ aspectRatio: '1', borderRadius: '14px', border: '2px dashed #C9D5E5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: photoUploading ? 'not-allowed' : 'pointer', opacity: photoUploading ? 0.6 : 1, background: '#FFFFFF' }}
               >
@@ -618,7 +673,7 @@ export default function MobileSellWizard() {
 
         {/* Price */}
         <FieldInput
-          label="Price (£)"
+          label="Price (Â£)"
           value={form.price}
           onChange={(v) => {
             setForm((p) => ({ ...p, price: v }));
@@ -631,7 +686,7 @@ export default function MobileSellWizard() {
           error={fieldErrors.price}
         />
 
-        {/* ── More details (collapsible) ── */}
+        {/* â”€â”€ More details (collapsible) â”€â”€ */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label className="text-[#0A234F]" style={{ fontSize: '13px', fontWeight: 700 }}>
             Shipping method <span className="text-primary">*</span>
@@ -759,7 +814,7 @@ export default function MobileSellWizard() {
         </div>
       </div>
 
-      {/* ── Sticky CTA ── */}
+      {/* â”€â”€ Sticky CTA â”€â”€ */}
       <div
         className="bg-white/[0.98]"
         style={{
@@ -787,7 +842,7 @@ export default function MobileSellWizard() {
           {publishing ? (
             <>
               <Loader2 style={{ width: '18px', height: '18px', animation: 'spin 1s linear infinite' }} />
-              Publishing…
+              Publishingâ€¦
             </>
           ) : (
             'List item'
@@ -797,3 +852,5 @@ export default function MobileSellWizard() {
     </div>
   );
 }
+
+

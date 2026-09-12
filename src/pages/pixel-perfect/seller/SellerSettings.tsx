@@ -35,11 +35,34 @@ const defaultShipping = {
   freeShippingThreshold: "",
 };
 
+const normalizeCarrier = (carrier?: string) => {
+  if (carrier === "evri" || carrier === "hermes") return "evri";
+  return "royal_mail";
+};
+
+type FulfilmentAddress = {
+  recipientOrBusinessName: string;
+  line1: string;
+  line2: string;
+  city: string;
+  county: string;
+  postcode: string;
+  country: string;
+  countryCode: string;
+};
+
+const emptyFulfilmentAddress: FulfilmentAddress = {
+  recipientOrBusinessName: "", line1: "", line2: "", city: "", county: "", postcode: "", country: "United Kingdom", countryCode: "GB",
+};
+
 const SellerSettings = () => {
   const { user } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [notifications, setNotifications] = useState<typeof defaultNotifications>(defaultNotifications);
   const [shipping, setShipping] = useState<typeof defaultShipping>(defaultShipping);
+  const [shippingOriginAddress, setShippingOriginAddress] = useState<FulfilmentAddress>(emptyFulfilmentAddress);
+  const [returnAddress, setReturnAddress] = useState<FulfilmentAddress>(emptyFulfilmentAddress);
+  const [useShippingOriginAsReturn, setUseShippingOriginAsReturn] = useState(true);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -56,7 +79,7 @@ const SellerSettings = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [{ data: notifData }, { data: profileData }] = await Promise.all([
+      const [{ data: notifData }, { data: profileData }, { data: fulfilmentData }] = await Promise.all([
         supabase
           .from("notification_settings")
           .select("orderConfirmation, shippingUpdates, promotionalEmails")
@@ -66,6 +89,11 @@ const SellerSettings = () => {
           .from("seller_profiles")
           .select("shippingDefaults, stripeConnectStatus")
           .eq("userId", user.id)
+          .maybeSingle(),
+        supabase
+          .from("seller_fulfilment_profiles")
+          .select("shippingOriginAddress, returnAddress, useShippingOriginAsReturn")
+          .eq("sellerId", user.id)
           .maybeSingle(),
       ]);
       if (notifData) {
@@ -85,14 +113,20 @@ const SellerSettings = () => {
       // Load shipping defaults: prefer DB, fall back to localStorage
       const dbShipping = profileData?.shippingDefaults as Partial<typeof defaultShipping> | null;
       if (dbShipping && typeof dbShipping === "object") {
-        setShipping({ ...defaultShipping, ...dbShipping });
+        setShipping({ ...defaultShipping, ...dbShipping, carrier: normalizeCarrier(dbShipping.carrier) });
       } else {
         const raw = safeLocalStorage.getItem(SHIPPING_STORAGE_KEY);
         if (raw) {
           try {
-            setShipping({ ...defaultShipping, ...(JSON.parse(raw) as Partial<typeof defaultShipping>) });
+            const parsed = JSON.parse(raw) as Partial<typeof defaultShipping>;
+            setShipping({ ...defaultShipping, ...parsed, carrier: normalizeCarrier(parsed.carrier) });
           } catch { /* ignore malformed data */ }
         }
+      }
+      if (fulfilmentData) {
+        if (fulfilmentData.shippingOriginAddress) setShippingOriginAddress({ ...emptyFulfilmentAddress, ...(fulfilmentData.shippingOriginAddress as Partial<FulfilmentAddress>) });
+        if (fulfilmentData.returnAddress) setReturnAddress({ ...emptyFulfilmentAddress, ...(fulfilmentData.returnAddress as Partial<FulfilmentAddress>) });
+        setUseShippingOriginAsReturn(fulfilmentData.useShippingOriginAsReturn ?? true);
       }
     };
     load();
@@ -127,6 +161,22 @@ const SellerSettings = () => {
         .eq("userId", user.id);
       if (shippingError) throw shippingError;
       safeLocalStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));
+
+      const effectiveReturnAddress = useShippingOriginAsReturn ? shippingOriginAddress : returnAddress;
+      const addressComplete = Boolean(
+        effectiveReturnAddress.line1.trim() && effectiveReturnAddress.city.trim() && effectiveReturnAddress.postcode.trim() && effectiveReturnAddress.countryCode.trim()
+      );
+      if (!addressComplete) throw new Error("Please complete the seller return address before saving fulfilment settings.");
+      const { error: fulfilmentError } = await supabase.from("seller_fulfilment_profiles").upsert({
+        sellerId: user.id,
+        shippingOriginAddress,
+        returnAddress: useShippingOriginAsReturn ? null : returnAddress,
+        useShippingOriginAsReturn,
+        dispatchDeadlineHours: 48,
+        trackingDeadlineHours: 48,
+        updatedAt: new Date().toISOString(),
+      }, { onConflict: "sellerId" });
+      if (fulfilmentError) throw fulfilmentError;
 
       // Change password if the user has filled in the password fields
       if (newPassword || currentPassword) {
@@ -228,68 +278,26 @@ const SellerSettings = () => {
     if (!user) return;
     setPauseLoading(true);
     try {
-      const { error: profileError } = await supabase
-        .from("seller_profiles")
-        .update({ isPaused: true })
-        .eq("userId", user.id);
-      if (profileError) throw profileError;
-      const { error: productsError } = await supabase
-        .from("products")
-        .update({ isActive: false })
-        .eq("sellerId", user.id)
-        .eq("isActive", true);
-      if (productsError) {
-        // Roll back the profile flag so both sides stay consistent.
-        await supabase
-          .from("seller_profiles")
-          .update({ isPaused: false })
-          .eq("userId", user.id);
-        throw productsError;
-      }
+      const { error } = await supabase.from("seller_profiles").update({ isPaused: true }).eq("userId", user.id);
+      if (error) throw error;
       setIsPaused(true);
-      toast({
-        title: "Account paused",
-        description: "All your listings are now hidden from the marketplace. Click Resume to re-enable them.",
-      });
+      toast({ title: "Shop paused", description: "New checkout is disabled while your existing listing states remain unchanged." });
     } catch {
-      toast({ title: "Failed to pause account", description: "Please try again.", variant: "destructive" });
-    } finally {
-      setPauseLoading(false);
-    }
+      toast({ title: "Failed to pause shop", description: "Please try again.", variant: "destructive" });
+    } finally { setPauseLoading(false); }
   };
 
   const handleResumeAccount = async () => {
     if (!user) return;
     setPauseLoading(true);
     try {
-      const { error: profileError } = await supabase
-        .from("seller_profiles")
-        .update({ isPaused: false })
-        .eq("userId", user.id);
-      if (profileError) throw profileError;
-      const { error: productsError } = await supabase
-        .from("products")
-        .update({ isActive: true })
-        .eq("sellerId", user.id)
-        .eq("isActive", false);
-      if (productsError) {
-        // Roll back the profile flag so both sides stay consistent.
-        await supabase
-          .from("seller_profiles")
-          .update({ isPaused: true })
-          .eq("userId", user.id);
-        throw productsError;
-      }
+      const { error } = await supabase.from("seller_profiles").update({ isPaused: false }).eq("userId", user.id);
+      if (error) throw error;
       setIsPaused(false);
-      toast({
-        title: "Account resumed",
-        description: "All your listings are now visible on the marketplace.",
-      });
+      toast({ title: "Shop resumed", description: "Checkout is enabled again. Individual listing states were preserved." });
     } catch {
-      toast({ title: "Failed to resume account", description: "Please try again.", variant: "destructive" });
-    } finally {
-      setPauseLoading(false);
-    }
+      toast({ title: "Failed to resume shop", description: "Please try again.", variant: "destructive" });
+    } finally { setPauseLoading(false); }
   };
 
   const handleDeleteSellerAccount = async () => {
@@ -402,10 +410,7 @@ const SellerSettings = () => {
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="royal_mail">Royal Mail</SelectItem>
-                  <SelectItem value="dpd">DPD</SelectItem>
-                  <SelectItem value="hermes">Evri (Hermes)</SelectItem>
-                  <SelectItem value="dhl">DHL</SelectItem>
-                  <SelectItem value="fedex">FedEx</SelectItem>
+                  <SelectItem value="evri">Evri</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -440,6 +445,43 @@ const SellerSettings = () => {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Shipping & Returns */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /> Shipping & Returns</CardTitle>
+          <CardDescription>Private fulfilment addresses used for dispatch and authorised returns. These are not shown on your public profile.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-3">Shipping origin address</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input placeholder="Business / recipient name" value={shippingOriginAddress.recipientOrBusinessName} onChange={(e)=>setShippingOriginAddress(a=>({...a,recipientOrBusinessName:e.target.value}))} />
+              <Input placeholder="Address line 1" value={shippingOriginAddress.line1} onChange={(e)=>setShippingOriginAddress(a=>({...a,line1:e.target.value}))} />
+              <Input placeholder="Address line 2 (optional)" value={shippingOriginAddress.line2} onChange={(e)=>setShippingOriginAddress(a=>({...a,line2:e.target.value}))} />
+              <Input placeholder="City" value={shippingOriginAddress.city} onChange={(e)=>setShippingOriginAddress(a=>({...a,city:e.target.value}))} />
+              <Input placeholder="County / region" value={shippingOriginAddress.county} onChange={(e)=>setShippingOriginAddress(a=>({...a,county:e.target.value}))} />
+              <Input placeholder="Postcode" value={shippingOriginAddress.postcode} onChange={(e)=>setShippingOriginAddress(a=>({...a,postcode:e.target.value.toUpperCase()}))} />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
+            <div><p className="text-sm font-medium">Use shipping origin as return address</p><p className="text-xs text-muted-foreground">Recommended when returns should come back to the same location.</p></div>
+            <Switch checked={useShippingOriginAsReturn} onCheckedChange={setUseShippingOriginAsReturn} />
+          </div>
+          {!useShippingOriginAsReturn && <div>
+            <p className="text-sm font-semibold text-foreground mb-3">Return address</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input placeholder="Business / recipient name" value={returnAddress.recipientOrBusinessName} onChange={(e)=>setReturnAddress(a=>({...a,recipientOrBusinessName:e.target.value}))} />
+              <Input placeholder="Address line 1" value={returnAddress.line1} onChange={(e)=>setReturnAddress(a=>({...a,line1:e.target.value}))} />
+              <Input placeholder="Address line 2 (optional)" value={returnAddress.line2} onChange={(e)=>setReturnAddress(a=>({...a,line2:e.target.value}))} />
+              <Input placeholder="City" value={returnAddress.city} onChange={(e)=>setReturnAddress(a=>({...a,city:e.target.value}))} />
+              <Input placeholder="County / region" value={returnAddress.county} onChange={(e)=>setReturnAddress(a=>({...a,county:e.target.value}))} />
+              <Input placeholder="Postcode" value={returnAddress.postcode} onChange={(e)=>setReturnAddress(a=>({...a,postcode:e.target.value.toUpperCase()}))} />
+            </div>
+          </div>}
+          <p className="text-xs text-muted-foreground">Loadify fulfilment policy: dispatch/tracking deadline is capped at 48 hours. Return addresses are snapshotted when a return is approved.</p>
         </CardContent>
       </Card>
 
