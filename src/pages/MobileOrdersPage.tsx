@@ -1,5 +1,5 @@
-﻿/**
- * MobileOrdersPage â€” native marketplace order history and order details.
+/**
+ * MobileOrdersPage — native marketplace order history and order details.
  * Purchases and sales share one transaction model while preserving each user's
  * perspective. The native detail surface stays inside the marketplace app.
  */
@@ -283,8 +283,8 @@ function OrderCard({ order, mode }: { order: OrderRow; mode: OrderMode }) {
         </div>
         <p className="mt-1.5 line-clamp-2 text-[13px] font-extrabold leading-[1.3] text-[#26354A]">{order.productTitle ?? "Order"}</p>
         {mode === "sell" ? <p className="mt-1 truncate text-[10px] font-semibold text-[#667085]">Buyer: {order.buyerName ?? "Customer"}</p> : null}
-        <div className="mt-1.5 flex items-center gap-2 text-[10px] font-medium text-[#7A8493]"><span>Qty {order.quantity}</span><span aria-hidden="true">â€¢</span><span>{formatDate(order.createdAt)}</span></div>
-        <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[14px] font-black text-[#0A234F]">Â£{order.total.toFixed(2)}</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" /></div>
+        <div className="mt-1.5 flex items-center gap-2 text-[10px] font-medium text-[#7A8493]"><span>Qty {order.quantity}</span><span aria-hidden="true">•</span><span>{formatDate(order.createdAt)}</span></div>
+        <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[14px] font-black text-[#0A234F]">£{order.total.toFixed(2)}</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" /></div>
       </div>
     </div>
   );
@@ -343,25 +343,83 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         setMode(actualMode);
 
         const counterpartId = actualMode === "sell" ? raw.buyerId : raw.sellerId;
-        let counterpartName = actualMode === "sell" ? raw.buyerNameSnapshot?.trim() || null : raw.sellerBusinessNameSnapshot?.trim() || null;
-        if (!counterpartName && counterpartId) {
-          const { data: display } = await supabase.from("user_display_names").select("id, firstName, lastName").eq("id", counterpartId).maybeSingle();
-          counterpartName = fullName(display as BuyerLookup | null);
+        let counterpartName =
+          actualMode === "sell"
+            ? raw.buyerNameSnapshot?.trim() || null
+            : raw.sellerBusinessNameSnapshot?.trim() || null;
+
+        const counterpartPromise =
+          !counterpartName && counterpartId
+            ? supabase
+                .from("user_display_names")
+                .select("id, firstName, lastName")
+                .eq("id", counterpartId)
+                .maybeSingle()
+            : Promise.resolve({ data: null });
+
+        const [
+          counterpartResult,
+          shipmentResult,
+          returnResult,
+          disputeResult,
+          paymentResult,
+          payoutResult,
+        ] = await Promise.all([
+          counterpartPromise,
+          supabase
+            .from("shipments")
+            .select("id, status, courier_name, tracking_number, proof_of_delivery_url, created_at, updated_at")
+            .eq("order_id", raw.id)
+            .maybeSingle(),
+          supabase
+            .from("returns")
+            .select("id, status, reason, refundAmount, createdAt")
+            .eq("orderId", raw.id)
+            .order("createdAt", { ascending: false })
+            .limit(1),
+          supabase
+            .from("disputes")
+            .select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt")
+            .eq("orderId", raw.id)
+            .order("createdAt", { ascending: false })
+            .limit(1),
+          supabase
+            .from("payment_sessions")
+            .select("status, updatedAt")
+            .eq("orderId", raw.id)
+            .eq("status", "completed")
+            .order("updatedAt", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("payouts")
+            .select("status")
+            .eq("orderId", raw.id)
+            .order("updatedAt", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
+
+        if (!counterpartName && counterpartResult.data) {
+          counterpartName = fullName(counterpartResult.data as BuyerLookup);
         }
 
-        const { data: shipmentData } = await supabase.from("shipments").select("id, status, courier_name, tracking_number, proof_of_delivery_url, created_at, updated_at").eq("order_id", raw.id).maybeSingle();
+        const shipmentData = shipmentResult.data;
+        const returnRows = returnResult.data;
+        const disputeRows = disputeResult.data;
+        const paymentRow = paymentResult.data;
+        const payoutRow = payoutResult.data;
+
         let events: ShipmentEventRow[] = [];
         if (shipmentData?.id) {
-          const { data: eventRows } = await supabase.from("shipment_events").select("id, status, message, created_at").eq("shipment_id", shipmentData.id).order("created_at", { ascending: true });
+          const { data: eventRows } = await supabase
+            .from("shipment_events")
+            .select("id, status, message, created_at")
+            .eq("shipment_id", shipmentData.id)
+            .order("created_at", { ascending: true });
+
           events = (eventRows ?? []) as ShipmentEventRow[];
         }
-
-        const [{ data: returnRows }, { data: disputeRows }, { data: paymentRow }, { data: payoutRow }] = await Promise.all([
-          supabase.from("returns").select("id, status, reason, refundAmount, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
-          supabase.from("disputes").select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
-          supabase.from("payment_sessions").select("status, updatedAt").eq("orderId", raw.id).eq("status", "completed").order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
-          supabase.from("payouts").select("status").eq("orderId", raw.id).order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
-        ]);
         const snapshotItem = raw.order_items?.find((item) => item.productSnapshotSource != null) ?? raw.order_items?.[0] ?? null;
         const shipment = (shipmentData as ShipmentRow | null) ?? null;
 
@@ -662,7 +720,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
           <div className="flex gap-3.5">
             <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#EEF2F7]">{detail.productImage ? <img src={detail.productImage} alt={detail.productTitle ?? "Product"} className="h-full w-full object-cover" /> : <Package className="h-8 w-8 text-[#A0A8B4]" />}</div>
-            <div className="min-w-0 flex-1"><p className="line-clamp-3 text-[14px] font-black leading-[1.35] text-[#26354A]">{detail.productTitle ?? "Order"}</p><p className="mt-2 text-[11px] font-semibold text-[#667085]">{mode === "sell" ? "Buyer" : "Seller"}: {counterpart}</p><div className="mt-2 flex items-end justify-between gap-2"><span className="text-[18px] font-black text-[#0A234F]">Â£{detail.total.toFixed(2)}</span><span className="text-[10px] font-semibold text-[#7A8493]">Qty {detail.quantity}</span></div></div>
+            <div className="min-w-0 flex-1"><p className="line-clamp-3 text-[14px] font-black leading-[1.35] text-[#26354A]">{detail.productTitle ?? "Order"}</p><p className="mt-2 text-[11px] font-semibold text-[#667085]">{mode === "sell" ? "Buyer" : "Seller"}: {counterpart}</p><div className="mt-2 flex items-end justify-between gap-2"><span className="text-[18px] font-black text-[#0A234F]">£{detail.total.toFixed(2)}</span><span className="text-[10px] font-semibold text-[#7A8493]">Qty {detail.quantity}</span></div></div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#0A234F]/[0.07] pt-3 text-[11px]"><div><p className="font-semibold text-[#98A2B3]">Order date</p><p className="mt-0.5 font-bold text-[#475569]">{formatDate(detail.createdAt)}</p></div><div><p className="font-semibold text-[#98A2B3]">Order status</p><p className="mt-0.5 font-bold capitalize text-[#475569]">{cfg.label}</p></div></div>
         </section>
@@ -716,7 +774,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
               {detail.shipment.status === "Delivered" ? (
                 <div className="mt-3 rounded-[14px] border border-[#0A234F]/[0.08] bg-white p-3">
                   <div className="flex items-center gap-2"><FileCheck2 className="h-4 w-4 text-[#1D57D8]" /><p className="text-[11px] font-black text-[#26354A]">Proof of delivery</p></div>
-                  {detail.shipment.proof_of_delivery_url ? <button type="button" disabled={proofOpening} onClick={() => { void openProof(); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#EEF2F7] text-[11px] font-extrabold text-[#0A234F] disabled:opacity-60">{proofOpening ? <Loader2 className="h-4 w-4 animate-spin" /> : null}View proof of delivery</button> : isSellerView ? <label className="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] px-3 text-[11px] font-extrabold text-white"><Upload className="h-4 w-4" />{proofUploading ? "Uploading proofâ€¦" : "Upload proof"}<input type="file" disabled={proofUploading} accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadProof(file); event.currentTarget.value = ""; }} /></label> : <p className="mt-2 text-[10px] text-[#7A8493]">Proof has not been uploaded yet.</p>}
+                  {detail.shipment.proof_of_delivery_url ? <button type="button" disabled={proofOpening} onClick={() => { void openProof(); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#EEF2F7] text-[11px] font-extrabold text-[#0A234F] disabled:opacity-60">{proofOpening ? <Loader2 className="h-4 w-4 animate-spin" /> : null}View proof of delivery</button> : isSellerView ? <label className="mt-2 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] px-3 text-[11px] font-extrabold text-white"><Upload className="h-4 w-4" />{proofUploading ? "Uploading proof…" : "Upload proof"}<input type="file" disabled={proofUploading} accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadProof(file); event.currentTarget.value = ""; }} /></label> : <p className="mt-2 text-[10px] text-[#7A8493]">Proof has not been uploaded yet.</p>}
                   {!detail.shipment.proof_of_delivery_url && isSellerView ? <p className="mt-2 text-[9px] leading-[1.45] text-[#7A8493]">JPG, PNG, WebP or PDF, maximum 10 MB. Proof can only be attached once.</p> : null}
                 </div>
               ) : null}
@@ -736,7 +794,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         </section>
 
         {detail.returnRequest ? (
-          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Return / refund</p><div className="mt-2 flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[13px] font-extrabold capitalize text-[#26354A]">{detail.returnRequest.status}</p><p className="mt-1 text-[10px] leading-[1.45] text-[#667085]">{detail.returnRequest.reason}</p></div>{detail.returnRequest.refundAmount != null ? <span className="shrink-0 text-[13px] font-black">Â£{detail.returnRequest.refundAmount.toFixed(2)}</span> : null}</div></section>
+          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Return / refund</p><div className="mt-2 flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[13px] font-extrabold capitalize text-[#26354A]">{detail.returnRequest.status}</p><p className="mt-1 text-[10px] leading-[1.45] text-[#667085]">{detail.returnRequest.reason}</p></div>{detail.returnRequest.refundAmount != null ? <span className="shrink-0 text-[13px] font-black">£{detail.returnRequest.refundAmount.toFixed(2)}</span> : null}</div></section>
         ) : returnCanStart ? (
           <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
             <div className="flex items-center gap-2"><RotateCcw className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Return this order</h2></div>

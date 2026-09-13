@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BarChart3, Eye, Package, PoundSterling, RotateCcw, ShoppingCart, TrendingUp } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
@@ -58,8 +58,8 @@ export default function SellerAnalytics() {
   }, [days, orders, products, returns, periodEnd]);
 
   const cards = [
-    { label:"Gross sales", value:`Â£${metrics.grossSales.toFixed(2)}`, icon:PoundSterling },
-    { label:"Net revenue", value:`Â£${metrics.netRevenue.toFixed(2)}`, icon:TrendingUp },
+    { label:"Gross sales", value:`£${metrics.grossSales.toFixed(2)}`, icon:PoundSterling },
+    { label:"Net revenue", value:`£${metrics.netRevenue.toFixed(2)}`, icon:TrendingUp },
     { label:"Orders", value:String(metrics.orderCount), icon:ShoppingCart },
     { label:"Product views", value:String(metrics.views), icon:Eye },
     { label:"Conversion", value:`${metrics.conversion.toFixed(2)}%`, icon:BarChart3 },
@@ -76,13 +76,13 @@ export default function SellerAnalytics() {
         </Select>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {cards.map(({label,value,icon:Icon}) => <Card key={label}><CardContent className="pt-5 flex items-center gap-4"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10"><Icon className="h-5 w-5 text-primary" /></span><div><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-bold">{loading ? "â€¦" : value}</p></div></CardContent></Card>)}
+        {cards.map(({label,value,icon:Icon}) => <Card key={label}><CardContent className="pt-5 flex items-center gap-4"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10"><Icon className="h-5 w-5 text-primary" /></span><div><p className="text-xs text-muted-foreground">{label}</p><p className="text-xl font-bold">{loading ? "…" : value}</p></div></CardContent></Card>)}
       </div>
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Package className="h-4 w-4" />Top products</CardTitle></CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm"><thead><tr className="border-b text-left text-muted-foreground"><th className="py-2">Product</th><th>Orders</th><th>Sales</th><th>Views</th><th>Conversion</th></tr></thead><tbody>
-            {metrics.topProducts.length === 0 ? <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No sales in this period.</td></tr> : metrics.topProducts.map((p) => <tr key={p.id} className="border-b last:border-0"><td className="py-3 font-medium">{p.title}</td><td>{p.orders}</td><td>Â£{p.sales.toFixed(2)}</td><td>{p.views}</td><td>{p.views > 0 ? `${((p.orders/p.views)*100).toFixed(2)}%` : "0.00%"}</td></tr>)}
+            {metrics.topProducts.length === 0 ? <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No sales in this period.</td></tr> : metrics.topProducts.map((p) => <tr key={p.id} className="border-b last:border-0"><td className="py-3 font-medium">{p.title}</td><td>{p.orders}</td><td>£{p.sales.toFixed(2)}</td><td>{p.views}</td><td>{p.views > 0 ? `${((p.orders/p.views)*100).toFixed(2)}%` : "0.00%"}</td></tr>)}
           </tbody></table>
         </CardContent>
       </Card>

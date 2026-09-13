@@ -1,5 +1,5 @@
-﻿/**
- * MobileSellWizard â€” /sell
+/**
+ * MobileSellWizard — /sell
  *
  * Single-screen fast-list form for mobile. Goal: list an item in under 15 seconds.
  *
@@ -407,7 +407,7 @@ export default function MobileSellWizard() {
     if (!form.title.trim()) errs.title = 'Please enter a title.';
     const price = parseFloat(form.price);
     if (!form.price || isNaN(price) || price <= 0)
-      errs.price = 'Please enter a valid price greater than Â£0.';
+      errs.price = 'Please enter a valid price greater than £0.';
     if (selectedShippingMethodIds.length === 0)
       errs.shipping = 'Please select at least one shipping method.';
     if (Object.keys(errs).length > 0) {
@@ -673,7 +673,7 @@ export default function MobileSellWizard() {
 
         {/* Price */}
         <FieldInput
-          label="Price (Â£)"
+          label="Price (£)"
           value={form.price}
           onChange={(v) => {
             setForm((p) => ({ ...p, price: v }));
@@ -842,7 +842,7 @@ export default function MobileSellWizard() {
           {publishing ? (
             <>
               <Loader2 style={{ width: '18px', height: '18px', animation: 'spin 1s linear infinite' }} />
-              Publishingâ€¦
+              Publishing…
             </>
           ) : (
             'List item'

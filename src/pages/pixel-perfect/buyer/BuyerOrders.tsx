@@ -466,7 +466,7 @@ const BuyerOrders = () => {
       </Tabs>
 
       <Dialog open={!!cancelOrder} onOpenChange={(open) => { if (!open) setCancelOrder(null); }}>
-        <DialogContent><DialogHeader><DialogTitle>Cancel this order?</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Use this when the order was placed by mistake. Cancellation is only available before the seller starts fulfilment. The payment will be returned to the original payment method.</p><DialogFooter><Button variant="outline" onClick={()=>setCancelOrder(null)} disabled={cancelLoading}>Keep order</Button><Button variant="destructive" onClick={handleCancelOrder} disabled={cancelLoading}>{cancelLoading?"Cancellingâ€¦":"Cancel order"}</Button></DialogFooter></DialogContent>
+        <DialogContent><DialogHeader><DialogTitle>Cancel this order?</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Use this when the order was placed by mistake. Cancellation is only available before the seller starts fulfilment. The payment will be returned to the original payment method.</p><DialogFooter><Button variant="outline" onClick={()=>setCancelOrder(null)} disabled={cancelLoading}>Keep order</Button><Button variant="destructive" onClick={handleCancelOrder} disabled={cancelLoading}>{cancelLoading?"Cancelling…":"Cancel order"}</Button></DialogFooter></DialogContent>
       </Dialog>
 
       <Dialog open={!!addressOrder} onOpenChange={(open) => { if (!open) setAddressOrder(null); }}>
