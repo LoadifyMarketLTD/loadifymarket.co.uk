@@ -100,6 +100,13 @@ export async function reconcilePaidOrderPayout(
     amount: number;
     transferId: string;
     note: string;
+    grossAmount?: number;
+    stripeProcessingFee?: number;
+    platformFee?: number;
+    platformFeeVat?: number;
+    connectFee?: number;
+    adjustments?: number;
+    stripeBalanceTransactionId?: string;
   },
 ): Promise<string> {
   const { data: existing, error: lookupError } = await sb
@@ -115,6 +122,13 @@ export async function reconcilePaidOrderPayout(
       .from('payouts')
       .update({
         amount: input.amount,
+        ...(input.grossAmount != null ? { grossAmount: input.grossAmount } : {}),
+        ...(input.stripeProcessingFee != null ? { stripeProcessingFee: input.stripeProcessingFee } : {}),
+        ...(input.platformFee != null ? { platformFee: input.platformFee } : {}),
+        ...(input.platformFeeVat != null ? { platformFeeVat: input.platformFeeVat } : {}),
+        ...(input.connectFee != null ? { connectFee: input.connectFee } : {}),
+        ...(input.adjustments != null ? { adjustments: input.adjustments } : {}),
+        ...(input.stripeBalanceTransactionId ? { stripeBalanceTransactionId: input.stripeBalanceTransactionId } : {}),
         currency: 'GBP',
         status: 'paid',
         paidAt: new Date().toISOString(),
@@ -131,6 +145,13 @@ export async function reconcilePaidOrderPayout(
       sellerId: input.sellerId,
       orderId: input.orderId,
       amount: input.amount,
+      grossAmount: input.grossAmount ?? input.amount,
+      stripeProcessingFee: input.stripeProcessingFee ?? 0,
+      platformFee: input.platformFee ?? 0,
+      platformFeeVat: input.platformFeeVat ?? 0,
+      connectFee: input.connectFee ?? 0,
+      adjustments: input.adjustments ?? 0,
+      stripeBalanceTransactionId: input.stripeBalanceTransactionId ?? null,
       currency: 'GBP',
       status: 'paid',
       stripeTransferId: input.transferId,
@@ -164,6 +185,13 @@ export async function reconcilePaidOrderPayout(
     .from('payouts')
     .update({
       amount: input.amount,
+      ...(input.grossAmount != null ? { grossAmount: input.grossAmount } : {}),
+      ...(input.stripeProcessingFee != null ? { stripeProcessingFee: input.stripeProcessingFee } : {}),
+      ...(input.platformFee != null ? { platformFee: input.platformFee } : {}),
+      ...(input.platformFeeVat != null ? { platformFeeVat: input.platformFeeVat } : {}),
+      ...(input.connectFee != null ? { connectFee: input.connectFee } : {}),
+      ...(input.adjustments != null ? { adjustments: input.adjustments } : {}),
+      ...(input.stripeBalanceTransactionId ? { stripeBalanceTransactionId: input.stripeBalanceTransactionId } : {}),
       currency: 'GBP',
       status: 'paid',
       paidAt: new Date().toISOString(),

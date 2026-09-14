@@ -345,6 +345,7 @@ describe('canonical shipment write boundary', () => {
   });
 
   it('requires shipped payment evidence for Out for Delivery', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
     const paymentGuard = vi.fn().mockResolvedValue({
       ok: true,
       statusCode: 200,

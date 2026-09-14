@@ -71,6 +71,16 @@ interface OrderLifecycleSummary {
   payoutStatus: string | null;
 }
 
+interface SettlementSummary {
+  grossAmount: number;
+  stripeProcessingFee: number;
+  platformFee: number;
+  platformFeeVat: number;
+  connectFee: number;
+  adjustments: number;
+  amount: number;
+}
+
 interface ShipmentEvent {
   id: string;
   status: string;
@@ -94,6 +104,7 @@ export default function SellerOrderDetails() {
   const [shipment, setShipment] = useState<ShipmentSummary | null>(null);
   const [shipmentEvents, setShipmentEvents] = useState<ShipmentEvent[]>([]);
   const [lifecycle, setLifecycle] = useState<OrderLifecycleSummary>({ paidAt: null, returnStatus: null, disputeStatus: null, payoutStatus: null });
+  const [settlement, setSettlement] = useState<SettlementSummary | null>(null);
   const [carrier, setCarrier] = useState("Royal Mail");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [loading, setLoading] = useState(true);
@@ -123,7 +134,7 @@ export default function SellerOrderDetails() {
       supabase.from("payment_sessions").select("status, updatedAt").eq("orderId", orderId).eq("status", "completed").order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("returns").select("status").eq("orderId", orderId).order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("disputes").select("status").eq("orderId", orderId).order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("payouts").select("status").eq("orderId", orderId).order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("payouts").select("status, grossAmount, stripeProcessingFee, platformFee, platformFeeVat, connectFee, adjustments, amount").eq("orderId", orderId).order("updatedAt", { ascending: false }).limit(1).maybeSingle(),
     ]);
     setLifecycle({
       paidAt: (paymentRow as { updatedAt?: string } | null)?.updatedAt ?? (data.status !== "pending" ? data.createdAt : null),
@@ -131,6 +142,15 @@ export default function SellerOrderDetails() {
       disputeStatus: (disputeRow as { status?: string } | null)?.status ?? null,
       payoutStatus: (payoutRow as { status?: string } | null)?.status ?? null,
     });
+    setSettlement(payoutRow ? {
+      grossAmount: Number(payoutRow.grossAmount ?? 0),
+      stripeProcessingFee: Number(payoutRow.stripeProcessingFee ?? 0),
+      platformFee: Number(payoutRow.platformFee ?? 0),
+      platformFeeVat: Number(payoutRow.platformFeeVat ?? 0),
+      connectFee: Number(payoutRow.connectFee ?? 0),
+      adjustments: Number(payoutRow.adjustments ?? 0),
+      amount: Number(payoutRow.amount ?? 0),
+    } : null);
 
     const { data: shipmentData } = await supabase
       .from("shipments")
@@ -350,6 +370,23 @@ export default function SellerOrderDetails() {
             <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>£{Number(order.shippingAmount || 0).toFixed(2)}</span></div>
             <div className="flex justify-between border-t pt-2 font-bold"><span>Total</span><span>£{Number(order.total || 0).toFixed(2)}</span></div>
           </div>
+        </CardContent></Card>
+
+        <Card><CardContent className="p-5">
+          <h2 className="font-semibold">Seller settlement</h2>
+          {settlement ? (
+            <div className="mt-4 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Gross buyer payment</span><span>£{settlement.grossAmount.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Actual Stripe processing</span><span>−£{settlement.stripeProcessingFee.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Loadify commission</span><span>−£{settlement.platformFee.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">VAT on Loadify fee</span><span>−£{settlement.platformFeeVat.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Connect / payout cost</span><span>−£{settlement.connectFee.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Adjustments</span><span>−£{settlement.adjustments.toFixed(2)}</span></div>
+              <div className="flex justify-between border-t pt-2 font-bold"><span>Net seller amount</span><span>£{settlement.amount.toFixed(2)}</span></div>
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">The exact statement will appear after the protection period, when Stripe's actual processing fee is available and funds are released.</p>
+          )}
         </CardContent></Card>
       </div>
 

@@ -350,8 +350,15 @@ export interface Payout {
   id: string;
   sellerId: string;
   amount: number;
+  grossAmount?: number;
+  stripeProcessingFee?: number;
+  platformFee?: number;
+  platformFeeVat?: number;
+  connectFee?: number;
+  adjustments?: number;
+  stripeBalanceTransactionId?: string;
   currency: string;
-  status: 'pending' | 'processing' | 'paid' | 'failed';
+  status: 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled';
   stripePayoutId?: string;    // Stripe automatic payout to bank (set by Stripe)
   stripeTransferId?: string;  // Stripe Connect Transfer ID (set by platform after sale)
   createdAt: string;

@@ -131,12 +131,12 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "How do I receive payouts?",
         answer:
-          "Connect your Stripe Express account from the Payouts tab in your Seller Dashboard. Once connected, earnings from completed orders are automatically transferred to your bank account, minus the platform commission.",
+          "Connect your Stripe Express account from the Payouts tab. After the protection period, the order is settled less the actual Stripe processing fee, Loadify commission and evidenced adjustments. Standard bank payouts are grouped weekly, normally Friday, once the connected balance reaches £25.",
       },
       {
         question: "What commission does Loadify Market charge?",
         answer:
-          "Loadify Market charges a 7% commission on all completed sales, deducted automatically from each order. During our launch promotion — until 31 December 2026 — new sellers benefit from 0% commission. Standard fees apply from 1 January 2027 onwards.",
+          "Loadify commission is 0% through 31 December 2026 and 7% from 1 January 2027. The seller separately bears the actual Stripe processing fee and any actual attributable Connect or payout cost, shown transparently in the settlement statement.",
       },
       {
         question: "How do I manage orders?",

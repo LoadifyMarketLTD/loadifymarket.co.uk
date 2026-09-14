@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
+import { findOrderTransfer, reverseOrderTransfer } from './_shared/orderTransfer';
 
 const WEBHOOK_SECRETS = [
   process.env.STRIPE_WEBHOOK_SECRET?.trim(),
@@ -601,9 +602,12 @@ async function handleRefund(charge: Stripe.Charge): Promise<void> {
 
   if (!payment?.orderId) return;
 
+  const isFullRefund = charge.amount_refunded >= charge.amount;
   const { error: orderError } = await supabase!
     .from('orders')
-    .update({ status: 'refunded', escrowStatus: 'refunded' })
+    .update(isFullRefund
+      ? { status: 'refunded', escrowStatus: 'refunded' }
+      : { escrowStatus: 'partial_refund' })
     .eq('id', payment.orderId);
   if (orderError) throw orderError;
 
@@ -614,17 +618,23 @@ async function handleRefund(charge: Stripe.Charge): Promise<void> {
     .eq('status', 'paid')
     .maybeSingle<{ id: string; stripeTransferId: string | null; status: string }>();
 
-  if (payout?.stripeTransferId && stripe) {
-    const reversal = await stripe.transfers.createReversal(
-      payout.stripeTransferId,
-      { metadata: { orderId: payment.orderId } },
-      { idempotencyKey: `order-refund-transfer:${payment.orderId}` },
+  if (payout?.stripeTransferId && stripe && isFullRefund) {
+    const transfer = await stripe.transfers.retrieve(payout.stripeTransferId);
+    const reversal = await reverseOrderTransfer(
+      stripe,
+      transfer,
+      `order-refund-transfer:${payment.orderId}`,
+      { orderId: payment.orderId },
     );
     const { error: payoutError } = await supabase!
       .from('payouts')
       .update({ status: 'cancelled', reference: reversal.id, notes: `Transfer reversed after Stripe refund. Reversal ID: ${reversal.id}` })
       .eq('id', payout.id);
     if (payoutError) throw payoutError;
+  } else if (payout?.stripeTransferId && !isFullRefund) {
+    console.error(
+      `charge.refunded: order ${payment.orderId} received a partial refund after seller transfer; manual proportional recovery required`,
+    );
   }
 }
 
@@ -663,6 +673,7 @@ async function handlePaymentIntentCanceled(
 export async function handleStripeDispute(
   sb: import('@supabase/supabase-js').SupabaseClient,
   dispute: Stripe.Dispute,
+  stripeClientOverride?: Stripe | null,
 ): Promise<void> {
   const paymentIntentId = typeof dispute.payment_intent === 'string'
     ? dispute.payment_intent
@@ -701,6 +712,45 @@ export async function handleStripeDispute(
     escrowStatus: 'held',
   });
   if (error && error.code !== '23505') throw error;
+
+  // A chargeback can arrive after escrow was released. Recover the seller
+  // transfer immediately and idempotently so the platform is not left funding
+  // the seller's dispute exposure. Before release, no transfer exists and the
+  // order remains held for manual review.
+  const stripeClient = stripeClientOverride ?? stripe;
+  if (!stripeClient) return;
+  const { data: payout, error: payoutLookupError } = await sb
+    .from('payouts')
+    .select('id, stripeTransferId, status')
+    .eq('orderId', order.id)
+    .not('stripeTransferId', 'is', null)
+    .limit(1)
+    .maybeSingle<{ id: string; stripeTransferId: string; status: string }>();
+  if (payoutLookupError) throw payoutLookupError;
+  if (!payout?.stripeTransferId || payout.status === 'cancelled') return;
+
+  const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+  const transfer = await findOrderTransfer(stripeClient, {
+    orderId: order.id,
+    knownTransferId: payout.stripeTransferId,
+    transferGroup: paymentIntent.transfer_group,
+  });
+  if (!transfer) return;
+  const reversal = await reverseOrderTransfer(
+    stripeClient,
+    transfer,
+    `order-dispute-transfer:${dispute.id}`,
+    { orderId: order.id, disputeId: dispute.id },
+  );
+  const { error: payoutUpdateError } = await sb
+    .from('payouts')
+    .update({
+      status: 'cancelled',
+      reference: reversal.id,
+      notes: `Seller transfer reversed after Stripe chargeback. Dispute: ${dispute.id}; reversal: ${reversal.id}`,
+    })
+    .eq('id', payout.id);
+  if (payoutUpdateError) throw payoutUpdateError;
 }
 
 export async function handleConnectAccountUpdated(
@@ -731,7 +781,7 @@ export async function handleConnectAccountUpdated(
     const stripeClient = stripeClientOverride ?? stripe!;
     try {
       await stripeClient.accounts.update(account.id, {
-        settings: { payouts: { schedule: { delay_days: 7 } } },
+        settings: { payouts: { schedule: { interval: 'manual' } } },
       });
     } catch (payoutDelayError) {
       console.warn('account.updated: unable to set payout delay:', payoutDelayError);

@@ -77,6 +77,11 @@
 [functions."escrow-release"]
   schedule = "0 2 * * *"
 
+# Group connected-account bank payouts weekly and keep balances below £25
+# in Stripe until they reach the disclosed minimum threshold.
+[functions."seller-bank-payout"]
+  schedule = "0 8 * * 5"
+
 # payment-session-cleanup is the canonical reconciliation loop for abandoned
 # Stripe Checkout/PaymentIntent sessions and stale awaiting-payment order locks.
 [functions."payment-session-cleanup"]

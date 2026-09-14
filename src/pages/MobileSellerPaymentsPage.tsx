@@ -148,7 +148,7 @@ export default function MobileSellerPaymentsPage() {
               <div className="min-w-0">
                 <p className="m-0 text-[9px] font-black uppercase tracking-[0.15em] text-white/55">Payout account</p>
                 <p className="m-0 mt-1 text-[18px] font-black tracking-[-0.02em] text-white">Stripe Connect</p>
-                <p className="m-0 mt-1 max-w-[250px] text-[11px] leading-[1.55] text-white/65">Secure account setup and payout management for your Loadify sales.</p>
+                <p className="m-0 mt-1 max-w-[250px] text-[11px] leading-[1.55] text-white/65">Secure account setup and transparent settlement for your Loadify sales.</p>
               </div>
               <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.05em] ${statusMeta.badge}`}>
                 <StatusIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -156,6 +156,13 @@ export default function MobileSellerPaymentsPage() {
               </span>
             </div>
           </div>
+        </section>
+
+        <section className="mt-5 rounded-[18px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_20px_rgba(10,35,79,0.04)]">
+          <p className="m-0 text-[12px] font-extrabold text-[#0A234F]">Seller fee policy</p>
+          <p className="m-0 mt-1 text-[11px] leading-[1.55] text-[#7A8493]">
+            Loadify commission is 0% through 31 December 2026 and 7% from 1 January 2027. Actual Stripe processing and attributable Connect/payout costs are deducted from seller settlement and shown separately. Standard bank payouts are grouped weekly, normally Friday, from £25.
+          </p>
         </section>
 
         <section className="mt-5 rounded-[18px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_20px_rgba(10,35,79,0.05)]">

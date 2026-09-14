@@ -166,7 +166,7 @@ export default function MobileBalancePage() {
                 <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
                   <div className="min-w-0">
                     <p className="m-0 text-[10px] font-bold text-white/55">Payout provider</p>
-                    <p className="m-0 mt-0.5 text-[12px] font-extrabold text-white">Stripe Connect</p>
+                    <p className="m-0 mt-0.5 text-[12px] font-extrabold text-white">Stripe Connect · weekly from £25</p>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[9px] font-black uppercase tracking-[0.05em] ${statusMeta.badge}`}>
                     <StatusIcon className="h-3.5 w-3.5" aria-hidden="true" />

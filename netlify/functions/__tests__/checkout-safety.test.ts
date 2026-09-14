@@ -581,6 +581,14 @@ describe('handleStripeDispute – stores dispute record in DB (P4B)', () => {
             };
           case 'disputes':
             return { insert: insertMock };
+          case 'payouts':
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              not: vi.fn().mockReturnThis(),
+              limit: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            };
           default:
             return {};
         }
@@ -720,7 +728,7 @@ describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
     };
   }
 
-  it('Test P2A-1: sets 7-day payout delay when seller becomes active', async () => {
+  it('Test P2A-1: sets manual payout schedule for the weekly £25 policy when seller becomes active', async () => {
     const mockAccountsUpdate = vi.fn().mockResolvedValue({});
 
     vi.doMock('@supabase/supabase-js', () => makeWebhookSupabaseMock());
@@ -746,7 +754,7 @@ describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
 
     expect(mockAccountsUpdate).toHaveBeenCalledOnce();
     expect(mockAccountsUpdate).toHaveBeenCalledWith('acct_test_active', {
-      settings: { payouts: { schedule: { delay_days: 7 } } },
+      settings: { payouts: { schedule: { interval: 'manual' } } },
     });
   });
 

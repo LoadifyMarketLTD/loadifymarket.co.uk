@@ -9,6 +9,10 @@ import {
   reconcilePaidOrderPayout,
   reverseOrderTransfer,
 } from './_shared/orderTransfer';
+import {
+  calculateSellerSettlementPence,
+  retrieveStripeProcessingFee,
+} from './_shared/stripeSettlement';
 
 /**
  * Releases marketplace-held funds only after delivery/completion, the configured
@@ -245,13 +249,18 @@ export const handler = schedule('0 2 * * *', async () => {
       }
       const transferDestination = paymentSellerAccountId ?? sellerProfile.stripeAccountId;
 
-      const netSellerPence = Math.round(
-        (Number(order.total) - Number(order.commission || 0)) * 100,
-      );
-      if (!Number.isSafeInteger(netSellerPence) || netSellerPence <= 0) {
-        console.error(`escrow-release: ${order.orderNumber} has invalid release amount`);
+      const feeEvidence = await retrieveStripeProcessingFee(stripe, latestCharge);
+      const grossPence = Math.round(Number(order.total) * 100);
+      if (feeEvidence.currency !== 'gbp' || feeEvidence.grossPence !== grossPence) {
+        console.error(`escrow-release: ${order.orderNumber} Stripe fee evidence does not match order total`);
         continue;
       }
+      const commissionPence = Math.round(Number(order.commission || 0) * 100);
+      const netSellerPence = calculateSellerSettlementPence({
+        grossPence,
+        commissionPence,
+        processingFeePence: feeEvidence.processingFeePence,
+      });
       const netSellerAmount = netSellerPence / 100;
 
       const { data: payoutRow, error: payoutLookupError } = await supabase
@@ -312,7 +321,14 @@ export const handler = schedule('0 2 * * *', async () => {
         orderId: order.id,
         amount: netSellerAmount,
         transferId: transfer.id,
-        note: `Released after ${ESCROW_WINDOW_DAYS}-day protection window.`,
+        grossAmount: grossPence / 100,
+        stripeProcessingFee: feeEvidence.processingFeePence / 100,
+        platformFee: commissionPence / 100,
+        platformFeeVat: 0,
+        connectFee: 0,
+        adjustments: 0,
+        stripeBalanceTransactionId: feeEvidence.balanceTransactionId,
+        note: `Released after ${ESCROW_WINDOW_DAYS}-day protection window. Actual Stripe processing fee deducted from seller settlement.`,
       });
 
       const [latestOrderResult, postTransferDispute, postTransferReturn] = await Promise.all([

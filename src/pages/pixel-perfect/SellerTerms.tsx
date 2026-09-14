@@ -13,7 +13,7 @@ const SellerTerms = () => {
         </div>
         <div className="container mx-auto px-4 max-w-4xl prose prose-slate dark:prose-invert prose-headings:font-display">
           <h1>Seller Terms</h1>
-          <p className="text-muted-foreground"><strong>Last updated:</strong> 19 March 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> 14 September 2026</p>
 
           <p>These Seller Terms apply to all users who list and sell goods through Loadify Market ("Platform"), operated by XDrive Logistics Ltd (Company No: 13171804, VAT: GB375949535). These terms supplement our general <a href="/terms">Terms &amp; Conditions</a>.</p>
 
@@ -65,13 +65,16 @@ const SellerTerms = () => {
           <p>We reserve the right to remove listings and suspend accounts that violate these restrictions.</p>
 
           <h2>4. Fees &amp; Payments</h2>
-          <p>Sellers may be subject to:</p>
+          <p>The buyer pays the product price and any clearly displayed delivery charge. Loadify does not add a card-processing surcharge to the buyer. For marketplace sales, the seller authorises Loadify and Stripe Connect to collect the buyer payment, hold it during the applicable protection period, deduct the amounts below, and settle the balance to the seller's connected account.</p>
           <ul>
-            <li><strong>Listing fees:</strong> Charges for listing products on the Platform (if applicable)</li>
-            <li><strong>Commission:</strong> 7% of each successful sale (0% during the launch promotion period until 31 December 2026)</li>
-            <li><strong>Payment processing fees:</strong> Charged by our payment provider (Stripe)</li>
+            <li><strong>Listing fee:</strong> £0. There is no mandatory seller subscription.</li>
+            <li><strong>Loadify commission:</strong> 0% through 31 December 2026; 7% from 1 January 2027 unless a different rate is notified in accordance with these terms.</li>
+            <li><strong>Stripe processing:</strong> the seller bears the actual processing fee charged for that transaction. Loadify records the fee from Stripe's transaction evidence and does not substitute an estimated percentage.</li>
+            <li><strong>Connect and payout costs:</strong> the seller bears actual, attributable Stripe Connect or payout costs where incurred and shown in the settlement statement. No cost is deducted without supporting payment evidence.</li>
+            <li><strong>VAT on Loadify fees:</strong> added separately only where legally applicable. VAT is not applied automatically to the seller's gross sale or to a Stripe cost without the required tax basis.</li>
           </ul>
-          <p>Current fee schedules are available in the Seller Dashboard. We reserve the right to update fees with 30 days' notice.</p>
+          <p>The seller's settlement statement shows the gross buyer payment, actual Stripe processing fee, Loadify commission, VAT on Loadify fees where applicable, other evidenced adjustments, and net amount. Standard bank payouts are grouped weekly, normally on Friday, once the connected balance is at least £25; Stripe eligibility, reserves, disputes, refunds or compliance restrictions may delay a payout.</p>
+          <p>Stripe processing fees and evidenced Connect costs may remain payable after a refund or chargeback where Stripe does not return them. Refunds, chargebacks, reversals and losses attributable to the seller or the seller's goods may be recovered from held funds, the connected Stripe balance, later settlements or amounts otherwise owed to the seller. Loadify bears losses caused solely by Loadify's own error. We may update future fees with at least 30 days' notice; an already completed order keeps its recorded fee basis.</p>
 
           <h2>5. Order Fulfilment</h2>
           <p>As a seller, you are responsible for:</p>

@@ -12,7 +12,7 @@ const TermsAndConditions = () => {
         </div>
         <div className="container mx-auto px-4 max-w-4xl prose prose-slate dark:prose-invert prose-headings:font-display">
           <h1>Terms &amp; Conditions</h1>
-          <p className="text-muted-foreground"><strong>Last updated:</strong> 19 March 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> 14 September 2026</p>
 
           <p>These Terms and Conditions ("Terms") govern your use of the Loadify Market website and marketplace platform ("Platform") operated by XDrive Logistics Ltd ("we", "us", "our"), a company registered in England and Wales (Company No: 13171804, VAT: GB375949535), with its registered office at 101 Cornelian Street, Blackburn BB1 9QL, United Kingdom.</p>
 
@@ -59,7 +59,8 @@ const TermsAndConditions = () => {
           </ul>
 
           <h2>6. Payments</h2>
-          <p>All payments on the Platform are processed securely via Stripe. We do not store your card details. Payment terms, including any fees applicable to sellers, are disclosed during the listing process and in the Seller Dashboard.</p>
+          <p>All payments on the Platform are processed securely via Stripe Connect. We do not store card details. For a marketplace-seller purchase, the named independent seller is the legal seller and merchant of record; Loadify facilitates checkout, protection-period holding, settlement, refunds and disputes through the payment configuration.</p>
+          <p>The buyer is charged only the product price, delivery and any other mandatory amount clearly included in the total before payment. Loadify does not impose a separate card-processing surcharge on the buyer. The seller bears the actual Stripe processing fee and any actual attributable Connect or payout cost, deducted transparently from seller settlement. Loadify commission is 0% through 31 December 2026 and 7% from 1 January 2027. VAT is added to Loadify fees only where applicable.</p>
 
           <h2>7. Returns &amp; Disputes</h2>
           <p>Return policies are set by individual sellers. If you have a dispute with a seller, we encourage you to resolve it directly. We may assist in mediation at our discretion. Loadify Market is not liable for the quality, legality, or accuracy of any products listed by sellers.</p>

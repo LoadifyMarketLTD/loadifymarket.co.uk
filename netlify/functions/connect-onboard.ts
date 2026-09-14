@@ -117,8 +117,7 @@ export const handler: Handler = async (event) => {
         settings: {
           payouts: {
             schedule: {
-              interval: 'weekly',
-              weekly_anchor: 'friday',
+              interval: 'manual',
             },
           },
         },
