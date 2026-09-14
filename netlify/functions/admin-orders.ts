@@ -53,6 +53,15 @@ interface PaymentSessionMetaRow {
   stripePaymentIntent: string | null;
 }
 
+interface CancellationRequestRow {
+  id: string;
+  orderId: string;
+  reason: string;
+  details: string | null;
+  status: string;
+  createdAt: string;
+}
+
 async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient): Promise<AuthResult> {
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
 
@@ -188,6 +197,18 @@ export const handler: Handler = async (event) => {
       }
 
       const orderIds = orderRows.map((o) => o.id);
+      const cancellationRequests = new Map<string, CancellationRequestRow>();
+      if (orderIds.length > 0) {
+        const { data: requests, error: requestsError } = await admin
+          .from('order_cancellation_requests')
+          .select('id, orderId, reason, details, status, createdAt')
+          .in('orderId', orderIds)
+          .eq('status', 'requested');
+        if (requestsError) throw requestsError;
+        (requests ?? []).forEach((request: CancellationRequestRow) => {
+          cancellationRequests.set(request.orderId, request);
+        });
+      }
       const completedPayments = new Map<string, PaymentSessionMetaRow>();
       if (orderIds.length > 0) {
         const { data: paymentSessions } = await admin
@@ -241,6 +262,7 @@ export const handler: Handler = async (event) => {
           allowedNonStripeFlow: paymentEvidence.allowedNonStripeFlow,
           releaseEligible: releaseEligibility.eligible,
           releaseEligibilityReason: releaseEligibility.reason,
+          cancellationRequest: cancellationRequests.get(o.id) ?? null,
         };
       });
 
@@ -269,6 +291,50 @@ export const handler: Handler = async (event) => {
       const allowUnpaidTransition = body.allowUnpaidTransition === true;
       const overrideReason = typeof body.overrideReason === 'string' ? body.overrideReason.trim() : '';
       const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+
+      if (op === 'reject_cancellation_request') {
+        if (!orderId || reason.length < 3 || reason.length > 1000) {
+          return {
+            statusCode: 400,
+            headers: JSON_HEADERS,
+            body: JSON.stringify({ error: 'orderId and a rejection reason (3–1000 characters) are required' }),
+          };
+        }
+
+        const { data: request, error: requestError } = await admin
+          .from('order_cancellation_requests')
+          .update({ status: 'rejected', updatedAt: new Date().toISOString() })
+          .eq('orderId', orderId)
+          .eq('status', 'requested')
+          .select('id, buyerId, reason, details')
+          .maybeSingle<{ id: string; buyerId: string; reason: string; details: string | null }>();
+        if (requestError) throw requestError;
+        if (!request) {
+          return { statusCode: 409, headers: JSON_HEADERS, body: JSON.stringify({ error: 'No open cancellation request exists for this order' }) };
+        }
+
+        const { error: auditError } = await admin.from('audit_logs').insert({
+          actorId: auth.caller.id,
+          actorEmail: auth.caller.email,
+          action: 'reject_order_cancellation_request',
+          tableName: 'order_cancellation_requests',
+          recordId: request.id,
+          oldData: { status: 'requested', reason: request.reason, details: request.details },
+          newData: { status: 'rejected', reviewReason: reason, orderId },
+        });
+        if (auditError) console.error('admin-orders: cancellation rejection audit failed:', auditError.message);
+
+        await admin.from('notifications').insert({
+          userId: request.buyerId,
+          type: 'order',
+          title: 'Cancellation request declined',
+          message: `Your cancellation request was reviewed and declined. Reason: ${reason}`,
+          isRead: false,
+          link: '/buyer/orders',
+        });
+
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
+      }
 
       if (op === 'update_status') {
         if (!orderId || !status) {

@@ -30,6 +30,13 @@ interface Order {
   allowedNonStripeFlow?: string | null;
   releaseEligible?: boolean;
   releaseEligibilityReason?: string | null;
+  cancellationRequest?: {
+    id: string;
+    reason: string;
+    details: string | null;
+    status: string;
+    createdAt: string;
+  } | null;
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -56,6 +63,28 @@ const AdminOrders = () => {
   const [releaseReason, setReleaseReason] = useState("");
   const [releaseLoading, setReleaseLoading] = useState(false);
   const [releaseError, setReleaseError] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionLoading, setRejectionLoading] = useState(false);
+
+  const rejectCancellation = async (order: Order) => {
+    setRejectionLoading(true);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/admin-orders", {
+        method: "POST",
+        body: JSON.stringify({ op: "reject_cancellation_request", orderId: order.id, reason: rejectionReason.trim() }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(data.error || "Failed to reject cancellation request");
+      setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, cancellationRequest: null } : o));
+      setSelected((current) => current && current.id === order.id ? { ...current, cancellationRequest: null } : current);
+      setRejectionReason("");
+      toast({ title: "Cancellation request declined", description: "The buyer has been notified." });
+    } catch (err) {
+      toast({ title: "Request could not be declined", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setRejectionLoading(false);
+    }
+  };
 
   const issueRefund = async (order: Order) => {
     setRefundLoading(true);
@@ -302,7 +331,7 @@ const AdminOrders = () => {
         ))}
       </Tabs>
 
-      <Dialog open={!!selected} onOpenChange={() => { setSelected(null); setReleaseReason(""); setReleaseError(null); }}>
+      <Dialog open={!!selected} onOpenChange={() => { setSelected(null); setReleaseReason(""); setReleaseError(null); setRejectionReason(""); }}>
         {selected && (
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -330,6 +359,26 @@ const AdminOrders = () => {
                   </p>
                 </div>
               </div>
+              {selected.cancellationRequest && (
+                <div className="space-y-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">Buyer cancellation request</p>
+                    <p className="mt-1 text-sm font-medium text-white">{selected.cancellationRequest.reason.replace(/_/g, " ")}</p>
+                    {selected.cancellationRequest.details && <p className="mt-1 text-xs text-slate-300">{selected.cancellationRequest.details}</p>}
+                  </div>
+                  <p className="text-xs text-slate-300">Approve by issuing the Stripe refund below. Stock and settlement are reconciled only after Stripe confirms the full refund.</p>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(event) => setRejectionReason(event.target.value)}
+                    placeholder="Reason if declining this request"
+                    maxLength={1000}
+                    className="min-h-[76px] w-full rounded-md border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-white"
+                  />
+                  <Button variant="outline" size="sm" disabled={rejectionLoading || rejectionReason.trim().length < 3} onClick={() => rejectCancellation(selected)}>
+                    {rejectionLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Declining…</> : "Decline request"}
+                  </Button>
+                </div>
+              )}
               <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.3)" }}>
                 <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>UPDATE STATUS</p>
                 <div className="flex items-center gap-2">
@@ -419,14 +468,14 @@ const AdminOrders = () => {
                     {refundLoading ? (
                       <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processing…</>
                     ) : (
-                      <><RotateCcw className="h-4 w-4 mr-2" />Issue Stripe Refund</>
+                      <><RotateCcw className="h-4 w-4 mr-2" />{selected.cancellationRequest ? "Approve & issue Stripe refund" : "Issue Stripe Refund"}</>
                     )}
                   </Button>
                 </div>
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => { setSelected(null); setRefundError(null); setReleaseReason(""); setReleaseError(null); }}>Close</Button>
+              <Button variant="outline" onClick={() => { setSelected(null); setRefundError(null); setReleaseReason(""); setReleaseError(null); setRejectionReason(""); }}>Close</Button>
             </DialogFooter>
           </DialogContent>
         )}

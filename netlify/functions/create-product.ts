@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { validateActiveShippingMethodIds } from './_shared/shippingMethods';
 import {
   buildSellerNonVatProductEvidence,
   hasExplicitSellerNonVatDeclaration,
@@ -170,6 +171,15 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  let validatedShippingMethodIds: string[] | undefined;
+  if (shippingMethodIds !== undefined) {
+    const validation = await validateActiveShippingMethodIds(supabase, shippingMethodIds);
+    if (!validation.ok) {
+      return { statusCode: validation.status, body: JSON.stringify({ error: validation.error }) };
+    }
+    validatedShippingMethodIds = validation.ids;
+  }
+
   let sellerCanPublish = isAdmin;
 
   const { data: sellerProfile, error: profileError } = await supabase
@@ -262,8 +272,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create listing. Please try again.' }) };
   }
 
-  if (Array.isArray(shippingMethodIds) && shippingMethodIds.length > 0) {
-    const rows = shippingMethodIds.map((method_id) => ({
+  if (validatedShippingMethodIds && validatedShippingMethodIds.length > 0) {
+    const rows = validatedShippingMethodIds.map((method_id) => ({
       product_id: inserted.id,
       method_id,
       dispatch_time: dispatchTime || null,
