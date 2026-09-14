@@ -10,7 +10,7 @@ const CookiePolicy = () => {
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Cookie Policy" }]} backTo="/" />
         </div>
-        <div className="container mx-auto px-4 max-w-4xl prose prose-slate dark:prose-invert prose-headings:font-display">
+        <div className="legal-content">
           <h1>Cookie Policy</h1>
           <p className="text-muted-foreground"><strong>Last updated:</strong> 19 March 2026</p>
 

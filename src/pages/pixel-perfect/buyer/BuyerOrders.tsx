@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown, CheckCheck } from "lucide-react";
+import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown, CheckCheck, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
@@ -67,6 +67,13 @@ const DISPUTE_REASONS: { value: string; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+const CANCELLATION_REASONS = [
+  { value: "accidental_purchase", label: "Purchased by mistake" },
+  { value: "duplicate_order", label: "Duplicate order" },
+  { value: "wrong_delivery_details", label: "Wrong delivery details" },
+  { value: "other", label: "Other" },
+];
+
 const BuyerOrders = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -84,6 +91,11 @@ const BuyerOrders = () => {
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeLoading, setDisputeLoading] = useState(false);
+  const [cancellationOrder, setCancellationOrder] = useState<OrderRow | null>(null);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancellationDetails, setCancellationDetails] = useState("");
+  const [cancellationLoading, setCancellationLoading] = useState(false);
+  const [cancellationRequestedIds, setCancellationRequestedIds] = useState<Set<string>>(() => new Set());
 
   const [confirmDeliveryOrder, setConfirmDeliveryOrder] = useState<OrderRow | null>(null);
   const [confirmDeliveryLoading, setConfirmDeliveryLoading] = useState(false);
@@ -168,7 +180,18 @@ const BuyerOrders = () => {
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
-        setOrders((data as unknown as OrderRow[]) || []);
+        const rows = (data as unknown as OrderRow[]) || [];
+        setOrders(rows);
+        if (rows.length > 0) {
+          const { data: cancellationRows } = await supabase
+            .from("order_cancellation_requests")
+            .select("orderId")
+            .in("orderId", rows.map((order) => order.id))
+            .eq("status", "requested");
+          setCancellationRequestedIds(new Set((cancellationRows ?? []).map((row) => String(row.orderId))));
+        } else {
+          setCancellationRequestedIds(new Set());
+        }
       } catch (err) {
         console.error("Error fetching orders:", err);
         toast({ title: "Failed to load orders", description: "Please refresh the page.", variant: "destructive" });
@@ -257,6 +280,26 @@ const BuyerOrders = () => {
     }
   };
 
+  const handleCancellationSubmit = async () => {
+    if (!cancellationOrder || !cancellationReason || cancellationLoading) return;
+    setCancellationLoading(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/request-order-cancellation", {
+        method: "POST",
+        body: JSON.stringify({ orderId: cancellationOrder.id, reason: cancellationReason, details: cancellationDetails.trim() }),
+      });
+      const payload = await response.json() as { error?: string; message?: string };
+      if (!response.ok) throw new Error(payload.error || "Cancellation could not be requested.");
+      setCancellationRequestedIds((current) => new Set(current).add(cancellationOrder.id));
+      setCancellationOrder(null); setCancellationReason(""); setCancellationDetails("");
+      toast({ title: "Cancellation requested", description: payload.message || "The order remains active until the Stripe refund is confirmed." });
+    } catch (err) {
+      toast({ title: "Cancellation request failed", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setCancellationLoading(false);
+    }
+  };
+
   const renderTable = (data: OrderRow[]) => (
     <Table>
       <TableHeader>
@@ -306,6 +349,16 @@ const BuyerOrders = () => {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-600"
+                    title={cancellationRequestedIds.has(o.id) ? "Cancellation already requested" : o.status === "paid" ? "Request cancellation" : "Cancellation requests are available before packing"}
+                    disabled={o.status !== "paid" || cancellationRequestedIds.has(o.id)}
+                    onClick={() => { setCancellationOrder(o); setCancellationReason(""); setCancellationDetails(""); }}
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -406,6 +459,18 @@ const BuyerOrders = () => {
         <TabsContent value="delivered"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("delivered"))}</div></CardContent></Card></TabsContent>
         <TabsContent value="completed"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("completed"))}</div></CardContent></Card></TabsContent>
       </Tabs>
+
+      <Dialog open={!!cancellationOrder} onOpenChange={(open) => { if (!open) setCancellationOrder(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Request order cancellation</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">Submit this before the seller packs or dispatches the order. The order remains active until Loadify confirms the Stripe refund.</p>
+            <div className="space-y-2"><Label>Reason</Label><Select value={cancellationReason} onValueChange={setCancellationReason}><SelectTrigger><SelectValue placeholder="Choose a reason…" /></SelectTrigger><SelectContent>{CANCELLATION_REASONS.map((reason) => <SelectItem key={reason.value} value={reason.value}>{reason.label}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="cancellation-details">Details (optional)</Label><Textarea id="cancellation-details" maxLength={1000} value={cancellationDetails} onChange={(event) => setCancellationDetails(event.target.value)} /></div>
+          </div>
+          <DialogFooter><Button variant="outline" disabled={cancellationLoading} onClick={() => setCancellationOrder(null)}>Keep order</Button><Button variant="destructive" disabled={cancellationLoading || !cancellationReason} onClick={handleCancellationSubmit}>{cancellationLoading ? "Submitting…" : "Submit request"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!returnOrder} onOpenChange={(open) => { if (!open) setReturnOrder(null); }}>
         <DialogContent>
