@@ -449,10 +449,14 @@ export const handler: Handler = async (event) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalPence,
       currency: 'gbp',
-      payment_method_types: ['card'],
+      // Keep the charge on the platform for the protection window, but make the
+      // connected seller the business of record for this payment.
+      on_behalf_of: sellerProfile.stripeAccountId,
       transfer_group: transferGroup,
       metadata: {
         buyerId: verifiedBuyerId,
+        sellerId: checkoutSellerId,
+        sellerStripeAccountId: sellerProfile.stripeAccountId,
         productIds: productIds.join(','),
         transferGroup,
         reservationToken,
@@ -488,6 +492,7 @@ export const handler: Handler = async (event) => {
           totalPence,
           catalogTotal: total,
           buyerId: verifiedBuyerId,
+          sellerStripeAccountId: sellerProfile.stripeAccountId,
           transferGroup,
           reservationToken,
           isB2B: isB2BBuyer,

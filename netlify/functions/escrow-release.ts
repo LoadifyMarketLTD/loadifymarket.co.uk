@@ -229,6 +229,22 @@ export const handler = schedule('0 2 * * *', async () => {
         continue;
       }
 
+      const paymentSellerAccountId = typeof paymentIntent.on_behalf_of === 'string'
+        ? paymentIntent.on_behalf_of
+        : paymentIntent.on_behalf_of?.id
+          ?? paymentIntent.metadata?.sellerStripeAccountId
+          ?? null;
+      if (
+        paymentSellerAccountId &&
+        paymentSellerAccountId !== sellerProfile.stripeAccountId
+      ) {
+        console.error(
+          `escrow-release: ${order.orderNumber} seller Stripe account differs from the immutable payment destination; manual review required`,
+        );
+        continue;
+      }
+      const transferDestination = paymentSellerAccountId ?? sellerProfile.stripeAccountId;
+
       const netSellerPence = Math.round(
         (Number(order.total) - Number(order.commission || 0)) * 100,
       );
@@ -257,7 +273,7 @@ export const handler = schedule('0 2 * * *', async () => {
         knownTransferId: payoutRow?.stripeTransferId ?? null,
         transferGroup: paymentIntent.transfer_group,
         expectedAmountPence: netSellerPence,
-        expectedDestination: sellerProfile.stripeAccountId,
+        expectedDestination: transferDestination,
       });
 
       if (transfer && isTransferFullyReversed(transfer)) {
@@ -276,7 +292,7 @@ export const handler = schedule('0 2 * * *', async () => {
           {
             amount: netSellerPence,
             currency: 'gbp',
-            destination: sellerProfile.stripeAccountId,
+            destination: transferDestination,
             source_transaction: latestCharge,
             ...(paymentIntent.transfer_group
               ? { transfer_group: paymentIntent.transfer_group }

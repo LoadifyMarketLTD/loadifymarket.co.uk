@@ -190,6 +190,12 @@ export const handler: Handler = async (event) => {
       case 'payout.paid':
         await handlePayoutPaid(stripeEvent.data.object as Stripe.Payout, stripeEvent.account ?? null);
         break;
+      case 'payout.failed':
+        await handlePayoutTerminalFailure(stripeEvent.data.object as Stripe.Payout, stripeEvent.account ?? null, 'failed');
+        break;
+      case 'payout.canceled':
+        await handlePayoutTerminalFailure(stripeEvent.data.object as Stripe.Payout, stripeEvent.account ?? null, 'canceled');
+        break;
       default:
         console.log(`Unhandled Stripe event type: ${stripeEvent.type}`);
     }
@@ -792,9 +798,27 @@ export async function handleTransferCreated(transfer: Stripe.Transfer): Promise<
   if (error) console.error('transfer.created payout update failed:', error.message);
 }
 
+export async function transferIdsIncludedInPayout(
+  stripeClient: Stripe,
+  payoutId: string,
+  connectedAccountId: string,
+): Promise<string[]> {
+  const transferIds = new Set<string>();
+  for await (const balanceTransaction of stripeClient.balanceTransactions.list(
+    { payout: payoutId, limit: 100 },
+    { stripeAccount: connectedAccountId },
+  )) {
+    const source = balanceTransaction.source;
+    const sourceId = typeof source === 'string' ? source : source?.id;
+    if (sourceId?.startsWith('tr_')) transferIds.add(sourceId);
+  }
+  return [...transferIds];
+}
+
 export async function handlePayoutPaid(
   payout: Stripe.Payout,
   connectedAccountId: string | null,
+  stripeClientOverride?: Stripe | null,
 ): Promise<void> {
   if (!connectedAccountId) return;
 
@@ -805,6 +829,11 @@ export async function handlePayoutPaid(
     .maybeSingle<{ userId: string }>();
   if (!sellerProfile?.userId) return;
 
+  const stripeClient = stripeClientOverride ?? stripe;
+  if (!stripeClient) throw new Error('Stripe client is not configured');
+  const transferIds = await transferIdsIncludedInPayout(stripeClient, payout.id, connectedAccountId);
+  if (transferIds.length === 0) return;
+
   const { error } = await supabase!
     .from('payouts')
     .update({
@@ -814,6 +843,32 @@ export async function handlePayoutPaid(
     })
     .eq('sellerId', sellerProfile.userId)
     .eq('status', 'paid')
+    .in('stripeTransferId', transferIds)
     .is('stripePayoutId', null);
   if (error) console.error('payout.paid DB update failed:', error.message);
+}
+
+export async function handlePayoutTerminalFailure(
+  payout: Stripe.Payout,
+  connectedAccountId: string | null,
+  terminalStatus: 'failed' | 'canceled',
+  stripeClientOverride?: Stripe | null,
+): Promise<void> {
+  if (!connectedAccountId) return;
+  const stripeClient = stripeClientOverride ?? stripe;
+  if (!stripeClient) throw new Error('Stripe client is not configured');
+
+  const transferIds = await transferIdsIncludedInPayout(stripeClient, payout.id, connectedAccountId);
+  if (transferIds.length === 0) return;
+
+  const failureCode = terminalStatus === 'failed' && payout.failure_code
+    ? ` Failure code: ${payout.failure_code}.`
+    : '';
+  const { error } = await supabase!
+    .from('payouts')
+    .update({
+      notes: `Bank payout ${terminalStatus}; seller funds remain tracked in the connected Stripe balance.${failureCode}`,
+    })
+    .in('stripeTransferId', transferIds);
+  if (error) console.error(`payout.${terminalStatus} DB update failed:`, error.message);
 }
