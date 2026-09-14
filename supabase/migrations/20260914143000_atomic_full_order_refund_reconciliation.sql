@@ -36,8 +36,14 @@ BEGIN
                WHEN COALESCE("stockQuantity", 0) + v_item.quantity <= 10 THEN 'low_stock'
                ELSE 'in_stock'
              END,
-             "listingStatus" = 'active',
-             "reservedUntil" = NULL
+             "listingStatus" = CASE
+               WHEN "listingStatus" = 'sold' THEN 'active'
+               ELSE "listingStatus"
+             END,
+             "reservedUntil" = CASE
+               WHEN "listingStatus" = 'sold' THEN NULL
+               ELSE "reservedUntil"
+             END
        WHERE id = v_item."productId";
       v_restored := v_restored + 1;
     END IF;

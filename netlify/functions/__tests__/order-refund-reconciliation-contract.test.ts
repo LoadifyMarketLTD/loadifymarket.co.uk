@@ -10,6 +10,9 @@ describe('full order refund reconciliation contract', () => {
     expect(source).toContain('"stockFinalizedAt" IS NOT NULL');
     expect(source).toContain('"stockRestoredAt" IS NULL');
     expect(source).toContain('SET "stockRestoredAt" = now()');
+    expect(source).toContain('WHEN "listingStatus" = \'sold\' THEN \'active\'');
+    expect(source).toContain('ELSE "listingStatus"');
+    expect(source).toContain('ELSE "reservedUntil"');
     expect(source).toContain("SET status = 'refunded', \"escrowStatus\" = 'refunded'");
     expect(source).toContain("status IN ('requested', 'approved')");
     expect(source).toContain('REVOKE ALL ON FUNCTION public.reconcile_full_order_refund(uuid) FROM PUBLIC, anon, authenticated');
