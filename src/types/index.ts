@@ -295,6 +295,7 @@ export interface Return {
   images?: string[];
   status: ReturnStatus;
   refundAmount?: number;
+  buyerCarrier?: string;
   buyerTrackingNumber?: string;
   sellerTrackingNumber?: string;
   createdAt: string;
@@ -336,6 +337,9 @@ export interface Dispute {
   status: DisputeStatus;
   resolution?: string;
   resolutionType?: DisputeResolutionType;
+  sellerResponse?: string;
+  sellerRespondedAt?: string;
+  escalatedAt?: string;
   refundAmount?: number;
   resolvedBy?: string;
   sellerResponseDeadline?: string;  // 48 hrs from open

@@ -45,7 +45,7 @@ const AboutUs = () => {
               </h2>
               <ul className="text-muted-foreground space-y-2">
                 <li>â€¢ <strong className="text-foreground">Sellers</strong> â€” Independent UK businesses and individuals offering physical products and serviceâ€‘based listings across multiple categories, including electronics, fashion, home & garden, handmade items, logistics capacity, and bespoke supply.</li>
-                <li>• <strong className="text-foreground">Buyers</strong> — Consumers, retailers, resellers and businesses sourcing physical goods and service solutions at clear fixed prices.</li>
+                <li><strong className="text-foreground">Buyers</strong> &mdash; Consumers, retailers, resellers and businesses sourcing physical goods and service solutions at clear fixed prices.</li>
               </ul>
             </section>
 

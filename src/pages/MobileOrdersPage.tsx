@@ -70,6 +70,8 @@ type ReturnRow = {
   status: string;
   reason: string;
   refundAmount: number | null;
+  buyerCarrier: string | null;
+  buyerTrackingNumber: string | null;
   createdAt: string;
 };
 
@@ -81,6 +83,10 @@ type DisputeRow = {
   protectionReason: string | null;
   resolution: string | null;
   resolutionType: string | null;
+  sellerResponse: string | null;
+  sellerRespondedAt: string | null;
+  sellerResponseDeadline: string | null;
+  escalatedAt: string | null;
   createdAt: string;
 };
 
@@ -316,11 +322,17 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [returnCarrier, setReturnCarrier] = useState('');
+  const [returnTracking, setReturnTracking] = useState('');
+  const [returnTrackingSaving, setReturnTrackingSaving] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeSubject, setDisputeSubject] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+  const [sellerDisputeResponse, setSellerDisputeResponse] = useState('');
+  const [sellerDisputeResponding, setSellerDisputeResponding] = useState(false);
+  const [disputeEscalating, setDisputeEscalating] = useState(false);
   const [cancellationOpen, setCancellationOpen] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
   const [cancellationDetails, setCancellationDetails] = useState("");
@@ -376,8 +388,8 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         }
 
         const [{ data: returnRows }, { data: disputeRows }, { data: cancellationRows }] = await Promise.all([
-          supabase.from("returns").select("id, status, reason, refundAmount, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
-          supabase.from("disputes").select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
+          supabase.from("returns").select("id, status, reason, refundAmount, buyerCarrier, buyerTrackingNumber, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
+          supabase.from("disputes").select("id, status, subject, description, protectionReason, resolution, resolutionType, sellerResponse, sellerRespondedAt, sellerResponseDeadline, escalatedAt, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
           supabase.from("order_cancellation_requests").select("id, status, reason, details, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
         ]);
         const snapshotItem = raw.order_items?.find((item) => item.productSnapshotSource != null) ?? raw.order_items?.[0] ?? null;
@@ -399,6 +411,9 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           shippingAddress: raw.shippingAddress ?? null,
           listingContext: snapshotItem?.listingContextSnapshot ?? raw.products?.listingContext ?? null,
         });
+        const latestReturn = ((returnRows ?? [])[0] as ReturnRow | undefined) ?? null;
+        setReturnCarrier(latestReturn?.buyerCarrier ?? '');
+        setReturnTracking(latestReturn?.buyerTrackingNumber ?? '');
         setShipmentCourier(shipment?.courier_name ?? "");
         setShipmentTracking(shipment?.tracking_number ?? "");
       } catch {
@@ -475,6 +490,34 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
     }
   };
 
+  const saveReturnTracking = async () => {
+    if (!detail?.returnRequest || mode !== 'buy' || returnTrackingSaving) return;
+    const carrier = returnCarrier.trim();
+    const tracking = returnTracking.trim();
+    if (!carrier || !/^[A-Za-z0-9][A-Za-z0-9 _./-]{3,79}$/.test(tracking)) {
+      toast({ title: 'Complete return tracking', description: 'Enter the carrier and a valid tracking number.', variant: 'destructive' });
+      return;
+    }
+    setReturnTrackingSaving(true);
+    try {
+      const { data, error: trackingError } = await supabase
+        .from('returns')
+        .update({ buyerCarrier: carrier, buyerTrackingNumber: tracking })
+        .eq('id', detail.returnRequest.id)
+        .eq('buyerId', user?.id ?? '')
+        .eq('status', 'approved')
+        .select('id, status, reason, refundAmount, buyerCarrier, buyerTrackingNumber, createdAt')
+        .single();
+      if (trackingError) throw trackingError;
+      setDetail((current) => current ? { ...current, returnRequest: data as ReturnRow } : current);
+      toast({ title: 'Return tracking saved', description: 'The seller can now follow the return parcel.' });
+    } catch (trackingError) {
+      toast({ title: 'Tracking was not saved', description: trackingError instanceof Error ? trackingError.message : 'Please try again.', variant: 'destructive' });
+    } finally {
+      setReturnTrackingSaving(false);
+    }
+  };
+
   const submitDispute = async () => {
     if (!detail || !user?.id || mode !== "buy" || disputeSubmitting) return;
     if (!detail.sellerId) {
@@ -512,7 +555,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           description: disputeDescription.trim(),
           protectionReason: disputeReason || null,
         })
-        .select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt")
+        .select("id, status, subject, description, protectionReason, resolution, resolutionType, sellerResponse, sellerRespondedAt, sellerResponseDeadline, escalatedAt, createdAt")
         .single();
       if (insertError) throw insertError;
 
@@ -526,6 +569,44 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
       toast({ title: "Failed to open dispute", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setDisputeSubmitting(false);
+    }
+  };
+
+  const submitSellerDisputeResponse = async () => {
+    if (!detail?.dispute || mode !== 'sell' || sellerDisputeResponding) return;
+    if (sellerDisputeResponse.trim().length < 10) {
+      toast({ title: 'Response is too short', description: 'Explain your position in at least 10 characters.', variant: 'destructive' });
+      return;
+    }
+    setSellerDisputeResponding(true);
+    try {
+      const { data, error: responseError } = await supabase.rpc('respond_to_dispute', {
+        p_dispute_id: detail.dispute.id,
+        p_response: sellerDisputeResponse.trim(),
+      });
+      if (responseError) throw responseError;
+      setDetail((current) => current ? { ...current, dispute: data as DisputeRow } : current);
+      setSellerDisputeResponse('');
+      toast({ title: 'Response submitted', description: 'The buyer has been notified.' });
+    } catch (responseError) {
+      toast({ title: 'Response was not submitted', description: responseError instanceof Error ? responseError.message : 'Please try again.', variant: 'destructive' });
+    } finally {
+      setSellerDisputeResponding(false);
+    }
+  };
+
+  const escalateDispute = async () => {
+    if (!detail?.dispute || mode !== 'buy' || disputeEscalating) return;
+    setDisputeEscalating(true);
+    try {
+      const { data, error: escalationError } = await supabase.rpc('escalate_dispute', { p_dispute_id: detail.dispute.id });
+      if (escalationError) throw escalationError;
+      setDetail((current) => current ? { ...current, dispute: data as DisputeRow } : current);
+      toast({ title: 'Case escalated', description: 'Loadify support has been notified for formal review.' });
+    } catch (escalationError) {
+      toast({ title: 'Case cannot be escalated yet', description: escalationError instanceof Error ? escalationError.message : 'Please try again.', variant: 'destructive' });
+    } finally {
+      setDisputeEscalating(false);
     }
   };
 
@@ -783,7 +864,31 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         </section>
 
         {detail.returnRequest ? (
-          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Return / refund</p><div className="mt-2 flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[13px] font-extrabold capitalize text-[#26354A]">{detail.returnRequest.status}</p><p className="mt-1 text-[10px] leading-[1.45] text-[#667085]">{detail.returnRequest.reason}</p></div>{detail.returnRequest.refundAmount != null ? <span className="shrink-0 text-[13px] font-black">{`\u00A3${detail.returnRequest.refundAmount.toFixed(2)}`}</span> : null}</div></section>
+          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Return / refund</p>
+            <div className="mt-2 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[13px] font-extrabold capitalize text-[#26354A]">{detail.returnRequest.status}</p>
+                <p className="mt-1 text-[10px] leading-[1.45] text-[#667085]">{detail.returnRequest.reason}</p>
+              </div>
+              {detail.returnRequest.refundAmount != null ? <span className="shrink-0 text-[13px] font-black">{`\u00A3${detail.returnRequest.refundAmount.toFixed(2)}`}</span> : null}
+            </div>
+            {detail.returnRequest.status === 'approved' && mode === 'buy' ? (
+              <div className="mt-3 space-y-2 rounded-[14px] bg-[#F7F9FC] p-3">
+                <p className="text-[10px] font-extrabold text-[#26354A]">Return parcel tracking</p>
+                <input value={returnCarrier} onChange={(event) => setReturnCarrier(event.target.value)} maxLength={80} placeholder="Carrier, for example Royal Mail" className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A] outline-none" />
+                <input value={returnTracking} onChange={(event) => setReturnTracking(event.target.value)} maxLength={80} placeholder="Tracking number" className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A] outline-none" />
+                <button type="button" disabled={returnTrackingSaving} onClick={() => { void saveReturnTracking(); }} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">
+                  {returnTrackingSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {detail.returnRequest.buyerTrackingNumber ? 'Update tracking' : 'Save tracking'}
+                </button>
+              </div>
+            ) : detail.returnRequest.buyerTrackingNumber ? (
+              <p className="mt-3 rounded-[12px] bg-[#F7F9FC] px-3 py-2 text-[10px] text-[#475569]">
+                {detail.returnRequest.buyerCarrier ? `${detail.returnRequest.buyerCarrier}: ` : ''}{detail.returnRequest.buyerTrackingNumber}
+              </p>
+            ) : null}
+          </section>
         ) : returnCanStart ? (
           <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
             <div className="flex items-center gap-2"><RotateCcw className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Return this order</h2></div>
@@ -809,6 +914,27 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
                 <p className="mt-2 text-[9px] font-semibold text-[#98A2B3]">Opened {formatDate(detail.dispute.createdAt)}</p>
               </div>
             </div>
+            {detail.dispute.sellerResponse ? (
+              <div className="mt-3 rounded-[13px] border border-blue-100 bg-blue-50 px-3 py-3">
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-blue-700">Seller response</p>
+                <p className="mt-1 whitespace-pre-wrap text-[11px] leading-[1.5] text-blue-950">{detail.dispute.sellerResponse}</p>
+                {detail.dispute.sellerRespondedAt ? <p className="mt-1 text-[9px] text-blue-700">{formatDateTime(detail.dispute.sellerRespondedAt)}</p> : null}
+              </div>
+            ) : null}
+            {!detail.dispute.resolution && mode === 'sell' ? (
+              <div className="mt-3 space-y-2 rounded-[13px] bg-[#F7F9FC] p-3">
+                <p className="text-[10px] font-extrabold text-[#26354A]">Respond to this case</p>
+                <textarea value={sellerDisputeResponse} onChange={(event) => setSellerDisputeResponse(event.target.value)} rows={4} maxLength={4000} placeholder="Explain your position and any relevant shipping or order facts" className="w-full resize-none rounded-[12px] border border-[#0A234F]/10 bg-white p-3 text-[11px] text-[#26354A] outline-none" />
+                <button type="button" disabled={sellerDisputeResponding || sellerDisputeResponse.trim().length < 10} onClick={() => { void submitSellerDisputeResponse(); }} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-50">
+                  {sellerDisputeResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{detail.dispute.sellerResponse ? 'Update response' : 'Submit response'}
+                </button>
+              </div>
+            ) : null}
+            {!detail.dispute.resolution && mode === 'buy' && !detail.dispute.escalatedAt ? (
+              <button type="button" disabled={disputeEscalating} onClick={() => { void escalateDispute(); }} className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#0A234F] disabled:opacity-50">
+                {disputeEscalating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Escalate to Loadify
+              </button>
+            ) : detail.dispute.escalatedAt ? <p className="mt-3 rounded-[12px] bg-[#FFF4D6] px-3 py-2 text-[10px] font-bold text-[#795300]">Escalated to Loadify for formal review.</p> : null}
             {detail.dispute.resolution ? (
               <div className="mt-3 rounded-[13px] border border-emerald-100 bg-emerald-50 px-3 py-3">
                 <p className="text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700">Resolution</p>

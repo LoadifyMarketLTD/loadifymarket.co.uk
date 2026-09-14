@@ -13,7 +13,7 @@ describe('mobile seller listing tax-gate recovery', () => {
     expect(mobileSellWizard).toContain("body: JSON.stringify({ ...payload, isActive: false })");
     expect(mobileSellWizard).toContain("setListingResultMode('draft')");
     expect(mobileSellWizard).toContain('Item saved as draft');
-    expect(mobileSellWizard).toContain('Complete or refresh your seller tax setup before publishing it live.');
+    expect(mobileSellWizard).toContain('Complete your seller and payment setup before publishing it live.');
   });
 
   it('does not report a tax-blocked draft as a published listing', () => {

@@ -20,6 +20,9 @@ import {
 import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import { toast } from '@/hooks/use-toast';
+import { enableNativePushNotifications } from '@/hooks/usePushTokenRegistration';
+import { AppSettings } from '@/lib/appSettings';
+import { isCapacitorNative } from '@/lib/capacitorUtils';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import type { AppNotification } from '@/types';
 
@@ -56,6 +59,7 @@ export default function MobileNotificationsPage() {
   const [openingNotificationId, setOpeningNotificationId] = useState<string | null>(null);
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pushPermissionState, setPushPermissionState] = useState<'idle' | 'enabling' | 'granted' | 'denied' | 'unsupported'>('idle');
 
   useEffect(() => {
     if (!user) {
@@ -186,6 +190,20 @@ export default function MobileNotificationsPage() {
     }
   };
 
+  const enablePush = async () => {
+    setPushPermissionState('enabling');
+    try {
+      const result = await enableNativePushNotifications();
+      setPushPermissionState(result);
+      if (result === 'granted') {
+        toast({ title: 'Device notifications enabled' });
+      }
+    } catch {
+      setPushPermissionState('denied');
+      toast({ title: 'Could not enable notifications', variant: 'destructive' });
+    }
+  };
+
   return (
     <div
       className="md:hidden min-h-screen bg-[#EEF3F8] text-[#0A234F]"
@@ -223,6 +241,32 @@ export default function MobileNotificationsPage() {
       </header>
 
       <main className="px-[var(--mob-side,16px)] py-4">
+        {isCapacitorNative() && pushPermissionState !== 'granted' && pushPermissionState !== 'unsupported' ? (
+          <section className="mb-4 rounded-[18px] border border-[#0A234F]/10 bg-white p-4 shadow-[0_7px_20px_rgba(10,35,79,0.05)]" aria-labelledby="device-notifications-title">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#FFF4D6] text-[#9A6500]">
+                <Bell className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="device-notifications-title" className="m-0 text-[14px] font-extrabold text-[#0A234F]">Get order and message updates</h2>
+                <p className="mb-0 mt-1 text-[12px] leading-[1.45] text-[#667085]">
+                  Enable device notifications so important marketplace activity is not missed.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" disabled={pushPermissionState === 'enabling'} onClick={() => void enablePush()} className="rounded-full bg-[#0A234F] px-4 py-2 text-[11px] font-extrabold text-white disabled:opacity-50">
+                    {pushPermissionState === 'enabling' ? 'Enabling...' : 'Enable notifications'}
+                  </button>
+                  {pushPermissionState === 'denied' ? (
+                    <button type="button" onClick={() => void AppSettings.open()} className="rounded-full border border-[#0A234F]/15 bg-white px-4 py-2 text-[11px] font-extrabold text-[#0A234F]">
+                      Open app settings
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         {loading ? (
           <div className="flex flex-col gap-3">
             {[...Array(4)].map((_, i) => (

@@ -199,6 +199,14 @@ const SellerReturns = () => {
                   <p className="font-medium text-foreground">{formatDate(selected.createdAt)}</p>
                 </div>
               </div>
+              {selected.buyerTrackingNumber && (
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">RETURN TRACKING</p>
+                  <p className="text-sm font-medium text-blue-950">
+                    {selected.buyerCarrier ? `${selected.buyerCarrier}: ` : ''}{selected.buyerTrackingNumber}
+                  </p>
+                </div>
+              )}
               {selected.description && (
                 <div className="rounded-lg bg-muted/50 border border-border p-3">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">BUYER NOTES</p>
