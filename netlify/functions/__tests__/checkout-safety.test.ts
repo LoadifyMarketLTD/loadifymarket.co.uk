@@ -581,6 +581,14 @@ describe('handleStripeDispute – stores dispute record in DB (P4B)', () => {
             };
           case 'disputes':
             return { insert: insertMock };
+          case 'payouts':
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              not: vi.fn().mockReturnThis(),
+              limit: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            };
           default:
             return {};
         }
