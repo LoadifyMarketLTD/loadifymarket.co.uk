@@ -8,6 +8,7 @@ import {
   reconcilePaidOrderPayout,
   reverseOrderTransfer,
 } from './_shared/orderTransfer';
+import { reconcileFullOrderRefund } from './_shared/orderRefund';
 
 const REFUNDABLE_STATUSES = new Set(['paid', 'packed', 'shipped', 'delivered', 'completed']);
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
@@ -177,6 +178,33 @@ export const handler: Handler = async (event) => {
     }
   }
 
+
+  if (refund.status === 'failed' || refund.status === 'canceled') {
+    return {
+      statusCode: 502,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        error: `Stripe refund ${refund.status}. The order and seller settlement remain unchanged.`,
+        refundId: refund.id,
+        status: refund.status,
+      }),
+    };
+  }
+
+  if (refund.status !== 'succeeded') {
+    return {
+      statusCode: 202,
+      headers: corsHeaders,
+      body: JSON.stringify({
+        success: true,
+        pending: true,
+        refundId: refund.id,
+        status: refund.status,
+        message: 'Stripe has not yet confirmed the refund. The order and seller settlement remain unchanged until confirmation.',
+      }),
+    };
+  }
+
   let transferReversalId: string | null = null;
   let transferRecoveryWarning: string | null = null;
 
@@ -244,13 +272,11 @@ export const handler: Handler = async (event) => {
     console.error('create-refund:', transferRecoveryWarning, recoveryError);
   }
 
-  const { error: updateError } = await supabase
-    .from('orders')
-    .update({ status: 'refunded', escrowStatus: 'refunded' })
-    .eq('id', orderId);
 
-  if (updateError) {
-    console.error('create-refund: refund succeeded but order reconciliation failed:', updateError.message);
+  try {
+    await reconcileFullOrderRefund(supabase, orderId);
+  } catch (updateError) {
+    console.error('create-refund: refund succeeded but order reconciliation failed:', updateError);
     return {
       statusCode: 500,
       headers: corsHeaders,

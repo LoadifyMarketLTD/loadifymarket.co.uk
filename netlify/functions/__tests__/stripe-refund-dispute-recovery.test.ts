@@ -8,7 +8,7 @@ describe('Stripe refund and dispute seller recovery', () => {
   it('does not mark a partial refund as a full refund or reverse the full transfer', () => {
     const source = webhook();
     expect(source).toContain('charge.amount_refunded >= charge.amount');
-    expect(source).toContain("{ escrowStatus: 'partial_refund' }");
+    expect(source).toContain(".update({ escrowStatus: 'partial_refund' })");
     expect(source).toContain('stripe && isFullRefund');
   });
 

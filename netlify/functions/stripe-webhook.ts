@@ -3,6 +3,7 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { findOrderTransfer, reverseOrderTransfer } from './_shared/orderTransfer';
+import { reconcileFullOrderRefund } from './_shared/orderRefund';
 
 const WEBHOOK_SECRETS = [
   process.env.STRIPE_WEBHOOK_SECRET?.trim(),
@@ -178,6 +179,10 @@ export const handler: Handler = async (event) => {
         break;
       case 'charge.refunded':
         await handleRefund(stripeEvent.data.object as Stripe.Charge);
+        break;
+      case 'refund.updated':
+      case 'refund.failed':
+        await handleRefundStatusUpdate(stripeEvent.data.object as Stripe.Refund);
         break;
       case 'charge.dispute.created':
         await handleStripeDispute(supabase, stripeEvent.data.object as Stripe.Dispute);
@@ -588,6 +593,20 @@ interface PaymentSessionWithOrder {
   orders?: { orderNumber?: string } | null;
 }
 
+async function handleRefundStatusUpdate(refund: Stripe.Refund): Promise<void> {
+  if (refund.status === 'failed' || refund.status === 'canceled') {
+    console.error(`refund lifecycle: ${refund.id} ended with status ${refund.status}; order remains unchanged`);
+    return;
+  }
+  if (refund.status !== 'succeeded') return;
+
+  const chargeId = typeof refund.charge === 'string' ? refund.charge : refund.charge?.id;
+  if (!chargeId || !stripe) return;
+
+  const charge = await stripe.charges.retrieve(chargeId);
+  await handleRefund(charge);
+}
+
 async function handleRefund(charge: Stripe.Charge): Promise<void> {
   const paymentIntentId = typeof charge.payment_intent === 'string'
     ? charge.payment_intent
@@ -603,13 +622,15 @@ async function handleRefund(charge: Stripe.Charge): Promise<void> {
   if (!payment?.orderId) return;
 
   const isFullRefund = charge.amount_refunded >= charge.amount;
-  const { error: orderError } = await supabase!
-    .from('orders')
-    .update(isFullRefund
-      ? { status: 'refunded', escrowStatus: 'refunded' }
-      : { escrowStatus: 'partial_refund' })
-    .eq('id', payment.orderId);
-  if (orderError) throw orderError;
+  if (isFullRefund) {
+    await reconcileFullOrderRefund(supabase!, payment.orderId);
+  } else {
+    const { error: orderError } = await supabase!
+      .from('orders')
+      .update({ escrowStatus: 'partial_refund' })
+      .eq('id', payment.orderId);
+    if (orderError) throw orderError;
+  }
 
   const { data: payout } = await supabase!
     .from('payouts')

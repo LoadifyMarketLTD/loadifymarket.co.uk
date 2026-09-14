@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { validateActiveShippingMethodIds } from './_shared/shippingMethods';
 import {
   buildSellerNonVatProductEvidence,
   hasExplicitSellerNonVatDeclaration,
@@ -173,6 +174,15 @@ export const handler: Handler = async (event) => {
   }
   if (hasOwn(updateData, 'listingContext')) updateData.listingContext = nextContext;
 
+  let validatedShippingMethodIds: string[] | undefined;
+  if (shippingMethodIds !== undefined) {
+    const validation = await validateActiveShippingMethodIds(supabase, shippingMethodIds);
+    if (!validation.ok) {
+      return { statusCode: validation.status, body: JSON.stringify({ error: validation.error }) };
+    }
+    validatedShippingMethodIds = validation.ids;
+  }
+
   let nextPrice = existingProduct.price;
   if (hasOwn(updateData, 'price')) {
     const rawPrice = updateData.price;
@@ -243,8 +253,8 @@ export const handler: Handler = async (event) => {
 
   if (wantsPublished && nextContext === 'product') {
     let shippingCount = 0;
-    if (Array.isArray(shippingMethodIds)) {
-      shippingCount = shippingMethodIds.length;
+    if (validatedShippingMethodIds) {
+      shippingCount = validatedShippingMethodIds.length;
     } else {
       const { count, error: shippingCountError } = await supabase
         .from('product_shipping')
@@ -309,7 +319,7 @@ export const handler: Handler = async (event) => {
     });
   }
 
-  if (Array.isArray(shippingMethodIds)) {
+  if (validatedShippingMethodIds) {
     const { data: previousShipping, error: previousError } = await supabase
       .from('product_shipping')
       .select('method_id, dispatch_time')
@@ -319,8 +329,8 @@ export const handler: Handler = async (event) => {
     const { error: deleteError } = await supabase.from('product_shipping').delete().eq('product_id', productId);
     if (deleteError) return { statusCode: 500, body: JSON.stringify({ error: 'Unable to update shipping setup.' }) };
 
-    if (shippingMethodIds.length > 0) {
-      const rows = shippingMethodIds.map((method_id) => ({ product_id: productId, method_id, dispatch_time: dispatchTime || null }));
+    if (validatedShippingMethodIds.length > 0) {
+      const rows = validatedShippingMethodIds.map((method_id) => ({ product_id: productId, method_id, dispatch_time: dispatchTime || null }));
       const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
       if (shippingError) {
         if (previousShipping?.length) {

@@ -44,6 +44,8 @@ describe('Stripe runtime deployment contract', () => {
       'payment_intent.payment_failed',
       'payment_intent.canceled',
       'charge.refunded',
+      'refund.updated',
+      'refund.failed',
       'charge.dispute.created',
       'transfer.created',
       'account.updated',
