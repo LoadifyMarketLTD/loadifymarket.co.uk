@@ -529,13 +529,22 @@ export const handler: Handler = async (event) => {
 
     const transferGroup = randomUUID();
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       mode: 'payment',
       line_items: lineItems,
       expires_at: Math.floor(Date.now() / 1000) + STRIPE_CHECKOUT_WINDOW_MINUTES * 60,
       success_url: `${siteUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cart`,
-      payment_intent_data: { transfer_group: transferGroup },
+      payment_intent_data: {
+        transfer_group: transferGroup,
+        // The canonical Marketplace Seller contract makes the connected seller
+        // the merchant of record while Loadify retains the charge during the
+        // protection window and releases it with a later Transfer.
+        on_behalf_of: sellerProfile.stripeAccountId,
+        metadata: {
+          sellerId: checkoutSellerId,
+          sellerStripeAccountId: sellerProfile.stripeAccountId,
+        },
+      },
       metadata: {
         buyerId: verifiedBuyerId,
         productIds: productIds.join(','),
@@ -571,6 +580,7 @@ export const handler: Handler = async (event) => {
           totalPence,
           catalogTotal: total,
           buyerId: verifiedBuyerId,
+          sellerStripeAccountId: sellerProfile.stripeAccountId,
           transferGroup,
           reservationToken,
           isB2B: isB2BBuyer,

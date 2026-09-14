@@ -48,8 +48,33 @@ describe('Stripe runtime deployment contract', () => {
       'transfer.created',
       'account.updated',
       'payout.paid',
+      'payout.failed',
+      'payout.canceled',
     ]) {
       expect(webhook).toContain(`case '${eventType}':`);
     }
+  });
+
+  it('binds web and mobile payments to the immutable seller Stripe account', () => {
+    const checkout = read('netlify/functions/create-checkout.ts');
+    const paymentIntent = read('netlify/functions/create-payment-intent.ts');
+    const escrowRelease = read('netlify/functions/escrow-release.ts');
+
+    for (const source of [checkout, paymentIntent]) {
+      expect(source).toContain('on_behalf_of: sellerProfile.stripeAccountId');
+      expect(source).toContain('sellerStripeAccountId: sellerProfile.stripeAccountId');
+      expect(source).not.toContain("payment_method_types: ['card']");
+    }
+    expect(escrowRelease).toContain('paymentSellerAccountId !== sellerProfile.stripeAccountId');
+    expect(escrowRelease).toContain('destination: transferDestination');
+  });
+
+  it('reconciles a bank payout only to its included Stripe transfers', () => {
+    const webhook = read('netlify/functions/stripe-webhook.ts');
+
+    expect(webhook).toContain("{ payout: payoutId, limit: 100 }");
+    expect(webhook).toContain(".in('stripeTransferId', transferIds)");
+    expect(webhook).toContain('Bank payout ${terminalStatus}; seller funds remain tracked in the connected Stripe balance.');
+    expect(webhook).not.toContain(".eq('sellerId', sellerProfile.userId)\n    .eq('status', 'paid')\n    .is('stripePayoutId', null)");
   });
 });
