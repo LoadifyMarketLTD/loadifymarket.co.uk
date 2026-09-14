@@ -29,7 +29,7 @@ const GUIDELINES = [
     icon: CreditCard,
     title: 'Pricing & Fees',
     description:
-      'Prices must reflect the true cost of goods. A 7% marketplace commission applies to all completed sales (0% during the launch promotion until 31 December 2026). All transactions must be processed through the Loadify Market payment system.',
+      'There is no listing fee or mandatory subscription. Loadify commission is 0% through 31 December 2026 and 7% from 1 January 2027. The seller bears actual Stripe processing and attributable Connect/payout costs, shown separately in the settlement statement.',
   },
   {
     icon: BadgeCheck,

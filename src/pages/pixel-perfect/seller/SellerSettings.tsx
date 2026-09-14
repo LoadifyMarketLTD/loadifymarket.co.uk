@@ -486,7 +486,7 @@ const SellerSettings = () => {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Payouts are sent automatically after order completion via Stripe Connect Express. Weekly payouts every Friday.
+                  Seller settlement equals the gross sale less the actual Stripe processing fee, Loadify commission (0% through 31 December 2026; 7% from 1 January 2027), applicable VAT on Loadify fees and evidenced adjustments. Standard bank payouts are grouped weekly, normally Friday, from £25.
                 </p>
               </div>
             </div>
