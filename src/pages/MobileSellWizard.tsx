@@ -29,6 +29,8 @@ import { authorizedFetch } from '@/lib/authorizedFetch';
 import { trackStartListing, trackPublishListing } from '@/lib/analytics';
 import CategorySelector from '@/components/CategorySelector';
 import ShippingMethodSelector from '@/components/ShippingMethodSelector';
+import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_BlackGold.svg';
+import { useNativeStatusBar } from '@/hooks/useNativeStatusBar';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -151,6 +153,7 @@ function SuccessSheet({
 }) {
   const navigate = useNavigate();
   const isDraft = mode === 'draft';
+  useNativeStatusBar('DARK');
 
   return (
     <div
@@ -167,6 +170,11 @@ function SuccessSheet({
         paddingBottom: 'calc(32px + env(safe-area-inset-bottom, 0px))',
       }}
     >
+      <img
+        src={officialLoadifyMarketLogo}
+        alt="Loadify Market"
+        className="mb-8 h-auto w-[210px] max-w-[62vw] object-contain"
+      />
       <div
         className="bg-success/[0.15] flex items-center justify-center"
         style={{
@@ -188,7 +196,7 @@ function SuccessSheet({
           marginBottom: '10px',
         }}
       >
-        {isDraft ? 'Item saved as draft' : 'Your item is live! 🎉'}
+        {isDraft ? 'Item saved as draft' : 'Your item is live!'}
       </h2>
       <p
         className="text-foreground/55"

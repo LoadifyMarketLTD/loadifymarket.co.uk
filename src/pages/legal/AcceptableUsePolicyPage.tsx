@@ -13,7 +13,7 @@ export default function AcceptableUsePolicyPage() {
       <main id="main-content" className="flex-1 pt-4 md:pt-28 pb-16">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-4xl font-bold mb-6">Acceptable Use Policy</h1>
-      <div className="card prose max-w-full">
+      <div className="legal-content !mx-0 !w-full">
         <p className="text-sm text-gray-600 mb-4">Last updated: 19 March 2026</p>
 
         <h2 className="text-2xl font-semibold mt-6 mb-3">1. Introduction</h2>

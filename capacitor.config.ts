@@ -43,8 +43,11 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     StatusBar: {
-      style: 'Dark',
-      backgroundColor: '#0A0E1A',
+      // Most native entry screens use Loadify navy at the top. Individual
+      // light routes switch to dark system icons with useNativeStatusBar().
+      style: 'LIGHT',
+      overlaysWebView: false,
+      backgroundColor: '#0A234F',
     },
   },
 };

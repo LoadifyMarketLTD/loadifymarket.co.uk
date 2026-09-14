@@ -28,6 +28,7 @@ import { openExternalUrl } from "@/lib/capacitorUtils";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
+import { useNativeStatusBar } from "@/hooks/useNativeStatusBar";
 
 interface OrderRow {
   id: string;
@@ -83,6 +84,14 @@ type DisputeRow = {
   createdAt: string;
 };
 
+type CancellationRequestRow = {
+  id: string;
+  status: string;
+  reason: string;
+  details: string | null;
+  createdAt: string;
+};
+
 type DeliveryAddress = {
   name?: string | null;
   phone?: string | null;
@@ -115,6 +124,7 @@ type OrderDetail = OrderRow & {
   events: ShipmentEventRow[];
   returnRequest: ReturnRow | null;
   dispute: DisputeRow | null;
+  cancellationRequest: CancellationRequestRow | null;
   orderItemId: string | null;
   orderItemQuantity: number;
   shippingAddress: DeliveryAddress | null;
@@ -189,6 +199,13 @@ const DISPUTE_REASONS = [
   { value: "item_damaged", label: "Item damaged" },
   { value: "defective_product", label: "Defective product" },
   { value: "seller_not_responding", label: "Seller not responding" },
+  { value: "other", label: "Other" },
+] as const;
+
+const CANCELLATION_REASONS = [
+  { value: "accidental_purchase", label: "Purchased by mistake" },
+  { value: "duplicate_order", label: "Duplicate order" },
+  { value: "wrong_delivery_details", label: "Wrong delivery details" },
   { value: "other", label: "Other" },
 ] as const;
 
@@ -281,8 +298,8 @@ function OrderCard({ order, mode }: { order: OrderRow; mode: OrderMode }) {
         </div>
         <p className="mt-1.5 line-clamp-2 text-[13px] font-extrabold leading-[1.3] text-[#26354A]">{order.productTitle ?? "Order"}</p>
         {mode === "sell" ? <p className="mt-1 truncate text-[10px] font-semibold text-[#667085]">Buyer: {order.buyerName ?? "Customer"}</p> : null}
-        <div className="mt-1.5 flex items-center gap-2 text-[10px] font-medium text-[#7A8493]"><span>Qty {order.quantity}</span><span aria-hidden="true">•</span><span>{formatDate(order.createdAt)}</span></div>
-        <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[14px] font-black text-[#0A234F]">£{order.total.toFixed(2)}</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" /></div>
+        <div className="mt-1.5 flex items-center gap-2 text-[10px] font-medium text-[#7A8493]"><span>Qty {order.quantity}</span><span aria-hidden="true">{`\u2022`}</span><span>{formatDate(order.createdAt)}</span></div>
+        <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[14px] font-black text-[#0A234F]">{`\u00A3${order.total.toFixed(2)}`}</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" /></div>
       </div>
     </div>
   );
@@ -304,6 +321,10 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const [disputeSubject, setDisputeSubject] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+  const [cancellationOpen, setCancellationOpen] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancellationDetails, setCancellationDetails] = useState("");
+  const [cancellationSubmitting, setCancellationSubmitting] = useState(false);
   const [messageOpening, setMessageOpening] = useState(false);
   const [shipmentEditing, setShipmentEditing] = useState(false);
   const [shipmentCourier, setShipmentCourier] = useState("");
@@ -354,9 +375,10 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           events = (eventRows ?? []) as ShipmentEventRow[];
         }
 
-        const [{ data: returnRows }, { data: disputeRows }] = await Promise.all([
+        const [{ data: returnRows }, { data: disputeRows }, { data: cancellationRows }] = await Promise.all([
           supabase.from("returns").select("id, status, reason, refundAmount, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
           supabase.from("disputes").select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
+          supabase.from("order_cancellation_requests").select("id, status, reason, details, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
         ]);
         const snapshotItem = raw.order_items?.find((item) => item.productSnapshotSource != null) ?? raw.order_items?.[0] ?? null;
         const shipment = (shipmentData as ShipmentRow | null) ?? null;
@@ -371,6 +393,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           buyerId: raw.buyerId, sellerId: raw.sellerId, shipment, events,
           returnRequest: ((returnRows ?? [])[0] as ReturnRow | undefined) ?? null,
           dispute: ((disputeRows ?? [])[0] as DisputeRow | undefined) ?? null,
+          cancellationRequest: ((cancellationRows ?? [])[0] as CancellationRequestRow | undefined) ?? null,
           orderItemId: snapshotItem?.id ?? null,
           orderItemQuantity: snapshotItem?.quantity ?? raw.quantity ?? 1,
           shippingAddress: raw.shippingAddress ?? null,
@@ -506,6 +529,26 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
     }
   };
 
+  const submitCancellation = async () => {
+    if (!detail || mode !== "buy" || cancellationSubmitting || !cancellationReason) return;
+    setCancellationSubmitting(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/request-order-cancellation", {
+        method: "POST",
+        body: JSON.stringify({ orderId: detail.id, reason: cancellationReason, details: cancellationDetails.trim() }),
+      });
+      const payload = await response.json() as { error?: string; message?: string; request?: CancellationRequestRow };
+      if (!response.ok || !payload.request) throw new Error(payload.error || "Cancellation could not be requested.");
+      setDetail((current) => current ? { ...current, cancellationRequest: payload.request ?? null } : current);
+      setCancellationOpen(false); setCancellationReason(""); setCancellationDetails("");
+      toast({ title: "Cancellation requested", description: payload.message || "Do not assume the order is cancelled until the Stripe refund is confirmed." });
+    } catch (err) {
+      toast({ title: "Cancellation request failed", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setCancellationSubmitting(false);
+    }
+  };
+
   const openOrderConversation = async () => {
     if (!detail || messageOpening) return;
     setMessageOpening(true);
@@ -638,6 +681,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const counterpart = mode === "sell" ? detail.buyerName ?? "Customer" : detail.sellerName ?? "Seller";
   const returnCanStart = mode === "buy" && !detail.returnRequest && ["delivered", "completed"].includes(detail.status);
   const disputeCanStart = mode === "buy" && !detail.dispute && ["paid", "packed", "shipped", "delivered", "completed"].includes(detail.status);
+  const cancellationCanStart = mode === "buy" && !detail.cancellationRequest && detail.status === "paid";
   const isSellerView = mode === "sell" && detail.sellerId === user?.id;
   const shipmentMutable = isSellerView && !TERMINAL_FULFILMENT_ORDER_STATUSES.has(detail.status);
   const nextStatuses = detail.shipment ? nextShipmentStatuses(detail.shipment.status) : [];
@@ -656,10 +700,19 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
           <div className="flex gap-3.5">
             <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#EEF2F7]">{detail.productImage ? <img src={detail.productImage} alt={detail.productTitle ?? "Product"} className="h-full w-full object-cover" /> : <Package className="h-8 w-8 text-[#A0A8B4]" />}</div>
-            <div className="min-w-0 flex-1"><p className="line-clamp-3 text-[14px] font-black leading-[1.35] text-[#26354A]">{detail.productTitle ?? "Order"}</p><p className="mt-2 text-[11px] font-semibold text-[#667085]">{mode === "sell" ? "Buyer" : "Seller"}: {counterpart}</p><div className="mt-2 flex items-end justify-between gap-2"><span className="text-[18px] font-black text-[#0A234F]">£{detail.total.toFixed(2)}</span><span className="text-[10px] font-semibold text-[#7A8493]">Qty {detail.quantity}</span></div></div>
+            <div className="min-w-0 flex-1"><p className="line-clamp-3 text-[14px] font-black leading-[1.35] text-[#26354A]">{detail.productTitle ?? "Order"}</p><p className="mt-2 text-[11px] font-semibold text-[#667085]">{mode === "sell" ? "Buyer" : "Seller"}: {counterpart}</p><div className="mt-2 flex items-end justify-between gap-2"><span className="text-[18px] font-black text-[#0A234F]">{`\u00A3${detail.total.toFixed(2)}`}</span><span className="text-[10px] font-semibold text-[#7A8493]">Qty {detail.quantity}</span></div></div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#0A234F]/[0.07] pt-3 text-[11px]"><div><p className="font-semibold text-[#98A2B3]">Order date</p><p className="mt-0.5 font-bold text-[#475569]">{formatDate(detail.createdAt)}</p></div><div><p className="font-semibold text-[#98A2B3]">Order status</p><p className="mt-0.5 font-bold capitalize text-[#475569]">{cfg.label}</p></div></div>
         </section>
+
+        {detail.cancellationRequest ? (
+          <section className="rounded-[20px] border border-amber-200 bg-amber-50 p-4"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-amber-700">Cancellation request</p><p className="mt-2 text-[13px] font-extrabold capitalize text-[#26354A]">{detail.cancellationRequest.status}</p><p className="mt-1 text-[10px] leading-[1.5] text-[#667085]">The order remains active until Loadify confirms the Stripe refund.</p></section>
+        ) : cancellationCanStart ? (
+          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
+            <h2 className="text-[14px] font-black">Ordered by mistake?</h2><p className="mt-1 text-[10px] leading-[1.5] text-[#667085]">Request cancellation before the seller packs or dispatches the order. A request is not a confirmed refund.</p>
+            {!cancellationOpen ? <button type="button" onClick={() => setCancellationOpen(true)} className="mt-3 min-h-11 w-full rounded-[13px] border border-red-200 bg-red-50 text-[11px] font-extrabold text-red-700">Request cancellation</button> : <div className="mt-3 space-y-3"><select value={cancellationReason} onChange={(event) => setCancellationReason(event.target.value)} className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold"><option value="">Choose a reason</option>{CANCELLATION_REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select><textarea value={cancellationDetails} onChange={(event) => setCancellationDetails(event.target.value)} maxLength={1000} rows={3} placeholder="Optional details" className="w-full resize-none rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] p-3 text-[12px]" /><div className="flex gap-2"><button type="button" disabled={cancellationSubmitting} onClick={() => setCancellationOpen(false)} className="min-h-11 flex-1 rounded-[13px] border bg-white text-[11px] font-extrabold">Keep order</button><button type="button" disabled={cancellationSubmitting || !cancellationReason} onClick={() => { void submitCancellation(); }} className="min-h-11 flex-1 rounded-[13px] bg-red-600 text-[11px] font-extrabold text-white disabled:opacity-50">{cancellationSubmitting ? "Submitting…" : "Submit request"}</button></div></div>}
+          </section>
+        ) : null}
 
         {isSellerView ? (
           <section className={`rounded-[20px] border bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)] ${hasDeliveryAddress(detail.shippingAddress) ? "border-[#0A234F]/[0.08]" : "border-red-200"}`}>
@@ -730,7 +783,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         </section>
 
         {detail.returnRequest ? (
-          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Return / refund</p><div className="mt-2 flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[13px] font-extrabold capitalize text-[#26354A]">{detail.returnRequest.status}</p><p className="mt-1 text-[10px] leading-[1.45] text-[#667085]">{detail.returnRequest.reason}</p></div>{detail.returnRequest.refundAmount != null ? <span className="shrink-0 text-[13px] font-black">£{detail.returnRequest.refundAmount.toFixed(2)}</span> : null}</div></section>
+          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Return / refund</p><div className="mt-2 flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[13px] font-extrabold capitalize text-[#26354A]">{detail.returnRequest.status}</p><p className="mt-1 text-[10px] leading-[1.45] text-[#667085]">{detail.returnRequest.reason}</p></div>{detail.returnRequest.refundAmount != null ? <span className="shrink-0 text-[13px] font-black">{`\u00A3${detail.returnRequest.refundAmount.toFixed(2)}`}</span> : null}</div></section>
         ) : returnCanStart ? (
           <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
             <div className="flex items-center gap-2"><RotateCcw className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Return this order</h2></div>
@@ -799,6 +852,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
 }
 
 export default function MobileOrdersPage() {
+  useNativeStatusBar("DARK");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkOrderId = searchParams.get("orderId");

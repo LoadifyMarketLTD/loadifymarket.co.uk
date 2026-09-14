@@ -10,9 +10,9 @@ const BuyerTerms = () => {
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Buyer Terms" }]} backTo="/" />
         </div>
-        <div className="container mx-auto px-4 max-w-4xl prose prose-slate dark:prose-invert prose-headings:font-display">
+        <div className="legal-content">
           <h1>Buyer Terms</h1>
-          <p className="text-muted-foreground"><strong>Last updated:</strong> 19 March 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> 14 September 2026</p>
 
           <p>These Buyer Terms apply to all users who purchase goods through Loadify Market ("Platform"), operated by XDrive Logistics Ltd (Company No: 13171804, VAT: GB375949535). These terms supplement our general <a href="/terms">Terms &amp; Conditions</a>.</p>
 
@@ -55,6 +55,7 @@ const BuyerTerms = () => {
 
           <h2>5. Returns &amp; Refunds</h2>
           <p>Returns and refunds are subject to individual seller policies and our <a href="/returns">Returns Policy</a>. Statutory consumer rights under UK law are not affected.</p>
+          <p>A buyer may request cancellation of a paid order before it is packed. Submission does not itself cancel the order or guarantee a refund. Cancellation is complete only when Loadify confirms the order state and Stripe refund; after packing or dispatch, the applicable return process must be used.</p>
 
           <h2>6. Reviews &amp; Feedback</h2>
           <p>You may leave reviews and ratings for sellers and products. Reviews must be:</p>

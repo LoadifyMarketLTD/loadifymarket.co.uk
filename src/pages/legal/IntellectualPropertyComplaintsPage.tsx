@@ -12,7 +12,7 @@ export default function IntellectualPropertyComplaintsPage() {
       <main id="main-content" className="flex-1 pt-4 md:pt-28 pb-16">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <h1 className="text-4xl font-bold mb-6">Intellectual Property &amp; Trademark Complaints</h1>
-          <div className="card prose max-w-full">
+          <div className="legal-content !mx-0 !w-full">
             <p className="text-sm text-gray-600 mb-4">Last updated: 19 May 2026</p>
 
             <p>

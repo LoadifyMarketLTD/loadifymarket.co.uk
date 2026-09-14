@@ -216,3 +216,76 @@ body.native-marketplace-app {
     background: var(--gradient-hero);
   }
 }
+
+@layer components {
+  /* Legal/help copy previously relied on Tailwind's `prose` classes without
+     the typography plugin being installed. Keep this local and deterministic
+     so every policy page has the same readable Loadify presentation. */
+  .legal-content {
+    width: min(100% - 2rem, 56rem);
+    margin-inline: auto;
+    padding: clamp(1.5rem, 4vw, 3.5rem);
+    border: 1px solid rgba(10, 35, 79, 0.1);
+    border-radius: 1.5rem;
+    background: #fff;
+    color: #334155;
+    box-shadow: 0 18px 50px rgba(10, 35, 79, 0.08);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .legal-content > h1 {
+    margin: 0 0 0.75rem;
+    color: #0A234F;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .legal-content > h2 {
+    margin: 2.25rem 0 0.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #E2E8F0;
+    color: #0A234F;
+    font-size: clamp(1.25rem, 3vw, 1.55rem);
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
+  .legal-content > h3 {
+    margin: 1.5rem 0 0.5rem;
+    color: #0A234F;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .legal-content p { margin: 0.8rem 0; }
+  .legal-content > p:first-of-type {
+    margin-bottom: 1.5rem;
+    color: #64748B;
+    font-size: 0.875rem;
+  }
+  .legal-content strong { color: #0A234F; font-weight: 800; }
+  .legal-content ul,
+  .legal-content ol { margin: 0.9rem 0 1.25rem; padding-left: 1.5rem; }
+  .legal-content ul { list-style: disc; }
+  .legal-content ol { list-style: decimal; }
+  .legal-content li { margin: 0.4rem 0; padding-left: 0.25rem; }
+  .legal-content li::marker { color: #C98200; font-weight: 800; }
+  .legal-content a { color: #1D57D8; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+  .legal-content a:hover { color: #0A234F; }
+
+  @media (max-width: 640px) {
+    .legal-content {
+      width: calc(100% - 1.25rem);
+      padding: 1.35rem 1.15rem 1.75rem;
+      border-radius: 1.1rem;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+    .legal-content > h2 { margin-top: 1.8rem; padding-top: 1.2rem; }
+  }
+}

@@ -10,7 +10,7 @@ const TermsAndConditions = () => {
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Terms & Conditions" }]} backTo="/" />
         </div>
-        <div className="container mx-auto px-4 max-w-4xl prose prose-slate dark:prose-invert prose-headings:font-display">
+        <div className="legal-content">
           <h1>Terms &amp; Conditions</h1>
           <p className="text-muted-foreground"><strong>Last updated:</strong> 14 September 2026</p>
 

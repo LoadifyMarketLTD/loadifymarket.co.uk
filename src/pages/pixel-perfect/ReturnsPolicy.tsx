@@ -10,9 +10,9 @@ const ReturnsPolicy = () => {
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Returns Policy" }]} backTo="/" />
         </div>
-        <div className="container mx-auto px-4 max-w-4xl prose prose-slate dark:prose-invert prose-headings:font-display">
+        <div className="legal-content">
           <h1>Returns Policy</h1>
-          <p className="text-muted-foreground"><strong>Last updated:</strong> 19 March 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> 14 September 2026</p>
 
           <p>This Returns Policy outlines the terms under which returns and refunds are handled on Loadify Market, operated by XDrive Logistics Ltd (Company No: 13171804).</p>
 
@@ -24,6 +24,7 @@ const ReturnsPolicy = () => {
           <h2>2. Consumer Rights</h2>
           <p>Under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013, if you are purchasing as a consumer from a business seller, you have the right to cancel your order within <strong>14 days</strong> of receiving the goods without giving any reason.</p>
           <p>To exercise this right, you must inform the seller of your decision to cancel by a clear statement (e.g. via the Platform messaging system or email).</p>
+          <p>If a paid order has not yet been packed, the buyer may submit a cancellation request from Purchases. A request is not confirmation that the order has been cancelled: the order remains active until Loadify confirms the refund through Stripe. If packing or dispatch has already started, the buyer must use the applicable return process instead.</p>
 
           <h2>3. Return Conditions</h2>
           <p>For a return to be accepted under the statutory cancellation right:</p>
@@ -51,7 +52,7 @@ const ReturnsPolicy = () => {
           </ul>
 
           <h2>6. Refund Process</h2>
-          <p>Refunds are processed by the seller through the original payment method. Timelines vary by seller but typically take 5–14 business days after the returned item is received and inspected.</p>
+          <p>The seller or Loadify reviews the cancellation or return request as applicable. When a refund is authorised, Loadify executes it through Stripe to the original payment method and reconciles the order and seller settlement. Sellers must not send an off-platform refund as a substitute. After Stripe confirms the refund, the buyer's bank may take several business days to display it.</p>
 
           <h2>7. Disputes</h2>
           <p>If you are unable to resolve a return or refund issue directly with a seller, you may contact Loadify Market support. We will review the case and may mediate at our discretion. Our decision is final in cases where we facilitate dispute resolution.</p>
