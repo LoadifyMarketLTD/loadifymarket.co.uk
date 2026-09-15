@@ -218,6 +218,7 @@ export const handler: Handler = async (event) => {
         statusCode: 409,
         body: JSON.stringify({
           error: 'Complete seller setup and activate Stripe payments before publishing. You can still save the listing as a draft.',
+          code: 'SELLER_PAYMENT_SETUP_REQUIRED',
         }),
       };
     }

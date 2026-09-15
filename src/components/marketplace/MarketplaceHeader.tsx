@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard } from "lucide-react";
-import logo from "@/assets/LOGO.png";
+import logo from "@/assets/branding/loadify-market-master-blackgold.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import MarketplaceDrawer from "@/components/marketplace/MarketplaceDrawer";

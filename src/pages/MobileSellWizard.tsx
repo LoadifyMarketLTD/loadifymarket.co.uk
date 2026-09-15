@@ -11,8 +11,9 @@
  * Defaults: listingContext=product, stockQuantity=1, seller-selected shipping methods.
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Camera as NativeCamera, EncodingType, MediaTypeSelection, type MediaResult } from '@capacitor/camera';
 import {
   ArrowLeft,
   Camera,
@@ -21,6 +22,7 @@ import {
   Loader2,
   CheckCircle2,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -29,13 +31,28 @@ import { authorizedFetch } from '@/lib/authorizedFetch';
 import { trackStartListing, trackPublishListing } from '@/lib/analytics';
 import CategorySelector from '@/components/CategorySelector';
 import ShippingMethodSelector from '@/components/ShippingMethodSelector';
-import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_BlackGold.svg';
+import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-blackgold.svg';
 import { useNativeStatusBar } from '@/hooks/useNativeStatusBar';
+import {
+  MAX_LISTING_PHOTOS,
+  isCancellationError,
+  isNativeMediaAvailable,
+  isPermissionError,
+  prepareNativeImage,
+  prepareWebImage,
+  type PreparedListingImage,
+} from '@/lib/mobileListingMedia';
+import { AppSettings } from '@/lib/appSettings';
+import {
+  clearPendingCameraRecovery,
+  onNativeCameraRecovered,
+  readPendingCameraRecovery,
+} from '@/lib/nativeCameraRecovery';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const STORAGE_BUCKET = 'product-images';
-const MAX_PHOTOS = 6;
+const MAX_PHOTOS = MAX_LISTING_PHOTOS;
 
 const CONDITION_OPTIONS = [
   { value: '', label: 'Select condition' },
@@ -208,7 +225,7 @@ function SuccessSheet({
         }}
       >
         {isDraft
-          ? 'Your item was saved safely. Complete or refresh your seller tax setup before publishing it live.'
+          ? 'Your item was saved safely. Complete your seller and payment setup before publishing it live.'
           : 'Buyers can now find and purchase your listing.'}
       </p>
 
@@ -238,7 +255,7 @@ function SuccessSheet({
         </button>
 
         <button
-          onClick={() => navigate(isDraft ? '/seller/profile' : '/seller/setup')}
+          onClick={() => navigate(isDraft ? '/onboarding' : '/seller/products')}
           className="text-foreground bg-white/[0.06]"
           style={{
             width: '100%',
@@ -255,7 +272,7 @@ function SuccessSheet({
             gap: '8px',
           }}
         >
-          {isDraft ? 'Complete tax setup' : 'Set up payments'}
+          {isDraft ? 'Complete seller setup' : 'Manage listings'}
           <ChevronRight style={{ width: '16px', height: '16px' }} />
         </button>
 
@@ -313,6 +330,8 @@ export default function MobileSellWizard() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [failedUploads, setFailedUploads] = useState<File[]>([]);
+  const [showMediaSettings, setShowMediaSettings] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishedId, setPublishedId] = useState<string | null>(null);
@@ -331,25 +350,166 @@ export default function MobileSellWizard() {
 
   // ── Photo handlers ────────────────────────────────────────────────────────
 
-  const handleAddPhotos = async (files: FileList) => {
-    if (!user?.id) return;
+  const uploadPreparedImages = async (prepared: PreparedListingImage[]) => {
+    if (!user?.id || prepared.length === 0) return;
+    const settled = await Promise.allSettled(prepared.map(({ file }) => uploadPhoto(file, user.id)));
+    const urls = settled
+      .filter((result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled')
+      .map((result) => result.value);
+    const failed = prepared
+      .filter((_, index) => settled[index]?.status === 'rejected')
+      .map(({ file }) => file);
+    if (urls.length > 0) {
+      setForm((previous) => ({ ...previous, photos: [...previous.photos, ...urls].slice(0, MAX_PHOTOS) }));
+      setFieldErrors((previous) => ({ ...previous, photos: undefined }));
+    }
+    setFailedUploads(failed);
+    if (failed.length > 0) {
+      setPhotoError(`${failed.length} photo${failed.length === 1 ? '' : 's'} could not be uploaded. You can retry.`);
+    }
+  };
+
+  const processNativeResults = async (results: MediaResult[]) => {
+    const remaining = Math.max(0, MAX_PHOTOS - form.photos.length);
+    const settled = await Promise.allSettled(results.slice(0, remaining).map(prepareNativeImage));
+    const prepared = settled
+      .filter((result): result is PromiseFulfilledResult<PreparedListingImage> => result.status === 'fulfilled')
+      .map((result) => result.value);
+    await uploadPreparedImages(prepared);
+    const rejected = settled.filter((result) => result.status === 'rejected');
+    if (rejected.length > 0) {
+      const first = rejected[0] as PromiseRejectedResult;
+      setPhotoError(first.reason instanceof Error ? first.reason.message : 'Some images could not be processed.');
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    if (!isNativeMediaAvailable()) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
     setPhotoUploading(true);
     setPhotoError(null);
-    if (fieldErrors.photos) setFieldErrors((e) => ({ ...e, photos: undefined }));
+    setShowMediaSettings(false);
     try {
-      const remaining = MAX_PHOTOS - form.photos.length;
-      const batch = Array.from(files).slice(0, remaining);
-      const urls = await Promise.all(batch.map((f) => uploadPhoto(f, user.id)));
-      setForm((prev) => ({ ...prev, photos: [...prev.photos, ...urls].slice(0, MAX_PHOTOS) }));
-    } catch {
-      setPhotoError('Photo upload failed. Please try again.');
+      const photo = await NativeCamera.takePhoto({
+        targetWidth: 2048,
+        targetHeight: 2048,
+        quality: 82,
+        correctOrientation: true,
+        encodingType: EncodingType.JPEG,
+        saveToGallery: false,
+        includeMetadata: true,
+      });
+      await processNativeResults([photo]);
+
+    } catch (error) {
+      if (isCancellationError(error)) return;
+      if (isPermissionError(error)) setShowMediaSettings(true);
+      setPhotoError(error instanceof Error ? error.message : 'Camera failed. Please try again.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+  const handleChooseFromGallery = async () => {
+    if (!isNativeMediaAvailable()) {
+      galleryInputRef.current?.click();
+      return;
+    }
+    const remaining = MAX_PHOTOS - form.photos.length;
+    if (remaining <= 0) return;
+    setPhotoUploading(true);
+    setPhotoError(null);
+    setShowMediaSettings(false);
+    try {
+      const selection = await NativeCamera.chooseFromGallery({
+        mediaType: MediaTypeSelection.Photo,
+        allowMultipleSelection: true,
+        limit: remaining,
+        includeMetadata: true,
+      });
+      await processNativeResults(selection.results);
+    } catch (error) {
+      if (isCancellationError(error)) return;
+      if (isPermissionError(error)) setShowMediaSettings(true);
+      setPhotoError(error instanceof Error ? error.message : 'Gallery failed. Please try again.');
     } finally {
       setPhotoUploading(false);
     }
   };
 
+  const handleAddPhotos = async (files: FileList) => {
+    setPhotoUploading(true);
+    setPhotoError(null);
+    setShowMediaSettings(false);
+    try {
+      const remaining = Math.max(0, MAX_PHOTOS - form.photos.length);
+      const sourceFiles = Array.from(files).slice(0, remaining);
+      const settled = await Promise.allSettled(sourceFiles.map(prepareWebImage));
+      const prepared = settled
+        .filter((result): result is PromiseFulfilledResult<PreparedListingImage> => result.status === 'fulfilled')
+        .map((result) => result.value);
+      await uploadPreparedImages(prepared);
+      const rejected = settled.filter((result) => result.status === 'rejected');
+      if (rejected.length > 0) {
+        const first = rejected[0] as PromiseRejectedResult;
+        setPhotoError(first.reason instanceof Error ? first.reason.message : 'Some images could not be processed.');
+      }
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  const handleRetryUploads = async () => {
+    const retry = failedUploads;
+    setFailedUploads([]);
+    setPhotoUploading(true);
+    setPhotoError(null);
+    try {
+      await uploadPreparedImages(retry.map((file) => ({
+        id: crypto.randomUUID(),
+        file,
+        width: 0,
+        height: 0,
+      })));
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  useEffect(() => {
+    const processRecovery = (data: unknown) => {
+      const restored = data as MediaResult | { results?: MediaResult[] };
+      const results = 'results' in restored && Array.isArray(restored.results)
+        ? restored.results
+        : [restored as MediaResult];
+      setPhotoUploading(true);
+      void processNativeResults(results)
+        .then(clearPendingCameraRecovery)
+        .catch((error: unknown) => setPhotoError(error instanceof Error ? error.message : 'Recovered image processing failed.'))
+        .finally(() => setPhotoUploading(false));
+    };
+    const pending = readPendingCameraRecovery();
+    if (pending) processRecovery(pending.data);
+    const unsubscribe = onNativeCameraRecovered((payload) => processRecovery(payload.data));
+    return unsubscribe;
+    // Run once when the Sell screen is restored after Android reclaimed the app.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleRemovePhoto = (idx: number) => {
     setForm((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== idx) }));
+  };
+
+  const handleMovePhoto = (idx: number, direction: -1 | 1) => {
+    setForm((previous) => {
+      const target = idx + direction;
+      if (target < 0 || target >= previous.photos.length) return previous;
+      const photos = [...previous.photos];
+      [photos[idx], photos[target]] = [photos[target], photos[idx]];
+      return { ...previous, photos };
+    });
   };
 
   // ── Publish ───────────────────────────────────────────────────────────────
@@ -402,7 +562,10 @@ export default function MobileSellWizard() {
         // P1 tax evidence currently supports only a narrow live-publication class.
         // Never discard the seller's work when that live gate is not satisfied:
         // retry exactly once as an inactive draft while leaving checkout fail-closed.
-        if (publishRes.status === 409 && data.code === 'TAX_EVIDENCE_REQUIRED') {
+        if (
+          publishRes.status === 409 &&
+          (data.code === 'TAX_EVIDENCE_REQUIRED' || data.code === 'SELLER_PAYMENT_SETUP_REQUIRED')
+        ) {
           const draftRes = await authorizedFetch('/.netlify/functions/create-product', {
             method: 'POST',
             body: JSON.stringify({ ...payload, isActive: false }),
@@ -543,8 +706,28 @@ export default function MobileSellWizard() {
                   aria-label={`Remove photo ${idx + 1}`}
                   onClick={() => handleRemovePhoto(idx)}
                 >
-                  <X className="text-foreground" style={{ width: '14px', height: '14px' }} />
+                  <X className="text-white" style={{ width: '14px', height: '14px' }} />
                 </button>
+                <div className="absolute bottom-1.5 left-1.5 right-1.5 flex justify-between">
+                  <button
+                    type="button"
+                    aria-label={`Move photo ${idx + 1} left`}
+                    disabled={idx === 0}
+                    onClick={() => handleMovePhoto(idx, -1)}
+                    className="h-7 w-7 rounded-full border-none bg-black/70 text-white disabled:opacity-30"
+                  >
+                    <ChevronLeft className="m-auto h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Move photo ${idx + 1} right`}
+                    disabled={idx === form.photos.length - 1}
+                    onClick={() => handleMovePhoto(idx, 1)}
+                    className="h-7 w-7 rounded-full border-none bg-black/70 text-white disabled:opacity-30"
+                  >
+                    <ChevronRight className="m-auto h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
 
@@ -552,7 +735,7 @@ export default function MobileSellWizard() {
               <>
               <button
                 aria-label="Take photo"
-                onClick={() => cameraInputRef.current?.click()}
+                onClick={() => { void handleTakePhoto(); }}
                 disabled={photoUploading}
                 style={{ aspectRatio: '1', borderRadius: '14px', border: '2px dashed #C9D5E5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: photoUploading ? 'not-allowed' : 'pointer', opacity: photoUploading ? 0.6 : 1, background: '#FFFFFF' }}
               >
@@ -571,7 +754,7 @@ export default function MobileSellWizard() {
                   </>
                 )}
               </button>
-              <button aria-label="Choose from gallery" onClick={() => galleryInputRef.current?.click()} disabled={photoUploading} style={{ aspectRatio: '1', borderRadius: '14px', border: '2px dashed #C9D5E5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: photoUploading ? 'not-allowed' : 'pointer', opacity: photoUploading ? 0.6 : 1, background: '#FFFFFF' }}>
+              <button aria-label="Choose from gallery" onClick={() => { void handleChooseFromGallery(); }} disabled={photoUploading} style={{ aspectRatio: '1', borderRadius: '14px', border: '2px dashed #C9D5E5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', cursor: photoUploading ? 'not-allowed' : 'pointer', opacity: photoUploading ? 0.6 : 1, background: '#FFFFFF' }}>
                 <Images className="text-[#2563EB]" style={{ width: '24px', height: '24px' }} />
                 <span className="text-[#2563EB]" style={{ fontSize: '11px', fontWeight: 700 }}>Gallery</span>
               </button>
@@ -596,11 +779,28 @@ export default function MobileSellWizard() {
               {photoError}
             </p>
           )}
+          {(failedUploads.length > 0 || showMediaSettings) && (
+            <div className="flex flex-wrap gap-2">
+              {failedUploads.length > 0 && (
+                <button type="button" onClick={() => { void handleRetryUploads(); }} disabled={photoUploading} className="rounded-lg border border-[#0A234F] bg-white px-3 py-2 text-xs font-bold text-[#0A234F]">
+                  Retry failed upload{failedUploads.length === 1 ? '' : 's'}
+                </button>
+              )}
+              {showMediaSettings && (
+                <button type="button" onClick={() => { void AppSettings.open(); }} className="rounded-lg bg-[#0A234F] px-3 py-2 text-xs font-bold text-white">
+                  Open app settings
+                </button>
+              )}
+            </div>
+          )}
+          <p className="m-0 text-xs text-[#64748B]">
+            Up to 6 photos. JPEG, PNG, WebP, HEIC or HEIF; 25 MB source maximum and at least 600 x 600 pixels.
+          </p>
 
           <input
             ref={galleryInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
             multiple
             style={{ display: 'none' }}
             onChange={(e) => {
@@ -608,7 +808,7 @@ export default function MobileSellWizard() {
               e.target.value = '';
             }}
           />
-          <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={(e) => { if (e.target.files && e.target.files.length > 0) void handleAddPhotos(e.target.files); e.target.value = ''; }} />
+          <input ref={cameraInputRef} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style={{ display: 'none' }} onChange={(e) => { if (e.target.files && e.target.files.length > 0) void handleAddPhotos(e.target.files); e.target.value = ''; }} />
         </div>
 
         {/* Title */}

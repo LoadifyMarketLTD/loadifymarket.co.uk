@@ -385,11 +385,7 @@ const BuyerOrders = () => {
                     className="h-8 w-8"
                     title={returnEligible ? "Request return" : "Returns available after delivery"}
                     disabled={!returnEligible}
-                    onClick={() => {
-                      setReturnOrder(o);
-                      setReturnReason("");
-                      setReturnDescription("");
-                    }}
+                    onClick={() => navigate(`/orders?mode=buy&orderId=${encodeURIComponent(o.id)}`)}
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -399,12 +395,7 @@ const BuyerOrders = () => {
                     className="h-8 w-8 text-primary"
                     title={["paid", "packed", "shipped", "delivered", "completed"].includes(o.status) ? "Open dispute" : "Disputes available after payment"}
                     disabled={!["paid", "packed", "shipped", "delivered", "completed"].includes(o.status)}
-                    onClick={() => {
-                      setDisputeOrder(o);
-                      setDisputeSubject("");
-                      setDisputeReason("");
-                      setDisputeDescription("");
-                    }}
+                    onClick={() => navigate(`/orders?mode=buy&orderId=${encodeURIComponent(o.id)}`)}
                   >
                     <AlertTriangle className="h-4 w-4" />
                   </Button>

@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import MobileBottomNav from '@/components/MobileBottomNav';
-import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg';
+import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-whitegold.svg';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { openExternalUrl } from '@/lib/capacitorUtils';
 import { supabase } from '@/lib/supabase';

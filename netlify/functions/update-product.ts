@@ -108,11 +108,12 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
 
-  const { id: productId, shippingMethodIds, dispatchTime, lockedFieldsOnly, ...updateFields } = body as {
+  const { id: productId, shippingMethodIds, dispatchTime, lockedFieldsOnly, listingAction, ...updateFields } = body as {
     id: string;
     shippingMethodIds?: string[];
     dispatchTime?: string;
     lockedFieldsOnly?: boolean;
+    listingAction?: 'hide' | 'activate' | 'mark_sold';
     [key: string]: unknown;
   };
   if (!productId) return { statusCode: 400, body: JSON.stringify({ error: '"id" is required' }) };
@@ -246,6 +247,39 @@ export const handler: Handler = async (event) => {
     updateData.stockStatus = calculateStockStatus(nextContext, normalizedStockQuantity);
   }
 
+  if (listingAction !== undefined && !['hide', 'activate', 'mark_sold'].includes(listingAction)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid listing action' }) };
+  }
+  if (listingAction && existingProduct.listingStatus === 'reserved') {
+    return { statusCode: 409, body: JSON.stringify({ error: 'This listing is reserved by an active checkout and cannot be changed.', code: 'LISTING_RESERVED' }) };
+  }
+  if (listingAction === 'hide' && existingProduct.listingStatus === 'sold') {
+    return { statusCode: 409, body: JSON.stringify({ error: 'A sold listing cannot be hidden. Restock it before reactivating.', code: 'INVALID_LISTING_TRANSITION' }) };
+  }
+  if (listingAction === 'hide') {
+    updateData.isActive = false;
+    updateData.listingStatus = 'hidden';
+    updateData.reservedUntil = null;
+    updateData.reservationToken = null;
+  } else if (listingAction === 'mark_sold') {
+    updateData.isActive = false;
+    updateData.listingStatus = 'sold';
+    updateData.stockQuantity = 0;
+    updateData.stockStatus = 'out_of_stock';
+    updateData.reservedUntil = null;
+    updateData.reservationToken = null;
+  } else if (listingAction === 'activate') {
+    if (normalizedStockQuantity <= 0) {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Add stock before reactivating this listing.', code: 'RESTOCK_REQUIRED' }) };
+    }
+    updateData.isActive = true;
+    updateData.listingStatus = 'active';
+    updateData.stockQuantity = normalizedStockQuantity;
+    updateData.stockStatus = calculateStockStatus(nextContext, normalizedStockQuantity);
+    updateData.reservedUntil = null;
+    updateData.reservationToken = null;
+  }
+
   const wantsPublished = updateData.isActive === true || (!hasOwn(updateData, 'isActive') && existingProduct.isActive);
   if (wantsPublished && !sellerCanPublish) {
     return { statusCode: 409, body: JSON.stringify({ error: 'Complete seller setup and activate Stripe payments before publishing.' }) };
@@ -283,6 +317,17 @@ export const handler: Handler = async (event) => {
       reservedUntil: existingProduct.reservedUntil ?? null,
     },
   });
+
+  if (!isAdmin && listingAction && listingLocks.length > 0) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: `This listing cannot change visibility while ${formatSellerListingLockReason(listingLocks)}.`,
+        code: 'LISTING_LOCKED',
+        locks: listingLocks,
+      }),
+    };
+  }
 
   const criticalFieldChanged = LOCKED_CRITICAL_FIELDS.some((field) => {
     if (!hasOwn(updateData, field)) return false;

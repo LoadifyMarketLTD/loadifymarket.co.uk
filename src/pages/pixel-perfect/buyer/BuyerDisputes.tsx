@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Plus, ChevronRight, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ function formatDate(iso: string) {
 
 const BuyerDisputes = () => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Dispute | null>(null);
@@ -119,7 +121,7 @@ const BuyerDisputes = () => {
 
   useEffect(() => { void fetchDisputes(); }, [fetchDisputes]);
 
-  const openNewDisputeDialog = async () => {
+  const _openNewDisputeDialog = async () => {
     if (!user?.id) return;
     // Keep this list aligned with can_open_dispute() in the database.
     const { data } = await supabase
@@ -183,7 +185,7 @@ const BuyerDisputes = () => {
             Raise and track disputes for your orders.
           </p>
         </div>
-        <Button onClick={() => void openNewDisputeDialog()} className="shrink-0">
+        <Button onClick={() => navigate("/buyer/orders")} className="shrink-0">
           <Plus className="h-4 w-4 mr-2" /> Open Dispute
         </Button>
       </div>
@@ -283,6 +285,9 @@ const BuyerDisputes = () => {
                   {selected.description}
                 </div>
               </div>
+              <Button className="w-full" onClick={() => navigate(`/orders?mode=buy&orderId=${encodeURIComponent(selected.orderId)}`)}>
+                Open order Resolution Centre
+              </Button>
               {selected.resolution && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Resolution</p>

@@ -14,6 +14,7 @@ import {
   LogOut,
   MapPin,
   Package,
+  PackageSearch,
   Settings,
   ShieldCheck,
   Store,
@@ -26,7 +27,7 @@ import { hasAdminAccess, hasBuyerAccess, hasSellerAccess } from '@/lib/roleUtils
 import type { User as LoadifyUser } from '@/types';
 import { supabase } from '@/lib/supabase';
 import MobileBottomNav from '@/components/MobileBottomNav';
-import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_BlackGold.svg';
+import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-whitegold.svg';
 import { useUnreadNotificationsCount } from '@/hooks/useUnreadNotificationsCount';
 
 interface SectionItem {
@@ -59,6 +60,7 @@ function buildSections(user: LoadifyUser | null | undefined): Section[] {
           { label: 'Delivery addresses', to: '/buyer/addresses', icon: MapPin },
         ] : []),
         ...(canSell ? [
+          { label: 'My listings', to: '/seller/products', icon: PackageSearch },
           { label: 'Sales', to: '/orders?mode=sell', icon: Store },
           { label: 'Balance', to: '/profile/balance', icon: Wallet },
         ] : []),
@@ -170,13 +172,13 @@ export default function MobileProfilePage() {
           paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
         }}
       >
-        <header className="px-[var(--mob-side,16px)] pb-3 pt-5">
+        <header className="bg-[#0A234F] px-[var(--mob-side,16px)] pb-5 pt-5">
           <img
             src={officialLoadifyMarketLogo}
             alt="Loadify Market"
-            className="h-[34px] w-auto max-w-[190px] object-contain object-left"
+            className="h-auto w-[176px] max-w-[62vw] object-contain object-left"
           />
-          <h1 className="mt-2 text-[24px] font-black leading-none tracking-[-0.03em] text-[#0A234F]">Profile</h1>
+          <h1 className="mt-3 text-[24px] font-black leading-none tracking-[-0.03em] text-white">Profile</h1>
         </header>
 
         {!user ? (

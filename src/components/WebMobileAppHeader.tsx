@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import { MOBILE_NOTIFICATION_QUERY_TYPES } from '@/lib/notificationUtils';
 import WebMobileSearchOverlay from '@/components/WebMobileSearchOverlay';
-import logo from '@/assets/LOGO.png';
+import logo from '@/assets/branding/loadify-market-master-blackgold.svg';
 
 export default function WebMobileAppHeader() {
   const navigate = useNavigate();

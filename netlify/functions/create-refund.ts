@@ -287,6 +287,22 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  const { error: returnCompletionError } = await supabase
+    .from('returns')
+    .update({
+      status: 'completed',
+      refundAmount: refund.amount / 100,
+      resolvedBy: adminId,
+      resolvedAt: new Date().toISOString(),
+    })
+    .eq('orderId', orderId)
+    .in('status', ['requested', 'approved', 'received']);
+  if (returnCompletionError) {
+    const warning = 'Stripe refund succeeded, but the linked return could not be marked completed. Manual return review is required.';
+    transferRecoveryWarning = transferRecoveryWarning ? `${transferRecoveryWarning} ${warning}` : warning;
+    console.error('create-refund:', warning, returnCompletionError);
+  }
+
   await supabase.from('notifications').insert({
     userId: order.buyerId,
     type: 'order',

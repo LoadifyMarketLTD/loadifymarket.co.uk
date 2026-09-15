@@ -11,10 +11,13 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import type { Return } from "@/types";
+import { openCaseEvidence } from "@/lib/caseEvidence";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
   requested:  { label: "Requested",  className: "bg-primary/10 text-primary",   icon: AlertCircle },
   approved:   { label: "Approved",   className: "bg-blue-500/10 text-blue-700",     icon: CheckCircle2 },
+  received:   { label: "Received",   className: "bg-amber-500/10 text-amber-700",     icon: CheckCircle2 },
   completed:  { label: "Completed",  className: "bg-success/10 text-success", icon: CheckCircle2 },
   rejected:   { label: "Rejected",   className: "bg-danger/100/10 text-danger",       icon: XCircle },
 };
@@ -61,10 +64,12 @@ const SellerReturns = () => {
     setSubmitting(true);
     setError("");
     try {
-      const { error: dbError } = await supabase.from("returns").update({ status: "approved" }).eq("id", selected.id);
-      if (dbError) { setError(dbError.message); return; }
-      // Buyer notification is emitted by the database return-decision trigger,
-      // keeping status and notification delivery on one authoritative path.
+      const response = await authorizedFetch("/.netlify/functions/return-action", {
+        method: "POST",
+        body: JSON.stringify({ returnId: selected.id, action: "approve" }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) { setError(payload.error || "Return could not be approved."); return; }
       await load();
       setSelected(null);
     } finally {
@@ -77,13 +82,42 @@ const SellerReturns = () => {
     setSubmitting(true);
     setError("");
     try {
-      const { error: dbError } = await supabase.from("returns").update({ status: "rejected" }).eq("id", selected.id);
-      if (dbError) { setError(dbError.message); return; }
-      // Buyer notification is emitted by the database return-decision trigger.
+      const response = await authorizedFetch("/.netlify/functions/return-action", {
+        method: "POST",
+        body: JSON.stringify({ returnId: selected.id, action: "reject" }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) { setError(payload.error || "Return could not be rejected."); return; }
       await load();
       setSelected(null);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleReceived = async () => {
+    if (!selected?.buyerTrackingNumber || !user?.id) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/return-action", {
+        method: "POST",
+        body: JSON.stringify({ returnId: selected.id, action: "received" }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) { setError(payload.error || "Receipt could not be confirmed."); return; }
+      await load();
+      setSelected(null);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openEvidence = async (path: string) => {
+    try {
+      window.open(await openCaseEvidence(path), "_blank", "noopener,noreferrer");
+    } catch {
+      setError("Evidence could not be opened. Please try again.");
     }
   };
 
@@ -143,7 +177,7 @@ const SellerReturns = () => {
         {[
           { label: "Pending", count: byStatus("requested").length, color: "text-primary" },
           { label: "Approved", count: byStatus("approved").length, color: "text-blue-500" },
-          { label: "Completed", count: byStatus("completed").length, color: "text-emerald-500" },
+          { label: "Received", count: byStatus("received").length, color: "text-amber-600" },
           { label: "Rejected", count: byStatus("rejected").length, color: "text-red-500" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-lg border border-border p-2 text-center">
@@ -165,11 +199,13 @@ const SellerReturns = () => {
           <TabsTrigger value="all" className="text-xs h-7">All <Badge variant="secondary" className="ml-1 text-[10px] px-1 h-4">{filtered.length}</Badge></TabsTrigger>
           <TabsTrigger value="requested" className="text-xs h-7">Pending</TabsTrigger>
           <TabsTrigger value="approved" className="text-xs h-7">In Progress</TabsTrigger>
+          <TabsTrigger value="received" className="text-xs h-7">Received</TabsTrigger>
           <TabsTrigger value="completed" className="text-xs h-7">Done</TabsTrigger>
         </TabsList>
         <TabsContent value="all"><Card><CardContent className="p-0">{renderList(filtered)}</CardContent></Card></TabsContent>
         <TabsContent value="requested"><Card><CardContent className="p-0">{renderList(byStatus("requested"))}</CardContent></Card></TabsContent>
         <TabsContent value="approved"><Card><CardContent className="p-0">{renderList(byStatus("approved"))}</CardContent></Card></TabsContent>
+        <TabsContent value="received"><Card><CardContent className="p-0">{renderList(byStatus("received"))}</CardContent></Card></TabsContent>
         <TabsContent value="completed"><Card><CardContent className="p-0">{renderList(byStatus("completed"))}</CardContent></Card></TabsContent>
       </Tabs>
 
@@ -199,6 +235,26 @@ const SellerReturns = () => {
                   <p className="font-medium text-foreground">{formatDate(selected.createdAt)}</p>
                 </div>
               </div>
+              {selected.buyerTrackingNumber && (
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">RETURN TRACKING</p>
+                  <p className="text-sm font-medium text-blue-950">
+                    {selected.buyerCarrier ? `${selected.buyerCarrier}: ` : ''}{selected.buyerTrackingNumber}
+                  </p>
+                </div>
+              )}
+              {(selected.images ?? []).length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">BUYER EVIDENCE</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(selected.images ?? []).map((path, index) => (
+                      <Button key={path} type="button" variant="outline" size="sm" onClick={() => void openEvidence(path)}>
+                        View photo {index + 1}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {selected.description && (
                 <div className="rounded-lg bg-muted/50 border border-border p-3">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">BUYER NOTES</p>
@@ -206,6 +262,16 @@ const SellerReturns = () => {
                 </div>
               )}
             </div>
+            {selected.status === "approved" && selected.buyerTrackingNumber && (
+              <DialogFooter>
+                <Button disabled={submitting} onClick={handleReceived}>
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> {submitting ? "Processing…" : "Confirm item received"}
+                </Button>
+              </DialogFooter>
+            )}
+            {selected.status === "approved" && !selected.buyerTrackingNumber && (
+              <p className="text-xs text-muted-foreground">Waiting for the buyer to add return tracking.</p>
+            )}
             {selected.status === "requested" && (
               <DialogFooter className="flex gap-2">
                 <Button

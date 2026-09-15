@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ArrowRight, ChevronDown, ChevronRight, Grid2X2, X } from "lucide-react";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
-import logo from "@/assets/LOGO.png";
+import logo from "@/assets/branding/loadify-market-master-blackgold.svg";
 import type { User } from "@/types";
 import CATEGORY_CONFIG from "@/lib/category-config";
 import { marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";

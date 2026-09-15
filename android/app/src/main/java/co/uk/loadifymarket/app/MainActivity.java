@@ -8,6 +8,8 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        registerPlugin(AppSettingsPlugin.class);
+        registerPlugin(ImageNormalizerPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Keep the installed marketplace app visually anchored at scroll bounds.

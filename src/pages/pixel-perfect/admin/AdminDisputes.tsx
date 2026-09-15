@@ -36,6 +36,9 @@ interface Dispute {
   status: "open" | "in_review" | "resolved" | "closed";
   resolution: string | null;
   resolutionType: string | null;
+  sellerResponse: string | null;
+  sellerRespondedAt: string | null;
+  escalatedAt: string | null;
   createdAt: string;
 }
 
@@ -78,7 +81,7 @@ const AdminDisputes = () => {
     try {
       const { data, error } = await supabase
         .from("disputes")
-        .select("id, orderId, buyerId, sellerId, subject, description, protectionReason, status, resolution, resolutionType, createdAt")
+        .select("id, orderId, buyerId, sellerId, subject, description, protectionReason, status, resolution, resolutionType, sellerResponse, sellerRespondedAt, escalatedAt, createdAt")
         .order("createdAt", { ascending: false })
         .limit(200);
 
@@ -130,6 +133,9 @@ const AdminDisputes = () => {
           status: r.status as Dispute["status"],
           resolution: r.resolution as string | null,
           resolutionType: r.resolutionType as string | null,
+          sellerResponse: r.sellerResponse as string | null,
+          sellerRespondedAt: r.sellerRespondedAt as string | null,
+          escalatedAt: r.escalatedAt as string | null,
           createdAt: r.createdAt as string,
         }))
       );
@@ -167,9 +173,7 @@ const AdminDisputes = () => {
     }
     setActionLoading(resolveTarget.id);
 
-    const isRefundType =
-      resolveForm.resolutionType === "full_refund" ||
-      resolveForm.resolutionType === "partial_refund";
+    const isRefundType = resolveForm.resolutionType === "full_refund";
 
     try {
       // ── Step 1: If resolution involves a refund, trigger Stripe refund first ──
@@ -440,6 +444,16 @@ const AdminDisputes = () => {
                   {selected.description}
                 </div>
               </div>
+              {selected.sellerResponse && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Seller response</p>
+                  <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-950 whitespace-pre-wrap">
+                    {selected.sellerResponse}
+                    {selected.sellerRespondedAt && <p className="mt-1 text-xs text-blue-700">Responded {formatDate(selected.sellerRespondedAt)}</p>}
+                  </div>
+                </div>
+              )}
+              {selected.escalatedAt && <p className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm font-medium text-amber-900">Escalated {formatDate(selected.escalatedAt)}</p>}
               {selected.resolution && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Resolution</p>
@@ -492,14 +506,13 @@ const AdminDisputes = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full_refund">Full Refund (triggers Stripe refund)</SelectItem>
-                    <SelectItem value="partial_refund">Partial Refund (triggers Stripe refund)</SelectItem>
                     <SelectItem value="replacement">Replacement</SelectItem>
                     <SelectItem value="rejected">Rejected (No Action)</SelectItem>
                     <SelectItem value="withdrawn">Withdrawn by Buyer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {(resolveForm.resolutionType === "full_refund" || resolveForm.resolutionType === "partial_refund") && (
+              {resolveForm.resolutionType === "full_refund" && (
                 <div className="rounded-lg bg-primary-soft border border-primary/40 px-3 py-2.5 flex gap-2 text-sm text-primary">
                   <span className="shrink-0 font-bold">⚠</span>
                   <span>

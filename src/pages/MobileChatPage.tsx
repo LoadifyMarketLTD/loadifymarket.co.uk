@@ -7,7 +7,7 @@ import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import SafetyReportDialog from "@/components/safety/SafetyReportDialog";
-import officialLoadifyMarketLogo from "../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg";
+import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-whitegold.svg';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

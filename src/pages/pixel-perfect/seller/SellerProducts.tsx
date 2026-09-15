@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Share2, Package, Trash2, CheckSquare, MoreVertical } from "lucide-react";
+import { Plus, Search, Pencil, Share2, Package, Trash2, CheckSquare, MoreVertical, Eye, EyeOff, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -69,10 +69,15 @@ interface Product {
   shareCount?: number;
   images?: string[];
   listingContext?: string | null;
+  listingStatus?: string | null;
+  reservedUntil?: string | null;
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-success/10 text-success" },
+  hidden: { label: "Hidden", className: "bg-muted text-muted-foreground" },
+  reserved: { label: "Reserved", className: "bg-primary/10 text-primary" },
+  sold: { label: "Sold", className: "bg-muted text-muted-foreground" },
   pending_review: { label: "Pending Review", className: "bg-primary/10 text-primary" },
   out_of_stock: { label: "Out of Stock", className: "bg-danger/100/10 text-danger" },
   low_stock: { label: "Low Stock", className: "bg-primary/10 text-primary" },
@@ -80,6 +85,9 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 function deriveStatus(p: Product): string {
+  if (p.listingStatus === "reserved") return "reserved";
+  if (p.listingStatus === "sold") return "sold";
+  if (p.listingStatus === "hidden") return "hidden";
   if (!p.isActive) return "draft";
   if (!p.isApproved) return "pending_review";
   if (isSellerOutOfStock(p)) return "out_of_stock";
@@ -117,6 +125,7 @@ const SellerProducts = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [soldTarget, setSoldTarget] = useState<Product | null>(null);
   const [soldLoading, setSoldLoading] = useState(false);
+  const [lifecycleLoading, setLifecycleLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -124,7 +133,7 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, isUnique, views, shareCount, images, listingContext")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, isUnique, views, shareCount, images, listingContext, listingStatus, reservedUntil")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
@@ -241,9 +250,7 @@ const SellerProducts = () => {
         method: "POST",
         body: JSON.stringify({
           id: soldTarget.id,
-          isActive: false,
-          stockQuantity: 0,
-          stockStatus: "out_of_stock",
+          listingAction: "mark_sold",
         }),
       });
       if (!res.ok) {
@@ -253,7 +260,7 @@ const SellerProducts = () => {
       setProducts((prev) =>
         prev.map((p) =>
           p.id === soldTarget.id
-            ? { ...p, isActive: false, stockQuantity: 0, stockStatus: "out_of_stock" }
+            ? { ...p, isActive: false, stockQuantity: 0, stockStatus: "out_of_stock", listingStatus: "sold" }
             : p
         )
       );
@@ -264,6 +271,44 @@ const SellerProducts = () => {
     } finally {
       setSoldLoading(false);
       setSoldTarget(null);
+    }
+  };
+
+  const handleListingAction = async (product: Product, action: "hide" | "activate") => {
+    if (!user || lifecycleLoading) return;
+    setLifecycleLoading(product.id);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/update-product", {
+        method: "POST",
+        body: JSON.stringify({ id: product.id, listingAction: action }),
+      });
+      const payload = await res.json().catch(() => ({})) as { error?: string; code?: string };
+      if (!res.ok) {
+        if (payload.code === "RESTOCK_REQUIRED") {
+          toast({ title: "Stock required", description: payload.error, variant: "destructive" });
+          navigate(`/seller/products/${product.id}/edit`);
+          return;
+        }
+        throw new Error(payload.error ?? `Server returned ${res.status}`);
+      }
+      setProducts((prev) => prev.map((p) => p.id === product.id
+        ? { ...p, isActive: action === "activate", listingStatus: action === "activate" ? "active" : "hidden" }
+        : p));
+      toast({
+        title: action === "activate" ? "Listing is active" : "Listing hidden",
+        description: action === "activate"
+          ? `"${product.title}" is visible to buyers again.`
+          : `"${product.title}" is hidden from buyers. Its stock and history are preserved.`,
+      });
+    } catch (err) {
+      console.error("Listing action failed:", err);
+      toast({
+        title: "Update failed",
+        description: err instanceof Error ? err.message : "Could not update this listing.",
+        variant: "destructive",
+      });
+    } finally {
+      setLifecycleLoading(null);
     }
   };
 
@@ -299,7 +344,7 @@ const SellerProducts = () => {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {(["all", "active", "pending_review", "draft", "low_stock", "out_of_stock"] as const).map((s) => (
+          {(["all", "active", "pending_review", "reserved", "hidden", "sold", "draft", "low_stock", "out_of_stock"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
@@ -400,7 +445,18 @@ const SellerProducts = () => {
                         </a>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      {status !== "out_of_stock" && (
+                      {(status === "active" || status === "low_stock" || status === "out_of_stock") && (
+                        <DropdownMenuItem onClick={() => handleListingAction(p, "hide")} disabled={lifecycleLoading === p.id}>
+                          <EyeOff className="h-4 w-4 mr-2" /> Hide listing
+                        </DropdownMenuItem>
+                      )}
+                      {(status === "hidden" || status === "draft" || status === "sold") && (
+                        <DropdownMenuItem onClick={() => handleListingAction(p, "activate")} disabled={lifecycleLoading === p.id}>
+                          {status === "hidden" ? <Eye className="h-4 w-4 mr-2" /> : <RotateCcw className="h-4 w-4 mr-2" />}
+                          {status === "hidden" ? "Unhide listing" : "Restock & reactivate"}
+                        </DropdownMenuItem>
+                      )}
+                      {status !== "out_of_stock" && status !== "sold" && status !== "reserved" && (
                         <DropdownMenuItem
                           className="text-primary focus:text-primary"
                           onClick={() => setSoldTarget(p)}
@@ -529,7 +585,18 @@ const SellerProducts = () => {
                                 </a>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              {status !== "out_of_stock" && (
+                              {(status === "active" || status === "low_stock" || status === "out_of_stock") && (
+                                <DropdownMenuItem onClick={() => handleListingAction(p, "hide")} disabled={lifecycleLoading === p.id}>
+                                  <EyeOff className="h-3.5 w-3.5 mr-2" /> Hide listing
+                                </DropdownMenuItem>
+                              )}
+                              {(status === "hidden" || status === "draft" || status === "sold") && (
+                                <DropdownMenuItem onClick={() => handleListingAction(p, "activate")} disabled={lifecycleLoading === p.id}>
+                                  {status === "hidden" ? <Eye className="h-3.5 w-3.5 mr-2" /> : <RotateCcw className="h-3.5 w-3.5 mr-2" />}
+                                  {status === "hidden" ? "Unhide listing" : "Restock & reactivate"}
+                                </DropdownMenuItem>
+                              )}
+                              {status !== "out_of_stock" && status !== "sold" && status !== "reserved" && (
                                 <DropdownMenuItem
                                   className="text-primary focus:text-primary"
                                   onClick={() => setSoldTarget(p)}

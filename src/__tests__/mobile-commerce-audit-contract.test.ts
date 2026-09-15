@@ -8,7 +8,7 @@ describe('mobile commerce and branding audit contract', () => {
   it('uses the official master vector and avoids fragile mojibake-prone glyph literals', () => {
     const sell = source('src/pages/MobileSellWizard.tsx');
     const orders = source('src/pages/MobileOrdersPage.tsx');
-    expect(sell).toContain('LOADIFY_MARKET_Master_Vector_BlackGold.svg');
+    expect(sell).toContain("@/assets/branding/loadify-market-master-blackgold.svg");
     expect(sell).not.toContain('🎉');
     expect(orders).toContain('\\u00A3');
     expect(orders).toContain('\\u2022');

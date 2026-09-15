@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import logo from "../../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg";
+import logo from "@/assets/branding/loadify-market-master-whitegold.svg";
 
 const navigation = [
   { label: "Platform", to: "/platform" },

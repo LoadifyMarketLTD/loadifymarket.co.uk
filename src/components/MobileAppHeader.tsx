@@ -12,7 +12,7 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import { MOBILE_NOTIFICATION_QUERY_TYPES } from '@/lib/notificationUtils';
 import MobileSearchOverlay from '@/components/MobileSearchOverlay';
-import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg';
+import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-whitegold.svg';
 
 export default function MobileAppHeader() {
   const navigate = useNavigate();

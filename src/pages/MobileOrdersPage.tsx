@@ -4,8 +4,9 @@
  * perspective. The native detail surface stays inside the marketplace app.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Camera as NativeCamera, MediaTypeSelection, type MediaResult } from "@capacitor/camera";
 import {
   AlertCircle,
   ChevronLeft,
@@ -16,6 +17,7 @@ import {
   MessageSquare,
   MapPin,
   Package,
+  ImagePlus,
   RotateCcw,
   ShieldAlert,
   Truck,
@@ -29,6 +31,20 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 import { useNativeStatusBar } from "@/hooks/useNativeStatusBar";
+import {
+  MAX_CASE_EVIDENCE_FILES,
+  openCaseEvidence,
+  removeCaseEvidence,
+  uploadCaseEvidence,
+  type CaseEvidenceKind,
+} from "@/lib/caseEvidence";
+import {
+  isCancellationError,
+  isNativeMediaAvailable,
+  prepareNativeImage,
+  prepareWebImage,
+  type PreparedListingImage,
+} from "@/lib/mobileListingMedia";
 
 interface OrderRow {
   id: string;
@@ -70,7 +86,12 @@ type ReturnRow = {
   status: string;
   reason: string;
   refundAmount: number | null;
+  buyerCarrier: string | null;
+  buyerTrackingNumber: string | null;
+  images: string[];
   createdAt: string;
+  updatedAt: string | null;
+  resolvedAt: string | null;
 };
 
 type DisputeRow = {
@@ -81,7 +102,15 @@ type DisputeRow = {
   protectionReason: string | null;
   resolution: string | null;
   resolutionType: string | null;
+  sellerResponse: string | null;
+  images: string[];
+  sellerEvidence: string[];
+  sellerRespondedAt: string | null;
+  sellerResponseDeadline: string | null;
+  escalatedAt: string | null;
   createdAt: string;
+  updatedAt: string | null;
+  resolvedAt: string | null;
 };
 
 type CancellationRequestRow = {
@@ -305,6 +334,43 @@ function OrderCard({ order, mode }: { order: OrderRow; mode: OrderMode }) {
   );
 }
 
+function CaseTimeline({ events }: { events: Array<{ label: string; at: string | null }> }) {
+  const visible = events.filter((event): event is { label: string; at: string } => Boolean(event.at));
+  return (
+    <div className="mt-3 rounded-[13px] bg-[#F7F9FC] p-3">
+      <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[#7A8493]">Case timeline</p>
+      <div className="mt-2 space-y-2">{visible.map((event, index) => <div key={`${event.label}-${event.at}`} className="flex gap-2"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${index === visible.length - 1 ? "bg-[#F5A300]" : "bg-[#B8C1CD]"}`} /><div><p className="text-[10px] font-extrabold text-[#26354A]">{event.label}</p><p className="text-[9px] text-[#7A8493]">{formatDateTime(event.at)}</p></div></div>)}</div>
+    </div>
+  );
+}
+
+function EvidenceSelector({
+  files,
+  disabled,
+  onAdd,
+  onRemove,
+  inputRef,
+  onWebFiles,
+}: {
+  files: PreparedListingImage[];
+  disabled: boolean;
+  onAdd: () => void;
+  onRemove: (id: string) => void;
+  inputRef: RefObject<HTMLInputElement | null>;
+  onWebFiles: (files: FileList | null) => void;
+}) {
+  return (
+    <div className="rounded-[14px] border border-dashed border-[#0A234F]/20 bg-[#F7F9FC] p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="text-[10px] font-extrabold text-[#26354A]">Photo evidence</p><p className="mt-0.5 text-[9px] text-[#7A8493]">Up to {MAX_CASE_EVIDENCE_FILES} private photos</p></div>
+        <button type="button" disabled={disabled || files.length >= MAX_CASE_EVIDENCE_FILES} onClick={onAdd} className="flex min-h-9 items-center gap-1.5 rounded-[11px] bg-white px-3 text-[10px] font-extrabold text-[#0A234F] shadow-sm disabled:opacity-50"><ImagePlus className="h-3.5 w-3.5" />Add</button>
+      </div>
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple className="hidden" onChange={(event) => { onWebFiles(event.target.files); event.currentTarget.value = ""; }} />
+      {files.length > 0 ? <div className="mt-2 flex flex-wrap gap-2">{files.map((file, index) => <button key={file.id} type="button" disabled={disabled} onClick={() => onRemove(file.id)} className="rounded-full bg-white px-2.5 py-1.5 text-[9px] font-bold text-[#475569] shadow-sm">Photo {index + 1} &times;</button>)}</div> : null}
+    </div>
+  );
+}
+
 function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string; requestedMode: OrderMode; onBack: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -316,11 +382,18 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [returnCarrier, setReturnCarrier] = useState('');
+  const [returnTracking, setReturnTracking] = useState('');
+  const [returnTrackingSaving, setReturnTrackingSaving] = useState(false);
+  const [returnDecisionSaving, setReturnDecisionSaving] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeSubject, setDisputeSubject] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+  const [sellerDisputeResponse, setSellerDisputeResponse] = useState('');
+  const [sellerDisputeResponding, setSellerDisputeResponding] = useState(false);
+  const [disputeEscalating, setDisputeEscalating] = useState(false);
   const [cancellationOpen, setCancellationOpen] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
   const [cancellationDetails, setCancellationDetails] = useState("");
@@ -333,6 +406,12 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const [shipmentStatusSaving, setShipmentStatusSaving] = useState<string | null>(null);
   const [proofUploading, setProofUploading] = useState(false);
   const [proofOpening, setProofOpening] = useState(false);
+  const [returnEvidence, setReturnEvidence] = useState<PreparedListingImage[]>([]);
+  const [disputeEvidence, setDisputeEvidence] = useState<PreparedListingImage[]>([]);
+  const [sellerEvidence, setSellerEvidence] = useState<PreparedListingImage[]>([]);
+  const returnEvidenceInput = useRef<HTMLInputElement>(null);
+  const disputeEvidenceInput = useRef<HTMLInputElement>(null);
+  const sellerEvidenceInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -376,8 +455,8 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         }
 
         const [{ data: returnRows }, { data: disputeRows }, { data: cancellationRows }] = await Promise.all([
-          supabase.from("returns").select("id, status, reason, refundAmount, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
-          supabase.from("disputes").select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
+          supabase.from("returns").select("id, status, reason, refundAmount, buyerCarrier, buyerTrackingNumber, images, createdAt, updatedAt, resolvedAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
+          supabase.from("disputes").select("id, status, subject, description, protectionReason, resolution, resolutionType, sellerResponse, images, sellerEvidence, sellerRespondedAt, sellerResponseDeadline, escalatedAt, createdAt, updatedAt, resolvedAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
           supabase.from("order_cancellation_requests").select("id, status, reason, details, createdAt").eq("orderId", raw.id).order("createdAt", { ascending: false }).limit(1),
         ]);
         const snapshotItem = raw.order_items?.find((item) => item.productSnapshotSource != null) ?? raw.order_items?.[0] ?? null;
@@ -399,6 +478,9 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           shippingAddress: raw.shippingAddress ?? null,
           listingContext: snapshotItem?.listingContextSnapshot ?? raw.products?.listingContext ?? null,
         });
+        const latestReturn = ((returnRows ?? [])[0] as ReturnRow | undefined) ?? null;
+        setReturnCarrier(latestReturn?.buyerCarrier ?? '');
+        setReturnTracking(latestReturn?.buyerTrackingNumber ?? '');
         setShipmentCourier(shipment?.courier_name ?? "");
         setShipmentTracking(shipment?.tracking_number ?? "");
       } catch {
@@ -425,6 +507,67 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
     setDetail((current) => current ? { ...current, status: orderState?.status ?? current.status, shipment, events } : current);
     setShipmentCourier(shipment?.courier_name ?? "");
     setShipmentTracking(shipment?.tracking_number ?? "");
+  };
+
+  const appendEvidence = (kind: CaseEvidenceKind, additions: PreparedListingImage[]) => {
+    const update = (current: PreparedListingImage[]) => [...current, ...additions].slice(0, MAX_CASE_EVIDENCE_FILES);
+    if (kind === "return") setReturnEvidence(update);
+    else if (kind === "dispute") setDisputeEvidence(update);
+    else setSellerEvidence(update);
+  };
+
+  const currentEvidenceCount = (kind: CaseEvidenceKind) => (
+    kind === "return" ? returnEvidence.length : kind === "dispute" ? disputeEvidence.length : sellerEvidence.length
+  );
+
+  const prepareEvidenceFiles = async (kind: CaseEvidenceKind, files: File[]) => {
+    const remaining = MAX_CASE_EVIDENCE_FILES - currentEvidenceCount(kind);
+    const selected = files.slice(0, remaining);
+    const results = await Promise.allSettled(selected.map((file) => prepareWebImage(file)));
+    const prepared = results.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
+    const failures = results.filter((result) => result.status === "rejected");
+    if (prepared.length > 0) appendEvidence(kind, prepared);
+    if (failures.length > 0) {
+      const first = failures[0] as PromiseRejectedResult;
+      toast({ title: prepared.length ? "Some photos were skipped" : "Photos were not added", description: first.reason instanceof Error ? first.reason.message : "Choose valid image files.", variant: "destructive" });
+    }
+  };
+
+  const pickEvidence = async (kind: CaseEvidenceKind, webInput: RefObject<HTMLInputElement | null>) => {
+    if (!isNativeMediaAvailable()) {
+      webInput.current?.click();
+      return;
+    }
+    const remaining = MAX_CASE_EVIDENCE_FILES - currentEvidenceCount(kind);
+    if (remaining <= 0) return;
+    try {
+      const selection = await NativeCamera.chooseFromGallery({
+        mediaType: MediaTypeSelection.Photo,
+        allowMultipleSelection: true,
+        limit: remaining,
+        includeMetadata: true,
+      });
+      const results = await Promise.allSettled(selection.results.map((photo: MediaResult) => prepareNativeImage(photo)));
+      const prepared = results
+        .filter((result): result is PromiseFulfilledResult<PreparedListingImage> => result.status === "fulfilled")
+        .map((result) => result.value);
+      const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+      if (prepared.length > 0) appendEvidence(kind, prepared);
+      if (failures.length > 0) {
+        const first = failures[0] as PromiseRejectedResult;
+        toast({ title: prepared.length ? "Some photos were skipped" : "Photos were not added", description: first.reason instanceof Error ? first.reason.message : "Choose valid image files.", variant: "destructive" });
+      }
+    } catch (error) {
+      if (!isCancellationError(error)) toast({ title: "Gallery unavailable", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    }
+  };
+
+  const openEvidence = async (path: string) => {
+    try {
+      await openExternalUrl(await openCaseEvidence(path));
+    } catch (error) {
+      toast({ title: "Evidence unavailable", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    }
   };
 
   const submitReturn = async () => {
@@ -460,18 +603,81 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
       if (eligibility.result?.automaticRefundExecutionAllowed !== false || eligibility.result?.paymentMutationAllowed !== false) {
         throw new Error("Unsafe return policy response. No return was created.");
       }
+      const evidencePaths = await uploadCaseEvidence(returnEvidence, user.id, detail.id, "return");
       const { data: created, error: insertError } = await supabase.from("returns").insert({
         orderId: detail.id, buyerId: user.id, sellerId: detail.sellerId,
-        reason: returnReason, description: returnDescription.trim(), status: "requested",
-      }).select("id, status, reason, refundAmount, createdAt").single();
-      if (insertError) throw insertError;
+        reason: returnReason, description: returnDescription.trim(), status: "requested", images: evidencePaths,
+      }).select("id, status, reason, refundAmount, buyerCarrier, buyerTrackingNumber, images, createdAt, updatedAt, resolvedAt").single();
+      if (insertError) {
+        await removeCaseEvidence(evidencePaths);
+        throw insertError;
+      }
       setDetail((current) => current ? { ...current, returnRequest: created as ReturnRow } : current);
-      setReturnOpen(false); setReturnReason(""); setReturnDescription("");
+      setReturnOpen(false); setReturnReason(""); setReturnDescription(""); setReturnEvidence([]);
       toast({ title: "Return requested", description: decision === "manual_review" ? "Your request was submitted for manual review. No refund has been executed." : "Your return request was submitted. No refund has been executed." });
     } catch (err) {
       toast({ title: "Failed to submit return", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setReturnSubmitting(false);
+    }
+  };
+
+  const decideReturn = async (decision: "approved" | "rejected" | "received") => {
+    if (!detail?.returnRequest || mode !== "sell" || !user?.id || returnDecisionSaving) return;
+    if (decision === "received" && !detail.returnRequest.buyerTrackingNumber) {
+      toast({ title: "Tracking required", description: "The buyer must add return tracking before receipt can be confirmed.", variant: "destructive" });
+      return;
+    }
+    setReturnDecisionSaving(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/return-action", {
+        method: "POST",
+        body: JSON.stringify({
+          returnId: detail.returnRequest.id,
+          action: decision === "approved" ? "approve" : decision === "rejected" ? "reject" : "received",
+        }),
+      });
+      const payload = await response.json() as { error?: string; return?: ReturnRow };
+      if (!response.ok || !payload.return) throw new Error(payload.error || "Return could not be updated.");
+      setDetail((current) => current ? { ...current, returnRequest: payload.return as ReturnRow } : current);
+      toast({
+        title: decision === "received" ? "Return received" : decision === "approved" ? "Return approved" : "Return rejected",
+        description: decision === "received"
+          ? "Loadify has been notified to review and process the refund. No duplicate refund is created here."
+          : "The buyer has been notified of your decision.",
+      });
+    } catch (decisionError) {
+      toast({ title: "Return was not updated", description: decisionError instanceof Error ? decisionError.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setReturnDecisionSaving(false);
+    }
+  };
+
+  const saveReturnTracking = async () => {
+    if (!detail?.returnRequest || mode !== 'buy' || returnTrackingSaving) return;
+    const carrier = returnCarrier.trim();
+    const tracking = returnTracking.trim();
+    if (!carrier || !/^[A-Za-z0-9][A-Za-z0-9 _./-]{3,79}$/.test(tracking)) {
+      toast({ title: 'Complete return tracking', description: 'Enter the carrier and a valid tracking number.', variant: 'destructive' });
+      return;
+    }
+    setReturnTrackingSaving(true);
+    try {
+      const { data, error: trackingError } = await supabase
+        .from('returns')
+        .update({ buyerCarrier: carrier, buyerTrackingNumber: tracking })
+        .eq('id', detail.returnRequest.id)
+        .eq('buyerId', user?.id ?? '')
+        .eq('status', 'approved')
+        .select('id, status, reason, refundAmount, buyerCarrier, buyerTrackingNumber, images, createdAt, updatedAt, resolvedAt')
+        .single();
+      if (trackingError) throw trackingError;
+      setDetail((current) => current ? { ...current, returnRequest: data as ReturnRow } : current);
+      toast({ title: 'Return tracking saved', description: 'The seller can now follow the return parcel.' });
+    } catch (trackingError) {
+      toast({ title: 'Tracking was not saved', description: trackingError instanceof Error ? trackingError.message : 'Please try again.', variant: 'destructive' });
+    } finally {
+      setReturnTrackingSaving(false);
     }
   };
 
@@ -502,6 +708,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         return;
       }
 
+      const evidencePaths = await uploadCaseEvidence(disputeEvidence, user.id, detail.id, "dispute");
       const { data: created, error: insertError } = await supabase
         .from("disputes")
         .insert({
@@ -511,21 +718,81 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
           subject: disputeSubject.trim(),
           description: disputeDescription.trim(),
           protectionReason: disputeReason || null,
+          images: evidencePaths,
         })
-        .select("id, status, subject, description, protectionReason, resolution, resolutionType, createdAt")
+        .select("id, status, subject, description, protectionReason, resolution, resolutionType, sellerResponse, images, sellerEvidence, sellerRespondedAt, sellerResponseDeadline, escalatedAt, createdAt, updatedAt, resolvedAt")
         .single();
-      if (insertError) throw insertError;
+      if (insertError) {
+        await removeCaseEvidence(evidencePaths);
+        throw insertError;
+      }
 
       setDetail((current) => current ? { ...current, dispute: created as DisputeRow } : current);
       setDisputeOpen(false);
       setDisputeReason("");
       setDisputeSubject("");
       setDisputeDescription("");
+      setDisputeEvidence([]);
       toast({ title: "Dispute opened", description: "Your case has been submitted for review. No refund is executed by opening a dispute." });
     } catch (err) {
       toast({ title: "Failed to open dispute", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setDisputeSubmitting(false);
+    }
+  };
+
+  const submitSellerDisputeResponse = async () => {
+    if (!detail?.dispute || mode !== 'sell' || sellerDisputeResponding) return;
+    if (sellerDisputeResponse.trim().length < 10) {
+      toast({ title: 'Response is too short', description: 'Explain your position in at least 10 characters.', variant: 'destructive' });
+      return;
+    }
+    setSellerDisputeResponding(true);
+    let evidencePaths: string[] = [];
+    try {
+      if (!user?.id) throw new Error('Authentication required.');
+      evidencePaths = await uploadCaseEvidence(sellerEvidence, user.id, detail.id, 'seller-response');
+      const response = await authorizedFetch('/.netlify/functions/dispute-action', {
+        method: 'POST',
+        body: JSON.stringify({
+          disputeId: detail.dispute.id,
+          action: 'respond',
+          response: sellerDisputeResponse.trim(),
+          evidence: evidencePaths,
+        }),
+      });
+      const payload = await response.json() as { error?: string; dispute?: DisputeRow };
+      if (!response.ok || !payload.dispute) {
+        await removeCaseEvidence(evidencePaths);
+        throw new Error(payload.error || 'Response could not be submitted.');
+      }
+      setDetail((current) => current ? { ...current, dispute: payload.dispute as DisputeRow } : current);
+      setSellerDisputeResponse('');
+      setSellerEvidence([]);
+      toast({ title: 'Response submitted', description: 'The buyer has been notified.' });
+    } catch (responseError) {
+      toast({ title: 'Response was not submitted', description: responseError instanceof Error ? responseError.message : 'Please try again.', variant: 'destructive' });
+    } finally {
+      setSellerDisputeResponding(false);
+    }
+  };
+
+  const escalateDispute = async () => {
+    if (!detail?.dispute || mode !== 'buy' || disputeEscalating) return;
+    setDisputeEscalating(true);
+    try {
+      const response = await authorizedFetch('/.netlify/functions/dispute-action', {
+        method: 'POST',
+        body: JSON.stringify({ disputeId: detail.dispute.id, action: 'escalate' }),
+      });
+      const payload = await response.json() as { error?: string; dispute?: DisputeRow };
+      if (!response.ok || !payload.dispute) throw new Error(payload.error || 'Dispute could not be escalated.');
+      setDetail((current) => current ? { ...current, dispute: payload.dispute as DisputeRow } : current);
+      toast({ title: 'Case escalated', description: 'Loadify support has been notified for formal review.' });
+    } catch (escalationError) {
+      toast({ title: 'Case cannot be escalated yet', description: escalationError instanceof Error ? escalationError.message : 'Please try again.', variant: 'destructive' });
+    } finally {
+      setDisputeEscalating(false);
     }
   };
 
@@ -664,12 +931,12 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#F7F9FC] px-[var(--mob-side,16px)] pt-8 md:hidden"><div className="h-12 animate-pulse rounded-[14px] bg-[#E8EDF3]" /><div className="mt-4 h-36 animate-pulse rounded-[20px] bg-[#E8EDF3]" /><div className="mt-3 h-48 animate-pulse rounded-[20px] bg-[#E8EDF3]" /></div>;
+    return <div className="min-h-screen bg-[#F7F9FC] px-[var(--mob-side,16px)] pt-8"><div className="h-12 animate-pulse rounded-[14px] bg-[#E8EDF3]" /><div className="mt-4 h-36 animate-pulse rounded-[20px] bg-[#E8EDF3]" /><div className="mt-3 h-48 animate-pulse rounded-[20px] bg-[#E8EDF3]" /></div>;
   }
 
   if (error || !detail) {
     return (
-      <div className="min-h-screen bg-[#F7F9FC] px-[var(--mob-side,16px)] pt-8 text-[#0A234F] md:hidden">
+      <div className="min-h-screen bg-[#F7F9FC] px-[var(--mob-side,16px)] pt-8 text-[#0A234F]">
         <button onClick={onBack} className="flex h-10 items-center gap-1 text-[13px] font-extrabold"><ChevronLeft className="h-5 w-5" /> Back</button>
         <div className="mt-6 rounded-[20px] border border-red-100 bg-white p-6 text-center shadow-sm"><AlertCircle className="mx-auto h-8 w-8 text-red-500" /><p className="mt-3 text-[14px] font-extrabold">{error ?? "Order unavailable"}</p></div>
         <MobileBottomNav />
@@ -687,7 +954,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
   const nextStatuses = detail.shipment ? nextShipmentStatuses(detail.shipment.status) : [];
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden">
+    <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F]">
       <header className="sticky top-0 z-30 border-b border-[#0A234F]/[0.08] bg-white/95 px-[var(--mob-side,16px)] pb-3" style={{ paddingTop: "calc(0.7rem + env(safe-area-inset-top, 0px))", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }}>
         <div className="flex items-center gap-2">
           <button onClick={onBack} aria-label="Back to order history" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F4F6F8]"><ChevronLeft className="h-5 w-5" /></button>
@@ -696,7 +963,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         </div>
       </header>
 
-      <main className="space-y-3 px-[var(--mob-side,16px)] py-4" style={{ paddingBottom: "calc(92px + env(safe-area-inset-bottom, 0px))" }}>
+      <main className="mx-auto max-w-3xl space-y-3 px-[var(--mob-side,16px)] py-4" style={{ paddingBottom: "calc(92px + env(safe-area-inset-bottom, 0px))" }}>
         <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
           <div className="flex gap-3.5">
             <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#EEF2F7]">{detail.productImage ? <img src={detail.productImage} alt={detail.productTitle ?? "Product"} className="h-full w-full object-cover" /> : <Package className="h-8 w-8 text-[#A0A8B4]" />}</div>
@@ -783,11 +1050,55 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
         </section>
 
         {detail.returnRequest ? (
-          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Return / refund</p><div className="mt-2 flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[13px] font-extrabold capitalize text-[#26354A]">{detail.returnRequest.status}</p><p className="mt-1 text-[10px] leading-[1.45] text-[#667085]">{detail.returnRequest.reason}</p></div>{detail.returnRequest.refundAmount != null ? <span className="shrink-0 text-[13px] font-black">{`\u00A3${detail.returnRequest.refundAmount.toFixed(2)}`}</span> : null}</div></section>
+          <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7A8493]">Return / refund</p>
+            <div className="mt-2 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[13px] font-extrabold capitalize text-[#26354A]">{detail.returnRequest.status}</p>
+                <p className="mt-1 text-[10px] leading-[1.45] text-[#667085]">{detail.returnRequest.reason}</p>
+                {(detail.returnRequest.images ?? []).length > 0 ? <div className="mt-2 flex flex-wrap gap-2">{detail.returnRequest.images.map((path, index) => <button key={path} type="button" onClick={() => { void openEvidence(path); }} className="rounded-full bg-[#EEF2F7] px-2.5 py-1.5 text-[9px] font-extrabold text-[#0A234F]">View evidence {index + 1}</button>)}</div> : null}
+              </div>
+              {detail.returnRequest.refundAmount != null ? <span className="shrink-0 text-[13px] font-black">{`\u00A3${detail.returnRequest.refundAmount.toFixed(2)}`}</span> : null}
+            </div>
+            {detail.returnRequest.status === 'requested' && mode === 'sell' ? (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" disabled={returnDecisionSaving} onClick={() => { void decideReturn("rejected"); }} className="min-h-11 rounded-[12px] border border-red-200 bg-red-50 text-[10px] font-extrabold text-red-700 disabled:opacity-50">Reject return</button>
+                <button type="button" disabled={returnDecisionSaving} onClick={() => { void decideReturn("approved"); }} className="min-h-11 rounded-[12px] bg-[#0A234F] text-[10px] font-extrabold text-white disabled:opacity-50">Approve return</button>
+              </div>
+            ) : null}
+            {detail.returnRequest.status === 'approved' && mode === 'sell' ? (
+              detail.returnRequest.buyerTrackingNumber
+                ? <button type="button" disabled={returnDecisionSaving} onClick={() => { void decideReturn("received"); }} className="mt-3 min-h-11 w-full rounded-[12px] bg-[#0A234F] text-[10px] font-extrabold text-white disabled:opacity-50">Confirm returned item received</button>
+                : <p className="mt-3 rounded-[12px] bg-[#F7F9FC] px-3 py-2 text-[10px] text-[#667085]">Waiting for the buyer to add return tracking.</p>
+            ) : null}
+            {detail.returnRequest.status === 'received' ? (
+              <p className="mt-3 rounded-[12px] bg-amber-50 px-3 py-2 text-[10px] font-bold text-amber-800">Item received. Refund is awaiting controlled Loadify processing.</p>
+            ) : null}
+            {detail.returnRequest.status === 'approved' && mode === 'buy' ? (
+              <div className="mt-3 space-y-2 rounded-[14px] bg-[#F7F9FC] p-3">
+                <p className="text-[10px] font-extrabold text-[#26354A]">Return parcel tracking</p>
+                <input value={returnCarrier} onChange={(event) => setReturnCarrier(event.target.value)} maxLength={80} placeholder="Carrier, for example Royal Mail" className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A] outline-none" />
+                <input value={returnTracking} onChange={(event) => setReturnTracking(event.target.value)} maxLength={80} placeholder="Tracking number" className="h-11 w-full rounded-[12px] border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#26354A] outline-none" />
+                <button type="button" disabled={returnTrackingSaving} onClick={() => { void saveReturnTracking(); }} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">
+                  {returnTrackingSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {detail.returnRequest.buyerTrackingNumber ? 'Update tracking' : 'Save tracking'}
+                </button>
+              </div>
+            ) : detail.returnRequest.buyerTrackingNumber ? (
+              <p className="mt-3 rounded-[12px] bg-[#F7F9FC] px-3 py-2 text-[10px] text-[#475569]">
+                {detail.returnRequest.buyerCarrier ? `${detail.returnRequest.buyerCarrier}: ` : ''}{detail.returnRequest.buyerTrackingNumber}
+              </p>
+            ) : null}
+            <CaseTimeline events={[
+              { label: "Return requested", at: detail.returnRequest.createdAt },
+              { label: "Return tracking added", at: detail.returnRequest.buyerTrackingNumber ? detail.returnRequest.updatedAt : null },
+              { label: "Return resolved", at: detail.returnRequest.resolvedAt },
+            ]} />
+          </section>
         ) : returnCanStart ? (
           <section className="rounded-[20px] border border-[#0A234F]/[0.08] bg-white p-4 shadow-[0_7px_22px_rgba(10,35,79,0.05)]">
             <div className="flex items-center gap-2"><RotateCcw className="h-4 w-4 text-[#1D57D8]" /><h2 className="text-[14px] font-black">Return this order</h2></div>
-            {!returnOpen ? <button type="button" onClick={() => setReturnOpen(true)} className="mt-3 flex min-h-12 w-full items-center justify-center rounded-[14px] bg-[#0A234F] px-4 text-[12px] font-extrabold text-white">Request a return</button> : <div className="mt-3 space-y-3"><select value={returnReason} onChange={(event) => setReturnReason(event.target.value)} className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold text-[#26354A] outline-none"><option value="">Choose a reason</option>{RETURN_REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select><textarea value={returnDescription} onChange={(event) => setReturnDescription(event.target.value)} rows={4} maxLength={1000} placeholder="Tell us what happened" className="w-full resize-none rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] p-3 text-[12px] font-medium text-[#26354A] outline-none placeholder:text-[#98A2B3]" /><p className="text-[10px] leading-[1.45] text-[#667085]">Submitting a request does not execute a refund. Eligibility is checked first and manual review may be required.</p><div className="flex gap-2"><button type="button" disabled={returnSubmitting} onClick={() => setReturnOpen(false)} className="min-h-11 flex-1 rounded-[13px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#475569]">Cancel</button><button type="button" disabled={returnSubmitting} onClick={() => { void submitReturn(); }} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[13px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">{returnSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Submit return</button></div></div>}
+            {!returnOpen ? <button type="button" onClick={() => setReturnOpen(true)} className="mt-3 flex min-h-12 w-full items-center justify-center rounded-[14px] bg-[#0A234F] px-4 text-[12px] font-extrabold text-white">Request a return</button> : <div className="mt-3 space-y-3"><select value={returnReason} onChange={(event) => setReturnReason(event.target.value)} className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold text-[#26354A] outline-none"><option value="">Choose a reason</option>{RETURN_REASONS.map((reason) => <option key={reason.value} value={reason.value}>{reason.label}</option>)}</select><textarea value={returnDescription} onChange={(event) => setReturnDescription(event.target.value)} rows={4} maxLength={1000} placeholder="Tell us what happened" className="w-full resize-none rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] p-3 text-[12px] font-medium text-[#26354A] outline-none placeholder:text-[#98A2B3]" /><EvidenceSelector files={returnEvidence} disabled={returnSubmitting} inputRef={returnEvidenceInput} onAdd={() => { void pickEvidence("return", returnEvidenceInput); }} onWebFiles={(files) => { void prepareEvidenceFiles("return", Array.from(files ?? [])); }} onRemove={(id) => setReturnEvidence((current) => current.filter((item) => item.id !== id))} /><p className="text-[10px] leading-[1.45] text-[#667085]">Submitting a request does not execute a refund. Eligibility is checked first and manual review may be required.</p><div className="flex gap-2"><button type="button" disabled={returnSubmitting} onClick={() => setReturnOpen(false)} className="min-h-11 flex-1 rounded-[13px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#475569]">Cancel</button><button type="button" disabled={returnSubmitting} onClick={() => { void submitReturn(); }} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[13px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-60">{returnSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Submit return</button></div></div>}
           </section>
         ) : null}
 
@@ -809,6 +1120,36 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
                 <p className="mt-2 text-[9px] font-semibold text-[#98A2B3]">Opened {formatDate(detail.dispute.createdAt)}</p>
               </div>
             </div>
+            {(detail.dispute.images ?? []).length > 0 ? <div className="mt-3 flex flex-wrap gap-2">{detail.dispute.images.map((path, index) => <button key={path} type="button" onClick={() => { void openEvidence(path); }} className="rounded-full bg-[#EEF2F7] px-2.5 py-1.5 text-[9px] font-extrabold text-[#0A234F]">Buyer evidence {index + 1}</button>)}</div> : null}
+            {detail.dispute.sellerResponse ? (
+              <div className="mt-3 rounded-[13px] border border-blue-100 bg-blue-50 px-3 py-3">
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-blue-700">Seller response</p>
+                <p className="mt-1 whitespace-pre-wrap text-[11px] leading-[1.5] text-blue-950">{detail.dispute.sellerResponse}</p>
+                {detail.dispute.sellerRespondedAt ? <p className="mt-1 text-[9px] text-blue-700">{formatDateTime(detail.dispute.sellerRespondedAt)}</p> : null}
+                {(detail.dispute.sellerEvidence ?? []).length > 0 ? <div className="mt-2 flex flex-wrap gap-2">{detail.dispute.sellerEvidence.map((path, index) => <button key={path} type="button" onClick={() => { void openEvidence(path); }} className="rounded-full bg-white px-2.5 py-1.5 text-[9px] font-extrabold text-blue-800">Seller evidence {index + 1}</button>)}</div> : null}
+              </div>
+            ) : null}
+            {!detail.dispute.resolution && mode === 'sell' ? (
+              <div className="mt-3 space-y-2 rounded-[13px] bg-[#F7F9FC] p-3">
+                <p className="text-[10px] font-extrabold text-[#26354A]">Respond to this case</p>
+                <textarea value={sellerDisputeResponse} onChange={(event) => setSellerDisputeResponse(event.target.value)} rows={4} maxLength={4000} placeholder="Explain your position and any relevant shipping or order facts" className="w-full resize-none rounded-[12px] border border-[#0A234F]/10 bg-white p-3 text-[11px] text-[#26354A] outline-none" />
+                <EvidenceSelector files={sellerEvidence} disabled={sellerDisputeResponding} inputRef={sellerEvidenceInput} onAdd={() => { void pickEvidence("seller-response", sellerEvidenceInput); }} onWebFiles={(files) => { void prepareEvidenceFiles("seller-response", Array.from(files ?? [])); }} onRemove={(id) => setSellerEvidence((current) => current.filter((item) => item.id !== id))} />
+                <button type="button" disabled={sellerDisputeResponding || sellerDisputeResponse.trim().length < 10} onClick={() => { void submitSellerDisputeResponse(); }} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-50">
+                  {sellerDisputeResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{detail.dispute.sellerResponse ? 'Update response' : 'Submit response'}
+                </button>
+              </div>
+            ) : null}
+            {!detail.dispute.resolution && mode === 'buy' && !detail.dispute.escalatedAt ? (
+              <button type="button" disabled={disputeEscalating} onClick={() => { void escalateDispute(); }} className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#0A234F] disabled:opacity-50">
+                {disputeEscalating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Escalate to Loadify
+              </button>
+            ) : detail.dispute.escalatedAt ? <p className="mt-3 rounded-[12px] bg-[#FFF4D6] px-3 py-2 text-[10px] font-bold text-[#795300]">Escalated to Loadify for formal review.</p> : null}
+            <CaseTimeline events={[
+              { label: "Dispute opened", at: detail.dispute.createdAt },
+              { label: "Seller responded", at: detail.dispute.sellerRespondedAt },
+              { label: "Escalated to Loadify", at: detail.dispute.escalatedAt },
+              { label: "Case resolved", at: detail.dispute.resolvedAt },
+            ]} />
             {detail.dispute.resolution ? (
               <div className="mt-3 rounded-[13px] border border-emerald-100 bg-emerald-50 px-3 py-3">
                 <p className="text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700">Resolution</p>
@@ -833,6 +1174,7 @@ function MobileOrderDetail({ orderId, requestedMode, onBack }: { orderId: string
                 </select>
                 <input value={disputeSubject} onChange={(event) => setDisputeSubject(event.target.value)} maxLength={200} placeholder="Short subject" className="h-12 w-full rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] px-3 text-[12px] font-bold text-[#26354A] outline-none placeholder:text-[#98A2B3]" />
                 <textarea value={disputeDescription} onChange={(event) => setDisputeDescription(event.target.value)} rows={4} maxLength={4000} placeholder="Describe the problem clearly" className="w-full resize-none rounded-[14px] border border-[#0A234F]/10 bg-[#F7F9FC] p-3 text-[12px] font-medium text-[#26354A] outline-none placeholder:text-[#98A2B3]" />
+                <EvidenceSelector files={disputeEvidence} disabled={disputeSubmitting} inputRef={disputeEvidenceInput} onAdd={() => { void pickEvidence("dispute", disputeEvidenceInput); }} onWebFiles={(files) => { void prepareEvidenceFiles("dispute", Array.from(files ?? [])); }} onRemove={(id) => setDisputeEvidence((current) => current.filter((item) => item.id !== id))} />
                 <div className="flex gap-2">
                   <button type="button" disabled={disputeSubmitting} onClick={() => setDisputeOpen(false)} className="min-h-11 flex-1 rounded-[13px] border border-[#0A234F]/10 bg-white text-[11px] font-extrabold text-[#475569]">Cancel</button>
                   <button type="button" disabled={disputeSubmitting || !disputeSubject.trim() || !disputeDescription.trim()} onClick={() => { void submitDispute(); }} className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[13px] bg-[#0A234F] text-[11px] font-extrabold text-white disabled:opacity-50">
@@ -908,13 +1250,13 @@ export default function MobileOrdersPage() {
   const hasAwaitingPayment = mode === "buy" && orders.some((order) => order.status === "awaiting_payment");
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F] md:hidden">
+    <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F]">
       <header className="sticky top-0 z-30 border-b border-[#0A234F]/[0.08] bg-white/95 px-[var(--mob-side,16px)]" style={{ paddingTop: "calc(0.9rem + env(safe-area-inset-top, 0px))", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }}>
         <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">{mode === "sell" ? "Sales" : "Purchases"}</p>
         <div className="flex items-end justify-between gap-3"><h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">{mode === "sell" ? "Sold items" : "My orders"}</h1><div className="mb-0.5 flex rounded-full bg-[#EEF2F7] p-1"><button type="button" onClick={() => changeMode("buy")} className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "buy" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}>Purchases</button><button type="button" onClick={() => changeMode("sell")} className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "sell" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}>Sales</button></div></div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{TABS.map((tab) => { const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`min-h-9 shrink-0 rounded-full px-3 text-[11px] font-extrabold ${active ? "bg-[#0A234F] text-white" : "border border-[#0A234F]/10 bg-[#F7F9FC] text-[#667085]"}`}>{tab.label}</button>; })}</div>
       </header>
-      <main className="px-[var(--mob-side,16px)] py-4" style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}>
+      <main className="mx-auto max-w-3xl px-[var(--mob-side,16px)] py-4" style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}>
         {loading ? <div className="flex flex-col gap-3">{[1, 2, 3].map((n) => <div key={n} className="h-[108px] animate-pulse rounded-[18px] bg-[#E8EDF3]" />)}</div> : visibleOrders.length === 0 ? <div className="flex flex-col items-center justify-center rounded-[20px] border border-[#0A234F]/[0.08] bg-white px-6 py-14 text-center shadow-sm"><div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EEF2F7]"><Package className="h-7 w-7 text-[#94A3B8]" aria-hidden="true" /></div><p className="mt-4 text-[15px] font-extrabold text-[#0A234F]">{activeTab === "all" ? (mode === "sell" ? "No sales yet" : "No orders yet") : "Nothing in this section"}</p><p className="mt-1 text-[12px] leading-[1.45] text-[#7A8493]">{activeTab === "all" ? (mode === "sell" ? "Items sold through Loadify will appear here." : "Items you buy on Loadify will appear here.") : "Try another order status."}</p>{activeTab === "all" && mode === "buy" ? <Link to="/catalog" className="mt-5 rounded-[13px] bg-[#0A234F] px-4 py-2.5 text-[12px] font-extrabold text-white no-underline">Browse marketplace</Link> : null}</div> : <div className="flex flex-col gap-3">{visibleOrders.map((order) => <OrderCard key={order.id} order={order} mode={mode} />)}</div>}
         {!loading && hasAwaitingPayment ? <div className="mt-3 flex items-start gap-2 rounded-[14px] border border-[#F5A300]/40 bg-[#FFF8E8] p-3"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#C98200]" aria-hidden="true" /><p className="text-[11px] leading-relaxed text-[#795300]">You have orders awaiting payment. Open the order to complete checkout before the reservation expires.</p></div> : null}
         {!loading ? <button onClick={() => navigate("/faq")} className="mt-4 flex h-12 w-full items-center gap-2 rounded-[14px] border border-[#0A234F]/10 bg-white px-3 text-left"><CircleHelp className="h-4 w-4 shrink-0 text-[#667085]" aria-hidden="true" /><span className="flex-1 text-[12px] font-bold text-[#475569]">Need help with an order?</span><ChevronRight className="h-4 w-4 text-[#A0A8B4]" aria-hidden="true" /></button> : null}

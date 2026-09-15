@@ -1,14 +1,16 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PluginListenerHandle } from '@capacitor/core';
 import {
   PushNotifications,
   type ActionPerformed,
   type RegistrationError,
+  type PushNotificationSchema,
   type Token,
 } from '@capacitor/push-notifications';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { isCapacitorNative } from '@/lib/capacitorUtils';
+import { toast } from '@/hooks/use-toast';
 import {
   PUSH_TOKEN_REGISTRATION_VERSION,
   clearPushRegistrationCache,
@@ -17,6 +19,20 @@ import {
 } from '@/lib/secureSignOut';
 
 const nativePushEnabled = import.meta.env.VITE_NATIVE_PUSH_ENABLED === 'true';
+const PUSH_CONSENT_KEY = 'loadify.nativePush.userConsent.v1';
+const PUSH_CONSENT_EVENT = 'loadify:native-push-consent';
+
+export async function enableNativePushNotifications(): Promise<'granted' | 'denied' | 'unsupported'> {
+  if (!nativePushEnabled || !isCapacitorNative()) return 'unsupported';
+  let permission = await PushNotifications.checkPermissions();
+  if (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale') {
+    permission = await PushNotifications.requestPermissions();
+  }
+  if (permission.receive !== 'granted') return 'denied';
+  window.localStorage.setItem(PUSH_CONSENT_KEY, 'true');
+  window.dispatchEvent(new Event(PUSH_CONSENT_EVENT));
+  return 'granted';
+}
 
 function getPushPlatform(): 'android' | 'ios' {
   const platform = (
@@ -65,12 +81,21 @@ function routeFromPushAction(action: ActionPerformed): string {
     }
   }
 
-  return '/notifications';
+  return '/profile/notifications';
 }
 
 export function usePushTokenRegistration(userId?: string): void {
   const navigate = useNavigate();
   const previousUserIdRef = useRef<string | undefined>(userId);
+  const [hasPushConsent, setHasPushConsent] = useState(() =>
+    typeof window !== 'undefined' && window.localStorage.getItem(PUSH_CONSENT_KEY) === 'true',
+  );
+
+  useEffect(() => {
+    const syncConsent = () => setHasPushConsent(window.localStorage.getItem(PUSH_CONSENT_KEY) === 'true');
+    window.addEventListener(PUSH_CONSENT_EVENT, syncConsent);
+    return () => window.removeEventListener(PUSH_CONSENT_EVENT, syncConsent);
+  }, []);
 
   // Native push must only be enabled in Android/iOS builds that actually bundle
   // their Firebase/APNs configuration. Calling register() without Firebase on
@@ -101,7 +126,7 @@ export function usePushTokenRegistration(userId?: string): void {
   }, [userId]);
 
   useEffect(() => {
-    if (!nativePushEnabled || !userId || !isCapacitorNative() || typeof window === 'undefined') {
+    if (!nativePushEnabled || !hasPushConsent || !userId || !isCapacitorNative() || typeof window === 'undefined') {
       return;
     }
 
@@ -155,17 +180,24 @@ export function usePushTokenRegistration(userId?: string): void {
       );
 
       await registerHandle(
+        PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+          if (!active) return;
+          toast({
+            title: notification.title || 'Loadify Market',
+            description: notification.body || 'You have a new marketplace update.',
+          });
+          window.dispatchEvent(new CustomEvent('loadify:push-received', { detail: notification.data ?? {} }));
+        }),
+      );
+
+      await registerHandle(
         PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
           if (!active) return;
           navigate(routeFromPushAction(action));
         }),
       );
 
-      let permission = await PushNotifications.checkPermissions();
-      if (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale') {
-        permission = await PushNotifications.requestPermissions();
-      }
-
+      const permission = await PushNotifications.checkPermissions();
       if (permission.receive !== 'granted') {
         return;
       }
@@ -183,5 +215,5 @@ export function usePushTokenRegistration(userId?: string): void {
         void handle.remove();
       });
     };
-  }, [navigate, userId]);
+  }, [hasPushConsent, navigate, userId]);
 }

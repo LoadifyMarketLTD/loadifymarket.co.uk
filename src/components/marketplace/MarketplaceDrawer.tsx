@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { X, ChevronDown, ArrowRight } from "lucide-react";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
-import logo from "@/assets/LOGO.png";
+import logo from "@/assets/branding/loadify-market-master-blackgold.svg";
 import type { User } from "@/types";
 import CATEGORY_CONFIG from "@/lib/category-config";
 import { marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";

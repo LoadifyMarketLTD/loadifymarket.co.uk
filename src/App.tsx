@@ -100,7 +100,6 @@ function App() {
     }
     let disposed = false;
     let unsubscribe: (() => void) | undefined;
-    let timer: number | undefined;
     const startAuth = () => {
       if (disposed) return;
       void import('./lib/supabase').then(({ supabase }) => {
@@ -154,14 +153,12 @@ function App() {
         setUser(null);
       });
     };
-    if (location.pathname === '/') timer = window.setTimeout(startAuth, 5000);
-    else startAuth();
+    startAuth();
     return () => {
       disposed = true;
-      if (timer !== undefined) window.clearTimeout(timer);
       unsubscribe?.();
     };
-  }, [location.pathname, setUser, setLoading]);
+  }, [setUser, setLoading]);
 
 
   if (location.pathname === '/') {

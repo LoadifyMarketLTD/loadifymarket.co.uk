@@ -46,6 +46,6 @@ describe("Google Play account deletion compliance contract", () => {
   });
 
   it("bumps the Android compliance bundle version code", () => {
-    expect(androidGradle).toContain("versionCode 3");
+    expect(androidGradle).toContain("versionCode 6");
   });
 });
