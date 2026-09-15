@@ -31,7 +31,7 @@ import { authorizedFetch } from '@/lib/authorizedFetch';
 import { trackStartListing, trackPublishListing } from '@/lib/analytics';
 import CategorySelector from '@/components/CategorySelector';
 import ShippingMethodSelector from '@/components/ShippingMethodSelector';
-import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_BlackGold.svg';
+import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-blackgold.svg';
 import { useNativeStatusBar } from '@/hooks/useNativeStatusBar';
 import {
   MAX_LISTING_PHOTOS,

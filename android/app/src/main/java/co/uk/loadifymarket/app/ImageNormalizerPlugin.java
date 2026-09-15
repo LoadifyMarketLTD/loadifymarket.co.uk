@@ -20,10 +20,24 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 
 @CapacitorPlugin(name = "ImageNormalizer")
 public class ImageNormalizerPlugin extends Plugin {
+    private InputStream openImageStream(ContentResolver resolver, Uri uri, String originalValue) throws Exception {
+        if (uri.getScheme() == null || uri.getScheme().isEmpty()) {
+            return new FileInputStream(new File(originalValue));
+        }
+        if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return new FileInputStream(new File(uri.getPath()));
+        }
+        InputStream stream = resolver.openInputStream(uri);
+        if (stream == null) throw new IllegalStateException("Android returned an unreadable image stream.");
+        return stream;
+    }
+
     @PluginMethod
     public void openAppSettings(PluginCall call) {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -48,7 +62,7 @@ public class ImageNormalizerPlugin extends Plugin {
             ContentResolver resolver = getContext().getContentResolver();
             BitmapFactory.Options bounds = new BitmapFactory.Options();
             bounds.inJustDecodeBounds = true;
-            try (InputStream stream = resolver.openInputStream(uri)) {
+            try (InputStream stream = openImageStream(resolver, uri, uriValue)) {
                 BitmapFactory.decodeStream(stream, null, bounds);
             }
             if (bounds.outWidth < minDimension || bounds.outHeight < minDimension) {
@@ -64,7 +78,7 @@ public class ImageNormalizerPlugin extends Plugin {
             decode.inSampleSize = sampleSize;
             decode.inPreferredConfig = Bitmap.Config.ARGB_8888;
             Bitmap bitmap;
-            try (InputStream stream = resolver.openInputStream(uri)) {
+            try (InputStream stream = openImageStream(resolver, uri, uriValue)) {
                 bitmap = BitmapFactory.decodeStream(stream, null, decode);
             }
             if (bitmap == null) {
@@ -72,7 +86,7 @@ public class ImageNormalizerPlugin extends Plugin {
                 return;
             }
             int orientation = ExifInterface.ORIENTATION_NORMAL;
-            try (InputStream stream = resolver.openInputStream(uri)) {
+            try (InputStream stream = openImageStream(resolver, uri, uriValue)) {
                 if (stream != null) {
                     orientation = new ExifInterface(stream).getAttributeInt(
                         ExifInterface.TAG_ORIENTATION,

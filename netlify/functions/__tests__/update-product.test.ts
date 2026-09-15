@@ -310,4 +310,61 @@ describe('update-product', () => {
     expect(body.error).toMatch(/critical listing fields are locked/i);
     expect(body.locks?.[0]?.orderLabel).toBe('LM-1000001');
   });
+
+  it('hides a listing without destroying stock', async () => {
+    const { productUpdates } = mockSupabase({
+      productRow: { stockQuantity: 7, stockStatus: 'low_stock', listingStatus: 'active', isActive: true },
+    });
+    const { handler } = await import('../update-product');
+    const res = await handler(makeEvent({ id: 'product-1', listingAction: 'hide' }), {} as never);
+    expect(res.statusCode).toBe(200);
+    expect(productUpdates[0]).toMatchObject({
+      isActive: false,
+      listingStatus: 'hidden',
+      reservedUntil: null,
+      reservationToken: null,
+    });
+    expect(productUpdates[0].stockQuantity).toBeUndefined();
+  });
+
+  it('reactivates a hidden listing only when stock is available', async () => {
+    const { productUpdates } = mockSupabase({
+      productRow: { stockQuantity: 7, stockStatus: 'low_stock', listingStatus: 'hidden', isActive: false },
+    });
+    const { handler } = await import('../update-product');
+    const res = await handler(makeEvent({ id: 'product-1', listingAction: 'activate' }), {} as never);
+    expect(res.statusCode).toBe(200);
+    expect(productUpdates[0]).toMatchObject({
+      isActive: true,
+      listingStatus: 'active',
+      stockQuantity: 7,
+      stockStatus: 'low_stock',
+    });
+  });
+
+  it('requires stock before reactivating a sold listing', async () => {
+    const { productUpdates } = mockSupabase({
+      productRow: { stockQuantity: 0, stockStatus: 'out_of_stock', listingStatus: 'sold', isActive: false },
+    });
+    const { handler } = await import('../update-product');
+    const res = await handler(makeEvent({ id: 'product-1', listingAction: 'activate' }), {} as never);
+    expect(res.statusCode).toBe(409);
+    expect(JSON.parse(res.body as string)).toMatchObject({ code: 'RESTOCK_REQUIRED' });
+    expect(productUpdates).toHaveLength(0);
+  });
+
+  it('marks a listing sold using the authoritative listing status', async () => {
+    const { productUpdates } = mockSupabase({
+      productRow: { stockQuantity: 3, stockStatus: 'low_stock', listingStatus: 'active', isActive: true },
+    });
+    const { handler } = await import('../update-product');
+    const res = await handler(makeEvent({ id: 'product-1', listingAction: 'mark_sold' }), {} as never);
+    expect(res.statusCode).toBe(200);
+    expect(productUpdates[0]).toMatchObject({
+      isActive: false,
+      listingStatus: 'sold',
+      stockQuantity: 0,
+      stockStatus: 'out_of_stock',
+    });
+  });
 });

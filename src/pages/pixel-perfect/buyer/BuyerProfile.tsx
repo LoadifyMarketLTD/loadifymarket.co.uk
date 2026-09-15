@@ -9,6 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { formatUkPostcode, validateDeliveryAddress } from "@/lib/deliveryAddress";
 import {
   BUYER_ACCOUNT_TYPES,
   type BuyerAccountType,
@@ -158,6 +159,18 @@ const BuyerProfile = () => {
   const handleSave = async () => {
     if (!user) return;
 
+    const addressError = validateDeliveryAddress({
+      name: `${form.firstName} ${form.lastName}`,
+      line1: form.shippingLine1,
+      city: form.shippingCity,
+      postcode: form.shippingPostcode,
+      country: form.shippingCountry,
+    });
+    if (addressError) {
+      toast({ title: "Check the delivery address", description: addressError, variant: "destructive" });
+      return;
+    }
+
     const profileComplete = isBuyerProfileComplete({
       accountType: accountForm.accountType,
       firstName: form.firstName,
@@ -212,11 +225,13 @@ const BuyerProfile = () => {
               vatNumber: normalizedVatNumber || null,
               isVatVerified,
               shippingAddress: {
+                name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
                 line1: form.shippingLine1.trim(),
                 line2: form.shippingLine2.trim(),
                 city: form.shippingCity.trim(),
-                postcode: form.shippingPostcode.trim(),
-                country: form.shippingCountry.trim(),
+                postcode: formatUkPostcode(form.shippingPostcode),
+                country: "United Kingdom",
+                countryCode: "GB",
                 isDefault: true,
               },
             },

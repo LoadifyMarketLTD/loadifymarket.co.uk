@@ -16,6 +16,7 @@ import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 import { openExternalUrl } from "@/lib/capacitorUtils";
 import { supabase } from "@/lib/supabase";
 import { calculateCheckoutVat } from "@/lib/checkoutTaxDisplay";
+import { formatUkPostcode, validateDeliveryAddress } from "@/lib/deliveryAddress";
 
 interface ShippingOption {
   methodId: string;
@@ -208,12 +209,15 @@ const Checkout = () => {
       setShippingError("Please enter a valid email address.");
       return;
     }
-    if (!shippingData.address1.trim()) {
-      setShippingError("Please enter your street address.");
-      return;
-    }
-    if (!shippingData.city.trim() || !shippingData.postcode.trim()) {
-      setShippingError("Please enter your city and postcode.");
+    const addressError = validateDeliveryAddress({
+      name: `${shippingData.firstName} ${shippingData.lastName}`,
+      line1: shippingData.address1,
+      city: shippingData.city,
+      postcode: shippingData.postcode,
+      country: "United Kingdom",
+    });
+    if (addressError) {
+      setShippingError(addressError);
       return;
     }
     setShippingError(null);
@@ -221,7 +225,10 @@ const Checkout = () => {
   };
 
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setShippingData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const value = e.target.name === "postcode"
+      ? formatUkPostcode(e.target.value)
+      : e.target.value;
+    setShippingData((prev) => ({ ...prev, [e.target.name]: value }));
     if (shippingError) setShippingError(null);
   };
 

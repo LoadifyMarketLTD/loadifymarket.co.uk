@@ -296,7 +296,7 @@ export const handler: Handler = async (event) => {
       resolvedAt: new Date().toISOString(),
     })
     .eq('orderId', orderId)
-    .in('status', ['requested', 'approved']);
+    .in('status', ['requested', 'approved', 'received']);
   if (returnCompletionError) {
     const warning = 'Stripe refund succeeded, but the linked return could not be marked completed. Manual return review is required.';
     transferRecoveryWarning = transferRecoveryWarning ? `${transferRecoveryWarning} ${warning}` : warning;

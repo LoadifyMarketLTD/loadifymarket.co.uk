@@ -18,6 +18,8 @@ const config: CapacitorConfig = {
     cleartext: false,
   },
   android: {
+    // Never expose bridge payloads (including auth/session data) through logcat.
+    loggingBehavior: 'none',
     // Build configuration — populated at release-signing time.
     buildOptions: {
       keystorePath: undefined,

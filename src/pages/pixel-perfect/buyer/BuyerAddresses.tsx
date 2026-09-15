@@ -4,19 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, Home, Building2, Save, X, Search } from "lucide-react";
+import { MapPin, Home, Building2, Save, X, Search, Loader2, Copy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
-
-interface AddressData {
-  name?: string;
-  line1?: string;
-  line2?: string;
-  city?: string;
-  postcode?: string;
-  country?: string;
-}
+import {
+  type DeliveryAddressData as AddressData,
+  formatUkPostcode,
+  normalizeDeliveryAddress,
+  validateDeliveryAddress,
+} from "@/lib/deliveryAddress";
 
 interface AddressFormProps {
   label: string;
@@ -84,9 +81,16 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
   };
 
   const handleSave = async () => {
+    const normalized = normalizeDeliveryAddress(form);
+    const validationError = validateDeliveryAddress(normalized);
+    if (validationError) {
+      toast({ title: "Check the address", description: validationError, variant: "destructive" });
+      return;
+    }
+    setForm(normalized);
     setSaving(true);
     try {
-      await onSave(type, form);
+      await onSave(type, normalized);
       setEditing(false);
     } catch {
       // Error toast is shown by the parent handler; keep edit mode open so the user can retry.
@@ -126,7 +130,7 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
                 <div className="flex gap-1.5 mt-1">
                   <Input
                     value={form.postcode ?? ""}
-                    onChange={(e) => updateField("postcode", e.target.value)}
+                    onChange={(e) => updateField("postcode", formatUkPostcode(e.target.value))}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleFindAddress(); } }}
                     className="h-8 text-sm uppercase"
                     placeholder="e.g. SW1A 2AA"
@@ -142,7 +146,7 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
                     title="Look up postcode to fill town & country"
                   >
                     {lookingUp ? (
-                      <span className="animate-spin text-base leading-none">⟳</span>
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <><Search className="h-3 w-3 mr-1" />Find</>
                     )}
@@ -164,7 +168,7 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
               </div>
               <div>
                 <Label className="text-xs">Country</Label>
-                <Input value={form.country ?? ""} onChange={(e) => updateField("country", e.target.value)} className="mt-1 h-8 text-sm" />
+                <Input value="United Kingdom" readOnly aria-readonly="true" className="mt-1 h-8 text-sm bg-muted/40" />
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <Button size="sm" className="text-xs" onClick={handleSave} disabled={saving}>
@@ -237,15 +241,18 @@ const BuyerAddresses = () => {
   }, [user, toast]);
 
   const handleSave = async (type: "shipping" | "billing", data: AddressData) => {
-    if (!user) return;
+    if (!user) throw new Error("Sign in required");
     const field = type === "shipping" ? "shippingAddress" : "billingAddress";
+    const normalized = { ...normalizeDeliveryAddress(data), isDefault: type === "shipping" };
+    const validationError = validateDeliveryAddress(normalized);
+    if (validationError) throw new Error(validationError);
     try {
       const { error } = await supabase
         .from("buyer_profiles")
-        .upsert({ userId: user.id, [field]: data }, { onConflict: "userId" });
+        .upsert({ userId: user.id, [field]: normalized }, { onConflict: "userId" });
       if (error) throw error;
-      if (type === "shipping") setShippingAddress(data);
-      else setBillingAddress(data);
+      if (type === "shipping") setShippingAddress(normalized);
+      else setBillingAddress(normalized);
       toast({ title: "Address saved" });
     } catch (err) {
       console.error("Error saving address:", err);
@@ -254,8 +261,16 @@ const BuyerAddresses = () => {
     }
   };
 
+  const handleUseShippingForBilling = async () => {
+    try {
+      await handleSave("billing", shippingAddress);
+    } catch {
+      // handleSave already reports the persistence error.
+    }
+  };
+
   return (
-    <div className="p-4 sm:p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[900px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Saved Addresses</h1>
         <p className="text-muted-foreground text-sm mt-1">Manage your delivery and billing addresses.</p>
@@ -269,9 +284,25 @@ const BuyerAddresses = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <AddressCard label="Shipping Address" type="shipping" data={shippingAddress} onSave={handleSave} />
-          <AddressCard label="Billing Address" type="billing" data={billingAddress} onSave={handleSave} />
+        <div className="space-y-4">
+          {validateDeliveryAddress(shippingAddress) === null && (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleUseShippingForBilling()}
+                className="min-h-10 text-xs"
+              >
+                <Copy className="mr-2 h-3.5 w-3.5" />
+                Use shipping address for billing
+              </Button>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AddressCard label="Shipping Address" type="shipping" data={shippingAddress} onSave={handleSave} />
+            <AddressCard label="Billing Address" type="billing" data={billingAddress} onSave={handleSave} />
+          </div>
         </div>
       )}
     </div>

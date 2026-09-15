@@ -18,6 +18,7 @@ const recovery = read('src/lib/nativeCameraRecovery.ts');
 const manifest = read('android/app/src/main/AndroidManifest.xml');
 const mainActivity = read('android/app/src/main/java/co/uk/loadifymarket/app/MainActivity.java');
 const normalizer = read('android/app/src/main/java/co/uk/loadifymarket/app/ImageNormalizerPlugin.java');
+const capacitorConfig = read('capacitor.config.ts');
 
 describe('mobile seller native media contract', () => {
   it('uses current native APIs and keeps browser fallbacks separate', () => {
@@ -42,6 +43,9 @@ describe('mobile seller native media contract', () => {
     expect(normalizer).toContain('@CapacitorPlugin(name = "ImageNormalizer")');
     expect(normalizer).toContain('Bitmap.CompressFormat.JPEG');
     expect(normalizer).toContain('Settings.ACTION_APPLICATION_DETAILS_SETTINGS');
+    expect(normalizer).toContain('new FileInputStream(new File(originalValue))');
+    expect(normalizer).toContain('"file".equalsIgnoreCase(uri.getScheme())');
+    expect(capacitorConfig).toContain("loggingBehavior: 'none'");
   });
 
   it('supports activity recovery and the Android Photo Picker backport', () => {

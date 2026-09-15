@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logo from "../../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg";
+import logo from "@/assets/branding/loadify-market-master-whitegold.svg";
 
 const groups = [
   { title: "Platform", links: [["Overview", "/platform"], ["Buyers", "/buyers"], ["Sellers", "/sellers"], ["How It Works", "/how-it-works"], ["Trust", "/trust"]] },

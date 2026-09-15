@@ -28,6 +28,7 @@ interface DashboardStats {
   totalCustomers: number;
   pendingShipments: number;
   pendingReturns: number;
+  pendingDisputes: number;
   reviewsAwaitingReply: number | null;
   lowStockItems: number;
   outOfStockItems: number;
@@ -104,7 +105,7 @@ const SellerDashboard = () => {
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
 
-        const [productsRes, allOrdersRes, profileRes, balanceRes, todayMessagesRes, unreadMessagesRes, pendingReturnsRes] = await Promise.all([
+        const [productsRes, allOrdersRes, profileRes, balanceRes, todayMessagesRes, unreadMessagesRes, pendingReturnsRes, pendingDisputesRes] = await Promise.all([
           supabase
             .from("products")
             .select("id, title, views, addToCartCount, stockQuantity, isActive, isUnique, listingContext")
@@ -139,6 +140,12 @@ const SellerDashboard = () => {
             .select("id", { count: "exact", head: true })
             .eq("sellerId", user.id)
             .eq("status", "requested"),
+          supabase
+            .from("disputes")
+            .select("id", { count: "exact", head: true })
+            .eq("sellerId", user.id)
+            .in("status", ["open", "in_review"])
+            .is("sellerRespondedAt", null),
         ]);
 
         const products = productsRes.data ?? [];
@@ -183,6 +190,7 @@ const SellerDashboard = () => {
           totalCustomers: uniqueBuyerIds.length,
           pendingShipments: orders.filter((o) => o.status === "paid" || o.status === "packed").length,
           pendingReturns: pendingReturnsRes.count ?? 0,
+          pendingDisputes: pendingDisputesRes.count ?? 0,
           reviewsAwaitingReply,
           lowStockItems,
           outOfStockItems,
@@ -363,6 +371,12 @@ const SellerDashboard = () => {
           detail: "Review the buyer's request and respond.",
           to: "/seller/returns",
           icon: RotateCcw,
+        }] : []),
+        ...(stats.pendingDisputes > 0 ? [{
+          label: `${stats.pendingDisputes} dispute${stats.pendingDisputes === 1 ? "" : "s"} awaiting your response`,
+          detail: "Add your response and evidence before the deadline.",
+          to: "/orders?mode=sell",
+          icon: AlertCircle,
         }] : []),
         ...((stats.reviewsAwaitingReply ?? 0) > 0 ? [{
           label: `${stats.reviewsAwaitingReply} review${stats.reviewsAwaitingReply === 1 ? "" : "s"} awaiting your reply`,

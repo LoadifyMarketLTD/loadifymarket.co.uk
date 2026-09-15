@@ -13,6 +13,7 @@ const sellWizard = read('src/pages/MobileSellWizard.tsx');
 const mobileOrders = read('src/pages/MobileOrdersPage.tsx');
 const adminDisputes = read('src/pages/pixel-perfect/admin/AdminDisputes.tsx');
 const createRefund = read('netlify/functions/create-refund.ts');
+const disputeAction = read('netlify/functions/dispute-action.ts');
 const returnTrackingMigration = read('supabase/migrations/20260914182000_complete_buyer_return_tracking.sql');
 const disputeEscalationMigration = read('supabase/migrations/20260914184500_complete_dispute_response_escalation.sql');
 
@@ -51,8 +52,10 @@ describe('mobile release regression contract', () => {
     expect(disputeEscalationMigration).toContain('FUNCTION public.escalate_dispute');
     expect(disputeEscalationMigration).toContain('TO authenticated');
     expect(disputeEscalationMigration).toContain('FROM PUBLIC, anon');
-    expect(mobileOrders).toContain("supabase.rpc('respond_to_dispute'");
-    expect(mobileOrders).toContain("supabase.rpc('escalate_dispute'");
+    expect(mobileOrders).toContain("/.netlify/functions/dispute-action");
+    expect(disputeAction).toContain("caller.rpc('respond_to_dispute'");
+    expect(disputeAction).toContain("caller.rpc('escalate_dispute'");
+    expect(disputeAction).toContain('sendPushToUser(admin, targetId');
     expect(adminDisputes).toContain('sellerResponse');
     expect(adminDisputes).toContain('escalatedAt');
   });

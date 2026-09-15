@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import { hasSellerAccess } from '@/lib/roleUtils';
 import MobileBottomNav from '@/components/MobileBottomNav';
-import officialLoadifyMarketLogo from '../../LOADIFY_MARKET_Master_Vector_WhiteGold.svg';
+import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-whitegold.svg';
 
 type ConnectStatus = 'active' | 'pending' | 'restricted' | null;
 

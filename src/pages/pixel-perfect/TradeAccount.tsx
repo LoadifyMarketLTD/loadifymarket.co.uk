@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useCategories } from "@/hooks/useCategories";
 import { supabase } from "@/lib/supabase";
-import logo from "@/assets/loadify-logo.svg";
+import logo from "@/assets/branding/loadify-market-master-monogram.svg";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
