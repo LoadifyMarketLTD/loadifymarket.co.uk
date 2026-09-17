@@ -1,9 +1,16 @@
 apply plugin: 'com.android.application'
 
-def loadifyUploadStoreFile = project.findProperty('LOADIFY_UPLOAD_STORE_FILE') ?: System.getenv('LOADIFY_UPLOAD_STORE_FILE')
-def loadifyUploadKeyAlias = project.findProperty('LOADIFY_UPLOAD_KEY_ALIAS') ?: System.getenv('LOADIFY_UPLOAD_KEY_ALIAS')
+def loadifyUploadStoreFile = project.findProperty('LOADIFY_UPLOAD_STORE_FILE') ?: System.getenv('LOADIFY_UPLOAD_STORE_FILE') ?: 'D:/Loadify Files/LoadifyMarket-Keys/loadify-upload-key.jks'
+def loadifyUploadKeyAlias = project.findProperty('LOADIFY_UPLOAD_KEY_ALIAS') ?: System.getenv('LOADIFY_UPLOAD_KEY_ALIAS') ?: 'loadify-upload'
 def loadifyUploadStorePassword = project.findProperty('LOADIFY_UPLOAD_STORE_PASSWORD') ?: System.getenv('LOADIFY_UPLOAD_STORE_PASSWORD')
-def loadifyUploadKeyPassword = project.findProperty('LOADIFY_UPLOAD_KEY_PASSWORD') ?: System.getenv('LOADIFY_UPLOAD_KEY_PASSWORD')
+if (!loadifyUploadStorePassword) {
+    def userGradleProperties = new File(System.getProperty('user.home'), '.gradle/gradle.properties')
+    if (userGradleProperties.exists()) {
+        def storedPasswordLine = userGradleProperties.readLines().find { it.contains('LOADIFY_UPLOAD_STORE_PASSWORD=') }
+        if (storedPasswordLine) loadifyUploadStorePassword = storedPasswordLine.substring(storedPasswordLine.lastIndexOf('=') + 1).trim()
+    }
+}
+def loadifyUploadKeyPassword = project.findProperty('LOADIFY_UPLOAD_KEY_PASSWORD') ?: System.getenv('LOADIFY_UPLOAD_KEY_PASSWORD') ?: loadifyUploadStorePassword
 def loadifyReleaseSigningValues = [
     loadifyUploadStoreFile,
     loadifyUploadKeyAlias,
