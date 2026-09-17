@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/store";
-import { isCapacitorNative } from "@/lib/capacitorUtils";
+import { isCapacitorContext, isCapacitorNative } from "@/lib/capacitorUtils";
 import { sanitizeRedirectUrl } from "@/lib/sanitizeRedirectUrl";
 import SEO from "@/components/SEO";
 import { supabase } from "@/lib/supabase";
@@ -122,6 +122,7 @@ const Login = () => {
   };
 
   const headerHeight = "calc(var(--header-h, 6.875rem) + env(safe-area-inset-top, 0px))";
+  const isNativeContext = isCapacitorContext();
 
   return (
     <>
@@ -130,7 +131,15 @@ const Login = () => {
       <main
         id="main-content"
         className="bg-[#F7F9FC] px-4 py-8 text-[#0A234F] sm:px-6 lg:px-8"
-        style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}
+        style={isNativeContext
+          ? {
+              display: 'block',
+              minHeight: '100vh',
+              marginTop: 0,
+              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+            }
+          : { minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}
       >
         <div className="mx-auto w-full max-w-[1120px] overflow-hidden rounded-[26px] border border-[#0A234F]/10 bg-white shadow-[0_22px_65px_rgba(10,35,79,0.10)]">
           <div className="grid lg:grid-cols-[0.82fr_1.18fr]">

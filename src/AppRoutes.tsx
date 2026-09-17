@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import './seller-listing-editor-light.css';
 import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
@@ -11,6 +11,7 @@ import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 import RequireEmailVerified from './components/auth/RequireEmailVerified';
 import MobileSellGate from './components/MobileSellGate';
+import MobileAccountToolShell from './components/MobileAccountToolShell';
 
 const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'));
 
@@ -19,6 +20,13 @@ const MobileChatPage = lazy(() => import('./pages/MobileChatPage'));
 const MobileOrdersPage = lazy(() => import('./pages/MobileOrdersPage'));
 const MobileCategoriesPage = lazy(() => import('./pages/MobileCategoriesPage'));
 const MobileProfilePage = lazy(() => import('./pages/MobileProfilePage'));
+const MobileDeliveryAddressesPage = lazy(() => import('./pages/MobileDeliveryAddressesPage'));
+const MobileReturnsPage = lazy(() => import('./pages/MobileReturnsPage'));
+const MobileResolutionCentrePage = lazy(() => import('./pages/MobileResolutionCentrePage'));
+const MobileReviewsPage = lazy(() => import('./pages/MobileReviewsPage'));
+const MobileSellerListingsPage = lazy(() => import('./pages/MobileSellerListingsPage'));
+const MobileSellerShipmentsPage = lazy(() => import('./pages/MobileSellerShipmentsPage'));
+const MobileSellerStorePage = lazy(() => import('./pages/MobileSellerStorePage'));
 const MobileNotificationsPage = lazy(() => import('./pages/MobileNotificationsPage'));
 const MobileSecurityPage = lazy(() => import('./pages/MobileSecurityPage'));
 const MobileBalancePage = lazy(() => import('./pages/MobileBalancePage'));
@@ -93,6 +101,7 @@ const PPSellerOrders = lazy(() => import('./pages/pixel-perfect/seller/SellerOrd
 const PPSellerOrderDetails = lazy(() => import('./pages/pixel-perfect/seller/SellerOrderDetails'));
 const PPSellerShipments = lazy(() => import('./pages/pixel-perfect/seller/SellerShipments'));
 const PPSellerReturns = lazy(() => import('./pages/pixel-perfect/seller/SellerReturns'));
+const PPSellerDisputes = lazy(() => import('./pages/pixel-perfect/seller/SellerDisputes'));
 const PPSellerProfile = lazy(() => import('./pages/pixel-perfect/seller/SellerProfile'));
 const PPSellerSettings = lazy(() => import('./pages/pixel-perfect/seller/SellerSettings'));
 const PPSellerReviews = lazy(() => import('./pages/pixel-perfect/seller/SellerReviewsPage'));
@@ -153,6 +162,12 @@ function CategoryRedirect() {
   return <Navigate to={`/category/${slug ?? ''}`} replace />;
 }
 
+function MobileOrdersRoute() {
+  const location = useLocation();
+  const isSellerMode = new URLSearchParams(location.search).get('mode') === 'sell';
+  const page = <Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense>;
+  return isSellerMode ? <RequireSeller>{page}</RequireSeller> : <RequireBuyer>{page}</RequireBuyer>;
+}
 
 export default function AppRoutes() {
   const publicPage = (page: ReactNode) => <Suspense fallback={<PageLoader />}>{page}</Suspense>;
@@ -224,6 +239,7 @@ export default function AppRoutes() {
             <Route path="orders/:orderId" element={publicPage(<PPSellerOrderDetails />)} />
             <Route path="shipments" element={publicPage(<PPSellerShipments />)} />
             <Route path="returns" element={publicPage(<PPSellerReturns />)} />
+            <Route path="disputes" element={publicPage(<PPSellerDisputes />)} />
             <Route path="rfq" element={<Navigate to="/seller" replace />} />
             <Route path="reviews" element={publicPage(<PPSellerReviews />)} />
             <Route path="settings" element={publicPage(<PPSellerSettings />)} />
@@ -265,14 +281,26 @@ export default function AppRoutes() {
 
           <Route path="inbox" element={<RequireAuth>{publicPage(<MobileInboxPage />)}</RequireAuth>} />
           <Route path="inbox/:conversationId" element={<RequireAuth>{publicPage(<MobileChatPage />)}</RequireAuth>} />
-          <Route path="orders" element={<RequireAuth>{publicPage(<MobileOrdersPage />)}</RequireAuth>} />
+          <Route path="orders" element={<MobileOrdersRoute />} />
           <Route path="categories" element={publicPage(<MobileCategoriesPage />)} />
           <Route path="profile" element={publicPage(<MobileProfilePage />)} />
+          <Route path="profile/addresses" element={<RequireBuyer>{publicPage(<MobileDeliveryAddressesPage />)}</RequireBuyer>} />
+          <Route path="profile/returns" element={<RequireBuyer>{publicPage(<MobileReturnsPage />)}</RequireBuyer>} />
+          <Route path="profile/resolution" element={<RequireBuyer>{publicPage(<MobileResolutionCentrePage />)}</RequireBuyer>} />
+          <Route path="profile/reviews" element={<RequireBuyer>{publicPage(<MobileReviewsPage />)}</RequireBuyer>} />
+          <Route path="profile/listings" element={<RequireSellerAny>{publicPage(<MobileSellerListingsPage />)}</RequireSellerAny>} />
+          <Route path="profile/shipments" element={<RequireSeller>{publicPage(<MobileSellerShipmentsPage />)}</RequireSeller>} />
+          <Route path="profile/store" element={<RequireSellerAny>{publicPage(<MobileSellerStorePage />)}</RequireSellerAny>} />
           <Route path="profile/notifications" element={<RequireAuth>{publicPage(<MobileNotificationsPage />)}</RequireAuth>} />
           <Route path="profile/security" element={<RequireAuth>{publicPage(<MobileSecurityPage />)}</RequireAuth>} />
-          <Route path="profile/balance" element={<RequireAuth>{publicPage(<MobileBalancePage />)}</RequireAuth>} />
-          <Route path="profile/favourites" element={<RequireAuth>{publicPage(<MobileFavouritesPage />)}</RequireAuth>} />
+          <Route path="profile/balance" element={<RequireSeller>{publicPage(<MobileBalancePage />)}</RequireSeller>} />
+          <Route path="profile/favourites" element={<RequireBuyer>{publicPage(<MobileFavouritesPage />)}</RequireBuyer>} />
           <Route path="profile/settings" element={<RequireAuth>{publicPage(<MobileSettingsPage />)}</RequireAuth>} />
+          <Route path="profile/buyer-profile" element={<RequireBuyer>{publicPage(<MobileAccountToolShell title="Buyer profile"><PPBuyerProfile /></MobileAccountToolShell>)}</RequireBuyer>} />
+          <Route path="profile/buyer-settings" element={<RequireBuyer>{publicPage(<MobileAccountToolShell title="Buyer preferences"><PPBuyerSettings /></MobileAccountToolShell>)}</RequireBuyer>} />
+          <Route path="profile/seller-returns" element={<RequireSeller>{publicPage(<MobileAccountToolShell title="Seller returns"><PPSellerReturns /></MobileAccountToolShell>)}</RequireSeller>} />
+          <Route path="profile/seller-reviews" element={<RequireSeller>{publicPage(<MobileAccountToolShell title="Buyer reviews"><PPSellerReviews /></MobileAccountToolShell>)}</RequireSeller>} />
+          <Route path="profile/seller-settings" element={<RequireSeller>{publicPage(<MobileAccountToolShell title="Seller settings"><PPSellerSettings /></MobileAccountToolShell>)}</RequireSeller>} />
           <Route path="seller/promote" element={<Navigate to="/seller" replace />} />
           <Route path="seller/mobile-payments" element={<RequireSellerAny>{publicPage(<MobileSellerPaymentsPage />)}</RequireSellerAny>} />
           <Route path="sell" element={<MobileSellGate>{publicPage(<MobileSellWizard />)}</MobileSellGate>} />

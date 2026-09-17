@@ -12,6 +12,7 @@ import { toast } from '../hooks/use-toast';
 import { copyToClipboard } from '../lib/clipboard';
 import { trackPublishListing, trackStartListing, trackShareProduct, trackCopyLink } from '../lib/analytics';
 import { authorizedFetch } from '../lib/authorizedFetch';
+import { isCapacitorContext } from '../lib/capacitorUtils';
 import '../seller-listing-editor-density.css';
 import {
   deriveSellerListingLocks,
@@ -24,6 +25,7 @@ import {
 const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
 // Delay in ms before navigating away after a successful save
 const SUCCESS_REDIRECT_DELAY_MS = 1800;
+const sellerListingsRoute = () => isCapacitorContext() ? '/profile/listings' : '/seller';
 
 // Normalise a decimal number string entered by the user.
 //
@@ -199,7 +201,7 @@ export default function ProductFormPage() {
         // through this seller surface; the server boundary rejects them as well.
         if (data.listingContext === 'service') {
           toast({ title: 'Service listings are unavailable', description: 'Loadify Market currently supports physical product listings only.', variant: 'destructive' });
-          navigate('/seller/products');
+          navigate(sellerListingsRoute());
           return;
         }
         setListingContext('product');
@@ -579,7 +581,7 @@ export default function ProductFormPage() {
         ? `/seller/products/${recoveredTaxDraftId}/edit`
         : id && !publishMode
           ? `/seller/products/${id}/edit`
-          : (publishMode ? '/seller' : '/onboarding');
+          : (publishMode ? sellerListingsRoute() : '/onboarding');
 
       setTimeout(() => navigate(nextRoute), SUCCESS_REDIRECT_DELAY_MS);
     } catch (error) {
@@ -622,7 +624,7 @@ export default function ProductFormPage() {
         setShowDeleteConfirm(false);
         return;
       }
-      navigate('/seller/products');
+      navigate(sellerListingsRoute());
     } catch (err) {
       console.error('Error deleting product:', err);
       setErrors({ _form: `Failed to delete product: ${(err as { message?: string })?.message ?? 'Unknown error'}` });
@@ -1378,7 +1380,7 @@ export default function ProductFormPage() {
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <button
                     type="button"
-                    onClick={() => navigate('/seller')}
+                    onClick={() => navigate(sellerListingsRoute())}
                     className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
                   >
                     Cancel

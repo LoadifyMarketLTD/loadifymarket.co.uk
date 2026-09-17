@@ -5,6 +5,7 @@
  * account surface: identity, high-frequency shortcuts, settings and support.
  */
 
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Bell,
@@ -15,17 +16,22 @@ import {
   MapPin,
   Package,
   PackageSearch,
+  RefreshCcw,
   Settings,
+  ShieldAlert,
   ShieldCheck,
+  Star,
   Store,
+  Truck,
   User,
   Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
-import { hasAdminAccess, hasBuyerAccess, hasSellerAccess } from '@/lib/roleUtils';
+import { hasAdminAccess, hasBuyerAccess, hasSellerAccess, isActiveSellerAccess } from '@/lib/roleUtils';
 import type { User as LoadifyUser } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { getMobileWorkspace, setMobileWorkspace, type MobileWorkspace } from '@/lib/mobileWorkspace';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-whitegold.svg';
 import { useUnreadNotificationsCount } from '@/hooks/useUnreadNotificationsCount';
@@ -43,35 +49,58 @@ interface Section {
   items: SectionItem[];
 }
 
-function buildSections(user: LoadifyUser | null | undefined): Section[] {
+type LiveSellerState = 'unknown' | 'ready' | 'incomplete' | 'suspended';
+
+function buildSections(user: LoadifyUser | null | undefined, liveSellerState: LiveSellerState, workspace: MobileWorkspace): Section[] {
   const canSell = hasSellerAccess(user);
   const canBuy = hasBuyerAccess(user);
   const isAdminOnly = hasAdminAccess(user);
+  const effectiveSellerState = liveSellerState === 'unknown'
+    ? (user?.sellerStatus === 'suspended' ? 'suspended' : isActiveSellerAccess(user) ? 'ready' : 'incomplete')
+    : liveSellerState;
+  const sellerNotSuspended = canSell && effectiveSellerState !== 'suspended';
+  const activeSeller = canSell && effectiveSellerState === 'ready';
+
+  const buyingItems: SectionItem[] = [
+    ...(!canSell && !isAdminOnly ? [{ label: 'Start selling', to: '/onboarding/role-selection', icon: Store }] : []),
+    ...(canBuy ? [
+      { label: 'Favourite items', to: '/profile/favourites', icon: Heart },
+      { label: 'Purchases', to: '/orders?mode=buy', icon: Package },
+      { label: 'Delivery addresses', to: '/profile/addresses', icon: MapPin },
+      { label: 'Returns & refunds', to: '/profile/returns', icon: RefreshCcw },
+      { label: 'Resolution Centre', to: '/profile/resolution', icon: ShieldAlert },
+      { label: 'Reviews', to: '/profile/reviews', icon: Star },
+    ] : []),
+  ];
+  const sellingItems: SectionItem[] = [
+    ...(activeSeller ? [{ label: 'Sell an item', to: '/sell', icon: Store }] : []),
+    ...(sellerNotSuspended && !activeSeller ? [{ label: 'Complete seller setup', to: '/onboarding', icon: Store }] : []),
+    ...(sellerNotSuspended ? [
+      { label: 'My listings', to: '/profile/listings', icon: PackageSearch },
+      { label: 'Store profile', to: '/profile/store', icon: Store },
+    ] : []),
+    ...(activeSeller ? [
+      { label: 'Shipments', to: '/profile/shipments', icon: Truck },
+      { label: 'Sales', to: '/orders?mode=sell', icon: Store },
+      { label: 'Returns', to: '/profile/seller-returns', icon: RefreshCcw },
+      { label: 'Buyer reviews', to: '/profile/seller-reviews', icon: Star },
+      { label: 'Balance', to: '/profile/balance', icon: Wallet },
+      { label: 'Seller payments', to: '/seller/mobile-payments', icon: Wallet },
+      { label: 'Seller settings', to: '/profile/seller-settings', icon: Settings },
+    ] : []),
+  ];
 
   return [
     {
-      title: 'Marketplace',
-      items: [
-        ...(canSell ? [{ label: 'Sell an item', to: '/sell', icon: Store }] : []),
-        ...(!canSell && !isAdminOnly ? [{ label: 'Start selling', to: '/onboarding/role-selection', icon: Store }] : []),
-        { label: 'Favourite items', to: '/profile/favourites', icon: Heart },
-        ...(canBuy ? [
-          { label: 'Purchases', to: '/orders?mode=buy', icon: Package },
-          { label: 'Delivery addresses', to: '/buyer/addresses', icon: MapPin },
-        ] : []),
-        ...(canSell ? [
-          { label: 'My listings', to: '/seller/products', icon: PackageSearch },
-          { label: 'Sales', to: '/orders?mode=sell', icon: Store },
-          { label: 'Balance', to: '/profile/balance', icon: Wallet },
-        ] : []),
-      ],
+      title: workspace === 'selling' ? 'Selling' : 'Buying',
+      items: workspace === 'selling' ? sellingItems : buyingItems,
     },
     {
       title: 'Account',
       items: [
         { label: 'Settings', to: '/profile/settings', icon: Settings },
         { label: 'Security', to: '/profile/security', icon: ShieldCheck },
-        { label: 'Activity', to: '/profile/notifications', icon: Bell },
+        { label: 'Notifications', to: '/profile/notifications', icon: Bell },
       ],
     },
     {
@@ -144,8 +173,64 @@ function GuestView() {
 }
 
 export default function MobileProfilePage() {
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
+  const [liveSellerState, setLiveSellerState] = useState<LiveSellerState>('unknown');
+  const [workspaceState, setWorkspaceState] = useState<{ userId: string | null; workspace: MobileWorkspace }>(() => ({
+    userId: user?.id ?? null,
+    workspace: getMobileWorkspace(user),
+  }));
+  const canBuy = hasBuyerAccess(user);
+  const canSell = hasSellerAccess(user);
+  const showWorkspaceSwitch = Boolean(user && canBuy && canSell && !hasAdminAccess(user));
+  const activeWorkspace = workspaceState.userId === (user?.id ?? null)
+    ? workspaceState.workspace
+    : getMobileWorkspace(user);
+
+  useEffect(() => {
+    if (!user?.id || !hasSellerAccess(user)) {
+      queueMicrotask(() => setLiveSellerState('unknown'));
+      return;
+    }
+
+    let cancelled = false;
+    const fallbackSellerState: LiveSellerState = user.sellerStatus === 'suspended'
+      ? 'suspended'
+      : (user.onboardingCompleted === true || isActiveSellerAccess(user)) ? 'ready' : 'incomplete';
+    void Promise.all([
+      supabase
+        .from('seller_profiles')
+        .select('sellerStatus, sellerType, profileCompleted, storeCreated, firstProductCreated')
+        .eq('userId', user.id)
+        .maybeSingle(),
+      supabase
+        .from('users')
+        .select('onboardingCompleted')
+        .eq('id', user.id)
+        .maybeSingle(),
+    ]).then(([profileResult, userResult]) => {
+      if (cancelled) return;
+      if (profileResult.error || userResult.error) {
+        setLiveSellerState(fallbackSellerState);
+        return;
+      }
+      const profile = profileResult.data;
+      if (profile?.sellerStatus === 'suspended') {
+        setLiveSellerState('suspended');
+        return;
+      }
+      const canonicalType = ['individual', 'sole_trader', 'company'].includes(profile?.sellerType ?? '');
+      const ready = profile?.sellerStatus === 'active'
+        && canonicalType
+        && profile?.profileCompleted === true
+        && profile?.storeCreated === true
+        && profile?.firstProductCreated === true
+        && userResult.data?.onboardingCompleted === true;
+      setLiveSellerState(ready ? 'ready' : 'incomplete');
+    });
+
+    return () => { cancelled = true; };
+  }, [user]);
 
   const firstName = user ? (user as { firstName?: string }).firstName : undefined;
   const lastName = user ? (user as { lastName?: string }).lastName : undefined;
@@ -154,8 +239,17 @@ export default function MobileProfilePage() {
     ? `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase() || displayName?.[0]?.toUpperCase() || '?'
     : null;
 
-  const sections = buildSections(user);
+  const effectiveWorkspace: MobileWorkspace = showWorkspaceSwitch
+    ? activeWorkspace
+    : canSell && !canBuy ? 'selling' : 'buying';
+  const sellerReady = canSell && liveSellerState === 'ready';
+  const sections = buildSections(user, liveSellerState, effectiveWorkspace).filter((section) => section.items.length > 0);
   const unreadNotifications = useUnreadNotificationsCount(user?.id);
+
+  const selectWorkspace = (workspace: MobileWorkspace) => {
+    const next = setMobileWorkspace(user, workspace);
+    setWorkspaceState({ userId: user?.id ?? null, workspace: next });
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -181,7 +275,11 @@ export default function MobileProfilePage() {
           <h1 className="mt-3 text-[24px] font-black leading-none tracking-[-0.03em] text-white">Profile</h1>
         </header>
 
-        {!user ? (
+        {isLoading || (user !== null && hasSellerAccess(user) && liveSellerState === 'unknown') ? (
+          <div className="flex min-h-[220px] items-center justify-center" aria-label="Loading account">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0A234F]/15 border-b-[#0A234F]" />
+          </div>
+        ) : !user ? (
           <GuestView />
         ) : (
           <>
@@ -194,15 +292,46 @@ export default function MobileProfilePage() {
                   <p className="truncate text-[17px] font-black leading-tight text-[#0A234F]">{displayName}</p>
                   <p className="mt-1 truncate text-[11px] font-medium text-[#7A8493]">{user.email}</p>
                   <Link
-                    to={hasSellerAccess(user) ? '/sell' : '/catalog'}
+                    to={effectiveWorkspace === 'selling' ? (sellerReady ? '/sell' : '/onboarding') : '/catalog'}
                     className="mt-2 inline-flex items-center gap-1 text-[11px] font-extrabold text-[#1D57D8] no-underline"
                   >
-                    {hasSellerAccess(user) ? 'Sell an item' : 'Browse marketplace'}
+                    {effectiveWorkspace === 'selling' ? (sellerReady ? 'Sell an item' : 'Seller setup') : 'Browse marketplace'}
                     <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
                 </div>
               </div>
             </section>
+
+            {showWorkspaceSwitch ? (
+              <section className="px-[var(--mob-side,16px)] pb-4">
+                <div className="grid grid-cols-2 gap-1 rounded-[16px] border border-[#0A234F]/10 bg-[#E9EEF5] p-1 shadow-inner" aria-label="Marketplace workspace">
+                  {(['buying', 'selling'] as const).map((workspace) => {
+                    const selected = effectiveWorkspace === workspace;
+                    return (
+                      <button
+                        key={workspace}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => selectWorkspace(workspace)}
+                        className={`min-h-11 rounded-[12px] px-3 text-[13px] font-black transition ${selected ? 'bg-white text-[#0A234F] shadow-[0_4px_12px_rgba(10,35,79,0.12)]' : 'text-[#667085]'}`}
+                      >
+                        {workspace === 'buying' ? 'Buying' : 'Selling'}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mb-0 mt-2 px-1 text-[10px] font-semibold text-[#7A8493]">
+                  {effectiveWorkspace === 'buying' ? 'Purchases, returns and buyer tools' : 'Listings, sales and seller tools'}
+                </p>
+              </section>
+            ) : null}
+
+            {effectiveWorkspace === 'selling' && liveSellerState === 'suspended' ? (
+              <section className="mx-[var(--mob-side,16px)] mb-4 rounded-[16px] border border-red-200 bg-red-50 p-4">
+                <p className="m-0 text-[13px] font-black text-red-700">Selling is suspended</p>
+                <p className="mb-0 mt-1 text-[11px] leading-relaxed text-red-600">Your Buying workspace remains available while seller access is restricted.</p>
+              </section>
+            ) : null}
 
             {sections.map((section) => (
               <MenuSection

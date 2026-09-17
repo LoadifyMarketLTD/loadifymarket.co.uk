@@ -24,7 +24,6 @@ import officialLoadifyMarketLogo from '@/assets/branding/loadify-market-master-w
 type ConnectStatus = 'active' | 'pending' | 'restricted' | null;
 
 interface BalanceProfile {
-  balance?: number | null;
   stripeConnectStatus?: string | null;
 }
 
@@ -34,7 +33,6 @@ export default function MobileBalancePage() {
   const isSeller = hasSellerAccess(user);
   const userId = user?.id;
 
-  const [balance, setBalance] = useState<number | null>(null);
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>(null);
   const [loading, setLoading] = useState(isSeller);
 
@@ -45,19 +43,17 @@ export default function MobileBalancePage() {
 
     void supabase
       .from('seller_profiles')
-      .select('balance, stripeConnectStatus')
+      .select('stripeConnectStatus')
       .eq('userId', userId)
       .maybeSingle()
       .then(({ data }) => {
         if (cancelled) return;
         const profile = data as BalanceProfile | null;
-        setBalance(profile?.balance ?? 0);
         const status = profile?.stripeConnectStatus;
         setConnectStatus(status === 'active' || status === 'pending' || status === 'restricted' ? status : null);
         setLoading(false);
       }, () => {
         if (!cancelled) {
-          setBalance(0);
           setConnectStatus(null);
           setLoading(false);
         }
@@ -66,8 +62,6 @@ export default function MobileBalancePage() {
     return () => { cancelled = true; };
   }, [isSeller, userId]);
 
-  const formatBalance = (value: number) =>
-    value.toLocaleString('en-GB', { style: 'currency', currency: 'GBP' });
 
   const statusMeta = connectStatus === 'active'
     ? {
@@ -147,8 +141,8 @@ export default function MobileBalancePage() {
               <div className="p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="m-0 text-[9px] font-black uppercase tracking-[0.15em] text-white/55">Available balance</p>
-                    <p className="m-0 mt-1 text-[11px] font-medium text-white/65">Seller funds currently recorded in Loadify</p>
+                    <p className="m-0 text-[9px] font-black uppercase tracking-[0.15em] text-white/55">Payout balance</p>
+                    <p className="m-0 mt-1 text-[11px] font-medium text-white/65">Managed securely in Stripe Connect</p>
                   </div>
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-white/10 text-[#F5A300]">
                     <Wallet className="h-[18px] w-[18px]" aria-hidden="true" />
@@ -159,7 +153,7 @@ export default function MobileBalancePage() {
                   <div className="mt-5 h-11 w-36 animate-pulse rounded-[10px] bg-white/10" aria-label="Loading balance" />
                 ) : (
                   <p className="m-0 mt-4 text-[34px] font-black tracking-[-0.04em] text-white">
-                    {formatBalance(balance ?? 0)}
+                    {connectStatus === 'active' ? 'View in Stripe' : '—'}
                   </p>
                 )}
 

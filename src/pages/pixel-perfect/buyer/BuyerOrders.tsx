@@ -33,6 +33,16 @@ interface OrderRow {
   order_items: Array<{ productTitleSnapshot: string | null }> | null;
 }
 
+interface ReturnState {
+  id: string;
+  orderId: string;
+  status: string;
+  buyerCarrier: string | null;
+  buyerTrackingNumber: string | null;
+  refundAmount: number | null;
+  createdAt: string;
+}
+
 function orderProductTitle(order: OrderRow): string {
   const snapshot = order.order_items?.find((item) => item.productTitleSnapshot?.trim())?.productTitleSnapshot?.trim();
   return snapshot || order.products?.title || "—";
@@ -85,6 +95,11 @@ const BuyerOrders = () => {
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnLoading, setReturnLoading] = useState(false);
+  const [returnStates, setReturnStates] = useState<Map<string, ReturnState>>(() => new Map());
+  const [trackingReturn, setTrackingReturn] = useState<ReturnState | null>(null);
+  const [returnCarrier, setReturnCarrier] = useState("");
+  const [returnTrackingNumber, setReturnTrackingNumber] = useState("");
+  const [returnTrackingSaving, setReturnTrackingSaving] = useState(false);
 
   const [disputeOrder, setDisputeOrder] = useState<OrderRow | null>(null);
   const [disputeSubject, setDisputeSubject] = useState("");
@@ -183,14 +198,28 @@ const BuyerOrders = () => {
         const rows = (data as unknown as OrderRow[]) || [];
         setOrders(rows);
         if (rows.length > 0) {
-          const { data: cancellationRows } = await supabase
-            .from("order_cancellation_requests")
-            .select("orderId")
-            .in("orderId", rows.map((order) => order.id))
-            .eq("status", "requested");
+          const orderIds = rows.map((order) => order.id);
+          const [{ data: cancellationRows }, { data: returnRows }] = await Promise.all([
+            supabase
+              .from("order_cancellation_requests")
+              .select("orderId")
+              .in("orderId", orderIds)
+              .eq("status", "requested"),
+            supabase
+              .from("returns")
+              .select("id, orderId, status, buyerCarrier, buyerTrackingNumber, refundAmount, createdAt")
+              .in("orderId", orderIds)
+              .order("createdAt", { ascending: false }),
+          ]);
           setCancellationRequestedIds(new Set((cancellationRows ?? []).map((row) => String(row.orderId))));
+          const nextReturns = new Map<string, ReturnState>();
+          for (const row of (returnRows ?? []) as unknown as ReturnState[]) {
+            if (!nextReturns.has(row.orderId)) nextReturns.set(row.orderId, row);
+          }
+          setReturnStates(nextReturns);
         } else {
           setCancellationRequestedIds(new Set());
+          setReturnStates(new Map());
         }
       } catch (err) {
         console.error("Error fetching orders:", err);
@@ -230,16 +259,47 @@ const BuyerOrders = () => {
         return;
       }
 
-      const { error } = await supabase.from("returns").insert({
+      const { data: orderItem, error: orderItemError } = await supabase
+        .from("order_items")
+        .select("id, quantity")
+        .eq("orderId", returnOrder.id)
+        .limit(1)
+        .maybeSingle<{ id: string; quantity: number | null }>();
+      if (orderItemError || !orderItem?.id) throw new Error("Order item information is unavailable. Please contact support.");
+
+      const eligibilityResponse = await authorizedFetch("/.netlify/functions/customer-return-eligibility", {
+        method: "POST",
+        body: JSON.stringify({
+          orderId: returnOrder.id,
+          orderItemId: orderItem.id,
+          quantity: orderItem.quantity ?? 1,
+          reasonCode: returnReason,
+        }),
+      });
+      const eligibility = await eligibilityResponse.json() as {
+        error?: string;
+        result?: { decision?: string; automaticRefundExecutionAllowed?: boolean; paymentMutationAllowed?: boolean };
+      };
+      if (!eligibilityResponse.ok) throw new Error(eligibility.error || "Return eligibility could not be checked.");
+      if (eligibility.result?.decision === "ineligible") {
+        throw new Error("This order is outside the current return eligibility boundary.");
+      }
+      if (eligibility.result?.automaticRefundExecutionAllowed !== false || eligibility.result?.paymentMutationAllowed !== false) {
+        throw new Error("Unsafe return policy response. No return was created.");
+      }
+
+      const { data: created, error } = await supabase.from("returns").insert({
         orderId: returnOrder.id,
         buyerId: user.id,
         sellerId: returnOrder.sellerId,
         reason: returnReason,
         description: returnDescription.trim(),
         status: "requested",
-      });
+      }).select("id, orderId, status, buyerCarrier, buyerTrackingNumber, refundAmount, createdAt").single();
       if (error) throw error;
-      toast({ title: "Return requested", description: "Your return request has been submitted. We'll be in touch shortly." });
+      const createdReturn = created as unknown as ReturnState;
+      setReturnStates((current) => new Map(current).set(returnOrder.id, createdReturn));
+      toast({ title: "Return requested", description: "Your return request has been submitted. No refund is issued until the return conditions are completed." });
       setReturnOrder(null);
       setReturnReason("");
       setReturnDescription("");
@@ -247,6 +307,42 @@ const BuyerOrders = () => {
       toast({ title: "Failed to submit return", description: (err as Error).message, variant: "destructive" });
     } finally {
       setReturnLoading(false);
+    }
+  };
+
+  const openReturnTracking = (returnState: ReturnState) => {
+    setTrackingReturn(returnState);
+    setReturnCarrier(returnState.buyerCarrier ?? "");
+    setReturnTrackingNumber(returnState.buyerTrackingNumber ?? "");
+  };
+
+  const handleReturnTrackingSave = async () => {
+    if (!trackingReturn || !user?.id || returnTrackingSaving) return;
+    const carrier = returnCarrier.trim();
+    const tracking = returnTrackingNumber.trim();
+    if (!carrier || !/^[A-Za-z0-9][A-Za-z0-9 _./-]{3,79}$/.test(tracking)) {
+      toast({ title: "Complete return tracking", description: "Enter the carrier and a valid tracking number.", variant: "destructive" });
+      return;
+    }
+    setReturnTrackingSaving(true);
+    try {
+      const { data, error } = await supabase
+        .from("returns")
+        .update({ buyerCarrier: carrier, buyerTrackingNumber: tracking })
+        .eq("id", trackingReturn.id)
+        .eq("buyerId", user.id)
+        .eq("status", "approved")
+        .select("id, orderId, status, buyerCarrier, buyerTrackingNumber, refundAmount, createdAt")
+        .single();
+      if (error) throw error;
+      const updated = data as unknown as ReturnState;
+      setReturnStates((current) => new Map(current).set(updated.orderId, updated));
+      setTrackingReturn(updated);
+      toast({ title: "Return tracking saved", description: "The seller can now follow the return parcel." });
+    } catch (error) {
+      toast({ title: "Tracking was not saved", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setReturnTrackingSaving(false);
     }
   };
 
@@ -330,6 +426,20 @@ const BuyerOrders = () => {
           data.map((o) => {
             const deliveryConfirmed = deliveryConfirmedIds.has(o.id);
             const returnEligible = ["delivered", "completed"].includes(o.status);
+            const returnState = returnStates.get(o.id);
+            const canAddReturnTracking = returnState?.status === "approved" && !returnState.buyerTrackingNumber;
+            const returnActionEnabled = returnEligible && (!returnState || canAddReturnTracking);
+            const returnActionTitle = !returnEligible
+              ? "Returns available after delivery"
+              : !returnState
+                ? "Request return"
+                : canAddReturnTracking
+                  ? "Add return tracking"
+                  : returnState.status === "requested"
+                    ? "Return request awaiting seller decision"
+                    : returnState.status === "completed"
+                      ? "Return completed"
+                      : `Return ${returnState.status}`;
             return (
             <TableRow key={o.id}>
               <TableCell className="font-medium text-sm">
@@ -345,7 +455,14 @@ const BuyerOrders = () => {
                 £{(o.total ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className={statusColor[o.status] ?? ""}>{o.status}</Badge>
+                <div className="space-y-1">
+                  <Badge variant="outline" className={statusColor[o.status] ?? ""}>{o.status}</Badge>
+                  {returnState && (
+                    <p className="text-[11px] font-medium text-muted-foreground">
+                      Return: {returnState.status.replace(/_/g, " ")}
+                    </p>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
@@ -382,10 +499,18 @@ const BuyerOrders = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
-                    title={returnEligible ? "Request return" : "Returns available after delivery"}
-                    disabled={!returnEligible}
-                    onClick={() => navigate(`/orders?mode=buy&orderId=${encodeURIComponent(o.id)}`)}
+                    className={`h-8 w-8 ${canAddReturnTracking ? "text-blue-600" : ""}`}
+                    title={returnActionTitle}
+                    disabled={!returnActionEnabled}
+                    onClick={() => {
+                      if (canAddReturnTracking && returnState) {
+                        openReturnTracking(returnState);
+                      } else {
+                        setReturnOrder(o);
+                        setReturnReason("");
+                        setReturnDescription("");
+                      }
+                    }}
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -395,7 +520,12 @@ const BuyerOrders = () => {
                     className="h-8 w-8 text-primary"
                     title={["paid", "packed", "shipped", "delivered", "completed"].includes(o.status) ? "Open dispute" : "Disputes available after payment"}
                     disabled={!["paid", "packed", "shipped", "delivered", "completed"].includes(o.status)}
-                    onClick={() => navigate(`/orders?mode=buy&orderId=${encodeURIComponent(o.id)}`)}
+                    onClick={() => {
+                      setDisputeOrder(o);
+                      setDisputeSubject("");
+                      setDisputeReason("");
+                      setDisputeDescription("");
+                    }}
                   >
                     <AlertTriangle className="h-4 w-4" />
                   </Button>
@@ -505,6 +635,45 @@ const BuyerOrders = () => {
               disabled={returnLoading || !returnReason || !returnDescription.trim()}
             >
               {returnLoading ? "Submitting…" : "Submit Return Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!trackingReturn} onOpenChange={(open) => { if (!open) setTrackingReturn(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Return Tracking</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Your return has been approved. Add the carrier and tracking number after dispatching the parcel.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="return-carrier">Carrier</Label>
+              <Input
+                id="return-carrier"
+                maxLength={80}
+                placeholder="e.g. Royal Mail"
+                value={returnCarrier}
+                onChange={(event) => setReturnCarrier(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="return-tracking-number">Tracking number</Label>
+              <Input
+                id="return-tracking-number"
+                maxLength={80}
+                placeholder="Enter tracking number"
+                value={returnTrackingNumber}
+                onChange={(event) => setReturnTrackingNumber(event.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTrackingReturn(null)} disabled={returnTrackingSaving}>Close</Button>
+            <Button onClick={() => void handleReturnTrackingSave()} disabled={returnTrackingSaving || !returnCarrier.trim() || returnTrackingNumber.trim().length < 4}>
+              {returnTrackingSaving ? "Saving…" : "Save Tracking"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -14,6 +14,8 @@ import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import { supabase } from '@/lib/supabase';
+import { hasAdminAccess, hasSellerAccess } from '@/lib/roleUtils';
+import { setMobileWorkspace } from '@/lib/mobileWorkspace';
 
 function NavItem({
   to,
@@ -151,6 +153,12 @@ export default function MobileBottomNav() {
       promptAuth('sell');
       return;
     }
+    if (hasAdminAccess(user)) return;
+    if (!hasSellerAccess(user)) {
+      navigate('/onboarding/role-selection');
+      return;
+    }
+    setMobileWorkspace(user, 'selling');
     navigate('/sell');
   };
 
@@ -173,29 +181,22 @@ export default function MobileBottomNav() {
         <NavItem to="/marketplace" icon={Home} label="Home" isActive={location.pathname === '/marketplace'} />
         <NavItem to="/categories" icon={Search} label="Search" isActive={isActive('/categories') || isActive('/catalog')} />
 
-        <button
-          onClick={handleSell}
-          className="flex min-h-12 min-w-0 flex-1 flex-col items-center justify-end gap-1 px-1 pb-2"
-          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-          aria-label="Sell an item"
-        >
-          <span
-            className="flex items-center justify-center bg-[#0A234F] text-white"
-            style={{
-              width: 50,
-              height: 42,
-              borderRadius: 14,
-              marginTop: -15,
-              boxShadow: '0 8px 20px rgba(10,35,79,0.22)',
-              border: '2px solid #F5A300',
-            }}
+        {!user || !hasAdminAccess(user) ? (
+          <button
+            onClick={handleSell}
+            className="flex min-h-12 min-w-0 flex-1 flex-col items-center justify-end gap-1 px-1 pb-2"
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            aria-label="Sell an item"
           >
-            <Plus style={{ width: 23, height: 23 }} strokeWidth={2.6} aria-hidden="true" />
-          </span>
-          <span className="font-extrabold text-[#0A234F]" style={{ fontSize: 10, lineHeight: 1 }}>
-            Sell
-          </span>
-        </button>
+            <span
+              className="flex items-center justify-center bg-[#0A234F] text-white"
+              style={{ width: 50, height: 42, borderRadius: 14, marginTop: -15, boxShadow: '0 8px 20px rgba(10,35,79,0.22)', border: '2px solid #F5A300' }}
+            >
+              <Plus style={{ width: 23, height: 23 }} strokeWidth={2.6} aria-hidden="true" />
+            </span>
+            <span className="font-extrabold text-[#0A234F]" style={{ fontSize: 10, lineHeight: 1 }}>Sell</span>
+          </button>
+        ) : <div className="min-h-12 min-w-0 flex-1" aria-hidden="true" />}
 
         <MessagesNavButton isActive={isActive('/inbox')} />
         <NavItem to="/profile" icon={User} label="Profile" isActive={isActive('/profile')} />

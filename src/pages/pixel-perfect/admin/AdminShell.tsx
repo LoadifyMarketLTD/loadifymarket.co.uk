@@ -80,6 +80,13 @@ const SidebarContent = memo(({ displayName, onNavClick, onLogout }: SidebarConte
     </nav>
     <div className="p-3 border-t border-border space-y-1" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}>
       <NavLink
+        to="/buyer"
+        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+      >
+        <ShoppingBag className="h-4 w-4 shrink-0" />
+        <span>My Purchases</span>
+      </NavLink>
+      <NavLink
         to="/"
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
       >

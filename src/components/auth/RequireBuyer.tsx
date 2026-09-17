@@ -12,13 +12,14 @@ interface Props {
  * Buyer Space guard.
  *
  * Stage 2 identity contract: ordinary Marketplace Sellers keep Buyer capability
- * under the same Loadify identity. Admin remains isolated in Operations.
+ * under the same Loadify identity. Trusted Admins may also use Buyer Space
+ * for their own purchases while retaining Admin Hub authority.
  *
  * Access rules:
- *   buyer            → render children
- *   seller           → render children (Buyer capability retained)
- *   admin            → redirect /admin
- *   unauthenticated  → redirect /login
+ *   buyer            -> render children
+ *   seller           -> render children (Buyer capability retained)
+ *   admin            -> render children for own Buyer activity
+ *   unauthenticated  -> redirect /login
  */
 export default function RequireBuyer({ children }: Props) {
   const { user, isLoading } = useAuthStore();

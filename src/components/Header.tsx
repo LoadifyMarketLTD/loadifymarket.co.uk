@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import { isCapacitorNative } from "@/lib/capacitorUtils";
+import { isCapacitorContext } from "@/lib/capacitorUtils";
 
 const MarketplaceHeader = lazy(() => import("@/components/marketplace/MarketplaceHeader"));
 
@@ -49,10 +49,18 @@ function isNativeProfessionalRoute(pathname: string): boolean {
   return nativeProfessionalPaths.has(pathname) || nativeProfessionalPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+function isNativeSellerProductEditorRoute(pathname: string): boolean {
+  return pathname === "/seller/products/new" || (pathname.startsWith("/seller/products/") && pathname.endsWith("/edit"));
+}
+
 export default function Header() {
   const { pathname } = useLocation();
 
-  if (isCapacitorNative() && isNativeProfessionalRoute(pathname)) {
+  if (isCapacitorContext() && isNativeSellerProductEditorRoute(pathname)) {
+    return null;
+  }
+
+  if (isCapacitorContext() && isNativeProfessionalRoute(pathname)) {
     return <Navigate to="/marketplace" replace />;
   }
 

@@ -9,7 +9,7 @@
 import { ArrowRight, Sparkles, Store, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
-import { hasSellerAccess } from '@/lib/roleUtils';
+import { hasBuyerAccess, hasSellerAccess } from '@/lib/roleUtils';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import type { Product } from '@/components/catalog/ProductCard';
 
@@ -64,7 +64,9 @@ export default function MobileHeroBanner({ products, loading }: MobileHeroBanner
         </button>
         <button type="button" onClick={() => navigate('/categories')} className="min-h-9 shrink-0 rounded-full border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#0A234F] shadow-sm">Categories</button>
         <button type="button" onClick={() => navigate('/profile/favourites')} className="min-h-9 shrink-0 rounded-full border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#0A234F] shadow-sm">Favourites</button>
-        <button type="button" onClick={() => navigate('/orders')} className="min-h-9 shrink-0 rounded-full border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#0A234F] shadow-sm">My orders</button>
+        {user && hasBuyerAccess(user) ? (
+          <button type="button" onClick={() => navigate('/orders')} className="min-h-9 shrink-0 rounded-full border border-[#0A234F]/10 bg-white px-3 text-[11px] font-bold text-[#0A234F] shadow-sm">My orders</button>
+        ) : null}
       </div>
 
       <div className="mt-4 overflow-hidden rounded-[18px] border border-[#0A234F]/10 bg-white p-3 shadow-[0_10px_28px_rgba(10,35,79,0.08)]">

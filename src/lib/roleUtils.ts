@@ -44,15 +44,16 @@ export function isActiveSellerAccess(user: User | null | undefined): boolean {
 }
 
 /**
- * Ordinary Marketplace Sellers also retain Buyer capability under the same
- * identity. Admin stays isolated from normal commerce workspaces.
+ * Ordinary Marketplace Sellers retain Buyer capability under the same identity.
+ * Trusted Admins may also use Buyer tools for their own purchases; admin authority
+ * never grants Seller capability or ownership of another user's commerce data.
  *
  * The live database capability table is the authorization foundation; this UI
  * helper remains compatible with pre-migration sessions by deriving the same
  * Buyer+Seller relationship from the temporary users.role default context.
  */
 export function hasBuyerAccess(user: User | null | undefined): boolean {
-  if (hasAdminAccess(user)) return false;
+  if (hasAdminAccess(user)) return true;
   const explicit = explicitCapability(user, 'buyer');
   if (explicit !== null) return explicit;
   return user?.role === 'buyer' || user?.role === 'seller';

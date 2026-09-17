@@ -6,7 +6,7 @@ import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
 import Header from './components/Header';
 import AmbientLayer from './components/AmbientLayer';
-import { isCapacitorNative } from './lib/capacitorUtils';
+import { isCapacitorContext, isCapacitorNative } from './lib/capacitorUtils';
 import { usePushTokenRegistration } from './hooks/usePushTokenRegistration';
 
 import AuthPromptModal from './components/AuthPromptModal';
@@ -87,6 +87,22 @@ function App() {
       }).then((handle) => { removeListener = () => handle.remove(); });
     }).catch(() => {});
     return () => removeListener?.();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isCapacitorContext()) return;
+    let removeBackListener: (() => void) | undefined;
+    import('@capacitor/app').then(({ App: CapApp }) => {
+      CapApp.addListener('backButton', () => {
+        const path = window.location.pathname;
+        if (path === '/marketplace' || path === '/') {
+          void CapApp.exitApp();
+          return;
+        }
+        navigate(-1);
+      }).then((handle) => { removeBackListener = () => handle.remove(); });
+    }).catch(() => {});
+    return () => removeBackListener?.();
   }, [navigate]);
 
   useEffect(() => {

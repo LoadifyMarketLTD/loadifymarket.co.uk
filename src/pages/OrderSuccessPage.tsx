@@ -4,7 +4,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ShoppingBag, ArrowRight, Package, Shield, Truck, Star, Loader2, Clock } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { BRAND } from '../constants/brand';
-import { supabase } from '../lib/supabase';
 import { trackCompletedPurchase } from '../lib/analytics';
 import SEO from '@/components/SEO';
 
@@ -23,6 +22,7 @@ export default function OrderSuccessPage() {
   const sessionId = searchParams.get('session_id');
   const { clearCart } = useCart();
   const [phase, setPhase] = useState<PagePhase>('polling');
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const pollCount = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -41,55 +41,39 @@ export default function OrderSuccessPage() {
       if (cancelled) return;
 
       try {
-        // Query WITHOUT a status filter so we can distinguish "pending" (webhook
-        // in-flight) from "not found at all" (genuine error or wrong session id).
-        const { data } = await supabase
-          .from('payment_sessions')
-          .select('id, status, orderId, amount')
-          .eq('stripeSessionId', sessionId)
-          .maybeSingle();
+        const response = await fetch(
+          `/.netlify/functions/checkout-status?session_id=${encodeURIComponent(sessionId)}`,
+          { method: 'GET', headers: { Accept: 'application/json' } },
+        );
+        const data = await response.json() as {
+          found?: boolean;
+          confirmed?: boolean;
+          paymentStatus?: string | null;
+          orderId?: string | null;
+          orderNumber?: string | null;
+          amount?: number | null;
+        };
 
         if (cancelled) return;
+        if (data.orderNumber) setOrderNumber(data.orderNumber);
 
-        if (data) {
-          const row = data as { id: string; status: string; orderId?: string | null; amount?: number | null };
-
-          if (row.status === 'completed') {
-            // Webhook has processed — fire analytics and show the success page.
-            if (row.orderId) {
-              trackCompletedPurchase({ orderId: row.orderId, value: row.amount ?? 0 });
-            }
-            setPhase('confirmed');
-            return;
+        if (response.ok && data.confirmed) {
+          if (data.orderId) {
+            trackCompletedPurchase({ orderId: data.orderId, value: data.amount ?? 0 });
           }
-
-          // Row exists but status is still 'pending' — webhook hasn't fired yet.
-          // Keep polling up to MAX_POLLS times.
-          pollCount.current += 1;
-          if (pollCount.current >= MAX_POLLS) {
-            // Give up waiting — payment was received (row exists) but confirmation
-            // is taking longer than expected.  Show a safe message instead of an
-            // error so the user is not alarmed.
-            setPhase('timeout');
-            return;
-          }
-
-          timerRef.current = setTimeout(() => { void poll(); }, POLL_INTERVAL_MS);
+          setPhase('confirmed');
           return;
         }
 
-        // No row found at all yet — the create-checkout function may not have
-        // finished inserting it.  Retry up to MAX_POLLS times.
         pollCount.current += 1;
         if (pollCount.current >= MAX_POLLS) {
-          setPhase('not_found');
+          setPhase(data.found ? 'timeout' : 'not_found');
           return;
         }
 
         timerRef.current = setTimeout(() => { void poll(); }, POLL_INTERVAL_MS);
       } catch (err) {
-        // Network/DB error — log for diagnostics and keep retrying.
-        console.warn('OrderSuccessPage: poll error', err);
+        console.warn('OrderSuccessPage: checkout-status poll error', err);
         if (cancelled) return;
         pollCount.current += 1;
         if (pollCount.current >= MAX_POLLS) {
@@ -159,15 +143,15 @@ export default function OrderSuccessPage() {
                 Your payment was received. Your order is being confirmed — this can take a minute or two.
                 Please check your <strong>Orders page</strong> shortly and you should see it there.
               </p>
-              {sessionId && (
-                <p className="text-slate-400 text-xs mb-6 font-mono">
-                  Ref: {sessionId.slice(0, 8)}…{sessionId.slice(-4)}
+              {orderNumber && (
+                <p className="text-slate-600 text-sm mb-6 font-semibold">
+                  Order number: {orderNumber}
                 </p>
               )}
               <p className="text-slate-500 text-xs mb-6">
                 If your order does not appear within 10 minutes, please{' '}
                 <Link to="/contact" className="text-blue-600 underline">contact support</Link>{' '}
-                with the reference above.
+                with your order number.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
@@ -216,9 +200,9 @@ export default function OrderSuccessPage() {
             <p className="text-slate-600 text-base mb-2">
               Thank you for your purchase. Your order has been successfully placed.
             </p>
-            {sessionId && (
-              <p className="text-slate-500 text-xs mb-6 font-mono">
-                Ref: {sessionId.slice(0, 8)}…{sessionId.slice(-4)}
+            {orderNumber && (
+              <p className="text-slate-600 text-sm mb-6 font-semibold">
+                Order number: {orderNumber}
               </p>
             )}
 

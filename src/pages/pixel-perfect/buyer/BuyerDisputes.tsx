@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Plus, ChevronRight, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +13,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 interface Dispute {
   id: string;
@@ -25,6 +25,9 @@ interface Dispute {
   status: "open" | "in_review" | "resolved" | "closed";
   resolution: string | null;
   resolutionType: string | null;
+  sellerResponse: string | null;
+  sellerRespondedAt: string | null;
+  escalatedAt: string | null;
   createdAt: string;
 }
 
@@ -57,10 +60,10 @@ function formatDate(iso: string) {
 
 const BuyerDisputes = () => {
   const { user } = useAuthStore();
-  const navigate = useNavigate();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Dispute | null>(null);
+  const [escalating, setEscalating] = useState(false);
 
   // Open dispute dialog
   const [openDialog, setOpenDialog] = useState(false);
@@ -79,7 +82,7 @@ const BuyerDisputes = () => {
     try {
       const { data, error } = await supabase
         .from("disputes")
-        .select("id, orderId, subject, description, protectionReason, status, resolution, resolutionType, createdAt")
+        .select("id, orderId, subject, description, protectionReason, status, resolution, resolutionType, sellerResponse, sellerRespondedAt, escalatedAt, createdAt")
         .eq("buyerId", user.id)
         .order("createdAt", { ascending: false });
 
@@ -109,6 +112,9 @@ const BuyerDisputes = () => {
           status: d.status as Dispute["status"],
           resolution: d.resolution as string | null,
           resolutionType: d.resolutionType as string | null,
+          sellerResponse: d.sellerResponse as string | null,
+          sellerRespondedAt: d.sellerRespondedAt as string | null,
+          escalatedAt: d.escalatedAt as string | null,
           createdAt: d.createdAt as string,
         }))
       );
@@ -172,6 +178,26 @@ const BuyerDisputes = () => {
     }
   };
 
+  const handleEscalate = async () => {
+    if (!selected || escalating) return;
+    setEscalating(true);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/dispute-action", {
+        method: "POST",
+        body: JSON.stringify({ disputeId: selected.id, action: "escalate" }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Dispute could not be escalated.");
+      toast({ title: "Escalated to Loadify", description: "The case is now queued for platform review." });
+      setSelected(null);
+      await fetchDisputes();
+    } catch (err) {
+      toast({ title: "Escalation unavailable", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setEscalating(false);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* Header */}
@@ -185,7 +211,7 @@ const BuyerDisputes = () => {
             Raise and track disputes for your orders.
           </p>
         </div>
-        <Button onClick={() => navigate("/buyer/orders")} className="shrink-0">
+        <Button onClick={() => void _openNewDisputeDialog()} className="shrink-0">
           <Plus className="h-4 w-4 mr-2" /> Open Dispute
         </Button>
       </div>
@@ -285,9 +311,27 @@ const BuyerDisputes = () => {
                   {selected.description}
                 </div>
               </div>
-              <Button className="w-full" onClick={() => navigate(`/orders?mode=buy&orderId=${encodeURIComponent(selected.orderId)}`)}>
-                Open order Resolution Centre
-              </Button>
+              {selected.sellerResponse && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Seller response</p>
+                  <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-950 whitespace-pre-wrap">
+                    {selected.sellerResponse}
+                    {selected.sellerRespondedAt && (
+                      <p className="text-xs text-blue-700 mt-1">Responded {formatDate(selected.sellerRespondedAt)}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {selected.escalatedAt ? (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+                  Escalated to Loadify on {formatDate(selected.escalatedAt)}.
+                </div>
+              ) : ["open", "in_review"].includes(selected.status) ? (
+                <Button className="w-full" onClick={() => void handleEscalate()} disabled={escalating}>
+                  {escalating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Escalate to Loadify
+                </Button>
+              ) : null}
               {selected.resolution && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Resolution</p>

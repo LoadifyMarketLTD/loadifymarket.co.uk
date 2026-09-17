@@ -7,7 +7,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
-import { hasSellerAccess } from "@/lib/roleUtils";
+import { hasAdminAccess, hasSellerAccess } from "@/lib/roleUtils";
 
 const navItems = [
   { to: "/buyer", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -34,11 +34,12 @@ const mobileTabItems = [
 interface SidebarContentProps {
   displayName: string;
   sellerCapable: boolean;
+  adminCapable: boolean;
   onNavClick: () => void;
   onLogout: () => void;
 }
 
-const SidebarContent = ({ displayName, sellerCapable, onNavClick, onLogout }: SidebarContentProps) => (
+const SidebarContent = ({ displayName, sellerCapable, adminCapable, onNavClick, onLogout }: SidebarContentProps) => (
   <div className="flex flex-col h-full">
     <div className="p-5 border-b border-border">
       <div className="flex items-center gap-2">
@@ -77,6 +78,15 @@ const SidebarContent = ({ displayName, sellerCapable, onNavClick, onLogout }: Si
       ))}
     </nav>
     <div className="p-3 border-t border-border space-y-1">
+      {adminCapable && (
+        <NavLink
+          to="/admin"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
+          <ShieldAlert className="h-4 w-4 shrink-0" />
+          <span>Admin Hub</span>
+        </NavLink>
+      )}
       {sellerCapable && (
         <NavLink
           to="/seller"
@@ -111,6 +121,7 @@ const BuyerShell = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sellerCapable = hasSellerAccess(user);
+  const adminCapable = hasAdminAccess(user);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -131,13 +142,13 @@ const BuyerShell = () => {
   return (
     <div className="market-workspace-light flex bg-[#F7F9FC] overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>
       <aside className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
-        <SidebarContent displayName={displayName} sellerCapable={sellerCapable} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
+        <SidebarContent displayName={displayName} sellerCapable={sellerCapable} adminCapable={adminCapable} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
       </aside>
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 h-full w-64 bg-card border-r border-border flex flex-col">
-            <SidebarContent displayName={displayName} sellerCapable={sellerCapable} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
+            <SidebarContent displayName={displayName} sellerCapable={sellerCapable} adminCapable={adminCapable} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
           </aside>
         </div>
       )}

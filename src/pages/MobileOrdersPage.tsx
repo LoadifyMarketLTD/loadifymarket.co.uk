@@ -30,6 +30,8 @@ import { openExternalUrl } from "@/lib/capacitorUtils";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
+import { hasBuyerAccess, hasSellerAccess } from "@/lib/roleUtils";
+import { setMobileWorkspace } from "@/lib/mobileWorkspace";
 import { useNativeStatusBar } from "@/hooks/useNativeStatusBar";
 import {
   MAX_CASE_EVIDENCE_FILES,
@@ -1201,15 +1203,37 @@ export default function MobileOrdersPage() {
   const requestedMode = searchParams.get("mode");
   const { user } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
-  const mode: OrderMode = requestedMode === "sell" ? "sell" : "buy";
+  const canBuy = hasBuyerAccess(user);
+  const canSell = hasSellerAccess(user);
+  const mode: OrderMode = requestedMode === "sell" && canSell
+    ? "sell"
+    : requestedMode === "buy" && canBuy
+      ? "buy"
+      : canSell && !canBuy
+        ? "sell"
+        : "buy";
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("all");
 
   const changeMode = (nextMode: OrderMode) => {
+    if ((nextMode === "buy" && !canBuy) || (nextMode === "sell" && !canSell)) return;
+    setMobileWorkspace(user, nextMode === "sell" ? "selling" : "buying");
     const next = new URLSearchParams(searchParams); next.set("mode", nextMode); next.delete("orderId");
     setActiveTab("all"); setSearchParams(next, { replace: true });
   };
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const expected = mode === "sell" ? "sell" : "buy";
+    if (requestedMode !== expected) {
+      const next = new URLSearchParams(searchParams);
+      next.set("mode", expected);
+      next.delete("orderId");
+      setSearchParams(next, { replace: true });
+    }
+    setMobileWorkspace(user, mode === "sell" ? "selling" : "buying");
+  }, [user, mode, requestedMode, searchParams, setSearchParams]);
 
   const closeDetail = () => {
     const next = new URLSearchParams(searchParams); next.delete("orderId"); setSearchParams(next, { replace: true });
@@ -1253,7 +1277,7 @@ export default function MobileOrdersPage() {
     <div className="min-h-screen bg-[#F7F9FC] text-[#0A234F]">
       <header className="sticky top-0 z-30 border-b border-[#0A234F]/[0.08] bg-white/95 px-[var(--mob-side,16px)]" style={{ paddingTop: "calc(0.9rem + env(safe-area-inset-top, 0px))", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)" }}>
         <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#C98200]">{mode === "sell" ? "Sales" : "Purchases"}</p>
-        <div className="flex items-end justify-between gap-3"><h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">{mode === "sell" ? "Sold items" : "My orders"}</h1><div className="mb-0.5 flex rounded-full bg-[#EEF2F7] p-1"><button type="button" onClick={() => changeMode("buy")} className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "buy" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}>Purchases</button><button type="button" onClick={() => changeMode("sell")} className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "sell" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}>Sales</button></div></div>
+        <div className="flex items-end justify-between gap-3"><h1 className="mt-1 text-[22px] font-black tracking-[-0.03em] text-[#0A234F]">{mode === "sell" ? "Sold items" : "My orders"}</h1>{canBuy && canSell ? <div className="mb-0.5 flex rounded-full bg-[#EEF2F7] p-1"><button type="button" onClick={() => changeMode("buy")} className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "buy" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}>Purchases</button><button type="button" onClick={() => changeMode("sell")} className={`rounded-full px-3 py-1.5 text-[10px] font-extrabold ${mode === "sell" ? "bg-[#0A234F] text-white" : "text-[#667085]"}`}>Sales</button></div> : null}</div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{TABS.map((tab) => { const active = activeTab === tab.id; return <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`min-h-9 shrink-0 rounded-full px-3 text-[11px] font-extrabold ${active ? "bg-[#0A234F] text-white" : "border border-[#0A234F]/10 bg-[#F7F9FC] text-[#667085]"}`}>{tab.label}</button>; })}</div>
       </header>
       <main className="mx-auto max-w-3xl px-[var(--mob-side,16px)] py-4" style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}>
