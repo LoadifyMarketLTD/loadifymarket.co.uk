@@ -25,7 +25,8 @@ describe('mobile commerce and branding audit contract', () => {
   it('keeps cancellation requests separate from payment mutation', () => {
     const endpoint = source('netlify/functions/request-order-cancellation.ts');
     const migration = source('supabase/681_buyer_order_cancellation_requests.sql');
-    expect(endpoint).toContain("authenticateActiveCapability(event, admin, 'buyer')");
+    expect(endpoint).toContain('authenticateActiveAccount(event, admin)');
+    expect(endpoint).toContain(".eq('buyerId', auth.actor.id)");
     expect(endpoint).toContain("order.status !== 'paid'");
     expect(endpoint).not.toContain('stripe.refunds');
     expect(endpoint).not.toContain(".from('orders').update");

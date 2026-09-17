@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
-import { authenticateActiveCapability } from './_shared/activeAccountAuth';
+import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { jsonResponse, optionsResponse } from './_shared/http';
 
 const METHODS = 'POST, OPTIONS';
@@ -15,8 +15,8 @@ export const handler: Handler = async (event) => {
   if (!supabaseUrl || !serviceRoleKey) return jsonResponse(500, { error: 'Server configuration error' }, METHODS);
 
   const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
-  const auth = await authenticateActiveCapability(event, admin, 'buyer');
-  if (!auth.ok) return jsonResponse(auth.status, { error: auth.status === 401 ? 'Unauthorized' : 'Buyer access required' }, METHODS);
+  const auth = await authenticateActiveAccount(event, admin);
+  if (!auth.ok) return jsonResponse(auth.status, { error: 'Unauthorized' }, METHODS);
 
   let body: { orderId?: unknown; reason?: unknown; details?: unknown };
   try { body = JSON.parse(event.body || '{}') as typeof body; }
