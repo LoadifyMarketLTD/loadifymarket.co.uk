@@ -11,6 +11,7 @@ describe('native seller product editor routing contract', () => {
     const form = readRepo('src/pages/ProductFormPage.tsx');
     expect(header).toContain('isCapacitorContext() && isNativeSellerProductEditorRoute(pathname)');
     expect(header).toContain('isCapacitorContext() && isNativeProfessionalRoute(pathname)');
+    expect(header).not.toContain('<Navigate to="/marketplace" replace />');
     expect(form).toContain("const sellerListingsRoute = () => isCapacitorContext() ? '/profile/listings' : '/seller';");
   });
 
