@@ -61,7 +61,7 @@ export default function Header() {
   }
 
   if (isCapacitorContext() && isNativeProfessionalRoute(pathname)) {
-    return <Navigate to="/marketplace" replace />;
+    return null;
   }
 
   if (presentationPaths.has(pathname)) return null;
