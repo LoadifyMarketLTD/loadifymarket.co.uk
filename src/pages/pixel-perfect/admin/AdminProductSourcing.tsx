@@ -49,10 +49,11 @@ export default function AdminProductSourcing() {
   const [publicationGate, setPublicationGate] = useState<JsonRecord | null>(null);
   const [merchReview, setMerchReview] = useState<JsonRecord | null>(null);
   const [marketplaceProjection, setMarketplaceProjection] = useState<JsonRecord | null>(null);
+  const [projectionPublication, setProjectionPublication] = useState<JsonRecord | null>(null);
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -300,6 +301,29 @@ export default function AdminProductSourcing() {
       setMarketplaceProjection(body);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create marketplace projection.");
+    } finally { setLoading(null); }
+  }
+
+  async function publishMarketplaceProjection() {
+    setError(null);
+    setProjectionPublication(null);
+    const projection = asRecord(marketplaceProjection?.projection);
+    const projectionId = String(projection?.projectionId ?? "");
+    if (!projectionId) {
+      setError("Governed marketplace projection is required before buyer publication.");
+      return;
+    }
+    setLoading("publishProjection");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-publish-supplier-projection", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectionId }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to publish supplier projection."));
+      setProjectionPublication(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to publish supplier projection.");
     } finally { setLoading(null); }
   }
 
@@ -1002,8 +1026,23 @@ export default function AdminProductSourcing() {
                       Create governed marketplace projection
                     </Button>
                     {marketplaceProjection && (
-                      <div className="mt-2 text-xs font-medium text-emerald-700">
-                        Internal projection created · Buyer visible: NO · Checkout: disabled
+                      <div className="mt-3 space-y-2">
+                        <div className="text-xs font-medium text-emerald-700">
+                          Internal projection created · Buyer visible: {projectionPublication ? "YES" : "NO"} · Checkout: separately gated
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={publishMarketplaceProjection}
+                          disabled={loading !== null || projectionPublication !== null}
+                        >
+                          {loading === "publishProjection" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                          Publish to governed buyer catalog
+                        </Button>
+                        {projectionPublication && (
+                          <div className="text-xs text-muted-foreground">
+                            Buyer catalog publication recorded. Checkout still requires fresh supplier reservation and order orchestration.
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

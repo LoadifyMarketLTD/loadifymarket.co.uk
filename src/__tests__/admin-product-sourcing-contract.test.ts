@@ -44,6 +44,8 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("/.netlify/functions/admin-operator-merchandising-review");
     expect(page).toContain("Create governed marketplace projection");
     expect(page).toContain("/.netlify/functions/admin-supplier-marketplace-projection");
+    expect(page).toContain("Publish to governed buyer catalog");
+    expect(page).toContain("/.netlify/functions/admin-publish-supplier-projection");
     expect(page).toContain("/.netlify/functions/admin-supplier-publication-gate");
     expect(page).toContain("Generate AI draft");
     expect(page).toContain("/.netlify/functions/admin-ai-product-builder-generate");

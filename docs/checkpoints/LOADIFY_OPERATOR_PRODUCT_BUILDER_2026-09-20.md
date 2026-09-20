@@ -135,3 +135,25 @@ Verification:
 - TypeScript: PASS
 - ESLint: PASS
 - fresh production build: PASS; 2445 modules transformed; existing heic2any chunk warning only.
+
+## Continuation — governed buyer catalog publication boundary
+
+- Added service-role-only publication transition for reviewed Loadify Supplier-Fulfilled projections.
+- Publication re-checks canonical import, Phase G economics and fresh Phase H stock/price before buyer visibility.
+- Published projection remains separate from seller public.products; no seller identity is fabricated.
+- Checkout remains explicitly disabled at publication time and is a separate reservation/orchestration gate.
+- Added public supplier-catalog read endpoint. It returns only published GB Loadify Supplier-Fulfilled projections and revalidates economics plus fresh supplier stock/price on every read.
+- Unavailable/stale supplier products fail closed and are omitted from the buyer catalog response.
+- Admin Product Sourcing now exposes Publish to governed buyer catalog after the internal projection exists.
+
+Verification completed for this increment:
+- migration health: PASS (188 canonical migrations)
+- focused publication/catalog/review suite: 14/14 PASS
+- ESLint: PASS
+- full production build started separately; do not record PASS until process exit is observed.
+
+Build closure for governed buyer catalog publication:
+- full production build: PASS, exit 0
+- build security tests: 9/9 PASS
+- Vite: 2445 modules transformed, built in 30.78s
+- only existing large heic2any chunk warning remains.
