@@ -117,3 +117,21 @@ Verification:
 - focused final-review/publication/AI suite: 14/14 PASS
 - TypeScript: PASS
 - ESLint: PASS
+
+## Continuation — governed marketplace projection
+
+- Added a private Loadify Supplier-Fulfilled marketplace projection ledger.
+- Projection identity is bound to canonical product, supplier offer, supplier catalog item and approved merchandising review.
+- Server re-evaluates canonical import and Phase G economics before creating a projection.
+- Projection creation stores a SHA-256 payload digest and remains service-role-only.
+- Draft projection explicitly returns buyerVisible=false and checkoutEnabled=false.
+- No public.products seller row is created; seller create-product remains isolated from Loadify-operated supplier commerce.
+- Admin Product Sourcing can create the governed internal projection after final human review.
+- Next boundary: buyer catalog + checkout integration using supplier-order orchestration without fake seller identity.
+
+Verification:
+- migration health: PASS (187 canonical migrations)
+- focused projection/review/publication suite: 12/12 PASS
+- TypeScript: PASS
+- ESLint: PASS
+- fresh production build: PASS; 2445 modules transformed; existing heic2any chunk warning only.

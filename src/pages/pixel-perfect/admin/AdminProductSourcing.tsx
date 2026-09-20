@@ -48,10 +48,11 @@ export default function AdminProductSourcing() {
   const [economics, setEconomics] = useState<JsonRecord | null>(null);
   const [publicationGate, setPublicationGate] = useState<JsonRecord | null>(null);
   const [merchReview, setMerchReview] = useState<JsonRecord | null>(null);
+  const [marketplaceProjection, setMarketplaceProjection] = useState<JsonRecord | null>(null);
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "merchReview" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -271,6 +272,35 @@ export default function AdminProductSourcing() {
     } finally {
       setLoading(null);
     }
+  }
+
+  async function createMarketplaceProjection() {
+    setError(null);
+    setMarketplaceProjection(null);
+    const approvedReview = asRecord(merchReview?.review);
+    const merchandisingReviewId = String(approvedReview?.reviewId ?? "");
+    if (!merchandisingReviewId || !merchDraft) {
+      setError("Approved merchandising review is required before creating the marketplace projection.");
+      return;
+    }
+    setLoading("projection");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-marketplace-projection", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplierCatalogItemId: supplierCatalogItemId.trim(),
+          supplierOfferId: supplierOfferId.trim(),
+          canonicalProductId: canonicalProductId.trim(),
+          merchandisingReviewId,
+          projectionPayload: merchDraft,
+        }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to create marketplace projection."));
+      setMarketplaceProjection(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to create marketplace projection.");
+    } finally { setLoading(null); }
   }
 
   async function checkPublicationGate() {
@@ -961,6 +991,21 @@ export default function AdminProductSourcing() {
                     <div className="mt-1 text-xs text-muted-foreground">
                       Buyer publication is still locked. Next gate: governed marketplace projection.
                     </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3"
+                      onClick={createMarketplaceProjection}
+                      disabled={loading !== null || marketplaceProjection !== null}
+                    >
+                      {loading === "projection" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                      Create governed marketplace projection
+                    </Button>
+                    {marketplaceProjection && (
+                      <div className="mt-2 text-xs font-medium text-emerald-700">
+                        Internal projection created · Buyer visible: NO · Checkout: disabled
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
