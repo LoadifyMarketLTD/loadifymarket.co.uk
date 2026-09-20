@@ -8,6 +8,16 @@ import { authorizedFetch } from "@/lib/authorizedFetch";
 
 type JsonRecord = Record<string, unknown>;
 
+interface MerchandisingDraft {
+  title: string;
+  description: string;
+  benefits: string;
+  seoTitle: string;
+  seoDescription: string;
+  faq: string;
+  creativeBrief: string;
+}
+
 function asRecord(value: unknown): JsonRecord | null {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as JsonRecord)
@@ -36,6 +46,7 @@ export default function AdminProductSourcing() {
   const [canonicalProductId, setCanonicalProductId] = useState("");
   const [economics, setEconomics] = useState<JsonRecord | null>(null);
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
+  const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
   const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "ai" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
@@ -215,6 +226,10 @@ export default function AdminProductSourcing() {
   const preparedBrief = asRecord(aiBrief?.brief);
   const verifiedFacts = asRecord(preparedBrief?.verifiedFacts);
 
+  function updateMerchField(field: keyof MerchandisingDraft, value: string) {
+    setMerchDraft((current) => current ? { ...current, [field]: value } : current);
+  }
+
   async function prepareAiBrief() {
     setError(null);
     setAiBrief(null);
@@ -237,6 +252,17 @@ export default function AdminProductSourcing() {
       const body = (await response.json()) as JsonRecord;
       if (!response.ok) throw new Error(String(body.error ?? "Unable to prepare AI Product Builder brief."));
       setAiBrief(body);
+      const brief = asRecord(body.brief);
+      const facts = asRecord(brief?.verifiedFacts);
+      setMerchDraft({
+        title: String(facts?.title ?? ""),
+        description: String(facts?.description ?? ""),
+        benefits: "",
+        seoTitle: String(facts?.title ?? "").slice(0, 60),
+        seoDescription: String(facts?.description ?? "").slice(0, 160),
+        faq: "",
+        creativeBrief: "",
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to prepare AI Product Builder brief.");
     } finally {
@@ -574,6 +600,140 @@ export default function AdminProductSourcing() {
           </div>
         )}
       </section>
+
+      {merchDraft && preparedBrief && (
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-violet-600" />
+                <h2 className="font-semibold">Merchandising editor & preview</h2>
+              </div>
+              <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+                This editor is initialized only from verified canonical facts. Empty sections remain empty until a future AI provider
+                or an operator supplies reviewed copy.
+              </p>
+            </div>
+            <Badge variant="outline">Draft only · not published</Badge>
+          </div>
+
+          <div className="mt-5 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="space-y-4">
+              <label className="block space-y-1.5 text-sm font-medium">
+                Product title
+                <Input value={merchDraft.title} onChange={(e) => updateMerchField("title", e.target.value)} maxLength={300} />
+              </label>
+
+              <label className="block space-y-1.5 text-sm font-medium">
+                Product description
+                <textarea
+                  value={merchDraft.description}
+                  onChange={(e) => updateMerchField("description", e.target.value)}
+                  rows={7}
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </label>
+
+              <label className="block space-y-1.5 text-sm font-medium">
+                Benefits
+                <textarea
+                  value={merchDraft.benefits}
+                  onChange={(e) => updateMerchField("benefits", e.target.value)}
+                  rows={5}
+                  placeholder="One reviewed benefit per line"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </label>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block space-y-1.5 text-sm font-medium">
+                  SEO title
+                  <Input value={merchDraft.seoTitle} onChange={(e) => updateMerchField("seoTitle", e.target.value)} maxLength={70} />
+                </label>
+                <label className="block space-y-1.5 text-sm font-medium">
+                  SEO description
+                  <textarea
+                    value={merchDraft.seoDescription}
+                    onChange={(e) => updateMerchField("seoDescription", e.target.value)}
+                    rows={3}
+                    maxLength={180}
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </label>
+              </div>
+
+              <label className="block space-y-1.5 text-sm font-medium">
+                FAQ
+                <textarea
+                  value={merchDraft.faq}
+                  onChange={(e) => updateMerchField("faq", e.target.value)}
+                  rows={6}
+                  placeholder="Reviewed Q&A only. Do not add unsupported product facts."
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </label>
+
+              <label className="block space-y-1.5 text-sm font-medium">
+                Creative brief
+                <textarea
+                  value={merchDraft.creativeBrief}
+                  onChange={(e) => updateMerchField("creativeBrief", e.target.value)}
+                  rows={5}
+                  placeholder="Visual direction based on approved product facts and assets."
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </label>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-border bg-background p-5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Marketplace preview</div>
+                <div className="mt-4 aspect-[4/3] rounded-xl border border-dashed border-border bg-card p-4">
+                  <div className="flex h-full items-center justify-center text-center text-xs text-muted-foreground">
+                    Approved product asset preview will appear here after asset-rights review.
+                  </div>
+                </div>
+                <h3 className="mt-4 text-xl font-bold leading-tight">
+                  {merchDraft.title || "Product title"}
+                </h3>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                  {merchDraft.description || "Verified product description will appear here."}
+                </p>
+
+                {merchDraft.benefits.trim() && (
+                  <ul className="mt-4 space-y-2 text-sm">
+                    {merchDraft.benefits.split(/\r?\n/).map((benefit) => benefit.trim()).filter(Boolean).map((benefit, index) => (
+                      <li key={`${benefit}-${index}`} className="flex gap-2">
+                        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                        <span>{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-border bg-background p-5">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">SEO preview</div>
+                <div className="mt-3 text-base font-semibold">{merchDraft.seoTitle || "SEO title"}</div>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {merchDraft.seoDescription || "SEO description"}
+                </p>
+                <div className="mt-3 text-xs text-muted-foreground">
+                  Title {merchDraft.seoTitle.length}/70 · Description {merchDraft.seoDescription.length}/180
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.04] p-5">
+                <div className="text-sm font-semibold text-amber-800">Publication remains locked</div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Saving or publishing this draft is intentionally unavailable until asset-rights, compliance, economics and final
+                  review gates are satisfied.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="grid gap-4 md:grid-cols-3">
         <RoadmapCard icon={<Database className="h-5 w-5" />} title="Landed cost & margin" copy="Reuse Phase G economics so selling price is based on real supplier cost, shipping, tax/customs evidence and margin." />

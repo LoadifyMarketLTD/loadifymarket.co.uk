@@ -36,6 +36,9 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("AI Facts Lock");
     expect(page).toContain("/.netlify/functions/admin-ai-product-builder-brief");
     expect(page).toContain("Provider call: disabled");
+    expect(page).toContain("Merchandising editor & preview");
+    expect(page).toContain("Draft only · not published");
+    expect(page).toContain("Publication remains locked");
     expect(page).toContain("Review → Publish");
   });
 });

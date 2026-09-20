@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION public.server_get_verified_canonical_product_facts_v1
 )
 RETURNS jsonb
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = pg_catalog, public, private
 AS $$
 DECLARE
@@ -34,6 +34,8 @@ BEGIN
 END;
 $$;
 
+GRANT USAGE ON SCHEMA private TO service_role;
+GRANT SELECT ON TABLE private.normalized_product_facts TO service_role;
 REVOKE ALL ON FUNCTION public.server_get_verified_canonical_product_facts_v1(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.server_get_verified_canonical_product_facts_v1(uuid) FROM anon;
 REVOKE ALL ON FUNCTION public.server_get_verified_canonical_product_facts_v1(uuid) FROM authenticated;

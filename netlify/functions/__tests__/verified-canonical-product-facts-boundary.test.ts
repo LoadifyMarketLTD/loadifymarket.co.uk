@@ -14,7 +14,11 @@ describe("verified canonical product facts boundary", () => {
     expect(migration).toContain("DISTINCT ON (fact_key)");
   });
 
-  it("keeps the read RPC service-role only", () => {
+  it("keeps the read RPC service-role only and security-invoker", () => {
+    expect(migration).toContain("SECURITY INVOKER");
+    expect(migration).not.toContain("SECURITY DEFINER");
+    expect(migration).toContain("GRANT USAGE ON SCHEMA private TO service_role");
+    expect(migration).toContain("GRANT SELECT ON TABLE private.normalized_product_facts TO service_role");
     expect(migration).toContain("REVOKE ALL ON FUNCTION");
     expect(migration).toContain("FROM authenticated");
     expect(migration).toContain("TO service_role");

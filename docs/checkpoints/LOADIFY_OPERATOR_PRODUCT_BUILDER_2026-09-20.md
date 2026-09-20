@@ -64,3 +64,20 @@ Build warning remains the existing large-chunk warning for `heic2any`; it is not
 5. Build editable merchandising preview: title, description, benefits, SEO, FAQ and creative brief.
 6. Add final governed Review → Publish gate without warehouse assumptions.
 7. Run local authenticated E2E against a real supplier candidate before any merge or deployment.
+
+## Continuation — canonical facts + merchandising editor
+
+- Canonical verified facts reader hardened to `SECURITY INVOKER`.
+- Function execution remains service-role only; `anon` / `authenticated` / `PUBLIC` are revoked.
+- Service role receives only the private schema/table read privileges required for this server-side path.
+- AI Builder now reads canonical verified facts server-side; client-supplied candidate facts are not accepted.
+- Merchandising editor added for title, description, benefits, SEO title/description, FAQ and creative brief.
+- Marketplace and SEO previews added.
+- Draft remains non-persistent and non-publishable until later review/publish gates.
+
+Verification after this continuation:
+- migration health: PASS
+- focused canonical/AI tests: 13/13 PASS
+- TypeScript: PASS
+- ESLint: PASS
+- production build: PASS
