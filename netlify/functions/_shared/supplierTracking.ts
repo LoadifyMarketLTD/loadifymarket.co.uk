@@ -160,5 +160,11 @@ export async function syncSupplierTracking(
     p_dispatch_delay_minutes: 60,
   });
 
+  if (ingested > 0) {
+    await client.rpc('server_project_supplier_tracking_to_order_v1', {
+      p_order_id: context.orderId,
+    });
+  }
+
   return { ok: blocked === 0, ingested, blocked };
 }

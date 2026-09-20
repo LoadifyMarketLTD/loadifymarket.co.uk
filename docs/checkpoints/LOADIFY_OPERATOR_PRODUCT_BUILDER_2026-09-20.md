@@ -193,3 +193,20 @@ Verification:
 - TypeScript: PASS
 - focused ESLint: PASS
 - production build was started after the checks; Vite reached production transform. Final completion was not claimed in this checkpoint until the process reports its terminal result.
+
+## Continuation — supplier runtime, recovery, tracking and buyer status
+
+- Added admin-controlled provider-neutral supplier runtime actions: submit, acknowledgement recovery and tracking sync.
+- Runtime resolves adapters only from the Loadify supplier provider registry; inactive/unverified provider capabilities fail closed.
+- Recovery uses acknowledgement lookup before any retry. Unknown or pending supplier outcomes are not blindly resubmitted.
+- Tracking ingestion now projects trusted canonical shipment progress back onto the one existing public customer order.
+- Public order status advances only on canonical supplier tracking: shipped for dispatched/in-transit/out-for-delivery and delivered for delivered.
+- Added buyer-authenticated supplier order status endpoint with ownership enforcement.
+- Buyer response exposes safe status, supplier confirmation state, tracking reference/carrier, support-required flag and timestamps; supplier commercial internals remain private.
+- No supplier provider was activated and no production deployment was performed.
+
+Verification:
+- migration health: PASS (191 canonical migrations)
+- supplier runtime/recovery/tracking suite: 47/47 PASS
+- TypeScript: PASS
+- focused ESLint: PASS
