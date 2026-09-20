@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, ShoppingBag, Flag, BarChart3,
-  MessageSquare, Settings, ShieldCheck, ChevronRight, LogOut, Menu, Bell, UserCheck, Banknote, Zap, ShieldAlert,
+  MessageSquare, Settings, ShieldCheck, ChevronRight, LogOut, Menu, Bell, UserCheck, Banknote, Zap, ShieldAlert, Sparkles,
 } from "lucide-react";
 import { useState, memo } from "react";
 import { supabase } from "@/lib/supabase";
@@ -15,6 +15,7 @@ const navItems = [
   { to: "/admin/buyers", label: "Buyers", icon: UserCheck },
   { to: "/admin/approvals", label: "Sellers", icon: ShieldCheck },
   { to: "/admin/products", label: "Products", icon: Package },
+  { to: "/admin/product-sourcing", label: "Product Sourcing", icon: Sparkles },
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/admin/payouts", label: "Payouts", icon: Banknote },
   { to: "/admin/stripe-events", label: "Stripe Events", icon: Zap },

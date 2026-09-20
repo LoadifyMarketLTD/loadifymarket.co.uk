@@ -127,6 +127,7 @@ const PPAdminUsers = lazy(() => import('./pages/pixel-perfect/admin/AdminUsers')
 const PPAdminBuyers = lazy(() => import('./pages/pixel-perfect/admin/AdminBuyers'));
 const PPAdminApprovals = lazy(() => import('./pages/pixel-perfect/admin/AdminApprovals'));
 const PPAdminProducts = lazy(() => import('./pages/pixel-perfect/admin/AdminProducts'));
+const PPAdminProductSourcing = lazy(() => import('./pages/pixel-perfect/admin/AdminProductSourcing'));
 const PPAdminOrders = lazy(() => import('./pages/pixel-perfect/admin/AdminOrders'));
 const PPAdminFlagged = lazy(() => import('./pages/pixel-perfect/admin/AdminFlagged'));
 const PPAdminReports = lazy(() => import('./pages/pixel-perfect/admin/AdminReports'));
@@ -268,6 +269,7 @@ export default function AppRoutes() {
             <Route path="buyers" element={publicPage(<PPAdminBuyers />)} />
             <Route path="approvals" element={publicPage(<PPAdminApprovals />)} />
             <Route path="products" element={publicPage(<PPAdminProducts />)} />
+            <Route path="product-sourcing" element={publicPage(<PPAdminProductSourcing />)} />
             <Route path="orders" element={publicPage(<PPAdminOrders />)} />
             <Route path="flagged" element={publicPage(<PPAdminFlagged />)} />
             <Route path="reports" element={publicPage(<PPAdminReports />)} />
