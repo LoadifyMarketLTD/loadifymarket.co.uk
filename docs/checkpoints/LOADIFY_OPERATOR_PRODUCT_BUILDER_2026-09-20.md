@@ -101,3 +101,19 @@ Verification:
 - TypeScript: **PASS**
 - ESLint: **PASS**
 - production build: **PASS**
+
+## Continuation — final human merchandising review
+
+- Added a private operator merchandising review ledger keyed to canonical product, supplier offer and supplier catalog item.
+- Final human approval stores the exact reviewed merchandising draft plus SHA-256 digest, reviewer, reason and timestamp.
+- Approval is allowed only after the server re-evaluates canonical import governance and Phase G economics as eligible.
+- The approval RPC is SECURITY INVOKER, service-role-only; buyer/public roles have no execute access.
+- Approval does **not** create a public marketplace product and does **not** expose checkout.
+- UI now exposes Final Human Review only after the publication gate is PASS.
+- Next boundary remains the governed marketplace projection for Loadify Supplier-Fulfilled products; seller create-product is intentionally not reused.
+
+Verification:
+- migration health: PASS
+- focused final-review/publication/AI suite: 14/14 PASS
+- TypeScript: PASS
+- ESLint: PASS

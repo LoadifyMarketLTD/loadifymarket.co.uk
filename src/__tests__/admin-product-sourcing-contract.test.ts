@@ -38,8 +38,10 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("AI provider not configured");
     expect(page).toContain("Merchandising editor & preview");
     expect(page).toContain("Draft only · not published");
-    expect(page).toContain("Publication remains locked");
+    expect(page).toContain("Buyer publication is still locked");
     expect(page).toContain("Check publication gate");
+    expect(page).toContain("Approve reviewed merchandising");
+    expect(page).toContain("/.netlify/functions/admin-operator-merchandising-review");
     expect(page).toContain("/.netlify/functions/admin-supplier-publication-gate");
     expect(page).toContain("Generate AI draft");
     expect(page).toContain("/.netlify/functions/admin-ai-product-builder-generate");

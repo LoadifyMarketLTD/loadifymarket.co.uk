@@ -47,9 +47,11 @@ export default function AdminProductSourcing() {
   const [canonicalProductId, setCanonicalProductId] = useState("");
   const [economics, setEconomics] = useState<JsonRecord | null>(null);
   const [publicationGate, setPublicationGate] = useState<JsonRecord | null>(null);
+  const [merchReview, setMerchReview] = useState<JsonRecord | null>(null);
+  const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "merchReview" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -234,6 +236,41 @@ export default function AdminProductSourcing() {
 
   function updateMerchField(field: keyof MerchandisingDraft, value: string) {
     setMerchDraft((current) => current ? { ...current, [field]: value } : current);
+  }
+
+  async function approveMerchandisingReview() {
+    setError(null);
+    setMerchReview(null);
+    if (!publicationEligible || !merchDraft) {
+      setError("Publication gate must be eligible before final merchandising approval.");
+      return;
+    }
+    if (!reviewReason.trim()) {
+      setError("Enter the human review reason before approval.");
+      return;
+    }
+
+    setLoading("merchReview");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-operator-merchandising-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplierCatalogItemId: supplierCatalogItemId.trim(),
+          supplierOfferId: supplierOfferId.trim(),
+          canonicalProductId: canonicalProductId.trim(),
+          reason: reviewReason.trim(),
+          draft: merchDraft,
+        }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to approve merchandising review."));
+      setMerchReview(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to approve merchandising review.");
+    } finally {
+      setLoading(null);
+    }
   }
 
   async function checkPublicationGate() {
@@ -892,11 +929,40 @@ export default function AdminProductSourcing() {
               </div>
 
               <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.04] p-5">
-                <div className="text-sm font-semibold text-amber-800">Publication remains locked</div>
+                <div className="text-sm font-semibold text-amber-800">Final human review</div>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Saving or publishing this draft is intentionally unavailable until asset-rights, compliance, economics and final
-                  review gates are satisfied.
+                  Approval records the exact reviewed draft and its SHA-256 digest. It does not expose a buyer-facing listing.
                 </p>
+                <label className="mt-4 block space-y-1.5 text-sm font-medium">
+                  Review reason
+                  <textarea
+                    value={reviewReason}
+                    onChange={(e) => setReviewReason(e.target.value)}
+                    rows={3}
+                    placeholder="Why this merchandising draft is approved for the next publication gate"
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </label>
+                <Button
+                  type="button"
+                  className="mt-3"
+                  onClick={approveMerchandisingReview}
+                  disabled={loading !== null || !publicationEligible || !reviewReason.trim()}
+                >
+                  {loading === "merchReview" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                  Approve reviewed merchandising
+                </Button>
+                {!publicationEligible && (
+                  <div className="mt-2 text-xs text-muted-foreground">Publication gate must be PASS before approval.</div>
+                )}
+                {merchReview && (
+                  <div className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.04] p-3 text-sm">
+                    <div className="font-semibold text-emerald-700">Merchandising review approved</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Buyer publication is still locked. Next gate: governed marketplace projection.
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
