@@ -11,6 +11,7 @@ import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProduct, adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
+import { fetchSupplierCatalogItem } from "@/lib/supplierCatalog";
 import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 import {
@@ -164,7 +165,23 @@ const ProductDetail = () => {
         if (error) throw error;
 
         if (!data) {
-          setNotFound(true);
+          const supplierProduct = UUID_RE.test(id) ? await fetchSupplierCatalogItem(id) : null;
+          if (!supplierProduct) {
+            setNotFound(true);
+            return;
+          }
+          setProduct(supplierProduct);
+          setMobileQty(1);
+          setProductDescription(supplierProduct.description || "");
+          setProductSellerId(null);
+          setProductCategorySlug(null);
+          setGalleryImages(supplierProduct.image ? [supplierProduct.image] : []);
+          setRelated([]);
+          setSellerProducts([]);
+          setSellerListingCount(0);
+          setSellerStoreSlug(null);
+          setSellerJoinDate(null);
+          trackProductView(supplierProduct.id, supplierProduct.title, supplierProduct.price);
           return;
         }
 
@@ -455,6 +472,7 @@ const ProductDetail = () => {
   // Purchase/message actions are hidden only for the seller's own listing.
   // Product information itself must remain fully visible for every listing.
   const isOwnListing = !!(productSellerId && user?.id === productSellerId);
+  const isSupplierFulfilled = product.commercialMode === "loadify_supplier_fulfilled";
   const isMobileCtaVisible = !isOwnListing;
   const mobileBottomNavOffset = "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))";
   const mobileQuantityLimit = Math.max(1, Math.min(10, product.maxPurchaseQuantity ?? 10));
@@ -858,7 +876,7 @@ const ProductDetail = () => {
                     onCopyLink={handleCopyLink}
                     onNativeShare={handleNativeShare}
                     supportsNativeShare={supportsNativeShare}
-                    onMessageSeller={() => void handleMessage()}
+                    onMessageSeller={isSupplierFulfilled ? undefined : () => void handleMessage()}
                     contactActionLoading={ctaLoadingAction}
                   />
                 </div>
@@ -1036,7 +1054,7 @@ const ProductDetail = () => {
             </div>
           ) : (
             <div style={{ display: "flex", gap: "8px" }}>
-              <button
+              {!isSupplierFulfilled && <button
                 onClick={() => void handleMessage()}
                 disabled={ctaLoadingAction !== null}
                 aria-busy={ctaLoadingAction === "message"}
@@ -1069,7 +1087,7 @@ const ProductDetail = () => {
                     Message
                   </>
                 )}
-              </button>
+              </button>}
 
               <button
                 onClick={handleAddToCart}

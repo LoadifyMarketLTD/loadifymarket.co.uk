@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { fetchSupplierCatalog } from "@/lib/supplierCatalog";
 
 interface ShowcaseProduct {
   id: string;
@@ -32,12 +33,8 @@ const FeaturedProducts = () => {
         .limit(10);
 
       if (cancelled) return;
-      if (error || !data) {
-        setLoading(false);
-        return;
-      }
-
-      const rows = data as unknown as ShowcaseProduct[];
+      if (error) console.error("[FeaturedProducts] seller catalog unavailable:", error);
+      const rows = (data ?? []) as unknown as ShowcaseProduct[];
       const sellerIds = [...new Set(rows.map((item) => item.sellerId).filter((id): id is string => Boolean(id)))];
       const sellerNames = new Map<string, string>();
 
@@ -55,10 +52,22 @@ const FeaturedProducts = () => {
       }
 
       if (!cancelled) {
-        setProducts(rows.map((item) => ({
+        const supplierProducts = await fetchSupplierCatalog().catch(() => []);
+        if (cancelled) return;
+        const supplierShowcase: ShowcaseProduct[] = supplierProducts.map((item) => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          images: item.image ? [item.image] : null,
+          sellerId: null,
+          sellerName: "Loadify Market",
+          category: { name: "Loadify Market", slug: "loadify-market" },
+        }));
+        const sellerShowcase = rows.map((item) => ({
           ...item,
           sellerName: (item.sellerId && sellerNames.get(item.sellerId)?.trim()) || "Independent Seller",
-        })));
+        }));
+        setProducts([...supplierShowcase, ...sellerShowcase].slice(0, 10));
         setLoading(false);
       }
     };
@@ -79,7 +88,7 @@ const FeaturedProducts = () => {
               Discover what&apos;s live on Loadify
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[#5A6578] sm:text-[15px]">
-              Real approved listings from independent sellers across the marketplace.
+              Approved marketplace listings and selected products sold by Loadify Market with supplier fulfilment.
             </p>
           </div>
 

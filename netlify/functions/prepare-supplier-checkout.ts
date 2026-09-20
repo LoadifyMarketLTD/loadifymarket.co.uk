@@ -38,12 +38,16 @@ export const handler: Handler = async (event) => {
   }
 
   const projectionId = typeof body.projectionId === "string" ? body.projectionId.trim() : "";
+  const quantity = Number(body.quantity ?? 1);
   const shippingAddress = isRecord(body.shippingAddress) ? body.shippingAddress : {};
   const billingAddress = isRecord(body.billingAddress) ? body.billingAddress : shippingAddress;
   const checkoutAttemptId = typeof body.checkoutAttemptId === "string" ? body.checkoutAttemptId.trim() : randomUUID();
 
   if (!UUID_RE.test(projectionId)) {
     return jsonResponse(400, { error: "A valid supplier catalog projection is required" }, METHODS);
+  }
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
+    return jsonResponse(400, { error: "Supplier quantity must be between 1 and 100" }, METHODS);
   }
   if (!checkoutAttemptId || checkoutAttemptId.length > 120) {
     return jsonResponse(400, { error: "Invalid checkout attempt identity" }, METHODS);
@@ -90,6 +94,7 @@ export const handler: Handler = async (event) => {
   const { data, error } = await admin.rpc("server_prepare_supplier_checkout_v1", {
     p_buyer_id: auth.actor.id,
     p_projection_id: projectionId,
+    p_quantity: quantity,
     p_shipping_address: shippingAddress,
     p_billing_address: billingAddress,
     p_reservation_key: reservationKey,

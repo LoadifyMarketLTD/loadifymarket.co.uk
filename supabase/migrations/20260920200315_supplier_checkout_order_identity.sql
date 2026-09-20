@@ -53,6 +53,7 @@ END $$;
 CREATE OR REPLACE FUNCTION public.server_prepare_supplier_checkout_v1(
   p_buyer_id uuid,
   p_projection_id uuid,
+  p_quantity integer,
   p_shipping_address jsonb,
   p_billing_address jsonb,
   p_reservation_key text,
@@ -78,6 +79,9 @@ DECLARE
 BEGIN
   IF p_buyer_id IS NULL OR p_projection_id IS NULL OR p_correlation_id IS NULL THEN
     RAISE EXCEPTION 'buyer, projection and correlation identity are required';
+  END IF;
+  IF p_quantity IS NULL OR p_quantity < 1 OR p_quantity > 100 THEN
+    RAISE EXCEPTION 'supplier checkout quantity must be between 1 and 100';
   END IF;
   IF COALESCE(BTRIM(p_reservation_key),'')='' OR COALESCE(BTRIM(p_orchestration_idempotency_key),'')='' THEN
     RAISE EXCEPTION 'checkout idempotency keys are required';
@@ -121,10 +125,10 @@ BEGIN
     AND commercial_mode='loadify_supplier_fulfilled';
   IF NOT FOUND THEN RAISE EXCEPTION 'approved supplier pricing snapshot is required'; END IF;
 
-  v_subtotal:=ROUND((v_price.merchandise_amount+v_price.mandatory_fee_amount)::numeric,2);
-  v_tax:=ROUND(v_price.tax_amount::numeric,2);
-  v_shipping:=ROUND(v_price.customer_shipping_charge::numeric,2);
-  v_total:=ROUND(v_price.gross_customer_price::numeric,2);
+  v_subtotal:=ROUND(((v_price.merchandise_amount+v_price.mandatory_fee_amount)*p_quantity)::numeric,2);
+  v_tax:=ROUND((v_price.tax_amount*p_quantity)::numeric,2);
+  v_shipping:=ROUND((v_price.customer_shipping_charge*p_quantity)::numeric,2);
+  v_total:=ROUND((v_price.gross_customer_price*p_quantity)::numeric,2);
 
   INSERT INTO public.orders(
     "buyerId","sellerId","productId",quantity,subtotal,"vatAmount","shippingAmount",total,
@@ -133,7 +137,7 @@ BEGIN
     "supplierProjectionId","pricingSnapshotId","legalSellerIdentitySnapshot",
     "merchantOfRecordSnapshot","invoiceIssuerSnapshot","paymentRecipientSnapshot"
   ) VALUES(
-    p_buyer_id,NULL,NULL,1,v_subtotal,v_tax,v_shipping,v_total,
+    p_buyer_id,NULL,NULL,p_quantity,v_subtotal,v_tax,v_shipping,v_total,
     0,'awaiting_payment','held',COALESCE(p_shipping_address,'{}'::jsonb),COALESCE(p_billing_address,'{}'::jsonb),
     'loadify_supplier_fulfilled',v_projection.canonical_product_id,v_projection.supplier_offer_id,
     v_projection.supplier_catalog_item_id,v_projection.id,v_price.id,
@@ -144,7 +148,7 @@ BEGIN
     "canonicalProductId","supplierOfferId","pricingSnapshotId",
     "productTitleSnapshot","listingContextSnapshot","productSnapshotSource","productSnapshotCapturedAt"
   ) VALUES(
-    v_order_id,NULL,1,v_subtotal,0,v_subtotal,
+    v_order_id,NULL,p_quantity,ROUND((v_subtotal/p_quantity)::numeric,2),0,v_subtotal,
     v_projection.canonical_product_id,v_projection.supplier_offer_id,v_price.id,
     COALESCE(NULLIF(BTRIM(v_projection.projection_payload->>'title'),''),
       'Loadify supplier product'),
@@ -153,7 +157,7 @@ BEGIN
 
   v_reservation:=public.server_reserve_supplier_offer_v1(
     v_order_id,v_order_item_id,v_projection.supplier_offer_id,
-    'loadify_supplier_fulfilled',1,'GB','',
+    'loadify_supplier_fulfilled',p_quantity,'GB','',
     BTRIM(p_reservation_key),BTRIM(p_orchestration_idempotency_key),
     p_correlation_id,'{}'::jsonb,'supplier_commerce_default',30
   );
@@ -172,13 +176,13 @@ BEGIN
 END;
 $$;
 REVOKE ALL ON FUNCTION public.server_prepare_supplier_checkout_v1(
-  uuid,uuid,jsonb,jsonb,text,text,uuid
+  uuid,uuid,integer,jsonb,jsonb,text,text,uuid
 ) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.server_prepare_supplier_checkout_v1(
-  uuid,uuid,jsonb,jsonb,text,text,uuid
+  uuid,uuid,integer,jsonb,jsonb,text,text,uuid
 ) TO service_role;
 
 COMMENT ON FUNCTION public.server_prepare_supplier_checkout_v1(
-  uuid,uuid,jsonb,jsonb,text,text,uuid
+  uuid,uuid,integer,jsonb,jsonb,text,text,uuid
 ) IS
 'Creates the canonical awaiting-payment Loadify Supplier-Fulfilled order and reserves supplier stock atomically. No Stripe session is created here.';

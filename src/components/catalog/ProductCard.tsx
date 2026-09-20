@@ -22,6 +22,9 @@ export interface Product {
   /** Seller's user ID — used for owner-awareness CTAs */
   sellerId?: string;
   sellerVerified: boolean;
+  commercialMode?: "marketplace_seller" | "loadify_supplier_fulfilled";
+  canonicalProductId?: string;
+  fulfilmentLabel?: string;
   unitCount: number;
   rating: number;
   reviewCount?: number;

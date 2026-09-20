@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Elements } from "@stripe/react-stripe-js";
 import {
   ArrowLeft, ArrowRight, CreditCard, MapPin, User, Phone, Mail,
   Building2, ShieldCheck, Lock, Truck, Check, Loader2, X
@@ -17,6 +18,8 @@ import { openExternalUrl } from "@/lib/capacitorUtils";
 import { supabase } from "@/lib/supabase";
 import { calculateCheckoutVat } from "@/lib/checkoutTaxDisplay";
 import { formatUkPostcode, validateDeliveryAddress } from "@/lib/deliveryAddress";
+import { stripePromise } from "@/lib/stripe";
+import SupplierPaymentPanel from "@/components/checkout/SupplierPaymentPanel";
 
 interface ShippingOption {
   methodId: string;
@@ -25,6 +28,14 @@ interface ShippingOption {
   price: number;
   dispatchTime: string | null;
 }
+
+const SUPPLIER_FULFILMENT: ShippingOption = {
+  methodId: "loadify-supplier-fulfilled",
+  name: "Supplier Fulfilment",
+  courier: null,
+  price: 0,
+  dispatchTime: null,
+};
 
 const SELLER_ARRANGED: ShippingOption = {
   methodId: "seller-arranged",
@@ -41,11 +52,23 @@ const steps = [
 ];
 
 const Checkout = () => {
-  const { cartItems, subtotal, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
+  const navigate = useNavigate();
+  const { cartItems, subtotal, clearCart, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
   const { user, isLoading } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [supplierClientSecret, setSupplierClientSecret] = useState<string | null>(null);
+  const [supplierOrderId, setSupplierOrderId] = useState<string | null>(null);
+  const supplierItems = useMemo(
+    () => cartItems.filter((item) => item.product.commercialMode === "loadify_supplier_fulfilled"),
+    [cartItems],
+  );
+  const sellerItems = useMemo(
+    () => cartItems.filter((item) => item.product.commercialMode !== "loadify_supplier_fulfilled"),
+    [cartItems],
+  );
+  const supplierOnlyCart = supplierItems.length > 0 && sellerItems.length === 0;
   const [shippingData, setShippingData] = useState({
     firstName: "",
     lastName: "",
@@ -81,6 +104,12 @@ const Checkout = () => {
     const productIds = cartProductIds;
 
     const fetchShippingOptions = async () => {
+      if (supplierOnlyCart) {
+        setShippingOptions([SUPPLIER_FULFILMENT]);
+        setSelectedMethodId(SUPPLIER_FULFILMENT.methodId);
+        setShippingLoading(false);
+        return;
+      }
       setShippingLoading(true);
       try {
         const { data, error } = await supabase
@@ -159,7 +188,7 @@ const Checkout = () => {
     };
 
     void fetchShippingOptions();
-  }, [cartProductIds]);
+  }, [cartProductIds, supplierOnlyCart]);
 
   useEffect(() => {
     void refreshCartPrices();
@@ -249,6 +278,63 @@ const Checkout = () => {
         setCheckoutError(
           `You cannot purchase your own product "${ownProductInCart.product.title}". Please remove it from your cart.`
         );
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    if (supplierItems.length > 0 && sellerItems.length > 0) {
+      setCheckoutError("Supplier-fulfilled products and independent seller products must be checked out separately.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (supplierOnlyCart) {
+      if (!user) {
+        setCheckoutError("Please sign in to complete this Loadify Market purchase.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (supplierItems.length !== 1) {
+        setCheckoutError("Please checkout one supplier-fulfilled product at a time while supplier routing is finalised.");
+        setIsSubmitting(false);
+        return;
+      }
+      try {
+        const address = {
+          name: `${shippingData.firstName.trim()} ${shippingData.lastName.trim()}`.trim(),
+          phone: shippingData.phone.trim(),
+          line1: shippingData.address1.trim(),
+          line2: shippingData.address2.trim(),
+          city: shippingData.city.trim(),
+          county: shippingData.county.trim(),
+          postcode: shippingData.postcode.trim().toUpperCase(),
+          country: "GB",
+        };
+        const { data: authData } = await supabase.auth.getSession();
+        const token = authData.session?.access_token;
+        if (!token) throw new Error("Your session has expired. Please sign in again.");
+        const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+        const item = supplierItems[0];
+        const prepared = await fetch("/.netlify/functions/prepare-supplier-checkout", {
+          method: "POST", headers,
+          body: JSON.stringify({ projectionId: item.product.id, quantity: item.quantity, shippingAddress: address, billingAddress: address }),
+        });
+        const preparedBody = await prepared.json();
+        if (!prepared.ok) throw new Error(preparedBody.error || "Supplier checkout could not be prepared.");
+        const orderId = String(preparedBody.checkout?.orderId || "");
+        if (!orderId) throw new Error("Supplier checkout did not return an order.");
+        const payment = await fetch("/.netlify/functions/create-supplier-payment-intent", {
+          method: "POST", headers, body: JSON.stringify({ orderId }),
+        });
+        const paymentBody = await payment.json();
+        if (!payment.ok || !paymentBody.clientSecret) throw new Error(paymentBody.error || "Secure payment could not be initialised.");
+        setSupplierOrderId(orderId);
+        setSupplierClientSecret(String(paymentBody.clientSecret));
+        setIsSubmitting(false);
+        return;
+      } catch (err) {
+        setCheckoutError(err instanceof Error ? err.message : "Supplier checkout failed.");
         setIsSubmitting(false);
         return;
       }
@@ -693,7 +779,7 @@ const Checkout = () => {
                       <button onClick={() => setCurrentStep(1)} className="text-sm text-primary hover:underline">Edit</button>
                     </div>
                     <div className="text-sm text-muted-foreground pl-[52px]">
-                      <p>Card details entered securely on Stripe's checkout page</p>
+                      <p>{supplierOnlyCart ? "Card details are entered securely here with Stripe." : "Card details entered securely on Stripe's checkout page"}</p>
                     </div>
                   </div>
 
@@ -724,32 +810,41 @@ const Checkout = () => {
                   )}
 
                   <div className="rounded-lg bg-muted/50 border border-border p-4 text-xs text-muted-foreground leading-relaxed">
-                    <span className="font-semibold text-foreground">Marketplace Notice:</span>{" "}
-                    You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller.
+                    <span className="font-semibold text-foreground">{supplierOnlyCart ? "Loadify Sale:" : "Marketplace Notice:"}</span>{" "}
+                    {supplierOnlyCart
+                      ? "You are buying from Loadify Market. Stock is held and dispatched by an approved fulfilment supplier; Loadify does not operate a warehouse."
+                      : "You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller."}
                   </div>
 
-                  <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setCurrentStep(1)} className="h-11" disabled={isSubmitting}>
-                      <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                    </Button>
-                    <Button
-                      onClick={handlePlaceOrder}
-                      disabled={isSubmitting || noDeliveryMethodAvailable || selectedOption.methodId === SELLER_ARRANGED.methodId}
-                      className="flex-1 h-12 bg-primary hover:bg-primary-hover text-black font-bold text-base hover:opacity-90 transition-opacity"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Redirecting to Stripe…
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="mr-2 h-5 w-5" />
-                          Pay Securely · £{total.toLocaleString()}
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  {supplierOnlyCart && supplierClientSecret && supplierOrderId ? (
+                    <Elements stripe={stripePromise} options={{ clientSecret: supplierClientSecret }}>
+                      <SupplierPaymentPanel
+                        orderId={supplierOrderId}
+                        total={total}
+                        onPaid={(orderId) => {
+                          clearCart();
+                          navigate(`/buyer/orders?orderId=${encodeURIComponent(orderId)}`);
+                        }}
+                      />
+                    </Elements>
+                  ) : (
+                    <div className="flex gap-3">
+                      <Button variant="outline" onClick={() => setCurrentStep(1)} className="h-11" disabled={isSubmitting}>
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                      </Button>
+                      <Button
+                        onClick={handlePlaceOrder}
+                        disabled={isSubmitting || noDeliveryMethodAvailable || selectedOption.methodId === SELLER_ARRANGED.methodId}
+                        className="flex-1 h-12 bg-primary hover:bg-primary-hover text-black font-bold text-base hover:opacity-90 transition-opacity"
+                      >
+                        {isSubmitting ? (
+                          <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Preparing secure payment…</>
+                        ) : (
+                          <><Lock className="mr-2 h-5 w-5" />Pay Securely · £{total.toLocaleString()}</>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

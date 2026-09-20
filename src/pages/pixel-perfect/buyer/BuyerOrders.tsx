@@ -29,6 +29,10 @@ interface OrderRow {
   status: string;
   createdAt: string;
   sellerId: string | null;
+  commercialMode?: string | null;
+  supplierRuntimeStatus?: string | null;
+  supplierConfirmation?: string | null;
+  trackingRef?: string | null;
   products: { title: string } | null;
   order_items: Array<{ productTitleSnapshot: string | null }> | null;
 }
@@ -58,6 +62,11 @@ const statusColor: Record<string, string> = {
   cancelled: "bg-destructive/15 text-destructive border-destructive/20",
   refunded: "bg-destructive/15 text-destructive border-destructive/20",
   invoice_requested: "bg-blue-500/15 text-blue-700 border-blue-200",
+  processing: "bg-primary/15 text-primary border-primary/40",
+  in_transit: "bg-blue-500/15 text-blue-700 border-blue-200",
+  out_for_delivery: "bg-blue-500/15 text-blue-700 border-blue-200",
+  supplier_issue: "bg-destructive/15 text-destructive border-destructive/20",
+  delivery_exception: "bg-destructive/15 text-destructive border-destructive/20",
 };
 
 const RETURN_REASONS = [
@@ -191,12 +200,31 @@ const BuyerOrders = () => {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("id, orderNumber, total, status, createdAt, sellerId, products(title), order_items(productTitleSnapshot)")
+          .select("id, orderNumber, total, status, createdAt, sellerId, commercialMode, products(title), order_items(productTitleSnapshot)")
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
         const rows = (data as unknown as OrderRow[]) || [];
-        setOrders(rows);
+        const enrichedRows = await Promise.all(rows.map(async (order) => {
+          if (order.commercialMode !== "loadify_supplier_fulfilled") return order;
+          try {
+            const response = await authorizedFetch(`/.netlify/functions/supplier-order-status?orderId=${encodeURIComponent(order.id)}`);
+            if (!response.ok) return order;
+            const status = await response.json() as {
+              status?: string; supplierConfirmation?: string;
+              tracking?: { trackingRef?: string | null } | null;
+            };
+            return {
+              ...order,
+              supplierRuntimeStatus: status.status || null,
+              supplierConfirmation: status.supplierConfirmation || null,
+              trackingRef: status.tracking?.trackingRef || null,
+            };
+          } catch {
+            return order;
+          }
+        }));
+        setOrders(enrichedRows);
         if (rows.length > 0) {
           const orderIds = rows.map((order) => order.id);
           const [{ data: cancellationRows }, { data: returnRows }] = await Promise.all([
@@ -456,7 +484,15 @@ const BuyerOrders = () => {
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  <Badge variant="outline" className={statusColor[o.status] ?? ""}>{o.status}</Badge>
+                  <Badge variant="outline" className={statusColor[o.supplierRuntimeStatus || o.status] ?? ""}>
+                    {(o.supplierRuntimeStatus || o.status).replaceAll("_", " ")}
+                  </Badge>
+                  {o.commercialMode === "loadify_supplier_fulfilled" && (
+                    <span className="text-[11px] text-muted-foreground">
+                      Sold by Loadify Market{o.supplierConfirmation ? ` · Supplier ${o.supplierConfirmation}` : ""}
+                      {o.trackingRef ? ` · Tracking ${o.trackingRef}` : ""}
+                    </span>
+                  )}
                   {returnState && (
                     <p className="text-[11px] font-medium text-muted-foreground">
                       Return: {returnState.status.replace(/_/g, " ")}

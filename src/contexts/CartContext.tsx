@@ -140,14 +140,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const snapshot = cartItemsRef.current;
     if (snapshot.length === 0) return;
 
-    const productIds = snapshot.map((i) => i.product.id);
+    const sellerItems = snapshot.filter((i) => i.product.commercialMode !== "loadify_supplier_fulfilled");
+    const supplierItems = snapshot.filter((i) => i.product.commercialMode === "loadify_supplier_fulfilled");
+    const productIds = sellerItems.map((i) => i.product.id);
 
     try {
       const { supabase } = await import('@/lib/supabase');
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, price, isActive, isApproved, listingStatus, listingContext, stockQuantity, vatRate, taxTreatmentStatus, taxTreatmentSource")
-        .in("id", productIds);
+      const { fetchSupplierCatalogItem } = await import('@/lib/supplierCatalog');
+      const { data, error } = productIds.length > 0
+        ? await supabase
+            .from("products")
+            .select("id, price, isActive, isApproved, listingStatus, listingContext, stockQuantity, vatRate, taxTreatmentStatus, taxTreatmentSource")
+            .in("id", productIds)
+        : { data: [], error: null };
 
       if (error || !data) return;
 
@@ -167,7 +172,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       let anyPriceChanged = false;
 
-      const updated = snapshot
+      const updatedSellerItems = sellerItems
         .filter((item) => {
           const row = dbMap.get(item.product.id);
           if (!row?.isActive || !row.isApproved || row.listingStatus !== "active") {
@@ -204,7 +209,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         })
         .filter((item) => item.quantity > 0);
 
-      setCartItems(updated);
+      const refreshedSupplierItems = (await Promise.all(
+        supplierItems.map(async (item) => {
+          const current = await fetchSupplierCatalogItem(item.product.id);
+          if (!current?.isAvailable) return null;
+          if (current.price !== item.product.price) anyPriceChanged = true;
+          return {
+            ...item,
+            product: { ...item.product, ...current } as CartTaxProduct,
+            quantity: clampQuantity(current, item.quantity),
+          };
+        }),
+      )).filter((item): item is CartItem => Boolean(item && item.quantity > 0));
+
+      setCartItems([...refreshedSupplierItems, ...updatedSellerItems]);
       if (anyPriceChanged) {
         setPriceChangedBanner(true);
       }

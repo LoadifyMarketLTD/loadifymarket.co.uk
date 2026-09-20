@@ -210,3 +210,23 @@ Verification:
 - supplier runtime/recovery/tracking suite: 47/47 PASS
 - TypeScript: PASS
 - focused ESLint: PASS
+
+## Continuation — buyer catalog, product detail, cart, in-app checkout and order status
+
+- Buyer catalog now merges governed Loadify Supplier-Fulfilled projections with Marketplace Seller listings without fabricating seller IDs.
+- Product Detail falls back to the governed supplier catalog for projection IDs and labels Loadify Market as seller.
+- Supplier products are revalidated against the server catalog when cart prices/availability refresh.
+- Mixed Marketplace Seller + Supplier-Fulfilled checkout fails closed; the existing seller checkout remains unchanged.
+- Supplier checkout now supports explicit quantity through canonical order/reservation preparation.
+- Supplier-only checkout uses the canonical prepare-supplier-checkout and create-supplier-payment-intent boundaries.
+- Stripe Payment Element is rendered inside Loadify; supplier checkout does not redirect to an external seller checkout.
+- Buyer Orders enriches Loadify Supplier-Fulfilled orders with buyer-safe supplier confirmation/tracking/runtime status.
+- Supplier product UI does not expose a fake Message Seller action.
+- No production deployment or provider activation was performed.
+
+Verification:
+- migration health: PASS (191 canonical migrations)
+- focused buyer UI/checkout/payment suite: 14/14 PASS
+- TypeScript: PASS
+- focused ESLint: PASS
+- full npm build started; security build tests 9/9 PASS. Terminal build completion is not claimed until the running process exits.

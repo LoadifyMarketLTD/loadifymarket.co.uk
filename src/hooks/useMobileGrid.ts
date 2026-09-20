@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { adaptProducts } from '@/lib/productAdapter';
 import type { DBProduct } from '@/lib/productAdapter';
 import type { Product } from '@/components/catalog/ProductCard';
+import { fetchSupplierCatalog } from '@/lib/supplierCatalog';
 
 const PAGE_SIZE = 12;
 
@@ -84,11 +85,13 @@ export function useMobileGrid(): MobileGrid {
 
   useEffect(() => {
     cancelledRef.current = false;
-    fetchPage(0).then((items) => {
+    Promise.all([fetchPage(0), fetchSupplierCatalog()]).then(([sellerItems, supplierItems]) => {
       if (!cancelledRef.current) {
-        setProducts(items);
-        offsetRef.current = items.length;
-        setHasMore(items.length === PAGE_SIZE);
+        const ids = new Set(sellerItems.map((item) => item.id));
+        const supplierUnique = supplierItems.filter((item) => !ids.has(item.id));
+        setProducts([...supplierUnique, ...sellerItems]);
+        offsetRef.current = sellerItems.length;
+        setHasMore(sellerItems.length === PAGE_SIZE);
         setLoading(false);
       }
     }).catch((err) => {
