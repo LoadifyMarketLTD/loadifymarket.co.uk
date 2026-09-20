@@ -175,3 +175,21 @@ Verification:
 - focused checkout/catalog/projection suite: 12/12 PASS
 - TypeScript: PASS
 - ESLint: PASS
+
+## Continuation — Loadify payment truth + supplier-order handshake
+
+- Added a dedicated Loadify Supplier-Fulfilled PaymentIntent path; it does not reuse Marketplace Seller Connect routing.
+- Loadify remains merchant of record and buyer payment stays inside Loadify; no external checkout redirect.
+- PaymentIntent creation rechecks current supplier stock/price and reuses an existing pending PaymentIntent idempotently.
+- Stripe payment success now branches by commercial mode before Marketplace Seller materialization.
+- Supplier payment completion atomically links the canonical payment session, transitions the one customer order to paid and prepares the existing provider-neutral supplier-order handshake.
+- Supplier provider submission remains fail-closed and separate. Payment success never falsely means supplier-order success.
+- No provider was activated and no production mutation was performed.
+
+Verification:
+- migration health: PASS (190 canonical migrations)
+- focused payment/checkout/handshake suite: 30/30 PASS
+- follow-up payment/handshake suite: 25/25 PASS
+- TypeScript: PASS
+- focused ESLint: PASS
+- production build was started after the checks; Vite reached production transform. Final completion was not claimed in this checkpoint until the process reports its terminal result.

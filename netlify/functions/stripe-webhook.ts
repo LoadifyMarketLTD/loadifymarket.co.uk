@@ -567,13 +567,37 @@ async function handleMobilePaymentIntentSucceeded(
     .from('payment_sessions')
     .select('id, status, metadata, createdAt')
     .eq('stripePaymentIntent', paymentIntent.id)
-    .maybeSingle<{ id: string; status: string; metadata: OrderData; createdAt: string }>();
+    .maybeSingle<{ id: string; status: string; metadata: Record<string, unknown>; createdAt: string }>();
 
   if (error) throw error;
-  if (!pendingSession || pendingSession.status === 'completed') return;
+  if (!pendingSession) return;
+
+  if (pendingSession.metadata?.commercialMode === 'loadify_supplier_fulfilled') {
+    const expectedPence = Number(pendingSession.metadata.totalPence);
+    const received = paymentIntent.amount_received || paymentIntent.amount;
+    if (!Number.isInteger(expectedPence) || received !== expectedPence) {
+      throw new Error(`Supplier PaymentIntent amount mismatch for ${paymentIntent.id}`);
+    }
+    if (paymentIntent.currency.toLowerCase() !== 'gbp') {
+      throw new Error(`Unexpected supplier PaymentIntent currency for ${paymentIntent.id}`);
+    }
+    const { data: completed, error: completionError } = await sb.rpc('server_complete_supplier_payment_v1', {
+      p_payment_session_id: pendingSession.id,
+      p_payment_intent_ref: paymentIntent.id,
+      p_amount: received / 100,
+      p_currency: paymentIntent.currency.toUpperCase(),
+    });
+    if (completionError) throw completionError;
+    if (!completed || typeof completed !== 'object' || (completed as { ok?: unknown }).ok !== true) {
+      throw new Error(`Supplier payment completion failed for ${paymentIntent.id}`);
+    }
+    return;
+  }
+
+  if (pendingSession.status === 'completed') return;
   if (pendingSession.status !== 'pending') return;
 
-  const orderData = pendingSession.metadata;
+  const orderData = pendingSession.metadata as unknown as OrderData;
   const expectedPence = Number.isInteger(orderData.totalPence)
     ? Number(orderData.totalPence)
     : Math.round(Number(orderData.total) * 100);
