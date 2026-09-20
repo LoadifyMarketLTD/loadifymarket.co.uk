@@ -2,15 +2,12 @@ import { createClient } from "@supabase/supabase-js";
 import type { Handler } from "@netlify/functions";
 import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { prepareAiProductBuilderBrief } from "./_shared/aiProductBuilderContract";
+import { generateAiProductBuilderDraft } from "./_shared/aiProductBuilderProvider";
 import { jsonResponse, optionsResponse } from "./_shared/http";
 import { readVerifiedCanonicalProductFacts } from "./_shared/verifiedCanonicalProductFacts";
-import { aiProductBuilderProviderAvailable } from "./_shared/aiProductBuilderProvider";
 
 const METHODS = "POST, OPTIONS";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return optionsResponse(METHODS);
@@ -21,51 +18,57 @@ export const handler: Handler = async (event) => {
   if (!supabaseUrl || !serviceRoleKey) {
     return jsonResponse(500, { error: "Server configuration error" }, METHODS);
   }
+
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   const auth = await authenticateActiveAccount(event, admin, ["admin"]);
   if (!auth.ok) return jsonResponse(auth.status, { error: "Unauthorized" }, METHODS);
-
-  let body: Record<string, unknown>;
+  let canonicalProductId = "";
   try {
-    const parsed = JSON.parse(event.body || "{}");
-    if (!isRecord(parsed)) throw new Error("invalid body");
-    body = parsed;
+    const parsed = JSON.parse(event.body || "{}") as Record<string, unknown>;
+    canonicalProductId = typeof parsed.canonicalProductId === "string" ? parsed.canonicalProductId.trim() : "";
   } catch {
     return jsonResponse(400, { error: "Invalid JSON body" }, METHODS);
   }
 
-  const canonicalProductId = typeof body.canonicalProductId === "string" ? body.canonicalProductId.trim() : "";
+  if (!UUID_RE.test(canonicalProductId)) {
+    return jsonResponse(400, { error: "A valid canonicalProductId is required" }, METHODS);
+  }
+
   const verified = await readVerifiedCanonicalProductFacts(admin, canonicalProductId);
   if (!verified.ok) {
     const status = verified.kind === "validation" ? 400 : verified.kind === "not_found" ? 409 : 503;
     return jsonResponse(status, { error: verified.error, factsLocked: true }, METHODS);
   }
 
+  let brief;
   try {
-    const brief = prepareAiProductBuilderBrief({
-      facts: verified.facts,
-      factsVerified: true,
-    });
-
-    return jsonResponse(200, {
-      ok: true,
-      canonicalProductId: verified.canonicalProductId,
-      verifiedFactCount: verified.factCount,
-      brief,
-      generation: {
-        available: aiProductBuilderProviderAvailable(),
-        performed: false,
-        providerCalled: false,
-        marketplaceMutationPerformed: false,
-        publicationPerformed: false,
-        reason: "brief_ready_provider_not_invoked",
-      },
-      reviewRequired: true,
-    }, METHODS);
+    brief = prepareAiProductBuilderBrief({ facts: verified.facts, factsVerified: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "AI Product Builder brief rejected";
     return jsonResponse(400, { error: message, factsLocked: true }, METHODS);
   }
+  const generated = await generateAiProductBuilderDraft(brief);
+  if (!generated.ok || !generated.draft) {
+    const unavailable = generated.reason === "ai_product_builder_disabled"
+      || generated.reason === "ai_product_builder_provider_not_configured";
+    return jsonResponse(unavailable ? 503 : 502, {
+      error: generated.reason,
+      provider: generated.provider,
+      publicationPerformed: false,
+      marketplaceMutationPerformed: false,
+    }, METHODS);
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    canonicalProductId,
+    verifiedFactCount: verified.factCount,
+    provider: generated.provider,
+    draft: generated.draft,
+    reviewRequired: true,
+    publicationPerformed: false,
+    marketplaceMutationPerformed: false,
+  }, METHODS);
 };

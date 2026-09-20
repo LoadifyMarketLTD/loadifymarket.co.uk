@@ -42,12 +42,14 @@ export default function AdminProductSourcing() {
   const [mappingsJson, setMappingsJson] = useState("[]");
   const [review, setReview] = useState<JsonRecord | null>(null);
   const [plan, setPlan] = useState<JsonRecord | null>(null);
+  const [supplierCatalogItemId, setSupplierCatalogItemId] = useState("");
   const [supplierOfferId, setSupplierOfferId] = useState("");
   const [canonicalProductId, setCanonicalProductId] = useState("");
   const [economics, setEconomics] = useState<JsonRecord | null>(null);
+  const [publicationGate, setPublicationGate] = useState<JsonRecord | null>(null);
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "ai" | null>(null);
+  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -223,11 +225,96 @@ export default function AdminProductSourcing() {
   const planReady = importPlan?.planReady === true;
   const economicsDecision = asRecord(economics?.decision);
   const economicsEligible = economicsDecision?.eligible === true;
+  const publicationEligible = publicationGate?.eligible === true;
+  const publicationChecks = safeRecordArray(publicationGate?.checks);
   const preparedBrief = asRecord(aiBrief?.brief);
   const verifiedFacts = asRecord(preparedBrief?.verifiedFacts);
+  const aiGeneration = asRecord(aiBrief?.generation);
+  const aiProviderAvailable = aiGeneration?.available === true;
 
   function updateMerchField(field: keyof MerchandisingDraft, value: string) {
     setMerchDraft((current) => current ? { ...current, [field]: value } : current);
+  }
+
+  async function checkPublicationGate() {
+    setError(null);
+    setPublicationGate(null);
+    if (!supplierCatalogItemId.trim() || !supplierOfferId.trim() || !canonicalProductId.trim()) {
+      setError("Supplier catalog item, supplier offer and canonical product IDs are required for the publication gate.");
+      return;
+    }
+
+    setLoading("gate");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-publication-gate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplierCatalogItemId: supplierCatalogItemId.trim(),
+          supplierOfferId: supplierOfferId.trim(),
+          canonicalProductId: canonicalProductId.trim(),
+        }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to evaluate publication gate."));
+      setPublicationGate(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to evaluate publication gate.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function generateAiDraft() {
+    setError(null);
+    if (!canonicalProductId.trim()) {
+      setError("A canonical product ID is required for AI generation.");
+      return;
+    }
+    if (!aiProviderAvailable) {
+      setError("AI generation is not enabled or the server-side provider is not configured.");
+      return;
+    }
+
+    setLoading("aiGenerate");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-ai-product-builder-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ canonicalProductId: canonicalProductId.trim() }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to generate AI merchandising draft."));
+      const draft = asRecord(body.draft);
+      const title = asRecord(draft?.title);
+      const description = asRecord(draft?.description);
+      const seo = asRecord(draft?.seo);
+      const seoTitle = asRecord(seo?.title);
+      const seoDescription = asRecord(seo?.description);
+      const creative = asRecord(draft?.creativeBrief);
+      const benefits = safeRecordArray(draft?.benefits).map((item) => String(item.text ?? "")).filter(Boolean);
+      const faq = safeRecordArray(draft?.faq)
+        .map((item) => {
+          const question = String(item.question ?? "").trim();
+          const answer = String(item.answer ?? "").trim();
+          return question && answer ? `Q: ${question}\nA: ${answer}` : "";
+        })
+        .filter(Boolean);
+
+      setMerchDraft({
+        title: String(title?.text ?? ""),
+        description: String(description?.text ?? ""),
+        benefits: benefits.join("\n"),
+        seoTitle: String(seoTitle?.text ?? ""),
+        seoDescription: String(seoDescription?.text ?? ""),
+        faq: faq.join("\n\n"),
+        creativeBrief: String(creative?.text ?? ""),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to generate AI merchandising draft.");
+    } finally {
+      setLoading(null);
+    }
   }
 
   async function prepareAiBrief() {
@@ -500,7 +587,15 @@ export default function AdminProductSourcing() {
           </Badge>
         </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <label className="space-y-1.5 text-sm font-medium">
+            Supplier catalog item ID
+            <Input
+              value={supplierCatalogItemId}
+              onChange={(e) => setSupplierCatalogItemId(e.target.value)}
+              placeholder="UUID from supplier catalog"
+            />
+          </label>
           <label className="space-y-1.5 text-sm font-medium">
             Supplier offer ID
             <Input
@@ -540,6 +635,67 @@ export default function AdminProductSourcing() {
             <Metric label="Pricing policy" value={String(economicsDecision.pricingPolicyVersion ?? "—")} />
           </div>
         )}
+
+        <div className="mt-6 rounded-2xl border border-border bg-background p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold">Review & publication gate</h3>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Checks canonical import approval, verified facts, asset rights, GB compliance and commercial economics.
+                This gate is read-only and performs no publication.
+              </p>
+            </div>
+            <Button type="button" onClick={checkPublicationGate} disabled={loading !== null}>
+              {loading === "gate" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+              Check publication gate
+            </Button>
+          </div>
+
+          {publicationGate && (
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={publicationEligible ? "border-emerald-500/30 text-emerald-600" : "border-amber-500/30 text-amber-700"}
+                >
+                  {publicationEligible ? "Ready for final review" : "Blocked"}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {String(publicationGate.reason ?? "publication gate evaluated")}
+                </span>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {publicationChecks.map((check, index) => {
+                  const passed = check.passed === true;
+                  const covers = Array.isArray(check.covers)
+                    ? check.covers.filter((item): item is string => typeof item === "string")
+                    : [];
+                  return (
+                    <div key={String(check.key ?? index)} className="rounded-xl border border-border bg-card p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold">{String(check.key ?? "gate check").replace(/_/g, " ")}</div>
+                        <Badge variant="outline" className={passed ? "border-emerald-500/30 text-emerald-600" : "border-amber-500/30 text-amber-700"}>
+                          {passed ? "PASS" : "BLOCKED"}
+                        </Badge>
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground">{String(check.reason ?? "No reason returned")}</div>
+                      {covers.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {covers.map((item) => <Badge key={item} variant="outline">{item.replace(/_/g, " ")}</Badge>)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                Publication mutation: disabled · Supplier write: disabled · Buyer checkout exposure: disabled
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -549,8 +705,8 @@ export default function AdminProductSourcing() {
             <div>
               <h2 className="font-semibold">AI Product Builder</h2>
               <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-                Prepare the facts-locked merchandising brief only after governed supplier review. This step does not call an AI provider
-                and cannot publish or mutate marketplace products.
+                Prepare a facts-locked merchandising brief, then optionally generate structured merchandising copy through the
+                server-side provider. Generation never publishes or mutates marketplace products.
               </p>
             </div>
           </div>
@@ -568,8 +724,20 @@ export default function AdminProductSourcing() {
             {loading === "ai" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             Prepare AI brief
           </Button>
-          <span className="text-xs text-muted-foreground">
-            Reads verified canonical facts server-side; candidate URL facts are never sent to the AI brief.
+          <Button
+            type="button"
+            variant="outline"
+            onClick={generateAiDraft}
+            disabled={loading !== null || !preparedBrief || !aiProviderAvailable}
+          >
+            {loading === "aiGenerate" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            Generate AI draft
+          </Button>
+          <Badge variant="outline" className={aiProviderAvailable ? "border-emerald-500/30 text-emerald-600" : ""}>
+            {aiProviderAvailable ? "AI provider ready" : "AI provider not configured"}
+          </Badge>
+          <span className="w-full text-xs text-muted-foreground">
+            Reads verified canonical facts server-side; candidate URL facts are never sent to the AI brief or generation provider.
           </span>
         </div>
 
@@ -594,7 +762,7 @@ export default function AdminProductSourcing() {
                 certifications, materials, origin, warranty, compatibility, performance, safety, medical, authenticity or delivery claims remain forbidden.
               </p>
               <div className="mt-3 text-xs font-medium text-muted-foreground">
-                Provider call: disabled · Publication: disabled · Human review: required
+                Provider call: {aiProviderAvailable ? "available after brief" : "disabled"} · Publication: disabled · Human review: required
               </div>
             </div>
           </div>

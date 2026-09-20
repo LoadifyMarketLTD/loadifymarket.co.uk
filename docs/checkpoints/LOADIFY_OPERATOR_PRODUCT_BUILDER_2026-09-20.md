@@ -81,3 +81,23 @@ Verification after this continuation:
 - TypeScript: PASS
 - ESLint: PASS
 - production build: PASS
+
+## Continuation — AI generation boundary + publication gate
+
+- Added read-only Review & Publication Gate using the existing supplier import and supplier economics decisions.
+- Gate covers canonical import approval, verified facts, asset-rights clearance, GB compliance, landed cost, tax, pricing and margin.
+- Gate performs no marketplace mutation, no supplier write and no publication.
+- Added provider-independent server-side AI generation adapter behind `LOADIFY_AI_PRODUCT_BUILDER_ENABLED=false` by default.
+- Provider URL, API key and model are server-only environment variables; no `VITE_` secret is used.
+- Generated merchandising output must use the structured evidence contract and reference only verified canonical fact keys.
+- Output that cites unverified evidence is rejected before it reaches the editor.
+- Added admin Generate AI Draft flow; button remains disabled until a provider is explicitly configured.
+- Canonical-facts migration was recreated using `supabase migration new verified_canonical_product_facts_read`, producing `20260920191509_verified_canonical_product_facts_read.sql`.
+- Supabase current guidance checked: restricted functions should revoke default EXECUTE access; the canonical-facts reader remains SECURITY INVOKER and service-role-only.
+
+Verification:
+- focused Product Sourcing / AI / publication-gate suite: **20/20 PASS**
+- migration health: **PASS**
+- TypeScript: **PASS**
+- ESLint: **PASS**
+- production build: **PASS**

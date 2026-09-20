@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const repo = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("verified canonical product facts boundary", () => {
-  const migration = repo("supabase/migrations/20260920185000_verified_canonical_product_facts_read.sql");
+  const migration = repo("supabase/migrations/20260920191509_verified_canonical_product_facts_read.sql");
   const helper = repo("netlify/functions/_shared/verifiedCanonicalProductFacts.ts");
 
   it("returns only reviewed non-AI canonical facts", () => {
