@@ -8,10 +8,11 @@ describe("admin AI Product Builder brief runtime boundary", () => {
   const endpoint = repo("netlify/functions/admin-ai-product-builder-brief.ts");
   const wrapper = repo("netlify/functions-modern/admin-ai-product-builder-brief.ts");
 
-  it("is admin-authenticated and fail-closed before facts verification", () => {
+  it("is admin-authenticated and reads verified facts from canonical storage", () => {
     expect(endpoint).toContain('authenticateActiveAccount(event, admin, ["admin"])');
-    expect(endpoint).toContain("factsVerified !== true");
-    expect(endpoint).toContain("remains locked until product facts are verified");
+    expect(endpoint).toContain("readVerifiedCanonicalProductFacts");
+    expect(endpoint).toContain("canonicalProductId");
+    expect(endpoint).not.toContain("body.facts");
   });
 
   it("uses the facts-lock contract and performs no provider or marketplace mutation", () => {

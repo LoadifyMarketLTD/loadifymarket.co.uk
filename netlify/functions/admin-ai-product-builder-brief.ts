@@ -3,6 +3,7 @@ import type { Handler } from "@netlify/functions";
 import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { prepareAiProductBuilderBrief } from "./_shared/aiProductBuilderContract";
 import { jsonResponse, optionsResponse } from "./_shared/http";
+import { readVerifiedCanonicalProductFacts } from "./_shared/verifiedCanonicalProductFacts";
 
 const METHODS = "POST, OPTIONS";
 
@@ -34,23 +35,23 @@ export const handler: Handler = async (event) => {
     return jsonResponse(400, { error: "Invalid JSON body" }, METHODS);
   }
 
-  if (!isRecord(body.facts)) {
-    return jsonResponse(400, { error: "Verified product facts are required" }, METHODS);
+  const canonicalProductId = typeof body.canonicalProductId === "string" ? body.canonicalProductId.trim() : "";
+  const verified = await readVerifiedCanonicalProductFacts(admin, canonicalProductId);
+  if (!verified.ok) {
+    const status = verified.kind === "validation" ? 400 : verified.kind === "not_found" ? 409 : 503;
+    return jsonResponse(status, { error: verified.error, factsLocked: true }, METHODS);
   }
-  if (body.factsVerified !== true) {
-    return jsonResponse(409, {
-      error: "AI Product Builder remains locked until product facts are verified",
-      factsLocked: true,
-    }, METHODS);
-  }
+
   try {
     const brief = prepareAiProductBuilderBrief({
-      facts: body.facts,
+      facts: verified.facts,
       factsVerified: true,
     });
 
     return jsonResponse(200, {
       ok: true,
+      canonicalProductId: verified.canonicalProductId,
+      verifiedFactCount: verified.factCount,
       brief,
       generation: {
         performed: false,

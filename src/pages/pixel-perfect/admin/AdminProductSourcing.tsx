@@ -218,12 +218,12 @@ export default function AdminProductSourcing() {
   async function prepareAiBrief() {
     setError(null);
     setAiBrief(null);
-    if (!previewFacts) {
-      setError("Inspect a product source before preparing an AI merchandising brief.");
+    if (!canonicalProductId.trim()) {
+      setError("Enter the canonical product ID before preparing an AI merchandising brief.");
       return;
     }
     if (!review || acceptedCount < 1 || quarantinedCount > 0) {
-      setError("AI Product Builder is locked until governed supplier review has accepted facts with no quarantined records.");
+      setError("AI Product Builder is locked until governed supplier review has accepted records with no quarantined records.");
       return;
     }
 
@@ -232,7 +232,7 @@ export default function AdminProductSourcing() {
       const response = await authorizedFetch("/.netlify/functions/admin-ai-product-builder-brief", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ facts: previewFacts, factsVerified: true }),
+        body: JSON.stringify({ canonicalProductId: canonicalProductId.trim() }),
       });
       const body = (await response.json()) as JsonRecord;
       if (!response.ok) throw new Error(String(body.error ?? "Unable to prepare AI Product Builder brief."));
@@ -537,13 +537,13 @@ export default function AdminProductSourcing() {
           <Button
             type="button"
             onClick={prepareAiBrief}
-            disabled={loading !== null || !previewFacts || !review || acceptedCount < 1 || quarantinedCount > 0}
+            disabled={loading !== null || !canonicalProductId.trim() || !review || acceptedCount < 1 || quarantinedCount > 0}
           >
             {loading === "ai" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
             Prepare AI brief
           </Button>
           <span className="text-xs text-muted-foreground">
-            Requires inspected source + accepted governed review + zero quarantined records.
+            Reads verified canonical facts server-side; candidate URL facts are never sent to the AI brief.
           </span>
         </div>
 
