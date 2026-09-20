@@ -157,3 +157,21 @@ Build closure for governed buyer catalog publication:
 - build security tests: 9/9 PASS
 - Vite: 2445 modules transformed, built in 30.78s
 - only existing large heic2any chunk warning remains.
+
+## Continuation — supplier checkout preparation
+
+- Added canonical Loadify Supplier-Fulfilled checkout preparation without reusing Marketplace Seller checkout.
+- Existing customer order truth now supports Loadify-sale identity without fabricating a marketplace seller.
+- Supplier checkout preparation binds order/order item to canonical product, supplier offer, supplier catalog item, published supplier projection and pricing snapshot.
+- Legal seller snapshot: XDrive Logistics Ltd trading as Loadify Market.
+- Merchant of record / invoice issuer / payment recipient: Loadify Market.
+- Server rechecks buyer auth, published projection, supplier checkout guard, commercial economics and supplier stock reservation.
+- Reservation and canonical awaiting-payment order creation are atomic inside the service-role-only RPC.
+- No Stripe session, payment capture or supplier order submission occurs in this stage.
+- Marketplace Seller checkout remains unchanged and isolated.
+
+Verification:
+- migration health: PASS (189 canonical migrations)
+- focused checkout/catalog/projection suite: 12/12 PASS
+- TypeScript: PASS
+- ESLint: PASS
