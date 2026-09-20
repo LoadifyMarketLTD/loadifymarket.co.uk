@@ -18,6 +18,9 @@ describe("admin product sourcing operator surface", () => {
   it("uses the existing governed Direct Supplier review and Phase F plan endpoints", () => {
     expect(page).toContain("/.netlify/functions/admin-direct-supplier-staging-review");
     expect(page).toContain("/.netlify/functions/admin-direct-supplier-phase-f-import-plan");
+    expect(page).toContain("Supplier catalog item ID");
+    expect(page).toContain("Canonical product ID");
+    expect(page).toContain("Advanced mapping JSON");
     expect(page).not.toContain("admin-direct-supplier-phase-f-import-execute");
   });
 

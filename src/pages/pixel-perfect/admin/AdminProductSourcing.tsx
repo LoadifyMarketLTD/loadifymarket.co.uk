@@ -18,6 +18,12 @@ function safeCount(value: unknown): number {
   return Array.isArray(value) ? value.length : 0;
 }
 
+function safeRecordArray(value: unknown): JsonRecord[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is JsonRecord => asRecord(item) !== null)
+    : [];
+}
+
 export default function AdminProductSourcing() {
   const [productUrl, setProductUrl] = useState("");
   const [sourcePreview, setSourcePreview] = useState<JsonRecord | null>(null);
@@ -35,6 +41,7 @@ export default function AdminProductSourcing() {
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
   const foundation = asRecord(review?.foundationBinding);
+  const reviewItems = safeRecordArray(reviewPackage?.items);
   const acceptedCount = Number(reviewPackage?.acceptedCount ?? 0);
   const quarantinedCount = Number(reviewPackage?.quarantinedCount ?? 0);
   const stage = String(governance?.stage ?? "not loaded");
@@ -50,6 +57,35 @@ export default function AdminProductSourcing() {
     () => Boolean(review && supplierKey.trim() && sourceBatchDigest.trim()),
     [review, supplierKey, sourceBatchDigest],
   );
+
+  const mappingRows = useMemo(() => {
+    try {
+      const parsed = JSON.parse(mappingsJson) as unknown;
+      return Array.isArray(parsed) ? parsed.filter((item): item is JsonRecord => asRecord(item) !== null) : [];
+    } catch {
+      return [];
+    }
+  }, [mappingsJson]);
+
+  function updateMappingField(sourceRecordDigest: string, field: "supplierCatalogItemId" | "canonicalProductId", value: string) {
+    const normalizedDigest = sourceRecordDigest.trim().toLowerCase();
+    const next = mappingRows.filter((row) => String(row.sourceRecordDigest ?? "").trim().toLowerCase() !== normalizedDigest);
+    const previous = mappingRows.find((row) => String(row.sourceRecordDigest ?? "").trim().toLowerCase() === normalizedDigest);
+    const updated: JsonRecord = {
+      sourceRecordDigest: normalizedDigest,
+      supplierCatalogItemId: String(previous?.supplierCatalogItemId ?? ""),
+      canonicalProductId: String(previous?.canonicalProductId ?? ""),
+      [field]: value,
+    };
+    next.push(updated);
+    setMappingsJson(JSON.stringify(next, null, 2));
+  }
+
+  function mappingValue(sourceRecordDigest: string, field: "supplierCatalogItemId" | "canonicalProductId") {
+    const normalizedDigest = sourceRecordDigest.trim().toLowerCase();
+    const row = mappingRows.find((item) => String(item.sourceRecordDigest ?? "").trim().toLowerCase() === normalizedDigest);
+    return String(row?.[field] ?? "");
+  }
 
   async function previewSourceUrl() {
     setError(null);
@@ -353,17 +389,60 @@ export default function AdminProductSourcing() {
             {planReady ? `Plan ready · ${plannedItems} item(s)` : "Fail-closed"}
           </Badge>
         </div>
-        <label className="mt-5 block space-y-1.5 text-sm font-medium">
-          Catalog mappings JSON
+        {reviewItems.length > 0 ? (
+          <div className="mt-5 space-y-3">
+            {reviewItems.map((item, index) => {
+              const digest = String(item.sourceRecordDigest ?? "");
+              const productRef = String(item.externalProductRef ?? "unknown product");
+              const variantRef = String(item.externalVariantRef ?? "unknown variant");
+              return (
+                <div key={digest || index} className="rounded-xl border border-border bg-background p-4">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-sm font-semibold">{productRef}</div>
+                      <div className="text-xs text-muted-foreground">Variant: {variantRef}</div>
+                    </div>
+                    <code className="max-w-full truncate text-[10px] text-muted-foreground">{digest}</code>
+                  </div>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="space-y-1.5 text-xs font-medium">
+                      Supplier catalog item ID
+                      <Input
+                        value={mappingValue(digest, "supplierCatalogItemId")}
+                        onChange={(e) => updateMappingField(digest, "supplierCatalogItemId", e.target.value)}
+                        placeholder="Required UUID"
+                      />
+                    </label>
+                    <label className="space-y-1.5 text-xs font-medium">
+                      Canonical product ID
+                      <Input
+                        value={mappingValue(digest, "canonicalProductId")}
+                        onChange={(e) => updateMappingField(digest, "canonicalProductId", e.target.value)}
+                        placeholder="Canonical UUID"
+                      />
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-5 rounded-xl border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
+            Load a governed supplier review to map accepted records.
+          </div>
+        )}
+
+        <details className="mt-4 rounded-xl border border-border bg-background p-4">
+          <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">Advanced mapping JSON</summary>
           <textarea
             value={mappingsJson}
             onChange={(e) => setMappingsJson(e.target.value)}
             rows={8}
             spellCheck={false}
-            className="w-full rounded-xl border border-input bg-background px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
+            className="mt-3 w-full rounded-xl border border-input bg-card px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
             placeholder='[{"sourceRecordDigest":"...","supplierCatalogItemId":"...","canonicalProductId":"..."}]'
           />
-        </label>
+        </details>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button type="button" onClick={buildImportPlan} disabled={!canPlan || loading !== null}>
             {loading === "plan" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
