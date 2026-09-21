@@ -91,6 +91,10 @@ export default function AdminProductSourcing() {
   const [transportAmountUnit, setTransportAmountUnit] = useState<"minor" | "major">("minor");
   const [transportXmlRecordElement, setTransportXmlRecordElement] = useState("product");
   const [transportNormalization, setTransportNormalization] = useState<JsonRecord | null>(null);
+  const [acquisitionEnabled, setAcquisitionEnabled] = useState(false);
+  const [acquisitionMode, setAcquisitionMode] = useState<"manual" | "scheduled">("manual");
+  const [acquisitionRefreshMinutes, setAcquisitionRefreshMinutes] = useState("60");
+  const [acquisitionResult, setAcquisitionResult] = useState<JsonRecord | null>(null);
   const [onboardingReadiness, setOnboardingReadiness] = useState<JsonRecord | null>(null);
   const [qualificationEvidenceType, setQualificationEvidenceType] = useState("identity");
   const [qualificationSourceRef, setQualificationSourceRef] = useState("");
@@ -107,7 +111,7 @@ export default function AdminProductSourcing() {
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "transportNormalize" | "onboardingReadiness" | "qualification" | "sla" | "compliance" | "lifecycle" | "capability" | "adapter" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "transportNormalize" | "acquisitionControl" | "acquireNow" | "onboardingReadiness" | "qualification" | "sla" | "compliance" | "lifecycle" | "capability" | "adapter" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -144,6 +148,8 @@ export default function AdminProductSourcing() {
   const normalizationEnvelope = asRecord(transportNormalization?.normalization);
   const normalizationBatch = asRecord(normalizationEnvelope?.batch);
   const normalizationVariants = safeRecordArray(normalizationBatch?.variants);
+  const acquisitionRun = asRecord(acquisitionResult?.acquisition);
+  const acquisitionControl = asRecord(acquisitionResult?.control);
   const readinessSnapshot = asRecord(onboardingReadiness?.readiness);
   const resolvedSupplierId = String(readinessSnapshot?.supplierId ?? onboardingCandidate?.supplierId ?? "");
   const readinessBlockers = Array.isArray(readinessSnapshot?.blockers)
@@ -380,6 +386,75 @@ export default function AdminProductSourcing() {
       setTransportNormalization(body);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to normalize supplier source.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function saveAcquisitionControl() {
+    setError(null);
+    setAcquisitionResult(null);
+    if (!resolvedSupplierId) {
+      setError("Resolve the Supplier Foundation ID before configuring acquisition.");
+      return;
+    }
+    if (acquisitionEnabled && !/^env:[A-Z][A-Z0-9_]{2,127}$/.test(supplierOnboarding.configRef.trim())) {
+      setError("Enabled acquisition requires configRef in env:VARIABLE_NAME format.");
+      return;
+    }
+    const refreshMinutes = Number(acquisitionRefreshMinutes);
+    if (acquisitionMode === "scheduled" && (!Number.isInteger(refreshMinutes) || refreshMinutes < 15 || refreshMinutes > 10080)) {
+      setError("Scheduled refresh must be between 15 and 10080 minutes.");
+      return;
+    }
+
+    setLoading("acquisitionControl");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-acquisition-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplierId: resolvedSupplierId,
+          enabled: acquisitionEnabled,
+          mode: acquisitionMode,
+          refreshMinutes: acquisitionMode === "scheduled" ? refreshMinutes : undefined,
+          configRef: supplierOnboarding.configRef.trim(),
+        }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to update supplier acquisition control."));
+      setAcquisitionResult(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update supplier acquisition control.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function acquireSupplierNow() {
+    setError(null);
+    setAcquisitionResult(null);
+    const key = supplierOnboarding.supplierKey.trim().toLowerCase();
+    if (!key) {
+      setError("Supplier key is required before acquisition.");
+      return;
+    }
+
+    setLoading("acquireNow");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-direct-supplier-acquire", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ supplierKey: key }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) {
+        const blockers = Array.isArray(body.blockers) ? body.blockers.join(" · ") : "";
+        throw new Error([String(body.error ?? "Supplier acquisition failed."), blockers].filter(Boolean).join(" — "));
+      }
+      setAcquisitionResult(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Supplier acquisition failed.");
     } finally {
       setLoading(null);
     }
@@ -1084,7 +1159,7 @@ export default function AdminProductSourcing() {
           </label>
           <label className="space-y-1.5 text-sm font-medium">
             Server config reference
-            <Input value={supplierOnboarding.configRef} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, configRef: e.target.value }))} placeholder="supplier-config/acme-v1" />
+            <Input value={supplierOnboarding.configRef} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, configRef: e.target.value }))} placeholder="env:SUPPLIER_ACQUISITION_ACME_V1" />
           </label>
 
           <label className="space-y-1.5 text-sm font-medium md:col-span-2">
@@ -1233,6 +1308,91 @@ export default function AdminProductSourcing() {
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="font-semibold">Remote acquisition runtime</h2>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-muted-foreground">
+              Enable remote acquisition only after onboarding/Foundation gates are approved. Credentials never enter this form:
+              configRef points to a Netlify environment secret containing the supplier HTTP/API/SFTP configuration.
+            </p>
+          </div>
+          <Badge variant="outline">Fail-closed · staging only</Badge>
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="text-sm font-semibold">Acquisition control</div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={acquisitionEnabled}
+                  onChange={(e) => setAcquisitionEnabled(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                Acquisition enabled
+              </label>
+              <select
+                value={acquisitionMode}
+                onChange={(e) => setAcquisitionMode(e.target.value as "manual" | "scheduled")}
+                className="h-10 rounded-md border border-input bg-card px-3 text-sm"
+              >
+                <option value="manual">Manual only</option>
+                <option value="scheduled">Scheduled</option>
+              </select>
+              <Input
+                value={supplierOnboarding.configRef}
+                onChange={(e) => setSupplierOnboarding((v) => ({ ...v, configRef: e.target.value }))}
+                placeholder="env:SUPPLIER_ACQUISITION_ACME_V1"
+              />
+              <Input
+                type="number"
+                min="15"
+                max="10080"
+                value={acquisitionRefreshMinutes}
+                onChange={(e) => setAcquisitionRefreshMinutes(e.target.value)}
+                disabled={acquisitionMode !== "scheduled"}
+                placeholder="Refresh minutes"
+              />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={() => void saveAcquisitionControl()} disabled={loading !== null || !resolvedSupplierId}>
+                {loading === "acquisitionControl" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                Save acquisition control
+              </Button>
+              <Button type="button" onClick={() => void acquireSupplierNow()} disabled={loading !== null || !supplierOnboarding.supplierKey.trim()}>
+                {loading === "acquireNow" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                Acquire now
+              </Button>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-muted-foreground">
+              Scheduled mode is evaluated every 15 minutes but only suppliers explicitly enabled here can run.
+              Remote fetches are limited, redirect-free, public-network only and persist only to governed staging/quarantine.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="text-sm font-semibold">Latest acquisition action</div>
+            {!acquisitionResult ? (
+              <p className="mt-2 text-sm text-muted-foreground">No acquisition action in this session.</p>
+            ) : (
+              <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                <Metric label="Control enabled" value={String(acquisitionControl?.acquisitionEnabled ?? "—")} />
+                <Metric label="Mode" value={String(acquisitionControl?.acquisitionMode ?? "—")} />
+                <Metric label="Run ID" value={String(acquisitionRun?.runId ?? "—")} />
+                <Metric label="Batch ID" value={String(acquisitionRun?.batchId ?? "—")} />
+                <Metric label="Accepted" value={String(acquisitionRun?.acceptedCount ?? "—")} />
+                <Metric label="Quarantined" value={String(acquisitionRun?.quarantinedCount ?? "—")} />
+              </div>
+            )}
+            <div className="mt-3 text-xs text-muted-foreground">
+              Acquisition never publishes a marketplace listing, promotes capabilities, creates supplier orders or performs payment.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h2 className="font-semibold">Qualification → capability verification → catalog handoff</h2>
@@ -1372,7 +1532,7 @@ export default function AdminProductSourcing() {
                 <option value="verification">Verification</option>
                 <option value="active">Active (evidence required)</option>
               </select>
-              <Input value={supplierOnboarding.configRef} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, configRef: e.target.value }))} placeholder="Server config reference" />
+              <Input value={supplierOnboarding.configRef} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, configRef: e.target.value }))} placeholder="env:SUPPLIER_ACQUISITION_ACME_V1" />
             </div>
             <Button type="button" variant="outline" className="mt-3" onClick={() => void registerDirectSupplierAdapter()} disabled={loading !== null || !resolvedSupplierId}>
               {loading === "adapter" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

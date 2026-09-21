@@ -44,6 +44,13 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("Apply lifecycle decision");
     expect(page).toContain("Verify supplier capability");
     expect(page).toContain("Register / verify adapter");
+    expect(page).toContain("Remote acquisition runtime");
+    expect(page).toContain("/.netlify/functions/admin-supplier-acquisition-control");
+    expect(page).toContain("/.netlify/functions/admin-direct-supplier-acquire");
+    expect(page).toContain("Save acquisition control");
+    expect(page).toContain("Acquire now");
+    expect(page).toContain("env:SUPPLIER_ACQUISITION_ACME_V1");
+    expect(page).toContain("Acquisition never publishes a marketplace listing");
   });
 
   it("uses the existing governed Direct Supplier review and Phase F plan endpoints", () => {
