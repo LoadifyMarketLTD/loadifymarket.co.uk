@@ -15,6 +15,13 @@ describe("admin product sourcing operator surface", () => {
     expect(shell).toContain('to: "/admin/product-sourcing"');
     expect(page).not.toContain("/seller/products/new");
   });
+  it("surfaces the independent Supplier Hub source policy without coupling the page to named providers", () => {
+    expect(page).toContain("Loadify Supplier Hub · independent supply channels");
+    expect(page).toContain("/.netlify/functions/admin-supplier-source-policy");
+    expect(page).toContain("Discovery can never publish directly");
+    expect(page).toContain("Loadify assumes no physical warehouse");
+  });
+
   it("uses the existing governed Direct Supplier review and Phase F plan endpoints", () => {
     expect(page).toContain("/.netlify/functions/admin-direct-supplier-staging-review");
     expect(page).toContain("/.netlify/functions/admin-direct-supplier-phase-f-import-plan");

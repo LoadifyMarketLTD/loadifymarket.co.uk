@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { ArrowRight, Database, Loader2, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,8 @@ function safeRecordArray(value: unknown): JsonRecord[] {
 export default function AdminProductSourcing() {
   const [productUrl, setProductUrl] = useState("");
   const [sourcePreview, setSourcePreview] = useState<JsonRecord | null>(null);
+  const [discoveryNote, setDiscoveryNote] = useState("");
+  const [discoveryCandidate, setDiscoveryCandidate] = useState<JsonRecord | null>(null);
   const [supplierKey, setSupplierKey] = useState("");
   const [sourceBatchDigest, setSourceBatchDigest] = useState("");
   const [mappingsJson, setMappingsJson] = useState("[]");
@@ -55,10 +57,11 @@ export default function AdminProductSourcing() {
   const [fallbackAllowed, setFallbackAllowed] = useState(true);
   const [offerSelection, setOfferSelection] = useState<JsonRecord | null>(null);
   const [offerBinding, setOfferBinding] = useState<JsonRecord | null>(null);
+  const [sourcePolicies, setSourcePolicies] = useState<JsonRecord[]>([]);
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -68,6 +71,22 @@ export default function AdminProductSourcing() {
   const quarantinedCount = Number(reviewPackage?.quarantinedCount ?? 0);
   const stage = String(governance?.stage ?? "not loaded");
   const supplierFound = foundation?.supplierFound === true;
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await authorizedFetch("/.netlify/functions/admin-supplier-source-policy");
+        if (!response.ok) return;
+        const body = (await response.json()) as JsonRecord;
+        const channels = safeRecordArray(body.channels);
+        if (!cancelled) setSourcePolicies(channels);
+      } catch {
+        // Source policy visibility is informational; operational flows remain independently gated.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const preview = asRecord(sourcePreview?.preview);
   const previewFacts = asRecord(preview?.facts);
@@ -128,6 +147,31 @@ export default function AdminProductSourcing() {
       setSourcePreview(body);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to inspect product URL.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function saveDiscoveryCandidate() {
+    setError(null);
+    setDiscoveryCandidate(null);
+    if (!productUrl.trim() || !preview) {
+      setError("Inspect a product URL before saving a discovery candidate.");
+      return;
+    }
+
+    setLoading("discoverySave");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-product-discovery-candidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: productUrl.trim(), note: discoveryNote.trim() }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to save discovery candidate."));
+      setDiscoveryCandidate(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save discovery candidate.");
     } finally {
       setLoading(null);
     }
@@ -553,6 +597,39 @@ export default function AdminProductSourcing() {
         </div>
       )}
 
+      {sourcePolicies.length > 0 && (
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 className="font-semibold">Loadify Supplier Hub · independent supply channels</h2>
+              <p className="mt-1 max-w-4xl text-sm leading-6 text-muted-foreground">
+                Supplier identity, commercial authority, rights/compliance, economics and publication remain separate gates.
+                Discovery can never publish directly, and Loadify assumes no physical warehouse.
+              </p>
+            </div>
+            <Badge variant="outline">Provider-neutral · Fail-closed</Badge>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            {sourcePolicies.map((policy) => {
+              const transports = Array.isArray(policy.allowedTransports)
+                ? policy.allowedTransports.filter((item): item is string => typeof item === "string")
+                : [];
+              return (
+                <div key={String(policy.channel)} className="rounded-xl border border-border bg-background p-4">
+                  <div className="text-sm font-semibold">{String(policy.label ?? policy.channel)}</div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {transports.slice(0, 6).map((transport) => (
+                      <Badge key={transport} variant="outline" className="text-[10px]">{transport.replace(/_/g, " ")}</Badge>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-muted-foreground">{String(policy.notes ?? "")}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="flex items-start gap-3">
@@ -585,27 +662,54 @@ export default function AdminProductSourcing() {
             </p>
 
             {preview && (
-              <div className="mt-4 grid gap-4 rounded-xl border border-primary/15 bg-primary/[0.03] p-4 sm:grid-cols-[96px_1fr]">
-                <div className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-border bg-card text-center">
-                  <Database className="h-7 w-7 text-muted-foreground" />
-                  <span className="mt-2 px-2 text-[10px] leading-4 text-muted-foreground">
-                    {previewImages.length ? `${previewImages.length} source image(s)` : "No source images"}
-                  </span>
+              <div className="mt-4 space-y-4 rounded-xl border border-primary/15 bg-primary/[0.03] p-4">
+                <div className="grid gap-4 sm:grid-cols-[96px_1fr]">
+                  <div className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-border bg-card text-center">
+                    <Database className="h-7 w-7 text-muted-foreground" />
+                    <span className="mt-2 px-2 text-[10px] leading-4 text-muted-foreground">
+                      {previewImages.length ? `${previewImages.length} source image(s)` : "No source images"}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="border-amber-500/30 text-amber-700">Candidate only</Badge>
+                      <Badge variant="outline">{String(preview.sourceType ?? "source preview")}</Badge>
+                    </div>
+                    <h3 className="mt-2 truncate font-semibold">{String(previewFacts?.title ?? "Untitled product")}</h3>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {String(previewFacts?.description ?? "No description extracted from verified source data.")}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {previewFacts?.brand ? <span>Brand: {String(previewFacts.brand)}</span> : null}
+                      {previewFacts?.price ? <span>Source price: {String(previewFacts.currency ?? "")} {String(previewFacts.price)}</span> : null}
+                      <span>Rights: unverified</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="border-amber-500/30 text-amber-700">Candidate only</Badge>
-                    <Badge variant="outline">{String(preview.sourceType ?? "source preview")}</Badge>
+
+                <div className="border-t border-border pt-4">
+                  <label className="block space-y-1.5 text-xs font-medium">
+                    Discovery note
+                    <Input
+                      value={discoveryNote}
+                      onChange={(e) => setDiscoveryNote(e.target.value)}
+                      placeholder="Why this product is worth sourcing"
+                    />
+                  </label>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <Button type="button" variant="outline" onClick={saveDiscoveryCandidate} disabled={loading !== null}>
+                      {loading === "discoverySave" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                      Save discovery candidate
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      Discovery is non-commercial until an authorised supplier offer passes the later gates.
+                    </span>
                   </div>
-                  <h3 className="mt-2 truncate font-semibold">{String(previewFacts?.title ?? "Untitled product")}</h3>
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {String(previewFacts?.description ?? "No description extracted from verified source data.")}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    {previewFacts?.brand ? <span>Brand: {String(previewFacts.brand)}</span> : null}
-                    {previewFacts?.price ? <span>Source price: {String(previewFacts.currency ?? "")} {String(previewFacts.price)}</span> : null}
-                    <span>Rights: unverified</span>
-                  </div>
+                  {discoveryCandidate && (
+                    <div className="mt-3 text-xs font-medium text-emerald-700">
+                      Discovery candidate saved. No listing, supplier offer, checkout or provider order was created.
+                    </div>
+                  )}
                 </div>
               </div>
             )}

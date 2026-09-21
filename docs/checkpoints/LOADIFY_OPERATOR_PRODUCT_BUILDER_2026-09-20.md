@@ -305,3 +305,15 @@ Production:
 - The operator surface remains provider-neutral and contains no Avasam/Syncee/AppScenic-specific branching.
 - Focused UI/runtime verification: 19/19 PASS; TypeScript PASS; focused ESLint PASS.
 - Production build after the UI addition: PASS; 2,456 modules transformed; built in 32.61s.
+
+## Continuation — independent source channels + discovery candidate boundary
+
+- Added an explicit Supplier Source Policy with five channels: Direct Supplier Network, Supplier Aggregators, Wholesale & Catalog Feeds, Product Discovery and Multi-Supplier Routing.
+- Direct Supplier and wholesale channels allow JSON API/feed, CSV, XML, SFTP and manual catalog transports without assuming that a supplier must expose an API.
+- Product Discovery is structurally non-commercial: it may create discovery candidates only and cannot create a supplier offer or become buyer commerce directly.
+- Multi-Supplier Routing is explicitly orchestration over already-approved interchangeable offers, not an ingestion source.
+- Added an admin-only read-only source policy endpoint and surfaced the five channels in Admin Product Sourcing.
+- Wired the existing URL preview into a governed Save discovery candidate action with an operator note. Saving a candidate creates no supplier, canonical product, marketplace listing, checkout eligibility or provider activation.
+- Added private product_discovery_candidates persistence and service-role-only save RPC.
+- Product discovery migration 20260921101238 was applied successfully to production Supabase.
+- Focused source/discovery tests: 17/17 PASS; TypeScript PASS; ESLint PASS; canonical migration health PASS (195 migrations).
