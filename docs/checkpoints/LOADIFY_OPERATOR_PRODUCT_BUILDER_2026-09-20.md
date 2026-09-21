@@ -251,3 +251,20 @@ Verification:
 - build security suite: 9/9 PASS
 - production build: PASS, 2456 modules transformed, built in 34.47s
 - existing heic2any large-chunk warning remains unchanged.
+
+## Continuation — full regression baseline cleanup
+
+- Investigated the only two failures from the full 1,289-test suite. Both were stale source-contract assertions, not runtime regressions.
+- Delivery-address contract now follows the canonical mobile profile route /profile/addresses; the actual application route and current workspace contract already agreed on this path.
+- Suspended-seller contract now checks the live seller-status path used by Mobile Profile and RequireSeller rather than an obsolete RequireSellerAny source string. Buyer access remains preserved while selling is restricted.
+- During full lint, found pre-existing no-explicit-any debt in netlify/functions/return-action.ts from commit 65465c84; replaced those broad any annotations with SupabaseClient, ReturnRecord and AutomaticRefundResult types without changing refund behavior.
+
+Verification:
+- focused stale-contract tests: PASS
+- full Vitest suite: 207/207 files PASS; 1,289/1,289 tests PASS
+- full ESLint: PASS
+- TypeScript: PASS
+- migration health: PASS (192 canonical migrations)
+- build security tests: 9/9 PASS
+- production build: PASS, 2,456 modules transformed, built in 29.90s
+- existing heic2any large-chunk warning remains unchanged.

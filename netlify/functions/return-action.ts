@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { jsonResponse, optionsResponse } from './_shared/http';
@@ -15,6 +15,25 @@ interface RequestBody {
   action?: ReturnAction;
 }
 
+interface ReturnRecord {
+  id: string;
+  orderId: string;
+  buyerId: string;
+  sellerId: string;
+  status: string;
+  buyerTrackingNumber: string | null;
+}
+
+interface AutomaticRefundResult {
+  success: boolean;
+  alreadyRefunded?: boolean;
+  pending?: boolean;
+  refundId?: string;
+  amount?: number;
+  status?: string | null;
+  warning?: string | null;
+}
+
 const transition: Record<ReturnAction, { from: string; to: string }> = {
   approve: { from: 'requested', to: 'approved' },
   reject: { from: 'requested', to: 'rejected' },
@@ -22,8 +41,8 @@ const transition: Record<ReturnAction, { from: string; to: string }> = {
 };
 
 async function processAutomaticRefund(
-  admin: any,
-  current: { id: string; orderId: string; buyerId: string; sellerId: string },
+  admin: SupabaseClient,
+  current: Pick<ReturnRecord, 'id' | 'orderId' | 'buyerId' | 'sellerId'>,
   actorId: string,
 ) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -216,7 +235,7 @@ export const handler: Handler = async (event) => {
     .from('returns')
     .select('id, orderId, buyerId, sellerId, status, buyerTrackingNumber')
     .eq('id', returnId)
-    .maybeSingle<{ id: string; orderId: string; buyerId: string; sellerId: string; status: string; buyerTrackingNumber: string | null }>();
+    .maybeSingle<ReturnRecord>();
   if (readError || !current) return jsonResponse(404, { error: 'Return request not found' }, METHODS);
   if (current.sellerId !== auth.actor.id) return jsonResponse(403, { error: 'Only the order seller can perform this action' }, METHODS);
 
@@ -230,7 +249,7 @@ export const handler: Handler = async (event) => {
     return jsonResponse(409, { error: 'Buyer return tracking is required before confirming receipt' }, METHODS);
   }
 
-  let updated: any = current;
+  let updated: ReturnRecord = current;
   if (!retryReceivedRefund) {
     const { data: transitioned, error: updateError } = await admin
       .from('returns')
@@ -245,7 +264,7 @@ export const handler: Handler = async (event) => {
     updated = transitioned;
   }
 
-  let automaticRefund: any = null;
+  let automaticRefund: AutomaticRefundResult | null = null;
   if (action === 'received') {
     try {
       automaticRefund = await processAutomaticRefund(admin, current, auth.actor.id);

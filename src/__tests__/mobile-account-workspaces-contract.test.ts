@@ -70,10 +70,12 @@ describe('mobile account workspaces contract', () => {
   });
 
   it('blocks suspended sellers from catalogue and store management while retaining buyer access', () => {
-    const anySellerGuard = read('src/components/auth/RequireSellerAny.tsx');
+    const profile = read('src/pages/MobileProfilePage.tsx');
+    const sellerGuard = read('src/components/auth/RequireSeller.tsx');
     const roles = read('src/lib/roleUtils.ts');
-    expect(anySellerGuard).toContain("hasSellerAccess(user) && user.sellerStatus === 'suspended'");
-    expect(anySellerGuard).toContain('Buyer access remains available.');
+    expect(profile).toContain("profile?.sellerStatus === 'suspended'");
+    expect(profile).toContain('Your Buying workspace remains available while seller access is restricted.');
+    expect(sellerGuard).toContain("if (fetchState === 'suspended')");
     expect(roles).toContain("return user?.role === 'buyer' || user?.role === 'seller'");
   });
 

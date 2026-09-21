@@ -17,7 +17,7 @@ describe("marketplace delivery address contract", () => {
   it("exposes delivery-address management in the native profile", () => {
     const profile = read("src/pages/MobileProfilePage.tsx");
     expect(profile).toContain("Delivery addresses");
-    expect(profile).toContain("/buyer/addresses");
+    expect(profile).toContain("/profile/addresses");
   });
 
   it("shows the immutable order delivery address to sellers on web and mobile", () => {
