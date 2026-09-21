@@ -5,6 +5,7 @@ export interface SupplierOfferSelectionCandidate {
   supplierId: string;
   supplierKey: string;
   canonicalProductId: string;
+  externalVariantRef: string;
   territory: string;
   currency: string;
   requestedQuantity: number;

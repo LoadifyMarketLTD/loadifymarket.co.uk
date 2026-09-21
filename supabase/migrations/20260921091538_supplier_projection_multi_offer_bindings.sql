@@ -349,3 +349,191 @@ COMMENT ON TABLE private.supplier_projection_offer_bindings IS
 
 COMMENT ON FUNCTION public.server_supplier_projection_offer_candidates_v1(uuid,text) IS
 'Service-role-only read boundary for approved interchangeable supplier offers attached to a published canonical projection. Eligibility and ranking remain separate fail-closed runtime decisions.';
+
+
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS "supplierExternalVariantRefSnapshot" text;
+
+CREATE OR REPLACE FUNCTION public.server_prepare_supplier_checkout_selected_offer_v1(
+  p_buyer_id uuid,
+  p_projection_id uuid,
+  p_supplier_offer_id uuid,
+  p_quantity integer,
+  p_shipping_address jsonb,
+  p_billing_address jsonb,
+  p_reservation_key text,
+  p_orchestration_idempotency_key text,
+  p_correlation_id uuid
+) RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path TO ''
+AS $$
+DECLARE
+  v_projection private.supplier_marketplace_projections%ROWTYPE;
+  v_binding private.supplier_projection_offer_bindings%ROWTYPE;
+  v_offer private.supplier_offers%ROWTYPE;
+  v_catalog_item private.supplier_catalog_items%ROWTYPE;
+  v_price private.supplier_pricing_snapshots%ROWTYPE;
+  v_buyer public.users%ROWTYPE;
+  v_order_id uuid;
+  v_order_item_id uuid;
+  v_reservation jsonb;
+  v_subtotal numeric(12,2);
+  v_tax numeric(12,2);
+  v_shipping numeric(12,2);
+  v_total numeric(12,2);
+BEGIN
+  IF p_buyer_id IS NULL OR p_projection_id IS NULL OR p_supplier_offer_id IS NULL OR p_correlation_id IS NULL THEN
+    RAISE EXCEPTION 'buyer, projection, selected offer and correlation identity are required';
+  END IF;
+  IF p_quantity IS NULL OR p_quantity < 1 OR p_quantity > 100 THEN
+    RAISE EXCEPTION 'supplier checkout quantity must be between 1 and 100';
+  END IF;
+  IF COALESCE(BTRIM(p_reservation_key),'')='' OR COALESCE(BTRIM(p_orchestration_idempotency_key),'')='' THEN
+    RAISE EXCEPTION 'checkout idempotency keys are required';
+  END IF;
+  IF jsonb_typeof(COALESCE(p_shipping_address,'{}'::jsonb))<>'object'
+     OR jsonb_typeof(COALESCE(p_billing_address,'{}'::jsonb))<>'object' THEN
+    RAISE EXCEPTION 'checkout addresses must be JSON objects';
+  END IF;
+
+  SELECT * INTO v_buyer
+  FROM public.users
+  WHERE id=p_buyer_id AND role='buyer' AND "isActive"=true;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'active buyer identity is required';
+  END IF;
+
+  SELECT * INTO v_projection
+  FROM private.supplier_marketplace_projections
+  WHERE id=p_projection_id
+    AND status='published'
+    AND commercial_mode='loadify_supplier_fulfilled'
+    AND territory='GB'
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'published supplier projection is required';
+  END IF;
+
+  SELECT * INTO v_binding
+  FROM private.supplier_projection_offer_bindings
+  WHERE projection_id=v_projection.id
+    AND supplier_offer_id=p_supplier_offer_id
+    AND status='approved'
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'selected supplier offer is not approved for this projection';
+  END IF;
+
+  SELECT * INTO v_offer
+  FROM private.supplier_offers
+  WHERE id=p_supplier_offer_id
+    AND canonical_product_id=v_projection.canonical_product_id
+    AND territory=v_projection.territory
+    AND status='approved';
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'selected supplier offer is not interchangeable for this projection';
+  END IF;
+
+  SELECT * INTO v_catalog_item
+  FROM private.supplier_catalog_items
+  WHERE id=v_offer.supplier_catalog_item_id
+    AND supplier_id=v_offer.supplier_id;
+  IF NOT FOUND OR NULLIF(BTRIM(COALESCE(v_catalog_item.external_variant_ref,'')),'') IS NULL THEN
+    RAISE EXCEPTION 'selected supplier offer variant identity is unavailable';
+  END IF;
+
+  SELECT * INTO v_price
+  FROM private.supplier_pricing_snapshots
+  WHERE id=(
+    SELECT NULLIF(
+      public.server_supplier_commercial_decision_v1(
+        v_offer.id,
+        v_projection.canonical_product_id,
+        'loadify_supplier_fulfilled',
+        v_projection.territory
+      )->>'pricingSnapshotId',''
+    )::uuid
+  )
+    AND supplier_offer_id=v_offer.id
+    AND canonical_product_id=v_projection.canonical_product_id
+    AND status='approved'
+    AND commercial_mode='loadify_supplier_fulfilled';
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'approved selected-offer pricing snapshot is required';
+  END IF;
+
+  v_subtotal:=ROUND(((v_price.merchandise_amount+v_price.mandatory_fee_amount)*p_quantity)::numeric,2);
+  v_tax:=ROUND((v_price.tax_amount*p_quantity)::numeric,2);
+  v_shipping:=ROUND((v_price.customer_shipping_charge*p_quantity)::numeric,2);
+  v_total:=ROUND((v_price.gross_customer_price*p_quantity)::numeric,2);
+
+  INSERT INTO public.orders(
+    "buyerId","sellerId","productId",quantity,subtotal,"vatAmount","shippingAmount",total,
+    commission,status,"escrowStatus","shippingAddress","billingAddress",
+    "commercialMode","canonicalProductId","supplierOfferId","supplierCatalogItemId",
+    "supplierProjectionId","pricingSnapshotId","supplierExternalVariantRefSnapshot","legalSellerIdentitySnapshot",
+    "merchantOfRecordSnapshot","invoiceIssuerSnapshot","paymentRecipientSnapshot"
+  ) VALUES(
+    p_buyer_id,NULL,NULL,p_quantity,v_subtotal,v_tax,v_shipping,v_total,
+    0,'awaiting_payment','held',COALESCE(p_shipping_address,'{}'::jsonb),COALESCE(p_billing_address,'{}'::jsonb),
+    'loadify_supplier_fulfilled',v_projection.canonical_product_id,v_offer.id,
+    v_offer.supplier_catalog_item_id,v_projection.id,v_price.id,v_catalog_item.external_variant_ref,
+    'XDrive Logistics Ltd trading as Loadify Market','Loadify Market','Loadify Market','Loadify Market'
+  ) RETURNING id INTO v_order_id;
+
+  INSERT INTO public.order_items(
+    "orderId","productId",quantity,"pricePerUnit","vatRate",subtotal,
+    "canonicalProductId","supplierOfferId","pricingSnapshotId",
+    "productTitleSnapshot","listingContextSnapshot","productSnapshotSource","productSnapshotCapturedAt"
+  ) VALUES(
+    v_order_id,NULL,p_quantity,ROUND((v_subtotal/p_quantity)::numeric,2),0,v_subtotal,
+    v_projection.canonical_product_id,v_offer.id,v_price.id,
+    COALESCE(NULLIF(BTRIM(v_projection.projection_payload->>'title'),''),
+      'Loadify supplier product'),
+    'product','checkout_verified',now()
+  ) RETURNING id INTO v_order_item_id;
+
+  v_reservation:=public.server_reserve_supplier_offer_v1(
+    v_order_id,v_order_item_id,v_offer.id,
+    'loadify_supplier_fulfilled',p_quantity,v_projection.territory,v_catalog_item.external_variant_ref,
+    BTRIM(p_reservation_key),BTRIM(p_orchestration_idempotency_key),
+    p_correlation_id,'{}'::jsonb,'supplier_commerce_default',30
+  );
+  IF COALESCE((v_reservation->>'eligible')::boolean,false) IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'selected supplier reservation failed: %',COALESCE(v_reservation->>'reason','unknown');
+  END IF;
+
+  RETURN jsonb_build_object(
+    'ok',true,
+    'orderId',v_order_id,
+    'orderItemId',v_order_item_id,
+    'projectionId',v_projection.id,
+    'supplierOfferId',v_offer.id,
+    'supplierCatalogItemId',v_offer.supplier_catalog_item_id,
+    'supplierExternalVariantRef',v_catalog_item.external_variant_ref,
+    'pricingSnapshotId',v_price.id,
+    'amount',v_total,
+    'currency',v_price.currency,
+    'reservation',v_reservation,
+    'merchantOfRecord','Loadify Market',
+    'sellerOfRecord','XDrive Logistics Ltd trading as Loadify Market',
+    'offerSelectedBy','provider_neutral_selection_v1',
+    'paymentSessionCreated',false,
+    'interfaceVersion',1
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.server_prepare_supplier_checkout_selected_offer_v1(
+  uuid,uuid,uuid,integer,jsonb,jsonb,text,text,uuid
+) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.server_prepare_supplier_checkout_selected_offer_v1(
+  uuid,uuid,uuid,integer,jsonb,jsonb,text,text,uuid
+) TO service_role;
+
+COMMENT ON FUNCTION public.server_prepare_supplier_checkout_selected_offer_v1(
+  uuid,uuid,uuid,integer,jsonb,jsonb,text,text,uuid
+) IS
+'Creates an awaiting-payment Supplier-Fulfilled order for the explicitly selected approved interchangeable supplier offer and reserves that exact offer atomically. It does not submit a provider order or create/capture payment.';

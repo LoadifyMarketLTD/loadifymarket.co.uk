@@ -24,13 +24,14 @@ describe("supplier buyer catalog publication boundary", () => {
     expect(migration).toContain("'checkoutEnabled',false");
   });
 
-  it("serves only published GB supplier-fulfilled projections through a public RPC boundary with live economics and stock", () => {
+  it("serves only published GB supplier-fulfilled projections through the multi-supplier eligibility engine", () => {
     expect(catalog).toContain("server_get_supplier_marketplace_projection_v1");
     expect(readBoundary).toContain("p.status='published'");
     expect(readBoundary).toContain("p.commercial_mode='loadify_supplier_fulfilled'");
     expect(readBoundary).toContain("p.territory='GB'");
-    expect(catalog).toContain("evaluateSupplierEconomics");
-    expect(catalog).toContain("server_supplier_stock_price_decision_v1");
+    expect(catalog).toContain("evaluateProjectionSupplierOffers");
+    expect(catalog).toContain("selected.grossCustomerPrice");
+    expect(catalog).toContain("selected.sellableQuantity");
     expect(catalog).toContain("Fulfilled by approved supplier");
   });
 

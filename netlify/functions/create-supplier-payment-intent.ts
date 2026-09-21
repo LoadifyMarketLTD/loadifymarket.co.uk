@@ -33,7 +33,7 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await admin
     .from("orders")
-    .select("id,buyerId,status,total,commercialMode,sellerId,canonicalProductId,supplierOfferId,pricingSnapshotId,stripePaymentIntentId")
+    .select("id,buyerId,status,total,commercialMode,sellerId,canonicalProductId,supplierOfferId,pricingSnapshotId,supplierExternalVariantRefSnapshot,stripePaymentIntentId")
     .eq("id", orderId)
     .eq("buyerId", auth.actor.id)
     .maybeSingle();
@@ -41,7 +41,7 @@ export const handler: Handler = async (event) => {
   if (orderError || !order || order.status !== "awaiting_payment"
       || order.commercialMode !== "loadify_supplier_fulfilled"
       || order.sellerId !== null || !order.supplierOfferId || !order.pricingSnapshotId
-      || order.stripePaymentIntentId) {
+      || !order.supplierExternalVariantRefSnapshot || order.stripePaymentIntentId) {
     return jsonResponse(409, { error: "Supplier order is not ready for payment" }, METHODS);
   }
 
@@ -74,10 +74,15 @@ export const handler: Handler = async (event) => {
     p_canonical_product_id: order.canonicalProductId,
     p_commercial_mode: "loadify_supplier_fulfilled",
     p_territory: "GB",
-    p_external_variant_ref: "",
+    p_external_variant_ref: order.supplierExternalVariantRefSnapshot,
   });
-  if (guardError || !guard || guard.eligible !== true) {
-    return jsonResponse(409, { error: "Supplier stock or price is no longer valid", guard }, METHODS);
+  if (guardError || !guard || guard.eligible !== true
+      || guard.pricingSnapshotId !== order.pricingSnapshotId) {
+    return jsonResponse(409, {
+      error: "Supplier stock or price is no longer valid",
+      guard,
+      expectedPricingSnapshotId: order.pricingSnapshotId,
+    }, METHODS);
   }
 
   const amountPence = Math.round(Number(order.total) * 100);
@@ -95,6 +100,7 @@ export const handler: Handler = async (event) => {
       buyerId: auth.actor.id,
       supplierOfferId: order.supplierOfferId,
       pricingSnapshotId: order.pricingSnapshotId,
+      supplierExternalVariantRef: order.supplierExternalVariantRefSnapshot,
     },
   }, { idempotencyKey: `supplier-payment:${order.id}` });
 
@@ -112,6 +118,7 @@ export const handler: Handler = async (event) => {
       totalPence: amountPence,
       supplierOfferId: order.supplierOfferId,
       pricingSnapshotId: order.pricingSnapshotId,
+      supplierExternalVariantRef: order.supplierExternalVariantRefSnapshot,
     },
   });
 

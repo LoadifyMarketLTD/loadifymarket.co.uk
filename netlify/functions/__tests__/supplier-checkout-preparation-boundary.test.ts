@@ -7,19 +7,23 @@ const repo = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 describe("Loadify Supplier-Fulfilled checkout preparation boundary", () => {
   const endpoint = repo("netlify/functions/prepare-supplier-checkout.ts");
   const migration = repo("supabase/migrations/20260920200315_supplier_checkout_order_identity.sql");
+  const multiOfferMigration = repo("supabase/migrations/20260921091538_supplier_projection_multi_offer_bindings.sql");
 
-  it("requires an authenticated buyer and a published supplier projection through the service-role read boundary", () => {
+  it("requires an authenticated buyer and evaluates the published projection through the provider-neutral selection runtime", () => {
     expect(endpoint).toContain('authenticateActiveAccount(event, admin, ["buyer"])');
-    expect(endpoint).toContain("server_get_supplier_marketplace_projection_v1");
+    expect(endpoint).toContain("evaluateProjectionSupplierOffers");
     expect(endpoint).toContain('"loadify_supplier_fulfilled"');
     expect(endpoint).not.toContain('.schema("private")');
   });
 
-  it("re-evaluates checkout and economics before reserving stock", () => {
+  it("selects one eligible supplier offer, rechecks checkout readiness, and reserves that exact offer", () => {
+    expect(endpoint).toContain("evaluateProjectionSupplierOffers");
     expect(endpoint).toContain("evaluateSupplierCheckoutGuard");
-    expect(endpoint).toContain("evaluateSupplierEconomics");
-    expect(endpoint).toContain("server_prepare_supplier_checkout_v1");
-    expect(migration).toContain("server_reserve_supplier_offer_v1");
+    expect(endpoint).toContain("selectedOffer.externalVariantRef");
+    expect(endpoint).toContain("server_prepare_supplier_checkout_selected_offer_v1");
+    expect(multiOfferMigration).toContain("server_reserve_supplier_offer_v1");
+    expect(multiOfferMigration).toContain("v_catalog_item.external_variant_ref");
+    expect(multiOfferMigration).toContain('"supplierExternalVariantRefSnapshot"');
   });
 
   it("uses the canonical order truth without a fake marketplace seller", () => {
@@ -37,9 +41,9 @@ describe("Loadify Supplier-Fulfilled checkout preparation boundary", () => {
     expect(migration).toContain("No Stripe session is created here");
   });
 
-  it("keeps the checkout preparation RPC service-role only", () => {
-    expect(migration).toContain("SECURITY INVOKER");
-    expect(migration).toContain("FROM PUBLIC, anon, authenticated");
-    expect(migration).toContain("TO service_role");
+  it("keeps the selected-offer checkout preparation RPC service-role only", () => {
+    expect(multiOfferMigration).toContain("SECURITY INVOKER");
+    expect(multiOfferMigration).toContain("FROM PUBLIC, anon, authenticated");
+    expect(multiOfferMigration).toContain("TO service_role");
   });
 });

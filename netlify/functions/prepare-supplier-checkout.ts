@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Handler } from "@netlify/functions";
 import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { jsonResponse, optionsResponse } from "./_shared/http";
-import { evaluateSupplierEconomics } from "./_shared/supplierEconomics";
+import { evaluateProjectionSupplierOffers } from "./_shared/supplierOfferSelectionRuntime";
 import { evaluateSupplierCheckoutGuard } from "./_shared/supplierSync";
 
 const METHODS = "POST, OPTIONS";
@@ -52,36 +52,33 @@ export const handler: Handler = async (event) => {
   if (!checkoutAttemptId || checkoutAttemptId.length > 120) {
     return jsonResponse(400, { error: "Invalid checkout attempt identity" }, METHODS);
   }
-  const { data: projectionRows, error: projectionError } = await admin.rpc(
-    "server_get_supplier_marketplace_projection_v1",
-    { p_projection_id: projectionId },
-  );
-  const projection = Array.isArray(projectionRows) ? projectionRows[0] : null;
-
-  if (projectionError || !projection) {
-    return jsonResponse(404, { error: "Supplier product is not available for checkout" }, METHODS);
-  }
-
-  const [checkoutGuard, economics] = await Promise.all([
-    evaluateSupplierCheckoutGuard(admin, {
-      supplierOfferId: projection.supplier_offer_id,
-      canonicalProductId: projection.canonical_product_id,
-      commercialMode: "loadify_supplier_fulfilled",
-      territory: "GB",
-    }),
-    evaluateSupplierEconomics(admin, {
-      supplierOfferId: projection.supplier_offer_id,
-      canonicalProductId: projection.canonical_product_id,
-      commercialMode: "loadify_supplier_fulfilled",
-      territory: "GB",
-    }),
-  ]);
-
-  if (!checkoutGuard.eligible || !economics.eligible) {
+  const selection = await evaluateProjectionSupplierOffers(admin, {
+    projectionId,
+    requestedQuantity: quantity,
+    territory: "GB",
+  });
+  const selectedOffer = selection.selected;
+  if (!selection.eligible || !selectedOffer) {
     return jsonResponse(409, {
       error: "Supplier checkout is not currently available",
+      selection,
+      paymentSessionCreated: false,
+    }, METHODS);
+  }
+
+  const checkoutGuard = await evaluateSupplierCheckoutGuard(admin, {
+    supplierOfferId: selectedOffer.supplierOfferId,
+    canonicalProductId: selectedOffer.canonicalProductId,
+    commercialMode: "loadify_supplier_fulfilled",
+    territory: selectedOffer.territory,
+    externalVariantRef: selectedOffer.externalVariantRef,
+  });
+
+  if (!checkoutGuard.eligible) {
+    return jsonResponse(409, {
+      error: "Selected supplier offer is no longer available for checkout",
+      selection,
       checkoutGuard,
-      economics,
       paymentSessionCreated: false,
     }, METHODS);
   }
@@ -89,9 +86,10 @@ export const handler: Handler = async (event) => {
   const reservationKey = `supplier-checkout:${auth.actor.id}:${projectionId}:${checkoutAttemptId}`;
   const orchestrationKey = `supplier-order:${auth.actor.id}:${projectionId}:${checkoutAttemptId}`;
 
-  const { data, error } = await admin.rpc("server_prepare_supplier_checkout_v1", {
+  const { data, error } = await admin.rpc("server_prepare_supplier_checkout_selected_offer_v1", {
     p_buyer_id: auth.actor.id,
     p_projection_id: projectionId,
+    p_supplier_offer_id: selectedOffer.supplierOfferId,
     p_quantity: quantity,
     p_shipping_address: shippingAddress,
     p_billing_address: billingAddress,
@@ -110,6 +108,8 @@ export const handler: Handler = async (event) => {
   return jsonResponse(200, {
     ok: true,
     checkout: data,
+    selectedSupplierOfferId: selectedOffer.supplierOfferId,
+    supplierSelectionReason: selection.reason,
     checkoutAttemptId,
     correlationId,
     paymentSessionCreated: false,

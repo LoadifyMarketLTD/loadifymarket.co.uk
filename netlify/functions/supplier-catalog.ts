@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Handler } from "@netlify/functions";
 import { jsonResponse, optionsResponse } from "./_shared/http";
-import { evaluateSupplierEconomics } from "./_shared/supplierEconomics";
+import { evaluateProjectionSupplierOffers } from "./_shared/supplierOfferSelectionRuntime";
 
 const METHODS = "GET, OPTIONS";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -24,22 +24,14 @@ export const handler: Handler = async (event) => {
 
   const items = [];
   for (const row of rows || []) {
-    const [economics, stockPrice] = await Promise.all([
-      evaluateSupplierEconomics(admin, {
-        supplierOfferId: row.supplier_offer_id,
-        canonicalProductId: row.canonical_product_id,
-        commercialMode: "loadify_supplier_fulfilled", territory: "GB",
-      }),
-      admin.rpc("server_supplier_stock_price_decision_v1", {
-        p_supplier_offer_id: row.supplier_offer_id,
-        p_canonical_product_id: row.canonical_product_id,
-        p_commercial_mode: "loadify_supplier_fulfilled",
-        p_territory: "GB",
-        p_external_variant_ref: "",
-      }),
-    ]);
-    const stock = stockPrice.data as Record<string, unknown> | null;
-    if (!economics.eligible || stockPrice.error || stock?.eligible !== true) continue;
+    const selection = await evaluateProjectionSupplierOffers(admin, {
+      projectionId: row.id,
+      requestedQuantity: 1,
+      territory: "GB",
+    });
+    const selected = selection.selected;
+    if (!selection.eligible || !selected) continue;
+
     const payload = row.projection_payload as Record<string, unknown>;
     items.push({
       id: row.id,
@@ -50,12 +42,13 @@ export const handler: Handler = async (event) => {
       benefits: typeof payload.benefits === "string" ? payload.benefits : "",
       seoTitle: typeof payload.seoTitle === "string" ? payload.seoTitle : "",
       seoDescription: typeof payload.seoDescription === "string" ? payload.seoDescription : "",
-      price: economics.grossCustomerPrice,
-      currency: economics.currency,
-      availability: stock.availability,
-      sellableQuantity: stock.sellableQuantity,
+      price: selected.grossCustomerPrice,
+      currency: selected.currency,
+      availability: (selected.sellableQuantity ?? 0) > 0 ? "in_stock" : "out_of_stock",
+      sellableQuantity: selected.sellableQuantity,
       fulfilmentLabel: "Fulfilled by approved supplier",
       checkoutEligible: true,
+      supplierOfferCount: selection.ranked.length,
       publishedAt: row.published_at,
     });
   }

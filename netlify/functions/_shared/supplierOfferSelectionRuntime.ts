@@ -145,6 +145,7 @@ async function buildCandidate(
     supplierId: row.supplier_id,
     supplierKey: row.supplier_key,
     canonicalProductId: row.canonical_product_id,
+    externalVariantRef: row.external_variant_ref,
     territory: row.territory,
     currency: String(row.currency ?? economics.currency ?? sync.currency ?? '').toUpperCase(),
     requestedQuantity,
