@@ -400,7 +400,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           </div>
         `).join('') : ''}
         <div style="background-color: #f0f9f4; border-left: 4px solid #22c55e; padding: 12px 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
-          <p style="margin: 0; font-size: 13px; color: #374151;"><strong>Marketplace Notice:</strong> Your order is fulfilled by the seller. Loadify Market is the marketplace platform and is not the seller of the products. For any questions about your order, please contact the seller directly or reach us at contact@loadifymarket.co.uk.</p>
+          <p style="margin: 0; font-size: 13px; color: #374151;"><strong>Order responsibility:</strong> Marketplace Seller orders are sold and fulfilled by the independent seller shown on the order. Loadify Supplier-Fulfilled orders are sold by Loadify Market and dispatched by an approved fulfilment supplier on Loadify's behalf. Use the seller or Loadify support route shown for your order if you need help.</p>
         </div>
         <p style="margin-top: 20px;">We'll send you another email when your order has been shipped.</p>
         <p>If you have any questions, please contact us at contact@loadifymarket.co.uk</p>

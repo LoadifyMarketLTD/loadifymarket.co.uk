@@ -144,12 +144,14 @@ describe('SEO foundation contract', () => {
     }
   });
 
-  it('uses the real public seller name in server-rendered Product structured data', () => {
+  it('uses the correct seller identity for marketplace and supplier-fulfilled Product structured data', () => {
     const productMeta = read('netlify/edge-functions/product-meta.ts');
     expect(productMeta).toContain("seller_profiles_public");
     expect(productMeta).toContain('fetchPublicSellerName');
     expect(productMeta).toContain('name: sellerName');
-    expect(productMeta).not.toContain('name: SITE_NAME');
+    expect(productMeta).toContain("commercialMode === 'loadify_supplier_fulfilled'");
+    expect(productMeta).toContain('name: SITE_NAME');
+    expect(productMeta).toContain('legalName: LEGAL_OPERATOR_NAME');
   });
 
   it('keeps Level 2 commercial metadata mapped to distinct public search intents', () => {

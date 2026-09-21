@@ -5,68 +5,59 @@ import SEO from "@/components/SEO";
 const ShippingPolicy = () => {
   return (
     <MainLayout>
-      <SEO title="Shipping Policy | Loadify Market" description="Learn about delivery options, timescales, and shipping policies for orders on Loadify Market." canonical="/shipping-policy" />
+      <SEO title="Shipping Policy | Loadify Market" description="Learn how shipping works for Marketplace Seller and Loadify Supplier-Fulfilled orders." canonical="/shipping-policy" />
       <main id="main-content" className="pt-4 md:pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Shipping Policy" }]} backTo="/" />
         </div>
         <div className="legal-content">
           <h1>Shipping Policy</h1>
-          <p className="text-muted-foreground"><strong>Last updated:</strong> 19 March 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> 21 September 2026</p>
 
-          <p>This Shipping Policy outlines how shipping and delivery work on Loadify Market, operated by XDrive Logistics Ltd (Company No: 13171804).</p>
+          <p>This Shipping Policy explains how dispatch and delivery work on Loadify Market, operated by XDrive Logistics Ltd (Company No: 13171804).</p>
+          <p><strong>Loadify does not operate a physical warehouse or delivery fleet for marketplace goods.</strong> Marketplace Seller orders are dispatched by the named independent seller. Loadify Supplier-Fulfilled orders are sold by Loadify and physically dispatched by an approved supplier or fulfilment provider on Loadify's behalf.</p>
 
-          <p><strong>Shipping is arranged and completed by the seller. Delivery times, costs, and tracking are provided by the seller. Loadify Market does not ship or dispatch any products.</strong></p>
-
-          <h2>1. Marketplace Shipping Model</h2>
-          <p>Loadify Market is a marketplace connecting independent buyers and sellers. Each seller is responsible for shipping their own products. Shipping methods, costs, timelines and carrier choices are set by individual sellers and displayed on each product listing.</p>
+          <h2>1. Shipping Models</h2>
+          <p><strong>Marketplace Seller.</strong> The independent seller chooses and manages the available shipping methods, dispatch process and tracking for its products, subject to the terms shown before purchase and applicable Platform rules.</p>
+          <p><strong>Loadify Supplier-Fulfilled.</strong> Loadify remains the seller of record, while the approved supplier or fulfilment provider holds the stock and performs physical dispatch. Supplier-held stock does not become Loadify warehouse stock.</p>
 
           <h2>2. Delivery Areas</h2>
-          <p>Most sellers on Loadify Market ship within the United Kingdom. Some sellers may offer international shipping. Delivery areas are specified on each product listing. Please check the seller's shipping details before placing an order.</p>
+          <p>The delivery territory for a product is shown by the applicable listing and checkout flow. Supplier-Fulfilled products are only offered where the approved supplier route, stock, pricing and delivery capability are eligible for the buyer's destination.</p>
 
           <h2>3. Shipping Costs</h2>
-          <p>Shipping costs are determined by the seller based on:</p>
+          <p>Shipping charges are calculated from the applicable seller or supplier-fulfilment route and are shown before the buyer confirms payment. Relevant factors may include:</p>
           <ul>
             <li>Item weight and dimensions</li>
             <li>Delivery destination</li>
-            <li>Shipping method selected</li>
-            <li>Whether the order is a large or oversized item</li>
+            <li>Selected delivery service</li>
+            <li>Whether the order requires parcel, freight or oversized-item handling</li>
           </ul>
-          <p>Shipping costs are displayed at checkout before you confirm your order.</p>
+          <p>The buyer is not committed to a shipping charge that was not included in the order total shown before payment.</p>
 
-          <h2>4. Estimated Delivery Times</h2>
-          <p>Delivery timeframes vary by seller and shipping method. Typical estimates for UK delivery:</p>
-          <ul>
-            <li><strong>Standard delivery:</strong> 3–7 business days</li>
-            <li><strong>Express delivery:</strong> 1–3 business days</li>
-            <li><strong>Freight / large item delivery:</strong> 5–10 business days (dependent on carrier and location)</li>
-            <li><strong>Collection:</strong> Available from some sellers — arranged directly</li>
-          </ul>
-          <p>These are estimates only. Actual delivery times may vary due to stock availability, carrier schedules and external factors.</p>
+          <h2>4. Dispatch and Estimated Delivery</h2>
+          <p>Dispatch and delivery estimates are product- and route-specific. The estimate shown on the product, checkout or order record is the relevant estimate for that purchase. Platform-wide examples or marketing statements do not replace the order-specific delivery information.</p>
+          <p>Delivery may be affected by stock changes, carrier operations, address issues, severe weather, public holidays or other events outside the reasonable control of the dispatching party.</p>
 
           <h2>5. Large Item &amp; Freight Deliveries</h2>
-          <p>For large item and freight orders:</p>
+          <p>Where a large-item or freight service is offered, the listing or checkout should identify any important delivery conditions. Depending on the product and carrier:</p>
           <ul>
-            <li>Delivery is typically kerbside unless otherwise agreed</li>
-            <li>The buyer is responsible for having adequate means to receive and unload large items</li>
-            <li>Specific delivery arrangements should be confirmed with the seller before purchase</li>
-            <li>Additional charges may apply for tail-lift delivery or specific time slots</li>
+            <li>Delivery may be kerbside unless another service is expressly stated</li>
+            <li>The buyer may need suitable means to receive or unload the goods</li>
+            <li>Booked delivery windows or additional handling services may carry separate charges shown before payment</li>
           </ul>
 
           <h2>6. Order Tracking</h2>
-          <p>Where available, sellers will provide tracking information via the Platform. You can view tracking updates in your Buyer Dashboard under "Orders". Not all sellers or shipping methods include tracking.</p>
+          <p>Where tracking is available, it is attached to the Loadify order record. For Marketplace Seller orders the tracking originates from the seller's fulfilment process. For Supplier-Fulfilled orders it may originate from the approved supplier or its carrier and is surfaced through Loadify where supported.</p>
 
           <h2>7. Delivery Issues</h2>
-          <p>If you experience delivery issues such as:</p>
-          <ul>
-            <li>Non-delivery or significant delays</li>
-            <li>Damaged goods on arrival</li>
-            <li>Incorrect items received</li>
-          </ul>
-          <p>Please contact the seller directly through the Platform. If the issue remains unresolved, contact Loadify Market support for assistance.</p>
+          <p>Examples include non-delivery, significant delay, damage in transit or receipt of an incorrect item.</p>
+          <p>For a Marketplace Seller order, use the seller-contact or order-support route first unless the Platform directs otherwise. For a Loadify Supplier-Fulfilled order, contact Loadify through the order/support route; Loadify will coordinate with the fulfilment supplier or carrier where required.</p>
 
-          <h2>8. Contact</h2>
-          <p>For shipping-related queries:</p>
+          <h2>8. Failed Delivery and Address Accuracy</h2>
+          <p>Buyers are responsible for providing an accurate delivery address and reasonable delivery-contact information. Additional charges caused by an incorrect address, repeated failed delivery or refused delivery may be recoverable where permitted by law and disclosed terms.</p>
+
+          <h2>9. Contact</h2>
+          <p>For shipping-related support:</p>
           <ul>
             <li>Email: contact@loadifymarket.co.uk</li>
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>

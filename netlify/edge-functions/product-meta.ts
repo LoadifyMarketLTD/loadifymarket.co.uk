@@ -15,6 +15,7 @@ import {
 const BASE_URL = 'https://loadifymarket.co.uk';
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
 const SITE_NAME = 'Loadify Market';
+const LEGAL_OPERATOR_NAME = 'XDrive Logistics Ltd';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,12 +36,29 @@ interface ProductRow {
   rating?: number | string | null;
   reviewCount?: number | null;
   category?: { name?: string; slug?: string } | null;
+  commercialMode?: 'marketplace_seller' | 'loadify_supplier_fulfilled';
+  currency?: string | null;
 }
 
 type ProductLookup =
   | { status: 'found'; product: ProductRow }
   | { status: 'not_found' }
   | { status: 'unavailable' };
+
+interface SupplierCatalogPayload {
+  items?: Array<{
+    id?: string;
+    commercialMode?: string;
+    title?: string;
+    description?: string;
+    seoDescription?: string;
+    imageUrls?: unknown;
+    price?: number | string;
+    currency?: string;
+    sellableQuantity?: number;
+    checkoutEligible?: boolean;
+  }>;
+}
 
 function excerpt(text: string, max = 180): string {
   const s = text.replace(/\s+/g, ' ').trim();
@@ -160,6 +178,55 @@ async function fetchProductData(
   }
 }
 
+async function fetchSupplierProductData(
+  productRef: string,
+  origin: string,
+): Promise<ProductLookup> {
+  if (!UUID_PATTERN.test(productRef)) return { status: 'not_found' };
+
+  try {
+    const url = `${origin}/.netlify/functions/supplier-catalog?id=${encodeURIComponent(productRef)}`;
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(2500),
+    });
+
+    if (res.status === 404) return { status: 'not_found' };
+    if (!res.ok) return { status: 'unavailable' };
+
+    const payload = (await res.json()) as SupplierCatalogPayload;
+    const item = Array.isArray(payload.items) ? payload.items[0] : undefined;
+    if (!item || item.id !== productRef || item.commercialMode !== 'loadify_supplier_fulfilled') {
+      return { status: 'not_found' };
+    }
+    if (!item.title?.trim()) return { status: 'unavailable' };
+
+    const imageUrls = Array.isArray(item.imageUrls)
+      ? item.imageUrls.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      : [];
+    const quantity = Number(item.sellableQuantity ?? 0);
+
+    return {
+      status: 'found',
+      product: {
+        id: item.id,
+        title: item.title.trim(),
+        description: item.seoDescription?.trim() || item.description?.trim() || '',
+        images: imageUrls,
+        price: item.price,
+        listingStatus: item.checkoutEligible === true ? 'active' : 'inactive',
+        listingContext: 'product',
+        stockQuantity: Number.isFinite(quantity) ? Math.max(0, Math.floor(quantity)) : 0,
+        condition: 'new',
+        commercialMode: 'loadify_supplier_fulfilled',
+        currency: item.currency?.trim().toUpperCase() || 'GBP',
+      },
+    };
+  } catch {
+    return { status: 'unavailable' };
+  }
+}
+
 async function fetchPublicSellerName(
   sellerId: string,
   supabaseUrl: string,
@@ -217,13 +284,19 @@ export default async function productMeta(
     return baseResponsePromise;
   }
 
-  const [baseResponse, lookup] = await Promise.all([
+  const [baseResponse, marketplaceLookup] = await Promise.all([
     baseResponsePromise,
     fetchProductData(productRef, supabaseUrl, supabaseAnonKey),
   ]);
 
   const contentType = baseResponse.headers.get('content-type') ?? '';
   if (!contentType.includes('text/html')) return baseResponse;
+  if (marketplaceLookup.status === 'unavailable') return baseResponse;
+
+  let lookup = marketplaceLookup;
+  if (lookup.status === 'not_found' && UUID_PATTERN.test(productRef)) {
+    lookup = await fetchSupplierProductData(productRef, requestUrl.origin);
+  }
   if (lookup.status === 'unavailable') return baseResponse;
   if (lookup.status === 'not_found') return noindexHtmlResponse(baseResponse);
 
@@ -232,9 +305,12 @@ export default async function productMeta(
     return noindexHtmlResponse(baseResponse);
   }
 
-  const sellerName = product.sellerId
-    ? await fetchPublicSellerName(product.sellerId, supabaseUrl, supabaseAnonKey)
-    : undefined;
+  const isSupplierFulfilled = product.commercialMode === 'loadify_supplier_fulfilled';
+  const sellerName = isSupplierFulfilled
+    ? SITE_NAME
+    : product.sellerId
+      ? await fetchPublicSellerName(product.sellerId, supabaseUrl, supabaseAnonKey)
+      : undefined;
 
   const title = product.title.trim();
   const rawDesc = (product.description ?? '').replace(/\s+/g, ' ').trim();
@@ -257,6 +333,7 @@ export default async function productMeta(
   const parsedPrice = Number(product.price);
   const priceNum = Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : undefined;
   const priceStr = priceNum !== undefined ? priceNum.toFixed(2) : undefined;
+  const priceCurrency = product.currency?.trim().toUpperCase() || 'GBP';
   const schemaAvailability = isAvailable(product)
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
@@ -361,11 +438,11 @@ export default async function productMeta(
   if (priceStr) {
     if (!html.includes('property="og:price:amount"')) {
       extraLines.push(`  <meta property="og:price:amount" content="${escapeAttr(priceStr)}" />`);
-      extraLines.push('  <meta property="og:price:currency" content="GBP" />');
+      extraLines.push(`  <meta property="og:price:currency" content="${escapeAttr(priceCurrency)}" />`);
     }
     if (!html.includes('property="product:price:amount"')) {
       extraLines.push(`  <meta property="product:price:amount" content="${escapeAttr(priceStr)}" />`);
-      extraLines.push('  <meta property="product:price:currency" content="GBP" />');
+      extraLines.push(`  <meta property="product:price:currency" content="${escapeAttr(priceCurrency)}" />`);
     }
   }
 
@@ -392,16 +469,23 @@ export default async function productMeta(
           offers: {
             '@type': 'Offer',
             price: priceStr,
-            priceCurrency: 'GBP',
+            priceCurrency,
             availability: schemaAvailability,
             url: canonicalUrl,
             ...(itemCondition ? { itemCondition } : {}),
             ...(sellerName
               ? {
-                  seller: {
-                    '@type': 'Organization',
-                    name: sellerName,
-                  },
+                  seller: isSupplierFulfilled
+                    ? {
+                        '@type': 'Organization',
+                        name: SITE_NAME,
+                        legalName: LEGAL_OPERATOR_NAME,
+                        url: BASE_URL,
+                      }
+                    : {
+                        '@type': 'Organization',
+                        name: sellerName,
+                      },
                 }
               : {}),
           },

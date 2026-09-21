@@ -50,7 +50,7 @@ const SLIDES: Slide[] = [
   {
     emoji: "🔍",
     title: "Discover Products",
-    subtitle: "Browse thousands of listings from verified UK sellers — all in one place.",
+    subtitle: "Browse marketplace listings and Loadify Supplier-Fulfilled products — all in one place.",
     accentColor: "#A78BFA",
   },
   {
