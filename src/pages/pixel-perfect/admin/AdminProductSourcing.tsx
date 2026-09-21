@@ -18,6 +18,25 @@ interface MerchandisingDraft {
   creativeBrief: string;
 }
 
+interface DirectSupplierOnboardingForm {
+  supplierKey: string;
+  legalName: string;
+  registrationCountry: string;
+  registrationNumber: string;
+  vatNumber: string;
+  feedTransport: "json_api" | "json_feed" | "csv" | "xml" | "sftp" | "manual_catalog";
+  territories: string;
+  capabilities: string;
+  configRef: string;
+  commercialTermsRef: string;
+  currency: string;
+  paymentTermsDays: string;
+  dispatchSlaHours: string;
+  returnWindowDays: string;
+  onboardingStatus: "draft" | "qualification" | "ready_for_review" | "approved" | "blocked";
+  reviewReason: string;
+}
+
 function asRecord(value: unknown): JsonRecord | null {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as JsonRecord)
@@ -58,10 +77,17 @@ export default function AdminProductSourcing() {
   const [offerSelection, setOfferSelection] = useState<JsonRecord | null>(null);
   const [offerBinding, setOfferBinding] = useState<JsonRecord | null>(null);
   const [sourcePolicies, setSourcePolicies] = useState<JsonRecord[]>([]);
+  const [supplierOnboarding, setSupplierOnboarding] = useState<DirectSupplierOnboardingForm>({
+    supplierKey: "", legalName: "", registrationCountry: "GB", registrationNumber: "", vatNumber: "",
+    feedTransport: "csv", territories: "GB", capabilities: "supplier_identity,catalog,stock,price,shipping,tracking,returns",
+    configRef: "", commercialTermsRef: "", currency: "GBP", paymentTermsDays: "", dispatchSlaHours: "",
+    returnWindowDays: "", onboardingStatus: "draft", reviewReason: "",
+  });
+  const [supplierOnboardingResult, setSupplierOnboardingResult] = useState<JsonRecord | null>(null);
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -172,6 +198,81 @@ export default function AdminProductSourcing() {
       setDiscoveryCandidate(body);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save discovery candidate.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function saveSupplierOnboarding(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setSupplierOnboardingResult(null);
+
+    const territories = supplierOnboarding.territories.split(",").map((item) => item.trim().toUpperCase()).filter(Boolean);
+    const capabilities = supplierOnboarding.capabilities.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
+    if (!supplierOnboarding.supplierKey.trim() || !supplierOnboarding.legalName.trim()) {
+      setError("Supplier key and legal name are required for Direct Supplier onboarding.");
+      return;
+    }
+    if (territories.length === 0) {
+      setError("At least one supported territory is required.");
+      return;
+    }
+
+    setLoading("supplierOnboarding");
+    try {
+      const candidateResponse = await authorizedFetch("/.netlify/functions/admin-direct-supplier-foundation-candidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          onboardingVersion: 1,
+          supplierKey: supplierOnboarding.supplierKey.trim().toLowerCase(),
+          legalName: supplierOnboarding.legalName.trim(),
+          registrationCountry: supplierOnboarding.registrationCountry.trim().toUpperCase(),
+          registrationNumber: supplierOnboarding.registrationNumber.trim() || undefined,
+          vatNumber: supplierOnboarding.vatNumber.trim() || undefined,
+          feedTransport: supplierOnboarding.feedTransport,
+          warehouseDeclarations: [],
+          supportedTerritories: territories,
+          requestedCapabilities: capabilities,
+          commercialApproval: false,
+          hostedActivation: "off",
+        }),
+      });
+      const candidateBody = (await candidateResponse.json()) as JsonRecord;
+      if (!candidateResponse.ok) throw new Error(String(candidateBody.error ?? "Unable to create supplier candidate."));
+      const candidate = asRecord(candidateBody.candidate);
+      const supplierId = String(candidate?.supplierId ?? "");
+      if (!supplierId) throw new Error("Supplier candidate did not return a Supplier Foundation ID.");
+
+      const profileResponse = await authorizedFetch("/.netlify/functions/admin-supplier-onboarding-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "upsert",
+          payload: {
+            supplierId,
+            sourceClass: "direct_supplier",
+            feedTransport: supplierOnboarding.feedTransport,
+            configRef: supplierOnboarding.configRef.trim() || undefined,
+            supportedTerritories: territories,
+            requestedCapabilities: capabilities,
+            commercialTermsRef: supplierOnboarding.commercialTermsRef.trim() || undefined,
+            currency: supplierOnboarding.currency.trim().toUpperCase() || undefined,
+            paymentTermsDays: supplierOnboarding.paymentTermsDays || undefined,
+            dispatchSlaHours: supplierOnboarding.dispatchSlaHours || undefined,
+            returnWindowDays: supplierOnboarding.returnWindowDays || undefined,
+            onboardingStatus: supplierOnboarding.onboardingStatus,
+            reviewReason: supplierOnboarding.reviewReason.trim() || undefined,
+          },
+        }),
+      });
+      const profileBody = (await profileResponse.json()) as JsonRecord;
+      if (!profileResponse.ok) throw new Error(String(profileBody.error ?? "Unable to save supplier onboarding profile."));
+      setSupplierOnboardingResult({ candidate: candidateBody, profile: profileBody });
+      setSupplierKey(supplierOnboarding.supplierKey.trim().toLowerCase());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save Direct Supplier onboarding.");
     } finally {
       setLoading(null);
     }
@@ -629,6 +730,117 @@ export default function AdminProductSourcing() {
           </div>
         </section>
       )}
+
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="font-semibold">Direct Supplier onboarding</h2>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-muted-foreground">
+              Create a real Supplier Foundation candidate and persist reviewed source/commercial configuration.
+              This records onboarding intent only: no capability promotion, supplier activation, listing, order or payment is created.
+            </p>
+          </div>
+          <Badge variant="outline">First-class direct supply</Badge>
+        </div>
+
+        <form onSubmit={saveSupplierOnboarding} className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <label className="space-y-1.5 text-sm font-medium">
+            Supplier key
+            <Input value={supplierOnboarding.supplierKey} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, supplierKey: e.target.value }))} placeholder="acme-wholesale-uk" />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Legal name
+            <Input value={supplierOnboarding.legalName} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, legalName: e.target.value }))} placeholder="Supplier legal entity" />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Registration country
+            <Input value={supplierOnboarding.registrationCountry} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, registrationCountry: e.target.value }))} maxLength={2} />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Feed / import transport
+            <select value={supplierOnboarding.feedTransport} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, feedTransport: e.target.value as DirectSupplierOnboardingForm["feedTransport"] }))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="json_api">API / JSON API</option>
+              <option value="json_feed">JSON feed / feed URL</option>
+              <option value="csv">CSV</option>
+              <option value="xml">XML</option>
+              <option value="sftp">SFTP</option>
+              <option value="manual_catalog">Manual catalog</option>
+            </select>
+          </label>
+
+          <label className="space-y-1.5 text-sm font-medium">
+            Registration number
+            <Input value={supplierOnboarding.registrationNumber} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, registrationNumber: e.target.value }))} />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            VAT number
+            <Input value={supplierOnboarding.vatNumber} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, vatNumber: e.target.value }))} />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Supported territories
+            <Input value={supplierOnboarding.territories} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, territories: e.target.value }))} placeholder="GB,IE" />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Server config reference
+            <Input value={supplierOnboarding.configRef} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, configRef: e.target.value }))} placeholder="supplier-config/acme-v1" />
+          </label>
+
+          <label className="space-y-1.5 text-sm font-medium md:col-span-2">
+            Requested capabilities
+            <Input value={supplierOnboarding.capabilities} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, capabilities: e.target.value }))} />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Commercial terms reference
+            <Input value={supplierOnboarding.commercialTermsRef} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, commercialTermsRef: e.target.value }))} placeholder="contract / approved terms ref" />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Currency
+            <Input value={supplierOnboarding.currency} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, currency: e.target.value }))} maxLength={3} />
+          </label>
+
+          <label className="space-y-1.5 text-sm font-medium">
+            Payment terms days
+            <Input type="number" min="0" value={supplierOnboarding.paymentTermsDays} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, paymentTermsDays: e.target.value }))} />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Dispatch SLA hours
+            <Input type="number" min="0" value={supplierOnboarding.dispatchSlaHours} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, dispatchSlaHours: e.target.value }))} />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Return window days
+            <Input type="number" min="0" value={supplierOnboarding.returnWindowDays} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, returnWindowDays: e.target.value }))} />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Onboarding status
+            <select value={supplierOnboarding.onboardingStatus} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, onboardingStatus: e.target.value as DirectSupplierOnboardingForm["onboardingStatus"] }))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="draft">Draft</option>
+              <option value="qualification">Qualification</option>
+              <option value="ready_for_review">Ready for review</option>
+              <option value="approved">Approved (Foundation gates required)</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          </label>
+
+          <label className="space-y-1.5 text-sm font-medium md:col-span-2 xl:col-span-4">
+            Review reason
+            <Input value={supplierOnboarding.reviewReason} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, reviewReason: e.target.value }))} placeholder="Evidence / decision note for this onboarding state" />
+          </label>
+
+          <div className="flex flex-wrap items-center gap-3 md:col-span-2 xl:col-span-4">
+            <Button type="submit" disabled={loading !== null}>
+              {loading === "supplierOnboarding" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+              Save Direct Supplier onboarding
+            </Button>
+            <span className="text-xs text-muted-foreground">Credentials are forbidden here; configRef points only to server-side configuration.</span>
+          </div>
+
+          {supplierOnboardingResult && (
+            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.04] p-3 text-sm text-emerald-700 md:col-span-2 xl:col-span-4">
+              Supplier candidate and onboarding dossier saved. Activation remains unchanged and downstream qualification/compliance/economics gates still apply.
+            </div>
+          )}
+        </form>
+      </section>
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">

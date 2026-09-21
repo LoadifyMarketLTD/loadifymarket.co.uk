@@ -20,6 +20,12 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("/.netlify/functions/admin-supplier-source-policy");
     expect(page).toContain("Discovery can never publish directly");
     expect(page).toContain("Loadify assumes no physical warehouse");
+    expect(page).toContain("Direct Supplier onboarding");
+    expect(page).toContain("/.netlify/functions/admin-direct-supplier-foundation-candidate");
+    expect(page).toContain("/.netlify/functions/admin-supplier-onboarding-profile");
+    expect(page).toContain("API / JSON API");
+    expect(page).toContain("JSON feed / feed URL");
+    expect(page).toContain("Manual catalog");
   });
 
   it("uses the existing governed Direct Supplier review and Phase F plan endpoints", () => {
