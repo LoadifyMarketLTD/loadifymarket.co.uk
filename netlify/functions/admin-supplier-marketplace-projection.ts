@@ -5,6 +5,7 @@ import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { jsonResponse, optionsResponse } from "./_shared/http";
 import { evaluateSupplierImport } from "./_shared/supplierImport";
 import { evaluateSupplierEconomics } from "./_shared/supplierEconomics";
+import { buildSupplierMerchandisingPayload, fetchSupplierVerifiedMedia } from "./_shared/supplierVerifiedMedia";
 
 const METHODS = "POST, OPTIONS";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -41,30 +42,33 @@ export const handler: Handler = async (event) => {
     return jsonResponse(400, { error: "Valid projection identity and payload are required" }, METHODS);
   }
 
-  const [importDecision, economicsDecision] = await Promise.all([
+  const [importDecision, economicsDecision, mediaSnapshot] = await Promise.all([
     evaluateSupplierImport(admin, { supplierCatalogItemId, canonicalProductId }),
     evaluateSupplierEconomics(admin, {
       supplierOfferId, canonicalProductId,
       commercialMode: "loadify_supplier_fulfilled", territory: "GB",
     }),
+    fetchSupplierVerifiedMedia(admin, { supplierCatalogItemId, canonicalProductId }),
   ]);
 
-  if (!importDecision.eligible || !economicsDecision.eligible) {
+  if (!importDecision.eligible || !economicsDecision.eligible || !mediaSnapshot.eligible) {
     return jsonResponse(409, {
       error: "Projection gate is not eligible",
       importDecision, economicsDecision,
+      mediaDecision: { eligible: mediaSnapshot.eligible, reason: mediaSnapshot.reason, imageCount: mediaSnapshot.imageUrls.length },
       buyerVisible: false, checkoutEnabled: false,
     }, METHODS);
   }
 
-  const payloadHash = createHash("sha256").update(JSON.stringify(projectionPayload)).digest("hex");
+  const governedProjectionPayload = buildSupplierMerchandisingPayload(projectionPayload as Record<string, unknown>, mediaSnapshot.imageUrls);
+  const payloadHash = createHash("sha256").update(JSON.stringify(governedProjectionPayload)).digest("hex");
   const { data, error } = await admin.rpc("server_create_supplier_marketplace_projection_v1", {
     p_actor_id: auth.actor.id,
     p_canonical_product_id: canonicalProductId,
     p_supplier_offer_id: supplierOfferId,
     p_supplier_catalog_item_id: supplierCatalogItemId,
     p_merchandising_review_id: merchandisingReviewId,
-    p_projection_payload: projectionPayload,
+    p_projection_payload: governedProjectionPayload,
     p_payload_hash: payloadHash,
   });
   if (error) return jsonResponse(409, { error: error.message, buyerVisible: false, checkoutEnabled: false }, METHODS);

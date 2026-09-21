@@ -41,7 +41,7 @@ import {
 
 const BASE_URL = "https://loadifymarket.co.uk";
 const DEFAULT_PRODUCT_SEO_DESCRIPTION =
-  "Discover products from verified UK sellers on Loadify Market.";
+  "Discover marketplace and supplier-fulfilled products on Loadify Market.";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
 
 function toAbsolutePublicUrl(value?: string | null): string | undefined {
@@ -175,7 +175,7 @@ const ProductDetail = () => {
           setProductDescription(supplierProduct.description || "");
           setProductSellerId(null);
           setProductCategorySlug(null);
-          setGalleryImages(supplierProduct.image ? [supplierProduct.image] : []);
+          setGalleryImages(supplierProduct.images?.length ? supplierProduct.images : supplierProduct.image ? [supplierProduct.image] : []);
           setRelated([]);
           setSellerProducts([]);
           setSellerListingCount(0);
@@ -796,7 +796,7 @@ const ProductDetail = () => {
                     borderBottom: "1px solid #DCE3ED",
                   }}
                 >
-                  <span style={{ fontSize: "14px", color: "#64748B" }}>Seller</span>
+                  <span style={{ fontSize: "14px", color: "#64748B" }}>{isSupplierFulfilled ? "Sold by" : "Seller"}</span>
                   <span style={{ fontSize: "14px", fontWeight: 600, color: "#0A234F" }}>{product.seller}</span>
                 </div>
 
@@ -881,16 +881,18 @@ const ProductDetail = () => {
                   />
                 </div>
 
-                <SellerCard
-                  name={product.seller}
-                  verified={product.sellerVerified}
-                  rating={product.rating}
-                  location={product.location}
-                  totalListings={sellerListingCount}
-                  storeSlug={sellerStoreSlug}
-                  sellerId={productSellerId}
-                  joinDate={sellerJoinDate}
-                />
+                {!isSupplierFulfilled && (
+                  <SellerCard
+                    name={product.seller}
+                    verified={product.sellerVerified}
+                    rating={product.rating}
+                    location={product.location}
+                    totalListings={sellerListingCount}
+                    storeSlug={sellerStoreSlug}
+                    sellerId={productSellerId}
+                    joinDate={sellerJoinDate}
+                  />
+                )}
 
                 {user && (
                   <button

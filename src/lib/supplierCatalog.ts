@@ -6,6 +6,7 @@ interface SupplierCatalogItem {
   commercialMode: "loadify_supplier_fulfilled";
   title: string;
   description: string;
+  imageUrls?: string[];
   price: number;
   currency: string;
   availability?: string;
@@ -31,13 +32,15 @@ export async function fetchSupplierCatalog(): Promise<Product[]> {
 
 function adaptSupplierCatalogItem(item: SupplierCatalogItem): Product {
   const quantity = Math.max(0, Math.floor(Number(item.sellableQuantity ?? 0)));
+  const imageUrls = (item.imageUrls ?? []).filter((value) => typeof value === "string" && value.startsWith("https://")).slice(0, 12);
   return {
     id: item.id,
     canonicalProductId: item.canonicalProductId,
     commercialMode: "loadify_supplier_fulfilled",
     title: item.title,
     description: item.description,
-    image: "",
+    image: imageUrls[0] || "",
+    images: imageUrls,
     price: Number(item.price),
     category: "Loadify Market",
     subcategory: "",

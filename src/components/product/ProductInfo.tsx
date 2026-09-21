@@ -76,6 +76,7 @@ const ProductInfo = ({
     normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
 
   const isOwner = !!(user && sellerId && user.id === sellerId);
+  const isSupplierFulfilled = product.commercialMode === "loadify_supplier_fulfilled";
   const isAvailable = product.isAvailable !== false;
   const availabilityMessage = product.availabilityMessage || "This listing is not currently available for purchase.";
 
@@ -242,18 +243,20 @@ const ProductInfo = ({
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Truck className="h-4 w-4 text-primary" />
-          Seller-Fulfilled Delivery
+          {isSupplierFulfilled ? "Approved Supplier Fulfilment" : "Seller-Fulfilled Delivery"}
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          Transparent Seller Terms
+          {isSupplierFulfilled ? "Loadify Market Sale Terms" : "Transparent Seller Terms"}
         </div>
       </div>
 
       <div className="rounded-lg bg-muted/50 border border-border px-4 py-3 text-xs text-muted-foreground leading-relaxed">
         <span className="font-semibold text-foreground">Sold by: {product.seller}</span>
         {" — "}
-        This product is listed, supplied, fulfilled, and delivered by the seller. Loadify Market provides the marketplace platform only.
+        {isSupplierFulfilled
+          ? "Stock is held and dispatched by an approved fulfilment supplier. Loadify Market does not operate a warehouse."
+          : "This product is listed, supplied, fulfilled, and delivered by the seller. Loadify Market provides the marketplace platform only."}
       </div>
 
       {!isOwner && !isAvailable && (
@@ -296,7 +299,7 @@ const ProductInfo = ({
               onClick={handleBuyNow}
               disabled={!isAvailable}
             >
-              Buy from Seller <ArrowRight className="ml-2 h-5 w-5" />
+              {isSupplierFulfilled ? "Buy Now" : "Buy from Seller"} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button
               size="lg"

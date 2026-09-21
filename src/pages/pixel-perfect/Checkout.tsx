@@ -262,7 +262,7 @@ const Checkout = () => {
   };
 
   const vat = useMemo(() => calculateCheckoutVat(cartItems), [cartItems]);
-  const vatLabel = vat === 0 ? "VAT — not charged by seller" : "VAT";
+  const vatLabel = supplierOnlyCart ? "VAT" : vat === 0 ? "VAT — not charged by seller" : "VAT";
   const shippingAmount = selectedOption.price;
   const total = subtotal + shippingAmount;
 

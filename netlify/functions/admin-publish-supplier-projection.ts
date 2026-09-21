@@ -69,8 +69,8 @@ export const handler: Handler = async (event) => {
   return jsonResponse(200, {
     ok: true, publication: data,
     buyerVisible: true,
-    checkoutEnabled: false,
+    checkoutEnabled: true,
     sellerListingMutationPerformed: false,
-    nextGate: "supplier_checkout_reservation_bridge",
+    nextGate: "buyer_checkout_revalidation",
   }, METHODS);
 };

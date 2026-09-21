@@ -33,6 +33,9 @@ export const handler: Handler = async (event) => {
     if (!selection.eligible || !selected) continue;
 
     const payload = row.projection_payload as Record<string, unknown>;
+    const imageUrls = Array.isArray(payload.imageUrls)
+      ? payload.imageUrls.filter((value): value is string => typeof value === "string" && value.startsWith("https://")).slice(0, 12)
+      : [];
     items.push({
       id: row.id,
       canonicalProductId: row.canonical_product_id,
@@ -42,6 +45,7 @@ export const handler: Handler = async (event) => {
       benefits: typeof payload.benefits === "string" ? payload.benefits : "",
       seoTitle: typeof payload.seoTitle === "string" ? payload.seoTitle : "",
       seoDescription: typeof payload.seoDescription === "string" ? payload.seoDescription : "",
+      imageUrls,
       price: selected.grossCustomerPrice,
       currency: selected.currency,
       availability: (selected.sellableQuantity ?? 0) > 0 ? "in_stock" : "out_of_stock",

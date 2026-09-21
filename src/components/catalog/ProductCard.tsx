@@ -12,6 +12,7 @@ export interface Product {
   title: string;
   description?: string;
   image: string;
+  images?: string[];
   price: number;
   originalPrice?: number;
   category: string;
@@ -60,6 +61,7 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
   const navigate = useNavigate();
   const isNative = isCapacitorContext();
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
+  const isSupplierFulfilled = product.commercialMode === "loadify_supplier_fulfilled";
   const light = theme === "light";
   const hasReviews = (product.reviewCount ?? 0) > 0 && product.rating > 0;
   const availabilityLabel = product.listingContext === "service"
@@ -150,7 +152,11 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
         <div className={`flex items-center justify-between pt-2 border-t ${light ? "border-slate-200" : "border-border"}`}>
           <div className="flex items-center gap-1.5">
             <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.seller}</span>
-            {product.sellerVerified ? (
+            {isSupplierFulfilled ? (
+              <span className="inline-flex items-center text-[10px] font-semibold text-[#1D57D8] bg-[#EEF3FF] border border-[#B8CBFF] rounded-full px-1.5 py-0.5" title="Fulfilled by approved supplier" aria-label="Supplier fulfilled">
+                Supplier fulfilled
+              </span>
+            ) : product.sellerVerified ? (
               <span
                 className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-success bg-success/10 border border-emerald-500/30 rounded-full px-1.5 py-0.5"
                 title="Verified Seller"

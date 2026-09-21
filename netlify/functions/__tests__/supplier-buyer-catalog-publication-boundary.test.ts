@@ -17,9 +17,10 @@ describe("supplier buyer catalog publication boundary", () => {
     expect(publish).toContain("server_publish_supplier_marketplace_projection_v1");
   });
 
-  it("does not mutate seller listings or enable checkout", () => {
+  it("keeps seller listings untouched while handing published projections to revalidated supplier checkout", () => {
     expect(publish).toContain("sellerListingMutationPerformed: false");
-    expect(publish).toContain("checkoutEnabled: false");
+    expect(publish).toContain("checkoutEnabled: true");
+    expect(publish).toContain('nextGate: "buyer_checkout_revalidation"');
     expect(publish).not.toContain("create-product");
     expect(migration).toContain("'checkoutEnabled',false");
   });
@@ -33,6 +34,8 @@ describe("supplier buyer catalog publication boundary", () => {
     expect(catalog).toContain("selected.grossCustomerPrice");
     expect(catalog).toContain("selected.sellableQuantity");
     expect(catalog).toContain("Fulfilled by approved supplier");
+    expect(catalog).toContain("payload.imageUrls");
+    expect(catalog).toContain("imageUrls,");
   });
 
   it("keeps publication and projection-read RPCs service-role only while private schema stays unexposed", () => {

@@ -30,7 +30,7 @@ export default function PlatformPage() {
   return (
     <MainLayout>
       <SEO title="Loadify Market Platform | Marketplace for Buyers, Sellers & Business" description="Explore Loadify Market — a UK-operated marketplace with connected buyer and seller environments, marketplace ordering, tracking and controlled business integration paths." canonical="/platform" />
-      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F] md:pt-[122px]">
+      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F] pt-[82px] md:pt-[122px]">
         <section className="relative overflow-hidden border-b border-[#0A234F]/10 bg-[#F8F7F4]">
           <div className="pointer-events-none absolute -right-44 -top-40 h-[520px] w-[520px] rounded-full bg-[#1D57D8]/[0.08] blur-3xl" aria-hidden="true" />
           <div className="mx-auto grid min-h-[650px] max-w-[1480px] items-center gap-12 px-5 py-16 sm:px-7 lg:grid-cols-12 lg:px-10 lg:py-20">

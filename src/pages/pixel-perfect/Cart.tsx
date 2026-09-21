@@ -8,6 +8,7 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import { calculateCheckoutVat } from "@/lib/checkoutTaxDisplay";
+import ProductImagePlaceholder from "@/components/ProductImagePlaceholder";
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, subtotal, priceChangedBanner, dismissPriceBanner, refreshCartPrices } = useCart();
@@ -31,8 +32,14 @@ const Cart = () => {
       .map((item) => item.product.sellerId)
       .filter((id): id is string => Boolean(id))
   );
+  const supplierItems = cartItems.filter((item) => item.product.commercialMode === "loadify_supplier_fulfilled");
+  const sellerItems = cartItems.filter((item) => item.product.commercialMode !== "loadify_supplier_fulfilled");
   const isMultiSellerCart = uniqueSellerIds.size > 1;
-  const isCheckoutBlocked = isMultiSellerCart || ownProductIds.length > 0;
+  const isMixedCommerceCart = supplierItems.length > 0 && sellerItems.length > 0;
+  const supplierProductCount = new Set(supplierItems.map((item) => item.product.id)).size;
+  const hasMultipleSupplierProducts = supplierProductCount > 1;
+  const supplierOnlyCart = supplierItems.length > 0 && sellerItems.length === 0;
+  const isCheckoutBlocked = isMultiSellerCart || isMixedCommerceCart || hasMultipleSupplierProducts || ownProductIds.length > 0;
 
   const vat = calculateCheckoutVat(cartItems);
   const total = subtotal;
@@ -119,6 +126,16 @@ const Cart = () => {
                 <strong>Multiple sellers detected:</strong> Your cart contains items from {uniqueSellerIds.size} different sellers. Please remove items until only one seller remains before checking out.
               </div>
             )}
+            {isMixedCommerceCart && (
+              <div className="lg:col-span-2 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
+                <strong>Separate checkout required:</strong> Supplier-fulfilled products and independent seller products must be purchased separately.
+              </div>
+            )}
+            {hasMultipleSupplierProducts && (
+              <div className="lg:col-span-2 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
+                <strong>Supplier checkout:</strong> Please checkout one supplier-fulfilled product at a time while supplier routing is finalised.
+              </div>
+            )}
             {/* Cart Items */}
             <div className="space-y-4">
               {cartItems.map((item) => {
@@ -127,6 +144,7 @@ const Cart = () => {
                   ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
                   : 0;
                 const isOwnProduct = ownProductIds.includes(product.id);
+                const isSupplierFulfilled = product.commercialMode === "loadify_supplier_fulfilled";
 
                 return (
                   <div
@@ -136,11 +154,15 @@ const Cart = () => {
                     {/* Image */}
                     <Link to={`/product/${product.id}`} className="shrink-0">
                       <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden bg-muted">
-                        <img
-                          src={product.image}
-                          alt={product.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <ProductImagePlaceholder theme="light" />
+                        )}
                       </div>
                     </Link>
 
@@ -163,9 +185,11 @@ const Cart = () => {
                         </div>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-xs text-muted-foreground">{product.seller}</span>
-                          {product.sellerVerified && (
+                          {isSupplierFulfilled ? (
+                            <span className="text-xs text-[#1D57D8] font-medium">Supplier fulfilled</span>
+                          ) : product.sellerVerified ? (
                             <span className="text-xs text-primary font-medium">✓ Active</span>
-                          )}
+                          ) : null}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs text-muted-foreground">{product.condition}</span>
@@ -227,11 +251,11 @@ const Cart = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Delivery</span>
-                    <span className="font-medium text-muted-foreground italic">Set by seller</span>
+                    <span className="font-medium text-muted-foreground italic">{supplierOnlyCart ? "Supplier fulfilment" : isMixedCommerceCart ? "Split checkout required" : "Set by seller"}</span>
                   </div>
                   {vat !== null ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">VAT — not charged by seller</span>
+                      <span className="text-muted-foreground">{supplierItems.length > 0 ? "VAT" : "VAT — not charged by seller"}</span>
                       <span className="font-medium text-foreground">£{vat.toFixed(2)}</span>
                     </div>
                   ) : (
@@ -271,7 +295,7 @@ const Cart = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="h-4 w-4 text-primary shrink-0" />
-                  <span>Delivery is set by the seller</span>
+                  <span>{supplierOnlyCart ? "Fulfilled by an approved supplier" : isMixedCommerceCart ? "Separate checkout required" : "Delivery is set by the seller"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0" />

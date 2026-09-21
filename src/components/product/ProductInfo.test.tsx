@@ -95,4 +95,17 @@ describe("ProductInfo contact CTAs", () => {
     renderProductInfo({ onMessageSeller: vi.fn(), contactActionLoading: "message" });
     expect(screen.getByRole("button", { name: /opening/i })).toBeDisabled();
   });
+
+  it("uses Loadify supplier-fulfilled wording without presenting a marketplace seller fulfilment claim", () => {
+    renderProductInfo({
+      product: { ...product, seller: "Loadify Market", commercialMode: "loadify_supplier_fulfilled" },
+      sellerId: null,
+      onMessageSeller: undefined,
+    });
+    expect(screen.getByText("Approved Supplier Fulfilment")).toBeInTheDocument();
+    expect(screen.getByText("Loadify Market Sale Terms")).toBeInTheDocument();
+    expect(screen.getByText(/stock is held and dispatched by an approved fulfilment supplier/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /buy now/i })).toBeInTheDocument();
+    expect(screen.queryByText("Seller-Fulfilled Delivery")).not.toBeInTheDocument();
+  });
 });
