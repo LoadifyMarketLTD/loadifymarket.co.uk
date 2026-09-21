@@ -8,11 +8,11 @@ describe("Loadify Supplier-Fulfilled checkout preparation boundary", () => {
   const endpoint = repo("netlify/functions/prepare-supplier-checkout.ts");
   const migration = repo("supabase/migrations/20260920200315_supplier_checkout_order_identity.sql");
 
-  it("requires an authenticated buyer and published supplier projection", () => {
+  it("requires an authenticated buyer and a published supplier projection through the service-role read boundary", () => {
     expect(endpoint).toContain('authenticateActiveAccount(event, admin, ["buyer"])');
-    expect(endpoint).toContain('"supplier_marketplace_projections"');
-    expect(endpoint).toContain('projection.status !== "published"');
+    expect(endpoint).toContain("server_get_supplier_marketplace_projection_v1");
     expect(endpoint).toContain('"loadify_supplier_fulfilled"');
+    expect(endpoint).not.toContain('.schema("private")');
   });
 
   it("re-evaluates checkout and economics before reserving stock", () => {

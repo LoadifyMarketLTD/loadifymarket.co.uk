@@ -17,12 +17,9 @@ export const handler: Handler = async (event) => {
   const requestedId = (event.queryStringParameters?.id || "").trim();
   if (requestedId && !UUID_RE.test(requestedId)) return jsonResponse(400, { error: "Invalid catalog item id" }, METHODS);
 
-  let query = admin.schema("private").from("supplier_marketplace_projections")
-    .select("id,canonical_product_id,supplier_offer_id,projection_payload,payload_hash,published_at")
-    .eq("status", "published").eq("commercial_mode", "loadify_supplier_fulfilled").eq("territory", "GB")
-    .order("published_at", { ascending: false }).limit(requestedId ? 1 : 50);
-  if (requestedId) query = query.eq("id", requestedId);
-  const { data: rows, error } = await query;
+  const { data: rows, error } = await admin.rpc("server_get_supplier_marketplace_projection_v1", {
+    p_projection_id: requestedId || null,
+  });
   if (error) return jsonResponse(503, { error: "Supplier catalog unavailable" }, METHODS);
 
   const items = [];

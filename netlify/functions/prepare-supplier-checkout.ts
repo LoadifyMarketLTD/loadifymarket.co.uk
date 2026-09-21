@@ -52,15 +52,13 @@ export const handler: Handler = async (event) => {
   if (!checkoutAttemptId || checkoutAttemptId.length > 120) {
     return jsonResponse(400, { error: "Invalid checkout attempt identity" }, METHODS);
   }
-  const { data: projection, error: projectionError } = await admin
-    .schema("private")
-    .from("supplier_marketplace_projections")
-    .select("id,canonical_product_id,supplier_offer_id,status,commercial_mode,territory")
-    .eq("id", projectionId)
-    .maybeSingle();
+  const { data: projectionRows, error: projectionError } = await admin.rpc(
+    "server_get_supplier_marketplace_projection_v1",
+    { p_projection_id: projectionId },
+  );
+  const projection = Array.isArray(projectionRows) ? projectionRows[0] : null;
 
-  if (projectionError || !projection || projection.status !== "published"
-      || projection.commercial_mode !== "loadify_supplier_fulfilled" || projection.territory !== "GB") {
+  if (projectionError || !projection) {
     return jsonResponse(404, { error: "Supplier product is not available for checkout" }, METHODS);
   }
 

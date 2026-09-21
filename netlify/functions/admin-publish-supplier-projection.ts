@@ -25,10 +25,11 @@ export const handler: Handler = async (event) => {
   } catch { return jsonResponse(400, { error: "Invalid JSON body" }, METHODS); }
   if (!UUID_RE.test(projectionId)) return jsonResponse(400, { error: "Valid projectionId is required" }, METHODS);
 
-  const { data: projection, error: projectionError } = await admin
-    .schema("private").from("supplier_marketplace_projections")
-    .select("id,canonical_product_id,supplier_offer_id,supplier_catalog_item_id,status")
-    .eq("id", projectionId).maybeSingle();
+  const { data: projectionRows, error: projectionError } = await admin.rpc(
+    "server_get_supplier_marketplace_projection_v1",
+    { p_projection_id: projectionId },
+  );
+  const projection = Array.isArray(projectionRows) ? projectionRows[0] : null;
   if (projectionError || !projection) return jsonResponse(404, { error: "Marketplace projection not found" }, METHODS);
 
   const [importDecision, economicsDecision, stockPrice] = await Promise.all([
