@@ -13,6 +13,7 @@
 /products                             /catalog                        301!
 /blog                                 /deals                          301!
 /intellectual-property-complaints     /ip-trademark-complaints        301!
+/wholesale-info                       /trade                           301!
 
 # Legacy transactional-email order links. Preserve the order id so auth can
 # return the buyer to the matching order after sign-in.

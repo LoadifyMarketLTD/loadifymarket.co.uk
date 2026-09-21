@@ -26,7 +26,6 @@ const PUBLIC_MARKETING_ROUTES = [
   '/deals',
   '/about',
   '/contact',
-  '/wholesale-info',
 ] as const;
 
 const PUBLIC_POLICY_ROUTES = [
@@ -77,6 +76,7 @@ const CANONICAL_REDIRECTS = [
   ['/products', '/catalog'],
   ['/blog', '/deals'],
   ['/intellectual-property-complaints', '/ip-trademark-complaints'],
+  ['/wholesale-info', '/trade'],
 ] as const;
 
 describe('SEO foundation contract', () => {
@@ -162,7 +162,7 @@ describe('SEO foundation contract', () => {
     expect(COMMERCIAL_SEO_META['/sellers'].title).toContain('Sell Products Online');
     expect(COMMERCIAL_SEO_META['/business'].title).toContain('B2B Marketplace UK');
     expect(COMMERCIAL_SEO_META['/trade'].title).toContain('Trade Buyers');
-    expect(COMMERCIAL_SEO_META['/suppliers'].title).toContain('Suppliers, Brands & Wholesalers');
+    expect(COMMERCIAL_SEO_META['/suppliers'].title).toContain('Supplier Hub');
 
     for (const [path, meta] of Object.entries(COMMERCIAL_SEO_META)) {
       expect(meta.title.length, `title too long: ${path}`).toBeLessThanOrEqual(70);

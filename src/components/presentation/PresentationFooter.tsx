@@ -3,7 +3,7 @@ import logo from "@/assets/branding/loadify-market-master-whitegold.svg";
 
 const groups = [
   { title: "Platform", links: [["Overview", "/platform"], ["Buyers", "/buyers"], ["Sellers", "/sellers"], ["How It Works", "/how-it-works"], ["Trust", "/trust"]] },
-  { title: "Business", links: [["Overview", "/business"], ["Trade Buyers", "/trade"], ["Suppliers, Brands & Wholesalers", "/suppliers"], ["Partners", "/partners"]] },
+  { title: "Business", links: [["Overview", "/business"], ["Trade Buyers", "/trade"], ["Supplier Hub", "/suppliers"], ["Partners", "/partners"]] },
   { title: "Technology", links: [["Overview", "/technology"], ["Integrations", "/integrations"], ["Developers", "/developers"]] },
   { title: "Company", links: [["About", "/about"], ["Help & FAQ", "/faq"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
 ] as const;

@@ -41,7 +41,6 @@ export const STATIC_PAGES: StaticEntry[] = [
   { loc: '/faq',                                    changefreq: 'monthly', priority: '0.6' },
   { loc: '/contact',                                changefreq: 'monthly', priority: '0.6' },
   { loc: '/about',                                  changefreq: 'monthly', priority: '0.5' },
-  { loc: '/wholesale-info',                         changefreq: 'monthly', priority: '0.6' },
   { loc: '/track-order',                            changefreq: 'monthly', priority: '0.5' },
   { loc: '/terms',                                  changefreq: 'yearly',  priority: '0.4' },
   { loc: '/privacy',                                changefreq: 'yearly',  priority: '0.4' },

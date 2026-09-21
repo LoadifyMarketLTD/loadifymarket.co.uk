@@ -890,7 +890,7 @@ export default function TradeAccount() {
                   { to: "/contact", label: "Contact Us" },
                   { to: "/terms", label: "Terms & Conditions" },
                   { to: "/privacy", label: "Privacy Policy" },
-                  { to: "/wholesale-info", label: "Wholesale Info" },
+                  { to: "/trade", label: "Trade Overview" },
                 ].map((link) => (
                   <li key={link.to}>
                     <Link to={link.to} className="hover:text-white transition-colors">

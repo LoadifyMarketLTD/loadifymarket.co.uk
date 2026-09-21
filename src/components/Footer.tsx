@@ -70,7 +70,7 @@ const Footer = () => (
         <div className="px-5 py-6">
           <p className="text-lg font-black tracking-[-0.02em]">Loadify Market</p>
           <p className="mt-2 text-[12px] leading-5 text-white/72">
-            A UK-operated marketplace where customers can discover and purchase products and approved sellers can build their catalogue and manage marketplace orders.
+            A UK-operated marketplace connecting buyers with independent sellers and governed supplier-fulfilled products. Loadify does not operate a warehouse.
           </p>
           <div className="mt-4 grid gap-1 text-[10px] leading-4 text-white/60">
             <span>XDrive Logistics Ltd · Company No. 13171804</span>
@@ -95,24 +95,24 @@ const Footer = () => (
             </div>
 
             <div className="min-w-0">
-              <ColHeading>Sell</ColHeading>
+              <ColHeading>Sell &amp; Supply</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/register?type=seller">Start Selling</FooterLink>
+                <FooterLink to="/suppliers">Supplier Hub</FooterLink>
                 <FooterLink to="/seller">Seller Dashboard</FooterLink>
-                <FooterLink to="/seller/products/new">List a Product</FooterLink>
-                <FooterLink to="/seller-terms">Seller Fees &amp; Pricing</FooterLink>
                 <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
+                <FooterLink to="/integrations">Supplier Integrations</FooterLink>
               </ul>
             </div>
 
             <div className="min-w-0">
-              <ColHeading>Loadify</ColHeading>
+              <ColHeading>Platform</ColHeading>
               <ul className="space-y-2.5">
+                <FooterLink to="/platform">Platform</FooterLink>
+                <FooterLink to="/technology">Technology</FooterLink>
+                <FooterLink to="/how-it-works">How It Works</FooterLink>
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/contact">Contact Us</FooterLink>
-                <FooterLink to="/contact?topic=partnership">Partner With Us</FooterLink>
-                <FooterLink to="/shipping-policy">Shipping &amp; Delivery</FooterLink>
-                <FooterLink to="/contact?topic=problem">Report a Problem</FooterLink>
               </ul>
             </div>
           </div>
@@ -128,7 +128,7 @@ const Footer = () => (
           </div>
           <div className="mt-4 border-t border-white/10 pt-4 text-[10px] leading-4 text-white/60">
             <p>&copy; 2021 XDrive Logistics Ltd. Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.</p>
-            <p className="mt-2">Transaction-specific seller, fulfilment, delivery and return terms apply.</p>
+            <p className="mt-2">Seller and supplier-fulfilled products use different commercial and fulfilment paths; transaction-specific terms apply.</p>
           </div>
         </div>
       </div>
@@ -150,7 +150,7 @@ const Footer = () => (
             <div className="col-span-2 max-w-xl lg:col-span-1">
               <p className="text-xl font-black tracking-[-0.02em] text-white">Loadify Market</p>
               <p className="mt-3 max-w-lg text-[13px] leading-6 text-white/72">
-                A UK-operated marketplace where customers can discover and purchase products and approved sellers can build their catalogue and manage marketplace orders.
+                A UK-operated marketplace connecting buyers with independent sellers and governed supplier-fulfilled products. Loadify does not operate a warehouse.
               </p>
               <div className="mt-5 grid gap-1 text-[11px] leading-5 text-white/62 sm:grid-cols-2 lg:grid-cols-1">
                 <span>XDrive Logistics Ltd · Company No. 13171804</span>
@@ -172,24 +172,24 @@ const Footer = () => (
             </div>
 
             <div>
-              <ColHeading>Sell</ColHeading>
+              <ColHeading>Sell &amp; Supply</ColHeading>
               <ul className="space-y-2.5">
                 <FooterLink to="/register?type=seller">Start Selling</FooterLink>
+                <FooterLink to="/suppliers">Supplier Hub</FooterLink>
                 <FooterLink to="/seller">Seller Dashboard</FooterLink>
-                <FooterLink to="/seller/products/new">List a Product</FooterLink>
-                <FooterLink to="/seller-terms">Seller Fees &amp; Pricing</FooterLink>
                 <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
+                <FooterLink to="/integrations">Supplier Integrations</FooterLink>
               </ul>
             </div>
 
             <div>
-              <ColHeading>Loadify</ColHeading>
+              <ColHeading>Platform</ColHeading>
               <ul className="space-y-2.5">
+                <FooterLink to="/platform">Platform</FooterLink>
+                <FooterLink to="/technology">Technology</FooterLink>
+                <FooterLink to="/how-it-works">How It Works</FooterLink>
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/contact">Contact Us</FooterLink>
-                <FooterLink to="/contact?topic=partnership">Partner With Us</FooterLink>
-                <FooterLink to="/shipping-policy">Shipping &amp; Delivery</FooterLink>
-                <FooterLink to="/contact?topic=problem">Report a Problem</FooterLink>
               </ul>
             </div>
           </div>
@@ -206,7 +206,7 @@ const Footer = () => (
             </div>
             <div className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-4 text-[11px] leading-5 text-white/62 lg:flex-row lg:items-center lg:justify-between">
               <p>&copy; 2021 XDrive Logistics Ltd. Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.</p>
-              <p className="lg:text-right">Transaction-specific seller, fulfilment, delivery and return terms apply.</p>
+              <p className="lg:text-right">Seller and supplier-fulfilled products use different commercial and fulfilment paths; transaction-specific terms apply.</p>
             </div>
           </div>
         </div>

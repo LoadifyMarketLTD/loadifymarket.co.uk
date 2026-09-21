@@ -23,7 +23,6 @@ const presentationPaths = new Set([
 const nativeProfessionalPaths = new Set([
   ...presentationPaths,
   "/trade-account",
-  "/wholesale-info",
   "/dashboard",
   "/seller",
   "/seller/setup",

@@ -5,8 +5,8 @@ export type CommercialSeoMeta = {
 
 export const COMMERCIAL_SEO_META = {
   '/': {
-    title: 'UK Online Marketplace for Buyers, Sellers & Business | Loadify Market',
-    description: 'Shop products, sell online and source for business through Loadify Market, a UK-operated marketplace connecting buyers, sellers, trade and supplier routes.',
+    title: 'UK Online Marketplace & Supplier Commerce | Loadify Market',
+    description: 'Shop, sell and source through Loadify Market, a UK-operated marketplace connecting buyers, independent sellers, trade buyers and governed supplier routes.',
   },
   '/marketplace': {
     title: 'UK Online Marketplace to Buy & Sell Products | Loadify Market',
@@ -33,8 +33,8 @@ export const COMMERCIAL_SEO_META = {
     description: 'Register as a trade buyer and source products through Loadify Market using a dedicated business purchasing path for traders, companies and organisations.',
   },
   '/suppliers': {
-    title: 'UK Marketplace for Suppliers, Brands & Wholesalers | Loadify Market',
-    description: 'Explore Loadify Market routes for brands, wholesalers, distributors and product suppliers to sell, discuss supply participation or connect commerce systems.',
+    title: 'UK Supplier Hub for Brands & Wholesalers | Loadify Market',
+    description: 'Explore Loadify Market supplier routes for manufacturers, importers, wholesalers and distributors using governed catalogue ingestion and supplier fulfilment.',
   },
 } as const satisfies Record<string, CommercialSeoMeta>;
 

@@ -68,7 +68,6 @@ const PPBuyerTerms = lazy(() => import('./pages/pixel-perfect/BuyerTerms'));
 const PPSellerTerms = lazy(() => import('./pages/pixel-perfect/SellerTerms'));
 const PPDisclaimer = lazy(() => import('./pages/pixel-perfect/Disclaimer'));
 const PPFAQ = lazy(() => import('./pages/pixel-perfect/FAQ'));
-const PPWholesaleInfo = lazy(() => import('./pages/pixel-perfect/WholesaleInfo'));
 const PPCheckoutError = lazy(() => import('./pages/pixel-perfect/CheckoutError'));
 const PPNotFound = lazy(() => import('./pages/pixel-perfect/NotFound'));
 
@@ -212,7 +211,7 @@ export default function AppRoutes() {
           <Route path="disclaimer" element={publicPage(<PPDisclaimer />)} />
           <Route path="faq" element={publicPage(<PPFAQ />)} />
           <Route path="help" element={<Navigate to="/faq" replace />} />
-          <Route path="wholesale-info" element={publicPage(<PPWholesaleInfo />)} />
+          <Route path="wholesale-info" element={<Navigate to="/trade" replace />} />
 
           <Route path="login" element={publicPage(<PPLogin />)} />
           <Route path="register" element={publicPage(<PPSignup />)} />

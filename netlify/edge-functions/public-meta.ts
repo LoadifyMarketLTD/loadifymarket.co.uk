@@ -15,12 +15,12 @@ const PAGE_META: Record<string, PageMeta> = {
     description: 'Explore Loadify Market — a UK-operated marketplace with connected buyer and seller environments, marketplace ordering, tracking and controlled business integration paths.',
   },
   '/technology': {
-    title: 'Loadify Technology | Integrations & Developer Context',
-    description: "Explore Loadify Market's controlled technology, commerce integration and developer connectivity model.",
+    title: 'Loadify Technology | Supplier Foundation & AI Product Builder',
+    description: "Explore Loadify Market's Supplier Foundation, governed catalogue ingestion, AI Product Builder and evidence-led commerce technology model.",
   },
   '/integrations': {
-    title: 'Loadify Integrations | Supplier Commerce & Technology Connectivity',
-    description: "Explore Loadify Market's controlled supplier and commerce integration model, capability validation process and evidence-based connectivity paths.",
+    title: 'Loadify Integrations | Supplier Feeds, APIs & Commerce Connectivity',
+    description: "Explore Loadify Market's provider-neutral supplier ingestion model, supported catalogue transports and evidence-led commerce integration lifecycle.",
   },
   '/partners': {
     title: 'Loadify Partners | Commercial, Technology & Marketplace Partnerships',
