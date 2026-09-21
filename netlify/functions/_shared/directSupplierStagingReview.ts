@@ -12,7 +12,7 @@ import {
 
 const SUPPLIER_KEY = /^[a-z0-9][a-z0-9_-]{2,63}$/;
 const SHA256_HEX = /^[a-f0-9]{64}$/;
-const TRANSPORTS = new Set<DirectSupplierFeedTransport>(['json_api', 'json_feed', 'csv', 'xml', 'sftp']);
+const TRANSPORTS = new Set<DirectSupplierFeedTransport>(['json_api', 'json_feed', 'csv', 'xml', 'sftp', 'manual_catalog']);
 const QUARANTINE_REASONS = new Set<DirectSupplierFeedQuarantineReason>([
   'DUPLICATE_EXTERNAL_VARIANT_REF',
   'UNDECLARED_WAREHOUSE_COUNTRY',

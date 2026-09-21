@@ -19,8 +19,18 @@ describe('supplier provider registry', () => {
     expect(listSupplierProviderDefinitions().every(provider => provider.hostedActivation === 'off')).toBe(true);
   });
 
-  it('does not register Syncee as a Loadify provider', () => {
-    expect(listSupplierProviderDefinitions().map(provider => provider.key)).not.toContain('syncee');
+  it('registers Syncee as an optional fail-closed supplier-network adapter', async () => {
+    const syncee = getSupplierProviderDefinition('syncee');
+    expect(syncee.role).toBe('supplier_network');
+    expect(syncee.hostedActivation).toBe('off');
+    expect(syncee.verifiedCapabilities).toEqual([]);
+    expect(syncee.potentialCapabilities).toEqual(['catalog', 'variants', 'stock', 'price']);
+
+    const adapter = createSupplierProviderAdapter('syncee');
+    expect(adapter.capabilities).toEqual([]);
+    const result = await adapter.listCatalog?.(CONTEXT);
+    expect(result?.ok).toBe(false);
+    expect(result && !result.ok ? result.errorClass : null).toBe('CAPABILITY_UNAVAILABLE');
   });
 
   it('preserves Avasam as the only provider with verified code capabilities', () => {
@@ -87,6 +97,25 @@ describe('Loadify Direct Supplier Contract V1', () => {
         currency: 'GBP',
         amountMinor: 2599,
         stockQuantity: 14,
+        warehouseCountry: 'GB',
+      }],
+    });
+    expect(errors).toEqual([]);
+  });
+
+  it('accepts controlled manual catalog entry through the same governed staging contract', () => {
+    const errors = validateDirectSupplierFeedBatch({
+      contractVersion: 1,
+      supplierKey: 'uk-wholesaler-001',
+      generatedAt: '2026-09-21T09:00:00.000Z',
+      transport: 'manual_catalog',
+      variants: [{
+        externalProductRef: 'MANUAL-100',
+        externalVariantRef: 'MANUAL-100-DEFAULT',
+        title: 'Manually entered supplier product',
+        currency: 'GBP',
+        amountMinor: 1299,
+        stockQuantity: 5,
         warehouseCountry: 'GB',
       }],
     });

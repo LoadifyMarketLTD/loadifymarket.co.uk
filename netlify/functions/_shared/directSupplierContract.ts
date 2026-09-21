@@ -1,7 +1,7 @@
 export const DIRECT_SUPPLIER_CONTRACT_VERSION = 1 as const;
 export const DIRECT_SUPPLIER_MAX_VARIANTS_PER_BATCH = 500 as const;
 
-export type DirectSupplierFeedTransport = 'json_api' | 'json_feed' | 'csv' | 'xml' | 'sftp';
+export type DirectSupplierFeedTransport = 'json_api' | 'json_feed' | 'csv' | 'xml' | 'sftp' | 'manual_catalog';
 
 export interface DirectSupplierVariantRecord {
   externalProductRef: string;

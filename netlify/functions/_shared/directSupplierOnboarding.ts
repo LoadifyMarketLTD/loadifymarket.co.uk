@@ -47,6 +47,7 @@ const FEED_TRANSPORTS = new Set<DirectSupplierFeedTransport>([
   'csv',
   'xml',
   'sftp',
+  'manual_catalog',
 ]);
 const ADAPTER_CAPABILITIES = new Set<SupplierAdapterCapability>([
   'supplier_identity',

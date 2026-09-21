@@ -12,12 +12,13 @@ describe('supplier provider readiness control plane', () => {
       'avasam',
       'bigbuy',
       'direct_supplier',
+      'syncee',
       'appscenic',
       'salehoo',
       'spocket',
       'aliexpress_dsers',
     ]);
-    expect(new Set(readiness.map(item => item.provider)).size).toBe(7);
+    expect(new Set(readiness.map(item => item.provider)).size).toBe(8);
   });
 
   it('makes Avasam an external provider blocker rather than a platform-engineering blocker', () => {
@@ -53,9 +54,14 @@ describe('supplier provider readiness control plane', () => {
   });
 
   it('distinguishes retailer/API/contract blockers for the remaining providers', () => {
+    const syncee = getSupplierProviderReadiness('syncee');
     const appscenic = getSupplierProviderReadiness('appscenic');
     const salehoo = getSupplierProviderReadiness('salehoo');
     const spocket = getSupplierProviderReadiness('spocket');
+
+    expect(syncee.readinessState).toBe('partner_access_required');
+    expect(syncee.blockingDependencies).toEqual(['partner_retailer_api_access']);
+    expect(syncee.verifiedCapabilities).toEqual([]);
 
     expect(appscenic.readinessState).toBe('partner_access_required');
     expect(appscenic.blockingDependencies).toEqual(['partner_retailer_api_access']);
