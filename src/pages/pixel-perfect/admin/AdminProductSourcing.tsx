@@ -50,10 +50,15 @@ export default function AdminProductSourcing() {
   const [merchReview, setMerchReview] = useState<JsonRecord | null>(null);
   const [marketplaceProjection, setMarketplaceProjection] = useState<JsonRecord | null>(null);
   const [projectionPublication, setProjectionPublication] = useState<JsonRecord | null>(null);
+  const [alternateSupplierOfferId, setAlternateSupplierOfferId] = useState("");
+  const [offerBindingReason, setOfferBindingReason] = useState("");
+  const [fallbackAllowed, setFallbackAllowed] = useState(true);
+  const [offerSelection, setOfferSelection] = useState<JsonRecord | null>(null);
+  const [offerBinding, setOfferBinding] = useState<JsonRecord | null>(null);
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -235,6 +240,10 @@ export default function AdminProductSourcing() {
   const verifiedFacts = asRecord(preparedBrief?.verifiedFacts);
   const aiGeneration = asRecord(aiBrief?.generation);
   const aiProviderAvailable = aiGeneration?.available === true;
+  const offerSelectionResult = asRecord(offerSelection?.result);
+  const selectedSupplierOffer = asRecord(offerSelectionResult?.selected);
+  const rankedSupplierOffers = safeRecordArray(offerSelectionResult?.ranked);
+  const rejectedSupplierOffers = safeRecordArray(offerSelectionResult?.rejected);
 
   function updateMerchField(field: keyof MerchandisingDraft, value: string) {
     setMerchDraft((current) => current ? { ...current, [field]: value } : current);
@@ -325,6 +334,71 @@ export default function AdminProductSourcing() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to publish supplier projection.");
     } finally { setLoading(null); }
+  }
+
+  async function evaluateProjectionOffers() {
+    setError(null);
+    setOfferSelection(null);
+    const projection = asRecord(marketplaceProjection?.projection);
+    const projectionId = String(projection?.projectionId ?? "");
+    if (!projectionId) {
+      setError("Create the governed marketplace projection before evaluating supplier offers.");
+      return;
+    }
+
+    setLoading("offerSelection");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-offer-selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "evaluate", projectionId, requestedQuantity: 1, territory: "GB" }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to evaluate supplier offers."));
+      setOfferSelection(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to evaluate supplier offers.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function mutateProjectionOffer(action: "bind" | "approve" | "disable") {
+    setError(null);
+    setOfferBinding(null);
+    const projection = asRecord(marketplaceProjection?.projection);
+    const projectionId = String(projection?.projectionId ?? "");
+    if (!projectionId) {
+      setError("Create the governed marketplace projection before managing supplier offers.");
+      return;
+    }
+    if (!alternateSupplierOfferId.trim() || !offerBindingReason.trim()) {
+      setError("Supplier offer ID and a governance reason are required.");
+      return;
+    }
+
+    setLoading(action === "bind" ? "offerBind" : action === "approve" ? "offerApprove" : "offerDisable");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-offer-selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          projectionId,
+          supplierOfferId: alternateSupplierOfferId.trim(),
+          reason: offerBindingReason.trim(),
+          fallbackAllowed,
+        }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to update supplier offer binding."));
+      setOfferBinding(body);
+      await evaluateProjectionOffers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update supplier offer binding.");
+    } finally {
+      setLoading(null);
+    }
   }
 
   async function checkPublicationGate() {
@@ -1026,10 +1100,88 @@ export default function AdminProductSourcing() {
                       Create governed marketplace projection
                     </Button>
                     {marketplaceProjection && (
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-3 space-y-4">
                         <div className="text-xs font-medium text-emerald-700">
-                          Internal projection created · Buyer visible: {projectionPublication ? "YES" : "NO"} · Checkout: separately gated
+                          Internal projection created · Buyer visible: {projectionPublication ? "YES" : "NO"} · Checkout: multi-supplier gated
                         </div>
+
+                        <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-4">
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                              <div className="text-sm font-semibold">Multi-supplier fulfilment set</div>
+                              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                Add only supplier offers for the same canonical product and territory. Binding does not bypass stock,
+                                economics, shipping, tracking, returns or provider capability gates.
+                              </p>
+                            </div>
+                            <Button type="button" variant="outline" onClick={evaluateProjectionOffers} disabled={loading !== null}>
+                              {loading === "offerSelection" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                              Evaluate eligible offers
+                            </Button>
+                          </div>
+
+                          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                            <label className="space-y-1.5 text-xs font-medium">
+                              Alternative supplier offer ID
+                              <Input
+                                value={alternateSupplierOfferId}
+                                onChange={(e) => setAlternateSupplierOfferId(e.target.value)}
+                                placeholder="Approved offer UUID for the same canonical product"
+                              />
+                            </label>
+                            <label className="space-y-1.5 text-xs font-medium">
+                              Governance reason
+                              <Input
+                                value={offerBindingReason}
+                                onChange={(e) => setOfferBindingReason(e.target.value)}
+                                placeholder="Why this offer is safe for this projection"
+                              />
+                            </label>
+                          </div>
+
+                          <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                            <input
+                              type="checkbox"
+                              checked={fallbackAllowed}
+                              onChange={(e) => setFallbackAllowed(e.target.checked)}
+                              className="h-4 w-4 rounded border-border"
+                            />
+                            Allow as automatic fallback only when the original customer promise is preserved
+                          </label>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button type="button" variant="outline" onClick={() => void mutateProjectionOffer("bind")} disabled={loading !== null}>
+                              {loading === "offerBind" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                              Bind candidate
+                            </Button>
+                            <Button type="button" variant="outline" onClick={() => void mutateProjectionOffer("approve")} disabled={loading !== null}>
+                              {loading === "offerApprove" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                              Approve offer
+                            </Button>
+                            <Button type="button" variant="outline" onClick={() => void mutateProjectionOffer("disable")} disabled={loading !== null}>
+                              {loading === "offerDisable" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                              Disable offer
+                            </Button>
+                          </div>
+
+                          {offerBinding && (
+                            <div className="mt-3 text-xs text-emerald-700">
+                              Supplier offer binding updated successfully.
+                            </div>
+                          )}
+
+                          {offerSelectionResult && (
+                            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                              <Metric
+                                label="Selected supplier"
+                                value={selectedSupplierOffer ? String(selectedSupplierOffer.supplierKey ?? selectedSupplierOffer.supplierOfferId ?? "Eligible") : "None"}
+                              />
+                              <Metric label="Eligible offers" value={String(rankedSupplierOffers.length)} />
+                              <Metric label="Rejected offers" value={String(rejectedSupplierOffers.length)} />
+                            </div>
+                          )}
+                        </div>
+
                         <Button
                           type="button"
                           onClick={publishMarketplaceProjection}
@@ -1040,7 +1192,7 @@ export default function AdminProductSourcing() {
                         </Button>
                         {projectionPublication && (
                           <div className="text-xs text-muted-foreground">
-                            Buyer catalog publication recorded. Checkout still requires fresh supplier reservation and order orchestration.
+                            Buyer catalog publication recorded. Checkout still requires fresh multi-supplier selection, exact SKU reservation and payment revalidation.
                           </div>
                         )}
                       </div>

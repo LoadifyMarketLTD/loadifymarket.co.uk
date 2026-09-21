@@ -51,4 +51,17 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("/.netlify/functions/admin-ai-product-builder-generate");
     expect(page).toContain("Review → Publish");
   });
+
+  it("exposes governed multi-supplier fulfilment controls without provider-specific coupling", () => {
+    expect(page).toContain("Multi-supplier fulfilment set");
+    expect(page).toContain("Evaluate eligible offers");
+    expect(page).toContain("Bind candidate");
+    expect(page).toContain("Approve offer");
+    expect(page).toContain("Disable offer");
+    expect(page).toContain("Allow as automatic fallback only when the original customer promise is preserved");
+    expect(page).toContain("/.netlify/functions/admin-supplier-offer-selection");
+    expect(page).not.toContain("avasam");
+    expect(page).not.toContain("syncee");
+    expect(page).not.toContain("appscenic");
+  });
 });

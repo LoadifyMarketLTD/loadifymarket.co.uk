@@ -268,3 +268,40 @@ Verification:
 - build security tests: 9/9 PASS
 - production build: PASS, 2,456 modules transformed, built in 29.90s
 - existing heic2any large-chunk warning remains unchanged.
+
+## Continuation — provider-neutral multi-supplier runtime live
+
+- Expanded Supplier Foundation with Syncee as an optional fail-closed supplier-network adapter. No Syncee capability is treated as verified and hosted activation remains off.
+- Direct Supplier staging now includes manual_catalog in addition to JSON API/feed, CSV, XML and SFTP.
+- Added deterministic multi-supplier offer selection for one canonical product. Mandatory catalog, economics, stock/price, shipping, order-submission, acknowledgement, tracking and returns gates all fail closed.
+- Added admin-governed projection-to-offer bindings with explicit bind / approve / disable state. Supplier substitution is never implicit.
+- Added safe fallback selection. A fallback is rejected if it would regress the customer promise for territory, currency, customer price, dispatch SLA or return window.
+- Supplier catalog, checkout and payment initialisation now use the selected eligible offer rather than assuming the original projection supplier.
+- Checkout snapshots the exact supplier external variant/SKU and pricing snapshot into the order, reserves that exact supplier offer, and payment revalidates the same variant plus pricing snapshot before Stripe PaymentIntent creation.
+- No supplier provider was activated and no real supplier order or payment was created.
+
+Verification before deployment:
+- full Vitest suite: 212/212 files PASS; 1,313/1,313 tests PASS
+- TypeScript: PASS
+- ESLint: PASS
+- canonical migration health: PASS (194 migrations)
+- security build tests: 9/9 PASS
+- production build: PASS; 2,456 modules transformed; built in 39.09s
+- existing heic2any chunk-size warning remains unchanged.
+
+Production:
+- migration 20260921091538 supplier projection multi-offer bindings applied successfully to Supabase.
+- verified production schema: bindings table, admin binding RPC, candidate RPC, selected-offer checkout RPC and supplierExternalVariantRefSnapshot column all present.
+- main advanced by fast-forward from 6a9956b2 to 0cafd9e1.
+- Netlify deploy completed successfully.
+- live smoke: home 200; supplier-catalog 200 with empty catalog; new admin multi-offer endpoint 401 without auth; prepare-supplier-checkout 401 without auth; create-supplier-payment-intent 401 without auth.
+- production currently has 0 supplier marketplace projections and 0 projection-offer bindings, so no supplier product has been published by this deployment.
+
+## Continuation — Admin multi-supplier fulfilment controls
+
+- Admin Product Sourcing now exposes the governed multi-supplier fulfilment set after a marketplace projection is created.
+- Admin can evaluate eligible offers, bind a candidate, explicitly approve it, disable it, and choose whether it may be used as an automatic fallback.
+- The UI states that fallback is allowed only when the original customer promise is preserved and that bindings do not bypass stock, economics, shipping, tracking, returns or provider capability gates.
+- The operator surface remains provider-neutral and contains no Avasam/Syncee/AppScenic-specific branching.
+- Focused UI/runtime verification: 19/19 PASS; TypeScript PASS; focused ESLint PASS.
+- Production build after the UI addition: PASS; 2,456 modules transformed; built in 32.61s.
