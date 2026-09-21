@@ -45,8 +45,11 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("Verify supplier capability");
     expect(page).toContain("Register / verify adapter");
     expect(page).toContain("Remote acquisition runtime");
+    expect(page).toContain("/.netlify/functions/admin-supplier-acquisition-preflight");
     expect(page).toContain("/.netlify/functions/admin-supplier-acquisition-control");
     expect(page).toContain("/.netlify/functions/admin-direct-supplier-acquire");
+    expect(page).toContain("Preflight configRef");
+    expect(page).toContain("Secret material returned: NO");
     expect(page).toContain("Save acquisition control");
     expect(page).toContain("Acquire now");
     expect(page).toContain("env:SUPPLIER_ACQUISITION_ACME_V1");

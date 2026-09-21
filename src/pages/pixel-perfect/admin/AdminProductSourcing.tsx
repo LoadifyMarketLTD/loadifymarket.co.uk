@@ -95,6 +95,7 @@ export default function AdminProductSourcing() {
   const [acquisitionMode, setAcquisitionMode] = useState<"manual" | "scheduled">("manual");
   const [acquisitionRefreshMinutes, setAcquisitionRefreshMinutes] = useState("60");
   const [acquisitionResult, setAcquisitionResult] = useState<JsonRecord | null>(null);
+  const [acquisitionPreflight, setAcquisitionPreflight] = useState<JsonRecord | null>(null);
   const [onboardingReadiness, setOnboardingReadiness] = useState<JsonRecord | null>(null);
   const [qualificationEvidenceType, setQualificationEvidenceType] = useState("identity");
   const [qualificationSourceRef, setQualificationSourceRef] = useState("");
@@ -111,7 +112,7 @@ export default function AdminProductSourcing() {
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "transportNormalize" | "acquisitionControl" | "acquireNow" | "onboardingReadiness" | "qualification" | "sla" | "compliance" | "lifecycle" | "capability" | "adapter" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "transportNormalize" | "acquisitionPreflight" | "acquisitionControl" | "acquireNow" | "onboardingReadiness" | "qualification" | "sla" | "compliance" | "lifecycle" | "capability" | "adapter" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -150,6 +151,9 @@ export default function AdminProductSourcing() {
   const normalizationVariants = safeRecordArray(normalizationBatch?.variants);
   const acquisitionRun = asRecord(acquisitionResult?.acquisition);
   const acquisitionControl = asRecord(acquisitionResult?.control);
+  const acquisitionPreflightSnapshot = asRecord(acquisitionPreflight?.preflight);
+  const acquisitionPreflightBinding = asRecord(acquisitionPreflightSnapshot?.binding);
+  const acquisitionPreflightConfig = asRecord(acquisitionPreflightSnapshot?.config);
   const readinessSnapshot = asRecord(onboardingReadiness?.readiness);
   const resolvedSupplierId = String(readinessSnapshot?.supplierId ?? onboardingCandidate?.supplierId ?? "");
   const readinessBlockers = Array.isArray(readinessSnapshot?.blockers)
@@ -386,6 +390,42 @@ export default function AdminProductSourcing() {
       setTransportNormalization(body);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to normalize supplier source.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function preflightAcquisitionConfig() {
+    setError(null);
+    setAcquisitionPreflight(null);
+    const supplierKey = supplierOnboarding.supplierKey.trim().toLowerCase();
+    const configRef = supplierOnboarding.configRef.trim();
+    if (!supplierKey) {
+      setError("Supplier key is required before config preflight.");
+      return;
+    }
+    if (!/^env:[A-Z][A-Z0-9_]{2,127}$/.test(configRef)) {
+      setError("Config preflight requires configRef in env:VARIABLE_NAME format.");
+      return;
+    }
+
+    setLoading("acquisitionPreflight");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-acquisition-preflight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplierKey,
+          configRef,
+          transport: supplierOnboarding.feedTransport,
+          sourceFormat: supplierOnboarding.sourceFormat,
+        }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to preflight acquisition config."));
+      setAcquisitionPreflight(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to preflight acquisition config.");
     } finally {
       setLoading(null);
     }
@@ -1356,6 +1396,10 @@ export default function AdminProductSourcing() {
               />
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={() => void preflightAcquisitionConfig()} disabled={loading !== null || !supplierOnboarding.supplierKey.trim() || !supplierOnboarding.configRef.trim()}>
+                {loading === "acquisitionPreflight" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                Preflight configRef
+              </Button>
               <Button type="button" variant="outline" onClick={() => void saveAcquisitionControl()} disabled={loading !== null || !resolvedSupplierId}>
                 {loading === "acquisitionControl" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
                 Save acquisition control
@@ -1365,6 +1409,23 @@ export default function AdminProductSourcing() {
                 Acquire now
               </Button>
             </div>
+
+            {acquisitionPreflightSnapshot && (
+              <div className="mt-3 rounded-xl border border-border bg-card p-3">
+                <div className="grid gap-2 text-sm sm:grid-cols-3">
+                  <Metric label="Secret provisioned" value={acquisitionPreflightSnapshot.provisioned === true ? "YES" : "NO"} />
+                  <Metric label="Config valid" value={acquisitionPreflightSnapshot.valid === true ? "YES" : "NO"} />
+                  <Metric label="Binding" value={acquisitionPreflightSnapshot.bound === true ? "MATCH" : "BLOCKED"} />
+                  <Metric label="Supplier key" value={acquisitionPreflightBinding?.supplierKeyMatches === true ? "MATCH" : "—"} />
+                  <Metric label="Transport" value={acquisitionPreflightBinding?.transportMatches === true ? "MATCH" : "—"} />
+                  <Metric label="Source format" value={acquisitionPreflightBinding?.sourceFormatMatches === true ? "MATCH" : "—"} />
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Preflight performs no DNS lookup or supplier request. Secret material returned: NO. External access: NO.
+                  {acquisitionPreflightConfig?.kind ? ` Runtime config: ${String(acquisitionPreflightConfig.kind)}.` : ""}
+                </div>
+              </div>
+            )}
             <p className="mt-3 text-xs leading-5 text-muted-foreground">
               Scheduled mode is evaluated every 15 minutes but only suppliers explicitly enabled here can run.
               Remote fetches are limited, redirect-free, public-network only and persist only to governed staging/quarantine.
