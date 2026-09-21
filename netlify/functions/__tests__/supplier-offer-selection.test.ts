@@ -11,6 +11,7 @@ const base = (overrides: Partial<SupplierOfferSelectionCandidate> = {}): Supplie
   supplierId: '00000000-0000-4000-8000-000000000101',
   supplierKey: 'supplier-a',
   canonicalProductId: '00000000-0000-4000-8000-000000000201',
+  externalVariantRef: 'SKU-BASE',
   territory: 'GB',
   currency: 'GBP',
   requestedQuantity: 1,
