@@ -117,8 +117,11 @@ function buildResponseFromResult(result: HandlerResponse | void): Response {
     }
   }
 
+  const status = result.statusCode;
+  const bodyForbidden = status === 204 || status === 205 || status === 304;
   let body: BodyInit | null = null;
-  if (result.body != null) {
+
+  if (!bodyForbidden && result.body != null) {
     if (result.isBase64Encoded) {
       const binaryString = atob(result.body);
       const bytes = new Uint8Array(binaryString.length);
@@ -131,8 +134,8 @@ function buildResponseFromResult(result: HandlerResponse | void): Response {
     }
   }
 
-  return new Response(body, {
-    status: result.statusCode,
+  return new Response(bodyForbidden ? null : body, {
+    status,
     headers,
   });
 }
