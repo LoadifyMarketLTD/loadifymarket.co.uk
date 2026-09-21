@@ -26,6 +26,17 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("API / JSON API");
     expect(page).toContain("JSON feed / feed URL");
     expect(page).toContain("Manual catalog");
+    expect(page).toContain("Supplier warehouses");
+    expect(page).toContain("main:GB,eu-hub:IE");
+    expect(page).toContain("Qualification → capability verification → catalog handoff");
+    expect(page).toContain("/.netlify/functions/admin-supplier-onboarding-readiness");
+    expect(page).toContain("/.netlify/functions/admin-supplier-onboarding-capability");
+    expect(page).toContain("Verify qualification evidence");
+    expect(page).toContain("Activate reviewed SLA");
+    expect(page).toContain("Record approved GB compliance");
+    expect(page).toContain("Apply lifecycle decision");
+    expect(page).toContain("Verify supplier capability");
+    expect(page).toContain("Register / verify adapter");
   });
 
   it("uses the existing governed Direct Supplier review and Phase F plan endpoints", () => {

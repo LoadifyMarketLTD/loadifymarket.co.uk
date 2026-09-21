@@ -25,6 +25,7 @@ interface DirectSupplierOnboardingForm {
   registrationNumber: string;
   vatNumber: string;
   feedTransport: "json_api" | "json_feed" | "csv" | "xml" | "sftp" | "manual_catalog";
+  warehouseDeclarations: string;
   territories: string;
   capabilities: string;
   configRef: string;
@@ -79,15 +80,28 @@ export default function AdminProductSourcing() {
   const [sourcePolicies, setSourcePolicies] = useState<JsonRecord[]>([]);
   const [supplierOnboarding, setSupplierOnboarding] = useState<DirectSupplierOnboardingForm>({
     supplierKey: "", legalName: "", registrationCountry: "GB", registrationNumber: "", vatNumber: "",
-    feedTransport: "csv", territories: "GB", capabilities: "supplier_identity,catalog,stock,price,shipping,tracking,returns",
+    feedTransport: "csv", warehouseDeclarations: "main:GB", territories: "GB", capabilities: "catalog,variants,stock,price",
     configRef: "", commercialTermsRef: "", currency: "GBP", paymentTermsDays: "", dispatchSlaHours: "",
     returnWindowDays: "", onboardingStatus: "draft", reviewReason: "",
   });
   const [supplierOnboardingResult, setSupplierOnboardingResult] = useState<JsonRecord | null>(null);
+  const [onboardingReadiness, setOnboardingReadiness] = useState<JsonRecord | null>(null);
+  const [qualificationEvidenceType, setQualificationEvidenceType] = useState("identity");
+  const [qualificationSourceRef, setQualificationSourceRef] = useState("");
+  const [qualificationSummary, setQualificationSummary] = useState("");
+  const [capabilityName, setCapabilityName] = useState("catalog");
+  const [capabilitySourceRef, setCapabilitySourceRef] = useState("");
+  const [capabilitySummary, setCapabilitySummary] = useState("");
+  const [complianceSourceRef, setComplianceSourceRef] = useState("");
+  const [complianceSummary, setComplianceSummary] = useState("");
+  const [lifecycleTarget, setLifecycleTarget] = useState<"verification" | "approved">("verification");
+  const [onboardingGovernanceReason, setOnboardingGovernanceReason] = useState("");
+  const [slaVersion, setSlaVersion] = useState("1");
+  const [adapterStatus, setAdapterStatus] = useState<"verification" | "active">("verification");
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "onboardingReadiness" | "qualification" | "sla" | "compliance" | "lifecycle" | "capability" | "adapter" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -118,6 +132,19 @@ export default function AdminProductSourcing() {
   const previewFacts = asRecord(preview?.facts);
   const previewImages = Array.isArray(previewFacts?.images)
     ? previewFacts.images.filter((item): item is string => typeof item === "string")
+    : [];
+  const onboardingCandidateEnvelope = asRecord(supplierOnboardingResult?.candidate);
+  const onboardingCandidate = asRecord(onboardingCandidateEnvelope?.candidate);
+  const readinessSnapshot = asRecord(onboardingReadiness?.readiness);
+  const resolvedSupplierId = String(readinessSnapshot?.supplierId ?? onboardingCandidate?.supplierId ?? "");
+  const readinessBlockers = Array.isArray(readinessSnapshot?.blockers)
+    ? readinessSnapshot.blockers.filter((item): item is string => typeof item === "string")
+    : [];
+  const missingQualification = Array.isArray(readinessSnapshot?.missingQualificationEvidence)
+    ? readinessSnapshot.missingQualificationEvidence.filter((item): item is string => typeof item === "string")
+    : [];
+  const missingCapabilities = Array.isArray(readinessSnapshot?.missingCapabilityEvidence)
+    ? readinessSnapshot.missingCapabilityEvidence.filter((item): item is string => typeof item === "string")
     : [];
 
   const canPlan = useMemo(
@@ -210,12 +237,30 @@ export default function AdminProductSourcing() {
 
     const territories = supplierOnboarding.territories.split(",").map((item) => item.trim().toUpperCase()).filter(Boolean);
     const capabilities = supplierOnboarding.capabilities.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
+    const warehouseDeclarations = supplierOnboarding.warehouseDeclarations
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => {
+        const separator = item.lastIndexOf(":");
+        if (separator <= 0) return null;
+        const externalWarehouseRef = item.slice(0, separator).trim();
+        const country = item.slice(separator + 1).trim().toUpperCase();
+        return externalWarehouseRef && /^[A-Z]{2}$/.test(country)
+          ? { externalWarehouseRef, country }
+          : null;
+      })
+      .filter((item): item is { externalWarehouseRef: string; country: string } => item !== null);
     if (!supplierOnboarding.supplierKey.trim() || !supplierOnboarding.legalName.trim()) {
       setError("Supplier key and legal name are required for Direct Supplier onboarding.");
       return;
     }
     if (territories.length === 0) {
       setError("At least one supported territory is required.");
+      return;
+    }
+    if (warehouseDeclarations.length === 0) {
+      setError("Declare at least one supplier warehouse as reference:country, for example main:GB.");
       return;
     }
 
@@ -232,7 +277,7 @@ export default function AdminProductSourcing() {
           registrationNumber: supplierOnboarding.registrationNumber.trim() || undefined,
           vatNumber: supplierOnboarding.vatNumber.trim() || undefined,
           feedTransport: supplierOnboarding.feedTransport,
-          warehouseDeclarations: [],
+          warehouseDeclarations,
           supportedTerritories: territories,
           requestedCapabilities: capabilities,
           commercialApproval: false,
@@ -276,6 +321,167 @@ export default function AdminProductSourcing() {
     } finally {
       setLoading(null);
     }
+  }
+
+  async function evaluateOnboardingReadiness() {
+    setError(null);
+    setOnboardingReadiness(null);
+    const key = supplierOnboarding.supplierKey.trim().toLowerCase() || supplierKey.trim().toLowerCase();
+    if (!key) {
+      setError("Enter a supplier key before evaluating onboarding readiness.");
+      return;
+    }
+    setLoading("onboardingReadiness");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-onboarding-readiness", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ supplierKey: key, territory: "GB" }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to evaluate supplier onboarding readiness."));
+      setOnboardingReadiness(body);
+      setSupplierKey(key);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to evaluate supplier onboarding readiness.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function runFoundationMutation(
+    action: "set_qualification" | "activate_sla" | "set_compliance" | "set_lifecycle" | "register_adapter",
+    payload: JsonRecord,
+    loadingKey: "qualification" | "sla" | "compliance" | "lifecycle" | "adapter",
+  ) {
+    if (!resolvedSupplierId) {
+      setError("Resolve the Supplier Foundation ID first by saving onboarding or refreshing readiness.");
+      return false;
+    }
+    setError(null);
+    setLoading(loadingKey);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-foundation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, payload: { supplierId: resolvedSupplierId, ...payload } }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Supplier Foundation update failed."));
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Supplier Foundation update failed.");
+      return false;
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function saveQualificationEvidence() {
+    if (!qualificationSourceRef.trim()) {
+      setError("Qualification source reference is required for verified evidence.");
+      return;
+    }
+    const ok = await runFoundationMutation("set_qualification", {
+      evidenceType: qualificationEvidenceType,
+      status: "verified",
+      sourceRef: qualificationSourceRef.trim(),
+      evidenceSummary: qualificationSummary.trim() || undefined,
+    }, "qualification");
+    if (ok) await evaluateOnboardingReadiness();
+  }
+
+  async function activateSupplierSla() {
+    if (!supplierOnboarding.commercialTermsRef.trim()) {
+      setError("Commercial terms reference is required before activating the supplier SLA.");
+      return;
+    }
+    const ok = await runFoundationMutation("activate_sla", {
+      version: slaVersion,
+      commercialTermsRef: supplierOnboarding.commercialTermsRef.trim(),
+      dispatchHours: supplierOnboarding.dispatchSlaHours || undefined,
+      returnWindowDays: supplierOnboarding.returnWindowDays || undefined,
+      effectiveFrom: new Date().toISOString(),
+    }, "sla");
+    if (ok) await evaluateOnboardingReadiness();
+  }
+
+  async function saveSupplierCompliance() {
+    if (!complianceSourceRef.trim()) {
+      setError("Compliance source reference is required.");
+      return;
+    }
+    const ok = await runFoundationMutation("set_compliance", {
+      territory: "GB",
+      riskClass: "green",
+      status: "approved",
+      evidenceSummary: complianceSummary.trim() || "Reviewed supplier compliance evidence",
+      sourceRefs: [complianceSourceRef.trim()],
+    }, "compliance");
+    if (ok) await evaluateOnboardingReadiness();
+  }
+
+  async function advanceSupplierLifecycle() {
+    if (!onboardingGovernanceReason.trim()) {
+      setError("A lifecycle governance reason is required.");
+      return;
+    }
+    const ok = await runFoundationMutation("set_lifecycle", {
+      status: lifecycleTarget,
+      reason: onboardingGovernanceReason.trim(),
+    }, "lifecycle");
+    if (ok) await evaluateOnboardingReadiness();
+  }
+
+  async function saveSupplierCapabilityEvidence() {
+    if (!resolvedSupplierId || !capabilitySourceRef.trim()) {
+      setError("Resolve the supplier and provide a capability evidence source reference.");
+      return;
+    }
+    setError(null);
+    setLoading("capability");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-onboarding-capability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplierId: resolvedSupplierId,
+          territory: "GB",
+          capability: capabilityName,
+          status: "verified",
+          sourceRefs: [capabilitySourceRef.trim()],
+          evidenceSummary: capabilitySummary.trim() || undefined,
+        }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) throw new Error(String(body.error ?? "Unable to save supplier capability evidence."));
+      await evaluateOnboardingReadiness();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save supplier capability evidence.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function registerDirectSupplierAdapter() {
+    const capabilities = supplierOnboarding.capabilities
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
+    if (!supplierOnboarding.configRef.trim()) {
+      setError("A server-side config reference is required before adapter registration.");
+      return;
+    }
+    const ok = await runFoundationMutation("register_adapter", {
+      providerKey: "direct_supplier",
+      adapterKey: "direct_supplier",
+      interfaceVersion: 1,
+      adapterVersion: "1.0.0",
+      status: adapterStatus,
+      capabilities,
+      configRef: supplierOnboarding.configRef.trim(),
+    }, "adapter");
+    if (ok) await evaluateOnboardingReadiness();
   }
 
   async function loadReview(event: FormEvent) {
@@ -777,6 +983,10 @@ export default function AdminProductSourcing() {
             <Input value={supplierOnboarding.vatNumber} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, vatNumber: e.target.value }))} />
           </label>
           <label className="space-y-1.5 text-sm font-medium">
+            Supplier warehouses
+            <Input value={supplierOnboarding.warehouseDeclarations} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, warehouseDeclarations: e.target.value }))} placeholder="main:GB,eu-hub:IE" />
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
             Supported territories
             <Input value={supplierOnboarding.territories} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, territories: e.target.value }))} placeholder="GB,IE" />
           </label>
@@ -840,6 +1050,161 @@ export default function AdminProductSourcing() {
             </div>
           )}
         </form>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="font-semibold">Qualification → capability verification → catalog handoff</h2>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-muted-foreground">
+              Record only reviewed evidence. Direct Supplier capability verification is supplier-specific; one supplier can never validate another.
+              Catalog ingestion remains blocked until the Supplier Foundation, commercial/SLA, compliance and active catalog adapter gates all pass.
+            </p>
+          </div>
+          <Button type="button" variant="outline" onClick={() => void evaluateOnboardingReadiness()} disabled={loading !== null}>
+            {loading === "onboardingReadiness" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+            Refresh readiness
+          </Button>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Metric label="Supplier ID" value={resolvedSupplierId || "Unresolved"} />
+          <Metric label="Lifecycle" value={String(readinessSnapshot?.lifecycleStatus ?? "—")} />
+          <Metric label="Onboarding" value={String(readinessSnapshot?.onboardingStatus ?? "—")} />
+          <Metric label="Catalog handoff" value={readinessSnapshot?.catalogIngestionEligible === true ? "READY" : "BLOCKED"} />
+        </div>
+
+        {readinessSnapshot && (
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
+            <div className="rounded-xl border border-border bg-background p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Readiness blockers</div>
+              <div className="mt-2 text-sm">{readinessBlockers.length ? readinessBlockers.join(" · ") : "None"}</div>
+            </div>
+            <div className="rounded-xl border border-border bg-background p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Missing qualification</div>
+              <div className="mt-2 text-sm">{missingQualification.length ? missingQualification.join(" · ") : "None"}</div>
+            </div>
+            <div className="rounded-xl border border-border bg-background p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Missing capability evidence</div>
+              <div className="mt-2 text-sm">{missingCapabilities.length ? missingCapabilities.join(" · ") : "None"}</div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-2">
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="text-sm font-semibold">1. Qualification evidence</div>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Supplier Foundation requires current evidence for identity, business, fulfilment, feed/import quality, tracking, returns, documentation, compliance and content rights.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <select value={qualificationEvidenceType} onChange={(e) => setQualificationEvidenceType(e.target.value)} className="h-10 rounded-md border border-input bg-card px-3 text-sm">
+                {["identity","business_identity","warehouse_origin","uk_shipping","api_feed_capability","stock_reliability","price_reliability","tracking","returns","documentation","compliance","content_rights"].map((value) => (
+                  <option key={value} value={value}>{value === "api_feed_capability" ? "feed/import capability" : value.replace(/_/g, " ")}</option>
+                ))}
+              </select>
+              <Input value={qualificationSourceRef} onChange={(e) => setQualificationSourceRef(e.target.value)} placeholder="Evidence source reference" />
+              <Input className="sm:col-span-2" value={qualificationSummary} onChange={(e) => setQualificationSummary(e.target.value)} placeholder="Reviewed evidence summary" />
+            </div>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => void saveQualificationEvidence()} disabled={loading !== null || !resolvedSupplierId}>
+              {loading === "qualification" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Verify qualification evidence
+            </Button>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="text-sm font-semibold">2. Commercial terms & SLA</div>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Activates a versioned internal SLA record only. It does not enable Supplier Commerce or provider ordering.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <Input value={slaVersion} onChange={(e) => setSlaVersion(e.target.value)} placeholder="SLA version" />
+              <Input value={supplierOnboarding.commercialTermsRef} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, commercialTermsRef: e.target.value }))} placeholder="Commercial terms reference" />
+              <Input type="number" min="1" value={supplierOnboarding.dispatchSlaHours} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, dispatchSlaHours: e.target.value }))} placeholder="Dispatch SLA hours" />
+              <Input type="number" min="0" value={supplierOnboarding.returnWindowDays} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, returnWindowDays: e.target.value }))} placeholder="Return window days" />
+            </div>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => void activateSupplierSla()} disabled={loading !== null || !resolvedSupplierId}>
+              {loading === "sla" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Activate reviewed SLA
+            </Button>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="text-sm font-semibold">3. GB compliance decision</div>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Approval requires a real source reference. Red-risk suppliers remain fail-closed in the database.
+            </p>
+            <div className="mt-3 space-y-3">
+              <Input value={complianceSourceRef} onChange={(e) => setComplianceSourceRef(e.target.value)} placeholder="Compliance source reference" />
+              <Input value={complianceSummary} onChange={(e) => setComplianceSummary(e.target.value)} placeholder="Compliance review summary" />
+            </div>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => void saveSupplierCompliance()} disabled={loading !== null || !resolvedSupplierId}>
+              {loading === "compliance" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Record approved GB compliance
+            </Button>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="text-sm font-semibold">4. Supplier lifecycle</div>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Approval is rejected unless all canonical qualification, SLA and compliance gates are already satisfied.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <select value={lifecycleTarget} onChange={(e) => setLifecycleTarget(e.target.value as "verification" | "approved")} className="h-10 rounded-md border border-input bg-card px-3 text-sm">
+                <option value="verification">Verification</option>
+                <option value="approved">Approved</option>
+              </select>
+              <Input value={onboardingGovernanceReason} onChange={(e) => setOnboardingGovernanceReason(e.target.value)} placeholder="Governance reason" />
+            </div>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => void advanceSupplierLifecycle()} disabled={loading !== null || !resolvedSupplierId}>
+              {loading === "lifecycle" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Apply lifecycle decision
+            </Button>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="text-sm font-semibold">5. Supplier-specific capability evidence</div>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              This evidence belongs to this supplier only. Verify each requested capability from real documentation, test evidence or contractual proof.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <select value={capabilityName} onChange={(e) => setCapabilityName(e.target.value)} className="h-10 rounded-md border border-input bg-card px-3 text-sm">
+                {["supplier_identity","catalog","variants","stock","price","shipping","order_submission","acknowledgement","tracking","cancellation","returns","reimbursement"].map((value) => (
+                  <option key={value} value={value}>{value.replace(/_/g, " ")}</option>
+                ))}
+              </select>
+              <Input value={capabilitySourceRef} onChange={(e) => setCapabilitySourceRef(e.target.value)} placeholder="Capability evidence source" />
+              <Input className="sm:col-span-2" value={capabilitySummary} onChange={(e) => setCapabilitySummary(e.target.value)} placeholder="What was verified" />
+            </div>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => void saveSupplierCapabilityEvidence()} disabled={loading !== null || !resolvedSupplierId}>
+              {loading === "capability" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Verify supplier capability
+            </Button>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-4">
+            <div className="text-sm font-semibold">6. Direct Supplier adapter & catalog handoff</div>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Verification mode is non-live. Active mode is database-blocked until every registered capability has current supplier-specific evidence.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <select value={adapterStatus} onChange={(e) => setAdapterStatus(e.target.value as "verification" | "active")} className="h-10 rounded-md border border-input bg-card px-3 text-sm">
+                <option value="verification">Verification</option>
+                <option value="active">Active (evidence required)</option>
+              </select>
+              <Input value={supplierOnboarding.configRef} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, configRef: e.target.value }))} placeholder="Server config reference" />
+            </div>
+            <Button type="button" variant="outline" className="mt-3" onClick={() => void registerDirectSupplierAdapter()} disabled={loading !== null || !resolvedSupplierId}>
+              {loading === "adapter" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Register / verify adapter
+            </Button>
+            <div className="mt-3 text-xs text-muted-foreground">
+              {readinessSnapshot?.catalogIngestionEligible === true
+                ? "Catalog handoff is READY. Continue below with governed batch review and Phase F import planning."
+                : "Catalog handoff remains BLOCKED. Resolve the readiness blockers above first."}
+            </div>
+          </div>
+        </div>
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
