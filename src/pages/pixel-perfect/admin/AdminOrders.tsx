@@ -24,6 +24,7 @@ interface Order {
   total: number;
   status: string;
   date: string;
+  commercialMode?: string | null;
   listingContext?: "product" | "service" | null;
   hasValidPaymentEvidence?: boolean;
   paymentEvidenceSource?: string | null;
@@ -35,6 +36,14 @@ interface Order {
     reason: string;
     details: string | null;
     status: string;
+    createdAt: string;
+  } | null;
+  returnRequest?: {
+    id: string;
+    reason: string;
+    status: string;
+    commercialMode: string | null;
+    supplierReturnCaseId: string | null;
     createdAt: string;
   } | null;
 }
@@ -65,6 +74,97 @@ const AdminOrders = () => {
   const [releaseError, setReleaseError] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [rejectionLoading, setRejectionLoading] = useState(false);
+  const [supplierOpsLoading, setSupplierOpsLoading] = useState(false);
+  const [supplierOpsAction, setSupplierOpsAction] = useState<string | null>(null);
+  const [supplierHandshake, setSupplierHandshake] = useState<Record<string, unknown> | null>(null);
+  const [supplierTracking, setSupplierTracking] = useState<Record<string, unknown> | null>(null);
+  const [supplierReturns, setSupplierReturns] = useState<Record<string, unknown> | null>(null);
+
+  const refreshSupplierOps = useCallback(async (order: Order) => {
+    if (order.commercialMode !== "loadify_supplier_fulfilled") {
+      setSupplierHandshake(null);
+      setSupplierTracking(null);
+      setSupplierReturns(null);
+      return;
+    }
+    setSupplierOpsLoading(true);
+    try {
+      const [handshakeResponse, trackingResponse, returnsResponse] = await Promise.all([
+        authorizedFetch("/.netlify/functions/admin-supplier-order-handshake", {
+          method: "POST",
+          body: JSON.stringify({ action: "status", orderId: order.id }),
+        }),
+        authorizedFetch("/.netlify/functions/admin-supplier-tracking", {
+          method: "POST",
+          body: JSON.stringify({ action: "status", orderId: order.id }),
+        }),
+        authorizedFetch("/.netlify/functions/admin-supplier-returns", {
+          method: "POST",
+          body: JSON.stringify({ action: "status", orderId: order.id }),
+        }),
+      ]);
+      const [handshakeBody, trackingBody, returnsBody] = await Promise.all([
+        handshakeResponse.json(),
+        trackingResponse.json(),
+        returnsResponse.json(),
+      ]) as Array<Record<string, unknown>>;
+      setSupplierHandshake(handshakeResponse.ok ? (handshakeBody.result as Record<string, unknown> ?? handshakeBody) : handshakeBody);
+      setSupplierTracking(trackingResponse.ok ? (trackingBody.result as Record<string, unknown> ?? trackingBody) : trackingBody);
+      setSupplierReturns(returnsResponse.ok ? (returnsBody.result as Record<string, unknown> ?? returnsBody) : returnsBody);
+    } finally {
+      setSupplierOpsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selected) void refreshSupplierOps(selected);
+  }, [selected, refreshSupplierOps]);
+
+  const runSupplierRuntime = async (order: Order, action: "submit" | "recover" | "tracking") => {
+    setSupplierOpsAction(action);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-order-runtime", {
+        method: "POST",
+        body: JSON.stringify({ orderId: order.id, action }),
+      });
+      const body = await response.json() as { error?: string; result?: Record<string, unknown> };
+      if (!response.ok) throw new Error(body.error || `Supplier ${action} action failed`);
+      toast({ title: "Supplier operation completed", description: `${action} completed without bypassing provider controls.` });
+      await refreshSupplierOps(order);
+    } catch (err) {
+      toast({ title: "Supplier operation blocked", description: err instanceof Error ? err.message : "Provider control rejected the action.", variant: "destructive" });
+    } finally {
+      setSupplierOpsAction(null);
+    }
+  };
+
+  const runSupplierReturnRuntime = async (order: Order, action: "request" | "poll_recovery") => {
+    const returnId = order.returnRequest?.id;
+    if (!returnId) return;
+    setSupplierOpsAction(action);
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-return-runtime", {
+        method: "POST",
+        body: JSON.stringify({ returnId, action }),
+      });
+      const body = await response.json() as { error?: string; result?: Record<string, unknown> };
+      if (!response.ok) throw new Error(body.error || `Supplier return ${action} failed`);
+      const linkedCaseId = typeof body.result?.returnCaseId === "string" ? body.result.returnCaseId : null;
+      if (linkedCaseId) {
+        const applyLink = (current: Order) => current.returnRequest
+          ? { ...current, returnRequest: { ...current.returnRequest, supplierReturnCaseId: linkedCaseId } }
+          : current;
+        setOrders((current) => current.map((item) => item.id === order.id ? applyLink(item) : item));
+        setSelected((current) => current && current.id === order.id ? applyLink(current) : current);
+      }
+      toast({ title: "Supplier return operation completed", description: action === "request" ? "Supplier return authorisation was processed." : "Supplier recovery status was refreshed." });
+      await refreshSupplierOps(order);
+    } catch (err) {
+      toast({ title: "Supplier return operation blocked", description: err instanceof Error ? err.message : "Provider return control rejected the action.", variant: "destructive" });
+    } finally {
+      setSupplierOpsAction(null);
+    }
+  };
 
   const rejectCancellation = async (order: Order) => {
     setRejectionLoading(true);
@@ -191,7 +291,16 @@ const AdminOrders = () => {
 
   const byStatus = (status: string) => filtered.filter((o) => o.status === status);
   const activeOrders = filtered.filter((o) => ["paid", "packed", "shipped"].includes(o.status));
+  const supplierOrders = filtered.filter((o) => o.commercialMode === "loadify_supplier_fulfilled");
   const totalValue = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const supplierHandshakeItems = Array.isArray(supplierHandshake?.items)
+    ? supplierHandshake.items.filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && !Array.isArray(item))
+    : [];
+  const supplierHandshakeCurrent = supplierHandshakeItems[0] ?? null;
+  const supplierTrackingShipments = Array.isArray(supplierTracking?.shipments) ? supplierTracking.shipments.length : 0;
+  const supplierTrackingExceptions = Array.isArray(supplierTracking?.exceptions) ? supplierTracking.exceptions.length : 0;
+  const supplierReturnCases = Array.isArray(supplierReturns?.returns) ? supplierReturns.returns.length : 0;
+  const supplierRecoveries = Array.isArray(supplierReturns?.recoveries) ? supplierReturns.recoveries.length : 0;
 
   const renderTable = (data: Order[]) => (
     <Table>
@@ -315,14 +424,16 @@ const AdminOrders = () => {
           <TabsTrigger value="active" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Active</TabsTrigger>
           <TabsTrigger value="delivered" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Delivered</TabsTrigger>
           <TabsTrigger value="disputed" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Disputed</TabsTrigger>
+          <TabsTrigger value="supplier" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Supplier <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{supplierOrders.length}</Badge></TabsTrigger>
         </TabsList>
-        {(["all", "active", "delivered", "disputed"] as const).map((tab) => (
+        {(["all", "active", "delivered", "disputed", "supplier"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
                   tab === "active" ? activeOrders :
+                  tab === "supplier" ? supplierOrders :
                   byStatus(tab)
                 )}
               </div>
@@ -359,6 +470,80 @@ const AdminOrders = () => {
                   </p>
                 </div>
               </div>
+
+              {selected.commercialMode === "loadify_supplier_fulfilled" && (
+                <div className="space-y-3 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Supplier-Fulfilled Operations</p>
+                      <p className="mt-1 text-xs text-slate-300">Loadify is seller of record. Supplier fulfilment, recovery and tracking remain separate controlled operations.</p>
+                    </div>
+                    {supplierOpsLoading && <Loader2 className="h-4 w-4 animate-spin text-blue-300" />}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-lg border border-white/10 bg-slate-950/20 p-2">
+                      <span className="text-slate-400">Provider</span>
+                      <p className="mt-1 font-semibold text-white">{String(supplierHandshakeCurrent?.providerKey ?? "Not resolved")}</p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-slate-950/20 p-2">
+                      <span className="text-slate-400">Handshake</span>
+                      <p className="mt-1 font-semibold text-white">{String(supplierHandshakeCurrent?.state ?? "Not prepared")}</p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-slate-950/20 p-2">
+                      <span className="text-slate-400">Tracking</span>
+                      <p className="mt-1 font-semibold text-white">{supplierTrackingShipments} shipment record(s) · {supplierTrackingExceptions} exception(s)</p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-slate-950/20 p-2">
+                      <span className="text-slate-400">Returns / recovery</span>
+                      <p className="mt-1 font-semibold text-white">{supplierReturnCases} case(s) · {supplierRecoveries} recovery record(s)</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" disabled={supplierOpsAction !== null} onClick={() => void runSupplierRuntime(selected, "submit")}>
+                      {supplierOpsAction === "submit" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Submit to supplier
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={supplierOpsAction !== null} onClick={() => void runSupplierRuntime(selected, "recover")}>
+                      {supplierOpsAction === "recover" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Recover acknowledgement
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={supplierOpsAction !== null} onClick={() => void runSupplierRuntime(selected, "tracking")}>
+                      {supplierOpsAction === "tracking" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Sync tracking
+                    </Button>
+                  </div>
+
+                  {selected.returnRequest && (
+                    <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold text-amber-200">Buyer return: {selected.returnRequest.status}</p>
+                          <p className="text-[11px] text-slate-300">{selected.returnRequest.reason.replace(/_/g, " ")}</p>
+                        </div>
+                        <Badge variant="outline" className="border-amber-500/40 text-amber-200">
+                          {selected.returnRequest.supplierReturnCaseId ? "Supplier case linked" : "Supplier case pending"}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" disabled={supplierOpsAction !== null} onClick={() => void runSupplierReturnRuntime(selected, "request")}>
+                          {supplierOpsAction === "request" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                          Request supplier return
+                        </Button>
+                        {selected.returnRequest.supplierReturnCaseId && (
+                          <Button size="sm" variant="outline" disabled={supplierOpsAction !== null} onClick={() => void runSupplierReturnRuntime(selected, "poll_recovery")}>
+                            {supplierOpsAction === "poll_recovery" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Poll supplier recovery
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-300">Buyer refund is independent from supplier reimbursement. A supplier recovery failure must never block an owed buyer refund.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {selected.cancellationRequest && (
                 <div className="space-y-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
                   <div>
@@ -385,7 +570,7 @@ const AdminOrders = () => {
                   <Select
                     value={selected.status}
                     onValueChange={(val) => updateOrderStatus(selected.id, val)}
-                    disabled={actionLoading === selected.id || ["cancelled", "refunded"].includes(selected.status)}
+                    disabled={actionLoading === selected.id || selected.commercialMode === "loadify_supplier_fulfilled" || ["cancelled", "refunded"].includes(selected.status)}
                   >
                     <SelectTrigger className="flex-1">
                       <SelectValue />
@@ -401,7 +586,9 @@ const AdminOrders = () => {
                   {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />}
                 </div>
                 <p className="text-[11px]" style={{ color: "rgba(148,163,184,0.72)" }}>
-                  Cancellation and refunds use the dedicated actions below so payment and listing state stay reconciled.
+                  {selected.commercialMode === "loadify_supplier_fulfilled"
+                    ? "Supplier-Fulfilled fulfilment status is projected from the controlled supplier handshake/tracking path and cannot be manually overridden here."
+                    : "Cancellation and refunds use the dedicated actions below so payment and listing state stay reconciled."}
                 </p>
               </div>
               {!selected.hasValidPaymentEvidence && (

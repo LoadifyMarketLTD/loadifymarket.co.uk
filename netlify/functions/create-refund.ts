@@ -85,7 +85,7 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select('id, orderNumber, status, escrowStatus, total, commission, sellerId, buyerId, stripePaymentIntentId')
+    .select('id, orderNumber, status, escrowStatus, total, commission, sellerId, buyerId, stripePaymentIntentId, commercialMode')
     .eq('id', orderId)
     .maybeSingle<{
       id: string;
@@ -94,9 +94,10 @@ export const handler: Handler = async (event) => {
       escrowStatus: string;
       total: number;
       commission: number;
-      sellerId: string;
+      sellerId: string | null;
       buyerId: string;
       stripePaymentIntentId: string | null;
+      commercialMode: string | null;
     }>();
 
   if (orderError || !order) {
@@ -208,68 +209,74 @@ export const handler: Handler = async (event) => {
   let transferReversalId: string | null = null;
   let transferRecoveryWarning: string | null = null;
 
-  try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    const { data: sellerProfile, error: sellerError } = await supabase
-      .from('seller_profiles')
-      .select('stripeAccountId')
-      .eq('userId', order.sellerId)
-      .maybeSingle<{ stripeAccountId: string | null }>();
-    if (sellerError) throw sellerError;
+  if (order.commercialMode !== 'loadify_supplier_fulfilled') {
+    if (!order.sellerId) {
+      transferRecoveryWarning = 'Buyer refund succeeded, but marketplace seller identity is missing. Manual payout review is required.';
+    } else {
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        const { data: sellerProfile, error: sellerError } = await supabase
+          .from('seller_profiles')
+          .select('stripeAccountId')
+          .eq('userId', order.sellerId)
+          .maybeSingle<{ stripeAccountId: string | null }>();
+        if (sellerError) throw sellerError;
 
-    const netSellerPence = Math.round(
-      (Number(order.total) - Number(order.commission || 0)) * 100,
-    );
+        const netSellerPence = Math.round(
+          (Number(order.total) - Number(order.commission || 0)) * 100,
+        );
 
-    const { data: payoutRecord, error: payoutLookupError } = await supabase
-      .from('payouts')
-      .select('id, stripeTransferId, status')
-      .eq('orderId', orderId)
-      .not('stripeTransferId', 'is', null)
-      .limit(1)
-      .maybeSingle<{ id: string; stripeTransferId: string; status: string }>();
-    if (payoutLookupError) throw payoutLookupError;
+        const { data: payoutRecord, error: payoutLookupError } = await supabase
+          .from('payouts')
+          .select('id, stripeTransferId, status')
+          .eq('orderId', orderId)
+          .not('stripeTransferId', 'is', null)
+          .limit(1)
+          .maybeSingle<{ id: string; stripeTransferId: string; status: string }>();
+        if (payoutLookupError) throw payoutLookupError;
 
-    const transfer = await findOrderTransfer(stripe, {
-      orderId,
-      knownTransferId: payoutRecord?.stripeTransferId ?? null,
-      transferGroup: paymentIntent.transfer_group,
-      expectedAmountPence: Number.isSafeInteger(netSellerPence) && netSellerPence > 0
-        ? netSellerPence
-        : null,
-      expectedDestination: sellerProfile?.stripeAccountId ?? null,
-    });
+        const transfer = await findOrderTransfer(stripe, {
+          orderId,
+          knownTransferId: payoutRecord?.stripeTransferId ?? null,
+          transferGroup: paymentIntent.transfer_group,
+          expectedAmountPence: Number.isSafeInteger(netSellerPence) && netSellerPence > 0
+            ? netSellerPence
+            : null,
+          expectedDestination: sellerProfile?.stripeAccountId ?? null,
+        });
 
-    if (transfer) {
-      const payoutId = await reconcilePaidOrderPayout(supabase, {
-        sellerId: order.sellerId,
-        orderId,
-        amount: transfer.amount / 100,
-        transferId: transfer.id,
-        note: 'Recovered/reconciled while processing order refund.',
-      });
+        if (transfer) {
+          const payoutId = await reconcilePaidOrderPayout(supabase, {
+            sellerId: order.sellerId,
+            orderId,
+            amount: transfer.amount / 100,
+            transferId: transfer.id,
+            note: 'Recovered/reconciled while processing order refund.',
+          });
 
-      const reversal = await reverseOrderTransfer(
-        stripe,
-        transfer,
-        `order-refund-transfer:${orderId}`,
-        { orderId },
-      );
-      transferReversalId = reversal.id;
+          const reversal = await reverseOrderTransfer(
+            stripe,
+            transfer,
+            `order-refund-transfer:${orderId}`,
+            { orderId },
+          );
+          transferReversalId = reversal.id;
 
-      const { error: payoutUpdateError } = await supabase
-        .from('payouts')
-        .update({
-          status: 'cancelled',
-          reference: reversal.id,
-          notes: `Seller transfer reversed after refund. Stripe reversal ID: ${reversal.id}`,
-        })
-        .eq('id', payoutId);
-      if (payoutUpdateError) throw payoutUpdateError;
+          const { error: payoutUpdateError } = await supabase
+            .from('payouts')
+            .update({
+              status: 'cancelled',
+              reference: reversal.id,
+              notes: `Seller transfer reversed after refund. Stripe reversal ID: ${reversal.id}`,
+            })
+            .eq('id', payoutId);
+          if (payoutUpdateError) throw payoutUpdateError;
+        }
+      } catch (recoveryError) {
+        transferRecoveryWarning = 'Buyer refund succeeded, but seller-transfer reconciliation could not be completed automatically. Manual Stripe review is required.';
+        console.error('create-refund:', transferRecoveryWarning, recoveryError);
+      }
     }
-  } catch (recoveryError) {
-    transferRecoveryWarning = 'Buyer refund succeeded, but seller-transfer reconciliation could not be completed automatically. Manual Stripe review is required.';
-    console.error('create-refund:', transferRecoveryWarning, recoveryError);
   }
 
 
@@ -285,6 +292,17 @@ export const handler: Handler = async (event) => {
         refundId: refund.id,
       }),
     };
+  }
+
+  if (order.commercialMode === 'loadify_supplier_fulfilled') {
+    const { error: supplierReconcileError } = await supabase.rpc('server_reconcile_supplier_financials_v1', {
+      p_order_id: orderId,
+    });
+    if (supplierReconcileError) {
+      const warning = 'Buyer refund succeeded, but supplier recovery reconciliation requires admin review.';
+      transferRecoveryWarning = transferRecoveryWarning ? `${transferRecoveryWarning} ${warning}` : warning;
+      console.error('create-refund:', warning, supplierReconcileError);
+    }
   }
 
   const { error: returnCompletionError } = await supabase

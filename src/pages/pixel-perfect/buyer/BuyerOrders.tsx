@@ -269,7 +269,8 @@ const BuyerOrders = () => {
 
   const handleReturnSubmit = async () => {
     if (!returnOrder || !user || !returnReason || !returnDescription.trim()) return;
-    if (!returnOrder.sellerId) {
+    const supplierFulfilled = returnOrder.commercialMode === "loadify_supplier_fulfilled";
+    if (!supplierFulfilled && !returnOrder.sellerId) {
       toast({ title: "Cannot submit return", description: "Seller information is unavailable for this order. Please contact support for assistance.", variant: "destructive" });
       return;
     }
@@ -284,6 +285,36 @@ const BuyerOrders = () => {
       if (existing) {
         toast({ title: "Return already submitted", description: "A return request for this order is already open or in progress.", variant: "destructive" });
         setReturnOrder(null);
+        return;
+      }
+
+      if (supplierFulfilled) {
+        const response = await authorizedFetch("/.netlify/functions/request-supplier-customer-return", {
+          method: "POST",
+          body: JSON.stringify({
+            orderId: returnOrder.id,
+            reasonCode: returnReason,
+            description: returnDescription.trim(),
+          }),
+        });
+        const payload = await response.json() as {
+          error?: string;
+          return?: ReturnState;
+          manualReviewRequired?: boolean;
+        };
+        if (!response.ok || !payload.return) {
+          throw new Error(payload.error || "Supplier return request could not be created.");
+        }
+        setReturnStates((current) => new Map(current).set(returnOrder.id, payload.return as ReturnState));
+        toast({
+          title: "Return requested",
+          description: payload.manualReviewRequired
+            ? "Loadify has recorded the return. Supplier authorisation is being reviewed before any refund is issued."
+            : "Your return request has been recorded. No refund is issued until the return conditions are completed.",
+        });
+        setReturnOrder(null);
+        setReturnReason("");
+        setReturnDescription("");
         return;
       }
 

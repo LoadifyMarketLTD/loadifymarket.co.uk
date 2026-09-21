@@ -230,3 +230,24 @@ Verification:
 - TypeScript: PASS
 - focused ESLint: PASS
 - full npm build started; security build tests 9/9 PASS. Terminal build completion is not claimed until the running process exits.
+
+## Continuation — supplier returns, buyer refunds and admin operations
+
+- Added a sellerless Loadify Supplier-Fulfilled return bridge while preserving the existing Marketplace Seller return identity.
+- Supplier-Fulfilled customer returns now store commercial mode, requested quantity and an optional supplier return-case link; no fake seller ID is created.
+- Buyer return requests are recorded independently from supplier authorisation and supplier reimbursement.
+- Supplier return authorisation and reimbursement polling remain admin-controlled and provider-capability gated through the existing supplier adapter registry.
+- Buyer refund truth is now explicitly independent from supplier recovery truth. A valid buyer refund is not blocked by supplier reimbursement failure.
+- Marketplace Seller refund behavior retains its existing Stripe Connect transfer-reversal path; Loadify Supplier-Fulfilled refunds skip seller-transfer reversal and reconcile supplier financial truth separately.
+- Admin Orders now includes a Supplier tab and a Supplier-Fulfilled Operations panel with controlled submit, acknowledgement recovery, tracking sync, supplier-return request and supplier-recovery polling.
+- Manual fulfilment status override is disabled for Loadify Supplier-Fulfilled orders; status remains projected from canonical supplier handshake/tracking truth.
+- No supplier provider was activated and no production deployment was performed.
+
+Verification:
+- migration health: PASS (192 canonical migrations)
+- focused returns/recovery/admin-operations suite: 28/28 PASS
+- TypeScript: PASS
+- focused ESLint: PASS
+- build security suite: 9/9 PASS
+- production build: PASS, 2456 modules transformed, built in 34.47s
+- existing heic2any large-chunk warning remains unchanged.

@@ -26,7 +26,8 @@ interface OrderListRow {
   status: string | null;
   createdAt: string | null;
   buyerId: string;
-  productId: string;
+  productId: string | null;
+  commercialMode?: string | null;
   buyerNameSnapshot?: string | null;
   commercialSnapshotSource?: string | null;
   stripePaymentIntentId?: string | null;
@@ -59,6 +60,16 @@ interface CancellationRequestRow {
   reason: string;
   details: string | null;
   status: string;
+  createdAt: string;
+}
+
+interface ReturnRequestRow {
+  id: string;
+  orderId: string;
+  reason: string;
+  status: string;
+  commercialMode: string | null;
+  supplierReturnCaseId: string | null;
   createdAt: string;
 }
 
@@ -148,7 +159,7 @@ export const handler: Handler = async (event) => {
     if (event.httpMethod === 'GET') {
       const { data: rows, error: ordersErr } = await admin
         .from('orders')
-        .select('id, orderNumber, total, status, createdAt, buyerId, productId, buyerNameSnapshot, commercialSnapshotSource, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus, order_items(productTitleSnapshot, productSnapshotSource)')
+        .select('id, orderNumber, total, status, createdAt, buyerId, productId, commercialMode, buyerNameSnapshot, commercialSnapshotSource, stripePaymentIntentId, rfqId, rfqResponseId, escrowStatus, order_items(productTitleSnapshot, productSnapshotSource)')
         .order('createdAt', { ascending: false })
         .limit(100);
 
@@ -209,6 +220,19 @@ export const handler: Handler = async (event) => {
           cancellationRequests.set(request.orderId, request);
         });
       }
+      const returnRequests = new Map<string, ReturnRequestRow>();
+      if (orderIds.length > 0) {
+        const { data: returns, error: returnsError } = await admin
+          .from('returns')
+          .select('id, orderId, reason, status, commercialMode, supplierReturnCaseId, createdAt')
+          .in('orderId', orderIds)
+          .order('createdAt', { ascending: false });
+        if (returnsError) throw returnsError;
+        (returns ?? []).forEach((request: ReturnRequestRow) => {
+          if (!returnRequests.has(request.orderId)) returnRequests.set(request.orderId, request);
+        });
+      }
+
       const completedPayments = new Map<string, PaymentSessionMetaRow>();
       if (orderIds.length > 0) {
         const { data: paymentSessions } = await admin
@@ -256,6 +280,7 @@ export const handler: Handler = async (event) => {
           total: o.total ?? 0,
           status: o.status ?? 'paid',
           date: formatDate(o.createdAt),
+          commercialMode: o.commercialMode ?? null,
           listingContext: product?.listingContext ?? null,
           hasValidPaymentEvidence: paymentEvidence.hasValidPaymentEvidence,
           paymentEvidenceSource: paymentEvidence.paymentEvidenceSource,
@@ -263,6 +288,7 @@ export const handler: Handler = async (event) => {
           releaseEligible: releaseEligibility.eligible,
           releaseEligibilityReason: releaseEligibility.reason,
           cancellationRequest: cancellationRequests.get(o.id) ?? null,
+          returnRequest: returnRequests.get(o.id) ?? null,
         };
       });
 
