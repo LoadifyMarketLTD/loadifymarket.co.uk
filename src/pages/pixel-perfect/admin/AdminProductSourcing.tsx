@@ -24,7 +24,8 @@ interface DirectSupplierOnboardingForm {
   registrationCountry: string;
   registrationNumber: string;
   vatNumber: string;
-  feedTransport: "json_api" | "json_feed" | "csv" | "xml" | "sftp" | "manual_catalog";
+  feedTransport: "json_api" | "json_feed" | "feed_url" | "csv" | "xml" | "sftp" | "manual_catalog";
+  sourceFormat: "json" | "csv" | "xml" | "canonical_json";
   warehouseDeclarations: string;
   territories: string;
   capabilities: string;
@@ -80,11 +81,16 @@ export default function AdminProductSourcing() {
   const [sourcePolicies, setSourcePolicies] = useState<JsonRecord[]>([]);
   const [supplierOnboarding, setSupplierOnboarding] = useState<DirectSupplierOnboardingForm>({
     supplierKey: "", legalName: "", registrationCountry: "GB", registrationNumber: "", vatNumber: "",
-    feedTransport: "csv", warehouseDeclarations: "main:GB", territories: "GB", capabilities: "catalog,variants,stock,price",
+    feedTransport: "csv", sourceFormat: "csv", warehouseDeclarations: "main:GB", territories: "GB", capabilities: "catalog,variants,stock,price",
     configRef: "", commercialTermsRef: "", currency: "GBP", paymentTermsDays: "", dispatchSlaHours: "",
     returnWindowDays: "", onboardingStatus: "draft", reviewReason: "",
   });
   const [supplierOnboardingResult, setSupplierOnboardingResult] = useState<JsonRecord | null>(null);
+  const [transportPreviewPayload, setTransportPreviewPayload] = useState("");
+  const [transportFieldMapJson, setTransportFieldMapJson] = useState("{}");
+  const [transportAmountUnit, setTransportAmountUnit] = useState<"minor" | "major">("minor");
+  const [transportXmlRecordElement, setTransportXmlRecordElement] = useState("product");
+  const [transportNormalization, setTransportNormalization] = useState<JsonRecord | null>(null);
   const [onboardingReadiness, setOnboardingReadiness] = useState<JsonRecord | null>(null);
   const [qualificationEvidenceType, setQualificationEvidenceType] = useState("identity");
   const [qualificationSourceRef, setQualificationSourceRef] = useState("");
@@ -101,7 +107,7 @@ export default function AdminProductSourcing() {
   const [reviewReason, setReviewReason] = useState("");
   const [aiBrief, setAiBrief] = useState<JsonRecord | null>(null);
   const [merchDraft, setMerchDraft] = useState<MerchandisingDraft | null>(null);
-  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "onboardingReadiness" | "qualification" | "sla" | "compliance" | "lifecycle" | "capability" | "adapter" | "ai" | "aiGenerate" | null>(null);
+  const [loading, setLoading] = useState<"url" | "discoverySave" | "review" | "plan" | "economics" | "gate" | "merchReview" | "projection" | "publishProjection" | "offerSelection" | "offerBind" | "offerApprove" | "offerDisable" | "supplierOnboarding" | "transportNormalize" | "onboardingReadiness" | "qualification" | "sla" | "compliance" | "lifecycle" | "capability" | "adapter" | "ai" | "aiGenerate" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewPackage = asRecord(review?.reviewPackage);
   const governance = asRecord(review?.intakeGovernance);
@@ -135,6 +141,9 @@ export default function AdminProductSourcing() {
     : [];
   const onboardingCandidateEnvelope = asRecord(supplierOnboardingResult?.candidate);
   const onboardingCandidate = asRecord(onboardingCandidateEnvelope?.candidate);
+  const normalizationEnvelope = asRecord(transportNormalization?.normalization);
+  const normalizationBatch = asRecord(normalizationEnvelope?.batch);
+  const normalizationVariants = safeRecordArray(normalizationBatch?.variants);
   const readinessSnapshot = asRecord(onboardingReadiness?.readiness);
   const resolvedSupplierId = String(readinessSnapshot?.supplierId ?? onboardingCandidate?.supplierId ?? "");
   const readinessBlockers = Array.isArray(readinessSnapshot?.blockers)
@@ -277,6 +286,7 @@ export default function AdminProductSourcing() {
           registrationNumber: supplierOnboarding.registrationNumber.trim() || undefined,
           vatNumber: supplierOnboarding.vatNumber.trim() || undefined,
           feedTransport: supplierOnboarding.feedTransport,
+          sourceFormat: supplierOnboarding.sourceFormat,
           warehouseDeclarations,
           supportedTerritories: territories,
           requestedCapabilities: capabilities,
@@ -299,6 +309,7 @@ export default function AdminProductSourcing() {
             supplierId,
             sourceClass: "direct_supplier",
             feedTransport: supplierOnboarding.feedTransport,
+            sourceFormat: supplierOnboarding.sourceFormat,
             configRef: supplierOnboarding.configRef.trim() || undefined,
             supportedTerritories: territories,
             requestedCapabilities: capabilities,
@@ -318,6 +329,57 @@ export default function AdminProductSourcing() {
       setSupplierKey(supplierOnboarding.supplierKey.trim().toLowerCase());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save Direct Supplier onboarding.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function previewTransportNormalization() {
+    setError(null);
+    setTransportNormalization(null);
+    if (!supplierOnboarding.supplierKey.trim() || !transportPreviewPayload.trim()) {
+      setError("Supplier key and a source payload are required for transport normalization preview.");
+      return;
+    }
+
+    let fieldMap: JsonRecord | undefined;
+    try {
+      const parsed = JSON.parse(transportFieldMapJson || "{}") as unknown;
+      if (parsed && (typeof parsed !== "object" || Array.isArray(parsed))) {
+        throw new Error("Field mapping must be a JSON object.");
+      }
+      fieldMap = asRecord(parsed) ?? undefined;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Field mapping JSON is invalid.");
+      return;
+    }
+
+    setLoading("transportNormalize");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-direct-supplier-normalize-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supplierKey: supplierOnboarding.supplierKey.trim().toLowerCase(),
+          transport: supplierOnboarding.feedTransport,
+          sourceFormat: supplierOnboarding.sourceFormat,
+          rawPayload: transportPreviewPayload,
+          fieldMap: fieldMap && Object.keys(fieldMap).length > 0 ? fieldMap : undefined,
+          amountUnit: transportAmountUnit,
+          minorUnitDigits: 2,
+          xmlRecordElement: supplierOnboarding.sourceFormat === "xml"
+            ? transportXmlRecordElement.trim() || "product"
+            : undefined,
+        }),
+      });
+      const body = (await response.json()) as JsonRecord;
+      if (!response.ok) {
+        const details = Array.isArray(body.errors) ? body.errors.join(" · ") : String(body.error ?? "Unable to normalize supplier source.");
+        throw new Error(details);
+      }
+      setTransportNormalization(body);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to normalize supplier source.");
     } finally {
       setLoading(null);
     }
@@ -964,13 +1026,43 @@ export default function AdminProductSourcing() {
           </label>
           <label className="space-y-1.5 text-sm font-medium">
             Feed / import transport
-            <select value={supplierOnboarding.feedTransport} onChange={(e) => setSupplierOnboarding((v) => ({ ...v, feedTransport: e.target.value as DirectSupplierOnboardingForm["feedTransport"] }))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="json_api">API / JSON API</option>
-              <option value="json_feed">JSON feed / feed URL</option>
-              <option value="csv">CSV</option>
-              <option value="xml">XML</option>
+            <select
+              value={supplierOnboarding.feedTransport}
+              onChange={(e) => {
+                const feedTransport = e.target.value as DirectSupplierOnboardingForm["feedTransport"];
+                const sourceFormat = feedTransport === "csv"
+                  ? "csv"
+                  : feedTransport === "xml"
+                    ? "xml"
+                    : feedTransport === "manual_catalog"
+                      ? "canonical_json"
+                      : feedTransport === "json_api" || feedTransport === "json_feed"
+                        ? "json"
+                        : supplierOnboarding.sourceFormat;
+                setSupplierOnboarding((v) => ({ ...v, feedTransport, sourceFormat }));
+              }}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="json_api">API</option>
+              <option value="json_feed">JSON feed</option>
+              <option value="feed_url">Feed URL</option>
+              <option value="csv">CSV upload / import</option>
+              <option value="xml">XML upload / import</option>
               <option value="sftp">SFTP</option>
               <option value="manual_catalog">Manual catalog</option>
+            </select>
+          </label>
+          <label className="space-y-1.5 text-sm font-medium">
+            Source format
+            <select
+              value={supplierOnboarding.sourceFormat}
+              onChange={(e) => setSupplierOnboarding((v) => ({ ...v, sourceFormat: e.target.value as DirectSupplierOnboardingForm["sourceFormat"] }))}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="json">JSON</option>
+              <option value="csv">CSV</option>
+              <option value="xml">XML</option>
+              <option value="canonical_json">Canonical JSON</option>
             </select>
           </label>
 
@@ -1050,6 +1142,94 @@ export default function AdminProductSourcing() {
             </div>
           )}
         </form>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="font-semibold">Transport normalization preview</h2>
+            <p className="mt-1 max-w-4xl text-sm leading-6 text-muted-foreground">
+              Convert supplier JSON, CSV or flat XML into the canonical Direct Supplier batch before staging.
+              Feed URL and SFTP are configuration-only here: this preview performs no network access, persistence, publication or supplier order.
+            </p>
+          </div>
+          <Badge variant="outline">Local normalization only</Badge>
+        </div>
+
+        <div className="mt-5 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-3">
+            <label className="block space-y-1.5 text-sm font-medium">
+              Source payload
+              <textarea
+                value={transportPreviewPayload}
+                onChange={(e) => setTransportPreviewPayload(e.target.value)}
+                className="min-h-56 w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-xs"
+                placeholder={supplierOnboarding.sourceFormat === "csv"
+                  ? "product_id,variant_id,name,currency,price,country"
+                  : supplierOnboarding.sourceFormat === "xml"
+                    ? "<catalog><product>...</product></catalog>"
+                    : "[{ ...supplier product... }]"}
+              />
+            </label>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="space-y-1.5 text-sm font-medium">
+                Amount unit
+                <select value={transportAmountUnit} onChange={(e) => setTransportAmountUnit(e.target.value as "minor" | "major")} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                  <option value="minor">Minor units (1299)</option>
+                  <option value="major">Major units (12.99)</option>
+                </select>
+              </label>
+              <label className="space-y-1.5 text-sm font-medium">
+                XML record element
+                <Input value={transportXmlRecordElement} onChange={(e) => setTransportXmlRecordElement(e.target.value)} disabled={supplierOnboarding.sourceFormat !== "xml"} placeholder="product" />
+              </label>
+              <div className="flex items-end">
+                <Button type="button" onClick={() => void previewTransportNormalization()} disabled={loading !== null || !transportPreviewPayload.trim()} className="w-full">
+                  {loading === "transportNormalize" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                  Normalize preview
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="block space-y-1.5 text-sm font-medium">
+              Field mapping JSON
+              <textarea
+                value={transportFieldMapJson}
+                onChange={(e) => setTransportFieldMapJson(e.target.value)}
+                className="min-h-40 w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-xs"
+                placeholder='{"externalProductRef":"product_id","externalVariantRef":"variant_id","title":"name","currency":"currency","amount":"price","warehouseCountry":"country"}'
+              />
+            </label>
+            <p className="text-xs leading-5 text-muted-foreground">
+              Leave the mapping as an empty object for canonical field names. JSON mappings support dotted paths. CSV/XML mappings use column or tag names.
+              Secrets and credentials are rejected by the preview endpoint.
+            </p>
+
+            {transportNormalization && (
+              <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.04] p-4">
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <Badge variant="outline">records {String(normalizationEnvelope?.recordCount ?? normalizationVariants.length)}</Badge>
+                  <Badge variant="outline">transport {String(normalizationBatch?.transport ?? "—")}</Badge>
+                  <Badge variant="outline">format {String(normalizationBatch?.sourceFormat ?? "—")}</Badge>
+                  <Badge variant="outline">external access NO</Badge>
+                  <Badge variant="outline">persistence NO</Badge>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {normalizationVariants.slice(0, 3).map((variant, index) => (
+                    <div key={index} className="rounded-lg border border-border bg-background p-3 text-xs">
+                      <div className="font-semibold">{String(variant.title ?? "Untitled")}</div>
+                      <div className="mt-1 text-muted-foreground">
+                        {String(variant.externalVariantRef ?? "—")} · {String(variant.currency ?? "—")} {String(variant.amountMinor ?? "—")} minor units · stock {String(variant.stockQuantity ?? "—")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">

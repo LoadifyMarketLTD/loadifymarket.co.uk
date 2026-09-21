@@ -17,7 +17,8 @@ export type SupplierOnboardingStatus =
 export interface SupplierOnboardingProfileInput {
   supplierId: string;
   sourceClass: SupplierOnboardingSourceClass;
-  feedTransport: 'json_api' | 'json_feed' | 'csv' | 'xml' | 'sftp' | 'manual_catalog';
+  feedTransport: 'json_api' | 'json_feed' | 'feed_url' | 'csv' | 'xml' | 'sftp' | 'manual_catalog';
+  sourceFormat?: 'json' | 'csv' | 'xml' | 'canonical_json';
   configRef?: string;
   supportedTerritories: string[];
   requestedCapabilities: string[];

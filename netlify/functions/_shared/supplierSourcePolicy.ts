@@ -36,7 +36,7 @@ const POLICIES: Record<SupplierSourceChannel, SupplierSourcePolicy> = {
   direct_supplier_network: {
     channel: 'direct_supplier_network',
     label: 'Direct Supplier Network',
-    allowedTransports: ['json_api', 'json_feed', 'csv', 'xml', 'sftp', 'manual_catalog'],
+    allowedTransports: ['json_api', 'json_feed', 'feed_url', 'csv', 'xml', 'sftp', 'manual_catalog'],
     mayCreateStagingCandidates: true,
     mayCreateSupplierOffers: true,
     mayBecomeBuyerVisibleWithoutSupplierAuthority: false,
@@ -60,7 +60,7 @@ const POLICIES: Record<SupplierSourceChannel, SupplierSourcePolicy> = {
   wholesale_catalog_feed: {
     channel: 'wholesale_catalog_feed',
     label: 'Wholesale & Catalog Feeds',
-    allowedTransports: ['json_api', 'json_feed', 'csv', 'xml', 'sftp', 'manual_catalog'],
+    allowedTransports: ['json_api', 'json_feed', 'feed_url', 'csv', 'xml', 'sftp', 'manual_catalog'],
     mayCreateStagingCandidates: true,
     mayCreateSupplierOffers: true,
     mayBecomeBuyerVisibleWithoutSupplierAuthority: false,

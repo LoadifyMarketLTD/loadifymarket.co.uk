@@ -33,8 +33,18 @@ describe('supplier source policy', () => {
       canonicalSupplierOfferApproved: false,
     });
 
+    const feedUrl = evaluateSupplierSourceAdmission({
+      channel: 'direct_supplier_network',
+      transport: 'feed_url',
+      supplierIdentityVerified: false,
+      commercialTermsApproved: false,
+      rightsAndComplianceVerified: false,
+      canonicalSupplierOfferApproved: false,
+    });
+
     expect(direct.eligibleForStaging).toBe(true);
     expect(wholesale.eligibleForStaging).toBe(true);
+    expect(feedUrl.eligibleForStaging).toBe(true);
     expect(direct.eligibleForBuyerCommerce).toBe(false);
     expect(wholesale.eligibleForBuyerCommerce).toBe(false);
   });

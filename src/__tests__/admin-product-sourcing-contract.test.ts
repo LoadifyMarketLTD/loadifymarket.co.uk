@@ -23,9 +23,16 @@ describe("admin product sourcing operator surface", () => {
     expect(page).toContain("Direct Supplier onboarding");
     expect(page).toContain("/.netlify/functions/admin-direct-supplier-foundation-candidate");
     expect(page).toContain("/.netlify/functions/admin-supplier-onboarding-profile");
-    expect(page).toContain("API / JSON API");
-    expect(page).toContain("JSON feed / feed URL");
+    expect(page).toContain("Feed / import transport");
+    expect(page).toContain('<option value="json_api">API</option>');
+    expect(page).toContain('<option value="feed_url">Feed URL</option>');
+    expect(page).toContain('<option value="sftp">SFTP</option>');
+    expect(page).toContain("Source format");
     expect(page).toContain("Manual catalog");
+    expect(page).toContain("Transport normalization preview");
+    expect(page).toContain("/.netlify/functions/admin-direct-supplier-normalize-preview");
+    expect(page).toContain("external access NO");
+    expect(page).toContain("persistence NO");
     expect(page).toContain("Supplier warehouses");
     expect(page).toContain("main:GB,eu-hub:IE");
     expect(page).toContain("Qualification → capability verification → catalog handoff");

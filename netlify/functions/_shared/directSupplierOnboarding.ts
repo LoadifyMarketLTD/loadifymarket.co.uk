@@ -1,5 +1,5 @@
 import type { SupplierAdapterCapability } from './supplierAdapter';
-import type { DirectSupplierFeedTransport } from './directSupplierContract';
+import type { DirectSupplierFeedTransport, DirectSupplierSourceFormat } from './directSupplierContract';
 
 export const DIRECT_SUPPLIER_ONBOARDING_VERSION = 1 as const;
 export const DIRECT_SUPPLIER_MAX_ONBOARDING_BODY_BYTES = 65536 as const;
@@ -23,6 +23,7 @@ export interface DirectSupplierOnboardingManifestV1 {
   registrationNumber?: string;
   vatNumber?: string;
   feedTransport: DirectSupplierFeedTransport;
+  sourceFormat?: DirectSupplierSourceFormat;
   warehouseDeclarations: DirectSupplierWarehouseDeclaration[];
   supportedTerritories: string[];
   requestedCapabilities: SupplierAdapterCapability[];
@@ -44,11 +45,13 @@ const MAX_TERRITORIES = 32;
 const FEED_TRANSPORTS = new Set<DirectSupplierFeedTransport>([
   'json_api',
   'json_feed',
+  'feed_url',
   'csv',
   'xml',
   'sftp',
   'manual_catalog',
 ]);
+const SOURCE_FORMATS = new Set<DirectSupplierSourceFormat>(['json','csv','xml','canonical_json']);
 const ADAPTER_CAPABILITIES = new Set<SupplierAdapterCapability>([
   'supplier_identity',
   'catalog',
@@ -71,6 +74,7 @@ const MANIFEST_KEYS = new Set([
   'registrationNumber',
   'vatNumber',
   'feedTransport',
+  'sourceFormat',
   'warehouseDeclarations',
   'supportedTerritories',
   'requestedCapabilities',
@@ -112,6 +116,22 @@ export function validateDirectSupplierOnboardingManifest(
   }
   if (!FEED_TRANSPORTS.has(manifest.feedTransport)) {
     errors.push('feedTransport is unsupported');
+  }
+  if (manifest.sourceFormat !== undefined && !SOURCE_FORMATS.has(manifest.sourceFormat)) {
+    errors.push('sourceFormat is unsupported');
+  }
+  if ((manifest.feedTransport === 'feed_url' || manifest.feedTransport === 'sftp') && !manifest.sourceFormat) {
+    errors.push('sourceFormat is required for feed_url and sftp');
+  }
+  if (manifest.feedTransport === 'csv' && manifest.sourceFormat && manifest.sourceFormat !== 'csv') {
+    errors.push('csv transport requires csv sourceFormat');
+  }
+  if (manifest.feedTransport === 'xml' && manifest.sourceFormat && manifest.sourceFormat !== 'xml') {
+    errors.push('xml transport requires xml sourceFormat');
+  }
+  if ((manifest.feedTransport === 'json_api' || manifest.feedTransport === 'json_feed')
+    && manifest.sourceFormat && !['json','canonical_json'].includes(manifest.sourceFormat)) {
+    errors.push('JSON transports require json or canonical_json sourceFormat');
   }
   if (manifest.commercialApproval !== false) {
     errors.push('commercialApproval must remain false in onboarding manifests');
@@ -192,6 +212,12 @@ export function parseDirectSupplierOnboardingManifest(value: unknown): DirectSup
   if (typeof value.feedTransport !== 'string' || !FEED_TRANSPORTS.has(value.feedTransport as DirectSupplierFeedTransport)) {
     errors.push('feedTransport is unsupported');
   }
+  if (value.sourceFormat !== undefined && (typeof value.sourceFormat !== 'string' || !SOURCE_FORMATS.has(value.sourceFormat as DirectSupplierSourceFormat))) {
+    errors.push('sourceFormat is unsupported');
+  }
+  if ((value.feedTransport === 'feed_url' || value.feedTransport === 'sftp') && typeof value.sourceFormat !== 'string') {
+    errors.push('sourceFormat is required for feed_url and sftp');
+  }
   if (value.commercialApproval !== false) {
     errors.push('commercialApproval must remain false in onboarding manifests');
   }
@@ -269,6 +295,7 @@ export function parseDirectSupplierOnboardingManifest(value: unknown): DirectSup
       ? value.vatNumber.trim()
       : undefined,
     feedTransport: value.feedTransport as DirectSupplierFeedTransport,
+    sourceFormat: typeof value.sourceFormat === 'string' ? value.sourceFormat as DirectSupplierSourceFormat : undefined,
     warehouseDeclarations: warehouses,
     supportedTerritories: territories,
     requestedCapabilities: capabilities,

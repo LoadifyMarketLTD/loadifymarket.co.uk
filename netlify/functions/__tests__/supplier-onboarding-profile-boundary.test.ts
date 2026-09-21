@@ -10,6 +10,10 @@ const endpoint = readFileSync(
   resolve(process.cwd(), 'netlify/functions/admin-supplier-onboarding-profile.ts'),
   'utf8',
 );
+const transportMigration = readFileSync(
+  resolve(process.cwd(), 'supabase/migrations/20260921122708_supplier_onboarding_feed_url_and_source_format.sql'),
+  'utf8',
+);
 
 describe('supplier onboarding profile boundary', () => {
   it('keeps supplier onboarding private, admin-only and provider-neutral', () => {
@@ -19,6 +23,14 @@ describe('supplier onboarding profile boundary', () => {
     expect(migration).toContain('REVOKE ALL ON TABLE private.supplier_onboarding_profiles');
     expect(endpoint).toContain("authenticateActiveAccount(event, admin, ['admin'])");
   });
+  it('separates acquisition transport from source format and adds feed URL without enabling external acquisition', () => {
+    expect(transportMigration).toContain("'json_api','json_feed','feed_url','csv','xml','sftp','manual_catalog'");
+    expect(transportMigration).toContain('source_format text');
+    expect(transportMigration).toContain("'json','csv','xml','canonical_json'");
+    expect(transportMigration).toContain('configRef is required for remote supplier transports');
+    expect(transportMigration).toContain("feed_transport IN ('feed_url','sftp')");
+  });
+
   it('stores configuration references and commercial terms without accepting secrets', () => {
     expect(migration).toContain('config_ref text');
     expect(migration).toContain('commercial_terms_ref text');
