@@ -3,7 +3,8 @@ import type { Handler } from '@netlify/functions';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { jsonResponse, optionsResponse } from './_shared/http';
 import { mutateSupplierFoundation, type SupplierFoundationAdminAction } from './_shared/supplierFoundation';
-import { createSupplierProviderAdapter } from './_shared/supplierProviderRegistry';
+import { loadSupplierIntegrationRuntime } from './_shared/supplierIntegrationRuntime';
+import { UniversalDirectSupplierAdapterV1 } from './_shared/universalDirectSupplierAdapter';
 
 const METHODS = 'POST, OPTIONS';
 const ACTIONS = new Set<SupplierFoundationAdminAction>([
@@ -61,12 +62,15 @@ export const handler: Handler = async (event) => {
     const transactional = new Set(['shipping','order_submission','acknowledgement','tracking','cancellation','returns','reimbursement']);
     const requestedTransactional = requested.filter(capability => transactional.has(capability));
     if (requestedTransactional.length > 0) {
-      const runtimeAdapter = createSupplierProviderAdapter('direct_supplier');
-      const runtimeCapabilities = runtimeAdapter.capabilities as readonly string[];
+      const supplierId = typeof payload.supplierId === 'string' ? payload.supplierId.trim() : '';
+      const territory = typeof payload.territory === 'string' ? payload.territory.trim().toUpperCase() : 'GB';
+      const runtime = supplierId ? await loadSupplierIntegrationRuntime(admin, supplierId, territory) : null;
+      const runtimeAdapter = runtime ? new UniversalDirectSupplierAdapterV1(runtime) : null;
+      const runtimeCapabilities = runtimeAdapter ? runtimeAdapter.capabilities as readonly string[] : [];
       const missing = requestedTransactional.filter(capability => !runtimeCapabilities.includes(capability));
       if (missing.length > 0) {
         return jsonResponse(409, {
-          error: 'Direct Supplier transactional adapter code is not installed for the requested capabilities',
+          error: 'Direct Supplier transactional runtime bindings are not executable for the requested capabilities',
           missingCapabilities: missing,
           activationPerformed: false,
         }, METHODS);
