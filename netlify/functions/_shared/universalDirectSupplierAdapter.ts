@@ -16,6 +16,7 @@ import { SUPPLIER_ADAPTER_INTERFACE_VERSION } from './supplierAdapter';
 import type { SupplierIntegrationBinding, SupplierIntegrationRuntime } from './supplierIntegrationRuntime';
 import { resolveSupplierRuntimeConfig } from './supplierRuntimeConfig';
 import { executeSupplierRuntimeHttp } from './supplierRuntimeHttp';
+import { resolveSupplierWebhookConfig } from './supplierWebhookRuntime';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -58,6 +59,54 @@ function mapRequest(source: JsonRecord, mapping: JsonRecord): JsonRecord {
     if (value !== undefined) setPath(output, remotePathValue.trim(), value);
   }
   return output;
+}
+
+const FORBIDDEN_DYNAMIC_HEADERS = new Set([
+  'authorization','cookie','host','content-length','connection','proxy-authorization',
+  'te','trailer','transfer-encoding','upgrade',
+]);
+
+function mapDynamicHeaders(source: JsonRecord, mapping: JsonRecord): SupplierAdapterResult<Record<string, string>> {
+  const headerMap = isRecord(mapping.headers) ? mapping.headers : {};
+  const output: Record<string, string> = {};
+  for (const [canonicalPath, remoteNameValue] of Object.entries(headerMap)) {
+    if (typeof remoteNameValue !== 'string') continue;
+    const name = remoteNameValue.trim().toLowerCase();
+    if (!/^[a-z0-9!#$%&'*+.^_`|~-]{1,64}$/.test(name) || FORBIDDEN_DYNAMIC_HEADERS.has(name)) {
+      return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: 'Supplier runtime dynamic header mapping is invalid' };
+    }
+    const value = canonicalValue(source, canonicalPath);
+    if (value === undefined || value === null) continue;
+    const rendered = String(value);
+    if (rendered.length > 4096 || /[\r\n]/.test(rendered)) {
+      return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: 'Supplier runtime dynamic header value is invalid' };
+    }
+    output[name] = rendered;
+  }
+  return { ok: true, data: output };
+}
+
+function mappingHasCanonicalPath(mapping: JsonRecord, canonicalPath: string): boolean {
+  const requestMap = isRecord(mapping.request) ? mapping.request : {};
+  const headerMap = isRecord(mapping.headers) ? mapping.headers : {};
+  return (
+    typeof requestMap[canonicalPath] === 'string'
+    || typeof headerMap[canonicalPath] === 'string'
+  );
+}
+
+function orderSubmissionMappingReady(mapping: JsonRecord): boolean {
+  const required = [
+    'context.idempotencyKey',
+    'input.externalOfferRef',
+    'input.quantity',
+    'input.recipient.name',
+    'input.recipient.line1',
+    'input.recipient.city',
+    'input.recipient.postcode',
+    'input.recipient.country',
+  ];
+  return required.every((path) => mappingHasCanonicalPath(mapping, path));
 }
 
 function mappedString(payload: unknown, mapping: JsonRecord, key: string): string {
@@ -128,10 +177,22 @@ async function executeBinding(
   }
 
   const config = resolved.config;
+  if (binding.capability === 'order_submission' && !orderSubmissionMappingReady(binding.mapping)) {
+    return {
+      ok: false,
+      errorClass: 'AUTH_CONFIGURATION_FAILURE',
+      message: 'Supplier order runtime mapping must include idempotency, offer, quantity and minimum fulfilment recipient fields',
+    };
+  }
   const requestPayload = mapRequest(canonicalInput, binding.mapping);
+  if (binding.executionMode === 'automated_write' && Object.keys(requestPayload).length === 0) {
+    return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: 'Supplier write runtime mapping is empty' };
+  }
+  const dynamicHeaders = mapDynamicHeaders(canonicalInput, binding.mapping);
+  if (!dynamicHeaders.ok) return dynamicHeaders;
   const url = new URL(config.url);
   let body: string | undefined;
-  const headers: Record<string, string> = { ...(config.headers ?? {}) };
+  const headers: Record<string, string> = { ...(config.headers ?? {}), ...dynamicHeaders.data };
 
   if (config.kind === 'graphql') {
     headers['content-type'] = 'application/json';
@@ -190,13 +251,23 @@ export class UniversalDirectSupplierAdapterV1 implements SupplierAdapterV1 {
     ]);
     this.capabilities = [...runtime.bindings.values()]
       .filter(binding => binding.status === 'verified' && binding.executionMode !== 'manual_only')
-      .filter(binding =>
-        binding.transport === 'http_rest'
-        || binding.transport === 'graphql'
-        || (binding.capability === 'acknowledgement' && binding.transport === 'webhook')
-      )
-      .map(binding => binding.capability)
-      .filter(capability => implemented.has(capability));
+      .filter(binding => {
+        if (!implemented.has(binding.capability) || !binding.configRef) return false;
+        if (binding.transport === 'http_rest' || binding.transport === 'graphql') {
+          const resolved = resolveSupplierRuntimeConfig(binding.configRef, {
+            supplierKey: runtime.supplierKey,
+            capability: binding.capability,
+            transport: binding.transport,
+          });
+          if (!resolved.ok) return false;
+          return binding.capability !== 'order_submission' || orderSubmissionMappingReady(binding.mapping);
+        }
+        if (binding.capability === 'acknowledgement' && binding.transport === 'webhook') {
+          return resolveSupplierWebhookConfig(binding.configRef, runtime.supplierKey).ok;
+        }
+        return false;
+      })
+      .map(binding => binding.capability);
   }
 
   private binding(capability: SupplierAdapterCapability): SupplierIntegrationBinding | null {
