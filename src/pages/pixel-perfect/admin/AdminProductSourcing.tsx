@@ -118,6 +118,14 @@ export default function AdminProductSourcing() {
   const [capabilityName, setCapabilityName] = useState("catalog");
   const [capabilitySourceRef, setCapabilitySourceRef] = useState("");
   const [capabilitySummary, setCapabilitySummary] = useState("");
+  const [capabilityExecutionMode, setCapabilityExecutionMode] = useState<"manual_only" | "automated_read" | "automated_write">("automated_read");
+  const [capabilityContractRef, setCapabilityContractRef] = useState("");
+  const [capabilityWriteAllowed, setCapabilityWriteAllowed] = useState(false);
+  const [capabilityPiiAllowed, setCapabilityPiiAllowed] = useState(false);
+  const [capabilityPiiFields, setCapabilityPiiFields] = useState("");
+  const [capabilityIdempotencyKnown, setCapabilityIdempotencyKnown] = useState(false);
+  const [capabilityLostResponseKnown, setCapabilityLostResponseKnown] = useState(false);
+  const [capabilityRateLimitKnown, setCapabilityRateLimitKnown] = useState(false);
   const [complianceSourceRef, setComplianceSourceRef] = useState("");
   const [complianceSummary, setComplianceSummary] = useState("");
   const [lifecycleTarget, setLifecycleTarget] = useState<"verification" | "approved">("verification");
@@ -705,6 +713,22 @@ export default function AdminProductSourcing() {
       setError("Resolve the supplier and provide a capability evidence source reference.");
       return;
     }
+    const piiFields = capabilityPiiFields.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
+    if (capabilityExecutionMode !== "manual_only" && !capabilityContractRef.trim()) {
+      setError("Automated supplier capability evidence requires a contract / documentation reference.");
+      return;
+    }
+    if (capabilityExecutionMode === "automated_write" && (!capabilityWriteAllowed || !capabilityIdempotencyKnown || !capabilityLostResponseKnown)) {
+      setError("Automated write capability requires explicit write permission, idempotency and lost-response recovery evidence.");
+      return;
+    }
+    if (capabilityName === "order_submission" && capabilityExecutionMode === "automated_write") {
+      const requiredPii = ["name", "line1", "city", "postcode", "country"];
+      if (!capabilityPiiAllowed || requiredPii.some((field) => !piiFields.includes(field))) {
+        setError("Automated order submission requires explicit PII permission for name, line1, city, postcode and country.");
+        return;
+      }
+    }
     setError(null);
     setLoading("capability");
     try {
@@ -718,6 +742,14 @@ export default function AdminProductSourcing() {
           status: "verified",
           sourceRefs: [capabilitySourceRef.trim()],
           evidenceSummary: capabilitySummary.trim() || undefined,
+          executionMode: capabilityExecutionMode,
+          contractRef: capabilityContractRef.trim() || undefined,
+          writeAllowed: capabilityExecutionMode === "automated_write" && capabilityWriteAllowed,
+          piiAllowed: capabilityExecutionMode === "automated_write" && capabilityPiiAllowed,
+          piiFields: capabilityExecutionMode === "automated_write" && capabilityPiiAllowed ? piiFields : [],
+          idempotencyKnown: capabilityExecutionMode === "automated_write" && capabilityIdempotencyKnown,
+          lostResponseRecoveryKnown: capabilityExecutionMode === "automated_write" && capabilityLostResponseKnown,
+          rateLimitKnown: capabilityRateLimitKnown,
         }),
       });
       const body = (await response.json()) as JsonRecord;
@@ -1677,13 +1709,65 @@ export default function AdminProductSourcing() {
               This evidence belongs to this supplier only. Verify each requested capability from real documentation, test evidence or contractual proof.
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <select value={capabilityName} onChange={(e) => setCapabilityName(e.target.value)} className="h-10 rounded-md border border-input bg-card px-3 text-sm">
+              <select
+                value={capabilityName}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setCapabilityName(next);
+                  const writeCapability = ["order_submission", "cancellation", "returns"].includes(next);
+                  setCapabilityExecutionMode(writeCapability ? "manual_only" : "automated_read");
+                  setCapabilityWriteAllowed(false);
+                  setCapabilityPiiAllowed(false);
+                  setCapabilityPiiFields("");
+                  setCapabilityIdempotencyKnown(false);
+                  setCapabilityLostResponseKnown(false);
+                  setCapabilityRateLimitKnown(false);
+                  setCapabilityContractRef("");
+                }}
+                className="h-10 rounded-md border border-input bg-card px-3 text-sm"
+              >
                 {["supplier_identity","catalog","variants","stock","price","shipping","order_submission","acknowledgement","tracking","cancellation","returns","reimbursement"].map((value) => (
                   <option key={value} value={value}>{value.replace(/_/g, " ")}</option>
                 ))}
               </select>
+              <select
+                value={capabilityExecutionMode}
+                onChange={(e) => {
+                  const mode = e.target.value as "manual_only" | "automated_read" | "automated_write";
+                  setCapabilityExecutionMode(mode);
+                  if (mode !== "automated_write") {
+                    setCapabilityWriteAllowed(false);
+                    setCapabilityPiiAllowed(false);
+                    setCapabilityPiiFields("");
+                    setCapabilityIdempotencyKnown(false);
+                    setCapabilityLostResponseKnown(false);
+                  }
+                }}
+                className="h-10 rounded-md border border-input bg-card px-3 text-sm"
+              >
+                <option value="manual_only">Manual only</option>
+                <option value="automated_read">Automated read</option>
+                <option value="automated_write">Automated write</option>
+              </select>
               <Input value={capabilitySourceRef} onChange={(e) => setCapabilitySourceRef(e.target.value)} placeholder="Capability evidence source" />
+              <Input value={capabilityContractRef} onChange={(e) => setCapabilityContractRef(e.target.value)} placeholder="Contract / API documentation reference" />
               <Input className="sm:col-span-2" value={capabilitySummary} onChange={(e) => setCapabilitySummary(e.target.value)} placeholder="What was verified" />
+              {capabilityExecutionMode === "automated_write" ? (
+                <>
+                  <label className="flex items-center gap-2 text-xs font-medium"><input type="checkbox" checked={capabilityWriteAllowed} onChange={(e) => setCapabilityWriteAllowed(e.target.checked)} /> Provider authorises this write capability</label>
+                  <label className="flex items-center gap-2 text-xs font-medium"><input type="checkbox" checked={capabilityIdempotencyKnown} onChange={(e) => setCapabilityIdempotencyKnown(e.target.checked)} /> Idempotency / duplicate prevention verified</label>
+                  <label className="flex items-center gap-2 text-xs font-medium"><input type="checkbox" checked={capabilityLostResponseKnown} onChange={(e) => setCapabilityLostResponseKnown(e.target.checked)} /> Lost-response recovery verified</label>
+                  <label className="flex items-center gap-2 text-xs font-medium"><input type="checkbox" checked={capabilityRateLimitKnown} onChange={(e) => setCapabilityRateLimitKnown(e.target.checked)} /> Rate-limit behaviour documented</label>
+                  <label className="flex items-center gap-2 text-xs font-medium"><input type="checkbox" checked={capabilityPiiAllowed} onChange={(e) => setCapabilityPiiAllowed(e.target.checked)} /> Customer fulfilment PII disclosure explicitly permitted</label>
+                  <Input
+                    value={capabilityPiiFields}
+                    onChange={(e) => setCapabilityPiiFields(e.target.value)}
+                    placeholder="PII fields, e.g. name,line1,city,postcode,country,phone"
+                  />
+                </>
+              ) : (
+                <label className="flex items-center gap-2 text-xs font-medium sm:col-span-2"><input type="checkbox" checked={capabilityRateLimitKnown} onChange={(e) => setCapabilityRateLimitKnown(e.target.checked)} /> Rate-limit / refresh behaviour documented</label>
+              )}
             </div>
             <Button type="button" variant="outline" className="mt-3" onClick={() => void saveSupplierCapabilityEvidence()} disabled={loading !== null || !resolvedSupplierId}>
               {loading === "capability" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
