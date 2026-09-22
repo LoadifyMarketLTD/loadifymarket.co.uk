@@ -169,7 +169,7 @@ export const handler: Handler = async (event) => {
 
   const phase7Blockers = unique([
     ...stringArray(onboarding.blockers),
-    ...stringArray(acquisition.blockers),
+    ...(!manualCatalogue ? stringArray(acquisition.blockers) : []),
     ...(bool(configPreflight.ready) ? [] : [text(configPreflight.reason) || 'acquisition_config_not_ready']),
   ]);
 
