@@ -50,9 +50,10 @@ describe("public supplier application boundary", () => {
   });
 
   it("exposes the dedicated application route and supplier hub CTA", () => {
-    expect(routes).toContain('path="supplier-application"');
-    expect(repo("src/pages/public/SuppliersPage.tsx")).toContain('to="/supplier-application"');
-    expect(repo("netlify/functions/sitemap.ts")).toContain("'/supplier-application'");
-    expect(repo("netlify/edge-functions/public-meta.ts")).toContain("'/supplier-application'");
+    expect(routes).toContain('path="suppliers/apply"');
+    expect(routes).toContain('path="supplier-application" element={<Navigate to="/suppliers/apply" replace />}');
+    expect(repo("src/pages/public/SuppliersPage.tsx")).toContain('to="/suppliers/apply"');
+    expect(repo("netlify/functions/sitemap.ts")).toContain("'/suppliers/apply'");
+    expect(repo("netlify/edge-functions/public-meta.ts")).toContain("'/suppliers/apply'");
   });
 });
