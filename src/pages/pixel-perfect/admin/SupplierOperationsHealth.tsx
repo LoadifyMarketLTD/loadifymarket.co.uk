@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Activity, AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +27,9 @@ export default function SupplierOperationsHealth({ supplierId }: { supplierId: s
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadHealth() {
-    if (!supplierId.trim()) {
+  const loadHealth = useCallback(async () => {
+    const normalizedSupplierId = supplierId.trim();
+    if (!normalizedSupplierId) {
       setHealth(null);
       setError("");
       return;
@@ -40,7 +41,7 @@ export default function SupplierOperationsHealth({ supplierId }: { supplierId: s
       const response = await authorizedFetch("/.netlify/functions/admin-supplier-health", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ supplierId: supplierId.trim() }),
+        body: JSON.stringify({ supplierId: normalizedSupplierId }),
       });
       const body = await response.json() as JsonRecord;
       if (!response.ok) throw new Error(text(body.error) || "Unable to read Supplier Health.");
@@ -53,15 +54,11 @@ export default function SupplierOperationsHealth({ supplierId }: { supplierId: s
     } finally {
       setLoading(false);
     }
-  }
+  }, [supplierId]);
 
   useEffect(() => {
-    if (supplierId.trim()) void loadHealth();
-    else {
-      setHealth(null);
-      setError("");
-    }
-  }, [supplierId]);
+    void loadHealth();
+  }, [loadHealth]);
 
   const status = text(health?.status);
   const action = text(health?.recommendedAction);
