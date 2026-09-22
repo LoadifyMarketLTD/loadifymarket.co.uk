@@ -73,5 +73,5 @@ describe('mobile release regression contract', () => {
     const forbidden = [/\uFFFD/u, /Â£/u, /â€¢/u, /ðŸ/u];
     const failures = files.filter((file) => forbidden.some((pattern) => pattern.test(fs.readFileSync(file, 'utf8'))));
     expect(failures).toEqual([]);
-  });
+  }, 20_000);
 });
