@@ -12,7 +12,7 @@ describe('Direct Supplier durable staging transport alignment', () => {
     const allowlist = "'json_api','json_feed','feed_url','csv','xml','sftp','manual_catalog'";
     expect(migration).toContain('direct_supplier_batch_transport_check');
     expect(migration).toContain('direct_supplier_stage_transport_check');
-    expect(migration.match(new RegExp(allowlist.replace(/[.*+?^$\{\}()|[\]\\]/g, '\\$&'), 'g'))?.length).toBeGreaterThanOrEqual(3);
+    expect(migration.match(new RegExp(allowlist.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))?.length).toBeGreaterThanOrEqual(3);
   });
 
   it('keeps persistence service-role-only and commerce fail-closed', () => {
