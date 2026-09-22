@@ -139,19 +139,6 @@ function normalizeAckState(value: string, mapping: JsonRecord): SupplierOrderAck
   return 'unknown';
 }
 
-function normalizeError(status: number): SupplierAdapterResult<never> {
-  if (status === 401 || status === 403) {
-    return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: 'Supplier runtime authentication was rejected' };
-  }
-  if (status === 429) {
-    return { ok: false, errorClass: 'RATE_LIMITED', message: 'Supplier runtime rate limit reached' };
-  }
-  if (status >= 400 && status < 500) {
-    return { ok: false, errorClass: 'PERMANENT_REJECTION', message: 'Supplier runtime rejected the request' };
-  }
-  return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: 'Supplier runtime request failed' };
-}
-
 async function executeBinding(
   runtime: SupplierIntegrationRuntime,
   binding: SupplierIntegrationBinding,
