@@ -104,6 +104,12 @@ export function resolveSupplierRuntimeConfig(
   if (kind === 'graphql' && method !== 'POST') {
     return { ok: false, code: 'CONFIG_INVALID', error: 'GraphQL runtime requires POST' };
   }
+  if (['order_submission','cancellation','returns'].includes(expected.capability) && method === 'GET') {
+    return { ok: false, code: 'CONFIG_INVALID', error: 'Supplier write capability cannot use GET' };
+  }
+  if (expected.capability === 'order_submission' && method === 'DELETE') {
+    return { ok: false, code: 'CONFIG_INVALID', error: 'Supplier order submission cannot use DELETE' };
+  }
 
   const timeoutMs = numberValue(value.timeoutMs) ?? 10000;
   const maxBytes = numberValue(value.maxBytes) ?? MAX_BYTES;
