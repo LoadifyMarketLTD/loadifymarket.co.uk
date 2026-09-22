@@ -169,11 +169,11 @@ export default function SupplierApplicationPage() {
         canonical="/suppliers/apply"
       />
       <SectionNav title="Business" items={businessNav} />
-      <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F]">
+      <main id="main-content" className="bg-[#F7F9FC] text-[#0A234F]">
         <section className="border-b border-[#0A234F]/10">
           <div className="mx-auto grid max-w-[1480px] gap-10 px-5 py-14 sm:px-7 lg:grid-cols-[0.72fr_1.28fr] lg:px-10 lg:py-20">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#8A7351]">Supplier Application</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#E67E00]">Supplier Application</p>
               <h1 className="mt-5 font-serif text-[2.7rem] font-normal leading-[1.02] tracking-[-0.04em] sm:text-[3.8rem]">Tell us how your supply operation works.</h1>
               <p className="mt-6 text-[16px] leading-8 text-[#5A6578]">This form is for manufacturers, importers, wholesalers and distributors interested in direct supplier participation. It creates a review application only.</p>
               <div className="mt-8 rounded-[24px] bg-[#0A234F] p-7 text-white">
@@ -181,20 +181,20 @@ export default function SupplierApplicationPage() {
                 <h2 className="mt-5 font-serif text-2xl text-white">Do not submit passwords, API keys or credentials.</h2>
                 <p className="mt-3 text-sm leading-6 text-white/75">Technical credentials are never collected in this public form. If a relationship progresses, any required configuration is handled later through controlled server-side setup.</p>
               </div>
-              <div className="mt-6 space-y-3 text-sm text-[#5A6578]">
-                {["Application does not equal supplier approval.", "No products are published from this form.", "No commerce capability is activated automatically."].map((item) => <div key={item} className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#1D57D8]" /><span>{item}</span></div>)}
+              <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                {["Application does not equal supplier approval.", "No products are published from this form.", "No commerce capability is activated automatically."].map((item) => <div key={item} className="flex min-h-16 items-center gap-3 rounded-[18px] bg-[#0A234F] px-4 py-3 text-sm font-semibold leading-5 text-white shadow-[0_10px_26px_rgba(10,35,79,0.10)]"><CheckCircle2 className="h-4 w-4 shrink-0 text-[#F5A300]" /><span>{item}</span></div>)}
               </div>
             </div>
 
-            <form onSubmit={submit} className="rounded-[28px] border border-[#0A234F]/10 bg-white p-6 shadow-[0_18px_50px_rgba(10,35,79,0.08)] sm:p-8">
+            <form onSubmit={submit} className="rounded-[28px] border border-[#0A234F]/15 bg-white p-6 shadow-[0_18px_50px_rgba(10,35,79,0.10)] sm:p-8">
               <div className="hidden" aria-hidden="true">
                 <Label htmlFor="supplier-bot-field">Do not fill this field</Label>
                 <Input id="supplier-bot-field" tabIndex={-1} autoComplete="off" value={form.botField} onChange={(e) => update("botField", e.target.value)} />
               </div>
 
-              <div className="flex items-center gap-3 border-b border-[#0A234F]/10 pb-5">
-                <FileInput className="h-6 w-6 text-[#1D57D8]" />
-                <div><h2 className="text-xl font-extrabold">Supplier profile</h2><p className="mt-1 text-sm text-[#667085]">Business, catalogue and fulfilment information for initial review.</p></div>
+              <div className="flex items-center gap-3 rounded-[20px] bg-[#0A234F] px-5 py-4 text-white shadow-[0_12px_30px_rgba(10,35,79,0.12)]">
+                <FileInput className="h-6 w-6 text-[#F5A300]" />
+                <div><h2 className="text-xl font-extrabold text-white">Supplier profile</h2><p className="mt-1 text-sm text-white/70">Business, catalogue and fulfilment information for initial review.</p></div>
               </div>
 
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -226,7 +226,7 @@ export default function SupplierApplicationPage() {
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {catalogOptions.map(([value, label]) => (
                     <label key={value} className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0A234F]/10 bg-[#F8F7F4] px-4 py-3 text-sm font-semibold">
-                      <input type="checkbox" checked={form.catalogMethods.includes(value)} onChange={() => toggleCatalogMethod(value)} className="h-4 w-4" />
+                      <input type="checkbox" checked={form.catalogMethods.includes(value)} onChange={() => toggleCatalogMethod(value)} className="h-4 w-4 accent-[#F5A300]" />
                       {label}
                     </label>
                   ))}
@@ -252,7 +252,7 @@ export default function SupplierApplicationPage() {
                 <Field label="Additional information"><Textarea rows={5} maxLength={4000} value={form.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Commercial terms, order submission method, tracking or returns notes, existing feed documentation, or anything else useful for initial review." /></Field>
               </div>
 
-              <Button type="submit" disabled={status === "loading"} className="mt-7 min-h-12 w-full sm:w-auto">
+              <Button type="submit" disabled={status === "loading"} className="mt-7 min-h-12 w-full bg-[#F5A300] px-6 font-extrabold text-[#0A234F] hover:bg-[#E67E00] hover:text-[#0A234F] sm:w-auto">
                 {status === "loading" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</> : "Submit Supplier Application"}
               </Button>
 
@@ -271,5 +271,5 @@ function Field({ label, required, children }: { label: string; required?: boolea
 }
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
-  return <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0A234F]/10 bg-[#F8F7F4] px-4 py-3 text-sm font-semibold"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />{label}</label>;
+  return <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#0A234F]/10 bg-[#F8F7F4] px-4 py-3 text-sm font-semibold"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4 accent-[#F5A300]" />{label}</label>;
 }
