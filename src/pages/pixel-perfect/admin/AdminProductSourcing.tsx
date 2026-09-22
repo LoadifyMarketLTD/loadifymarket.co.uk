@@ -43,6 +43,15 @@ interface DirectSupplierOnboardingForm {
   reviewReason: string;
 }
 
+function sourceFormatForTransport(
+  transport: DirectSupplierOnboardingForm["feedTransport"],
+): DirectSupplierOnboardingForm["sourceFormat"] {
+  if (transport === "csv") return "csv";
+  if (transport === "xml") return "xml";
+  if (transport === "manual_catalog") return "canonical_json";
+  return "json";
+}
+
 function asRecord(value: unknown): JsonRecord | null {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as JsonRecord)
@@ -90,6 +99,8 @@ export default function AdminProductSourcing() {
     returnWindowDays: "", onboardingStatus: "draft", reviewReason: "",
   });
   const [supplierOnboardingResult, setSupplierOnboardingResult] = useState<JsonRecord | null>(null);
+  const [sourceSupplierApplicationId, setSourceSupplierApplicationId] = useState("");
+  const [sourceSupplierApplicationLabel, setSourceSupplierApplicationLabel] = useState("");
   const [transportPreviewPayload, setTransportPreviewPayload] = useState("");
   const [transportFieldMapJson, setTransportFieldMapJson] = useState("{}");
   const [transportAmountUnit, setTransportAmountUnit] = useState<"minor" | "major">("minor");
@@ -253,6 +264,56 @@ export default function AdminProductSourcing() {
     }
   }
 
+  function loadQualifiedSupplierApplication(application: JsonRecord) {
+    const applicationId = String(application.id ?? "").trim();
+    const status = String(application.status ?? "").trim().toLowerCase();
+    const legalName = String(application.legal_name ?? "").trim();
+    const methods = Array.isArray(application.catalog_methods)
+      ? application.catalog_methods.filter((item): item is DirectSupplierOnboardingForm["feedTransport"] =>
+          typeof item === "string"
+          && ["json_api", "json_feed", "feed_url", "csv", "xml", "sftp", "manual_catalog"].includes(item),
+        )
+      : [];
+    const territories = Array.isArray(application.fulfilment_territories)
+      ? application.fulfilment_territories.filter((item): item is string => typeof item === "string")
+      : [];
+
+    if (!applicationId || status !== "qualified" || !legalName || methods.length === 0) {
+      setError("Only a qualified supplier application with a valid legal name and catalogue method can be loaded into onboarding.");
+      return;
+    }
+
+    const feedTransport = methods[0];
+    setSupplierOnboarding((current) => ({
+      ...current,
+      supplierKey: "",
+      legalName,
+      registrationCountry: String(application.registration_country ?? "GB").trim().toUpperCase(),
+      registrationNumber: String(application.registration_number ?? "").trim(),
+      vatNumber: String(application.vat_number ?? "").trim(),
+      feedTransport,
+      sourceFormat: sourceFormatForTransport(feedTransport),
+      warehouseDeclarations: "",
+      territories: territories.join(","),
+      capabilities: "catalog",
+      configRef: "",
+      commercialTermsRef: "",
+      paymentTermsDays: "",
+      dispatchSlaHours: application.dispatch_sla_hours == null ? "" : String(application.dispatch_sla_hours),
+      returnWindowDays: "",
+      onboardingStatus: "draft",
+      reviewReason: `Loaded from qualified public application ${applicationId}. Confirm supplier key, warehouse references, selected catalogue route, requested capabilities, commercial terms and evidence before progressing.`,
+    }));
+    setSupplierKey("");
+    setSupplierOnboardingResult(null);
+    setSourceSupplierApplicationId(applicationId);
+    setSourceSupplierApplicationLabel(legalName);
+    setError(null);
+    window.setTimeout(() => {
+      document.getElementById("direct-supplier-onboarding")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  }
+
   async function saveSupplierOnboarding(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -339,7 +400,32 @@ export default function AdminProductSourcing() {
       });
       const profileBody = (await profileResponse.json()) as JsonRecord;
       if (!profileResponse.ok) throw new Error(String(profileBody.error ?? "Unable to save supplier onboarding profile."));
-      setSupplierOnboardingResult({ candidate: candidateBody, profile: profileBody });
+      let applicationLink: JsonRecord | null = null;
+      if (sourceSupplierApplicationId) {
+        const applicationResponse = await authorizedFetch("/.netlify/functions/admin-supplier-applications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update",
+            payload: {
+              applicationId: sourceSupplierApplicationId,
+              status: "converted",
+              convertedSupplierId: supplierId,
+              reviewNotes: supplierOnboarding.reviewReason.trim() || undefined,
+            },
+          }),
+        });
+        const applicationBody = (await applicationResponse.json()) as JsonRecord;
+        if (applicationResponse.ok) {
+          applicationLink = applicationBody;
+          setSourceSupplierApplicationId("");
+          setSourceSupplierApplicationLabel("");
+        } else {
+          setError(`Supplier candidate and onboarding profile were saved, but the source application could not be linked: ${String(applicationBody.error ?? "unknown error")}`);
+        }
+      }
+
+      setSupplierOnboardingResult({ candidate: candidateBody, profile: profileBody, applicationLink });
       setSupplierKey(supplierOnboarding.supplierKey.trim().toLowerCase());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save Direct Supplier onboarding.");
@@ -1118,7 +1204,7 @@ export default function AdminProductSourcing() {
         </section>
       )}
 
-      <SupplierApplicationQueue />
+      <SupplierApplicationQueue onLoadQualifiedApplication={loadQualifiedSupplierApplication} />
 
       <ControlledPilotReadiness />
 
@@ -1126,7 +1212,7 @@ export default function AdminProductSourcing() {
 
       <FirstSupplierLaunchGate supplierKey={supplierOnboarding.supplierKey || supplierKey} />
 
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <section id="direct-supplier-onboarding" className="scroll-mt-28 rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="font-semibold">Direct Supplier onboarding</h2>
@@ -1137,6 +1223,16 @@ export default function AdminProductSourcing() {
           </div>
           <Badge variant="outline">First-class direct supply</Badge>
         </div>
+
+        {sourceSupplierApplicationId && (
+          <div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-6">
+            <strong>Qualified application loaded: {sourceSupplierApplicationLabel}</strong>
+            <p className="mt-1 text-muted-foreground">
+              Only submitted facts were copied. Supplier key, warehouse references, capability scope, configuration,
+              commercial terms and evidence were intentionally not invented and still require admin confirmation.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={saveSupplierOnboarding} className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <label className="space-y-1.5 text-sm font-medium">
