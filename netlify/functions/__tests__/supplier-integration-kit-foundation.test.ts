@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const repo = (file: string) => readFileSync(resolve(process.cwd(), file), "utf8");
-const migration = repo("supabase/migrations/20260922153500_supplier_integration_profiles.sql");
+const migration = repo("supabase/migrations/20260922154236_supplier_integration_profiles.sql");
 const api = repo("netlify/functions/admin-supplier-integration-profile.ts");
 const modern = repo("netlify/functions-modern/admin-supplier-integration-profile.ts");
 const panel = repo("src/pages/pixel-perfect/admin/SupplierIntegrationKit.tsx");
