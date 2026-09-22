@@ -6,8 +6,8 @@ import SEO from "@/components/SEO";
 const SignupEntry = () => (
   <MainLayout>
     <SEO
-      title="Choose Account Type | Loadify Market"
-      description="Choose whether you want to join Loadify as a Buyer, begin Marketplace Seller setup, or explore the dedicated Supplier Commerce participation route."
+      title="Choose How to Join | Loadify Market"
+      description="Choose the correct Loadify participation route: create Buyer access, begin Marketplace Seller setup, or submit a dedicated Supplier application."
       robots="noindex, nofollow"
     />
 
@@ -47,16 +47,16 @@ const SignupEntry = () => (
               <span className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-extrabold text-white">Continue as Seller <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
             </Link>
 
-            <Link to="/suppliers" className="group flex h-full flex-col rounded-[24px] border border-white/10 bg-[#0A234F] p-7 text-white shadow-[0_18px_45px_rgba(10,35,79,0.14)] transition hover:-translate-y-0.5 hover:border-[#F5A300]/55 hover:shadow-[0_22px_55px_rgba(10,35,79,0.20)]">
+            <Link to="/suppliers/apply" className="group flex h-full flex-col rounded-[24px] border border-white/10 bg-[#0A234F] p-7 text-white shadow-[0_18px_45px_rgba(10,35,79,0.14)] transition hover:-translate-y-0.5 hover:border-[#F5A300]/55 hover:shadow-[0_22px_55px_rgba(10,35,79,0.20)]">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5"><PackageSearch className="h-6 w-6 text-[#F5A300]" aria-hidden="true" /></div>
               <p className="mt-5 text-[10px] font-black uppercase tracking-[0.16em] text-[#F5A300]">Supply</p>
-              <h2 className="mt-2 text-2xl font-black text-white">Supplier & Wholesaler</h2>
-              <p className="mt-3 text-sm leading-6 text-white/80">Bring your catalogue, brand or wholesale supply capability to Loadify through the dedicated business route.</p>
+              <h2 className="mt-2 text-2xl font-black text-white">Supplier</h2>
+              <p className="mt-3 text-sm leading-6 text-white/80">Manufacturers, importers, wholesalers and distributors can apply for Loadify's dedicated supplier participation route.</p>
               <div className="mt-5 space-y-2 text-xs font-semibold text-white/85">
-                <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#F5A300]" /> Brands, suppliers & wholesalers</p>
-                <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#F5A300]" /> Controlled commercial participation</p>
+                <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#F5A300]" /> Manufacturers, importers, wholesalers & distributors</p>
+                <p className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#F5A300]" /> Application review before supplier onboarding</p>
               </div>
-              <span className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-extrabold text-white">Continue as Supplier <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
+              <span className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-extrabold text-white">Start Supplier Application <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
             </Link>
           </div>
 
