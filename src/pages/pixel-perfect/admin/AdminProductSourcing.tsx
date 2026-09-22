@@ -283,12 +283,12 @@ export default function AdminProductSourcing() {
       return;
     }
 
-    const feedTransport = methods[0];
+    const feedTransport = methods[0] as DirectSupplierOnboardingForm["feedTransport"];
     setSupplierOnboarding((current) => ({
       ...current,
       supplierKey: "",
       legalName,
-      registrationCountry: String(application.registration_country ?? "GB").trim().toUpperCase(),
+      registrationCountry: String(application.registration_country ?? "").trim().toUpperCase(),
       registrationNumber: String(application.registration_number ?? "").trim(),
       vatNumber: String(application.vat_number ?? "").trim(),
       feedTransport,
@@ -302,7 +302,7 @@ export default function AdminProductSourcing() {
       dispatchSlaHours: application.dispatch_sla_hours == null ? "" : String(application.dispatch_sla_hours),
       returnWindowDays: "",
       onboardingStatus: "draft",
-      reviewReason: `Loaded from qualified public application ${applicationId}. Confirm supplier key, warehouse references, selected catalogue route, requested capabilities, commercial terms and evidence before progressing.`,
+      reviewReason: `Loaded from qualified public application ${applicationId}. Confirm supplier key, warehouse references, selected catalogue route${methods.length > 1 ? " (multiple methods were declared)" : ""}, requested capabilities, commercial terms and evidence before progressing.`,
     }));
     setSupplierKey("");
     setSupplierOnboardingResult(null);
