@@ -4,6 +4,7 @@ import type {
   SupplierAdapterErrorClass,
   SupplierAdapterResult,
   SupplierAdapterV1,
+  SupplierFulfilmentRecipient,
   SupplierOrderAcknowledgement,
 } from './supplierAdapter';
 import { adapterSupports } from './supplierAdapter';
@@ -95,6 +96,26 @@ function acknowledgementResultClass(ack: SupplierOrderAcknowledgement): 'SUCCESS
   return 'UNKNOWN_OUTCOME';
 }
 
+function parseFulfilmentRecipient(value: unknown): SupplierFulfilmentRecipient | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  const required = ['name', 'line1', 'city', 'postcode', 'country'] as const;
+  if (required.some(key => typeof row[key] !== 'string' || !String(row[key]).trim())) return null;
+  const optional = (key: 'line2' | 'region' | 'phone' | 'email'): string | undefined =>
+    typeof row[key] === 'string' && row[key].trim() ? row[key].trim() : undefined;
+  return {
+    name: String(row.name).trim(),
+    line1: String(row.line1).trim(),
+    line2: optional('line2'),
+    city: String(row.city).trim(),
+    region: optional('region'),
+    postcode: String(row.postcode).trim(),
+    country: String(row.country).trim().toUpperCase(),
+    phone: optional('phone'),
+    email: optional('email'),
+  };
+}
+
 async function recordSubmissionResult(
   client: SupabaseClient,
   handshakeId: string,
@@ -178,6 +199,41 @@ export async function submitPaidSupplierOrder(
     return { ok: false, state: 'reconciliation_required', handshakeId: prepared.handshakeId, errorClass: 'CAPABILITY_UNAVAILABLE' };
   }
 
+  let fulfilmentRecipient: SupplierFulfilmentRecipient | undefined;
+  if (prepared.providerKey === 'direct_supplier') {
+    const { data: disclosure, error: disclosureError } = await client.rpc(
+      'server_supplier_order_fulfilment_disclosure_v1',
+      { p_handshake_id: prepared.handshakeId },
+    );
+    const disclosureRow = disclosure && typeof disclosure === 'object' && !Array.isArray(disclosure)
+      ? disclosure as Record<string, unknown>
+      : null;
+    if (
+      disclosureError
+      || disclosureRow?.eligible !== true
+      || disclosureRow.piiDisclosed !== true
+    ) {
+      return {
+        ok: false,
+        state: 'blocked',
+        handshakeId: prepared.handshakeId,
+        reason: typeof disclosureRow?.reason === 'string'
+          ? disclosureRow.reason
+          : 'supplier_fulfilment_disclosure_not_ready',
+      };
+    }
+    const recipient = parseFulfilmentRecipient(disclosureRow.recipient);
+    if (!recipient) {
+      return {
+        ok: false,
+        state: 'blocked',
+        handshakeId: prepared.handshakeId,
+        reason: 'supplier_fulfilment_disclosure_invalid',
+      };
+    }
+    fulfilmentRecipient = recipient;
+  }
+
   const { data: startData, error: startError } = await client.rpc('server_mark_supplier_order_submission_started_v1', {
     p_handshake_id: prepared.handshakeId,
     p_idempotency_key: prepared.idempotencyKey,
@@ -202,6 +258,7 @@ export async function submitPaidSupplierOrder(
       externalOfferRef: prepared.externalOfferRef,
       quantity: prepared.quantity,
       destinationCountry: prepared.destinationCountry,
+      ...(fulfilmentRecipient ? { recipient: fulfilmentRecipient } : {}),
     });
   } catch (error) {
     result = {
