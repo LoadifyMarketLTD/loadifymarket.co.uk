@@ -14,6 +14,14 @@ interface Body {
   evidenceSummary?: string;
   evidenceHash?: string;
   expiresAt?: string;
+  executionMode?: "manual_only" | "automated_read" | "automated_write";
+  writeAllowed?: boolean;
+  piiAllowed?: boolean;
+  piiFields?: string[];
+  idempotencyKnown?: boolean;
+  lostResponseRecoveryKnown?: boolean;
+  rateLimitKnown?: boolean;
+  contractRef?: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -55,6 +63,14 @@ export const handler: Handler = async (event) => {
       evidenceSummary: body.evidenceSummary ?? null,
       evidenceHash: body.evidenceHash ?? null,
       expiresAt: body.expiresAt ?? null,
+      executionMode: body.executionMode ?? 'manual_only',
+      writeAllowed: body.writeAllowed === true,
+      piiAllowed: body.piiAllowed === true,
+      piiFields: Array.isArray(body.piiFields) ? body.piiFields : [],
+      idempotencyKnown: body.idempotencyKnown === true,
+      lostResponseRecoveryKnown: body.lostResponseRecoveryKnown === true,
+      rateLimitKnown: body.rateLimitKnown === true,
+      contractRef: body.contractRef ?? null,
     },
   });
 
