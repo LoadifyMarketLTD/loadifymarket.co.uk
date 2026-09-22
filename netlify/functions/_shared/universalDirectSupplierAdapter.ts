@@ -3,8 +3,13 @@ import type {
   SupplierAdapterContext,
   SupplierAdapterResult,
   SupplierAdapterV1,
+  SupplierCatalogItemRef,
   SupplierOrderAcknowledgement,
   SupplierOrderRequest,
+  SupplierPriceSnapshot,
+  SupplierShippingQuote,
+  SupplierShippingQuoteRequest,
+  SupplierStockSnapshot,
   SupplierTrackingEvent,
 } from './supplierAdapter';
 import { SUPPLIER_ADAPTER_INTERFACE_VERSION } from './supplierAdapter';
@@ -59,6 +64,19 @@ function mappedString(payload: unknown, mapping: JsonRecord, key: string): strin
   const path = typeof responseMap[key] === 'string' ? String(responseMap[key]) : '';
   const value = path ? getPath(payload, path) : undefined;
   return typeof value === 'string' || typeof value === 'number' ? String(value).trim() : '';
+}
+
+function mappedNumber(payload: unknown, mapping: JsonRecord, key: string): number | undefined {
+  const raw = mappedString(payload, mapping, key);
+  if (!raw) return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
+}
+
+function rowsFromPayload(payload: unknown, mapping: JsonRecord): unknown[] {
+  const listPath = typeof mapping.listPath === 'string' ? String(mapping.listPath) : '';
+  const value = listPath ? getPath(payload, listPath) : payload;
+  return Array.isArray(value) ? value : [value];
 }
 
 function normalizeAckState(value: string, mapping: JsonRecord): SupplierOrderAcknowledgement['state'] {
@@ -184,15 +202,118 @@ export class UniversalDirectSupplierAdapterV1 implements SupplierAdapterV1 {
   readonly capabilities: readonly SupplierAdapterCapability[];
 
   constructor(private readonly runtime: SupplierIntegrationRuntime) {
+    const implemented = new Set<SupplierAdapterCapability>([
+      'supplier_identity','catalog','stock','price','shipping',
+      'order_submission','acknowledgement','tracking','cancellation','returns','reimbursement',
+    ]);
     this.capabilities = [...runtime.bindings.values()]
       .filter(binding => binding.status === 'verified' && binding.executionMode !== 'manual_only')
       .filter(binding => binding.transport === 'http_rest' || binding.transport === 'graphql')
-      .map(binding => binding.capability);
+      .map(binding => binding.capability)
+      .filter(capability => implemented.has(capability));
   }
 
   private binding(capability: SupplierAdapterCapability): SupplierIntegrationBinding | null {
     const binding = this.runtime.bindings.get(capability);
     return binding && binding.status === 'verified' ? binding : null;
+  }
+
+  async getSupplierIdentity(context: SupplierAdapterContext): Promise<SupplierAdapterResult<Record<string, unknown>>> {
+    const binding = this.binding('supplier_identity');
+    if (!binding) return { ok: false, errorClass: 'CAPABILITY_UNAVAILABLE', message: 'Supplier identity binding is unavailable' };
+    const executed = await executeBinding(this.runtime, binding, { context });
+    if (!executed.ok) return executed;
+    if (!isRecord(executed.data)) {
+      return { ok: false, errorClass: 'MALFORMED_RESPONSE', message: 'Supplier identity response is not an object' };
+    }
+    return { ok: true, data: executed.data };
+  }
+
+  async listCatalog(context: SupplierAdapterContext): Promise<SupplierAdapterResult<SupplierCatalogItemRef[]>> {
+    const binding = this.binding('catalog');
+    if (!binding) return { ok: false, errorClass: 'CAPABILITY_UNAVAILABLE', message: 'Catalog binding is unavailable' };
+    const executed = await executeBinding(this.runtime, binding, { context });
+    if (!executed.ok) return executed;
+    const items: SupplierCatalogItemRef[] = [];
+    for (const row of rowsFromPayload(executed.data, binding.mapping)) {
+      const externalProductRef = mappedString(row, binding.mapping, 'externalProductRef');
+      if (!externalProductRef) continue;
+      const variantPath = isRecord(binding.mapping.response) && typeof binding.mapping.response.externalVariantRefs === 'string'
+        ? String(binding.mapping.response.externalVariantRefs)
+        : '';
+      const rawVariants = variantPath ? getPath(row, variantPath) : undefined;
+      const externalVariantRefs = Array.isArray(rawVariants)
+        ? rawVariants.map(value => String(value).trim()).filter(Boolean)
+        : undefined;
+      items.push({ externalProductRef, externalVariantRefs });
+    }
+    return { ok: true, data: items };
+  }
+
+  async getStock(context: SupplierAdapterContext, externalVariantRefs: string[]): Promise<SupplierAdapterResult<SupplierStockSnapshot[]>> {
+    const binding = this.binding('stock');
+    if (!binding) return { ok: false, errorClass: 'CAPABILITY_UNAVAILABLE', message: 'Stock binding is unavailable' };
+    const executed = await executeBinding(this.runtime, binding, { context, externalVariantRefs });
+    if (!executed.ok) return executed;
+    const snapshots: SupplierStockSnapshot[] = [];
+    const availabilityMap = isRecord(binding.mapping.availabilityMap) ? binding.mapping.availabilityMap : {};
+    for (const row of rowsFromPayload(executed.data, binding.mapping)) {
+      const externalVariantRef = mappedString(row, binding.mapping, 'externalVariantRef');
+      if (!externalVariantRef) continue;
+      const quantity = mappedNumber(row, binding.mapping, 'quantity');
+      const rawAvailability = mappedString(row, binding.mapping, 'availability');
+      const mappedAvailability = typeof availabilityMap[rawAvailability] === 'string'
+        ? String(availabilityMap[rawAvailability]).toLowerCase()
+        : rawAvailability.toLowerCase();
+      const availability = ['in_stock','out_of_stock','limited','unknown'].includes(mappedAvailability)
+        ? mappedAvailability as SupplierStockSnapshot['availability']
+        : quantity !== undefined
+          ? quantity > 0 ? 'in_stock' : 'out_of_stock'
+          : 'unknown';
+      const observedAt = mappedString(row, binding.mapping, 'observedAt') || new Date().toISOString();
+      snapshots.push({ externalVariantRef, quantity, availability, observedAt });
+    }
+    return { ok: true, data: snapshots };
+  }
+
+  async getPrices(context: SupplierAdapterContext, externalVariantRefs: string[]): Promise<SupplierAdapterResult<SupplierPriceSnapshot[]>> {
+    const binding = this.binding('price');
+    if (!binding) return { ok: false, errorClass: 'CAPABILITY_UNAVAILABLE', message: 'Price binding is unavailable' };
+    const executed = await executeBinding(this.runtime, binding, { context, externalVariantRefs });
+    if (!executed.ok) return executed;
+    const snapshots: SupplierPriceSnapshot[] = [];
+    for (const row of rowsFromPayload(executed.data, binding.mapping)) {
+      const externalVariantRef = mappedString(row, binding.mapping, 'externalVariantRef');
+      const amountMinor = mappedNumber(row, binding.mapping, 'amountMinor');
+      const currency = mappedString(row, binding.mapping, 'currency').toUpperCase();
+      const observedAt = mappedString(row, binding.mapping, 'observedAt') || new Date().toISOString();
+      if (!externalVariantRef || !Number.isSafeInteger(amountMinor) || amountMinor === undefined || amountMinor < 0 || !/^[A-Z]{3}$/.test(currency)) continue;
+      snapshots.push({ externalVariantRef, amountMinor, currency, observedAt });
+    }
+    return { ok: true, data: snapshots };
+  }
+
+  async quoteShipping(context: SupplierAdapterContext, input: SupplierShippingQuoteRequest): Promise<SupplierAdapterResult<SupplierShippingQuote[]>> {
+    const binding = this.binding('shipping');
+    if (!binding) return { ok: false, errorClass: 'CAPABILITY_UNAVAILABLE', message: 'Shipping binding is unavailable' };
+    const executed = await executeBinding(this.runtime, binding, { context, input });
+    if (!executed.ok) return executed;
+    const quotes: SupplierShippingQuote[] = [];
+    for (const row of rowsFromPayload(executed.data, binding.mapping)) {
+      const serviceRef = mappedString(row, binding.mapping, 'serviceRef');
+      const amountMinor = mappedNumber(row, binding.mapping, 'amountMinor');
+      const currency = mappedString(row, binding.mapping, 'currency').toUpperCase();
+      if (!serviceRef || amountMinor === undefined || !Number.isSafeInteger(amountMinor) || amountMinor < 0 || !/^[A-Z]{3}$/.test(currency)) continue;
+      quotes.push({
+        serviceRef,
+        amountMinor,
+        currency,
+        estimatedDispatchAt: mappedString(row, binding.mapping, 'estimatedDispatchAt') || undefined,
+        estimatedDeliveryFrom: mappedString(row, binding.mapping, 'estimatedDeliveryFrom') || undefined,
+        estimatedDeliveryTo: mappedString(row, binding.mapping, 'estimatedDeliveryTo') || undefined,
+      });
+    }
+    return { ok: true, data: quotes };
   }
 
   async submitOrder(context: SupplierAdapterContext, input: SupplierOrderRequest): Promise<SupplierAdapterResult<SupplierOrderAcknowledgement>> {
