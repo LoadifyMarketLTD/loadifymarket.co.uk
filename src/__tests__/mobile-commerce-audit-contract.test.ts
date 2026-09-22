@@ -38,7 +38,7 @@ describe('mobile commerce and branding audit contract', () => {
     expect(source('src/pages/MobileOrdersPage.tsx')).toContain('/.netlify/functions/request-order-cancellation');
     expect(source('src/pages/pixel-perfect/buyer/BuyerOrders.tsx')).toContain('/.netlify/functions/request-order-cancellation');
     expect(source('src/pages/pixel-perfect/ReturnsPolicy.tsx')).toContain('A request is not confirmation');
-    expect(source('src/pages/pixel-perfect/BuyerTerms.tsx')).toContain('Submission does not itself cancel');
+    expect(source('src/pages/pixel-perfect/BuyerTerms.tsx')).toContain('A cancellation request does not itself cancel an order.');
   });
 
   it('uses the shared legal typography system on every public policy surface', () => {
