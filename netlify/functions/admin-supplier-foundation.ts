@@ -62,7 +62,8 @@ export const handler: Handler = async (event) => {
     const requestedTransactional = requested.filter(capability => transactional.has(capability));
     if (requestedTransactional.length > 0) {
       const runtimeAdapter = createSupplierProviderAdapter('direct_supplier');
-      const missing = requestedTransactional.filter(capability => !runtimeAdapter.capabilities.includes(capability as never));
+      const runtimeCapabilities = runtimeAdapter.capabilities as readonly string[];
+      const missing = requestedTransactional.filter(capability => !runtimeCapabilities.includes(capability));
       if (missing.length > 0) {
         return jsonResponse(409, {
           error: 'Direct Supplier transactional adapter code is not installed for the requested capabilities',
