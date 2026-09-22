@@ -3,7 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import type { Handler } from "@netlify/functions";
 import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { jsonResponse, optionsResponse } from "./_shared/http";
-import { createSupplierProviderAdapter, SUPPLIER_PROVIDER_KEYS, type SupplierProviderKey } from "./_shared/supplierProviderRegistry";
+import { SUPPLIER_PROVIDER_KEYS, type SupplierProviderKey } from "./_shared/supplierProviderRegistry";
+import { createRuntimeSupplierAdapter } from "./_shared/supplierAdapterRuntimeFactory";
 import { recoverSupplierOrderAcknowledgement, submitPaidSupplierOrder } from "./_shared/supplierOrderHandshake";
 import { syncSupplierTracking } from "./_shared/supplierTracking";
 
@@ -46,7 +47,15 @@ export const handler: Handler = async (event) => {
 
   const providerKey = String(current.providerKey ?? "");
   if (!isProviderKey(providerKey)) return jsonResponse(409, { error: "Supplier provider is not registered" }, METHODS);
-  const adapter = createSupplierProviderAdapter(providerKey);
+  const supplierOfferId = String(current.supplierOfferId ?? "");
+  if (!UUID_RE.test(supplierOfferId)) {
+    return jsonResponse(409, { error: "Supplier offer context is unavailable" }, METHODS);
+  }
+  const adapter = await createRuntimeSupplierAdapter({
+    client: admin,
+    providerKey,
+    supplierOfferId,
+  });
   if (action === "tracking") {
     const result = await syncSupplierTracking(admin, adapter, String(current.handshakeId ?? ""));
     return jsonResponse(result.ok ? 200 : 409, { ok: result.ok, action, result }, METHODS);
