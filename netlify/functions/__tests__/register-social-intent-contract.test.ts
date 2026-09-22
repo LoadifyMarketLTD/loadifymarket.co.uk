@@ -79,5 +79,8 @@ describe('verified social registration contract', () => {
     expect(signupEntry).toContain('Choose how you want to participate');
     expect(signupEntry).toContain('/register?type=buyer');
     expect(signupEntry).toContain('/register?type=seller');
+    expect(signupEntry).toContain('to="/suppliers/apply"');
+    expect(signupEntry).toContain('Start Supplier Application');
+    expect(signupEntry).not.toContain('to="/suppliers" className="group flex h-full flex-col');
   });
 });
