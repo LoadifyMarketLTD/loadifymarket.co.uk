@@ -16,7 +16,7 @@ const PUBLIC_MARKETING_ROUTES = [
   '/business',
   '/trade',
   '/suppliers',
-  '/supplier-application',
+  '/suppliers/apply',
   '/technology',
   '/integrations',
   '/partners',
@@ -78,6 +78,7 @@ const CANONICAL_REDIRECTS = [
   ['/blog', '/deals'],
   ['/intellectual-property-complaints', '/ip-trademark-complaints'],
   ['/wholesale-info', '/trade'],
+  ['/supplier-application', '/suppliers/apply'],
 ] as const;
 
 describe('SEO foundation contract', () => {
