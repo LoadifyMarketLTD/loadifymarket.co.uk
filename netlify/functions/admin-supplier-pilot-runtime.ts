@@ -3,7 +3,8 @@ import type { Handler } from '@netlify/functions';
 import { handler as canonicalPilotHandler } from './admin-supplier-pilot';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { createProviderExecutionCapabilityRegistry } from './_shared/providerExecutionContracts';
-import { createSupplierProviderAdapter } from './_shared/supplierProviderRegistry';
+import { loadSupplierIntegrationRuntime } from './_shared/supplierIntegrationRuntime';
+import { UniversalDirectSupplierAdapterV1 } from './_shared/universalDirectSupplierAdapter';
 import { jsonResponse } from './_shared/http';
 import {
   PHASE_O_SHADOW_REVIEW_CAPABILITY,
@@ -217,11 +218,15 @@ export const handler: Handler = async (event, context) => {
       && typeof directCapability === 'object'
       && !Array.isArray(directCapability)
     ) ? directCapability as Record<string, unknown> : null;
-    const runtimeAdapter = createSupplierProviderAdapter('direct_supplier');
-    const runtimeOrderReady = runtimeAdapter.capabilities.includes('order_submission')
+    const directRuntime = await loadSupplierIntegrationRuntime(admin, supplierId, territory);
+    const runtimeAdapter = directRuntime ? new UniversalDirectSupplierAdapterV1(directRuntime) : null;
+    const runtimeOrderReady = Boolean(
+      runtimeAdapter
+      && runtimeAdapter.capabilities.includes('order_submission')
       && runtimeAdapter.capabilities.includes('acknowledgement')
       && typeof runtimeAdapter.submitOrder === 'function'
-      && typeof runtimeAdapter.getOrderAcknowledgement === 'function';
+      && typeof runtimeAdapter.getOrderAcknowledgement === 'function'
+    );
     providerOrderExecution = {
       found: direct?.found === true,
       availability: runtimeOrderReady && direct?.availability === 'available'
