@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Cable, Loader2, RefreshCw, Save, ShieldCheck } from "lucide-react";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { Badge } from "@/components/ui/badge";
@@ -44,42 +44,8 @@ export default function SupplierIntegrationKit({ supplierId }: { supplierId: str
   const [loading, setLoading] = useState<"load" | "save" | null>(null);
   const [error, setError] = useState("");
 
-  const selected = useMemo(() => profiles.find((profile) =>
-    text(profile.capability) === capability && text(profile.territory) === "GB"
-  ) ?? null, [profiles, capability]);
-
-  async function loadProfiles() {
-    if (!supplierId.trim()) {
-      setProfiles([]);
-      setError("");
-      return;
-    }
-    setLoading("load");
-    setError("");
-    try {
-      const response = await authorizedFetch("/.netlify/functions/admin-supplier-integration-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "list", supplierId: supplierId.trim() }),
-      });
-      const body = await response.json() as JsonRecord;
-      if (!response.ok) throw new Error(text(body.error) || "Unable to load supplier integration profiles.");
-      const result = asRecord(body.result);
-      setProfiles(records(result?.profiles));
-    } catch (caught) {
-      setProfiles([]);
-      setError(caught instanceof Error ? caught.message : "Unable to load supplier integration profiles.");
-    } finally {
-      setLoading(null);
-    }
-  }
-
-  useEffect(() => {
-    void loadProfiles();
-  }, [supplierId]);
-
-  useEffect(() => {
-    if (!selected) {
+  const applyProfileToForm = useCallback((profile: JsonRecord | null) => {
+    if (!profile) {
       setConfigRef("");
       setContractRef("");
       setMappingJson("{}");
@@ -87,18 +53,52 @@ export default function SupplierIntegrationKit({ supplierId }: { supplierId: str
       setNotes("");
       return;
     }
-    const nextTransport = text(selected.transport);
-    const nextExecution = text(selected.execution_mode);
-    const nextStatus = text(selected.status);
+    const nextTransport = text(profile.transport);
+    const nextExecution = text(profile.execution_mode);
+    const nextStatus = text(profile.status);
     if (TRANSPORTS.includes(nextTransport as Transport)) setTransport(nextTransport as Transport);
     if (["manual_only","automated_read","automated_write"].includes(nextExecution)) setExecutionMode(nextExecution as ExecutionMode);
     if (["draft","verified","blocked","stale"].includes(nextStatus)) setStatus(nextStatus as ProfileStatus);
-    setConfigRef(text(selected.config_ref));
-    setContractRef(text(selected.contract_ref));
-    const mapping = asRecord(selected.mapping) ?? {};
-    setMappingJson(JSON.stringify(mapping, null, 2));
-    setNotes(text(selected.notes));
-  }, [selected]);
+    setConfigRef(text(profile.config_ref));
+    setContractRef(text(profile.contract_ref));
+    setMappingJson(JSON.stringify(asRecord(profile.mapping) ?? {}, null, 2));
+    setNotes(text(profile.notes));
+  }, []);
+
+  const loadProfiles = useCallback(async (preferredCapability: Capability = "catalog") => {
+    const normalizedSupplierId = supplierId.trim();
+    if (!normalizedSupplierId) return;
+
+    setLoading("load");
+    setError("");
+    try {
+      const response = await authorizedFetch("/.netlify/functions/admin-supplier-integration-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "list", supplierId: normalizedSupplierId }),
+      });
+      const body = await response.json() as JsonRecord;
+      if (!response.ok) throw new Error(text(body.error) || "Unable to load supplier integration profiles.");
+      const result = asRecord(body.result);
+      const nextProfiles = records(result?.profiles);
+      setProfiles(nextProfiles);
+      setCapability(preferredCapability);
+      const nextSelected = nextProfiles.find((profile) =>
+        text(profile.capability) === preferredCapability && text(profile.territory) === "GB"
+      ) ?? null;
+      applyProfileToForm(nextSelected);
+    } catch (caught) {
+      setProfiles([]);
+      setError(caught instanceof Error ? caught.message : "Unable to load supplier integration profiles.");
+    } finally {
+      setLoading(null);
+    }
+  }, [applyProfileToForm, supplierId]);
+
+  useEffect(() => {
+    if (!supplierId.trim()) return;
+    void loadProfiles("catalog");
+  }, [loadProfiles, supplierId]);
 
   function alignExecutionMode(nextTransport: Transport) {
     setTransport(nextTransport);
@@ -167,7 +167,7 @@ export default function SupplierIntegrationKit({ supplierId }: { supplierId: str
       });
       const body = await response.json() as JsonRecord;
       if (!response.ok) throw new Error(text(body.error) || "Unable to save supplier integration profile.");
-      await loadProfiles();
+      await loadProfiles(capability);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to save supplier integration profile.");
     } finally {
@@ -189,7 +189,7 @@ export default function SupplierIntegrationKit({ supplierId }: { supplierId: str
             Plain FTP is recognised but remains manual-only by policy.
           </p>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={() => void loadProfiles()} disabled={!supplierId.trim() || loading !== null}>
+        <Button type="button" variant="outline" size="sm" onClick={() => void loadProfiles(capability)} disabled={!supplierId.trim() || loading !== null}>
           {loading === "load" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
           Refresh bindings
         </Button>
@@ -212,10 +212,16 @@ export default function SupplierIntegrationKit({ supplierId }: { supplierId: str
                 onChange={(event) => {
                   const next = event.target.value as Capability;
                   setCapability(next);
-                  if (["order_submission","cancellation","returns"].includes(next)) {
-                    if (!["manual_portal","manual_file","ftp"].includes(transport)) setExecutionMode("automated_write");
-                  } else if (executionMode === "automated_write") {
-                    setExecutionMode("automated_read");
+                  const nextSelected = profiles.find((profile) =>
+                    text(profile.capability) === next && text(profile.territory) === "GB"
+                  ) ?? null;
+                  applyProfileToForm(nextSelected);
+                  if (!nextSelected) {
+                    if (["order_submission","cancellation","returns"].includes(next)) {
+                      if (!["manual_portal","manual_file","ftp"].includes(transport)) setExecutionMode("automated_write");
+                    } else if (executionMode === "automated_write") {
+                      setExecutionMode("automated_read");
+                    }
                   }
                 }}
               >
