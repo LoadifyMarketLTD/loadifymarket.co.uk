@@ -32,7 +32,17 @@ interface RuntimeBody {
 interface PilotStatusShape {
   exists?: boolean;
   pilotId?: string;
+  supplierId?: string;
   providerKey?: string;
+  territory?: string;
+}
+
+interface RuntimeCapabilityExecution {
+  found: boolean;
+  availability: 'available' | 'manual_only' | 'unavailable';
+  reason: string;
+  externalMutationAllowed: boolean;
+  piiDisclosureAllowed: boolean;
 }
 
 interface CanonicalReadinessShape {
@@ -185,11 +195,50 @@ export const handler: Handler = async (event, context) => {
     && !Array.isArray(rawCanonicalReadiness)
   ) ? rawCanonicalReadiness as CanonicalReadinessShape : null;
 
-  const capabilityRegistry = createProviderExecutionCapabilityRegistry();
-  const providerOrderExecution = capabilityRegistry.resolve({
-    provider: providerKey,
-    capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
-  });
+  let providerOrderExecution: RuntimeCapabilityExecution;
+  if (providerKey === 'direct_supplier') {
+    const supplierId = text(status.supplierId);
+    const territory = text(status.territory || 'GB').toUpperCase();
+    if (!supplierId || !isUuid(supplierId)) {
+      return jsonResponse(409, { error: 'Direct Supplier pilot supplier identity is unavailable' }, METHODS);
+    }
+    const { data: directCapability, error: directCapabilityError } = await admin.rpc(
+      'server_supplier_capability_execution_v1',
+      {
+        p_supplier_id: supplierId,
+        p_territory: territory,
+        p_capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
+      },
+    );
+    const direct = (
+      !directCapabilityError
+      && directCapability
+      && typeof directCapability === 'object'
+      && !Array.isArray(directCapability)
+    ) ? directCapability as Record<string, unknown> : null;
+    providerOrderExecution = {
+      found: direct?.found === true,
+      availability: direct?.availability === 'available' || direct?.availability === 'manual_only'
+        ? direct.availability
+        : 'unavailable',
+      reason: text(direct?.reason) || (directCapabilityError ? 'direct_supplier_capability_lookup_failed' : 'direct_supplier_capability_unavailable'),
+      externalMutationAllowed: direct?.externalMutationAllowed === true,
+      piiDisclosureAllowed: direct?.piiDisclosureAllowed === true,
+    };
+  } else {
+    const capabilityRegistry = createProviderExecutionCapabilityRegistry();
+    const resolved = capabilityRegistry.resolve({
+      provider: providerKey,
+      capability: PHASE_O_SHADOW_REVIEW_CAPABILITY,
+    });
+    providerOrderExecution = {
+      found: resolved.found,
+      availability: resolved.availability,
+      reason: resolved.reason,
+      externalMutationAllowed: resolved.externalMutationAllowed,
+      piiDisclosureAllowed: resolved.piiDisclosureAllowed,
+    };
+  }
   const providerOrderContractReady = providerOrderExecution.found
     && providerOrderExecution.availability === 'available'
     && providerOrderExecution.externalMutationAllowed
