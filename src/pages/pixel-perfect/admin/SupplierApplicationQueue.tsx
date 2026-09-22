@@ -23,7 +23,11 @@ function list(value: unknown): string {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string").join(", ") : "";
 }
 
-export default function SupplierApplicationQueue() {
+interface SupplierApplicationQueueProps {
+  onLoadQualifiedApplication?: (application: JsonRecord) => void;
+}
+
+export default function SupplierApplicationQueue({ onLoadQualifiedApplication }: SupplierApplicationQueueProps) {
   const [applications, setApplications] = useState<JsonRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState("");
@@ -170,6 +174,15 @@ export default function SupplierApplicationQueue() {
                       {next.replace(/_/g, " ")}
                     </Button>
                   ))}
+                  {status === "qualified" && onLoadQualifiedApplication && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => onLoadQualifiedApplication(application)}
+                    >
+                      Load into onboarding
+                    </Button>
+                  )}
                 </div>
               </div>
             </article>
