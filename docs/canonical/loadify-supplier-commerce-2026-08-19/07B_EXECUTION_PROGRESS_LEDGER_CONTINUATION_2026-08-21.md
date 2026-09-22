@@ -201,3 +201,88 @@ Canonical record:
 For Direct Supplier, further commercial progression is now evidence-bound rather than code-bound: an authentic admin-reviewed onboarding manifest is required before creating a real Supplier Foundation candidate. After candidate creation, the existing canonical lifecycle still requires real qualification evidence, active SLA, approved compliance, and verified adapter capability before approval/readiness can be claimed.
 
 Do not use the synthetic `uk-maker-001` fixture or invented legal/commercial data to manufacture Pilot evidence. No provider/supplier capability is promoted merely because the candidate-onboarding route exists.
+
+---
+
+## 22 September 2026 — First Supplier Launch Gate (P7/P8 platform readiness surface)
+
+Implementation reached `main` at `10a50ad50c4e2dc3a669554fc7762e110c7d84b1`.
+
+This slice adds an active-admin-only, read-only launch decision surface for the first authentic Direct Supplier. It composes existing canonical truth instead of introducing a parallel readiness model:
+
+- Supplier Foundation / onboarding readiness via `server_supplier_onboarding_readiness_v1`;
+- governed acquisition context via `server_supplier_acquisition_context_v1`;
+- server-side acquisition configuration binding checks without returning secret material;
+- Supplier Control Centre / health evidence via `server_admin_supplier_control_centre_v1`;
+- Controlled Pilot status / readiness / acceptance via `server_admin_supplier_pilot_status_v1`.
+
+The implementation is exposed in Admin Product Sourcing as **First Supplier Launch Gate · P7 / P8** and reports two separate outcomes:
+
+- **P7 — First real supplier readiness:** requires authentic supplier identity plus onboarding, qualification, SLA, compliance, adapter/capability and applicable acquisition/config readiness;
+- **P8 — Controlled pilot acceptance:** remains HOLD until a matching bounded Controlled Pilot has real activation evidence and its acceptance gate passes after authentic pilot activity.
+
+The gate is intentionally non-mutating. It does not:
+
+- create or approve a Supplier Foundation identity;
+- start an acquisition run;
+- create, prepare or activate a pilot;
+- enable any Supplier Commerce control;
+- publish a marketplace listing;
+- create an order;
+- mutate payment state;
+- call an external supplier/provider.
+
+Manual catalogue onboarding remains a valid provider-neutral route and is not incorrectly blocked on remote acquisition configuration.
+
+### Production verification after implementation
+
+Production Supabase remained fail-closed after the implementation:
+
+- Supplier Foundation suppliers: **0**;
+- public supplier applications: **0**;
+- supplier onboarding profiles: **0**;
+- supplier acquisition runs: **0**;
+- controlled pilot programs: **0**.
+
+All global Supplier Commerce controls remained **OFF**, including:
+
+- `*`;
+- `checkout`;
+- `import`;
+- `pilot`;
+- `price_sync`;
+- `publish`;
+- `reservation`;
+- `return_recovery`;
+- `stock_sync`;
+- `supplier_order`;
+- `tracking_ingest`.
+
+Netlify production deploy for `main @10a50ad` reached the live-site deployment path and passed the repository build gates observed during deployment:
+
+- web build environment validation: PASS;
+- canonical migration health: 203 migrations checked;
+- security build tests: 9/9 PASS;
+- TypeScript/Vite production build completed before Netlify deployment/post-processing;
+- no migration was introduced by this P7/P8 readiness surface.
+
+### Canonical phase status — unchanged by code readiness
+
+**PHASE O — CONTROLLED PILOT remains OPEN.**
+
+The platform is now better prepared to evaluate the first authentic supplier, but code/readiness UI is not Pilot PASS.
+
+The next real transition is evidence-bound:
+
+1. receive or source an authentic supplier;
+2. admin-review its real onboarding manifest/application;
+3. create a Supplier Foundation **candidate** only for that real supplier;
+4. collect and verify the canonical qualification evidence;
+5. activate a real agreed SLA;
+6. approve territory compliance;
+7. verify the exact adapter/capability evidence;
+8. prove the real catalogue/acquisition path;
+9. only then prepare a bounded Controlled Pilot;
+10. close Pilot acceptance only from authentic pilot/order/operational evidence.
+
+Synthetic supplier identities, invented evidence and simulator-only evidence remain invalid for P7/P8 or Phase O closure. **Simulator PASS is not Pilot PASS.**
