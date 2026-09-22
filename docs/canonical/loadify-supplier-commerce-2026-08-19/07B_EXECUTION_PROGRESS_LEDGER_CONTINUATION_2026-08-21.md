@@ -286,3 +286,111 @@ The next real transition is evidence-bound:
 10. close Pilot acceptance only from authentic pilot/order/operational evidence.
 
 Synthetic supplier identities, invented evidence and simulator-only evidence remain invalid for P7/P8 or Phase O closure. **Simulator PASS is not Pilot PASS.**
+
+
+---
+
+## 22 September 2026 — Qualified Supplier Application → Direct Supplier Onboarding handoff
+
+Implementation reached `main` at `dfa44f779b8cb11c9423befa440e01f5fd4c1bc6`.
+
+This closes the operational gap between the public Supplier Application queue and governed Direct Supplier onboarding without weakening any Supplier Foundation boundary.
+
+### Implemented flow
+
+A public application must first be reviewed and explicitly marked `qualified` by an active admin. Only then does the admin queue expose **Load into onboarding**.
+
+The handoff copies only facts already submitted by the applicant:
+
+- legal name;
+- registration country / registration number;
+- VAT number where supplied;
+- declared catalogue method;
+- declared fulfilment territories;
+- declared dispatch SLA.
+
+The handoff intentionally does **not** invent or infer missing governance facts. The following remain blank or conservative and require admin confirmation:
+
+- Supplier Foundation key;
+- warehouse references;
+- provider/acquisition configuration reference;
+- commercial terms reference;
+- payment terms;
+- return window;
+- broader capability scope;
+- qualification / rights / compliance evidence;
+- commerce approval.
+
+The onboarding record remains `draft` until the normal evidence-led process advances it.
+
+### Conversion ordering
+
+The application is not marked `converted` merely because it was qualified or loaded into the form.
+
+The production sequence is:
+
+1. active admin loads the qualified application;
+2. admin completes and confirms the Direct Supplier onboarding manifest;
+3. `admin-direct-supplier-foundation-candidate` creates/updates the real Supplier Foundation candidate;
+4. the returned real Supplier Foundation ID is required;
+5. the onboarding profile is saved;
+6. only after those operations succeed does the application queue update to `converted` with `convertedSupplierId`;
+7. the existing database RPC independently rejects conversion unless that Supplier Foundation identity exists.
+
+No public application RPC creates a Supplier Foundation identity, activates commerce or publishes a listing.
+
+### Production deployment and verification
+
+Netlify production deploy `6ab2893acfbf37000899842f` for `main @dfa44f7` reached **Published**.
+
+Observed production build gates:
+
+- web build environment validation: PASS;
+- canonical migration health: 203 migrations checked;
+- security build tests: 9/9 PASS;
+- TypeScript/Vite production build completed;
+- Netlify deployment completed and the site went live;
+- Lighthouse: Performance 91, Accessibility 97, Best Practices 100, SEO 97, PWA 100.
+
+No Supabase migration was introduced by this handoff.
+
+Post-deploy production data remained unchanged and fail-closed:
+
+- Supplier Foundation suppliers: **0**;
+- public supplier applications: **0**;
+- supplier onboarding profiles: **0**;
+- supplier acquisition runs: **0**;
+- controlled pilot programs: **0**.
+
+All global Supplier Commerce controls remained **OFF**:
+
+- `*`;
+- `checkout`;
+- `import`;
+- `pilot`;
+- `price_sync`;
+- `publish`;
+- `reservation`;
+- `return_recovery`;
+- `stock_sync`;
+- `supplier_order`;
+- `tracking_ingest`.
+
+### Exact continuation point
+
+The platform-side path to the first real Direct Supplier is now connected:
+
+`/suppliers/apply`
+→ private candidate-only application
+→ admin review
+→ qualified application
+→ facts-only onboarding handoff
+→ real Supplier Foundation candidate
+→ qualification / SLA / compliance / capability evidence
+→ P7 First Supplier Launch Gate
+→ bounded Controlled Pilot
+→ P8 real pilot acceptance.
+
+**P7 and P8 business PASS remain evidence-bound and are not closed by this implementation.**
+
+The next required input is an authentic supplier application or otherwise verified real supplier onboarding manifest. Synthetic suppliers, invented evidence and simulator-only evidence remain invalid. **Simulator PASS is not Pilot PASS.**
