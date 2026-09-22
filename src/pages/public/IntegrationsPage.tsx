@@ -10,7 +10,14 @@ const technologyNav = [
   { label: "Developers", to: "/developers" },
 ] as const;
 
-const transports = ["API / JSON", "CSV", "XML", "Feed URL", "SFTP", "Manual catalogue"] as const;
+const transports = [
+  { title: "API / JSON", copy: "Structured API or JSON-based catalogue exchange for suppliers with a maintained programmatic data source." },
+  { title: "CSV", copy: "Scheduled or reviewed CSV catalogue data where the supplier can keep products, stock and pricing accurate." },
+  { title: "XML", copy: "Structured XML catalogue ingestion for suppliers whose operational feed is maintained in XML format." },
+  { title: "Feed URL", copy: "Approved HTTPS feed endpoints for repeatable catalogue acquisition without requiring a custom API." },
+  { title: "SFTP", copy: "Controlled server-to-server file exchange for suppliers operating secure scheduled catalogue exports." },
+  { title: "Manual catalogue", copy: "Governed manual catalogue onboarding when a supplier has no reliable automated feed yet." },
+] as const;
 
 const domains = [
   { icon: PackageSearch, eyebrow: "CATALOGUE", title: "Catalogue & offers", copy: "Product identity, variants and commercial offer data can be evaluated through a provider-appropriate ingestion path." },
@@ -57,7 +64,23 @@ export default function IntegrationsPage() {
         <section className="bg-white py-16 sm:py-20">
           <div className="mx-auto max-w-[1480px] px-5 sm:px-7 lg:px-10">
             <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8A7351]">Supported catalogue transports</p><h2 className="mt-3 max-w-3xl font-serif text-3xl sm:text-4xl">Use the transport the supplier can maintain reliably.</h2></div><p className="max-w-2xl text-sm leading-7 text-[#667085] lg:justify-self-end">A feed format is not itself proof of commercial readiness. Identity, data quality, rights, compliance and fulfilment still pass through the supplier governance path.</p></div>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">{transports.map((transport, index) => <article key={transport} className="rounded-[22px] border border-[#0A234F]/10 bg-[#F8F7F4] p-5"><FileInput className="h-5 w-5 text-[#1D57D8]" /><span className="mt-6 block text-[10px] font-black text-[#8A7351]">{String(index + 1).padStart(2, "0")}</span><h3 className="mt-2 text-sm font-extrabold">{transport}</h3></article>)}</div>
+            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {transports.map(({ title, copy }, index) => (
+                <article
+                  key={title}
+                  className="flex min-h-[245px] flex-col rounded-[24px] bg-[#0A234F] p-7 text-white shadow-[0_18px_50px_rgba(10,35,79,0.12)]"
+                >
+                  <FileInput className="h-6 w-6 text-[#F5A300]" />
+                  <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">
+                    {String(index + 1).padStart(2, "0")}
+                  </p>
+                  <h3 className="mt-3 font-serif text-[1.8rem] font-normal leading-[1.08] tracking-[-0.03em] text-white">
+                    {title}
+                  </h3>
+                  <p className="mt-4 flex-1 text-[15px] leading-7 text-white/80">{copy}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
