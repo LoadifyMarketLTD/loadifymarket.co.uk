@@ -15,7 +15,8 @@ describe("supplier runtime and buyer status boundary", () => {
     expect(runtime).toContain("submitPaidSupplierOrder");
     expect(runtime).toContain("recoverSupplierOrderAcknowledgement");
     expect(runtime).toContain("syncSupplierTracking");
-    expect(runtime).toContain("createSupplierProviderAdapter");
+    expect(runtime).toContain("createRuntimeSupplierAdapter");
+    expect(runtime).toContain("supplierOfferId");
   });
 
   it("exposes only buyer-owned supplier order status", () => {
