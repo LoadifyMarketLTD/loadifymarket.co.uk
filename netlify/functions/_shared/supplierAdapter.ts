@@ -78,14 +78,29 @@ export interface SupplierShippingQuoteRequest {
   destinationPostcode?: string;
 }
 
+export interface SupplierFulfilmentRecipient {
+  name: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  region?: string;
+  postcode: string;
+  country: string;
+  phone?: string;
+  email?: string;
+}
+
 export interface SupplierOrderRequest {
   externalOfferRef: string;
   quantity: number;
   shippingServiceRef?: string;
   destinationCountry: string;
-  // Customer PII is intentionally not part of the generic adapter contract here.
-  // Provider implementations may translate the minimum lawful server-side
-  // disclosure envelope without leaking credentials or PII into the core model.
+  /**
+   * Server-authorised minimum disclosure only. This must come from the immutable
+   * order shipping snapshot through the controlled fulfilment-disclosure RPC;
+   * adapters must never read buyer profiles or billing addresses directly.
+   */
+  recipient?: SupplierFulfilmentRecipient;
 }
 
 export interface SupplierOrderAcknowledgement {
