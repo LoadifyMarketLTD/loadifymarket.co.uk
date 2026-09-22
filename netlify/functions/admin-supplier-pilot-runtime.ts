@@ -235,7 +235,7 @@ export const handler: Handler = async (event, context) => {
           ? 'manual_only'
           : 'unavailable',
       reason: !runtimeOrderReady
-        ? 'direct_supplier_runtime_adapter_not_installed'
+        ? 'direct_supplier_runtime_binding_not_executable'
         : text(direct?.reason) || (directCapabilityError ? 'direct_supplier_capability_lookup_failed' : 'direct_supplier_capability_unavailable'),
       externalMutationAllowed: runtimeOrderReady && direct?.externalMutationAllowed === true,
       piiDisclosureAllowed: runtimeOrderReady && direct?.piiDisclosureAllowed === true,
