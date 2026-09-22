@@ -76,11 +76,11 @@ describe('verified social registration contract', () => {
   });
 
   it('requires account type before the signup form route', () => {
-    expect(signupEntry).toContain('Choose how you want to participate');
+    expect(signupEntry).toContain('Choose your account type');
     expect(signupEntry).toContain('/register?type=buyer');
     expect(signupEntry).toContain('/register?type=seller');
     expect(signupEntry).toContain('to="/suppliers/apply"');
-    expect(signupEntry).toContain('Start Supplier Application');
-    expect(signupEntry).not.toContain('to="/suppliers" className="group flex h-full flex-col');
+    expect(signupEntry).toContain('Supplier application');
+    expect(signupEntry).toContain('it is not a third marketplace account type');
   });
 });
