@@ -8,6 +8,7 @@ import { authorizedFetch } from "@/lib/authorizedFetch";
 import SupplierApplicationQueue from "./SupplierApplicationQueue";
 import ControlledPilotReadiness from "./ControlledPilotReadiness";
 import SupplierOperationsHealth from "./SupplierOperationsHealth";
+import FirstSupplierLaunchGate from "./FirstSupplierLaunchGate";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -1122,6 +1123,8 @@ export default function AdminProductSourcing() {
       <ControlledPilotReadiness />
 
       <SupplierOperationsHealth supplierId={resolvedSupplierId} />
+
+      <FirstSupplierLaunchGate supplierKey={supplierOnboarding.supplierKey || supplierKey} />
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
