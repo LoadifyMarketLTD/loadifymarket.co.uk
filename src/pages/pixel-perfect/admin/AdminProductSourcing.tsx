@@ -9,6 +9,7 @@ import SupplierApplicationQueue from "./SupplierApplicationQueue";
 import ControlledPilotReadiness from "./ControlledPilotReadiness";
 import SupplierOperationsHealth from "./SupplierOperationsHealth";
 import FirstSupplierLaunchGate from "./FirstSupplierLaunchGate";
+import SupplierIntegrationKit from "./SupplierIntegrationKit";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -1241,6 +1242,8 @@ export default function AdminProductSourcing() {
       <ControlledPilotReadiness />
 
       <SupplierOperationsHealth supplierId={resolvedSupplierId} />
+
+      <SupplierIntegrationKit supplierId={resolvedSupplierId} />
 
       <FirstSupplierLaunchGate supplierKey={supplierOnboarding.supplierKey || supplierKey} />
 
