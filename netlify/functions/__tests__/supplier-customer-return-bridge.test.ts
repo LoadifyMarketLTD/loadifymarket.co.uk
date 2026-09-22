@@ -28,7 +28,8 @@ describe("supplier customer return bridge", () => {
 
   it("keeps supplier return/recovery runtime admin controlled and capability gated", () => {
     expect(adminRuntime).toContain('authenticateActiveAccount(event, admin, ["admin"])');
-    expect(adminRuntime).toContain("createSupplierProviderAdapter");
+    expect(adminRuntime).toContain("createRuntimeSupplierAdapter");
+    expect(adminRuntime).toContain("supplierOfferId");
     expect(adminRuntime).toContain("requestSupplierReturn");
     expect(adminRuntime).toContain("pollSupplierRecovery");
     expect(adminRuntime).toContain("buyerRefundIssued: false");
