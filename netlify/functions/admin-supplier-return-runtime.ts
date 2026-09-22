@@ -3,7 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import type { Handler } from "@netlify/functions";
 import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { jsonResponse, optionsResponse } from "./_shared/http";
-import { createSupplierProviderAdapter, SUPPLIER_PROVIDER_KEYS, type SupplierProviderKey } from "./_shared/supplierProviderRegistry";
+import { SUPPLIER_PROVIDER_KEYS, type SupplierProviderKey } from "./_shared/supplierProviderRegistry";
+import { createRuntimeSupplierAdapter } from "./_shared/supplierAdapterRuntimeFactory";
 import { pollSupplierRecovery, requestSupplierReturn } from "./_shared/supplierReturns";
 
 const METHODS = "POST, OPTIONS";
@@ -61,7 +62,15 @@ export const handler: Handler = async (event) => {
 
   const providerKey = String(current.providerKey ?? "");
   if (!isProviderKey(providerKey)) return jsonResponse(409, { error: "Supplier provider is not registered" }, METHODS);
-  const adapter = createSupplierProviderAdapter(providerKey);
+  const supplierOfferId = String(current.supplierOfferId ?? "");
+  if (!UUID_RE.test(supplierOfferId)) {
+    return jsonResponse(409, { error: "Supplier offer context is unavailable" }, METHODS);
+  }
+  const adapter = await createRuntimeSupplierAdapter({
+    client: admin,
+    providerKey,
+    supplierOfferId,
+  });
 
   if (action === "poll_recovery") {
     const returnCaseId = String(platformReturn.supplierReturnCaseId ?? "");
