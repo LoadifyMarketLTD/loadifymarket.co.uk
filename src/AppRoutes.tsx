@@ -182,7 +182,8 @@ export default function AppRoutes() {
           <Route path="business" element={publicPage(<BusinessPage />)} />
           <Route path="trade" element={publicPage(<TradePage />)} />
           <Route path="suppliers" element={publicPage(<SuppliersPage />)} />
-          <Route path="supplier-application" element={publicPage(<SupplierApplicationPage />)} />
+          <Route path="suppliers/apply" element={publicPage(<SupplierApplicationPage />)} />
+          <Route path="supplier-application" element={<Navigate to="/suppliers/apply" replace />} />
           <Route path="technology" element={publicPage(<TechnologyPage />)} />
           <Route path="integrations" element={publicPage(<IntegrationsPage />)} />
           <Route path="partners" element={publicPage(<PartnersPage />)} />
