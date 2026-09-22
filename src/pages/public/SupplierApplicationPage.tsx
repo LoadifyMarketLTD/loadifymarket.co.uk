@@ -12,7 +12,7 @@ const businessNav = [
   { label: "Overview", to: "/business" },
   { label: "Trade Buyers", to: "/trade" },
   { label: "Supplier Hub", to: "/suppliers" },
-  { label: "Apply", to: "/supplier-application" },
+  { label: "Apply", to: "/suppliers/apply" },
 ] as const;
 
 const catalogOptions = [
@@ -164,9 +164,9 @@ export default function SupplierApplicationPage() {
   return (
     <MainLayout>
       <SEO
-        title="Become a Loadify Supplier | Supplier Application"
-        description="Apply to discuss direct supplier participation with Loadify Market. Share your business, catalogue, warehouse and fulfilment capabilities without submitting credentials or API secrets."
-        canonical="/supplier-application"
+        title="Become a Supplier | Loadify Market"
+        description="Apply to become a direct Loadify Market supplier. For manufacturers, importers, wholesalers and distributors with supplier-held stock and fulfilment."
+        canonical="/suppliers/apply"
       />
       <SectionNav title="Business" items={businessNav} />
       <main id="main-content" className="bg-[#F8F7F4] text-[#0A234F]">
