@@ -3,6 +3,7 @@ import type { Handler } from '@netlify/functions';
 import { handler as canonicalPilotHandler } from './admin-supplier-pilot';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { createProviderExecutionCapabilityRegistry } from './_shared/providerExecutionContracts';
+import { createSupplierProviderAdapter } from './_shared/supplierProviderRegistry';
 import { jsonResponse } from './_shared/http';
 import {
   PHASE_O_SHADOW_REVIEW_CAPABILITY,
@@ -216,14 +217,23 @@ export const handler: Handler = async (event, context) => {
       && typeof directCapability === 'object'
       && !Array.isArray(directCapability)
     ) ? directCapability as Record<string, unknown> : null;
+    const runtimeAdapter = createSupplierProviderAdapter('direct_supplier');
+    const runtimeOrderReady = runtimeAdapter.capabilities.includes('order_submission')
+      && runtimeAdapter.capabilities.includes('acknowledgement')
+      && typeof runtimeAdapter.submitOrder === 'function'
+      && typeof runtimeAdapter.getOrderAcknowledgement === 'function';
     providerOrderExecution = {
       found: direct?.found === true,
-      availability: direct?.availability === 'available' || direct?.availability === 'manual_only'
-        ? direct.availability
-        : 'unavailable',
-      reason: text(direct?.reason) || (directCapabilityError ? 'direct_supplier_capability_lookup_failed' : 'direct_supplier_capability_unavailable'),
-      externalMutationAllowed: direct?.externalMutationAllowed === true,
-      piiDisclosureAllowed: direct?.piiDisclosureAllowed === true,
+      availability: runtimeOrderReady && direct?.availability === 'available'
+        ? 'available'
+        : direct?.availability === 'manual_only'
+          ? 'manual_only'
+          : 'unavailable',
+      reason: !runtimeOrderReady
+        ? 'direct_supplier_runtime_adapter_not_installed'
+        : text(direct?.reason) || (directCapabilityError ? 'direct_supplier_capability_lookup_failed' : 'direct_supplier_capability_unavailable'),
+      externalMutationAllowed: runtimeOrderReady && direct?.externalMutationAllowed === true,
+      piiDisclosureAllowed: runtimeOrderReady && direct?.piiDisclosureAllowed === true,
     };
   } else {
     const capabilityRegistry = createProviderExecutionCapabilityRegistry();
