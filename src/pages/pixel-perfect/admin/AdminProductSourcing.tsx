@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import SupplierApplicationQueue from "./SupplierApplicationQueue";
+import ControlledPilotReadiness from "./ControlledPilotReadiness";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -1116,6 +1117,8 @@ export default function AdminProductSourcing() {
       )}
 
       <SupplierApplicationQueue />
+
+      <ControlledPilotReadiness />
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">

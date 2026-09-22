@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "verify:migrations": "node scripts/verify-migration-health.mjs",
+    "verify:deploy-runtime": "node scripts/verify-netlify-deploy-runtime.mjs",
     "e2e:setup": "node scripts/setup-playwright-local.mjs",
     "e2e:typecheck": "tsc -p e2e/tsconfig.json --noEmit",
     "e2e:list": "playwright test --list",
