@@ -6,6 +6,10 @@ const migration = readFileSync(
   resolve(process.cwd(), 'supabase/migrations/20260921115721_supplier_onboarding_qualification_readiness.sql'),
   'utf8',
 );
+const transactionMigration = readFileSync(
+  resolve(process.cwd(), 'supabase/migrations/20260922145846_direct_supplier_transaction_capability_evidence.sql'),
+  'utf8',
+);
 const capabilityApi = readFileSync(
   resolve(process.cwd(), 'netlify/functions/admin-supplier-onboarding-capability.ts'),
   'utf8',
@@ -25,20 +29,20 @@ describe('supplier onboarding qualification and readiness boundary', () => {
   });
 
   it('requires source-backed current evidence before a direct supplier adapter can become active', () => {
-    expect(migration).toContain("NEW.provider_key='direct_supplier'");
-    expect(migration).toContain('ce.supplier_id=NEW.supplier_id');
-    expect(migration).toContain("ce.status='verified'");
-    expect(migration).toContain('jsonb_array_length(ce.source_refs)>0');
-    expect(migration).toContain('current supplier-specific capability evidence is required');
-    expect(migration).toContain("v_capability NOT IN ('catalog','variants','stock','price')");
-    expect(migration).toContain('direct supplier capability is not implemented in the current Loadify ingestion runtime');
+    expect(transactionMigration).toContain("NEW.provider_key='direct_supplier'");
+    expect(transactionMigration).toContain('ce.supplier_id=NEW.supplier_id');
+    expect(transactionMigration).toContain("ce.status='verified'");
+    expect(transactionMigration).toContain('jsonb_array_length(ce.source_refs)>0');
+    expect(transactionMigration).toContain('current supplier-specific capability evidence is required');
+    expect(transactionMigration).toContain('write safety evidence is incomplete');
+    expect(transactionMigration).toContain('minimum fulfilment PII permission is required');
   });
 
   it('preserves provider-level evidence guards for non-direct adapters', () => {
-    expect(migration).toContain('private.supplier_commerce_provider_capabilities');
-    expect(migration).toContain('pc.provider_key=NEW.provider_key');
-    expect(migration).toContain("pc.status='verified'");
-    expect(migration).toContain('pc.reverify_due_at>now()');
+    expect(transactionMigration).toContain('private.supplier_commerce_provider_capabilities');
+    expect(transactionMigration).toContain('pc.provider_key=NEW.provider_key');
+    expect(transactionMigration).toContain("pc.status='verified'");
+    expect(transactionMigration).toContain('pc.reverify_due_at>now()');
   });
 
   it('creates a fail-closed readiness snapshot without activating commerce or publishing', () => {
