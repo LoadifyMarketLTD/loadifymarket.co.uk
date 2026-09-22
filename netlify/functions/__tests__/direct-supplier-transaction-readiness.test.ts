@@ -9,6 +9,9 @@ const foundationApi = repo('netlify/functions/admin-supplier-foundation.ts');
 const adapterContract = repo('netlify/functions/_shared/supplierAdapter.ts');
 const orderRuntime = repo('netlify/functions/_shared/supplierOrderHandshake.ts');
 const pilotRuntime = repo('netlify/functions/admin-supplier-pilot-runtime.ts');
+const integrationMigration = repo('supabase/migrations/20260922154827_direct_supplier_multi_transport_pilot_readiness.sql');
+const runtimeFactory = repo('netlify/functions/_shared/supplierAdapterRuntimeFactory.ts');
+const universalAdapter = repo('netlify/functions/_shared/universalDirectSupplierAdapter.ts');
 
 describe('direct supplier transaction readiness boundary', () => {
   it('records execution mode, write, PII, idempotency and recovery evidence separately', () => {
@@ -57,18 +60,24 @@ describe('direct supplier transaction readiness boundary', () => {
     expect(orderRuntime).not.toContain('billingAddress');
   });
 
-  it('does not allow evidence alone to activate a transactional adapter or Phase O runtime', () => {
-    expect(foundationApi).toContain("createSupplierProviderAdapter('direct_supplier')");
-    expect(foundationApi).toContain('Direct Supplier transactional adapter code is not installed');
+  it('does not allow evidence alone to activate Direct Supplier runtime', () => {
+    expect(foundationApi).toContain('loadSupplierIntegrationRuntime');
+    expect(foundationApi).toContain('UniversalDirectSupplierAdapterV1');
+    expect(foundationApi).toContain('transactional runtime bindings are not executable');
     expect(pilotRuntime).toContain('server_supplier_capability_execution_v1');
-    expect(pilotRuntime).toContain("createSupplierProviderAdapter('direct_supplier')");
-    expect(pilotRuntime).toContain('direct_supplier_runtime_adapter_not_installed');
+    expect(pilotRuntime).toContain('loadSupplierIntegrationRuntime');
+    expect(pilotRuntime).toContain('direct_supplier_runtime_binding_not_executable');
+    expect(runtimeFactory).toContain('server_supplier_offer_integration_context_v1');
+    expect(runtimeFactory).toContain('loadSupplierIntegrationRuntime');
+    expect(universalAdapter).toContain('resolveSupplierRuntimeConfig');
   });
 
-  it('replaces generic provider evidence with supplier-specific evidence only for direct suppliers', () => {
-    expect(migration).toContain("v_pilot.provider_key='direct_supplier'");
-    expect(migration).toContain('direct_supplier_capability_evidence');
-    expect(migration).toContain('supplier_commerce_provider_capabilities');
-    expect(migration).toContain('single_verified_full_capability_adapter');
+  it('uses supplier-specific multi-transport bindings instead of the legacy single-adapter rule for Direct Supplier', () => {
+    expect(integrationMigration).toContain("v_pilot.provider_key='direct_supplier'");
+    expect(integrationMigration).toContain('direct_supplier_integration_bindings');
+    expect(integrationMigration).toContain('verified_automated_order_binding_required');
+    expect(integrationMigration).toContain('verified_acknowledgement_binding_required');
+    expect(integrationMigration).toContain("'universal_supplier_integration_kit'");
+    expect(integrationMigration).toContain("'single_verified_full_capability_adapter'");
   });
 });
