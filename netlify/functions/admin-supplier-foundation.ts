@@ -3,6 +3,7 @@ import type { Handler } from '@netlify/functions';
 import { authenticateActiveAccount } from './_shared/activeAccountAuth';
 import { jsonResponse, optionsResponse } from './_shared/http';
 import { mutateSupplierFoundation, type SupplierFoundationAdminAction } from './_shared/supplierFoundation';
+import { createSupplierProviderAdapter } from './_shared/supplierProviderRegistry';
 
 const METHODS = 'POST, OPTIONS';
 const ACTIONS = new Set<SupplierFoundationAdminAction>([
@@ -47,6 +48,29 @@ export const handler: Handler = async (event) => {
   const payload = body.payload;
   if (!action || !ACTIONS.has(action) || !payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return jsonResponse(400, { error: 'A supported action and object payload are required' }, METHODS);
+  }
+
+  if (
+    action === 'register_adapter'
+    && String(payload.providerKey ?? '').trim().toLowerCase() === 'direct_supplier'
+    && String(payload.status ?? '').trim().toLowerCase() === 'active'
+  ) {
+    const requested = Array.isArray(payload.capabilities)
+      ? payload.capabilities.filter((item): item is string => typeof item === 'string')
+      : [];
+    const transactional = new Set(['shipping','order_submission','acknowledgement','tracking','cancellation','returns','reimbursement']);
+    const requestedTransactional = requested.filter(capability => transactional.has(capability));
+    if (requestedTransactional.length > 0) {
+      const runtimeAdapter = createSupplierProviderAdapter('direct_supplier');
+      const missing = requestedTransactional.filter(capability => !runtimeAdapter.capabilities.includes(capability as never));
+      if (missing.length > 0) {
+        return jsonResponse(409, {
+          error: 'Direct Supplier transactional adapter code is not installed for the requested capabilities',
+          missingCapabilities: missing,
+          activationPerformed: false,
+        }, METHODS);
+      }
+    }
   }
 
   // Defence-in-depth: provider credentials/secrets never belong in the canonical
