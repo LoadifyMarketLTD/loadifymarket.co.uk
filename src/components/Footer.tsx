@@ -99,6 +99,7 @@ const Footer = () => (
               <ul className="space-y-2.5">
                 <FooterLink to="/register?type=seller">Start Selling</FooterLink>
                 <FooterLink to="/suppliers">Supplier Hub</FooterLink>
+                <FooterLink to="/supplier-application">Become a Supplier</FooterLink>
                 <FooterLink to="/seller">Seller Dashboard</FooterLink>
                 <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
                 <FooterLink to="/integrations">Supplier Integrations</FooterLink>
@@ -176,6 +177,7 @@ const Footer = () => (
               <ul className="space-y-2.5">
                 <FooterLink to="/register?type=seller">Start Selling</FooterLink>
                 <FooterLink to="/suppliers">Supplier Hub</FooterLink>
+                <FooterLink to="/supplier-application">Become a Supplier</FooterLink>
                 <FooterLink to="/seller">Seller Dashboard</FooterLink>
                 <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
                 <FooterLink to="/integrations">Supplier Integrations</FooterLink>

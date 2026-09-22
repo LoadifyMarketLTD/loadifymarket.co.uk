@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import SupplierApplicationQueue from "./SupplierApplicationQueue";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -1113,6 +1114,8 @@ export default function AdminProductSourcing() {
           </div>
         </section>
       )}
+
+      <SupplierApplicationQueue />
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">

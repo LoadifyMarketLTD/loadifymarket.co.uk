@@ -14,6 +14,10 @@ const PAGE_META: Record<string, PageMeta> = {
     title: 'Loadify Market Platform | Marketplace for Buyers, Sellers & Business',
     description: 'Explore Loadify Market — a UK-operated marketplace with connected buyer and seller environments, marketplace ordering, tracking and controlled business integration paths.',
   },
+  '/supplier-application': {
+    title: 'Become a Loadify Supplier | Supplier Application',
+    description: 'Apply to discuss direct supplier participation with Loadify Market. Share business, catalogue, warehouse and fulfilment capabilities without submitting API keys or credentials.',
+  },
   '/technology': {
     title: 'Loadify Technology | Supplier Foundation & AI Product Builder',
     description: "Explore Loadify Market's Supplier Foundation, governed catalogue ingestion, AI Product Builder and evidence-led commerce technology model.",

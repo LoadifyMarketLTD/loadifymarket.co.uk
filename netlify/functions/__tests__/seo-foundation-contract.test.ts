@@ -16,6 +16,7 @@ const PUBLIC_MARKETING_ROUTES = [
   '/business',
   '/trade',
   '/suppliers',
+  '/supplier-application',
   '/technology',
   '/integrations',
   '/partners',
