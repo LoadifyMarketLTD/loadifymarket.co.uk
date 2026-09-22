@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -95,8 +96,7 @@ describe("universal Direct Supplier runtime", () => {
     if (!resolved.ok) return;
     const rawBody = '{"event":"accepted"}';
     const timestamp = "1790092800";
-    const crypto = require("node:crypto") as typeof import("node:crypto");
-    const signature = "v1=" + crypto.createHmac("sha256", "0123456789abcdef0123456789abcdef")
+    const signature = "v1=" + createHmac("sha256", "0123456789abcdef0123456789abcdef")
       .update(timestamp + "." + rawBody, "utf8").digest("hex");
     expect(verifySupplierWebhookRequest({
       config: resolved.config,
