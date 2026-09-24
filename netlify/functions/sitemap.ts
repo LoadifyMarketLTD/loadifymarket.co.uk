@@ -148,7 +148,8 @@ export const handler: Handler = async (event) => {
           .limit(50000),
         supabase
           .from('seller_profiles_public')
-          .select('userId')
+          .select('userId,marketCodes')
+          .contains('marketCodes', [market])
           .limit(50000),
       ]);
 
@@ -170,15 +171,16 @@ export const handler: Handler = async (event) => {
         && Array.isArray(profilesResult.data)
       ) {
         const publicSellerIds = new Set(
-          (profilesResult.data as Array<{ userId?: string }>).map((row) => row.userId).filter(Boolean),
+          (profilesResult.data as Array<{ userId?: string; marketCodes?: string[] }>)
+            .filter((row) => row.marketCodes?.includes(market))
+            .map((row) => row.userId)
+            .filter(Boolean),
         );
-        sellerSlugs = market === 'GB'
-          ? uniqueStrings(
-              (storesResult.data as Array<{ storeSlug?: string; userId?: string }>)
-                .filter((row) => row.userId && publicSellerIds.has(row.userId))
-                .map((row) => row.storeSlug?.trim() ?? ''),
-            )
-          : [];
+        sellerSlugs = uniqueStrings(
+          (storesResult.data as Array<{ storeSlug?: string; userId?: string }>)
+            .filter((row) => row.userId && publicSellerIds.has(row.userId))
+            .map((row) => row.storeSlug?.trim() ?? ''),
+        );
       }
     } catch {
       // Non-fatal: fall through with whichever discovery data was available.

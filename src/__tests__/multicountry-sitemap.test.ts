@@ -21,7 +21,9 @@ describe("multi-country sitemap", () => {
     expect(source).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
   });
 
-  it("does not expose GB seller storefronts in the RO sitemap until public seller market projection exists", () => {
-    expect(source).toContain("sellerSlugs = market === 'GB'");
+  it("filters public seller storefronts by active market", () => {
+    expect(source).toContain(".select('userId,marketCodes')");
+    expect(source).toContain(".contains('marketCodes', [market])");
+    expect(source).toContain("row.marketCodes?.includes(market)");
   });
 });
