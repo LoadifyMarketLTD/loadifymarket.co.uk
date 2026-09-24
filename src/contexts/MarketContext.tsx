@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { MARKET_CONFIG, readMarket, writeMarket, type MarketCode, type MarketConfig } from '@/lib/marketConfig';
+import { MARKET_CONFIG, writeMarket, type MarketCode, type MarketConfig } from '@/lib/marketConfig';
+import { resolveInitialMarket } from '@/lib/marketResolver';
 
 interface MarketContextValue {
   market: MarketCode;
@@ -10,7 +11,7 @@ interface MarketContextValue {
 const MarketContext = createContext<MarketContextValue | undefined>(undefined);
 
 export function MarketProvider({ children }: { children: ReactNode }) {
-  const [market, setMarketState] = useState<MarketCode>(() => readMarket());
+  const [market, setMarketState] = useState<MarketCode>(() => resolveInitialMarket());
 
   useEffect(() => {
     document.documentElement.lang = MARKET_CONFIG[market].language;
