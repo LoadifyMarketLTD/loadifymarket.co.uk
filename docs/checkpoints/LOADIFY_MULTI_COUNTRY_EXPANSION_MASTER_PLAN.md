@@ -463,15 +463,31 @@ At the end of each significant work session append/update:
 
 ## 20. Current next exact task
 
-Phase 0/1 foundation is now stable. Continue into Phase 2 and the remaining commerce foundations.
+Phase 0/1 foundation and the first Phase 2/5 market-capability boundary are now stable.
 
-1. Introduce a real i18n framework with EN/RO resources and market-driven language sync.
-2. Internationalise shared marketplace navigation, market selector labels and common storefront actions first.
-3. Add translation fallback tests and prevent raw Romanian/English duplication.
-4. Extend catalogue/product adapters to expose canonical listing currency and market eligibility from the database.
-5. Make catalogue/search/product detail market-aware so GB-only listings do not become purchasable in RO.
-6. Continue the money/tax workstream without enabling RO checkout until RON pricing, tax, shipping and Stripe/payment validation are complete.
-7. Update this master plan and commit after every verified phase boundary.
+Completed since the previous checkpoint:
+- EN/RO i18n runtime with market-driven language sync and fallback tests.
+- market-aware catalogue, product detail, category, deals, wishlist and cart.
+- canonical product currency and market eligibility are preserved end-to-end on public commerce surfaces.
+- seller profiles now carry selling markets, delivery markets and returns country.
+- seller Settings exposes governed GB/RO market capability controls; Romania capability does not bypass launch gates.
+- Supplier Foundation now carries supplier market/delivery/returns capability and fails closed when the requested market is unsupported or not enabled.
+- existing seller/supplier records default to GB-only.
+- Romania checkout remains disabled.
+- focused seller/supplier market tests: PASS.
+- TypeScript: PASS.
+- ESLint: PASS.
+- migration health: PASS (213 canonical migrations).
+- production build: PASS (2,497 modules transformed).
+
+Next exact work:
+1. Continue Phase 3 Money & Tax with a canonical market-native pricing/tax contract.
+2. Add explicit RON price evidence/versioning rather than converting or relabelling legacy GBP amounts.
+3. Define transaction/display/settlement currency boundaries for orders, payment sessions, payouts and supplier offers.
+4. Make Romania tax treatment fail closed until EU/RO VAT evidence and rules are present.
+5. Add shipping-market readiness gates for RO.
+6. Keep Romania checkout disabled until pricing, tax, shipping and Stripe/payment validation all pass.
+7. Continue Phase 6 EU/RO compliance after the money/tax contract is stable.
 
 ## 21. Continuity instruction for Daniel
 
