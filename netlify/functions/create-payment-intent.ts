@@ -11,6 +11,7 @@ import { authenticateActiveAccount, hasActiveAccountCapability } from './_shared
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { resolveMarketplaceTaxV1 } from './_shared/marketplaceTax';
+import { validateMarketAddress } from '../../src/lib/marketAddress';
 
 interface CheckoutItem {
   productId: string;
@@ -95,6 +96,14 @@ export const handler: Handler = async (event) => {
 
   if (!Array.isArray(items) || items.length === 0 || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
+  }
+
+  const billingValidation = validateMarketAddress(billingAddress, requestedMarket);
+  if (!billingValidation.ok) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Billing address is invalid for the selected market.', code: 'BILLING_ADDRESS_MARKET_INVALID', details: billingValidation.errors }),
+    };
   }
   if (items.some((item) => !item.productId || !Number.isInteger(item.quantity) || item.quantity <= 0)) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Every payment item must have a valid product and positive whole-number quantity.' }) };
@@ -202,6 +211,15 @@ export const handler: Handler = async (event) => {
   const effectiveShippingAddress = shippingAddress ?? {};
   if (!isServiceOnlyCart && (!shippingAddress || Object.keys(shippingAddress).length === 0)) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Shipping address is required for physical product orders.' }) };
+  }
+  if (!isServiceOnlyCart && shippingAddress) {
+    const shippingValidation = validateMarketAddress(shippingAddress, requestedMarket);
+    if (!shippingValidation.ok) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Shipping address is invalid for the selected market.', code: 'SHIPPING_ADDRESS_MARKET_INVALID', details: shippingValidation.errors }),
+      };
+    }
   }
 
   let shippingAmount = 0;

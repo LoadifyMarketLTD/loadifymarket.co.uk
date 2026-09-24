@@ -5,6 +5,7 @@ import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { jsonResponse, optionsResponse } from "./_shared/http";
 import { evaluateProjectionSupplierOffers } from "./_shared/supplierOfferSelectionRuntime";
 import { evaluateSupplierCheckoutGuard } from "./_shared/supplierSync";
+import { validateMarketAddress } from "../../src/lib/marketAddress";
 
 const METHODS = "POST, OPTIONS";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -62,6 +63,17 @@ export const handler: Handler = async (event) => {
       code: "SUPPLIER_CHECKOUT_MARKET_NOT_READY",
       marketCode: requestedMarket,
       paymentSessionCreated: false,
+    }, METHODS);
+  }
+
+  const shippingValidation = validateMarketAddress(shippingAddress, requestedMarket);
+  const billingValidation = validateMarketAddress(billingAddress, requestedMarket);
+  if (!shippingValidation.ok || !billingValidation.ok) {
+    return jsonResponse(400, {
+      error: "Checkout address is invalid for the selected market",
+      code: "SUPPLIER_CHECKOUT_ADDRESS_INVALID",
+      shippingErrors: shippingValidation.errors,
+      billingErrors: billingValidation.errors,
     }, METHODS);
   }
 

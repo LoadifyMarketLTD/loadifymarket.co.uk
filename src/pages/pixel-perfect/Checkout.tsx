@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useMarket } from "@/contexts/MarketContext";
+import { marketCountryName, validateMarketAddress } from "@/lib/marketAddress";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 import { openExternalUrl } from "@/lib/capacitorUtils";
@@ -55,7 +56,7 @@ const steps = [
 
 const Checkout = () => {
   const { t } = useTranslation();
-  const { config: marketConfig } = useMarket();
+  const { market, config: marketConfig } = useMarket();
   const navigate = useNavigate();
   const { cartItems, subtotal, clearCart, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
   const { user, isLoading } = useAuthStore();
@@ -313,8 +314,12 @@ const Checkout = () => {
           city: shippingData.city.trim(),
           county: shippingData.county.trim(),
           postcode: shippingData.postcode.trim().toUpperCase(),
-          country: "GB",
+          country: market,
         };
+        const supplierAddressValidation = validateMarketAddress(address, market);
+        if (!supplierAddressValidation.ok) {
+          throw new Error("Please check the delivery address for the selected market.");
+        }
         const { data: authData } = await supabase.auth.getSession();
         const token = authData.session?.access_token;
         if (!token) throw new Error("Your session has expired. Please sign in again.");
@@ -322,7 +327,7 @@ const Checkout = () => {
         const item = supplierItems[0];
         const prepared = await fetch("/.netlify/functions/prepare-supplier-checkout", {
           method: "POST", headers,
-          body: JSON.stringify({ projectionId: item.product.id, quantity: item.quantity, shippingAddress: address, billingAddress: address }),
+          body: JSON.stringify({ projectionId: item.product.id, quantity: item.quantity, marketCode: market, shippingAddress: address, billingAddress: address }),
         });
         const preparedBody = await prepared.json();
         if (!prepared.ok) throw new Error(preparedBody.error || "Supplier checkout could not be prepared.");
@@ -370,8 +375,14 @@ const Checkout = () => {
         city: shippingData.city,
         ...(shippingData.county ? { county: shippingData.county } : {}),
         postal_code: shippingData.postcode,
-        country: "GB",
+        country: market,
       };
+      const addressValidation = validateMarketAddress(address, market);
+      if (!addressValidation.ok) {
+        setCheckoutError("Please check the delivery address for the selected market.");
+        setIsSubmitting(false);
+        return;
+      }
 
       if (user?.id) {
         const savedShippingAddress = {
@@ -382,8 +393,8 @@ const Checkout = () => {
           city: shippingData.city.trim(),
           county: shippingData.county.trim(),
           postcode: shippingData.postcode.trim().toUpperCase(),
-          country: "United Kingdom",
-          countryCode: "GB",
+          country: marketCountryName(market),
+          countryCode: market,
           isDefault: true,
         };
         const { error: saveAddressError } = await supabase
@@ -410,6 +421,7 @@ const Checkout = () => {
           : selectedOption.name,
         shippingAddress: address,
         billingAddress: address,
+        marketCode: market,
       };
 
       const { data: { session: authSession } } = await supabase.auth.getSession();
