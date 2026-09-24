@@ -35,6 +35,12 @@ interface FoundationDecision {
   interfaceVersion: number;
 }
 
+interface ProductMarketComplianceDecision {
+  eligible: boolean;
+  reason: string;
+  interfaceVersion: number;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -96,6 +102,32 @@ async function foundationCapability(
   }
 }
 
+async function productMarketCompliance(
+  client: SupabaseClient,
+  row: ProjectionOfferRow,
+): Promise<ProductMarketComplianceDecision> {
+  if (row.territory !== 'RO') {
+    return { eligible: true, reason: 'existing_market_boundary', interfaceVersion: 1 };
+  }
+
+  try {
+    const { data, error } = await client.rpc('server_product_market_compliance_decision_v1', {
+      p_supplier_catalog_item_id: row.supplier_catalog_item_id,
+      p_canonical_product_id: row.canonical_product_id,
+      p_market_code: row.territory,
+    });
+    if (error || !isRecord(data)
+      || typeof data.eligible !== 'boolean'
+      || typeof data.reason !== 'string'
+      || data.interfaceVersion !== 1) {
+      return { eligible: false, reason: 'product_market_compliance_unavailable', interfaceVersion: 1 };
+    }
+    return data as unknown as ProductMarketComplianceDecision;
+  } catch {
+    return { eligible: false, reason: 'product_market_compliance_unavailable', interfaceVersion: 1 };
+  }
+}
+
 async function buildCandidate(
   client: SupabaseClient,
   row: ProjectionOfferRow,
@@ -110,6 +142,7 @@ async function buildCandidate(
     acknowledgement,
     tracking,
     returns,
+    marketCompliance,
   ] = await Promise.all([
     evaluateSupplierCatalog(client, {
       canonicalProductId: row.canonical_product_id,
@@ -134,6 +167,7 @@ async function buildCandidate(
     foundationCapability(client, row.supplier_key, row.territory, 'acknowledgement'),
     foundationCapability(client, row.supplier_key, row.territory, 'tracking'),
     foundationCapability(client, row.supplier_key, row.territory, 'returns'),
+    productMarketCompliance(client, row),
   ]);
 
   const economicsMatchesSnapshot = economics.eligible
@@ -158,7 +192,7 @@ async function buildCandidate(
     trackingDeadlineHours: row.tracking_deadline_hours,
     stockObservedAt: sync.stockObservedAt ?? '',
     priceObservedAt: sync.priceObservedAt ?? '',
-    catalogEligible: catalog.eligible,
+    catalogEligible: catalog.eligible && marketCompliance.eligible,
     economicsEligible: economics.eligible && economicsMatchesSnapshot,
     stockPriceEligible: sync.eligible,
     shippingEligible: shipping.eligible,
