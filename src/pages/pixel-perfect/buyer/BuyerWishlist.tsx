@@ -9,11 +9,15 @@ import { useAuthStore } from "@/store";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@/components/catalog/ProductCard";
+import { useMarket } from "@/contexts/MarketContext";
+import { formatPrice } from "@/lib/formatPrice";
+import type { CurrencyCode } from "@/lib/money";
 
 interface WishlistProduct {
   id: string;
   title: string;
   price: number;
+  currency?: CurrencyCode;
   images: string[];
   isActive: boolean;
 }
@@ -21,6 +25,7 @@ interface WishlistProduct {
 const BuyerWishlist = () => {
   const { user } = useAuthStore();
   const { addToCart } = useCart();
+  const { market } = useMarket();
   const { toast } = useToast();
   const [items, setItems] = useState<WishlistProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +37,7 @@ const BuyerWishlist = () => {
     id: item.id,
     title: item.title,
     price: item.price,
+    currency: item.currency ?? 'GBP',
     image: item.images?.[0] ?? "",
     category: "",
     subcategory: "",
@@ -62,8 +68,9 @@ const BuyerWishlist = () => {
 
       const { data: products, error: productsError } = await supabase
         .from("products")
-        .select("id, title, price, images, isActive")
-        .in("id", productIds);
+        .select("id, title, price, currency, images, isActive")
+        .in("id", productIds)
+        .contains("marketCodes", [market]);
 
       if (productsError) throw productsError;
       setItems((products as WishlistProduct[]) || []);
@@ -72,7 +79,7 @@ const BuyerWishlist = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, market]);
 
   useEffect(() => { fetchWishlist(); }, [fetchWishlist]);
 
@@ -134,7 +141,7 @@ const BuyerWishlist = () => {
 
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-base font-bold text-foreground">
-                    £{(item.price ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatPrice(item.price ?? 0, item.currency ?? 'GBP')}
                   </span>
                 </div>
 

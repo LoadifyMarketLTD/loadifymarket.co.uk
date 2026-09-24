@@ -17,6 +17,8 @@ import { visualForCategory } from "@/data/marketplaceVisuals";
 import { marketplaceSubcategorySlug } from "@/data/marketplaceTaxonomy";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import { useMarket } from "@/contexts/MarketContext";
+import { formatPrice } from "@/lib/formatPrice";
 
 const PRODUCT_QUERY = `
   *,
@@ -43,6 +45,7 @@ async function fetchSellerMap(
 }
 
 const CategoryPage = () => {
+  const { market, config: marketConfig } = useMarket();
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const subParam = searchParams.get("sub");
@@ -141,7 +144,8 @@ const CategoryPage = () => {
         .from("products")
         .select(PRODUCT_QUERY)
         .eq("isActive", true)
-        .eq("isApproved", true);
+        .eq("isApproved", true)
+        .contains("marketCodes", [market]);
 
       if (filter?.types) {
         query = query.in("type", filter.types);
@@ -199,7 +203,7 @@ const CategoryPage = () => {
         seller: sellerMap.get(product.sellerId as string) ?? null,
       }));
 
-      setProducts(adaptProducts(mapped as unknown as DBProduct[]));
+      setProducts(adaptProducts(mapped as unknown as DBProduct[], market));
     } catch (error) {
       console.error("Error fetching category products:", error);
       toast({
@@ -211,7 +215,7 @@ const CategoryPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [config, activeChip, categoryId, selectedConditions, priceRange, sortBy]);
+  }, [config, activeChip, categoryId, selectedConditions, priceRange, sortBy, market]);
 
   useEffect(() => {
     if (!config && !dbCategory) return;
@@ -233,7 +237,7 @@ const CategoryPage = () => {
     ...selectedConditions,
     ...selectedLocations,
     ...(priceRange[0] > 0 || priceRange[1] < 10000
-      ? [`£${priceRange[0].toLocaleString()} – £${priceRange[1].toLocaleString()}`]
+      ? [`${formatPrice(priceRange[0], marketConfig.currency)} – ${formatPrice(priceRange[1], marketConfig.currency)}`]
       : []),
   ];
 
