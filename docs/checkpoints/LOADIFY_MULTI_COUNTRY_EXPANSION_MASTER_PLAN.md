@@ -480,14 +480,31 @@ Completed since the previous checkpoint:
 - migration health: PASS (213 canonical migrations).
 - production build: PASS (2,497 modules transformed).
 
+Completed after the previous checkpoint:
+- market-native product pricing evidence/versioning for GB/GBP and RO/RON; no GBP-to-RON relabelling.
+- explicit transaction/display/settlement currency semantics.
+- Supplier Commerce economics extended to RO only with RON pricing, current RO landed-cost evidence and verified RO tax evidence.
+- supplier PaymentIntent remains explicitly fail-closed outside live GB/GBP.
+- market-aware shipping methods/rates and a service-role shipping readiness decision; legacy shipping remains GB-only.
+- versioned private Romania/EU market-compliance evidence ledger and fail-closed readiness RPC.
+- Romania buyer returns are market-aware and remain blocked until the RO compliance gate is verified; GB keeps the existing delivery-based 14-day boundary.
+- product-level Romania compliance gate requires reviewed safety, labelling, documentation, marketability, manufacturer identity, EU responsible-person applicability/evidence, traceability and safety-information evidence.
+- Romania supplier-offer selection now rejects offers whose product-level RO compliance is incomplete.
+- focused Romania/multi-country tests: PASS.
+- TypeScript: PASS.
+- ESLint: PASS.
+- migration health: PASS (218 canonical migrations).
+- branch rebased on production hotfix main; UK production hotfix preserved.
+- Romania checkout remains disabled.
+
 Next exact work:
-1. Continue Phase 3 Money & Tax with a canonical market-native pricing/tax contract.
-2. Add explicit RON price evidence/versioning rather than converting or relabelling legacy GBP amounts.
-3. Define transaction/display/settlement currency boundaries for orders, payment sessions, payouts and supplier offers.
-4. Make Romania tax treatment fail closed until EU/RO VAT evidence and rules are present.
-5. Add shipping-market readiness gates for RO.
-6. Keep Romania checkout disabled until pricing, tax, shipping and Stripe/payment validation all pass.
-7. Continue Phase 6 EU/RO compliance after the money/tax contract is stable.
+1. Build the Romania checkout readiness aggregator that composes market compliance, product compliance, RON price, shipping, supplier/seller eligibility and payment readiness without activating checkout.
+2. Add RO order lifecycle invariants for market/currency snapshots and prevent mixed-market/mixed-currency orders.
+3. Extend refund/return lifecycle currency and market invariants for RO while preserving current UK behaviour.
+4. Add market-aware legal disclosure/version snapshots to orders.
+5. Continue Romanian storefront/legal i18n only after transactional gates are structurally complete.
+6. Run the full multi-country regression suite and production build before any merge/deployment decision.
+7. Do not apply Romania migrations or enable RO checkout in production until the launch gate is explicitly satisfied.
 
 ## 21. Continuity instruction for Daniel
 
