@@ -21,6 +21,7 @@ import { calculateCheckoutVat } from "@/lib/checkoutTaxDisplay";
 import { formatUkPostcode, validateDeliveryAddress } from "@/lib/deliveryAddress";
 import { stripePromise } from "@/lib/stripe";
 import SupplierPaymentPanel from "@/components/checkout/SupplierPaymentPanel";
+import { useTranslation } from "react-i18next";
 
 interface ShippingOption {
   methodId: string;
@@ -53,6 +54,7 @@ const steps = [
 ];
 
 const Checkout = () => {
+  const { t } = useTranslation();
   const { config: marketConfig } = useMarket();
   const navigate = useNavigate();
   const { cartItems, subtotal, clearCart, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
@@ -446,9 +448,9 @@ const Checkout = () => {
         <SEO title="Checkout | Loadify Market" description="Checkout availability for the selected Loadify market." canonical="/checkout" robots="noindex,nofollow" />
         <main id="main-content" className="pt-4 md:pt-28 pb-16">
           <div className="container mx-auto px-4 text-center py-20">
-            <h1 className="font-display text-2xl font-bold text-foreground mb-4">Checkout is not yet available in this market</h1>
-            <p className="text-muted-foreground mb-6">Romania is in pre-launch while local pricing, tax, shipping and payment validation are completed.</p>
-            <Link to="/catalog"><Button>Return to catalogue</Button></Link>
+            <h1 className="font-display text-2xl font-bold text-foreground mb-4">{t('checkout.unavailableTitle')}</h1>
+            <p className="text-muted-foreground mb-6">{t('checkout.unavailableBody')}</p>
+            <Link to="/catalog"><Button>{t('checkout.returnCatalog')}</Button></Link>
           </div>
         </main>
       </MainLayout>
