@@ -39,6 +39,7 @@ export const handler: Handler = async (event) => {
 
   const projectionId = typeof body.projectionId === "string" ? body.projectionId.trim() : "";
   const quantity = Number(body.quantity ?? 1);
+  const requestedMarket = typeof body.marketCode === "string" ? body.marketCode.trim().toUpperCase() : "GB";
   const shippingAddress = isRecord(body.shippingAddress) ? body.shippingAddress : {};
   const billingAddress = isRecord(body.billingAddress) ? body.billingAddress : shippingAddress;
   const checkoutAttemptId = typeof body.checkoutAttemptId === "string" ? body.checkoutAttemptId.trim() : randomUUID();
@@ -52,10 +53,22 @@ export const handler: Handler = async (event) => {
   if (!checkoutAttemptId || checkoutAttemptId.length > 120) {
     return jsonResponse(400, { error: "Invalid checkout attempt identity" }, METHODS);
   }
+  if (requestedMarket !== "GB" && requestedMarket !== "RO") {
+    return jsonResponse(400, { error: "Unsupported checkout market", code: "SUPPLIER_CHECKOUT_MARKET_INVALID" }, METHODS);
+  }
+  if (requestedMarket !== "GB") {
+    return jsonResponse(409, {
+      error: "Supplier checkout is not yet enabled for this market",
+      code: "SUPPLIER_CHECKOUT_MARKET_NOT_READY",
+      marketCode: requestedMarket,
+      paymentSessionCreated: false,
+    }, METHODS);
+  }
+
   const selection = await evaluateProjectionSupplierOffers(admin, {
     projectionId,
     requestedQuantity: quantity,
-    territory: "GB",
+    territory: requestedMarket,
   });
   const selectedOffer = selection.selected;
   if (!selection.eligible || !selectedOffer) {
