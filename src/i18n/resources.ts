@@ -28,7 +28,7 @@ export const en = {
     },
     checkout: {
       unavailableTitle: 'Checkout is not yet available in this market',
-      unavailableBody: 'Romania is in pre-launch while local pricing, tax, shipping and payment validation are completed.',
+      unavailableBody: 'Romania is in pre-launch while local pricing, tax, shipping, compliance and payment validation are completed.',
       returnCatalog: 'Return to catalogue',
     },
   },
@@ -63,8 +63,8 @@ export const ro = {
       button: 'Caută',
     },
     checkout: {
-      unavailableTitle: 'Checkout-ul nu este încă disponibil în această piață',
-      unavailableBody: 'România este în pre-lansare până la finalizarea validării prețurilor locale, taxelor, livrării și plăților.',
+      unavailableTitle: 'Finalizarea comenzii nu este încă disponibilă în această piață',
+      unavailableBody: 'România este în pre-lansare până la finalizarea validării prețurilor locale, taxelor, livrării, conformității și plăților.',
       returnCatalog: 'Înapoi la catalog',
     },
   },
