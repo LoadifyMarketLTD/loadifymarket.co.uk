@@ -514,14 +514,26 @@ Completed after the previous checkpoint:
 - latest production build before the payment/sitemap commits: PASS; a new full build is the next verification step.
 - Romania remains PRELAUNCH and no RO payment endpoint is enabled.
 
+Completed in the current launch-hardening pass:
+- full production build after payment/sitemap/address/launch-control work: PASS (2,498 modules transformed; security boundary tests 9/9 PASS; 225 canonical migrations unique).
+- public seller projection is market-aware and RO seller SEO only includes sellers explicitly enabled for RO.
+- checkout address contract is market-aware: GB postcodes and RO six-digit postal codes are validated consistently across web, mobile and supplier checkout boundaries.
+- explicit private RO launch control defaults to prelaunch with checkout/payment disabled and requires active-admin action plus compliance/payment readiness before a live cutover.
+- reviewed legal-policy version registry added for buyer terms, privacy, returns and shipping; RO checkout readiness now fails closed if current ro-RO policy versions are missing.
+- Romanian storefront i18n mojibake repaired and prelaunch messaging now explicitly includes compliance.
+- TypeScript: PASS.
+- ESLint: PASS.
+- focused launch/legal/i18n tests: PASS.
+- production build: PASS.
+- Romania remains PRELAUNCH; no RO payment endpoint or production-domain cutover has been enabled.
+
 Next exact work:
-1. Run the full production build/regression after the latest payment and sitemap commits.
-2. Make the public seller projection market-aware before exposing RO seller storefronts or seller SEO.
-3. Complete Romanian legal/storefront translations and policy version identifiers without weakening the compliance gates.
-4. Add RO address/postcode/county validation and order snapshot parity.
-5. Add explicit launch-cutover controls that require all readiness evidence and never auto-enable checkout.
-6. Validate domain/DNS/Netlify configuration for loadifymarket.ro separately from code readiness.
-7. Do not apply RO launch migrations, attach the RO production domain or enable checkout/payment until final E2E evidence is complete.
+1. Complete the Romanian legal-page presentation using reviewed policy content; do not auto-verify policy versions merely because translated text exists.
+2. Add the Romania distance-contract checkout disclosure/button wording required by the reviewed OUG 34/2014 source before any payment activation.
+3. Validate loadifymarket.ro ownership/DNS/Netlify availability separately from code readiness; do not attach it to production without final approval.
+4. Run a full RO prelaunch E2E with synthetic data through catalogue -> cart -> blocked checkout/readiness -> seller/supplier eligibility -> return/refund invariants.
+5. Rebase on current origin/main, resolve only verified conflicts, rerun full build/regression, then prepare the branch for review/merge.
+6. Do not apply RO launch migrations or enable checkout/payment until final E2E evidence and explicit launch approval are complete.
 
 ## 21. Continuity instruction for Daniel
 
