@@ -1,0 +1,206 @@
+D:\LoadifyMarket-Multicountry\src\components\admin\SafetyReportQueue.tsx:141: <p className="mt-2 text-[11px] text-muted-foreground/65">{new Date(report.createdAt).toLocaleString("en-GB")}</p>
+D:\LoadifyMarket-Multicountry\src\components\catalog\CatalogFilters.tsx:139: <span>£{priceRange[0].toLocaleString("en-GB")}</span>
+D:\LoadifyMarket-Multicountry\src\components\catalog\CatalogFilters.tsx:140: <span>£{priceRange[1].toLocaleString("en-GB")}</span>
+D:\LoadifyMarket-Multicountry\src\components\checkout\SupplierPaymentPanel.tsx:52: Pay securely £{total.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\components\product\ProductReviews.tsx:420: {new Date(review.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+D:\LoadifyMarket-Multicountry\src\components\DesktopConversationView.tsx:52: if (diffDays === 0) return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+D:\LoadifyMarket-Multicountry\src\components\DesktopConversationView.tsx:54: if (diffDays < 7) return d.toLocaleDateString("en-GB", { weekday: "short" });
+D:\LoadifyMarket-Multicountry\src\components\DesktopConversationView.tsx:55: return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+D:\LoadifyMarket-Multicountry\src\components\FeaturedProducts.tsx:167: £{item.price.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\components\MobileHeroBanner.tsx:94: <span className="mt-0.5 block text-[9.5px] font-black text-[#0A234F]">£{product.price.toFixed(2)}</span>
+D:\LoadifyMarket-Multicountry\src\components\SEO.tsx:24: /** ISO 4217 currency code for og:price, defaults to "GBP". */
+D:\LoadifyMarket-Multicountry\src\components\SEO.tsx:63: ogPriceCurrency = "GBP",
+D:\LoadifyMarket-Multicountry\src\components\ShippingMethodSelector.tsx:75: const price = rate ? `£${Number(rate.price).toFixed(2)}` : 'Free';
+D:\LoadifyMarket-Multicountry\src\constants\brand.ts:5: currency: import.meta.env.VITE_CURRENCY || "GBP",
+D:\LoadifyMarket-Multicountry\src\constants\brand.ts:6: currencySymbol: import.meta.env.VITE_CURRENCY_SYMBOL || "£",
+D:\LoadifyMarket-Multicountry\src\constants\brand.ts:13: companyAddress: import.meta.env.VITE_COMPANY_ADDRESS || "101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom",
+D:\LoadifyMarket-Multicountry\src\lib\analytics.ts:36: currency: "GBP",
+D:\LoadifyMarket-Multicountry\src\lib\analytics.ts:54: currency: "GBP",
+D:\LoadifyMarket-Multicountry\src\lib\analytics.ts:109: currency: "GBP",
+D:\LoadifyMarket-Multicountry\src\lib\analytics.ts:123: currency: "GBP",
+D:\LoadifyMarket-Multicountry\src\lib\analytics.ts:142: currency: "GBP",
+D:\LoadifyMarket-Multicountry\src\lib\b2bUtils.ts:54: *   B2B with verified VAT ? "£X.XX ex VAT"
+D:\LoadifyMarket-Multicountry\src\lib\b2bUtils.ts:55: *   Others                ? "£X.XX inc VAT"
+D:\LoadifyMarket-Multicountry\src\lib\b2bUtils.ts:62: const formatted = effective.toLocaleString('en-GB', {
+D:\LoadifyMarket-Multicountry\src\lib\b2bUtils.ts:64: currency: 'GBP',
+D:\LoadifyMarket-Multicountry\src\lib\deliveryAddress.ts:33: country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\lib\marketConfig.ts:2: export type MarketLocale = 'en-GB' | 'ro-RO';
+D:\LoadifyMarket-Multicountry\src\lib\marketConfig.ts:3: export type MarketCurrency = 'GBP' | 'RON';
+D:\LoadifyMarket-Multicountry\src\lib\marketConfig.ts:18: GB: { code: 'GB', locale: 'en-GB', currency: 'GBP', language: 'en', label: 'United Kingdom', shortLabel: 'UK', flag: '????', taxRegion: 'UK', shippingRegion: 'UK' },
+D:\LoadifyMarket-Multicountry\src\lib\shareProduct.ts:26: ? `${title} — £${product.price.toLocaleString('en-GB')} on Loadify Market`
+D:\LoadifyMarket-Multicountry\src\lib\supplierCatalog.ts:48: location: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\legal\AcceptableUsePolicyPage.tsx:106: or by post at: XDrive Logistics Ltd (trading as Loadify Market), 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom.
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminApprovals.tsx:198: ? new Date(d.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminBuyers.tsx:93: ? new Date(u.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminBuyers.tsx:121: ? new Date(fullUser.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminDisputes.tsx:62: return new Date(iso).toLocaleDateString("en-GB", {
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminFlagged.tsx:78: ? new Date(r.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminNotifications.tsx:31: return new Date(iso).toLocaleDateString("en-GB", {
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminOrders.tsx:339: <TableCell className="text-sm font-semibold text-white">£{o.total.toLocaleString()}</TableCell>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminOrders.tsx:383: { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)", tab: "all" },
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminOrders.tsx:456: <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Total</span><p className="font-semibold text-white">£{selected.total.toLocaleString()}</p></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:74: const fmtGBP = (v: number) =>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:75: new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(v);
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:78: new Date(iso).toLocaleDateString("en-GB", {
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:158: currency: (r.currency as string) || "GBP",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:185: toast({ title: "Payout approved", description: `${fmtGBP(req.amount)} for ${req.sellerName}` });
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:200: toast({ title: "Payout completed", description: `${fmtGBP(req.amount)} marked as paid` });
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:217: toast({ title: "Payout rejected", description: `${fmtGBP(rejectTarget.amount)} returned to seller balance` });
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:267: <TableCell className="font-semibold text-white">{fmtGBP(req.amount)}</TableCell>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:370: { label: "Pending GBP", value: fmtGBP(totalPending), accent: "text-primary" },
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:371: { label: "Approved GBP", value: fmtGBP(totalApproved), accent: "text-blue-400" },
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminPayouts.tsx:447: Rejecting {fmtGBP(rejectTarget.amount)} for {rejectTarget.sellerName}. The amount will be returned to their available balance.
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminProducts.tsx:133: ? new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminProducts.tsx:234: <TableCell className="text-sm font-semibold text-white">£{p.price.toLocaleString()}</TableCell>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminProductSourcing.tsx:99: configRef: "", commercialTermsRef: "", currency: "GBP", paymentTermsDays: "", dispatchSlaHours: "",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminReports.tsx:144: value: `£${totalRevenue.toLocaleString()}`,
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminSettings.tsx:46: defaultCurrency: "gbp",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminSettings.tsx:308: <SelectItem value="gbp">GBP (£)</SelectItem>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminStripeEvents.tsx:66: new Date(iso).toLocaleDateString("en-GB", {
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminSupport.tsx:143: ? new Date(t.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminSupport.tsx:146: ? new Date(t.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminSupport.tsx:250: ? new Date(r.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminUsers.tsx:106: ? new Date(u.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\AdminUsers.tsx:136: ? new Date(fullUser.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\admin\SupplierApplicationQueue.tsx:145: <Fact label="Minimum order" value={application.minimum_order_value == null ? "" : `£${String(application.minimum_order_value)}`} />
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerAddresses.tsx:26: name: "", line1: "", line2: "", city: "", postcode: "", country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerAddresses.tsx:70: country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerAddresses.tsx:171: <Input value="United Kingdom" readOnly aria-readonly="true" className="mt-1 h-8 text-sm bg-muted/40" />
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerDashboard.tsx:108: { label: "Total Spent", value: `£${totalSpent.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: TrendingUp, desc: "All time", to: "/buyer/orders" },
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerDashboard.tsx:169: {new Date(o.createdAt).toLocaleDateString("en-GB")}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerDashboard.tsx:176: £{(o.total ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerDashboard.tsx:215: £{(item.price ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerDisputes.tsx:56: return new Date(iso).toLocaleDateString("en-GB", {
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerNotifications.tsx:22: return new Date(iso).toLocaleDateString("en-GB", {
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerOrders.tsx:511: {new Date(o.createdAt).toLocaleDateString("en-GB")}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerOrders.tsx:514: £{(o.total ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerProfile.tsx:58: shippingCountry: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerProfile.tsx:102: new Date(u.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerProfile.tsx:119: shippingCountry: ship.country ?? "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerProfile.tsx:233: country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerReviews.tsx:232: {new Date(r.createdAt).toLocaleDateString("en-GB")}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerReviews.tsx:353: {new Date(selected.createdAt).toLocaleDateString("en-GB")}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerRFQ.tsx:15: const CURRENCY_OPTIONS = ["GBP", "EUR", "USD"];
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerRFQ.tsx:21: destination_country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerRFQ.tsx:23: currency: "GBP",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerRFQ.tsx:48: return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerRFQ.tsx:276: placeholder="e.g. United Kingdom, London"
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerRFQ.tsx:378: {new Intl.NumberFormat('en-GB', { style: 'currency', currency: resp.currency }).format(resp.quotedPrice)}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerSettings.tsx:49: currency: "gbp",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerSettings.tsx:329: <SelectItem value="gbp">GBP (£)</SelectItem>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\buyer\BuyerWishlist.tsx:137: £{(item.price ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerDashboard.tsx:313: toast({ title: "Payout requested", description: `A payout of £${balance.availableAmount.toFixed(2)} has been requested. It will be reviewed within 1–2 business days.` });
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerDashboard.tsx:326: value: `£${stats.grossSales.toLocaleString("en-GB", { maximumFractionDigits: 0 })}`,
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerDashboard.tsx:523: £{balance.availableAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerDashboard.tsx:532: £{balance.pendingAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerDashboard.tsx:539: £{balance.totalEarned.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerDashboard.tsx:584: <div className="text-[13px] font-bold text-foreground">£{order.total.toLocaleString()}</div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerDashboard.tsx:618: Sales: {productMetricsAvailable ? `£${prod.salesAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerDisputes.tsx:36: return new Date(value).toLocaleDateString("en-GB", {
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:312: <p className="text-sm text-muted-foreground">Order date {new Date(order.createdAt).toLocaleString("en-GB")}</p>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:313: {lifecycle.paidAt ? <p className="text-sm text-muted-foreground">Paid {new Date(lifecycle.paidAt).toLocaleString("en-GB")}</p> : null}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:321: <p className={`mt-1 font-mono text-sm font-bold ${deadlineLabel === "SLA BREACHED" ? "text-red-400" : "text-emerald-400"}`}>{deadlineLabel}</p>{trackingDeadline && !isDispatched ? <p className="mt-1 text-[11px] text-slate-300">Dispatch by {trackingDeadline.toLocaleString("en-GB")}</p> : null}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:341: <p>{address?.countryCode === "GB" || address?.country === "GB" ? "United Kingdom" : address?.country}</p>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:344: <Button variant="outline" size="sm" onClick={() => void copyText("Address", [address?.name || recipient, address?.line1, address?.line2, [address?.city, address?.county ?? address?.state].filter(Boolean).join(", "), address?.postcode ?? address?.postal_code, address?.countryCode === "GB" || address?.country === "GB" ? "United Kingdom" : address?.country].filter(Boolean).join("\n"))}><Copy className="mr-2 h-3.5 w-3.5" />Copy address</Button>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:363: <div className="text-right"><p className="text-sm font-semibold">£{(Number(item.pricePerUnit || 0) * item.quantity).toFixed(2)}</p><p className="text-xs text-muted-foreground">£{Number(item.pricePerUnit || 0).toFixed(2)} each</p></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:368: <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>£{Number(order.subtotal || 0).toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:369: <div className="flex justify-between"><span className="text-muted-foreground">VAT</span><span>£{Number(order.vatAmount || 0).toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:370: <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>£{Number(order.shippingAmount || 0).toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:371: <div className="flex justify-between border-t pt-2 font-bold"><span>Total</span><span>£{Number(order.total || 0).toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:379: <div className="flex justify-between"><span className="text-muted-foreground">Gross buyer payment</span><span>£{settlement.grossAmount.toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:380: <div className="flex justify-between"><span className="text-muted-foreground">Actual Stripe processing</span><span>-£{settlement.stripeProcessingFee.toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:381: <div className="flex justify-between"><span className="text-muted-foreground">Loadify commission</span><span>-£{settlement.platformFee.toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:382: <div className="flex justify-between"><span className="text-muted-foreground">VAT on Loadify fee</span><span>-£{settlement.platformFeeVat.toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:383: <div className="flex justify-between"><span className="text-muted-foreground">Connect / payout cost</span><span>-£{settlement.connectFee.toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:384: <div className="flex justify-between"><span className="text-muted-foreground">Adjustments</span><span>-£{settlement.adjustments.toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:385: <div className="flex justify-between border-t pt-2 font-bold"><span>Net seller amount</span><span>£{settlement.amount.toFixed(2)}</span></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:402: {shipment ? <div className="mb-4 space-y-1 rounded-lg border bg-muted/30 p-3 text-sm"><p>Status: <strong>{shipment.status}</strong></p><p>Carrier: <strong>{shipment.courier_name || "—"}</strong></p><p>Tracking: <strong>{shipment.tracking_number || "—"}</strong></p>{shipment.dispatched_at ? <p>Dispatched: <strong>{new Date(shipment.dispatched_at).toLocaleString("en-GB")}</strong></p> : null}</div> : null}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrderDetails.tsx:414: {shipmentEvents.length === 0 ? <p className="text-xs text-muted-foreground">No shipment events recorded yet.</p> : <div className="space-y-3">{shipmentEvents.map((event) => <div key={event.id} className="border-l-2 border-muted pl-3"><div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold">{event.status}</p><span className="text-[11px] text-muted-foreground">{new Date(event.created_at).toLocaleString("en-GB")}</span></div>{event.message ? <p className="mt-0.5 text-xs text-muted-foreground">{event.message}</p> : null}<p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{event.source.replace("_", " ")}</p></div>)}</div>}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrders.tsx:51: return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrders.tsx:261: <span className="text-sm font-bold text-foreground">£{o.total.toLocaleString()}</span>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrders.tsx:267: <div>{[o.shippingAddress?.line1, o.shippingAddress?.line2, o.shippingAddress?.city, o.shippingAddress?.county ?? o.shippingAddress?.state, o.shippingAddress?.postcode ?? o.shippingAddress?.postal_code, o.shippingAddress?.countryCode === "GB" ? "United Kingdom" : o.shippingAddress?.country].filter(Boolean).join(", ")}</div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerOrders.tsx:327: <td className="p-4 text-sm font-semibold text-foreground">£{o.total.toLocaleString()}</td>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerProducts.tsx:182: const text = encodeURIComponent(`Check out ${title} — £${price.toLocaleString("en-GB")} on Loadify Market: ${BASE_URL}/product/${productId}`);
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerProducts.tsx:203: title: `${title} — £${price.toLocaleString("en-GB")}`,
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerProducts.tsx:398: <span className="text-sm font-bold text-foreground">£{p.price.toLocaleString()}</span>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerProducts.tsx:540: <td className="p-4 text-sm font-semibold text-foreground">£{p.price.toLocaleString()}</td>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerProfile.tsx:33: return ["GB", "GBR", "UK", "UNITED KINGDOM", "GREAT BRITAIN"].includes(country.trim().toUpperCase());
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerProfile.tsx:145: memberSince: p?.createdAt ? new Date(p.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerProfile.tsx:204: const ukTerms = ["england", "wales", "scotland", "northern ireland", "united kingdom"];
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerProfile.tsx:358: ...(isStoredGbCountry(sellerCountry) ? { country: "United Kingdom", countryCode: "GB" } : {}),
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerReturns.tsx:26: return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerReturns.tsx:155: <div className="text-[13px] font-bold text-foreground">£{r.refundAmount.toLocaleString()}</div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerReturns.tsx:228: {selected.refundAmount != null ? `£${selected.refundAmount.toLocaleString()}` : "—"}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerRFQ.tsx:28: return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerSettings.tsx:489: Seller settlement equals the gross sale less the actual Stripe processing fee, Loadify commission (0% through 31 December 2026; 7% from 1 January 2027), applicable VAT on Loadify fees and evidenced adjustments. Standard bank payouts are grouped weekly, normally Friday, from £25.
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerShipments.tsx:278: const lines = [buyerNames[shipment.buyer_id] ?? "Customer", a?.line1, a?.line2, a?.city, a?.county ?? a?.state, a?.postcode ?? a?.postal_code, a?.countryCode === "GB" ? "United Kingdom" : a?.country].filter(Boolean).map(esc);
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerShipments.tsx:365: <div><span className="text-muted-foreground">Dispatched</span><p className="font-medium text-foreground">{selected.dispatched_at ? new Date(selected.dispatched_at).toLocaleDateString("en-GB") : "—"}</p></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerShipments.tsx:375: {[selected.orders?.shippingAddress?.line1, selected.orders?.shippingAddress?.line2, selected.orders?.shippingAddress?.city, selected.orders?.shippingAddress?.county ?? selected.orders?.shippingAddress?.state, selected.orders?.shippingAddress?.postcode ?? selected.orders?.shippingAddress?.postal_code, selected.orders?.shippingAddress?.countryCode === "GB" ? "United Kingdom" : selected.orders?.shippingAddress?.country].filter(Boolean).join(", ")}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\seller\SellerShipments.tsx:405: <div className="rounded-lg bg-muted/50 border border-border p-3"><p className="text-xs font-semibold text-muted-foreground mb-1">SHIPMENT CREATED</p><p className="text-sm text-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {new Date(selected.created_at).toLocaleString("en-GB")}</p></div>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Cart.tsx:224: £{(product.price * item.quantity).toLocaleString()}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Cart.tsx:228: £{product.price.toLocaleString()} each
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Cart.tsx:250: <span className="font-medium text-foreground">£{subtotal.toLocaleString()}</span>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Cart.tsx:259: <span className="font-medium text-foreground">£{vat.toFixed(2)}</span>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Cart.tsx:269: <span className="font-display text-xl font-bold text-foreground">£{total.toLocaleString()}</span>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Cart.tsx:321: Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Cart.tsx:326: Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Catalog.tsx:241: ? [`£${priceRange[0].toLocaleString()} – £${priceRange[1].toLocaleString()}`]
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\CategoryPage.tsx:236: ? [`£${priceRange[0].toLocaleString()} – £${priceRange[1].toLocaleString()}`]
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:246: country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:381: country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:627: <Input value="United Kingdom" disabled className="h-11 bg-muted" />
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:674: {option.price === 0 ? "Free" : `£${option.price.toFixed(2)}`}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:767: <p>United Kingdom</p>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:799: £{(item.product.price * item.quantity).toLocaleString()}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:843: <><Lock className="mr-2 h-5 w-5" />Pay Securely · £{total.toLocaleString()}</>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:867: £{(item.product.price * item.quantity).toLocaleString()}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:876: <span className="text-foreground font-medium">£{subtotal.toLocaleString()}</span>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:885: : `£${shippingAmount.toFixed(2)}`}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:893: : `£${vat.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Checkout.tsx:898: <span className="font-display text-xl font-bold text-foreground">£{total.toLocaleString()}</span>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\ContactUs.tsx:199: United Kingdom
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\Deals.tsx:185: ? [`£${priceRange[0].toLocaleString()} – £${priceRange[1].toLocaleString()}`]
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\FAQMobile.tsx:134: "Connect your Stripe Express account from the Payouts tab. After the protection period, the order is settled less the actual Stripe processing fee, Loadify commission and evidenced adjustments. Standard bank payouts are grouped weekly, normally Friday, once the connected balance reaches £25.",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\FAQWeb.tsx:132: "Connect your Stripe Express account from the Payouts tab. After the protection period, the order is settled to Stripe less the actual processing fee, Loadify commission and any evidenced adjustments. Standard bank payouts are grouped weekly, normally Friday, once the connected balance reaches £25.",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\PrivacyPolicyMobile.tsx:45: <p>The data controller is XDrive Logistics Ltd, registered in England and Wales (Company No: 13171804), with its registered office at 101 Cornelian Street, Blackburn BB1 9QL, United Kingdom.</p>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\PrivacyPolicyWeb.tsx:20: <p>The data controller is XDrive Logistics Ltd, registered in England and Wales (Company No: 13171804), with its registered office at 101 Cornelian Street, Blackburn BB1 9QL, United Kingdom.</p>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\ProductDetail.tsx:512: const whatsappText = `Check out this product on Loadify Market: ${product.title} — £${product.price.toLocaleString("en-GB")} ${currentProductUrl}`;
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\ProductDetail.tsx:527: priceCurrency: "GBP",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\ProductDetail.tsx:631: title={`${product.title} — £${product.price.toLocaleString("en-GB")}`}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\ProductDetail.tsx:637: ogPriceCurrency="GBP"
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\ProductDetail.tsx:748: £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\SellerTerms.tsx:70: <li><strong>Listing fee:</strong> £0. There is no mandatory seller subscription.</li>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\SellerTerms.tsx:76: <p>The seller's settlement statement shows the gross buyer payment, actual Stripe processing fee, Loadify commission, VAT on Loadify fees where applicable, other evidenced adjustments, and net amount. Standard bank payouts are grouped weekly, normally on Friday, once the connected balance is at least £25; Stripe eligibility, reserves, disputes, refunds or compliance restrictions may delay a payout.</p>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\TermsAndConditions.tsx:17: <p>These Terms and Conditions ("Terms") govern your use of the Loadify Market website and marketplace platform ("Platform") operated by XDrive Logistics Ltd ("we", "us", "our"), a company registered in England and Wales (Company No: 13171804, VAT: GB375949535), with its registered office at 101 Cornelian Street, Blackburn BB1 9QL, United Kingdom.</p>
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\TradeAccount.tsx:142: country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\TradeAccount.tsx:571: placeholder="United Kingdom"
+D:\LoadifyMarket-Multicountry\src\pages\pixel-perfect\TradeAccount.tsx:870: <span>United Kingdom</span>
+D:\LoadifyMarket-Multicountry\src\pages\public\SupplierApplicationPage.tsx:246: <Field label="Minimum order value (£)"><Input type="number" min="0" step="0.01" value={form.minimumOrderValue} onChange={(e) => update("minimumOrderValue", e.target.value)} /></Field>
+D:\LoadifyMarket-Multicountry\src\pages\AdminSellerDetailPage.tsx:395: {new Date(sellerUser.createdAt).toLocaleDateString('en-GB')}{' '}
+D:\LoadifyMarket-Multicountry\src\pages\AdminSellerDetailPage.tsx:589: £{product.price.toFixed(2)} · {product.condition} · Qty: {product.stockQuantity}
+D:\LoadifyMarket-Multicountry\src\pages\MobileBalancePage.tsx:163: <p className="m-0 mt-0.5 text-[12px] font-extrabold text-white">Stripe Connect · weekly from £25</p>
+D:\LoadifyMarket-Multicountry\src\pages\MobileChatPage.tsx:48: if (diffDays === 0) return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+D:\LoadifyMarket-Multicountry\src\pages\MobileChatPage.tsx:49: if (diffDays === 1) return `Yesterday ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
+D:\LoadifyMarket-Multicountry\src\pages\MobileChatPage.tsx:50: return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) +
+D:\LoadifyMarket-Multicountry\src\pages\MobileChatPage.tsx:51: " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+D:\LoadifyMarket-Multicountry\src\pages\MobileFavouritesPage.tsx:65: const formatPrice = (price: number) => price.toLocaleString('en-GB', { style: 'currency', currency: 'GBP' });
+D:\LoadifyMarket-Multicountry\src\pages\MobileInboxPage.tsx:45: if (diffDays === 0) return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+D:\LoadifyMarket-Multicountry\src\pages\MobileInboxPage.tsx:47: if (diffDays < 7) return d.toLocaleDateString("en-GB", { weekday: "short" });
+D:\LoadifyMarket-Multicountry\src\pages\MobileInboxPage.tsx:48: return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+D:\LoadifyMarket-Multicountry\src\pages\MobileNotificationsPage.tsx:30: return new Date(iso).toLocaleDateString('en-GB', {
+D:\LoadifyMarket-Multicountry\src\pages\MobileOrdersPage.tsx:275: return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+D:\LoadifyMarket-Multicountry\src\pages\MobileOrdersPage.tsx:279: return new Date(iso).toLocaleString("en-GB", {
+D:\LoadifyMarket-Multicountry\src\pages\MobileOrdersPage.tsx:996: <p>{detail.shippingAddress?.countryCode === "GB" || detail.shippingAddress?.country === "GB" ? "United Kingdom" : detail.shippingAddress?.country}</p>
+D:\LoadifyMarket-Multicountry\src\pages\MobileReturnsPage.tsx:97: <span className="mt-1 block text-[11px] text-[#8A94A3]">{new Date(item.createdAt).toLocaleDateString('en-GB')}</span>
+D:\LoadifyMarket-Multicountry\src\pages\MobileSellerPaymentsPage.tsx:164: Loadify commission is 0% through 31 December 2026 and 7% from 1 January 2027. Actual Stripe processing and attributable Connect/payout costs are deducted from seller settlement and shown separately. Standard bank payouts are grouped weekly, normally Friday, from £25.
+D:\LoadifyMarket-Multicountry\src\pages\MobileSellWizard.tsx:523: errs.price = 'Please enter a valid price greater than £0.';
+D:\LoadifyMarket-Multicountry\src\pages\MobileSellWizard.tsx:829: label="Price (£)"
+D:\LoadifyMarket-Multicountry\src\pages\ProductFormPage.tsx:913: Price (£) {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
+D:\LoadifyMarket-Multicountry\src\pages\ProductFormPage.tsx:932: Sale / Discounted Price (£)
+D:\LoadifyMarket-Multicountry\src\pages\ProductFormPage.tsx:1334: <label className="block text-sm font-medium text-slate-300 mb-1">Estimated Retail Value (£)</label>
+D:\LoadifyMarket-Multicountry\src\pages\TrackOrderPage.tsx:131: return new Date(dateString).toLocaleString('en-GB', {
+D:\LoadifyMarket-Multicountry\src\pages\TrackOrderPage.tsx:183: <div><p className="text-sm text-gray-600">Total</p><p className="font-semibold">£{trackingData.order.total.toFixed(2)}</p></div>
+D:\LoadifyMarket-Multicountry\src\__tests__\catalog-product-card-content.test.ts:38: country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\__tests__\catalog-product-card-content.test.ts:53: expect(product.location).toBe("Blackburn, United Kingdom");
+D:\LoadifyMarket-Multicountry\src\__tests__\delivery-address-validation.test.ts:47: country: "United Kingdom",
+D:\LoadifyMarket-Multicountry\src\__tests__\mobile-release-regression-contract.test.ts:73: const forbidden = [/\uFFFD/u, /Â£/u, /â€¢/u, /ðŸ/u];

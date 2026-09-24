@@ -1,8 +1,10 @@
+import { formatMarketMoney } from './marketConfig';
+
 /**
- * Shared GBP price formatter used across the whole front-end.
- *
- * Centralised here so that currency/locale can be changed in one place.
+ * Shared storefront price formatter.
+ * The underlying listing amount is not converted here; settlement/exchange
+ * conversion belongs at the commerce boundary. This only renders the active market.
  */
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(price);
+  return formatMarketMoney(price);
 }

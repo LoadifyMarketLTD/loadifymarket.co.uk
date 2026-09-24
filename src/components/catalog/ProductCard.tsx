@@ -6,6 +6,7 @@ import { productThumbnail } from "@/lib/imageOptimization";
 import NativeImg from "@/components/NativeImg";
 import ProductImagePlaceholder from "@/components/ProductImagePlaceholder";
 import { isCapacitorContext } from "@/lib/capacitorUtils";
+import { formatPrice } from "@/lib/formatPrice";
 
 export interface Product {
   id: string;
@@ -46,15 +47,6 @@ const conditionColor: Record<string, string> = {
   Mixed: "bg-primary/10 text-primary border-primary/40",
   Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
 };
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number.isFinite(price) ? price : 0);
-}
 
 const ProductCard = ({ product, linkState, theme = "light" }: { product: Product; linkState?: Record<string, unknown>; theme?: "default" | "light" }) => {
   const { user } = useAuthStore();
