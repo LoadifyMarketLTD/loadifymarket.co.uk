@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { captureError } from '../lib/errorTracking';
+import { recoverFromDeploymentAssetError } from '../lib/deploymentAssetRecovery';
 
 interface Props {
   children: ReactNode;
@@ -32,6 +33,11 @@ export default class ErrorBoundary extends Component<Props, State> {
     // Forward to the centralised error-tracking module so the error is
     // persisted via the error-report Netlify function in production.
     captureError(error, `ErrorBoundary: ${info.componentStack ?? ''}`);
+
+    // Netlify deploys are atomic. If a visitor keeps an older SPA session open,
+    // a lazy route may request a chunk from the previous deploy. Recover once
+    // instead of leaving the visitor on the global error screen.
+    recoverFromDeploymentAssetError(error);
   }
 
   handleReset = () => {
