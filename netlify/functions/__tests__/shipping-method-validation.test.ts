@@ -5,17 +5,18 @@ const FIRST_ID = '11111111-1111-4111-8111-111111111111';
 const SECOND_ID = '22222222-2222-4222-8222-222222222222';
 
 function client(rows: Array<{ id: string }>, error: unknown = null) {
-  const eq = vi.fn().mockResolvedValue({ data: rows, error });
+  const contains = vi.fn().mockResolvedValue({ data: rows, error });
+  const eq = vi.fn().mockReturnValue({ contains });
   const inQuery = vi.fn().mockReturnValue({ eq });
   const select = vi.fn().mockReturnValue({ in: inQuery });
   return {
     from: vi.fn().mockReturnValue({ select }),
-    calls: { select, inQuery, eq },
+    calls: { select, inQuery, eq, contains },
   };
 }
 
 describe('active shipping method validation', () => {
-  it('deduplicates valid active method ids', async () => {
+  it('deduplicates valid active GB method ids and applies the market gate', async () => {
     const mock = client([{ id: FIRST_ID }, { id: SECOND_ID }]);
     const result = await validateActiveShippingMethodIds(
       mock as never,
@@ -25,6 +26,15 @@ describe('active shipping method validation', () => {
     expect(result).toEqual({ ok: true, ids: [FIRST_ID, SECOND_ID] });
     expect(mock.calls.inQuery).toHaveBeenCalledWith('id', [FIRST_ID, SECOND_ID]);
     expect(mock.calls.eq).toHaveBeenCalledWith('active', true);
+    expect(mock.calls.contains).toHaveBeenCalledWith('marketCodes', ['GB']);
+  });
+
+  it('supports an explicit Romania market gate', async () => {
+    const mock = client([{ id: FIRST_ID }]);
+    const result = await validateActiveShippingMethodIds(mock as never, [FIRST_ID], 'RO');
+
+    expect(result).toEqual({ ok: true, ids: [FIRST_ID] });
+    expect(mock.calls.contains).toHaveBeenCalledWith('marketCodes', ['RO']);
   });
 
   it('rejects malformed ids before querying Supabase', async () => {
@@ -35,11 +45,15 @@ describe('active shipping method validation', () => {
     expect(mock.from).not.toHaveBeenCalled();
   });
 
-  it('fails closed when any requested method is inactive or missing', async () => {
+  it('fails closed when any requested method is inactive, missing or outside the market', async () => {
     const mock = client([{ id: FIRST_ID }]);
-    const result = await validateActiveShippingMethodIds(mock as never, [FIRST_ID, SECOND_ID]);
+    const result = await validateActiveShippingMethodIds(mock as never, [FIRST_ID, SECOND_ID], 'RO');
 
-    expect(result).toEqual({ ok: false, status: 400, error: 'One or more shipping methods are unavailable.' });
+    expect(result).toEqual({
+      ok: false,
+      status: 400,
+      error: 'One or more shipping methods are unavailable for the selected market.',
+    });
   });
 
   it('returns a server error when availability cannot be verified', async () => {
