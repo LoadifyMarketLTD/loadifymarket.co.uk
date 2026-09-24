@@ -281,22 +281,32 @@ Branch:
 
 The pre-existing Android release workspace `D:\LoadifyMarket-Release-v4` was intentionally left untouched because it contains active local Android/release artifacts.
 
-Implemented so far on the multi-country branch:
-- `src/lib/marketConfig.ts`
-- market types/config for GB and RO
-- persisted selected market
-- locale/currency/tax/shipping metadata
-- `src/components/marketplace/MarketSelector.tsx`
-- desktop marketplace market selector
-- mobile/drawer market selector
-- initial shared storefront price formatter connection
-- UK remains default
+Implemented and verified so far on the multi-country branch:
+- `src/lib/marketConfig.ts` with GB/RO market metadata and live/prelaunch readiness gates
+- persisted selected market with UK safe fallback
+- `src/contexts/MarketContext.tsx` reactive provider/hook
+- `src/lib/marketResolver.ts` saved-choice + domain resolver for loadifymarket.co.uk / loadifymarket.ro
+- `src/components/marketplace/MarketSelector.tsx` in desktop header and mobile drawer
+- `src/lib/money.ts` canonical money formatter that never relabels one currency as another
+- legacy listing prices remain GBP until explicit currency/market pricing exists
+- market/currency tests for GB default, RO persistence, hostname resolution and money safety
+- hard-coded UK/GBP audit evidence saved at `docs/checkpoints/evidence/multicountry-hardcoded-uk-audit.txt`
+- canonical commerce migration `20260924112000_multicountry_money_market_foundation.sql`
+- product currency + market eligibility fields
+- order/order-item/payment-session/payout market/currency fields
+- checkout backend market gate and listing currency/market validation
+- Romania checkout is intentionally disabled while the market is prelaunch
+- UK remains the live/default market
 
-TypeScript passed after the initial market foundation.
+Verification evidence:
+- TypeScript: PASS
+- ESLint: PASS
+- migration health: PASS (211 canonical migrations)
+- multi-country unit tests: PASS (10/10)
+- production build: PASS
+- existing build security tests: PASS (9/9)
 
-Further lint/verification was in progress when this master plan was created.
-
-Important: the current first-pass price display must obey Section 6. Do not treat market selection alone as permission to reinterpret stored GBP prices as RON.
+Important: selecting Romania must never reinterpret a stored GBP amount as RON. Romania remains prelaunch until market-native pricing, tax, shipping and payment flows are explicitly validated.
 
 ## 15. Implementation phases
 
@@ -453,14 +463,15 @@ At the end of each significant work session append/update:
 
 ## 20. Current next exact task
 
-Continue Phase 0/1 from the existing branch.
+Phase 0/1 foundation is now stable. Continue into Phase 2 and the remaining commerce foundations.
 
-1. Finish lint/diff verification of the initial foundation.
-2. Audit all hard-coded GBP/£/en-GB and UK assumptions.
-3. Replace the temporary market access pattern with a reactive MarketProvider/hook where needed.
-4. Define the canonical money model before allowing RO to display transactional RON amounts.
-5. Add tests for GB default, RO selection, persistence and formatting behaviour.
-6. Continue into i18n only after the market kernel is stable.
+1. Introduce a real i18n framework with EN/RO resources and market-driven language sync.
+2. Internationalise shared marketplace navigation, market selector labels and common storefront actions first.
+3. Add translation fallback tests and prevent raw Romanian/English duplication.
+4. Extend catalogue/product adapters to expose canonical listing currency and market eligibility from the database.
+5. Make catalogue/search/product detail market-aware so GB-only listings do not become purchasable in RO.
+6. Continue the money/tax workstream without enabling RO checkout until RON pricing, tax, shipping and Stripe/payment validation are complete.
+7. Update this master plan and commit after every verified phase boundary.
 
 ## 21. Continuity instruction for Daniel
 
