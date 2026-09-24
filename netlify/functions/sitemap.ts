@@ -15,11 +15,13 @@ import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { CATEGORY_SEO_LANDINGS } from '../../src/lib/categorySeo';
 
-const BASE_URL = 'https://loadifymarket.co.uk';
+const GB_BASE_URL = 'https://loadifymarket.co.uk';
+const RO_BASE_URL = 'https://loadifymarket.ro';
+type SitemapMarket = 'GB' | 'RO';
 
 type StaticEntry = { loc: string; changefreq: string; priority: string };
 type CategoryRow = { id?: string; slug?: string };
-type ProductRow = { id?: string; categoryId?: string | null };
+type ProductRow = { id?: string; categoryId?: string | null; marketCodes?: string[] | null };
 
 export const STATIC_PAGES: StaticEntry[] = [
   { loc: '/',                                       changefreq: 'daily',   priority: '1.0' },
@@ -67,8 +69,17 @@ function escapeXml(value: string): string {
     .replace(/'/g, '&apos;');
 }
 
-function urlEntry(loc: string, changefreq: string, priority: string): string {
-  return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+function urlEntry(loc: string, changefreq: string, priority: string, path?: string): string {
+  const alternates = path
+    ? `\n    <xhtml:link rel="alternate" hreflang="en-GB" href="${escapeXml(`${GB_BASE_URL}${path}`)}" />\n    <xhtml:link rel="alternate" hreflang="ro-RO" href="${escapeXml(`${RO_BASE_URL}${path}`)}" />\n    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(`${GB_BASE_URL}${path}`)}" />`
+    : '';
+  return `  <url>\n    <loc>${escapeXml(loc)}</loc>${alternates}\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+}
+
+function sitemapMarketFromEvent(event: Parameters<Handler>[0]): SitemapMarket {
+  const forwarded = event.headers['x-forwarded-host'] ?? event.headers.host ?? '';
+  const host = forwarded.split(',')[0]?.trim().toLowerCase().replace(/:\d+$/, '') ?? '';
+  return host === 'loadifymarket.ro' || host.endsWith('.loadifymarket.ro') ? 'RO' : 'GB';
 }
 
 function uniqueStrings(values: string[]): string[] {
@@ -99,6 +110,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  const market = sitemapMarketFromEvent(event);
+  const baseUrl = market === 'RO' ? RO_BASE_URL : GB_BASE_URL;
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
@@ -115,8 +128,9 @@ export const handler: Handler = async (event) => {
       const [productsResult, categoriesResult, storesResult, profilesResult] = await Promise.all([
         supabase
           .from('products')
-          .select('id,categoryId')
+          .select('id,categoryId,marketCodes')
           .eq('isActive', true)
+          .contains('marketCodes', [market])
           .eq('isApproved', true)
           .eq('listingStatus', 'active')
           .not('type', 'eq', 'logistics')
@@ -158,11 +172,13 @@ export const handler: Handler = async (event) => {
         const publicSellerIds = new Set(
           (profilesResult.data as Array<{ userId?: string }>).map((row) => row.userId).filter(Boolean),
         );
-        sellerSlugs = uniqueStrings(
-          (storesResult.data as Array<{ storeSlug?: string; userId?: string }>)
-            .filter((row) => row.userId && publicSellerIds.has(row.userId))
-            .map((row) => row.storeSlug?.trim() ?? ''),
-        );
+        sellerSlugs = market === 'GB'
+          ? uniqueStrings(
+              (storesResult.data as Array<{ storeSlug?: string; userId?: string }>)
+                .filter((row) => row.userId && publicSellerIds.has(row.userId))
+                .map((row) => row.storeSlug?.trim() ?? ''),
+            )
+          : [];
       }
     } catch {
       // Non-fatal: fall through with whichever discovery data was available.
@@ -170,21 +186,23 @@ export const handler: Handler = async (event) => {
   }
 
   const staticUrls = STATIC_PAGES.map((page) =>
-    urlEntry(`${BASE_URL}${page.loc}`, page.changefreq, page.priority),
+    urlEntry(`${baseUrl}${page.loc}`, page.changefreq, page.priority, page.loc),
   );
   const categoryUrls = liveCategoryPaths.map((path) =>
-    urlEntry(`${BASE_URL}${path}`, 'weekly', '0.7'),
+    urlEntry(`${baseUrl}${path}`, 'weekly', '0.7', path),
   );
-  const sellerUrls = sellerSlugs.map((slug) =>
-    urlEntry(`${BASE_URL}/seller/${encodeURIComponent(slug)}`, 'weekly', '0.6'),
-  );
-  const productUrls = productIds.map((id) =>
-    urlEntry(`${BASE_URL}/product/${encodeURIComponent(id)}`, 'weekly', '0.6'),
-  );
+  const sellerUrls = sellerSlugs.map((slug) => {
+    const path = `/seller/${encodeURIComponent(slug)}`;
+    return urlEntry(`${baseUrl}${path}`, 'weekly', '0.6', path);
+  });
+  const productUrls = productIds.map((id) => {
+    const path = `/product/${encodeURIComponent(id)}`;
+    return urlEntry(`${baseUrl}${path}`, 'weekly', '0.6', path);
+  });
 
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
     '',
     '  <!-- ── Stable public pages ───────────────────────────────────────────── -->',
     ...staticUrls,
