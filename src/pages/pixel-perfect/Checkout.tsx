@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
+import { useMarket } from "@/contexts/MarketContext";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 import { openExternalUrl } from "@/lib/capacitorUtils";
@@ -52,6 +53,7 @@ const steps = [
 ];
 
 const Checkout = () => {
+  const { config: marketConfig } = useMarket();
   const navigate = useNavigate();
   const { cartItems, subtotal, clearCart, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
   const { user, isLoading } = useAuthStore();
@@ -437,6 +439,21 @@ const Checkout = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (!marketConfig.checkoutEnabled) {
+    return (
+      <MainLayout>
+        <SEO title="Checkout | Loadify Market" description="Checkout availability for the selected Loadify market." canonical="/checkout" robots="noindex,nofollow" />
+        <main id="main-content" className="pt-4 md:pt-28 pb-16">
+          <div className="container mx-auto px-4 text-center py-20">
+            <h1 className="font-display text-2xl font-bold text-foreground mb-4">Checkout is not yet available in this market</h1>
+            <p className="text-muted-foreground mb-6">Romania is in pre-launch while local pricing, tax, shipping and payment validation are completed.</p>
+            <Link to="/catalog"><Button>Return to catalogue</Button></Link>
+          </div>
+        </main>
+      </MainLayout>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (

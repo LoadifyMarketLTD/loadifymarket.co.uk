@@ -25,6 +25,7 @@ interface CheckoutBody {
   shippingMethodId?: string;
   shippingMethod?: string;
   guestEmail?: string;
+  marketCode?: 'GB' | 'RO';
 }
 
 interface DBProduct {
@@ -44,6 +45,8 @@ interface DBProduct {
   listingContext: string;
   listingStatus: string;
   images: string[];
+  currency: 'GBP' | 'RON' | 'EUR' | 'USD';
+  marketCodes: string[];
 }
 
 const STRIPE_CHECKOUT_WINDOW_MINUTES = 30;
@@ -80,7 +83,12 @@ export const handler: Handler = async (event) => {
     billingAddress,
     shippingMethodId,
     shippingMethod,
+    marketCode = 'GB',
   } = body;
+
+  if (marketCode !== 'GB') {
+    return { statusCode: 409, body: JSON.stringify({ error: 'Checkout is not yet enabled for this market.', code: 'MARKET_CHECKOUT_NOT_READY' }) };
+  }
 
   if (!Array.isArray(items) || items.length === 0 || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -168,7 +176,7 @@ export const handler: Handler = async (event) => {
   const productIds = submittedProductIds;
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images')
+    .select('id, price, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images, currency, marketCodes')
     .in('id', productIds);
 
   if (dbError) {
@@ -190,7 +198,10 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: `Item "${dbProduct?.title ?? item.title}" is no longer available` }),
       };
     }
-    if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
+    if (dbProduct.currency !== 'GBP' || !Array.isArray(dbProduct.marketCodes) || !dbProduct.marketCodes.includes(marketCode)) {
+      return { statusCode: 409, body: JSON.stringify({ error: 'This item is not eligible for checkout in the selected market.', code: 'MARKET_CURRENCY_MISMATCH' }) };
+    }
+        if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
       return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" has an invalid price.` }) };
     }
     if (dbProduct.listingContext === 'service') {
@@ -561,6 +572,7 @@ export const handler: Handler = async (event) => {
         status: 'pending',
         amount: chargeableTotal,
         currency: 'GBP',
+        marketCode,
         metadata: {
           commercialSnapshotVersion: 1,
           buyerSnapshot,
