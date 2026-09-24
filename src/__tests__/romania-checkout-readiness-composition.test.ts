@@ -18,6 +18,7 @@ describe("Romania checkout readiness composition", () => {
     expect(migration).toContain("server_shipping_market_readiness_v1(p_product_id,'RO')");
     expect(migration).toContain("server_product_market_compliance_decision_v1");
     expect(migration).toContain("server_market_payment_readiness_v1('RO')");
+    expect(migration).toContain("server_market_legal_policy_snapshot_v1('RO')");
   });
 
   it("remains non-activating even if evidence becomes complete", () => {

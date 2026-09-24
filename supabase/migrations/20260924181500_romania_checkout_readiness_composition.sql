@@ -17,12 +17,14 @@ DECLARE
   v_shipping jsonb;
   v_product jsonb;
   v_payment jsonb;
+  v_legal jsonb;
   v_failures text[] := '{}';
 BEGIN
   v_market:=public.server_market_compliance_readiness_v1('RO');
   v_price:=public.server_product_market_price_decision_v1(p_product_id,'RO');
   v_shipping:=public.server_shipping_market_readiness_v1(p_product_id,'RO');
   v_payment:=public.server_market_payment_readiness_v1('RO');
+  v_legal:=public.server_market_legal_policy_snapshot_v1('RO');
 
   IF COALESCE((v_market->>'eligible')::boolean,false) IS DISTINCT FROM true THEN
     v_failures:=array_append(v_failures,'market_compliance');
@@ -50,6 +52,9 @@ BEGIN
   IF COALESCE((v_payment->>'eligible')::boolean,false) IS DISTINCT FROM true THEN
     v_failures:=array_append(v_failures,'payment_readiness');
   END IF;
+  IF COALESCE((v_legal->>'eligible')::boolean,false) IS DISTINCT FROM true THEN
+    v_failures:=array_append(v_failures,'legal_policy_versions');
+  END IF;
 
   RETURN jsonb_build_object(
     'eligible',cardinality(v_failures)=0,
@@ -62,6 +67,7 @@ BEGIN
     'marketPrice',v_price,
     'marketShipping',v_shipping,
     'paymentReadiness',v_payment,
+    'legalPolicyVersions',v_legal,
     'productCompliance',COALESCE(v_product,'{}'::jsonb),
     'interfaceVersion',1
   );
