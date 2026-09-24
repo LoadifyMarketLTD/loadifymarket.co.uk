@@ -1,10 +1,5 @@
-import { formatMarketMoney } from './marketConfig';
+import { formatMoney, type CurrencyCode } from './money';
 
-/**
- * Shared storefront price formatter.
- * The underlying listing amount is not converted here; settlement/exchange
- * conversion belongs at the commerce boundary. This only renders the active market.
- */
-export function formatPrice(price: number): string {
-  return formatMarketMoney(price);
+export function formatPrice(price: number, currency: CurrencyCode = 'GBP'): string {
+  return formatMoney({ amount: price, currency });
 }

@@ -15,8 +15,8 @@ export interface MarketConfig {
 }
 
 export const MARKET_CONFIG: Record<MarketCode, MarketConfig> = {
-  GB: { code: 'GB', locale: 'en-GB', currency: 'GBP', language: 'en', label: 'United Kingdom', shortLabel: 'UK', flag: '🇬🇧', taxRegion: 'UK', shippingRegion: 'UK' },
-  RO: { code: 'RO', locale: 'ro-RO', currency: 'RON', language: 'ro', label: 'România', shortLabel: 'RO', flag: '🇷🇴', taxRegion: 'EU_RO', shippingRegion: 'RO' },
+  GB: { code: 'GB', locale: 'en-GB', currency: 'GBP', language: 'en', label: 'United Kingdom', shortLabel: 'UK', flag: 'ðŸ‡¬ðŸ‡§', taxRegion: 'UK', shippingRegion: 'UK' },
+  RO: { code: 'RO', locale: 'ro-RO', currency: 'RON', language: 'ro', label: 'RomÃ¢nia', shortLabel: 'RO', flag: 'ðŸ‡·ðŸ‡´', taxRegion: 'EU_RO', shippingRegion: 'RO' },
 };
 
 const STORAGE_KEY = 'loadify-market-country';
@@ -32,9 +32,4 @@ export function writeMarket(code: MarketCode): void {
   window.localStorage.setItem(STORAGE_KEY, code);
   document.documentElement.lang = MARKET_CONFIG[code].language;
   window.dispatchEvent(new CustomEvent('loadify:market-change', { detail: code }));
-}
-
-export function formatMarketMoney(amount: number, market: MarketCode = readMarket()): string {
-  const cfg = MARKET_CONFIG[market];
-  return new Intl.NumberFormat(cfg.locale, { style: 'currency', currency: cfg.currency }).format(amount);
 }
