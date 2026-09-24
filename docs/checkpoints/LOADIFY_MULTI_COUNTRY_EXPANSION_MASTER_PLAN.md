@@ -497,14 +497,31 @@ Completed after the previous checkpoint:
 - branch rebased on production hotfix main; UK production hotfix preserved.
 - Romania checkout remains disabled.
 
+Completed after the previous checkpoint:
+- Romania checkout readiness composition now combines market compliance, product compliance, market-native RON price, shipping readiness and evidence-backed payment readiness.
+- readiness can become evidence-complete without activating checkout: checkoutEnabled/paymentEnabled remain false until an explicit launch cutover.
+- dedicated RO payment evidence ledger requires RON charge support, merchant account capability, SCA/3DS, refund support and settlement/reconciliation evidence.
+- web supplier checkout, supplier PaymentIntent and mobile PaymentIntent all fail closed outside the current live GB/GBP boundary.
+- order market/currency coherence is enforced across orders, order items, refunds, supplier recovery and reconciliation.
+- transaction-time legal disclosure snapshots are required and immutable for RO orders.
+- SEO canonical/hreflang now supports loadifymarket.co.uk / loadifymarket.ro.
+- dynamic sitemap is host/market aware, filters product inventory by market and publishes reciprocal hreflang links.
+- RO seller storefront sitemap exposure remains intentionally disabled until the public seller projection is market-aware.
+- TypeScript: PASS.
+- ESLint: PASS.
+- focused checkout/payment/SEO tests: PASS.
+- migration health: PASS (222 canonical migrations).
+- latest production build before the payment/sitemap commits: PASS; a new full build is the next verification step.
+- Romania remains PRELAUNCH and no RO payment endpoint is enabled.
+
 Next exact work:
-1. Build the Romania checkout readiness aggregator that composes market compliance, product compliance, RON price, shipping, supplier/seller eligibility and payment readiness without activating checkout.
-2. Add RO order lifecycle invariants for market/currency snapshots and prevent mixed-market/mixed-currency orders.
-3. Extend refund/return lifecycle currency and market invariants for RO while preserving current UK behaviour.
-4. Add market-aware legal disclosure/version snapshots to orders.
-5. Continue Romanian storefront/legal i18n only after transactional gates are structurally complete.
-6. Run the full multi-country regression suite and production build before any merge/deployment decision.
-7. Do not apply Romania migrations or enable RO checkout in production until the launch gate is explicitly satisfied.
+1. Run the full production build/regression after the latest payment and sitemap commits.
+2. Make the public seller projection market-aware before exposing RO seller storefronts or seller SEO.
+3. Complete Romanian legal/storefront translations and policy version identifiers without weakening the compliance gates.
+4. Add RO address/postcode/county validation and order snapshot parity.
+5. Add explicit launch-cutover controls that require all readiness evidence and never auto-enable checkout.
+6. Validate domain/DNS/Netlify configuration for loadifymarket.ro separately from code readiness.
+7. Do not apply RO launch migrations, attach the RO production domain or enable checkout/payment until final E2E evidence is complete.
 
 ## 21. Continuity instruction for Daniel
 
