@@ -14,6 +14,8 @@ import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct, PublicSellerCardData } from "@/lib/productAdapter";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import { useMarket } from "@/contexts/MarketContext";
+import { formatPrice } from "@/lib/formatPrice";
 
 // Product select — category joins only; seller data fetched separately
 const PRODUCT_QUERY = `
@@ -42,6 +44,7 @@ async function fetchSellerMap(
 const PAGE_SIZE = 24;
 
 const Catalog = () => {
+  const { market, config: marketConfig } = useMarket();
   const [searchParams] = useSearchParams();
   const queryParam = searchParams.get("q") || "";
   const categoryParam = searchParams.get("category") || "";
@@ -110,6 +113,7 @@ const Catalog = () => {
         .eq("isActive", true)
         .eq("isApproved", true)
         .eq("listingStatus", "active")
+        .contains("marketCodes", [market])
         .or("listingContext.eq.service,stockQuantity.gt.0")
         .not("type", "eq", "logistics");
 
@@ -190,7 +194,7 @@ const Catalog = () => {
       }));
 
       // Step 5: Adapt to UI shape
-      const newProducts = adaptProducts(mapped as unknown as DBProduct[]);
+      const newProducts = adaptProducts(mapped as unknown as DBProduct[], market);
       setProducts((prev) => page === 0 ? newProducts : [...prev, ...newProducts]);
       setHasMore(rows.length === PAGE_SIZE);
       pageRef.current = page;
@@ -201,7 +205,7 @@ const Catalog = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [queryParam, priceRange, sortBy, filterParam]);
+  }, [queryParam, priceRange, sortBy, filterParam, market]);
 
   useEffect(() => {
     pageRef.current = 0;
@@ -238,7 +242,7 @@ const Catalog = () => {
     ...selectedConditions,
     ...selectedLocations,
     ...(priceRange[0] > 0 || priceRange[1] < 10000
-      ? [`£${priceRange[0].toLocaleString()} – £${priceRange[1].toLocaleString()}`]
+      ? [`${formatPrice(priceRange[0], marketConfig.currency)} – ${formatPrice(priceRange[1], marketConfig.currency)}`]
       : []),
   ];
 

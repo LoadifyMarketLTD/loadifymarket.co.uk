@@ -7,6 +7,7 @@ import NativeImg from "@/components/NativeImg";
 import ProductImagePlaceholder from "@/components/ProductImagePlaceholder";
 import { isCapacitorContext } from "@/lib/capacitorUtils";
 import { formatPrice } from "@/lib/formatPrice";
+import type { CurrencyCode } from "@/lib/money";
 
 export interface Product {
   id: string;
@@ -15,6 +16,8 @@ export interface Product {
   image: string;
   images?: string[];
   price: number;
+  currency?: CurrencyCode;
+  marketCodes?: string[];
   originalPrice?: number;
   category: string;
   subcategory: string;
@@ -125,7 +128,7 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
         )}
 
         <div className={`text-lg font-bold leading-none ${light ? "text-[#0A234F]" : "text-foreground"}`}>
-          {formatPrice(product.price)}
+          {formatPrice(product.price, product.currency ?? 'GBP')}
         </div>
 
         <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs ${light ? "text-slate-500" : "text-muted-foreground"}`}>

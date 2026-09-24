@@ -32,6 +32,7 @@ import { authorizedFetch } from "@/lib/authorizedFetch";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import { useCart } from "@/contexts/CartContext";
+import { useMarket } from "@/contexts/MarketContext";
 import {
   trackProductView,
   trackShareProduct,
@@ -102,6 +103,7 @@ const ProductDetail = () => {
   const { user } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
   const { addToCart } = useCart();
+  const { market } = useMarket();
   // State passed from listing pages (Catalog, CategoryPage, Clearance)
   const navState = (location.state ?? {}) as {
     flow?: string;
@@ -156,7 +158,8 @@ const ProductDetail = () => {
         const query = supabase
           .from("products")
           .select(PRODUCT_QUERY)
-          .eq("isActive", true);
+          .eq("isActive", true)
+          .contains("marketCodes", [market]);
         const { data, error } = await (UUID_RE.test(id)
           ? query.eq("id", id)
           : query.eq("slug", id)
@@ -165,7 +168,7 @@ const ProductDetail = () => {
         if (error) throw error;
 
         if (!data) {
-          const supplierProduct = UUID_RE.test(id) ? await fetchSupplierCatalogItem(id) : null;
+          const supplierProduct = market === 'GB' && UUID_RE.test(id) ? await fetchSupplierCatalogItem(id) : null;
           if (!supplierProduct) {
             setNotFound(true);
             return;
@@ -241,6 +244,7 @@ const ProductDetail = () => {
             .eq("isActive", true)
             .eq("isApproved", true)
             .eq("listingStatus", "active")
+            .contains("marketCodes", [market])
             .or("listingContext.eq.service,stockQuantity.gt.0")
             .eq("categoryId", data.categoryId)
             .neq("id", data.id)
@@ -257,7 +261,7 @@ const ProductDetail = () => {
               subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
               seller: relSellerMap.get(p.sellerId as string) ?? null,
             }));
-            setRelated(adaptProducts(normRel as unknown as DBProduct[]));
+            setRelated(adaptProducts(normRel as unknown as DBProduct[], market));
           } else {
             setRelated([]);
           }
@@ -273,6 +277,7 @@ const ProductDetail = () => {
               .eq("isActive", true)
               .eq("isApproved", true)
               .eq("listingStatus", "active")
+              .contains("marketCodes", [market])
               .or("listingContext.eq.service,stockQuantity.gt.0"),
             supabase
               .from("seller_stores")
@@ -290,14 +295,15 @@ const ProductDetail = () => {
           const { data: sellerProductData } = await supabase
             .from("products").select(PRODUCT_QUERY)
             .eq("sellerId", data.sellerId).eq("isActive", true).eq("isApproved", true)
-            .eq("listingStatus", "active").or("listingContext.eq.service,stockQuantity.gt.0")
+            .eq("listingStatus", "active").contains("marketCodes", [market])
+            .or("listingContext.eq.service,stockQuantity.gt.0")
             .neq("id", data.id).order("createdAt", { ascending: false }).limit(4);
           const sameSellerInfo = sellerMap.get(data.sellerId) ?? null;
           setSellerProducts(adaptProducts(((sellerProductData ?? []).map((p: Record<string, unknown>) => ({
             ...p, category: Array.isArray(p.category) ? p.category[0] : p.category,
             subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
             seller: sameSellerInfo,
-          }))) as unknown as DBProduct[]));
+          }))) as unknown as DBProduct[], market));
           setSellerStoreSlug((storeRes.data as { storeSlug?: string } | null)?.storeSlug ?? null);
           setSellerJoinDate((joinRes.data as { createdAt?: string } | null)?.createdAt ?? null);
         }
@@ -310,7 +316,7 @@ const ProductDetail = () => {
     };
 
     fetchProduct();
-  }, [id, user?.id]);
+  }, [id, user?.id, market]);
 
   if (loading) {
     return (
