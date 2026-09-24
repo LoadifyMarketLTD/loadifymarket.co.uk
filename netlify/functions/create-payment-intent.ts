@@ -23,6 +23,7 @@ interface CheckoutItem {
 interface PaymentIntentBody {
   items: CheckoutItem[];
   buyerId: string;
+  marketCode?: string;
   shippingAddress?: Record<string, string>;
   billingAddress: Record<string, string>;
   shippingAmount?: number;
@@ -33,6 +34,8 @@ interface PaymentIntentBody {
 interface DBProduct {
   id: string;
   price: number;
+  currency: string | null;
+  marketCodes: string[] | null;
   priceExVat: number | null;
   vatRate: number | null;
   taxTreatmentStatus: string | null;
@@ -75,6 +78,21 @@ export const handler: Handler = async (event) => {
   }
 
   const { items, buyerId, shippingAddress, billingAddress, shippingMethodId, shippingMethod } = body;
+  const requestedMarket = typeof body.marketCode === 'string' ? body.marketCode.trim().toUpperCase() : 'GB';
+  if (requestedMarket !== 'GB' && requestedMarket !== 'RO') {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Unsupported checkout market', code: 'PAYMENT_MARKET_INVALID' }) };
+  }
+  if (requestedMarket !== 'GB') {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: 'Mobile payments are not yet enabled for this market',
+        code: 'PAYMENT_MARKET_NOT_READY',
+        marketCode: requestedMarket,
+      }),
+    };
+  }
+
   if (!Array.isArray(items) || items.length === 0 || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
@@ -140,7 +158,7 @@ export const handler: Handler = async (event) => {
   const productIds = submittedProductIds;
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images')
+    .select('id, price, currency, marketCodes, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images')
     .in('id', productIds);
 
   if (dbError) {
@@ -152,6 +170,14 @@ export const handler: Handler = async (event) => {
     const dbProduct = productMap.get(item.productId);
     if (!dbProduct || !dbProduct.isActive || !dbProduct.isApproved || dbProduct.listingStatus !== 'active') {
       return { statusCode: 400, body: JSON.stringify({ error: `Item "${dbProduct?.title ?? item.title}" is no longer available` }) };
+    }
+    const productMarkets = dbProduct.marketCodes?.length ? dbProduct.marketCodes : ['GB'];
+    if (!productMarkets.includes(requestedMarket)) {
+      return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" is not available in this market.`, code: 'PRODUCT_MARKET_NOT_ELIGIBLE' }) };
+    }
+    const productCurrency = dbProduct.currency ?? 'GBP';
+    if (requestedMarket === 'GB' && productCurrency !== 'GBP') {
+      return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" has an invalid market currency.`, code: 'PRODUCT_CURRENCY_MISMATCH' }) };
     }
     if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
       return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" has an invalid price.` }) };
