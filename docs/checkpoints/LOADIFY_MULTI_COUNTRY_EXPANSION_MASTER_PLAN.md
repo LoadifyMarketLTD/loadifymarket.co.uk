@@ -527,13 +527,24 @@ Completed in the current launch-hardening pass:
 - production build: PASS.
 - Romania remains PRELAUNCH; no RO payment endpoint or production-domain cutover has been enabled.
 
+Latest verified hardening evidence:
+- Romania distance-contract pre-order disclosure is now present in checkout, with explicit “Comandă cu obligație de plată” wording and links to buyer terms, returns, shipping and privacy.
+- targeted multi-country/RO regression: 18 test files, 74/74 tests PASS.
+- TypeScript and ESLint PASS after the checkout disclosure changes.
+- migration health PASS: 225 canonical migrations / 225 unique versions.
+- production security boundary suite: 9/9 PASS.
+- final production build after the disclosure changes: PASS; 2,499 modules transformed, exit code 0.
+- only known build warning remains the existing heic2any >600 kB chunk.
+- branch is synchronized with current origin/main and remains isolated from UK production.
+- loadifymarket.ro DNS currently does not resolve; no production-domain attachment has been attempted.
+- Romania remains PRELAUNCH with checkout/payment disabled.
+
 Next exact work:
 1. Complete the Romanian legal-page presentation using reviewed policy content; do not auto-verify policy versions merely because translated text exists.
-2. Add the Romania distance-contract checkout disclosure/button wording required by the reviewed OUG 34/2014 source before any payment activation.
-3. Validate loadifymarket.ro ownership/DNS/Netlify availability separately from code readiness; do not attach it to production without final approval.
-4. Run a full RO prelaunch E2E with synthetic data through catalogue -> cart -> blocked checkout/readiness -> seller/supplier eligibility -> return/refund invariants.
-5. Rebase on current origin/main, resolve only verified conflicts, rerun full build/regression, then prepare the branch for review/merge.
-6. Do not apply RO launch migrations or enable checkout/payment until final E2E evidence and explicit launch approval are complete.
+2. Build a reproducible synthetic RO prelaunch E2E fixture covering catalogue -> cart -> RO address -> blocked checkout/readiness -> seller/supplier eligibility -> return/refund invariants.
+3. Re-run the E2E fixture against the branch and preserve evidence in the checkpoint folder.
+4. Re-check origin/main immediately before review/merge and rerun production build if main moved.
+5. Do not apply RO launch migrations, attach loadifymarket.ro to production, or enable checkout/payment until final E2E evidence and explicit launch approval are complete.
 
 ## 21. Continuity instruction for Daniel
 
