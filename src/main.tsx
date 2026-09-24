@@ -10,6 +10,7 @@ import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
 import { installCheckoutFetchGuard } from "./lib/checkoutFetchGuard.ts";
 import { isCapacitorContext } from "./lib/capacitorUtils.ts";
 import { initNativeCameraRecovery } from "./lib/nativeCameraRecovery.ts";
+import { recoverFromDeploymentAssetError } from "./lib/deploymentAssetRecovery.ts";
 import "./index.css";
 import "./light-compat.css";
 import "./light-semantic-compat.css";
@@ -44,6 +45,16 @@ patchCapacitorFetch();
 installCheckoutFetchGuard();
 if (typeof window !== 'undefined') {
   window.addEventListener('load', installCheckoutFetchGuard, { once: true });
+
+  // Vite emits this event when an already-open SPA session tries to load a
+  // lazy chunk that no longer exists after a new atomic deployment.
+  window.addEventListener('vite:preloadError', (event) => {
+    const preloadEvent = event as Event & { payload?: unknown };
+    const recovered = recoverFromDeploymentAssetError(
+      preloadEvent.payload ?? new Error('Failed to fetch dynamically imported module'),
+    );
+    if (recovered) event.preventDefault();
+  });
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
