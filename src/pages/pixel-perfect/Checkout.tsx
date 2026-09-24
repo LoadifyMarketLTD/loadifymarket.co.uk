@@ -856,6 +856,24 @@ const Checkout = () => {
                       : "You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller."}
                   </div>
 
+                  {market === "RO" && (
+                    <div className="rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-muted-foreground">
+                      <p className="font-semibold text-foreground">Informații înainte de comandă</p>
+                      <p className="mt-1">
+                        Înainte de plasarea comenzii, verifică produsele, prețul total, costul livrării, identitatea comerciantului și informațiile privind retragerea/returnarea. Prin butonul de comandă confirmi că plasarea comenzii implică o obligație de plată.
+                      </p>
+                      <p className="mt-2">
+                        <a href="/buyer-terms" className="underline hover:text-foreground">Termeni cumpărător</a>
+                        {" · "}
+                        <a href="/returns" className="underline hover:text-foreground">Retururi</a>
+                        {" · "}
+                        <a href="/shipping" className="underline hover:text-foreground">Livrare</a>
+                        {" · "}
+                        <a href="/privacy" className="underline hover:text-foreground">Confidențialitate</a>
+                      </p>
+                    </div>
+                  )}
+
                   {supplierOnlyCart && supplierClientSecret && supplierOrderId ? (
                     <Elements stripe={stripePromise} options={{ clientSecret: supplierClientSecret }}>
                       <SupplierPaymentPanel
