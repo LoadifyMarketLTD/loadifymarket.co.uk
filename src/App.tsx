@@ -180,13 +180,13 @@ function App() {
 
   if (location.pathname === '/') {
     return (
-      <>
+      <MarketProvider>
         <AmbientLayer />
         <MaintenanceModeGate>
           <Suspense fallback={<AppShellLoader />}><Home /></Suspense>
         </MaintenanceModeGate>
         <CookieConsent />
-      </>
+      </MarketProvider>
     );
   }
 
