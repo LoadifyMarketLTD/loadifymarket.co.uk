@@ -111,7 +111,13 @@ CREATE TABLE IF NOT EXISTS private.dispatch_locations (
   CONSTRAINT dispatch_locations_address_check
     CHECK (jsonb_typeof(address)='object'),
   CONSTRAINT dispatch_locations_evidence_check
-    CHECK (jsonb_typeof(evidence)='object')
+    CHECK (jsonb_typeof(evidence)='object'),
+  CONSTRAINT dispatch_locations_verification_status_check
+    CHECK (verification_status IN ('draft','verified','suspended','retired')),
+  CONSTRAINT dispatch_locations_verified_evidence_check CHECK (
+    verification_status <> 'verified'
+    OR (reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL AND evidence <> '{}'::jsonb)
+  )
 );
 
 CREATE INDEX IF NOT EXISTS dispatch_locations_seller_idx
@@ -161,7 +167,8 @@ CREATE TABLE IF NOT EXISTS private.actor_route_capabilities (
   CONSTRAINT actor_route_capabilities_verified_evidence_check CHECK (
     capability_status <> 'verified'
     OR (
-      reviewed_by IS NOT NULL
+      dispatch_location_id IS NOT NULL
+      AND reviewed_by IS NOT NULL
       AND reviewed_at IS NOT NULL
       AND evidence <> '{}'::jsonb
     )
@@ -187,12 +194,13 @@ SECURITY DEFINER
 SET search_path TO ''
 AS $$
 DECLARE
+  v_origin text;
   v_destination text;
   v_location private.dispatch_locations%ROWTYPE;
   v_seller public.seller_profiles%ROWTYPE;
   v_supplier private.supplier_foundation_suppliers%ROWTYPE;
 BEGIN
-  SELECT destination_market INTO v_destination
+  SELECT origin_country,destination_market INTO v_origin,v_destination
   FROM private.market_routes
   WHERE id=NEW.route_id;
 
@@ -207,6 +215,14 @@ BEGIN
 
     IF NOT FOUND THEN
       RAISE EXCEPTION 'dispatch location is missing';
+    END IF;
+
+    IF v_location.country_code IS DISTINCT FROM v_origin THEN
+      RAISE EXCEPTION 'dispatch location country does not match route origin';
+    END IF;
+
+    IF NEW.capability_status='verified' AND v_location.verification_status IS DISTINCT FROM 'verified' THEN
+      RAISE EXCEPTION 'verified route capability requires verified dispatch location';
     END IF;
 
     IF NEW.seller_id IS NOT NULL AND v_location.seller_id IS DISTINCT FROM NEW.seller_id THEN
@@ -311,7 +327,8 @@ REVOKE ALL ON TABLE private.route_decision_snapshots
 
 CREATE OR REPLACE FUNCTION public.server_market_route_baseline_v1(
   p_origin_country text,
-  p_destination_market text
+  p_destination_country text,
+  p_destination_market text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -320,10 +337,11 @@ SET search_path TO ''
 AS $$
 DECLARE
   v_origin text:=upper(BTRIM(COALESCE(p_origin_country,'')));
-  v_destination text:=upper(BTRIM(COALESCE(p_destination_market,'')));
+  v_destination_country text:=upper(BTRIM(COALESCE(p_destination_country,'')));
+  v_destination_market text:=upper(BTRIM(COALESCE(p_destination_market,p_destination_country,'')));
   v_route private.market_routes%ROWTYPE;
 BEGIN
-  IF v_origin !~ '^[A-Z]{2}$' OR v_destination !~ '^[A-Z]{2}$' THEN
+  IF v_origin !~ '^[A-Z]{2}$' OR v_destination_country !~ '^[A-Z]{2}$' OR v_destination_market !~ '^[A-Z]{2}$' THEN
     RETURN jsonb_build_object(
       'eligible',false,
       'reason','invalid_route_code',
@@ -333,13 +351,14 @@ BEGIN
 
   SELECT * INTO v_route
   FROM private.market_routes
-  WHERE route_key=v_origin || '-' || v_destination;
+  WHERE route_key=v_origin || '-' || v_destination_country
+    AND destination_market=v_destination_market;
 
   IF NOT FOUND THEN
     RETURN jsonb_build_object(
       'eligible',false,
       'reason','route_not_configured',
-      'routeKey',v_origin || '-' || v_destination,
+      'routeKey',v_origin || '-' || v_destination_country,
       'interfaceVersion',1
     );
   END IF;
@@ -348,6 +367,7 @@ BEGIN
     'eligible',v_route.status='live' AND v_route.checkout_enabled,
     'routeKey',v_route.route_key,
     'originCountry',v_route.origin_country,
+    'destinationCountry',v_route.destination_country,
     'destinationMarket',v_route.destination_market,
     'status',v_route.status,
     'displayEnabled',v_route.display_enabled,
@@ -361,9 +381,9 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.server_market_route_baseline_v1(text,text)
+REVOKE ALL ON FUNCTION public.server_market_route_baseline_v1(text,text,text)
   FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.server_market_route_baseline_v1(text,text)
+GRANT EXECUTE ON FUNCTION public.server_market_route_baseline_v1(text,text,text)
   TO service_role;
 
 COMMENT ON TABLE private.market_routes IS
@@ -374,5 +394,5 @@ COMMENT ON TABLE private.actor_route_capabilities IS
   'ECN route-level seller/supplier capability. Verified capability may narrow but cannot exceed existing market/delivery declarations.';
 COMMENT ON TABLE private.route_decision_snapshots IS
   'Immutable-style audit snapshots for server cross-border eligibility decisions at display/offer/checkout/return boundaries.';
-COMMENT ON FUNCTION public.server_market_route_baseline_v1(text,text) IS
+COMMENT ON FUNCTION public.server_market_route_baseline_v1(text,text,text) IS
   'Service-role-only ECN route baseline. This does not itself authorise checkout; later route decisions must compose inventory, shipping, tax/customs, compliance and payment readiness.';

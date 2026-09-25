@@ -1170,3 +1170,35 @@ The design is complete when:
 - Romania remains fail-closed.
 
 This document satisfies the design stage. The next implementation task is the UK-safe schema foundation plus shadow route decision.
+
+
+---
+
+## 21. Implementation checkpoint — verified 25 September 2026
+
+The additive ECN-1 foundation has now been implemented in `supabase/migrations/20260925163000_ecn_cross_border_domain_foundation.sql` and hardened before authoritative use.
+
+Implemented invariants include:
+
+- `destination_country` is stored separately from `destination_market`;
+- the route key represents physical `origin_country -> destination_country`;
+- `GB-GB` remains the existing live domestic baseline;
+- `RO-RO`, `GB-RO` and `RO-GB` remain PRELAUNCH/fail-closed;
+- dispatch locations have explicit verification status and reviewed evidence;
+- verified actor route capability requires a verified dispatch location;
+- the dispatch-location country must equal the route origin country;
+- verified seller/supplier route capability cannot exceed existing market/delivery declarations;
+- route decision snapshots remain private;
+- `server_market_route_baseline_v1` is service-role only and does not itself authorise checkout;
+- existing `private.product_market_price_versions` remains the canonical market-native price truth.
+
+Verification after hardening:
+
+- ECN domain/route targeted suite: PASS;
+- canonical migration health: 227/227 unique versions PASS after ECN-2 addition;
+- TypeScript: PASS;
+- targeted ESLint: PASS;
+- production build: PASS (2,500 modules transformed; security boundary tests 9/9 PASS);
+- `git diff --check`: PASS.
+
+ECN-2 is implemented only as a shadow/read-only decision layer and is not wired into live checkout.

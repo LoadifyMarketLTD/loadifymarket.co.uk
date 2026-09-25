@@ -1,4 +1,4 @@
-# Loadify Market — European Commerce Network Master Blueprint
+# Loadify Market â€” European Commerce Network Master Blueprint
 
 **Status:** CANONICAL / ACTIVE  
 **Created:** 25 September 2026  
@@ -29,7 +29,7 @@ The current platform is already materially broader. Repository and database insp
 
 The correct strategic target is therefore:
 
-> **Loadify Market — a multi-sided, multi-country Commerce Operating Platform connecting buyers, sellers, trade buyers and direct suppliers, with integrated catalogue governance, payments, fulfilment, shipping, returns, disputes, compliance and operational controls.**
+> **Loadify Market â€” a multi-sided, multi-country Commerce Operating Platform connecting buyers, sellers, trade buyers and direct suppliers, with integrated catalogue governance, payments, fulfilment, shipping, returns, disputes, compliance and operational controls.**
 
 The expansion architecture must become:
 
@@ -147,7 +147,7 @@ The supplier model is explicitly:
 
 Canonical supplier lifecycle:
 
-**Candidate → Verification → Catalogue Connection → Normalisation → Merchandising Review → Controlled Publication → Commerce Runtime**
+**Candidate â†’ Verification â†’ Catalogue Connection â†’ Normalisation â†’ Merchandising Review â†’ Controlled Publication â†’ Commerce Runtime**
 
 This is a supplier-commerce infrastructure layer, not merely a seller registration form.
 
@@ -234,14 +234,14 @@ Preferred model:
 
 ```text
 Canonical Product
-  ├── seller / supplier identity
-  ├── origin / dispatch locations
-  ├── market availability
-  ├── market-native price offers
-  ├── inventory by location
-  ├── shipping eligibility
-  ├── compliance evidence
-  └── buyer-market presentation
+  â”œâ”€â”€ seller / supplier identity
+  â”œâ”€â”€ origin / dispatch locations
+  â”œâ”€â”€ market availability
+  â”œâ”€â”€ market-native price offers
+  â”œâ”€â”€ inventory by location
+  â”œâ”€â”€ shipping eligibility
+  â”œâ”€â”€ compliance evidence
+  â””â”€â”€ buyer-market presentation
 ```
 
 Example:
@@ -253,7 +253,7 @@ Canonical listing currency: GBP
 GB availability: YES
 RO availability: YES
 RO buyer presentation: RON
-GB → RO shipping route: eligible
+GB â†’ RO shipping route: eligible
 RO compliance: PASS
 RO checkout: eligible
 ```
@@ -329,13 +329,13 @@ A market to which the seller/supplier can fulfil.
 
 Where returned goods can be accepted.
 
-### 5.12 Origin → destination route
+### 5.12 Origin â†’ destination route
 
 The actual fulfilment path for a specific transaction.
 
 A Romanian buyer does not make a UK product a Romanian product. The transaction is instead evaluated as a route such as:
 
-`GB → RO`.
+`GB â†’ RO`.
 
 ---
 
@@ -343,7 +343,7 @@ A Romanian buyer does not make a UK product a Romanian product. The transaction 
 
 The platform should be understood in two layers.
 
-### Layer A — Loadify Core
+### Layer A â€” Loadify Core
 
 Existing core domains:
 
@@ -376,7 +376,7 @@ Existing core domains:
 - SEO
 - Mobile/Native
 
-### Layer B — International Commerce Layer
+### Layer B â€” International Commerce Layer
 
 New/extended international domains:
 
@@ -415,12 +415,12 @@ Detailed evidence inventory: `docs/checkpoints/LOADIFY_ECN_0_CANONICAL_CAPABILIT
 
 Status definitions:
 
-- **Implemented** — material code/schema exists.
-- **Partial** — usable foundations exist, but not complete end-to-end.
-- **E2E verified** — workflow has reproducible end-to-end evidence.
-- **Production-ready** — currently safe for intended production scope.
-- **Cross-border ready** — route-aware international behaviour is complete.
-- **Missing** — required international capability is absent.
+- **Implemented** â€” material code/schema exists.
+- **Partial** â€” usable foundations exist, but not complete end-to-end.
+- **E2E verified** â€” workflow has reproducible end-to-end evidence.
+- **Production-ready** â€” currently safe for intended production scope.
+- **Cross-border ready** â€” route-aware international behaviour is complete.
+- **Missing** â€” required international capability is absent.
 
 The statuses below describe the architecture observed on 25 September 2026. They are not a substitute for fresh launch evidence.
 
@@ -456,7 +456,7 @@ The statuses below describe the architecture observed on 25 September 2026. They
 
 ---
 
-## 8. Cross-Border Route Engine — highest-priority architectural addition
+## 8. Cross-Border Route Engine â€” highest-priority architectural addition
 
 ### 8.1 Purpose
 
@@ -545,8 +545,8 @@ Example:
 
 ```text
 Supplier A
-  ├── Warehouse GB / Birmingham / 80 units
-  └── Warehouse RO / Bucharest / 25 units
+  â”œâ”€â”€ Warehouse GB / Birmingham / 80 units
+  â””â”€â”€ Warehouse RO / Bucharest / 25 units
 ```
 
 A Romanian buyer ordering the product should preferably be fulfilled from the Romanian warehouse if:
@@ -557,7 +557,7 @@ A Romanian buyer ordering the product should preferably be fulfilled from the Ro
 - delivery service is available;
 - compliance evidence permits sale.
 
-If local stock is unavailable, the platform may evaluate a GB → RO route.
+If local stock is unavailable, the platform may evaluate a GB â†’ RO route.
 
 ### 9.2 Sourcing decision inputs
 
@@ -589,8 +589,8 @@ The existing supplier offer-selection system can later rank candidate fulfilment
 
 ```text
 RO warehouse
-→ DE warehouse
-→ GB warehouse
+â†’ DE warehouse
+â†’ GB warehouse
 ```
 
 based on landed cost, SLA and eligibility rather than a fixed supplier preference.
@@ -605,16 +605,16 @@ The current shipping foundation should evolve into a route-based service.
 
 ```text
 Origin
-→ Destination
-→ Shipment Profile
-→ Carrier
-→ Service
-→ Rate
-→ ETA
-→ Tracking capability
-→ Customs capability
-→ Return capability
-→ Eligibility
+â†’ Destination
+â†’ Shipment Profile
+â†’ Carrier
+â†’ Service
+â†’ Rate
+â†’ ETA
+â†’ Tracking capability
+â†’ Customs capability
+â†’ Return capability
+â†’ Eligibility
 ```
 
 ### 10.2 Shipment profile
@@ -631,17 +631,17 @@ At minimum:
 
 ### 10.3 Route examples
 
-- GB → GB
-- RO → RO
-- GB → RO
-- RO → GB
+- GB â†’ GB
+- RO â†’ RO
+- GB â†’ RO
+- RO â†’ GB
 
 Future:
 
-- RO → DE
-- DE → RO
-- FR → RO
-- EU → UK
+- RO â†’ DE
+- DE â†’ RO
+- FR â†’ RO
+- EU â†’ UK
 
 ### 10.4 Carrier integrations
 
@@ -691,7 +691,7 @@ Product subtotal
 = Buyer payable total
 ```
 
-### 11.2 UK ↔ EU importance
+### 11.2 UK â†” EU importance
 
 Post-Brexit GB/EU routes may require:
 
@@ -749,7 +749,7 @@ Required immutable transaction facts:
 Example:
 
 ```text
-Listing: £12.49 GBP
+Listing: Â£12.49 GBP
 Buyer presentation: 73.20 RON
 Transaction: 73.20 RON
 Settlement: GBP
@@ -803,7 +803,7 @@ Human/reviewed or authoritative evidence remains required where the gate calls f
 
 ## 14. Cross-Border Return Orchestration
 
-International returns must not automatically mean “send everything back to the original country.”
+International returns must not automatically mean â€œsend everything back to the original country.â€
 
 ### 14.1 Reverse logistics decision
 
@@ -824,14 +824,14 @@ The return engine should evaluate:
 
 ```text
 Buyer RO
-→ requests return
-→ platform validates return entitlement
-→ selects RO local return point where contractually permitted
-→ generates/assigns return shipping
-→ inspection/receipt event
-→ refund eligibility confirmed
-→ Stripe refund
-→ inventory/restock/disposition recorded
+â†’ requests return
+â†’ platform validates return entitlement
+â†’ selects RO local return point where contractually permitted
+â†’ generates/assigns return shipping
+â†’ inspection/receipt event
+â†’ refund eligibility confirmed
+â†’ Stripe refund
+â†’ inventory/restock/disposition recorded
 ```
 
 ### 14.3 Refund safety
@@ -864,7 +864,7 @@ The RFQ engine should support:
 - tax treatment
 - customs responsibility
 - validity period
-- accepted quote → order conversion
+- accepted quote â†’ order conversion
 
 ### 15.2 Document pack
 
@@ -884,7 +884,7 @@ Existing `rfq_requests`, `rfq_responses` and `rfq.ts` are foundations. Seller-fa
 
 ---
 
-## 16. Admin Hub → European Commerce Control Centre
+## 16. Admin Hub â†’ European Commerce Control Centre
 
 The Admin market selector must become operational, not cosmetic.
 
@@ -895,8 +895,8 @@ At minimum:
 - All markets
 - GB domestic
 - RO domestic
-- GB → RO
-- RO → GB
+- GB â†’ RO
+- RO â†’ GB
 - International eligible
 - International blocked
 - Compliance incomplete
@@ -923,7 +923,7 @@ Recommended:
 
 ### 16.3 Important rule
 
-Selecting `RO · RON` in Admin must not simply relabel all prices or show every UK product as Romanian.
+Selecting `RO Â· RON` in Admin must not simply relabel all prices or show every UK product as Romanian.
 
 A UK-origin listing may appear in an Admin Romanian context only with an explicit state such as:
 
@@ -941,8 +941,8 @@ A Romanian buyer should be able to understand whether an item is local or intern
 
 Possible presentation:
 
-- “Ships from Romania”
-- “International — ships from United Kingdom”
+- â€œShips from Romaniaâ€
+- â€œInternational â€” ships from United Kingdomâ€
 - estimated delivery
 - shipping cost
 - import/customs responsibility where applicable
@@ -952,7 +952,7 @@ Buyer experience must not expose internal complexity unnecessarily, but must not
 
 ---
 
-## 18. Seller and Supplier settings — target international capability
+## 18. Seller and Supplier settings â€” target international capability
 
 Seller/Supplier profiles should eventually record:
 
@@ -996,13 +996,13 @@ The current `marketCodes`, `deliveryMarketCodes` and `returnsCountryCode` are va
 
 Before adding more countries, Loadify must prove four routes:
 
-### Route A — GB domestic
+### Route A â€” GB domestic
 
 Existing production baseline. Must not regress.
 
-### Route B — RO domestic
+### Route B â€” RO domestic
 
-Romanian seller/supplier or Romanian inventory → Romanian buyer.
+Romanian seller/supplier or Romanian inventory â†’ Romanian buyer.
 
 Must prove:
 
@@ -1013,7 +1013,7 @@ Must prove:
 - Stripe RON lifecycle
 - local SEO/domain
 
-### Route C — GB → RO
+### Route C â€” GB â†’ RO
 
 Must prove:
 
@@ -1029,11 +1029,11 @@ Must prove:
 - refund
 - reconciliation
 
-### Route D — RO → GB
+### Route D â€” RO â†’ GB
 
 Must prove the reverse direction separately.
 
-Passing GB → RO does not automatically prove RO → GB.
+Passing GB â†’ RO does not automatically prove RO â†’ GB.
 
 ---
 
@@ -1067,7 +1067,7 @@ Required gates include:
 - RLS/API security
 - rollback plan
 
-No single passing test — including successful RON payment — makes Romania launch-ready by itself.
+No single passing test â€” including successful RON payment â€” makes Romania launch-ready by itself.
 
 ---
 
@@ -1100,8 +1100,8 @@ Country expansion must keep one platform while supporting local domains.
 
 Target:
 
-- `loadifymarket.co.uk` → GB
-- `loadifymarket.ro` → RO
+- `loadifymarket.co.uk` â†’ GB
+- `loadifymarket.ro` â†’ RO
 
 Both resolve to the same application/codebase.
 
@@ -1199,7 +1199,7 @@ Operational dashboards should expose:
 
 ## 26. Recommended implementation programme
 
-### Phase ECN-0 — Canonical capability inventory
+### Phase ECN-0 â€” Canonical capability inventory
 
 Deliverables:
 
@@ -1211,7 +1211,7 @@ Deliverables:
 
 No feature should be labelled production-ready based only on file existence.
 
-### Phase ECN-1 — Cross-border domain model
+### Phase ECN-1 â€” Cross-border domain model
 
 Implement/review:
 
@@ -1222,7 +1222,7 @@ Implement/review:
 - eligibility decision model
 - compatibility migration from `marketCodes`
 
-### Phase ECN-2 — Cross-Border Route Engine
+### Phase ECN-2 â€” Cross-Border Route Engine
 
 Build:
 
@@ -1235,7 +1235,7 @@ Build:
 - server-authoritative APIs/RPCs
 - tests
 
-### Phase ECN-3 — Unified Inventory / Multi-Warehouse
+### Phase ECN-3 â€” Unified Inventory / Multi-Warehouse
 
 Build:
 
@@ -1247,7 +1247,7 @@ Build:
 - multi-location sourcing
 - supplier-source ranking
 
-### Phase ECN-4 — Shipping Route Engine
+### Phase ECN-4 â€” Shipping Route Engine
 
 Build:
 
@@ -1259,7 +1259,7 @@ Build:
 - customs capability
 - reverse route capability
 
-### Phase ECN-5 — Tax / Customs / Landed Cost
+### Phase ECN-5 â€” Tax / Customs / Landed Cost
 
 Build:
 
@@ -1270,7 +1270,7 @@ Build:
 - buyer disclosure
 - audit snapshot
 
-### Phase ECN-6 — Destination Compliance Publication
+### Phase ECN-6 â€” Destination Compliance Publication
 
 Build:
 
@@ -1280,7 +1280,7 @@ Build:
 - seller/supplier compliance capability
 - publication gate integration
 
-### Phase ECN-7 — Reverse Logistics
+### Phase ECN-7 â€” Reverse Logistics
 
 Build:
 
@@ -1290,17 +1290,17 @@ Build:
 - refund trigger boundary
 - restock/disposition
 
-### Phase ECN-8 — Smart B2B / RFQ
+### Phase ECN-8 â€” Smart B2B / RFQ
 
 Complete:
 
 - buyer RFQ
 - seller/supplier response
 - cross-border commercial terms
-- accepted quote → order
+- accepted quote â†’ order
 - commercial document pack
 
-### Phase ECN-9 — Admin European Control Centre
+### Phase ECN-9 â€” Admin European Control Centre
 
 Upgrade:
 
@@ -1311,16 +1311,16 @@ Upgrade:
 - route controls
 - evidence review
 
-### Phase ECN-10 — Romania route validation
+### Phase ECN-10 â€” Romania route validation
 
 E2E:
 
-- GB → GB
-- RO → RO
-- GB → RO
-- RO → GB
+- GB â†’ GB
+- RO â†’ RO
+- GB â†’ RO
+- RO â†’ GB
 
-### Phase ECN-11 — Romania production cutover
+### Phase ECN-11 â€” Romania production cutover
 
 Only after all gates and explicit owner approval:
 
@@ -1330,7 +1330,7 @@ Only after all gates and explicit owner approval:
 - monitoring
 - rollback readiness
 
-### Phase ECN-12 — EU Country Factory
+### Phase ECN-12 â€” EU Country Factory
 
 New markets should be added primarily through:
 
@@ -1351,14 +1351,14 @@ Once Romania proves the architecture, adding a new country should resemble:
 
 ```text
 Add Market Config
-→ Add locale/translations
-→ Add tax/compliance rules
-→ Add legal policies
-→ Add shipping routes
-→ Validate payment currencies
-→ Seed launch-control evidence
-→ Run E2E
-→ Enable market
+â†’ Add locale/translations
+â†’ Add tax/compliance rules
+â†’ Add legal policies
+â†’ Add shipping routes
+â†’ Validate payment currencies
+â†’ Seed launch-control evidence
+â†’ Run E2E
+â†’ Enable market
 ```
 
 The core Buyer/Seller/Supplier/Admin applications should not be rewritten.
@@ -1413,7 +1413,7 @@ The following decisions are now recommended as canonical:
 
 Before adding more ad-hoc Romania UI behaviour:
 
-### Step 1 — freeze terminology
+### Step 1 â€” freeze terminology
 
 Adopt:
 
@@ -1431,7 +1431,7 @@ Adopt:
 - Settlement Currency
 - Cross-Border Route
 
-### Step 2 — complete the Capability Map with file/API/schema evidence
+### Step 2 â€” complete the Capability Map with file/API/schema evidence
 
 For each domain record:
 
@@ -1443,7 +1443,7 @@ For each domain record:
 - production status
 - cross-border gap
 
-### Step 3 — write the Cross-Border Route Engine technical design
+### Step 3 â€” write the Cross-Border Route Engine technical design
 
 Define:
 
@@ -1456,7 +1456,7 @@ Define:
 - admin visibility
 - audit strategy
 
-### Step 4 — map current GB/RO fields to the new model
+### Step 4 â€” map current GB/RO fields to the new model
 
 Identify what can be retained:
 
@@ -1471,7 +1471,7 @@ Identify what can be retained:
 
 and what needs extension.
 
-### Step 5 — do not activate Romania
+### Step 5 â€” do not activate Romania
 
 Romania stays PRELAUNCH while architecture and evidence are completed.
 
@@ -1481,14 +1481,14 @@ Romania stays PRELAUNCH while architecture and evidence are completed.
 
 The European Commerce Network architecture is successful when the following statement is true:
 
-> A buyer in any enabled market can discover a canonical product from any eligible seller/supplier location, and Loadify can deterministically decide whether the product may be displayed, offered, shipped, purchased and returned for the exact origin→destination route, while preserving correct currency, tax, customs, compliance, payment, fulfilment and audit evidence.
+> A buyer in any enabled market can discover a canonical product from any eligible seller/supplier location, and Loadify can deterministically decide whether the product may be displayed, offered, shipped, purchased and returned for the exact originâ†’destination route, while preserving correct currency, tax, customs, compliance, payment, fulfilment and audit evidence.
 
 For Romania specifically, success means Loadify can prove all four initial routes:
 
-- GB → GB
-- RO → RO
-- GB → RO
-- RO → GB
+- GB â†’ GB
+- RO â†’ RO
+- GB â†’ RO
+- RO â†’ GB
 
 without duplicating the application, duplicating product identities, corrupting money semantics or regressing UK production.
 
@@ -1515,6 +1515,144 @@ Any future agent changing international commerce must:
 
 Loadify should evolve toward:
 
-> **Loadify Market — the operating layer for multi-market commerce: discovery, supply, catalogue governance, inventory, payments, fulfilment, shipping, returns and compliance across domestic and cross-border routes.**
+> **Loadify Market â€” the operating layer for multi-market commerce: discovery, supply, catalogue governance, inventory, payments, fulfilment, shipping, returns and compliance across domestic and cross-border routes.**
 
 This statement reflects the platform that already exists and the architecture required to scale it into a European Commerce Network.
+
+---
+
+## 34. ECN implementation checkpoint â€” 25 September 2026
+
+### ECN-0
+
+**Completed.** Detailed evidence inventory:
+
+`docs/checkpoints/LOADIFY_ECN_0_CANONICAL_CAPABILITY_MAP_2026-09-25.md`
+
+Verified during ECN-0:
+
+- approximately 128 application pages;
+- 114 Netlify backend functions;
+- 225 canonical migrations before ECN-1 schema work;
+- 76 source test files;
+- 129 referenced source/test/document files in the capability map resolved successfully with zero missing references;
+- UK remains the production baseline;
+- Romania remains PRELAUNCH.
+
+### ECN-1 design
+
+**Completed.** Canonical technical design:
+
+`docs/checkpoints/LOADIFY_ECN_1_CROSS_BORDER_DOMAIN_MODEL_2026-09-25.md`
+
+The design explicitly separates:
+
+- market;
+- origin country;
+- destination country;
+- destination market;
+- dispatch location;
+- route capability;
+- market pricing;
+- shipping;
+- tax/customs;
+- compliance;
+- immutable route evidence.
+
+### ECN-1 schema foundation
+
+Implemented locally in:
+
+`supabase/migrations/20260925163000_ecn_cross_border_domain_foundation.sql`
+
+It introduces private, additive foundations for:
+
+- market routes;
+- seller/supplier dispatch locations;
+- actor route capabilities;
+- route decision snapshots;
+- service-role-only route baseline decision.
+
+Safety properties:
+
+- GB-GB remains the existing live baseline;
+- RO-RO, GB-RO and RO-GB are seeded PRELAUNCH/fail-closed;
+- destination country is distinct from destination market;
+- verified route capability requires a verified physical dispatch location;
+- dispatch country must match route origin;
+- verified route capability cannot exceed existing seller/supplier market declarations;
+- new operational tables are private;
+- the baseline RPC does not itself authorise checkout;
+- no Romania checkout/payment activation is included.
+
+Verification:
+
+- ECN domain foundation tests: **8/8 PASS**;
+- canonical migration health: **226/226 unique versions PASS**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**.
+
+### ECN-2 shadow route decision
+
+**Implemented locally in shadow/non-authoritative mode.**
+
+Files:
+
+- `supabase/migrations/20260925170000_ecn_cross_border_route_decision.sql`
+- `src/lib/crossBorder.ts`
+- `src/lib/crossBorder.test.ts`
+- `src/__tests__/ecn-cross-border-route-decision.test.ts`
+
+The shadow decision now composes:
+
+1. product activation + destination-market eligibility;
+2. destination country separately from destination market;
+3. explicit/verified dispatch location outside the legacy GB domestic compatibility path;
+4. seller/supplier route capability;
+5. market-native price decision;
+6. market shipping readiness;
+7. market and product compliance;
+8. payment readiness;
+9. legal policy readiness;
+10. market launch controls;
+11. cross-border tax/customs route readiness;
+12. return-route capability.
+
+Safety properties:
+
+- the function is read-only, SECURITY DEFINER and service-role only;
+- it is **not wired into live checkout**;
+- legacy implicit origin is permitted only for the existing GB->GB seller baseline during shadow parity;
+- RO-RO, GB-RO and RO-GB remain fail-closed;
+- ordinary seller RO product compliance is not inferred from supplier evidence;
+- seller and supplier blocker codes remain semantically distinct;
+- checkout requires every required gate to be eligible;
+- destination country and destination market remain separate concepts.
+
+Latest verification after hardening:
+
+- ECN targeted tests: **28/28 PASS** across 5 files;
+- targeted ESLint: **PASS**;
+- TypeScript: **PASS**;
+- canonical migration health: **227/227 unique versions PASS**;
+- build security boundary tests: **9/9 PASS**;
+- production build: **PASS**, 2,500 modules transformed;
+- `git diff --check`: **PASS**.
+
+### Next exact task
+
+Proceed to **GB->GB shadow parity evidence** before any checkout authority cutover.
+
+The parity harness must compare the existing live UK commerce contract against the ECN shadow decision for representative active UK listings and classify every mismatch by domain:
+
+- product/market;
+- actor capability;
+- price;
+- shipping;
+- compliance;
+- payment;
+- legal;
+- launch control;
+- returns.
+
+No mismatch may be hidden by changing live checkout. The route engine remains non-authoritative until GB parity is demonstrated. Romania remains PRELAUNCH.
