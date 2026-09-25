@@ -8,11 +8,14 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import { calculateCheckoutVat } from "@/lib/checkoutTaxDisplay";
+import { useMarket } from "@/contexts/MarketContext";
+import { formatMoney } from "@/lib/money";
 import ProductImagePlaceholder from "@/components/ProductImagePlaceholder";
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, subtotal, priceChangedBanner, dismissPriceBanner, refreshCartPrices } = useCart();
   const { user } = useAuthStore();
+  const { config: marketConfig } = useMarket();
 
   // Refresh prices from DB on mount — single batch query, non-blocking
   useEffect(() => {
@@ -221,11 +224,11 @@ const Cart = () => {
                         {/* Price */}
                         <div className="text-right">
                           <div className="font-display text-base sm:text-lg font-bold text-foreground">
-                            £{(product.price * item.quantity).toLocaleString()}
+                            {formatMoney({ amount: product.price * item.quantity, currency: product.currency ?? marketConfig.currency })}
                           </div>
                           {item.quantity > 1 && (
                             <div className="text-xs text-muted-foreground">
-                              £{product.price.toLocaleString()} each
+                              {formatMoney({ amount: product.price, currency: product.currency ?? marketConfig.currency })} each
                             </div>
                           )}
                           {itemDiscount > 0 && (
@@ -247,7 +250,7 @@ const Cart = () => {
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)} items)</span>
-                    <span className="font-medium text-foreground">£{subtotal.toLocaleString()}</span>
+                    <span className="font-medium text-foreground">{formatMoney({ amount: subtotal, currency: marketConfig.currency })}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Delivery</span>
@@ -256,7 +259,7 @@ const Cart = () => {
                   {vat !== null ? (
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">{supplierItems.length > 0 ? "VAT" : "VAT — not charged by seller"}</span>
-                      <span className="font-medium text-foreground">£{vat.toFixed(2)}</span>
+                      <span className="font-medium text-foreground">{formatMoney({ amount: vat, currency: marketConfig.currency })}</span>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
@@ -266,7 +269,7 @@ const Cart = () => {
                   )}
                   <div className="border-t border-border pt-3 flex items-center justify-between">
                     <span className="font-display font-semibold text-foreground">Total</span>
-                    <span className="font-display text-xl font-bold text-foreground">£{total.toLocaleString()}</span>
+                    <span className="font-display text-xl font-bold text-foreground">{formatMoney({ amount: total, currency: marketConfig.currency })}</span>
                   </div>
                 </div>
 
@@ -318,12 +321,12 @@ const Cart = () => {
             disabled
             aria-disabled="true"
           >
-            Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+            Checkout · {formatMoney({ amount: total, currency: marketConfig.currency })} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         ) : (
           <Link to="/checkout">
             <Button className="w-full h-12 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity">
-              Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+              Checkout · {formatMoney({ amount: total, currency: marketConfig.currency })} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
         )}
