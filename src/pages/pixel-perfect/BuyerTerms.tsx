@@ -1,8 +1,21 @@
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import { useMarket } from "@/contexts/MarketContext";
+import { RomaniaBuyerTerms } from "@/components/legal/RomaniaLegalContent";
 
 const BuyerTerms = () => {
+  const { market } = useMarket();
+  if (market === "RO") {
+    return (
+      <MainLayout>
+        <SEO title="Termeni pentru cumpărători | Loadify Market" description="Informații juridice pentru utilizatorii Loadify Market din România." canonical="/buyer-terms" />
+        <main id="main-content" className="pt-4 md:pt-28 pb-20">
+          <div className="container mx-auto px-4 max-w-4xl"><RomaniaBuyerTerms /></div>
+        </main>
+      </MainLayout>
+    );
+  }
   return (
     <MainLayout>
       <SEO title="Buyer Terms | Loadify Market" description="Read the buyer terms that apply to Marketplace Seller and Loadify Supplier-Fulfilled purchases." canonical="/buyer-terms" />

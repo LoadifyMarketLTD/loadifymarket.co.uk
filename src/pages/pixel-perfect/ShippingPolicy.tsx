@@ -1,8 +1,21 @@
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import { useMarket } from "@/contexts/MarketContext";
+import { RomaniaShippingPolicy } from "@/components/legal/RomaniaLegalContent";
 
 const ShippingPolicy = () => {
+  const { market } = useMarket();
+  if (market === "RO") {
+    return (
+      <MainLayout>
+        <SEO title="Politica de livrare | Loadify Market" description="Informații juridice pentru utilizatorii Loadify Market din România." canonical="/shipping-policy" />
+        <main id="main-content" className="pt-4 md:pt-28 pb-20">
+          <div className="container mx-auto px-4 max-w-4xl"><RomaniaShippingPolicy /></div>
+        </main>
+      </MainLayout>
+    );
+  }
   return (
     <MainLayout>
       <SEO title="Shipping Policy | Loadify Market" description="Learn how shipping works for Marketplace Seller and Loadify Supplier-Fulfilled orders." canonical="/shipping-policy" />

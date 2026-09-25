@@ -159,3 +159,21 @@ test('Romania tracked order renders the order currency instead of a UK pound lab
   await page.getByRole('button', { name: 'Track Order' }).click();
   await expect(page.getByText(/149[,.]90\s*RON/)).toBeVisible();
 });
+
+
+test('Romania legal pages render Romanian market-specific policy drafts while launch remains gated', async ({ page }) => {
+  await useRomaniaMarket(page);
+  const policies = [
+    ['/buyer-terms', 'Termeni pentru cumpărători'],
+    ['/returns-policy', 'Politica de retur'],
+    ['/shipping-policy', 'Politica de livrare'],
+    ['/privacy', 'Politica de confidențialitate'],
+  ] as const;
+
+  for (const [path, heading] of policies) {
+    await page.goto(path, { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ro');
+    await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
+    await expect(page.getByText(/proiect pre-lansare/i)).toBeVisible();
+  }
+});
