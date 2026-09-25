@@ -1145,3 +1145,22 @@ Launch posture is unchanged:
 - payment=false;
 - reviewed ro-RO legal policy versions are still required before launch;
 - payment-readiness evidence, Marketplace Seller RO tax contract, loadifymarket.ro domain cutover and final real-environment transaction rehearsal remain outstanding.
+
+
+### 24.15 GB→GB parity boundary decision — address + returns
+
+The GB→GB parity pass confirmed that the ECN Route Engine must remain narrower than the complete checkout/return workflow.
+
+Address validation remains authoritative in the existing checkout boundary through `validateMarketAddress(...)`; the Route Engine receives only destination route/postcode facts required for route/tax evaluation and does not duplicate full billing/shipping validation.
+
+Return handling was also clarified: ECN `returnEligible` is route-level reverse-logistics capability, not customer return entitlement. The shadow decision now explicitly publishes `returnRouteEligible` and `returnEntitlementAuthoritative=false`. Order-level entitlement remains governed by `customer-return-eligibility.ts` and `evaluateCustomerReturnAutomation(...)`, including ownership, delivery state/date, quantity, reason and return-window rules.
+
+Verification:
+
+- focused route/address tests: **19/19 PASS across 3 files**;
+- TypeScript PASS;
+- targeted ESLint PASS;
+- migration health **228/228**;
+- `git diff --check` PASS.
+
+The Route Engine remains non-authoritative. Buyer authentication, rate limiting, maintenance mode, duplicate-line prevention, single-seller-cart enforcement, complete address validation and order-level return entitlement remain outer workflow boundaries.

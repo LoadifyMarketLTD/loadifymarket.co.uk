@@ -681,6 +681,10 @@ BEGIN
       END IF;
     END IF;
   ELSE
+    -- This context reports route-level reverse-logistics capability only.
+    -- Customer return entitlement remains authoritative in
+    -- customer-return-eligibility.ts and evaluateCustomerReturnAutomation(),
+    -- because it depends on the original order, delivery date, quantity and reason.
     IF v_return_ok THEN
       v_result:='eligible';
     ELSE
@@ -709,6 +713,8 @@ BEGIN
     'shippingEligible',v_shipping_ok,
     'checkoutEligible',v_checkout_ok,
     'returnEligible',v_return_ok,
+    'returnRouteEligible',v_return_ok,
+    'returnEntitlementAuthoritative',false,
     'dispatchLocationId',p_dispatch_location_id,
     'legacyGbOrigin',v_legacy_gb_origin,
     'blockers',to_jsonb(ARRAY(SELECT DISTINCT x FROM unnest(v_blockers) AS x)),

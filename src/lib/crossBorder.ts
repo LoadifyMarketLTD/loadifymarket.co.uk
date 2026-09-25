@@ -80,7 +80,10 @@ export interface CrossBorderDecision {
   offerEligible: boolean;
   shippingEligible: boolean;
   checkoutEligible: boolean;
+  /** Route-level reverse-logistics capability only; customer entitlement remains order-authoritative. */
   returnEligible: boolean;
+  returnRouteEligible?: boolean;
+  returnEntitlementAuthoritative?: false;
   blockers: CrossBorderBlocker[];
   currencies?: Partial<CrossBorderCurrencySnapshot>;
   selectedDispatchLocationId?: string;
