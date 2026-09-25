@@ -177,3 +177,17 @@ test('Romania legal pages render Romanian market-specific policy drafts while la
     await expect(page.getByText(/proiect pre-lansare/i)).toBeVisible();
   }
 });
+
+
+test('Romania online withdrawal link is exposed from legal content and buyer route stays protected', async ({ page }) => {
+  await useRomaniaMarket(page);
+
+  await page.goto('/buyer-terms', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('link', { name: 'Retrageți-vă din contract aici' })).toHaveAttribute('href', '/buyer/withdrawal');
+
+  await page.goto('/returns-policy', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('link', { name: 'Retrageți-vă din contract aici' })).toHaveAttribute('href', '/buyer/withdrawal');
+
+  await page.goto('/buyer/withdrawal', { waitUntil: 'domcontentloaded' });
+  await expect.poll(() => new URL(page.url()).pathname, { timeout: 15_000 }).toBe('/login');
+});

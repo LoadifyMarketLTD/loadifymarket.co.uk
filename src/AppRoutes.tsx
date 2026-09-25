@@ -111,6 +111,7 @@ const PPSellerMessages = lazy(() => import('./pages/pixel-perfect/seller/SellerM
 const PPBuyerShell = lazy(() => import('./pages/pixel-perfect/buyer/BuyerShell'));
 const PPBuyerDashboard = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDashboard'));
 const PPBuyerOrders = lazy(() => import('./pages/pixel-perfect/buyer/BuyerOrders'));
+const PPBuyerWithdrawal = lazy(() => import('./pages/pixel-perfect/buyer/BuyerWithdrawal'));
 const PPBuyerAddresses = lazy(() => import('./pages/pixel-perfect/buyer/BuyerAddresses'));
 const PPBuyerPayments = lazy(() => import('./pages/pixel-perfect/buyer/BuyerPayments'));
 const PPBuyerReviews = lazy(() => import('./pages/pixel-perfect/buyer/BuyerReviews'));
@@ -253,6 +254,7 @@ export default function AppRoutes() {
           <Route path="buyer" element={<RequireBuyer><RequireEmailVerified>{publicPage(<PPBuyerShell />)}</RequireEmailVerified></RequireBuyer>}>
             <Route index element={publicPage(<PPBuyerDashboard />)} />
             <Route path="orders" element={publicPage(<PPBuyerOrders />)} />
+            <Route path="withdrawal" element={publicPage(<PPBuyerWithdrawal />)} />
             <Route path="wishlist" element={publicPage(<PPBuyerWishlist />)} />
             <Route path="addresses" element={publicPage(<PPBuyerAddresses />)} />
             <Route path="payments" element={publicPage(<PPBuyerPayments />)} />

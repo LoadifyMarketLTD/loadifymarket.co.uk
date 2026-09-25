@@ -26,8 +26,9 @@ export const RomaniaBuyerTerms = () => (
     <p>Prețurile pentru piața din România sunt afișate în RON. Plata cu cardul este procesată prin Stripe. Comanda este confirmată numai după finalizarea verificărilor de plată și eligibilitate aplicabile. Loadify nu stochează numărul complet al cardului.</p>
     <h2>3. Dreptul de retragere</h2>
     <p>Pentru contractele la distanță încheiate cu un comerciant, consumatorul beneficiază în mod obișnuit de o perioadă de 14 zile pentru retragere, fără a fi necesară justificarea, sub rezerva excepțiilor prevăzute de legislația aplicabilă. Pentru bunuri, termenul curge în mod obișnuit de la primirea acestora.</p>
+    <p>Începând cu 27 septembrie 2026, pentru comenzile online eligibile destinate pieței din România, consumatorul poate transmite declarația de retragere prin funcția permanent accesibilă <a href="/buyer/withdrawal">„Retrageți-vă din contract aici”</a>. După confirmare, Loadify transmite fără întârziere nejustificată o confirmare pe e-mail care include conținutul declarației, data și ora transmiterii.</p>
     <h2>4. Produse neconforme și garanția legală</h2>
-    <p>Drepturile legale privind bunurile neconforme nu sunt limitate de acești termeni. Atunci când normele UE/România privind vânzarea către consumatori se aplică, bunurile vândute de un comerciant beneficiază de garanția legală minimă aplicabilă și de remediile prevăzute de lege.</p>
+    <p>Drepturile legale privind bunurile neconforme nu sunt limitate de acești termeni. Pentru vânzările către consumatori la care se aplică OUG nr. 140/2021, vânzătorul răspunde pentru neconformitatea care există la livrare și devine aparentă în termenul legal aplicabil, inclusiv perioada minimă de doi ani prevăzută de legislația relevantă pentru bunurile vizate.</p>
     <h2>5. Marketplace</h2>
     <p>Loadify indică dacă oferta provine de la un comerciant sau, acolo unde este permis, de la o persoană care nu acționează ca profesionist. Protecțiile specifice consumatorilor pot diferi în funcție de statutul vânzătorului.</p>
     <h2>6. Retururi, rambursări și litigii</h2>
@@ -49,8 +50,8 @@ export const RomaniaReturnsPolicy = () => (
     <p>Dreptul de retragere poate fi exclus în cazurile prevăzute de lege, inclusiv pentru anumite bunuri personalizate, perisabile sau bunuri sigilate care nu pot fi returnate din motive de protecție a sănătății/igienă după desigilare. Excepția concretă trebuie să fie aplicabilă produsului respectiv.</p>
     <h2>5. Bunuri neconforme</h2>
     <p>O cerere privind un produs defect, deteriorat, descris incorect sau neconform este tratată separat de simpla schimbare de opinie și beneficiază de remediile legale aplicabile.</p>
-    <h2>6. Cum solicitați returul</h2>
-    <p>Folosiți ruta de retur din comandă sau contactați suportul. Pentru Marketplace Seller, comerciantul indicat este vânzătorul contractual; pentru Loadify Supplier-Fulfilled, Loadify este ruta de suport și vânzătorul contractual.</p>
+    <h2>6. Cum solicitați returul sau retragerea</h2>
+    <p>Pentru exercitarea dreptului de retragere aferent unei comenzi online eligibile din România, folosiți funcția <a href="/buyer/withdrawal">„Retrageți-vă din contract aici”</a>. Pentru returul fizic al bunului, folosiți ruta de retur din comandă sau contactați suportul. Pentru Marketplace Seller, comerciantul indicat este vânzătorul contractual; pentru Loadify Supplier-Fulfilled, Loadify este ruta de suport și vânzătorul contractual.</p>
     <h2>7. Contact</h2><Contact />
   </LegalShell>
 );
@@ -61,7 +62,7 @@ export const RomaniaShippingPolicy = () => (
     <h2>1. Cine expediază</h2>
     <p>Comenzile Marketplace Seller sunt expediate de comerciantul independent indicat. Produsele Loadify Supplier-Fulfilled sunt vândute de Loadify și pot fi expediate fizic de un furnizor sau operator logistic aprobat.</p>
     <h2>2. Cost și termen</h2>
-    <p>Costul livrării și termenul estimat aplicabil sunt afișate înainte de confirmarea plății. Dacă nu a fost convenit un alt termen, se aplică obligațiile legale privind livrarea contractelor cu consumatorii, inclusiv regula UE privind livrarea în cel mult 30 de zile acolo unde aceasta este aplicabilă.</p>
+    <p>Costul livrării și termenul estimat aplicabil sunt afișate înainte de confirmarea plății. Dacă nu a fost convenit un alt termen, se aplică obligațiile legale privind livrarea contractelor cu consumatorii, inclusiv regula privind livrarea în cel mult 30 de zile acolo unde aceasta este aplicabilă.</p>
     <h2>3. Adresa</h2>
     <p>Cumpărătorul trebuie să furnizeze o adresă corectă. Pentru România, fluxul de checkout validează codul poștal românesc de 6 cifre și informațiile obligatorii de livrare.</p>
     <h2>4. Urmărire și probleme de livrare</h2>
