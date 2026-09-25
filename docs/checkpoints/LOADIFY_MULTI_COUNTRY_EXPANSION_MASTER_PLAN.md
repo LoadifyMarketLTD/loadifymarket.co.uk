@@ -1055,3 +1055,49 @@ Post-merge verification:
 - `git diff --check`: **PASS**
 
 The ECN parity fix remains isolated to the shadow route decision and does not modify live UK checkout behaviour.
+
+
+### 24.14 GB→GB parity hardening — seller/account, stock and selected shipping
+
+A second production read-only parity pass checked the active UK physical catalogue against the live checkout boundaries for seller account state, stock and selected shipping method.
+
+Observed production state:
+
+- active physical listings: **9**
+- positive stock: **9/9**
+- seller commercial/account boundary ready: **9/9**
+- at least one active supported shipping selection with a non-negative rate: **9/9**
+- valid shipping choices per listing: **1–2**
+
+A shadow-only identity mismatch was reproduced for individual sellers: an empty `businessName` must fall back to non-empty `fullName`, matching the live TypeScript checkout. The SQL shadow logic was corrected accordingly. No live seller data was modified.
+
+The shadow checkout decision now also composes:
+
+- active `public.users` seller account;
+- active seller account capability;
+- active/non-paused seller lifecycle state;
+- active Stripe Connect account id/status;
+- individual/business commercial identity fallback;
+- requested quantity;
+- current stock sufficiency;
+- selected product shipping method;
+- shipping method active state;
+- supported carrier parity (`Royal Mail` / `Evri`);
+- at least one non-negative selected-method rate.
+
+New blocker coverage includes `SELLER_ACCOUNT_UNAVAILABLE`, `INSUFFICIENT_STOCK` and selected-service failure through the shipping blocker family.
+
+Verification before next main synchronization:
+
+- focused ECN parity tests: **47/47 PASS across 4 files**
+- focused helper/static tests after individual-seller fallback repair: **14/14 PASS**
+- TypeScript: **PASS**
+- targeted ESLint: **PASS**
+- canonical migration health: **228/228 unique versions PASS**
+- `git diff --check`: **PASS**
+
+Evidence continues in:
+
+`docs/checkpoints/evidence/ECN_GB_GB_SHADOW_PARITY_2026-09-25.md`
+
+The shadow route engine remains **non-authoritative**. Address structure validation, buyer authentication, rate limiting, maintenance mode and multi-seller cart rejection remain checkout-boundary controls and must not be silently replaced by the route decision.

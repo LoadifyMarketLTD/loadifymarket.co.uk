@@ -15,6 +15,8 @@ CREATE OR REPLACE FUNCTION public.server_cross_border_product_decision_v1(
   p_destination_country text,
   p_destination_market text,
   p_destination_postcode text DEFAULT NULL,
+  p_quantity integer DEFAULT 1,
+  p_shipping_method_id uuid DEFAULT NULL,
   p_context text DEFAULT 'checkout',
   p_dispatch_location_id uuid DEFAULT NULL,
   p_supplier_id uuid DEFAULT NULL,
@@ -30,6 +32,7 @@ DECLARE
   v_destination_country text:=upper(BTRIM(COALESCE(p_destination_country,'')));
   v_destination_market text:=upper(BTRIM(COALESCE(p_destination_market,'')));
   v_destination_postcode text:=upper(regexp_replace(BTRIM(COALESCE(p_destination_postcode,'')),'\\s+','','g'));
+  v_quantity integer:=COALESCE(p_quantity,0);
   v_context text:=lower(BTRIM(COALESCE(p_context,'')));
 
   v_product public.products%ROWTYPE;
@@ -50,6 +53,12 @@ DECLARE
   v_actor_route_verified boolean:=false;
   v_actor_can_fulfil boolean:=false;
   v_actor_can_return boolean:=false;
+  v_seller_account_ok boolean:=false;
+  v_stock_ok boolean:=false;
+  v_shipping_selection_ok boolean:=false;
+  v_selected_shipping_name text;
+  v_selected_shipping_courier text;
+  v_selected_shipping_amount numeric;
 
   v_price jsonb:='{}'::jsonb;
   v_shipping jsonb:='{}'::jsonb;
@@ -185,6 +194,51 @@ BEGIN
         v_diagnostics:=array_append(v_diagnostics,'SUPPLIER_DELIVERY_MARKET_UNSUPPORTED');
       END IF;
     END IF;
+  END IF;
+
+  IF p_supplier_id IS NULL THEN
+    SELECT
+      (
+        u."isActive"=true
+        AND u.role<>'admin'
+        AND EXISTS (
+          SELECT 1
+          FROM public.account_capabilities ac
+          WHERE ac.user_id=u.id
+            AND ac.capability='seller'
+            AND ac.revoked_at IS NULL
+        )
+        AND v_seller."sellerStatus"='active'
+        AND v_seller."stripeConnectStatus"='active'
+        AND COALESCE(v_seller."isPaused",false)=false
+        AND NULLIF(BTRIM(COALESCE(v_seller."stripeAccountId",'')),'') IS NOT NULL
+        AND COALESCE(
+          NULLIF(BTRIM(v_seller."businessName"),''),
+          NULLIF(BTRIM(v_seller."fullName"),'')
+        ) IS NOT NULL
+      )
+    INTO v_seller_account_ok
+    FROM public.users u
+    WHERE u.id=v_product."sellerId";
+
+    v_seller_account_ok:=COALESCE(v_seller_account_ok,false);
+
+    IF NOT v_seller_account_ok THEN
+      v_diagnostics:=array_append(v_diagnostics,'SELLER_ACCOUNT_UNAVAILABLE');
+    END IF;
+
+    v_stock_ok :=
+      v_quantity > 0
+      AND COALESCE(v_product."stockQuantity",0) >= v_quantity;
+
+    IF NOT v_stock_ok THEN
+      v_diagnostics:=array_append(v_diagnostics,'INSUFFICIENT_STOCK');
+    END IF;
+  ELSE
+    -- Supplier inventory/account authority is governed by the supplier runtime
+    -- and will be composed in the dedicated ECN supplier parity pass.
+    v_seller_account_ok:=true;
+    v_stock_ok:=true;
   END IF;
 
   IF p_dispatch_location_id IS NOT NULL THEN
@@ -354,6 +408,39 @@ BEGIN
     v_diagnostics:=array_append(v_diagnostics,'SHIPPING_SERVICE_UNAVAILABLE');
   END IF;
 
+  IF v_context<>'checkout' OR p_supplier_id IS NOT NULL THEN
+    v_shipping_selection_ok:=true;
+  ELSIF p_shipping_method_id IS NOT NULL THEN
+    SELECT
+      sm.name,
+      sm.courier,
+      MIN(sr.price)
+    INTO
+      v_selected_shipping_name,
+      v_selected_shipping_courier,
+      v_selected_shipping_amount
+    FROM public.product_shipping ps
+    JOIN public.shipping_methods sm
+      ON sm.id=ps.method_id
+    JOIN public.shipping_rates sr
+      ON sr.method_id=sm.id
+    WHERE ps.product_id=p_product_id
+      AND ps.method_id=p_shipping_method_id
+      AND sm.active=true
+      AND BTRIM(COALESCE(sm.courier,'')) IN ('Royal Mail','Evri')
+      AND sr.price>=0
+    GROUP BY sm.id,sm.name,sm.courier
+    LIMIT 1;
+
+    v_shipping_selection_ok:=FOUND;
+  ELSE
+    v_shipping_selection_ok:=false;
+  END IF;
+
+  IF NOT v_shipping_selection_ok THEN
+    v_diagnostics:=array_append(v_diagnostics,'SHIPPING_SERVICE_UNAVAILABLE');
+  END IF;
+
   v_market_compliance:=public.server_market_compliance_readiness_v1(v_destination_market);
   v_market_compliance_ok:=COALESCE((v_market_compliance->>'eligible')::boolean,false);
   IF NOT v_market_compliance_ok THEN
@@ -472,10 +559,13 @@ BEGIN
     AND v_route.shipping_enabled
     AND v_actor_can_fulfil
     AND v_actor_delivery_supported
-    AND v_shipping_market_ok;
+    AND v_shipping_market_ok
+    AND v_shipping_selection_ok;
 
   v_checkout_ok :=
     v_shipping_ok
+    AND v_seller_account_ok
+    AND v_stock_ok
     AND v_route.checkout_enabled
     AND v_route.status='live'
     AND v_marketplace_tax_ok
@@ -551,10 +641,17 @@ BEGIN
         v_blockers:=array_append(v_blockers,'MARKET_PRICE_EVIDENCE_INCOMPLETE');
       END IF;
       IF NOT v_shipping_market_ok
+         OR NOT v_shipping_selection_ok
          OR v_route.id IS NULL
          OR NOT COALESCE(v_route.shipping_enabled,false)
          OR NOT v_actor_can_fulfil THEN
         v_blockers:=array_append(v_blockers,'SHIPPING_ROUTE_UNAVAILABLE');
+      END IF;
+      IF NOT v_seller_account_ok THEN
+        v_blockers:=array_append(v_blockers,'SELLER_ACCOUNT_UNAVAILABLE');
+      END IF;
+      IF NOT v_stock_ok THEN
+        v_blockers:=array_append(v_blockers,'INSUFFICIENT_STOCK');
       END IF;
       IF NOT v_marketplace_tax_ok OR NOT v_tax_route_ok THEN
         v_blockers:=array_append(v_blockers,'TAX_READINESS_INCOMPLETE');
@@ -641,22 +738,30 @@ BEGIN
     'launchControl',v_launch,
     'marketplaceTaxEligible',v_marketplace_tax_ok,
     'destinationPostcode',NULLIF(v_destination_postcode,''),
+    'quantity',v_quantity,
+    'sellerAccountEligible',v_seller_account_ok,
+    'stockEligible',v_stock_ok,
+    'shippingSelectionEligible',v_shipping_selection_ok,
+    'selectedShippingMethodId',p_shipping_method_id,
+    'selectedShippingMethodName',v_selected_shipping_name,
+    'selectedShippingCourier',v_selected_shipping_courier,
+    'selectedShippingAmount',v_selected_shipping_amount,
     'interfaceVersion',1
   );
 END;
 $$;
 
 REVOKE ALL ON FUNCTION public.server_cross_border_product_decision_v1(
-  uuid,text,text,text,text,uuid,uuid,uuid,uuid
+  uuid,text,text,text,integer,uuid,text,uuid,uuid,uuid,uuid
 )
 FROM PUBLIC,anon,authenticated;
 
 GRANT EXECUTE ON FUNCTION public.server_cross_border_product_decision_v1(
-  uuid,text,text,text,text,uuid,uuid,uuid,uuid
+  uuid,text,text,text,integer,uuid,text,uuid,uuid,uuid,uuid
 )
 TO service_role;
 
 COMMENT ON FUNCTION public.server_cross_border_product_decision_v1(
-  uuid,text,text,text,text,uuid,uuid,uuid,uuid
+  uuid,text,text,text,integer,uuid,text,uuid,uuid,uuid,uuid
 ) IS
   'ECN-2 shadow cross-border product decision. Read-only and service-role-only. Country and market are separate. GB legacy origin is allowed only for GB-GB parity; Romania seller product compliance remains fail-closed until reviewed seller-product evidence exists.';
