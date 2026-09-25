@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Handler } from "@netlify/functions";
 import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { jsonResponse, optionsResponse } from "./_shared/http";
+import { marketPaymentIsLive, type LaunchMarket } from "./_shared/marketLaunch";
 
 const METHODS = "POST, OPTIONS";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -33,7 +34,7 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await admin
     .from("orders")
-    .select("id,buyerId,status,total,commercialMode,sellerId,canonicalProductId,supplierOfferId,pricingSnapshotId,supplierExternalVariantRefSnapshot,stripePaymentIntentId")
+    .select("id,buyerId,status,total,currency,marketCode,commercialMode,sellerId,canonicalProductId,supplierOfferId,pricingSnapshotId,supplierExternalVariantRefSnapshot,stripePaymentIntentId")
     .eq("id", orderId)
     .eq("buyerId", auth.actor.id)
     .maybeSingle();
@@ -43,6 +44,17 @@ export const handler: Handler = async (event) => {
       || order.sellerId !== null || !order.supplierOfferId || !order.pricingSnapshotId
       || !order.supplierExternalVariantRefSnapshot || order.stripePaymentIntentId) {
     return jsonResponse(409, { error: "Supplier order is not ready for payment" }, METHODS);
+  }
+
+  const orderMarket = order.marketCode === "RO" ? "RO" : order.marketCode === "GB" ? "GB" : null;
+  const expectedCurrency = orderMarket === "RO" ? "RON" : orderMarket === "GB" ? "GBP" : null;
+  if (!orderMarket || order.currency !== expectedCurrency || !await marketPaymentIsLive(admin, orderMarket as LaunchMarket)) {
+    return jsonResponse(409, {
+      error: "Supplier payments are not yet enabled for this market or currency",
+      code: "SUPPLIER_PAYMENT_MARKET_NOT_READY",
+      marketCode: order.marketCode,
+      currency: order.currency,
+    }, METHODS);
   }
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -61,7 +73,7 @@ export const handler: Handler = async (event) => {
         paymentIntentId: existingIntent.id,
         orderId: order.id,
         amountPence: existingIntent.amount,
-        currency: "GBP",
+        currency: order.currency,
         merchantOfRecord: "Loadify Market",
         externalCheckoutRedirect: false,
         reused: true,
@@ -73,7 +85,7 @@ export const handler: Handler = async (event) => {
     p_supplier_offer_id: order.supplierOfferId,
     p_canonical_product_id: order.canonicalProductId,
     p_commercial_mode: "loadify_supplier_fulfilled",
-    p_territory: "GB",
+    p_territory: order.marketCode,
     p_external_variant_ref: order.supplierExternalVariantRefSnapshot,
   });
   if (guardError || !guard || guard.eligible !== true
@@ -92,7 +104,7 @@ export const handler: Handler = async (event) => {
 
   const intent = await stripe.paymentIntents.create({
     amount: amountPence,
-    currency: "gbp",
+    currency: order.currency.toLowerCase(),
     automatic_payment_methods: { enabled: true },
     metadata: {
       commercialMode: "loadify_supplier_fulfilled",
@@ -111,7 +123,7 @@ export const handler: Handler = async (event) => {
     orderId: order.id,
     status: "pending",
     amount: Number(order.total),
-    currency: "GBP",
+    currency: order.currency,
     metadata: {
       commercialMode: "loadify_supplier_fulfilled",
       orderId: order.id,
@@ -132,7 +144,7 @@ export const handler: Handler = async (event) => {
     paymentIntentId: intent.id,
     orderId: order.id,
     amountPence,
-    currency: "GBP",
+    currency: order.currency,
     merchantOfRecord: "Loadify Market",
     externalCheckoutRedirect: false,
   }, METHODS);

@@ -90,6 +90,18 @@ function clientWithCandidate(overrides: Record<string, unknown> = {}): SupabaseC
         error: null,
       };
     }
+    if (name === 'server_product_market_compliance_decision_v1') {
+      return {
+        data: {
+          eligible: overrides.product_compliance !== false,
+          reason: overrides.product_compliance !== false
+            ? 'product_market_compliance_ready'
+            : 'product_market_compliance_incomplete',
+          interfaceVersion: 1,
+        },
+        error: null,
+      };
+    }
     if (name === 'server_supplier_foundation_decision_v1') {
       return {
         data: {
@@ -117,6 +129,20 @@ describe('supplier offer selection runtime', () => {
     expect(result.selected?.supplierOfferId).toBe(offerId);
     expect(result.selected?.requestedQuantity).toBe(2);
     expect(result.selected?.expectedContribution).toBe(8);
+  });
+
+  it('fails Romania supplier selection closed when product compliance is incomplete', async () => {
+    const result = await evaluateProjectionSupplierOffers(
+      clientWithCandidate({
+        territory: 'RO',
+        currency: 'RON',
+        product_compliance: false,
+      }),
+      { projectionId, requestedQuantity: 1, territory: 'RO' },
+    );
+
+    expect(result.eligible).toBe(false);
+    expect(result.rejected[0]?.reasons).toContain('catalog_not_eligible');
   });
 
   it('fails closed when a required fulfilment capability is unavailable', async () => {

@@ -32,6 +32,8 @@ import { authorizedFetch } from "@/lib/authorizedFetch";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import { useCart } from "@/contexts/CartContext";
+import { useMarket } from "@/contexts/MarketContext";
+import { formatMoney } from "@/lib/money";
 import {
   trackProductView,
   trackShareProduct,
@@ -42,16 +44,15 @@ import {
 const BASE_URL = "https://loadifymarket.co.uk";
 const DEFAULT_PRODUCT_SEO_DESCRIPTION =
   "Discover marketplace and supplier-fulfilled products on Loadify Market.";
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
 
-function toAbsolutePublicUrl(value?: string | null): string | undefined {
+function toAbsolutePublicUrl(value: string | null | undefined, baseUrl: string): string | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   if (trimmed.startsWith("//")) return `https:${trimmed}`;
-  if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`;
-  return `${BASE_URL}/${trimmed}`;
+  if (trimmed.startsWith("/")) return `${baseUrl}${trimmed}`;
+  return `${baseUrl}/${trimmed}`;
 }
 
 function excerpt(text: string, max = 180): string {
@@ -102,6 +103,7 @@ const ProductDetail = () => {
   const { user } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
   const { addToCart } = useCart();
+  const { market, config } = useMarket();
   // State passed from listing pages (Catalog, CategoryPage, Clearance)
   const navState = (location.state ?? {}) as {
     flow?: string;
@@ -156,7 +158,8 @@ const ProductDetail = () => {
         const query = supabase
           .from("products")
           .select(PRODUCT_QUERY)
-          .eq("isActive", true);
+          .eq("isActive", true)
+          .contains("marketCodes", [market]);
         const { data, error } = await (UUID_RE.test(id)
           ? query.eq("id", id)
           : query.eq("slug", id)
@@ -165,7 +168,7 @@ const ProductDetail = () => {
         if (error) throw error;
 
         if (!data) {
-          const supplierProduct = UUID_RE.test(id) ? await fetchSupplierCatalogItem(id) : null;
+          const supplierProduct = UUID_RE.test(id) ? await fetchSupplierCatalogItem(id, market) : null;
           if (!supplierProduct) {
             setNotFound(true);
             return;
@@ -181,7 +184,7 @@ const ProductDetail = () => {
           setSellerListingCount(0);
           setSellerStoreSlug(null);
           setSellerJoinDate(null);
-          trackProductView(supplierProduct.id, supplierProduct.title, supplierProduct.price);
+          trackProductView(supplierProduct.id, supplierProduct.title, supplierProduct.price, config.currency);
           return;
         }
 
@@ -220,7 +223,7 @@ const ProductDetail = () => {
         }
 
         // Track product page view for analytics
-        trackProductView(adapted.id, adapted.title, adapted.price);
+        trackProductView(adapted.id, adapted.title, adapted.price, config.currency);
 
         // Capture category slug for breadcrumb link
         const rawCat = Array.isArray(data.category) ? data.category[0] : data.category;
@@ -241,6 +244,7 @@ const ProductDetail = () => {
             .eq("isActive", true)
             .eq("isApproved", true)
             .eq("listingStatus", "active")
+            .contains("marketCodes", [market])
             .or("listingContext.eq.service,stockQuantity.gt.0")
             .eq("categoryId", data.categoryId)
             .neq("id", data.id)
@@ -257,7 +261,7 @@ const ProductDetail = () => {
               subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
               seller: relSellerMap.get(p.sellerId as string) ?? null,
             }));
-            setRelated(adaptProducts(normRel as unknown as DBProduct[]));
+            setRelated(adaptProducts(normRel as unknown as DBProduct[], market));
           } else {
             setRelated([]);
           }
@@ -273,6 +277,7 @@ const ProductDetail = () => {
               .eq("isActive", true)
               .eq("isApproved", true)
               .eq("listingStatus", "active")
+              .contains("marketCodes", [market])
               .or("listingContext.eq.service,stockQuantity.gt.0"),
             supabase
               .from("seller_stores")
@@ -290,14 +295,15 @@ const ProductDetail = () => {
           const { data: sellerProductData } = await supabase
             .from("products").select(PRODUCT_QUERY)
             .eq("sellerId", data.sellerId).eq("isActive", true).eq("isApproved", true)
-            .eq("listingStatus", "active").or("listingContext.eq.service,stockQuantity.gt.0")
+            .eq("listingStatus", "active").contains("marketCodes", [market])
+            .or("listingContext.eq.service,stockQuantity.gt.0")
             .neq("id", data.id).order("createdAt", { ascending: false }).limit(4);
           const sameSellerInfo = sellerMap.get(data.sellerId) ?? null;
           setSellerProducts(adaptProducts(((sellerProductData ?? []).map((p: Record<string, unknown>) => ({
             ...p, category: Array.isArray(p.category) ? p.category[0] : p.category,
             subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
             seller: sameSellerInfo,
-          }))) as unknown as DBProduct[]));
+          }))) as unknown as DBProduct[], market));
           setSellerStoreSlug((storeRes.data as { storeSlug?: string } | null)?.storeSlug ?? null);
           setSellerJoinDate((joinRes.data as { createdAt?: string } | null)?.createdAt ?? null);
         }
@@ -310,7 +316,7 @@ const ProductDetail = () => {
     };
 
     fetchProduct();
-  }, [id, user?.id]);
+  }, [id, user?.id, market, config.currency]);
 
   if (loading) {
     return (
@@ -445,7 +451,7 @@ const ProductDetail = () => {
       promptAuth('buy');
       return false;
     }
-    trackAddToCart(product.id, product.title, product.price);
+    trackAddToCart(product.id, product.title, product.price, config.currency);
     addToCart(product, mobileQty);
     return true;
   };
@@ -477,7 +483,9 @@ const ProductDetail = () => {
   const mobileBottomNavOffset = "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))";
   const mobileQuantityLimit = Math.max(1, Math.min(10, product.maxPurchaseQuantity ?? 10));
 
-  const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
+  const marketBaseUrl = market === "RO" ? "https://loadifymarket.ro" : BASE_URL;
+  const canonicalProductUrl = `${marketBaseUrl}/product/${product.id}`;
+  const formattedProductPrice = formatMoney({ amount: product.price, currency: config.currency }, config.locale);
   const currentProductUrl = typeof window !== "undefined"
     ? `${window.location.origin}${window.location.pathname}`
     : canonicalProductUrl;
@@ -507,9 +515,9 @@ const ProductDetail = () => {
     ? seoDescription
     : seoDescription.trimEnd() + BRAND_TAGLINE;
   const primaryImageCandidate = galleryImages.find((img) => typeof img === "string" && img.trim().length > 0) || product.image;
-  const seoImage = toAbsolutePublicUrl(primaryImageCandidate) ?? DEFAULT_OG_IMAGE;
+  const seoImage = toAbsolutePublicUrl(primaryImageCandidate, marketBaseUrl) ?? `${marketBaseUrl}/og-loadify-market.png`;
   const encodedProductUrl = encodeURIComponent(currentProductUrl);
-  const whatsappText = `Check out this product on Loadify Market: ${product.title} — £${product.price.toLocaleString("en-GB")} ${currentProductUrl}`;
+  const whatsappText = `Check out this product on Loadify Market: ${product.title} — ${formattedProductPrice} ${currentProductUrl}`;
   const encodedWhatsAppText = encodeURIComponent(whatsappText);
   const supportsNativeShare = canShare();
 
@@ -524,7 +532,7 @@ const ProductDetail = () => {
     offers: {
       "@type": "Offer",
       price: product.price.toFixed(2),
-      priceCurrency: "GBP",
+      priceCurrency: config.currency,
       availability: product.isAvailable === false
         ? "https://schema.org/OutOfStock"
         : "https://schema.org/InStock",
@@ -618,7 +626,7 @@ const ProductDetail = () => {
   const handleNativeShare = async () => {
     if (!supportsNativeShare) return;
     try {
-      await shareProduct({ id: product.id, title: product.title, price: product.price });
+      await shareProduct({ id: product.id, title: product.title, price: product.price, market, currency: config.currency });
       trackShareProduct("native", product.id, product.title);
     } catch {
       // User cancellation is non-fatal; no toast needed.
@@ -628,13 +636,13 @@ const ProductDetail = () => {
   return (
     <MainLayout>
       <SEO
-        title={`${product.title} — £${product.price.toLocaleString("en-GB")}`}
+        title={`${product.title} — ${formattedProductPrice}`}
         description={ogDescription}
         canonical={canonicalProductUrl}
         ogImage={seoImage}
         ogType="product"
         ogPrice={product.price != null ? product.price.toFixed(2) : undefined}
-        ogPriceCurrency="GBP"
+        ogPriceCurrency={config.currency}
         structuredData={productJsonLd}
       />
 
@@ -745,7 +753,7 @@ const ProductDetail = () => {
                 </h1>
 
                 <p style={{ fontSize: "26px", fontWeight: 800, color: "#0A234F", marginBottom: "4px" }}>
-                  £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
+                  {formattedProductPrice}
                 </p>
                 <p style={{ fontSize: "13px", color: "#64748B", fontWeight: 500, marginBottom: "4px" }}>
                   Shipping calculated at checkout

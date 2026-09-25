@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { Product } from "@/components/catalog/ProductCard";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
+import { useMarket } from "@/contexts/MarketContext";
 
 type CartTaxProduct = Product & {
   vatRate?: number | null;
@@ -55,6 +56,7 @@ function clampQuantity(product: Product, quantity: number): number {
 }
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const { market } = useMarket();
   const [cartItems, setCartItems] = useState<CartItem[]>(loadCartSync);
   const [priceChangedBanner, setPriceChangedBanner] = useState(false);
   const storageReadyRef = useRef(!isCapacitorNative());
@@ -63,6 +65,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Keep the stable refresh callback pointed at the exact cart from the current
   // render. This avoids relying on setState updater timing to read React state.
   cartItemsRef.current = cartItems;
+
+  useEffect(() => {
+    setCartItems((current) => current.filter((item) => {
+      if (item.product.commercialMode === "loadify_supplier_fulfilled") return market === "GB";
+      const markets = item.product.marketCodes?.length ? item.product.marketCodes : ["GB"];
+      return markets.includes(market);
+    }));
+  }, [market]);
 
   useEffect(() => {
     if (!isCapacitorNative()) return;
@@ -94,8 +104,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addToCart = (product: Product, quantity = 1) => {
     // Defense-in-depth: listing pages should already disable purchase actions,
-    // but never persist an explicitly unavailable product into the cart.
-    if (product.isAvailable === false || quantity <= 0) return;
+    // but never persist an unavailable or foreign-market product into the cart.
+    const eligibleMarkets = product.marketCodes?.length ? product.marketCodes : ["GB"];
+    const marketEligible = product.commercialMode === "loadify_supplier_fulfilled"
+      ? market === "GB"
+      : eligibleMarkets.includes(market);
+    if (product.isAvailable === false || quantity <= 0 || !marketEligible) return;
 
     setCartItems((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
@@ -150,8 +164,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = productIds.length > 0
         ? await supabase
             .from("products")
-            .select("id, price, isActive, isApproved, listingStatus, listingContext, stockQuantity, vatRate, taxTreatmentStatus, taxTreatmentSource")
+            .select("id, price, currency, marketCodes, isActive, isApproved, listingStatus, listingContext, stockQuantity, vatRate, taxTreatmentStatus, taxTreatmentSource")
             .in("id", productIds)
+            .contains("marketCodes", [market])
         : { data: [], error: null };
 
       if (error || !data) return;
@@ -159,6 +174,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       type DBRow = {
         id: string;
         price: number;
+        currency: Product["currency"] | null;
+        marketCodes: string[] | null;
         isActive: boolean;
         isApproved: boolean;
         listingStatus: string | null;
@@ -189,6 +206,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           const nextProduct: CartTaxProduct = {
             ...item.product,
             price: Number(row.price),
+            currency: row.currency ?? item.product.currency ?? "GBP",
+            marketCodes: row.marketCodes?.length ? row.marketCodes : ["GB"],
             vatRate: row.vatRate == null ? null : Number(row.vatRate),
             taxTreatmentStatus: row.taxTreatmentStatus,
             taxTreatmentSource: row.taxTreatmentSource,
@@ -209,7 +228,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         })
         .filter((item) => item.quantity > 0);
 
-      const refreshedSupplierItems = (await Promise.all(
+      const refreshedSupplierItems = market === "GB" ? (await Promise.all(
         supplierItems.map(async (item) => {
           const current = await fetchSupplierCatalogItem(item.product.id);
           if (!current?.isAvailable) return null;
@@ -220,7 +239,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             quantity: clampQuantity(current, item.quantity),
           };
         }),
-      )).filter((item): item is CartItem => Boolean(item && item.quantity > 0));
+      )).filter((item): item is CartItem => Boolean(item && item.quantity > 0)) : [];
 
       setCartItems([...refreshedSupplierItems, ...updatedSellerItems]);
       if (anyPriceChanged) {
@@ -229,7 +248,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } catch {
       // Non-fatal: server-side checkout validation remains authoritative.
     }
-  }, []);
+  }, [market]);
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);

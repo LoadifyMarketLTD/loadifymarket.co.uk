@@ -3,6 +3,7 @@ import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
+import { MarketProvider } from './contexts/MarketContext';
 import CookieConsent from './components/CookieConsent';
 import Header from './components/Header';
 import AmbientLayer from './components/AmbientLayer';
@@ -190,6 +191,7 @@ function App() {
   }
 
   return (
+    <MarketProvider>
     <CartProvider>
       <AmbientLayer />
       <Header />
@@ -199,6 +201,7 @@ function App() {
       </MaintenanceModeGate>
       <CookieConsent />
     </CartProvider>
+    </MarketProvider>
   );
 }
 

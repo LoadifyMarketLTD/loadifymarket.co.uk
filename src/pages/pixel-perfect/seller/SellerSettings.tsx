@@ -35,11 +35,21 @@ const defaultShipping = {
   freeShippingThreshold: "",
 };
 
+type SellerMarketCode = "GB" | "RO";
+
+const marketLabel: Record<SellerMarketCode, string> = {
+  GB: "United Kingdom",
+  RO: "Romania",
+};
+
 const SellerSettings = () => {
   const { user } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [notifications, setNotifications] = useState<typeof defaultNotifications>(defaultNotifications);
   const [shipping, setShipping] = useState<typeof defaultShipping>(defaultShipping);
+  const [marketCodes, setMarketCodes] = useState<SellerMarketCode[]>(["GB"]);
+  const [deliveryMarketCodes, setDeliveryMarketCodes] = useState<SellerMarketCode[]>(["GB"]);
+  const [returnsCountryCode, setReturnsCountryCode] = useState<SellerMarketCode>("GB");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -64,7 +74,7 @@ const SellerSettings = () => {
           .maybeSingle(),
         supabase
           .from("seller_profiles")
-          .select("shippingDefaults, stripeConnectStatus")
+          .select("shippingDefaults, stripeConnectStatus, marketCodes, deliveryMarketCodes, returnsCountryCode")
           .eq("userId", user.id)
           .maybeSingle(),
       ]);
@@ -76,6 +86,16 @@ const SellerSettings = () => {
           marketingEmails: notifData.promotionalEmails ?? prev.marketingEmails,
         }));
       }
+      if (Array.isArray(profileData?.marketCodes) && profileData.marketCodes.length > 0) {
+        setMarketCodes(profileData.marketCodes.filter((code): code is SellerMarketCode => code === "GB" || code === "RO"));
+      }
+      if (Array.isArray(profileData?.deliveryMarketCodes) && profileData.deliveryMarketCodes.length > 0) {
+        setDeliveryMarketCodes(profileData.deliveryMarketCodes.filter((code): code is SellerMarketCode => code === "GB" || code === "RO"));
+      }
+      if (profileData?.returnsCountryCode === "GB" || profileData?.returnsCountryCode === "RO") {
+        setReturnsCountryCode(profileData.returnsCountryCode);
+      }
+
       // Load Stripe Connect status
       if (profileData?.stripeConnectStatus) {
         setStripeConnectStatus(
@@ -103,6 +123,19 @@ const SellerSettings = () => {
 
   const handleSaveSettings = async () => {
     if (!user) return;
+    if (marketCodes.length === 0) {
+      toast({ title: "Selling market required", description: "Keep at least one selling market enabled.", variant: "destructive" });
+      return;
+    }
+    if (deliveryMarketCodes.length === 0) {
+      toast({ title: "Delivery market required", description: "Enable at least one delivery market.", variant: "destructive" });
+      return;
+    }
+    if (deliveryMarketCodes.some((code) => !marketCodes.includes(code))) {
+      toast({ title: "Invalid delivery market", description: "Every delivery market must also be enabled as a selling market.", variant: "destructive" });
+      return;
+    }
+
     setSaveLoading(true);
     let passwordChanged = false;
     try {
@@ -123,7 +156,13 @@ const SellerSettings = () => {
       // Also set shippingSetupCompleted=true to mark the onboarding step done.
       const { error: shippingError } = await supabase
         .from("seller_profiles")
-        .update({ shippingDefaults: shipping, shippingSetupCompleted: true })
+        .update({
+          shippingDefaults: shipping,
+          shippingSetupCompleted: true,
+          marketCodes,
+          deliveryMarketCodes,
+          returnsCountryCode,
+        })
         .eq("userId", user.id);
       if (shippingError) throw shippingError;
       safeLocalStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));
@@ -384,6 +423,71 @@ const SellerSettings = () => {
               <Label className="text-xs">Confirm New Password</Label>
               <Input type="password" placeholder="••••••••" className="mt-1" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Market Capability */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><Truck className="h-4 w-4 text-primary" /> Selling & Delivery Markets</CardTitle>
+          <CardDescription>
+            Choose where your listings may be offered and where you can fulfil orders. Enabling Romania records capability only; Romanian checkout remains separately gated until launch readiness is complete.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div>
+            <Label className="text-xs">Selling markets</Label>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {(["GB", "RO"] as SellerMarketCode[]).map((code) => (
+                <label key={code} className="flex items-center gap-2 rounded-md border border-border p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={marketCodes.includes(code)}
+                    onChange={(event) => {
+                      if (event.target.checked) {
+                        setMarketCodes((current) => Array.from(new Set([...current, code])));
+                      } else if (marketCodes.length > 1) {
+                        setMarketCodes((current) => current.filter((item) => item !== code));
+                        setDeliveryMarketCodes((current) => current.filter((item) => item !== code));
+                      }
+                    }}
+                  />
+                  {marketLabel[code]}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Delivery markets</Label>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {(["GB", "RO"] as SellerMarketCode[]).map((code) => (
+                <label key={code} className="flex items-center gap-2 rounded-md border border-border p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    disabled={!marketCodes.includes(code)}
+                    checked={deliveryMarketCodes.includes(code)}
+                    onChange={(event) => {
+                      setDeliveryMarketCodes((current) => event.target.checked
+                        ? Array.from(new Set([...current, code]))
+                        : current.filter((item) => item !== code));
+                    }}
+                  />
+                  {marketLabel[code]}
+                </label>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">A delivery market must also be enabled as a selling market.</p>
+          </div>
+          <div className="max-w-sm">
+            <Label className="text-xs">Returns country</Label>
+            <Select value={returnsCountryCode} onValueChange={(value) => setReturnsCountryCode(value as SellerMarketCode)}>
+              <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="GB">United Kingdom</SelectItem>
+                <SelectItem value="RO">Romania</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

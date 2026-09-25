@@ -203,6 +203,8 @@ function makeSupabaseMock(opts: {
                 data: products.map((product) => ({
                   listingContext: 'product',
                   listingStatus: 'active',
+                  currency: 'GBP',
+                  marketCodes: ['GB'],
                   ...product,
                 })),
                 error: productsError,

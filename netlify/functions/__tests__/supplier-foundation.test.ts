@@ -119,6 +119,40 @@ describe('Phase D Supplier Foundation', () => {
     expect(thrown.eligible).toBe(false);
   });
 
+  it('fails closed before RPC for unsupported marketplace territories', async () => {
+    const rpc = vi.fn();
+    const client = { rpc } as unknown as SupabaseClient;
+    await expect(evaluateSupplierFoundation(client, 'supplier-a', {
+      territory: 'FR',
+      requiredCapability: 'catalog',
+    })).resolves.toEqual({
+      eligible: false,
+      reason: 'unsupported_market',
+      interfaceVersion: SUPPLIER_FOUNDATION_INTERFACE_VERSION,
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('normalises supported marketplace territories before RPC evaluation', async () => {
+    const expected = {
+      eligible: false,
+      reason: 'supplier_market_not_enabled',
+      supplierId: '11111111-1111-1111-1111-111111111111',
+      interfaceVersion: 1,
+    };
+    const rpc = vi.fn(async () => ({ data: expected, error: null }));
+    const client = { rpc } as unknown as SupabaseClient;
+    await expect(evaluateSupplierFoundation(client, 'supplier-a', {
+      territory: ' ro ',
+      requiredCapability: 'catalog',
+    })).resolves.toEqual(expected);
+    expect(rpc).toHaveBeenCalledWith('server_supplier_foundation_decision_v1', {
+      p_supplier_key: 'supplier-a',
+      p_territory: 'RO',
+      p_required_capability: 'catalog',
+    });
+  });
+
   it('returns server readiness evidence without reconstructing qualification client-side', async () => {
     const expected = {
       eligible: true,

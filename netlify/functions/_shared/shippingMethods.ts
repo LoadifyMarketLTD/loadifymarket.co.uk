@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+export type ShippingMarketCode = 'GB' | 'RO';
+
 export type ShippingMethodValidation =
   | { ok: true; ids: string[] }
   | { ok: false; status: 400 | 500; error: string };
@@ -13,6 +15,7 @@ export type ShippingMethodValidation =
 export async function validateActiveShippingMethodIds(
   supabase: SupabaseClient,
   rawIds: unknown,
+  marketCode: ShippingMarketCode = 'GB',
 ): Promise<ShippingMethodValidation> {
   if (!Array.isArray(rawIds)) {
     return { ok: false, status: 400, error: 'shippingMethodIds must be an array.' };
@@ -28,7 +31,8 @@ export async function validateActiveShippingMethodIds(
     .from('shipping_methods')
     .select('id')
     .in('id', ids)
-    .eq('active', true);
+    .eq('active', true)
+    .contains('marketCodes', [marketCode]);
 
   if (error) {
     return { ok: false, status: 500, error: 'Unable to validate shipping methods.' };
@@ -36,7 +40,7 @@ export async function validateActiveShippingMethodIds(
 
   const activeIds = new Set((data ?? []).map((row) => String(row.id)));
   if (ids.some((id) => !activeIds.has(id))) {
-    return { ok: false, status: 400, error: 'One or more shipping methods are unavailable.' };
+    return { ok: false, status: 400, error: 'One or more shipping methods are unavailable for the selected market.' };
   }
 
   return { ok: true, ids };

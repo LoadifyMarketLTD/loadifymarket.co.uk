@@ -31,9 +31,9 @@ export const handler: Handler = async (event) => {
 
     const { data: paymentSession, error: paymentError } = await admin
       .from('payment_sessions')
-      .select('status, orderId, amount')
+      .select('status, orderId, amount, currency')
       .eq('stripeSessionId', sessionId)
-      .maybeSingle<{ status: string; orderId: string | null; amount: number | null }>();
+      .maybeSingle<{ status: string; orderId: string | null; amount: number | null; currency: string | null }>();
 
     if (paymentError) throw paymentError;
 
@@ -61,6 +61,7 @@ export const handler: Handler = async (event) => {
       orderNumber,
       orderStatus,
       amount: paymentSession?.amount ?? null,
+      currency: paymentSession?.currency ?? null,
     }, METHODS);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

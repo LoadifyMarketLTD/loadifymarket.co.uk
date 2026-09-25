@@ -85,7 +85,7 @@ describe('SEO Level 3 category architecture', () => {
     const source = read('netlify/edge-functions/public-meta.ts');
     expect(source).toContain("pathname === '/catalog' && requestUrl.search.length > 0");
     expect(source).toContain("setRobots(html, 'noindex, follow')");
-    expect(source).toContain('`${BASE_URL}${pathname}`');
+    expect(source).toContain('`${marketContext.baseUrl}${pathname}`');
   });
 
   it('shares curated category metadata with browser rendering', () => {

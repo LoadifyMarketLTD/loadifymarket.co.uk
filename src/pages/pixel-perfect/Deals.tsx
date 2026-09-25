@@ -14,6 +14,8 @@ import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
+import { useMarket } from "@/contexts/MarketContext";
+import { formatPrice } from "@/lib/formatPrice";
 // Promotional clearance artwork is intentionally scoped to /deals.
 const heroWarehouse = "/images/categories/clearance.jpg";
 
@@ -71,6 +73,7 @@ const dealSubSections = [
 ];
 
 const Deals = () => {
+  const { market, config: marketConfig } = useMarket();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -97,6 +100,7 @@ const Deals = () => {
         .select(PRODUCT_QUERY)
         .eq("isActive", true)
         .eq("isApproved", true)
+        .contains("marketCodes", [market])
         .in("type", typesToFetch);
 
       if (priceRange[0] > 0) query = query.gte("price", priceRange[0]);
@@ -139,14 +143,14 @@ const Deals = () => {
       }));
 
       // Step 5: Adapt to UI shape
-      setProducts(adaptProducts(mapped as unknown as DBProduct[]));
+      setProducts(adaptProducts(mapped as unknown as DBProduct[], market));
     } catch (err) {
       console.error("Error fetching deals:", err);
       toast({ title: "Could not load deals", description: "Please try refreshing the page.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [priceRange, sortBy, activeSubTypes]);
+  }, [priceRange, sortBy, activeSubTypes, market]);
 
   useEffect(() => {
     fetchProducts();
@@ -182,7 +186,7 @@ const Deals = () => {
     ...selectedConditions,
     ...selectedLocations,
     ...(priceRange[0] > 0 || priceRange[1] < 10000
-      ? [`£${priceRange[0].toLocaleString()} – £${priceRange[1].toLocaleString()}`]
+      ? [`${formatPrice(priceRange[0], marketConfig.currency)} – ${formatPrice(priceRange[1], marketConfig.currency)}`]
       : []),
   ];
 

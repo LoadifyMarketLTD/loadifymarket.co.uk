@@ -19,7 +19,7 @@ describe("supplier SEO and legal differentiation", () => {
     expect(productMeta).toContain("fetchSupplierProductData");
     expect(productMeta).toContain("/.netlify/functions/supplier-catalog?id=");
     expect(productMeta).toContain("item.commercialMode !== 'loadify_supplier_fulfilled'");
-    expect(productMeta).toContain("lookup = await fetchSupplierProductData(productRef, requestUrl.origin)");
+    expect(productMeta).toContain("lookup = await fetchSupplierProductData(productRef, requestUrl.origin, marketContext.market)");
   });
 
   it("emits marketplace seller identity for seller listings and Loadify identity for supplier-fulfilled offers", () => {

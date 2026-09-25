@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
+import { useMarket } from "@/contexts/MarketContext";
+import { marketCountryName, validateMarketAddress } from "@/lib/marketAddress";
+import { formatMoney } from "@/lib/money";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 import { openExternalUrl } from "@/lib/capacitorUtils";
@@ -20,6 +23,7 @@ import { calculateCheckoutVat } from "@/lib/checkoutTaxDisplay";
 import { formatUkPostcode, validateDeliveryAddress } from "@/lib/deliveryAddress";
 import { stripePromise } from "@/lib/stripe";
 import SupplierPaymentPanel from "@/components/checkout/SupplierPaymentPanel";
+import { useTranslation } from "react-i18next";
 
 interface ShippingOption {
   methodId: string;
@@ -52,6 +56,8 @@ const steps = [
 ];
 
 const Checkout = () => {
+  const { t } = useTranslation();
+  const { market, config: marketConfig } = useMarket();
   const navigate = useNavigate();
   const { cartItems, subtotal, clearCart, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
   const { user, isLoading } = useAuthStore();
@@ -238,15 +244,23 @@ const Checkout = () => {
       setShippingError("Please enter a valid email address.");
       return;
     }
-    const addressError = validateDeliveryAddress({
-      name: `${shippingData.firstName} ${shippingData.lastName}`,
+    const addressError = market === "GB"
+      ? validateDeliveryAddress({
+          name: `${shippingData.firstName} ${shippingData.lastName}`,
+          line1: shippingData.address1,
+          city: shippingData.city,
+          postcode: shippingData.postcode,
+          country: "United Kingdom",
+        })
+      : null;
+    const marketAddress = validateMarketAddress({
       line1: shippingData.address1,
       city: shippingData.city,
       postcode: shippingData.postcode,
-      country: "United Kingdom",
-    });
-    if (addressError) {
-      setShippingError(addressError);
+      country: market,
+    }, market);
+    if (addressError || !marketAddress.ok) {
+      setShippingError(addressError || "Please check the delivery address for the selected market.");
       return;
     }
     setShippingError(null);
@@ -255,7 +269,7 @@ const Checkout = () => {
 
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.name === "postcode"
-      ? formatUkPostcode(e.target.value)
+      ? (market === "GB" ? formatUkPostcode(e.target.value) : e.target.value.replace(/\D/g, "").slice(0, 6))
       : e.target.value;
     setShippingData((prev) => ({ ...prev, [e.target.name]: value }));
     if (shippingError) setShippingError(null);
@@ -309,8 +323,12 @@ const Checkout = () => {
           city: shippingData.city.trim(),
           county: shippingData.county.trim(),
           postcode: shippingData.postcode.trim().toUpperCase(),
-          country: "GB",
+          country: market,
         };
+        const supplierAddressValidation = validateMarketAddress(address, market);
+        if (!supplierAddressValidation.ok) {
+          throw new Error("Please check the delivery address for the selected market.");
+        }
         const { data: authData } = await supabase.auth.getSession();
         const token = authData.session?.access_token;
         if (!token) throw new Error("Your session has expired. Please sign in again.");
@@ -318,7 +336,7 @@ const Checkout = () => {
         const item = supplierItems[0];
         const prepared = await fetch("/.netlify/functions/prepare-supplier-checkout", {
           method: "POST", headers,
-          body: JSON.stringify({ projectionId: item.product.id, quantity: item.quantity, shippingAddress: address, billingAddress: address }),
+          body: JSON.stringify({ projectionId: item.product.id, quantity: item.quantity, marketCode: market, shippingAddress: address, billingAddress: address }),
         });
         const preparedBody = await prepared.json();
         if (!prepared.ok) throw new Error(preparedBody.error || "Supplier checkout could not be prepared.");
@@ -366,8 +384,14 @@ const Checkout = () => {
         city: shippingData.city,
         ...(shippingData.county ? { county: shippingData.county } : {}),
         postal_code: shippingData.postcode,
-        country: "GB",
+        country: market,
       };
+      const addressValidation = validateMarketAddress(address, market);
+      if (!addressValidation.ok) {
+        setCheckoutError("Please check the delivery address for the selected market.");
+        setIsSubmitting(false);
+        return;
+      }
 
       if (user?.id) {
         const savedShippingAddress = {
@@ -378,8 +402,8 @@ const Checkout = () => {
           city: shippingData.city.trim(),
           county: shippingData.county.trim(),
           postcode: shippingData.postcode.trim().toUpperCase(),
-          country: "United Kingdom",
-          countryCode: "GB",
+          country: marketCountryName(market),
+          countryCode: market,
           isDefault: true,
         };
         const { error: saveAddressError } = await supabase
@@ -406,6 +430,7 @@ const Checkout = () => {
           : selectedOption.name,
         shippingAddress: address,
         billingAddress: address,
+        marketCode: market,
       };
 
       const { data: { session: authSession } } = await supabase.auth.getSession();
@@ -437,6 +462,21 @@ const Checkout = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (!marketConfig.checkoutEnabled) {
+    return (
+      <MainLayout>
+        <SEO title="Checkout | Loadify Market" description="Checkout availability for the selected Loadify market." canonical="/checkout" robots="noindex,nofollow" />
+        <main id="main-content" className="pt-4 md:pt-28 pb-16">
+          <div className="container mx-auto px-4 text-center py-20">
+            <h1 className="font-display text-2xl font-bold text-foreground mb-4">{t('checkout.unavailableTitle')}</h1>
+            <p className="text-muted-foreground mb-6">{t('checkout.unavailableBody')}</p>
+            <Link to="/catalog"><Button>{t('checkout.returnCatalog')}</Button></Link>
+          </div>
+        </main>
+      </MainLayout>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -615,16 +655,16 @@ const Checkout = () => {
                       <Input id="city" name="city" placeholder="Manchester" className="h-11" value={shippingData.city} onChange={handleShippingChange} required />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="county">County</Label>
-                      <Input id="county" name="county" placeholder="Greater Manchester" className="h-11" value={shippingData.county} onChange={handleShippingChange} />
+                      <Label htmlFor="county">{market === "RO" ? "Județ / Sector" : "County"}</Label>
+                      <Input id="county" name="county" placeholder={market === "RO" ? "București / Cluj" : "Greater Manchester"} className="h-11" value={shippingData.county} onChange={handleShippingChange} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="postcode">Postcode</Label>
-                      <Input id="postcode" name="postcode" placeholder="M1 1AA" className="h-11" value={shippingData.postcode} onChange={handleShippingChange} required />
+                      <Label htmlFor="postcode">{market === "RO" ? "Cod poștal" : "Postcode"}</Label>
+                      <Input id="postcode" name="postcode" placeholder={market === "RO" ? "010101" : "M1 1AA"} inputMode={market === "RO" ? "numeric" : undefined} maxLength={market === "RO" ? 6 : undefined} className="h-11" value={shippingData.postcode} onChange={handleShippingChange} required />
                     </div>
                     <div className="space-y-2">
                       <Label>Country</Label>
-                      <Input value="United Kingdom" disabled className="h-11 bg-muted" />
+                      <Input value={marketCountryName(market)} disabled className="h-11 bg-muted" />
                     </div>
                   </div>
 
@@ -671,7 +711,7 @@ const Checkout = () => {
                               </div>
                             </div>
                             <span className="text-sm font-semibold text-foreground shrink-0">
-                              {option.price === 0 ? "Free" : `£${option.price.toFixed(2)}`}
+                              {option.price === 0 ? "Free" : formatMoney({ amount: option.price, currency: marketConfig.currency })}
                             </span>
                           </label>
                         ))}
@@ -764,7 +804,7 @@ const Checkout = () => {
                         {shippingData.city || "Manchester"}, {shippingData.county || "Greater Manchester"}{" "}
                         {shippingData.postcode || "M1 1AA"}
                       </p>
-                      <p>United Kingdom</p>
+                      <p>{marketCountryName(market)}</p>
                     </div>
                   </div>
 
@@ -796,7 +836,7 @@ const Checkout = () => {
                             <p className="text-xs text-muted-foreground">Qty: {item.quantity} · {item.product.seller}</p>
                           </div>
                           <span className="text-sm font-semibold text-foreground shrink-0">
-                            £{(item.product.price * item.quantity).toLocaleString()}
+                            {formatMoney({ amount: item.product.price * item.quantity, currency: item.product.currency ?? marketConfig.currency })}
                           </span>
                         </div>
                       ))}
@@ -815,6 +855,24 @@ const Checkout = () => {
                       ? "You are buying from Loadify Market. Stock is held and dispatched by an approved fulfilment supplier; Loadify does not operate a warehouse."
                       : "You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller."}
                   </div>
+
+                  {market === "RO" && (
+                    <div className="rounded-lg border border-border bg-background p-4 text-xs leading-relaxed text-muted-foreground">
+                      <p className="font-semibold text-foreground">Informații înainte de comandă</p>
+                      <p className="mt-1">
+                        Înainte de plasarea comenzii, verifică produsele, prețul total, costul livrării, identitatea comerciantului și informațiile privind retragerea/returnarea. Prin butonul de comandă confirmi că plasarea comenzii implică o obligație de plată.
+                      </p>
+                      <p className="mt-2">
+                        <a href="/buyer-terms" className="underline hover:text-foreground">Termeni cumpărător</a>
+                        {" · "}
+                        <a href="/returns" className="underline hover:text-foreground">Retururi</a>
+                        {" · "}
+                        <a href="/shipping" className="underline hover:text-foreground">Livrare</a>
+                        {" · "}
+                        <a href="/privacy" className="underline hover:text-foreground">Confidențialitate</a>
+                      </p>
+                    </div>
+                  )}
 
                   {supplierOnlyCart && supplierClientSecret && supplierOrderId ? (
                     <Elements stripe={stripePromise} options={{ clientSecret: supplierClientSecret }}>
@@ -840,7 +898,7 @@ const Checkout = () => {
                         {isSubmitting ? (
                           <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Preparing secure payment…</>
                         ) : (
-                          <><Lock className="mr-2 h-5 w-5" />Pay Securely · £{total.toLocaleString()}</>
+                          <><Lock className="mr-2 h-5 w-5" />{market === "RO" ? "Comandă cu obligație de plată" : "Pay Securely"} · {formatMoney({ amount: total, currency: marketConfig.currency })}</>
                         )}
                       </Button>
                     </div>
@@ -864,7 +922,7 @@ const Checkout = () => {
                         <p className="text-xs text-muted-foreground">x{item.quantity}</p>
                       </div>
                       <span className="text-xs font-semibold text-foreground">
-                        £{(item.product.price * item.quantity).toLocaleString()}
+                        {formatMoney({ amount: item.product.price * item.quantity, currency: item.product.currency ?? marketConfig.currency })}
                       </span>
                     </div>
                   ))}
@@ -873,7 +931,7 @@ const Checkout = () => {
                 <div className="border-t border-border pt-4 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="text-foreground font-medium">£{subtotal.toLocaleString()}</span>
+                    <span className="text-foreground font-medium">{formatMoney({ amount: subtotal, currency: marketConfig.currency })}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delivery</span>
@@ -882,7 +940,7 @@ const Checkout = () => {
                         ? <span className="italic text-muted-foreground">Set by seller</span>
                         : shippingAmount === 0
                           ? "Free"
-                          : `£${shippingAmount.toFixed(2)}`}
+                          : formatMoney({ amount: shippingAmount, currency: marketConfig.currency })}
                     </span>
                   </div>
                   <div className="flex justify-between gap-4">
@@ -890,12 +948,12 @@ const Checkout = () => {
                     <span className="text-foreground font-medium text-right">
                       {vat == null
                         ? <span className="italic text-muted-foreground">Verified at payment</span>
-                        : `£${vat.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        : formatMoney({ amount: vat, currency: marketConfig.currency })}
                     </span>
                   </div>
                   <div className="border-t border-border pt-3 flex justify-between">
                     <span className="font-display font-semibold text-foreground">Total</span>
-                    <span className="font-display text-xl font-bold text-foreground">£{total.toLocaleString()}</span>
+                    <span className="font-display text-xl font-bold text-foreground">{formatMoney({ amount: total, currency: marketConfig.currency })}</span>
                   </div>
                 </div>
               </div>

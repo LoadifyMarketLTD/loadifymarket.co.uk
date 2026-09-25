@@ -11,9 +11,7 @@ import {
   productAggregateRating,
   schemaItemCondition,
 } from '../../src/lib/productSeo.ts';
-
-const BASE_URL = 'https://loadifymarket.co.uk';
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
+import { marketCodesRestFilter, replaceOrInsertSeoAlternates, seoMarketContext, type SeoMarket } from './_shared/marketSeo.ts';
 const SITE_NAME = 'Loadify Market';
 const LEGAL_OPERATOR_NAME = 'XDrive Logistics Ltd';
 
@@ -38,6 +36,7 @@ interface ProductRow {
   category?: { name?: string; slug?: string } | null;
   commercialMode?: 'marketplace_seller' | 'loadify_supplier_fulfilled';
   currency?: string | null;
+  marketCodes?: string[] | null;
 }
 
 type ProductLookup =
@@ -81,14 +80,14 @@ function safeJsonLd(value: Record<string, unknown>): string {
     .replace(/>/g, '\\u003e');
 }
 
-function toAbsoluteUrl(value?: string | null): string | undefined {
+function toAbsoluteUrl(value: string | null | undefined, baseUrl: string): string | undefined {
   if (!value) return undefined;
   const v = value.trim();
   if (!v) return undefined;
   if (/^https?:\/\//i.test(v)) return v;
   if (v.startsWith('//')) return `https:${v}`;
-  if (v.startsWith('/')) return `${BASE_URL}${v}`;
-  return `${BASE_URL}/${v}`;
+  if (v.startsWith('/')) return `${baseUrl}${v}`;
+  return `${baseUrl}/${v}`;
 }
 
 function isAvailable(product: ProductRow): boolean {
@@ -131,6 +130,7 @@ async function fetchProductData(
   productRef: string,
   supabaseUrl: string,
   anonKey: string,
+  market: SeoMarket,
 ): Promise<ProductLookup> {
   try {
     const filterColumn = UUID_PATTERN.test(productRef) ? 'id' : 'slug';
@@ -148,6 +148,8 @@ async function fetchProductData(
       'specifications',
       'rating',
       'reviewCount',
+      'currency',
+      'marketCodes',
       'category:categories!categoryId(name,slug)',
     ].join(',');
     const url =
@@ -155,6 +157,7 @@ async function fetchProductData(
       `?${filterColumn}=eq.${encodeURIComponent(productRef)}` +
       `&isActive=eq.true` +
       `&isApproved=eq.true` +
+      `&marketCodes=cs.${marketCodesRestFilter(market)}` +
       `&select=${encodeURIComponent(select)}` +
       `&limit=1`;
 
@@ -181,11 +184,12 @@ async function fetchProductData(
 async function fetchSupplierProductData(
   productRef: string,
   origin: string,
+  market: SeoMarket,
 ): Promise<ProductLookup> {
   if (!UUID_PATTERN.test(productRef)) return { status: 'not_found' };
 
   try {
-    const url = `${origin}/.netlify/functions/supplier-catalog?id=${encodeURIComponent(productRef)}`;
+    const url = `${origin}/.netlify/functions/supplier-catalog?id=${encodeURIComponent(productRef)}&market=${market}`;
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(2500),
@@ -264,6 +268,9 @@ export default async function productMeta(
   context: Context,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
+  const marketContext = seoMarketContext(requestUrl);
+  const baseUrl = marketContext.baseUrl;
+  const defaultOgImage = `${baseUrl}/og-loadify-market.png`;
   const segments = requestUrl.pathname.split('/').filter(Boolean);
   if (segments.length !== 2 || segments[0] !== 'product') {
     return noindexHtmlResponse(await context.next());
@@ -286,7 +293,7 @@ export default async function productMeta(
 
   const [baseResponse, marketplaceLookup] = await Promise.all([
     baseResponsePromise,
-    fetchProductData(productRef, supabaseUrl, supabaseAnonKey),
+    fetchProductData(productRef, supabaseUrl, supabaseAnonKey, marketContext.market),
   ]);
 
   const contentType = baseResponse.headers.get('content-type') ?? '';
@@ -295,7 +302,7 @@ export default async function productMeta(
 
   let lookup = marketplaceLookup;
   if (lookup.status === 'not_found' && UUID_PATTERN.test(productRef)) {
-    lookup = await fetchSupplierProductData(productRef, requestUrl.origin);
+    lookup = await fetchSupplierProductData(productRef, requestUrl.origin, marketContext.market);
   }
   if (lookup.status === 'unavailable') return baseResponse;
   if (lookup.status === 'not_found') return noindexHtmlResponse(baseResponse);
@@ -324,12 +331,12 @@ export default async function productMeta(
       )
     : [];
   const absoluteImages = images
-    .map((imageUrl) => toAbsoluteUrl(imageUrl))
+    .map((imageUrl) => toAbsoluteUrl(imageUrl, baseUrl))
     .filter((imageUrl): imageUrl is string => Boolean(imageUrl));
-  const ogImage = absoluteImages[0] ?? DEFAULT_OG_IMAGE;
+  const ogImage = absoluteImages[0] ?? defaultOgImage;
 
   const fullTitle = `${title} | ${SITE_NAME}`;
-  const canonicalUrl = `${BASE_URL}/product/${product.id}`;
+  const canonicalUrl = `${baseUrl}/product/${product.id}`;
   const parsedPrice = Number(product.price);
   const priceNum = Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : undefined;
   const priceStr = priceNum !== undefined ? priceNum.toFixed(2) : undefined;
@@ -378,6 +385,10 @@ export default async function productMeta(
   html = html.replace(
     /<meta property="og:type" content="[^"]*"/,
     '<meta property="og:type" content="product"',
+  );
+  html = html.replace(
+    /<meta property="og:locale" content="[^"]*"/,
+    `<meta property="og:locale" content="${marketContext.locale.replace('-', '_')}"`,
   );
 
   if (html.includes('property="og:image:secure_url"')) {
@@ -480,7 +491,7 @@ export default async function productMeta(
                         '@type': 'Organization',
                         name: SITE_NAME,
                         legalName: LEGAL_OPERATOR_NAME,
-                        url: BASE_URL,
+                        url: baseUrl,
                       }
                     : {
                         '@type': 'Organization',
@@ -499,6 +510,7 @@ export default async function productMeta(
   if (extraLines.length > 0) {
     html = html.replace('</head>', `${extraLines.join('\n')}\n</head>`);
   }
+  html = replaceOrInsertSeoAlternates(html, `/product/${product.id}`);
 
   return new Response(html, {
     status: baseResponse.status,

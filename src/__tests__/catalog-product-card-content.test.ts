@@ -71,7 +71,7 @@ describe("catalog product card content", () => {
 
   it("renders the missing commercial information without showing empty engagement counters", () => {
     const card = read("src/components/catalog/ProductCard.tsx");
-    expect(card).toContain("formatPrice(product.price)");
+    expect(card).toContain("formatPrice(product.price, product.currency ?? 'GBP')");
     expect(card).toContain("product.description");
     expect(card).toContain("`${product.unitCount} available`");
     expect(card).toContain("product.location &&");
@@ -83,5 +83,12 @@ describe("catalog product card content", () => {
   it("fetches the public business address needed for catalog location", () => {
     const catalog = read("src/pages/pixel-perfect/Catalog.tsx");
     expect(catalog).toContain('select("userId, businessName, isApproved, rating, businessAddress")');
+  });
+
+  it("filters catalog and product detail by active marketplace", () => {
+    const catalog = read("src/pages/pixel-perfect/Catalog.tsx");
+    const detail = read("src/pages/pixel-perfect/ProductDetail.tsx");
+    expect(catalog).toContain('.contains("marketCodes", [market])');
+    expect(detail).toContain('.contains("marketCodes", [market])');
   });
 });

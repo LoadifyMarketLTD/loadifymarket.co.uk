@@ -52,6 +52,7 @@ export default function OrderSuccessPage() {
           orderId?: string | null;
           orderNumber?: string | null;
           amount?: number | null;
+          currency?: string | null;
         };
 
         if (cancelled) return;
@@ -59,7 +60,7 @@ export default function OrderSuccessPage() {
 
         if (response.ok && data.confirmed) {
           if (data.orderId) {
-            trackCompletedPurchase({ orderId: data.orderId, value: data.amount ?? 0 });
+            trackCompletedPurchase({ orderId: data.orderId, value: data.amount ?? 0, currency: data.currency ?? "GBP" });
           }
           setPhase('confirmed');
           return;

@@ -131,6 +131,15 @@ const VALID_ORDER_STATUSES = new Set([
 const BLOCKING_LISTING_STATUSES = ['awaiting_payment', 'paid', 'packed', 'shipped', 'delivered', 'completed'];
 
 export const handler: Handler = async (event) => {
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return {
+      statusCode: 401,
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ error: 'Unauthorized' }),
+    };
+  }
+
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

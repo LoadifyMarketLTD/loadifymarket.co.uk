@@ -16,6 +16,8 @@ export const handler: Handler = async (event) => {
 
   const requestedId = (event.queryStringParameters?.id || "").trim();
   if (requestedId && !UUID_RE.test(requestedId)) return jsonResponse(400, { error: "Invalid catalog item id" }, METHODS);
+  const market = (event.queryStringParameters?.market || "GB").trim().toUpperCase();
+  if (market !== "GB" && market !== "RO") return jsonResponse(400, { error: "Invalid market" }, METHODS);
 
   const { data: rows, error } = await admin.rpc("server_get_supplier_marketplace_projection_v1", {
     p_projection_id: requestedId || null,
@@ -27,7 +29,7 @@ export const handler: Handler = async (event) => {
     const selection = await evaluateProjectionSupplierOffers(admin, {
       projectionId: row.id,
       requestedQuantity: 1,
-      territory: "GB",
+      territory: market,
     });
     const selected = selection.selected;
     if (!selection.eligible || !selected) continue;
@@ -62,7 +64,7 @@ export const handler: Handler = async (event) => {
     ok: true,
     items,
     count: items.length,
-    territory: "GB",
+    territory: market,
     commercialMode: "loadify_supplier_fulfilled",
     inventoryAndPriceRevalidated: true,
   }, METHODS);

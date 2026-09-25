@@ -2,10 +2,10 @@ import { Helmet } from "react-helmet-async";
 import { getCategorySeoLanding } from "@/lib/categorySeo";
 import { getCommercialSeoMeta } from "@/lib/commercialSeo";
 import { buildSeoTitle } from "@/lib/seo";
+import { useMarket } from "@/contexts/MarketContext";
 
 const SITE_NAME = "Loadify Market";
 const BASE_URL = "https://loadifymarket.co.uk";
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
 const PRODUCT_SELLER_PROMO_RE = /\s*Sell with 0% commission on Loadify Market\.?\s*$/i;
 
 interface SEOProps {
@@ -56,13 +56,14 @@ export default function SEO({
   title,
   description,
   canonical,
-  ogImage = DEFAULT_OG_IMAGE,
+  ogImage,
   ogType = "website",
   robots = "index, follow",
   ogPrice,
   ogPriceCurrency = "GBP",
   structuredData,
 }: SEOProps) {
+  const { market, config } = useMarket();
   const sharedMeta = robots === "index, follow"
     ? getCommercialSeoMeta(canonical) ?? categoryMeta(canonical)
     : undefined;
@@ -72,11 +73,17 @@ export default function SEO({
     ogType,
   );
   const fullTitle = buildSeoTitle(resolvedTitle);
+  const alternatePath = canonicalPath(canonical);
+  const activeBaseUrl = market === "RO" ? "https://loadifymarket.ro" : BASE_URL;
+  const resolvedOgImage = ogImage ?? `${activeBaseUrl}/og-loadify-market.png`;
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
-      ? canonical
-      : `${BASE_URL}${canonical}`
+      ? `${activeBaseUrl}${canonicalPath(canonical) ?? "/"}`
+      : `${activeBaseUrl}${canonical}`
     : undefined;
+  const ukAlternateUrl = alternatePath ? `${BASE_URL}${alternatePath === "/" ? "" : alternatePath}` : undefined;
+  const roAlternateUrl = alternatePath ? `https://loadifymarket.ro${alternatePath === "/" ? "" : alternatePath}` : undefined;
+  const marketOgLocale = market === "RO" ? "ro_RO" : "en_GB";
 
   // Product JSON-LD is injected server-side by product-meta with the canonical
   // DB-backed product identity. Suppressing the hydrated duplicate prevents two
@@ -89,12 +96,17 @@ export default function SEO({
       <meta name="description" content={resolvedDescription} />
       {robots !== "index, follow" && <meta name="robots" content={robots} />}
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+      {ukAlternateUrl && <link rel="alternate" hrefLang="en-GB" href={ukAlternateUrl} />}
+      {roAlternateUrl && <link rel="alternate" hrefLang="ro-RO" href={roAlternateUrl} />}
+      {ukAlternateUrl && <link rel="alternate" hrefLang="x-default" href={ukAlternateUrl} />}
 
       <meta property="og:type" content={ogType} />
+      <meta property="og:locale" content={marketOgLocale} />
+      <meta name="content-language" content={config.locale} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={resolvedDescription} />
-      <meta property="og:image" content={ogImage} />
+      <meta property="og:image" content={resolvedOgImage} />
       {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
 
       {ogType === "product" && ogPrice && (
@@ -109,7 +121,7 @@ export default function SEO({
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={resolvedDescription} />
-      <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image" content={resolvedOgImage} />
 
       {shouldRenderStructuredData && structuredData && (
         <script type="application/ld+json">

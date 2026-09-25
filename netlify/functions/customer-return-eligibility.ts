@@ -39,11 +39,30 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await admin
     .from('orders')
-    .select('id, status, buyerId')
+    .select('id, status, buyerId, marketCode')
     .eq('id', orderId)
     .eq('buyerId', auth.actor.id)
-    .maybeSingle<{ id: string; status: string; buyerId: string }>();
+    .maybeSingle<{ id: string; status: string; buyerId: string; marketCode: string | null }>();
   if (orderError || !order) return jsonResponse(404, { error: 'Order not found' }, METHODS);
+
+  const marketCode = (order.marketCode || 'GB').trim().toUpperCase();
+  if (marketCode !== 'GB' && marketCode !== 'RO') {
+    return jsonResponse(409, { error: 'Unsupported order market', code: 'RETURN_MARKET_NOT_SUPPORTED' }, METHODS);
+  }
+
+  if (marketCode === 'RO') {
+    const { data: compliance, error: complianceError } = await admin.rpc(
+      'server_market_compliance_readiness_v1',
+      { p_market_code: 'RO' },
+    );
+    if (complianceError || !compliance || compliance.eligible !== true) {
+      return jsonResponse(409, {
+        error: 'Romania returns are not enabled until market compliance is verified',
+        code: 'RETURN_MARKET_COMPLIANCE_NOT_READY',
+        marketCode,
+      }, METHODS);
+    }
+  }
 
   const { data: item, error: itemError } = await admin
     .from('order_items')

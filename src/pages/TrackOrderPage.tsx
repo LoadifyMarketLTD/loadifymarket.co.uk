@@ -4,12 +4,14 @@ import SEO from "@/components/SEO";
 import { useSearchParams } from 'react-router-dom';
 import { Package, Search, Truck, CheckCircle, AlertCircle, Clock, ExternalLink } from 'lucide-react';
 import type { ShipmentEvent } from '../types/shipping';
+import { formatMoney, type CurrencyCode } from '@/lib/money';
 
 interface TrackingData {
   order: {
     orderNumber: string;
     createdAt: string;
     total: number;
+    currency?: CurrencyCode;
     status: string;
     product: {
       title: string;
@@ -180,7 +182,7 @@ export default function TrackOrderPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div><p className="text-sm text-gray-600">Order Number</p><p className="font-semibold">{trackingData.order.orderNumber}</p></div>
               <div><p className="text-sm text-gray-600">Order Date</p><p className="font-semibold">{formatDate(trackingData.order.createdAt)}</p></div>
-              <div><p className="text-sm text-gray-600">Total</p><p className="font-semibold">£{trackingData.order.total.toFixed(2)}</p></div>
+              <div><p className="text-sm text-gray-600">Total</p><p className="font-semibold">{formatMoney({ amount: trackingData.order.total, currency: trackingData.order.currency ?? 'GBP' })}</p></div>
               <div><p className="text-sm text-gray-600">Seller</p><p className="font-semibold">{trackingData.order.seller?.name || 'N/A'}</p></div>
             </div>
             {trackingData.order.product && (

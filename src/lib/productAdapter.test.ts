@@ -4,6 +4,7 @@ import {
   adaptProducts,
   getDBProductAvailability,
   isSellableDBProduct,
+  isDBProductEligibleForMarket,
   type DBProduct,
 } from './productAdapter';
 
@@ -68,9 +69,28 @@ describe('getDBProductAvailability', () => {
   });
 });
 
+describe('market eligibility', () => {
+  it('treats legacy listings as GB-only', () => {
+    expect(isDBProductEligibleForMarket(product(), 'GB')).toBe(true);
+    expect(isDBProductEligibleForMarket(product(), 'RO')).toBe(false);
+  });
+
+  it('allows listings explicitly enabled for Romania', () => {
+    const row = product({ marketCodes: ['RO'], currency: 'RON' });
+    expect(isSellableDBProduct(row, 'RO')).toBe(true);
+    expect(isSellableDBProduct(row, 'GB')).toBe(false);
+  });
+});
+
 describe('adaptProduct', () => {
   it('exposes live stock as the physical purchase limit', () => {
     expect(adaptProduct(product({ stockQuantity: 3 })).maxPurchaseQuantity).toBe(3);
+  });
+
+  it('preserves canonical currency and market eligibility', () => {
+    const adapted = adaptProduct(product({ currency: 'RON', marketCodes: ['RO'] }));
+    expect(adapted.currency).toBe('RON');
+    expect(adapted.marketCodes).toEqual(['RO']);
   });
 
   it('does not impose a stock-derived purchase limit on services', () => {

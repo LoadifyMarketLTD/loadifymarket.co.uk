@@ -12,18 +12,25 @@
  */
 
 import { Capacitor } from '@capacitor/core';
+import { formatMoney, type CurrencyCode } from '@/lib/money';
+import type { MarketCode } from '@/lib/marketConfig';
 
 export interface ShareProductOptions {
   id: string;
   title: string;
   price?: number;
+  market?: MarketCode;
+  currency?: CurrencyCode;
 }
 
 export async function shareProduct(product: ShareProductOptions): Promise<void> {
-  const url = `https://loadifymarket.co.uk/product/${product.id}`;
+  const market = product.market ?? "GB";
+  const currency = product.currency ?? (market === "RO" ? "RON" : "GBP");
+  const baseUrl = market === "RO" ? "https://loadifymarket.ro" : "https://loadifymarket.co.uk";
+  const url = `${baseUrl}/product/${product.id}`;
   const title = product.title;
   const text = product.price != null
-    ? `${title} — £${product.price.toLocaleString('en-GB')} on Loadify Market`
+    ? `${title} — ${formatMoney({ amount: product.price, currency })} on Loadify Market`
     : `${title} on Loadify Market`;
 
   if (Capacitor.isNativePlatform()) {

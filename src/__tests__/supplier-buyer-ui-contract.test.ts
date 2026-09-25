@@ -19,7 +19,7 @@ describe("supplier fulfilled buyer UI contract", () => {
     expect(grid).toContain("fetchSupplierCatalog()");
   });
   it("supports supplier product detail and cart revalidation", () => {
-    expect(detail).toContain("fetchSupplierCatalogItem(id)");
+    expect(detail).toContain("fetchSupplierCatalogItem(id, market)");
     expect(detail).toContain("isSupplierFulfilled");
     expect(cart).toContain('commercialMode === "loadify_supplier_fulfilled"');
     expect(cart).toContain("fetchSupplierCatalogItem(item.product.id)");

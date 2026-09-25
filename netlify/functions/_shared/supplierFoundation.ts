@@ -38,10 +38,19 @@ export async function evaluateSupplierFoundation(
   supplierKey: string,
   options: { territory?: string; requiredCapability?: string } = {},
 ): Promise<SupplierFoundationDecision> {
+  const territory = (options.territory ?? 'GB').trim().toUpperCase();
+  if (territory !== 'GB' && territory !== 'RO') {
+    return {
+      eligible: false,
+      reason: 'unsupported_market',
+      interfaceVersion: SUPPLIER_FOUNDATION_INTERFACE_VERSION,
+    };
+  }
+
   try {
     const { data, error } = await admin.rpc('server_supplier_foundation_decision_v1', {
       p_supplier_key: supplierKey,
-      p_territory: options.territory ?? 'GB',
+      p_territory: territory,
       p_required_capability: options.requiredCapability ?? null,
     });
     if (error || !isDecision(data)) {

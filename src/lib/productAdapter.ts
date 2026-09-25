@@ -7,6 +7,8 @@
 
 import type { Product as UIProduct } from "@/components/catalog/ProductCard";
 import { categoryImages, DEFAULT_CATEGORY_IMAGE } from "@/data/categoryImages";
+import type { MarketCode } from "@/lib/marketConfig";
+import type { CurrencyCode } from "@/lib/money";
 
 export interface PublicSellerCardData {
   businessName?: string | null;
@@ -25,6 +27,8 @@ export interface DBProduct {
   title: string;
   description?: string | null;
   price: number;
+  currency?: CurrencyCode | null;
+  marketCodes?: string[] | null;
   priceExVat?: number | null;
   images: string[];
   condition: string;
@@ -129,9 +133,19 @@ export function getDBProductAvailability(dbProduct: DBProduct): {
   return { isAvailable: true };
 }
 
+export function isDBProductEligibleForMarket(
+  dbProduct: DBProduct,
+  market: MarketCode = 'GB',
+): boolean {
+  const markets = Array.isArray(dbProduct.marketCodes) && dbProduct.marketCodes.length > 0
+    ? dbProduct.marketCodes
+    : ['GB'];
+  return markets.includes(market);
+}
+
 /** Public product grids should never promote a listing checkout would reject. */
-export function isSellableDBProduct(dbProduct: DBProduct): boolean {
-  return getDBProductAvailability(dbProduct).isAvailable;
+export function isSellableDBProduct(dbProduct: DBProduct, market: MarketCode = 'GB'): boolean {
+  return isDBProductEligibleForMarket(dbProduct, market) && getDBProductAvailability(dbProduct).isAvailable;
 }
 
 export function adaptProduct(dbProduct: DBProduct): UIProduct {
@@ -186,6 +200,10 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     description: shortDescription(dbProduct),
     image,
     price: Number(dbProduct.price),
+    currency: dbProduct.currency ?? 'GBP',
+    marketCodes: Array.isArray(dbProduct.marketCodes) && dbProduct.marketCodes.length > 0
+      ? dbProduct.marketCodes
+      : ['GB'],
     originalPrice: dbProduct.priceExVat ? Number(dbProduct.priceExVat) : undefined,
     category: categoryName,
     subcategory: subcategoryName,
@@ -207,6 +225,6 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
 }
 
 /** Convenience helper for public product grids. */
-export function adaptProducts(dbProducts: DBProduct[]): UIProduct[] {
-  return dbProducts.filter(isSellableDBProduct).map(adaptProduct);
+export function adaptProducts(dbProducts: DBProduct[], market: MarketCode = 'GB'): UIProduct[] {
+  return dbProducts.filter((product) => isSellableDBProduct(product, market)).map(adaptProduct);
 }

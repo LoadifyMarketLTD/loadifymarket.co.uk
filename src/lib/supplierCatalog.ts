@@ -16,21 +16,21 @@ interface SupplierCatalogItem {
   publishedAt?: string;
 }
 
-export async function fetchSupplierCatalogItem(id: string): Promise<Product | null> {
-  const response = await fetch(`/.netlify/functions/supplier-catalog?id=${encodeURIComponent(id)}`);
+export async function fetchSupplierCatalogItem(id: string, market: "GB" | "RO" = "GB"): Promise<Product | null> {
+  const response = await fetch(`/.netlify/functions/supplier-catalog?id=${encodeURIComponent(id)}&market=${market}`);
   if (!response.ok) return null;
   const payload = await response.json() as { items?: SupplierCatalogItem[] };
   const item = payload.items?.[0];
-  return item ? adaptSupplierCatalogItem(item) : null;
+  return item ? adaptSupplierCatalogItem(item, market) : null;
 }
-export async function fetchSupplierCatalog(): Promise<Product[]> {
-  const response = await fetch("/.netlify/functions/supplier-catalog");
+export async function fetchSupplierCatalog(market: "GB" | "RO" = "GB"): Promise<Product[]> {
+  const response = await fetch(`/.netlify/functions/supplier-catalog?market=${market}`);
   if (!response.ok) return [];
   const payload = await response.json() as { items?: SupplierCatalogItem[] };
-  return (payload.items ?? []).map(adaptSupplierCatalogItem);
+  return (payload.items ?? []).map((item) => adaptSupplierCatalogItem(item, market));
 }
 
-function adaptSupplierCatalogItem(item: SupplierCatalogItem): Product {
+function adaptSupplierCatalogItem(item: SupplierCatalogItem, market: "GB" | "RO"): Product {
   const quantity = Math.max(0, Math.floor(Number(item.sellableQuantity ?? 0)));
   const imageUrls = (item.imageUrls ?? []).filter((value) => typeof value === "string" && value.startsWith("https://")).slice(0, 12);
   return {
@@ -42,10 +42,11 @@ function adaptSupplierCatalogItem(item: SupplierCatalogItem): Product {
     image: imageUrls[0] || "",
     images: imageUrls,
     price: Number(item.price),
+    currency: item.currency === "RON" ? "RON" : "GBP",
     category: "Loadify Market",
     subcategory: "",
     condition: "New",
-    location: "United Kingdom",
+    location: market === "RO" ? "România" : "United Kingdom",
     seller: "Loadify Market",
     sellerVerified: true,
     fulfilmentLabel: item.fulfilmentLabel || "Fulfilled by approved supplier",

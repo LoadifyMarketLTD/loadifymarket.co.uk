@@ -3,21 +3,15 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { useMarket } from "@/contexts/MarketContext";
+import { formatPrice } from "@/lib/formatPrice";
 
 const conditions = ["New", "Like New", "Mixed", "Unchecked"];
 
-const locations = [
-  "London",
-  "Manchester",
-  "Birmingham",
-  "Leeds",
-  "Glasgow",
-  "Bristol",
-  "Liverpool",
-  "Sheffield",
-  "Edinburgh",
-  "Cardiff",
-];
+const MARKET_LOCATIONS = {
+  GB: ["London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Bristol", "Liverpool", "Sheffield", "Edinburgh", "Cardiff"],
+  RO: ["București", "Cluj-Napoca", "Timișoara", "Iași", "Constanța", "Brașov", "Craiova", "Oradea", "Sibiu", "Ploiești"],
+} as const;
 
 interface FilterSectionProps {
   title: string;
@@ -70,7 +64,9 @@ const CatalogFilters = ({
   availableCategories,
   theme = "light",
 }: CatalogFiltersProps) => {
+  const { market, config } = useMarket();
   const light = theme === "light";
+  const locations = MARKET_LOCATIONS[market];
   // Use DB-sourced category names when provided; show empty list otherwise
   const categoryList = availableCategories && availableCategories.length > 0
     ? availableCategories
@@ -136,8 +132,8 @@ const CatalogFilters = ({
             className="mb-3"
           />
           <div className={`flex items-center justify-between text-sm ${light ? "text-slate-600" : "text-muted-foreground"}`}>
-            <span>£{priceRange[0].toLocaleString("en-GB")}</span>
-            <span>£{priceRange[1].toLocaleString("en-GB")}</span>
+            <span>{formatPrice(priceRange[0], config.currency)}</span>
+            <span>{formatPrice(priceRange[1], config.currency)}</span>
           </div>
         </div>
       </FilterSection>

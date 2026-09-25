@@ -7,8 +7,7 @@
  */
 import type { Config, Context } from '@netlify/edge-functions';
 import { getCategorySeoLanding } from '../../src/lib/categorySeo.ts';
-
-const BASE_URL = 'https://loadifymarket.co.uk';
+import { marketCodesRestFilter, replaceOrInsertSeoAlternates, seoMarketContext, type SeoMarket } from './_shared/marketSeo.ts';
 const SITE_NAME = 'Loadify Market';
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,158}[a-z0-9])?$/i;
 
@@ -84,6 +83,7 @@ async function hasLiveListings(
   categoryIds: string[],
   supabaseUrl: string,
   anonKey: string,
+  market: SeoMarket,
 ): Promise<boolean> {
   if (categoryIds.length === 0) return false;
   try {
@@ -95,6 +95,7 @@ async function hasLiveListings(
       `&isApproved=eq.true` +
       `&listingStatus=eq.active` +
       `&type=neq.logistics` +
+      `&marketCodes=cs.${marketCodesRestFilter(market)}` +
       `&or=(listingContext.eq.service,stockQuantity.gt.0)` +
       `&select=id` +
       `&limit=1`;
@@ -115,6 +116,7 @@ export default async function categoryMeta(
   context: Context,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
+  const marketContext = seoMarketContext(requestUrl);
   const segments = requestUrl.pathname.split('/').filter(Boolean);
   if (segments.length !== 2 || segments[0] !== 'category') return context.next();
 
@@ -150,10 +152,10 @@ export default async function categoryMeta(
   const categoryName = landing?.label ?? categoryRows[0]?.name?.trim() ?? slug.replace(/-/g, ' ');
   const title = landing?.title ?? `${categoryName} Products | ${SITE_NAME}`;
   const description = landing?.description ?? `Browse ${categoryName} products from approved marketplace sellers on ${SITE_NAME}.`;
-  const canonical = `${BASE_URL}/category/${slug}`;
+  const canonical = `${marketContext.baseUrl}/category/${slug}`;
   const categoryIds = categoryRows.map((row) => row.id).filter((id): id is string => Boolean(id));
   const live = supabaseUrl && anonKey
-    ? await hasLiveListings(categoryIds, supabaseUrl, anonKey)
+    ? await hasLiveListings(categoryIds, supabaseUrl, anonKey, marketContext.market)
     : false;
   const faceted = requestUrl.search.length > 0;
   const robots = live && !faceted ? 'index, follow' : 'noindex, follow';
@@ -171,9 +173,11 @@ export default async function categoryMeta(
   html = replacePropertyMeta(html, 'og:title', title);
   html = replacePropertyMeta(html, 'og:description', description);
   html = replacePropertyMeta(html, 'og:url', canonical);
+  html = replacePropertyMeta(html, 'og:locale', marketContext.locale.replace('-', '_'));
   html = replaceOrInsertMeta(html, 'twitter:title', title);
   html = replaceOrInsertMeta(html, 'twitter:description', description);
   html = replaceCanonical(html, canonical);
+  html = replaceOrInsertSeoAlternates(html, `/category/${slug}`);
 
   return new Response(html, {
     status: baseResponse.status,

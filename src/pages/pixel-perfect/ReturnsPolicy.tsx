@@ -1,8 +1,21 @@
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import { useMarket } from "@/contexts/MarketContext";
+import { RomaniaReturnsPolicy } from "@/components/legal/RomaniaLegalContent";
 
 const ReturnsPolicy = () => {
+  const { market } = useMarket();
+  if (market === "RO") {
+    return (
+      <MainLayout>
+        <SEO title="Politica de retur | Loadify Market" description="Informații juridice pentru utilizatorii Loadify Market din România." canonical="/returns-policy" />
+        <main id="main-content" className="pt-4 md:pt-28 pb-20">
+          <div className="container mx-auto px-4 max-w-4xl"><RomaniaReturnsPolicy /></div>
+        </main>
+      </MainLayout>
+    );
+  }
   return (
     <MainLayout>
       <SEO title="Returns Policy | Loadify Market" description="Understand returns and refunds for Marketplace Seller and Loadify Supplier-Fulfilled purchases." canonical="/returns-policy" />
