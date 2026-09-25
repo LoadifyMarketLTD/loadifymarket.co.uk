@@ -129,3 +129,33 @@ test('Romania synthetic catalogue to cart remains RON and checkout stays fail-cl
   await expect(page.getByText(/România este în pre-lansare/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Înapoi la catalog' })).toBeVisible();
 });
+
+test('Romania tracked order renders the order currency instead of a UK pound label', async ({ page }) => {
+  await useRomaniaMarket(page);
+  await page.route('**/.netlify/functions/track-shipment', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        order: {
+          orderNumber: 'ORD-RO-SYNTHETIC',
+          createdAt: '2026-09-25T08:00:00.000Z',
+          total: 149.9,
+          currency: 'RON',
+          status: 'processing',
+          product: { title: 'Produs test România', image: null },
+          seller: { name: 'Seller Test România' },
+        },
+        shipment: null,
+        events: [],
+        state: 'being_prepared',
+      }),
+    });
+  });
+
+  await page.goto('/track-order', { waitUntil: 'domcontentloaded' });
+  await page.getByLabel('Order Number *').fill('ORD-RO-SYNTHETIC');
+  await page.getByLabel('Email Address *').fill('buyer@example.ro');
+  await page.getByRole('button', { name: 'Track Order' }).click();
+  await expect(page.getByText(/149[,.]90\s*RON/)).toBeVisible();
+});
