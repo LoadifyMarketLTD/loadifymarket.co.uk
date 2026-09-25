@@ -9,13 +9,10 @@ describe("Loadify Supplier-Fulfilled payment and handshake boundary", () => {
   const webhook = repo("netlify/functions/stripe-webhook.ts");
   const migration = repo("supabase/migrations/20260920201105_supplier_payment_completion.sql");
 
-  it("creates a Loadify merchant-of-record PaymentIntent without seller Connect routing", () => {
-    expect(payment).toContain('commercialMode: "loadify_supplier_fulfilled"');
-    expect(payment).toContain('automatic_payment_methods: { enabled: true }');
-    expect(payment).toContain('merchantOfRecord: "Loadify Market"');
-    expect(payment).toContain("externalCheckoutRedirect: false");
-    expect(payment).not.toContain("on_behalf_of");
-    expect(payment).not.toContain("transfer_data");
+  it("blocks new supplier marketplace payment until the intermediary settlement model is verified", () => {
+    expect(payment).toContain("server_supplier_marketplace_commercial_readiness_v1");
+    expect(payment).toContain("SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY");
+    expect(payment).not.toContain('merchantOfRecord: "Loadify Market"');
   });
 
   it("rechecks supplier stock/price before payment creation", () => {

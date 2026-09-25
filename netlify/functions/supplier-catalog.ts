@@ -24,6 +24,15 @@ export const handler: Handler = async (event) => {
   });
   if (error) return jsonResponse(503, { error: "Supplier catalog unavailable" }, METHODS);
 
+  const { data: commercialReadiness, error: commercialReadinessError } = await admin.rpc(
+    "server_supplier_marketplace_commercial_readiness_v1",
+    { p_market_code: market },
+  );
+  const commercialModelReady = !commercialReadinessError
+    && !!commercialReadiness
+    && commercialReadiness.eligible === true;
+  const supplierIdentityCache = new Map<string, { displayName: string; legalName: string }>();
+
   const items = [];
   for (const row of rows || []) {
     const selection = await evaluateProjectionSupplierOffers(admin, {
@@ -33,6 +42,21 @@ export const handler: Handler = async (event) => {
     });
     const selected = selection.selected;
     if (!selection.eligible || !selected) continue;
+
+    let supplierIdentity = supplierIdentityCache.get(selected.supplierId);
+    if (!supplierIdentity) {
+      const { data: identity, error: identityError } = await admin.rpc(
+        "server_supplier_marketplace_identity_v1",
+        { p_supplier_id: selected.supplierId },
+      );
+      if (!identityError && identity?.eligible === true) {
+        supplierIdentity = {
+          displayName: String(identity.displayName || identity.legalName || "Independent supplier"),
+          legalName: String(identity.legalName || identity.displayName || "Independent supplier"),
+        };
+        supplierIdentityCache.set(selected.supplierId, supplierIdentity);
+      }
+    }
 
     const payload = row.projection_payload as Record<string, unknown>;
     const imageUrls = Array.isArray(payload.imageUrls)
@@ -52,8 +76,12 @@ export const handler: Handler = async (event) => {
       currency: selected.currency,
       availability: (selected.sellableQuantity ?? 0) > 0 ? "in_stock" : "out_of_stock",
       sellableQuantity: selected.sellableQuantity,
-      fulfilmentLabel: "Fulfilled by approved supplier",
-      checkoutEligible: true,
+      fulfilmentLabel: "Sold and dispatched by approved supplier",
+      checkoutEligible: commercialModelReady,
+      checkoutBlockReason: commercialModelReady ? null : "SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY",
+      supplierId: selected.supplierId,
+      supplierName: supplierIdentity?.displayName || "Independent supplier",
+      supplierLegalName: supplierIdentity?.legalName || supplierIdentity?.displayName || "Independent supplier",
       supplierOfferCount: selection.ranked.length,
       publishedAt: row.published_at,
     });
@@ -67,5 +95,7 @@ export const handler: Handler = async (event) => {
     territory: market,
     commercialMode: "loadify_supplier_fulfilled",
     inventoryAndPriceRevalidated: true,
+    commercialModelReady,
+    commercialReadiness: commercialReadiness ?? null,
   }, METHODS);
 };

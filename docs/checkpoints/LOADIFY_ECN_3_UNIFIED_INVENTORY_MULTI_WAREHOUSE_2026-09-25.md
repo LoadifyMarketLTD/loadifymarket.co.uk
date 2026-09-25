@@ -555,3 +555,27 @@ Proceed with a **unified inventory decision layer**, not a unified raw-stock tab
 Create additive seller-location inventory positions and supplier-warehouse bindings, then normalize both seller and supplier sources through one server decision contract.
 
 This preserves the current enterprise supplier architecture while enabling true multi-warehouse and route-aware sourcing.
+
+
+## 20. Current supplier-path gate — 25 September 2026
+
+The supplier side of ECN-3 is intentionally **fail-closed** after discovery of a legacy business-model contradiction.
+
+The independent supplier owns/controls the goods and remains seller of record. Loadify remains the marketplace/platform intermediary.
+
+New supplier marketplace commerce cannot proceed until:
+
+- supplier legal identity is snapshotted into future orders;
+- invoice/payment-recipient semantics are defined;
+- the Stripe/settlement model is evidence-backed;
+- the market-specific commercial readiness control is verified.
+
+Until then:
+
+- seller-owned inventory-position work may continue;
+- supplier warehouse bindings remain descriptive mappings of third-party locations;
+- supplier stock evidence remains intact;
+- supplier inventory-source selection stays blocked;
+- no supplier ECN route can become checkout-authoritative.
+
+The historical technical identifier `loadify_supplier_fulfilled` is not an ownership statement and must not be used as one.

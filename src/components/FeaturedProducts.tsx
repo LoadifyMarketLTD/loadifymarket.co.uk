@@ -94,7 +94,7 @@ const FeaturedProducts = () => {
               Discover what&apos;s live on Loadify
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[#5A6578] sm:text-[15px]">
-              Approved marketplace listings and selected products sold by Loadify Market with supplier fulfilment.
+              Approved marketplace listings from independent sellers and approved suppliers, with supplier-held stock and dispatch.
             </p>
           </div>
 

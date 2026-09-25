@@ -1,0 +1,153 @@
+﻿docs/checkpoints/LOADIFY_MARKETPLACE_OWNERSHIP_MODEL_CORRECTION_2026-09-25.md:53:`loadify_supplier_fulfilled`
+docs/checkpoints/LOADIFY_MARKETPLACE_OWNERSHIP_MODEL_CORRECTION_2026-09-25.md:68:The ECN inventory source decision must not use `loadify_supplier_fulfilled` as an authoritative cross-border commercial mode.
+docs/checkpoints/LOADIFY_MARKETPLACE_OWNERSHIP_MODEL_CORRECTION_2026-09-25.md:78:1. inventory every use of `loadify_supplier_fulfilled` and `loadify_direct`;
+docs/checkpoints/LOADIFY_MULTI_COUNTRY_EXPANSION_MASTER_PLAN.md:1352:- however the legacy supplier-commerce mode `loadify_supplier_fulfilled` is also used by code, tests and buyer/legal copy that currently state that Loadify is seller/merchant of record for supplier-fulfilled goods.
+docs/checkpoints/LOADIFY_MULTI_COUNTRY_EXPANSION_MASTER_PLAN.md:1361:- ECN must not propagate `loadify_supplier_fulfilled` seller/MoR semantics into Romania/Europe;
+docs/checkpoints/LOADIFY_MULTI_COUNTRY_EXPANSION_MASTER_PLAN.md:1369:1. audit every use of `loadify_supplier_fulfilled` / `loadify_direct`;
+docs/checkpoints/LOADIFY_OPERATOR_PRODUCT_BUILDER_2026-09-20.md:28:5. Phase G supplier economics decision surface for `loadify_supplier_fulfilled` / GB.
+netlify/functions/__tests__/admin-supplier-economics-decision-runtime-boundary.test.ts:24:    expect(endpoint).toContain('"loadify_supplier_fulfilled"');
+netlify/functions/__tests__/admin-supplier-marketplace-projection-runtime-boundary.test.ts:15:    expect(endpoint).toContain('"loadify_supplier_fulfilled"');
+netlify/functions/__tests__/admin-supplier-publication-gate-runtime-boundary.test.ts:14:    expect(endpoint).toContain('"loadify_supplier_fulfilled"');
+netlify/functions/__tests__/seo-foundation-contract.test.ts:154:    expect(productMeta).toContain("commercialMode === 'loadify_supplier_fulfilled'");
+netlify/functions/__tests__/supplier-buyer-catalog-publication-boundary.test.ts:31:    expect(readBoundary).toContain("p.commercial_mode='loadify_supplier_fulfilled'");
+netlify/functions/__tests__/supplier-checkout-preparation-boundary.test.ts:15:    expect(endpoint).toContain('"loadify_supplier_fulfilled"');
+netlify/functions/__tests__/supplier-checkout-preparation-boundary.test.ts:31:    expect(migration).toContain("'loadify_supplier_fulfilled'");
+netlify/functions/__tests__/supplier-customer-return-bridge.test.ts:16:    expect(migration).toContain("loadify_supplier_fulfilled");
+netlify/functions/__tests__/supplier-customer-return-bridge.test.ts:23:    expect(buyerReturn).toContain('commercialMode: "loadify_supplier_fulfilled"');
+netlify/functions/__tests__/supplier-customer-return-bridge.test.ts:39:    expect(refund).toContain("order.commercialMode !== 'loadify_supplier_fulfilled'");
+netlify/functions/__tests__/supplier-economics.test.ts:38:    expect(migration).toContain("commercial_mode IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct')");
+netlify/functions/__tests__/supplier-economics.test.ts:105:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/__tests__/supplier-economics.test.ts:133:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/__tests__/supplier-economics.test.ts:139:      p_commercial_mode: 'loadify_supplier_fulfilled',
+netlify/functions/__tests__/supplier-order-orchestrator.test.ts:35:    expect(foundation).toContain("fulfiller_type IN ('marketplace_seller','loadify_direct','supplier')");
+netlify/functions/__tests__/supplier-order-orchestrator.test.ts:36:    expect(foundation).toContain("commercial_mode IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct')");
+netlify/functions/__tests__/supplier-order-orchestrator.test.ts:190:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/__tests__/supplier-order-orchestrator.test.ts:220:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/__tests__/supplier-order-route-integrity.test.ts:12:    expect(integrity).toContain("v_fulfiller NOT IN ('marketplace_seller','loadify_direct')");
+netlify/functions/__tests__/supplier-order-route-integrity.test.ts:18:    expect(integrity).toContain("fulfiller_type='loadify_direct' AND supplier_offer_id IS NULL AND seller_id IS NULL");
+netlify/functions/__tests__/supplier-order-route-integrity.test.ts:25:    expect(integrity).toContain("'loadify_direct_does_not_accept_marketplace_seller_identity'");
+netlify/functions/__tests__/supplier-payment-handshake-boundary.test.ts:13:    expect(payment).toContain('commercialMode: "loadify_supplier_fulfilled"');
+netlify/functions/__tests__/supplier-payment-handshake-boundary.test.ts:27:    expect(webhook).toContain("pendingSession.metadata?.commercialMode === 'loadify_supplier_fulfilled'");
+netlify/functions/__tests__/supplier-projection-multi-offer-contract.test.ts:35:    expect(migration).toContain("p.commercial_mode='loadify_supplier_fulfilled'");
+netlify/functions/__tests__/supplier-projection-multi-offer-contract.test.ts:47:    expect(migration).toContain("ps.commercial_mode='loadify_supplier_fulfilled'");
+netlify/functions/__tests__/supplier-seo-legal-differentiation.test.ts:21:    expect(productMeta).toContain("item.commercialMode !== 'loadify_supplier_fulfilled'");
+netlify/functions/__tests__/supplier-sync.test.ts:125:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/__tests__/supplier-sync.test.ts:156:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/__tests__/supplier-sync.test.ts:166:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/_shared/supplierEconomics.ts:8:  commercialMode: 'marketplace_seller' | 'loadify_supplier_fulfilled' | 'loadify_direct';
+netlify/functions/_shared/supplierOfferSelectionRuntime.ts:155:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/_shared/supplierOfferSelectionRuntime.ts:161:      commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/_shared/supplierOrderOrchestrator.ts:65:  commercialMode: 'loadify_supplier_fulfilled';
+netlify/functions/_shared/supplierSync.ts:8:  commercialMode: 'marketplace_seller' | 'loadify_supplier_fulfilled' | 'loadify_direct';
+netlify/functions/admin-operator-merchandising-review.ts:47:    evaluateSupplierEconomics(admin, { supplierOfferId, canonicalProductId, commercialMode: "loadify_supplier_fulfilled", territory: "GB" }),
+netlify/functions/admin-publish-supplier-projection.ts:43:      commercialMode: "loadify_supplier_fulfilled", territory: "GB",
+netlify/functions/admin-publish-supplier-projection.ts:48:      p_commercial_mode: "loadify_supplier_fulfilled",
+netlify/functions/admin-supplier-economics-decision.ts:13:  "loadify_supplier_fulfilled",
+netlify/functions/admin-supplier-economics-decision.ts:14:  "loadify_direct",
+netlify/functions/admin-supplier-economics-decision.ts:52:    : "loadify_supplier_fulfilled";
+netlify/functions/admin-supplier-marketplace-projection.ts:49:      commercialMode: "loadify_supplier_fulfilled", territory: "GB",
+netlify/functions/admin-supplier-publication-gate.ts:52:      commercialMode: "loadify_supplier_fulfilled",
+netlify/functions/admin-supplier-publication-gate.ts:80:    commercialMode: "loadify_supplier_fulfilled",
+netlify/functions/admin-supplier-return-runtime.ts:48:  if (returnError || !platformReturn || platformReturn.commercialMode !== "loadify_supplier_fulfilled") {
+netlify/functions/admin-supplier-sync.ts:19:  commercialMode?: 'marketplace_seller' | 'loadify_supplier_fulfilled' | 'loadify_direct';
+netlify/functions/admin-supplier-sync.ts:69:      || !body.commercialMode || !['marketplace_seller', 'loadify_supplier_fulfilled', 'loadify_direct'].includes(body.commercialMode)) {
+netlify/functions/autonomous-supplier-commerce.ts:59:    commercialMode: 'loadify_supplier_fulfilled',
+netlify/functions/create-refund.ts:212:  if (order.commercialMode !== 'loadify_supplier_fulfilled') {
+netlify/functions/create-refund.ts:297:  if (order.commercialMode === 'loadify_supplier_fulfilled') {
+netlify/functions/create-supplier-payment-intent.ts:43:      || order.commercialMode !== "loadify_supplier_fulfilled"
+netlify/functions/create-supplier-payment-intent.ts:87:    p_commercial_mode: "loadify_supplier_fulfilled",
+netlify/functions/create-supplier-payment-intent.ts:110:      commercialMode: "loadify_supplier_fulfilled",
+netlify/functions/create-supplier-payment-intent.ts:128:      commercialMode: "loadify_supplier_fulfilled",
+netlify/functions/prepare-supplier-checkout.ts:98:    commercialMode: "loadify_supplier_fulfilled",
+netlify/functions/request-supplier-customer-return.ts:45:  if (orderError || !order || order.commercialMode !== "loadify_supplier_fulfilled") {
+netlify/functions/request-supplier-customer-return.ts:89:      commercialMode: "loadify_supplier_fulfilled",
+netlify/functions/stripe-webhook.ts:575:  if (pendingSession.metadata?.commercialMode === 'loadify_supplier_fulfilled') {
+netlify/functions/supplier-catalog.ts:44:      commercialMode: "loadify_supplier_fulfilled",
+netlify/functions/supplier-catalog.ts:68:    commercialMode: "loadify_supplier_fulfilled",
+src/__tests__/admin-supplier-operations-ui-contract.test.ts:26:    expect(source).toContain('selected.commercialMode === "loadify_supplier_fulfilled"');
+src/__tests__/supplier-buyer-ui-contract.test.ts:16:    expect(catalog).toContain('commercialMode: "loadify_supplier_fulfilled"');
+src/__tests__/supplier-buyer-ui-contract.test.ts:24:    expect(cart).toContain('commercialMode === "loadify_supplier_fulfilled"');
+src/components/catalog/ProductCard.tsx:30:  commercialMode?: "marketplace_seller" | "loadify_supplier_fulfilled";
+src/components/catalog/ProductCard.tsx:59:  const isSupplierFulfilled = product.commercialMode === "loadify_supplier_fulfilled";
+src/components/product/ProductInfo.test.tsx:107:      product: { ...product, seller: "Loadify Market", commercialMode: "loadify_supplier_fulfilled" },
+src/components/product/ProductInfo.tsx:81:  const isSupplierFulfilled = product.commercialMode === "loadify_supplier_fulfilled";
+src/contexts/CartContext.tsx:71:      if (item.product.commercialMode === "loadify_supplier_fulfilled") return market === "GB";
+src/contexts/CartContext.tsx:109:    const marketEligible = product.commercialMode === "loadify_supplier_fulfilled"
+src/contexts/CartContext.tsx:157:    const sellerItems = snapshot.filter((i) => i.product.commercialMode !== "loadify_supplier_fulfilled");
+src/contexts/CartContext.tsx:158:    const supplierItems = snapshot.filter((i) => i.product.commercialMode === "loadify_supplier_fulfilled");
+src/lib/supplierCatalog.ts:6:  commercialMode: "loadify_supplier_fulfilled";
+src/lib/supplierCatalog.ts:39:    commercialMode: "loadify_supplier_fulfilled",
+src/pages/pixel-perfect/Cart.tsx:38:  const supplierItems = cartItems.filter((item) => item.product.commercialMode === "loadify_supplier_fulfilled");
+src/pages/pixel-perfect/Cart.tsx:39:  const sellerItems = cartItems.filter((item) => item.product.commercialMode !== "loadify_supplier_fulfilled");
+src/pages/pixel-perfect/Cart.tsx:150:                const isSupplierFulfilled = product.commercialMode === "loadify_supplier_fulfilled";
+src/pages/pixel-perfect/Checkout.tsx:70:    () => cartItems.filter((item) => item.product.commercialMode === "loadify_supplier_fulfilled"),
+src/pages/pixel-perfect/Checkout.tsx:74:    () => cartItems.filter((item) => item.product.commercialMode !== "loadify_supplier_fulfilled"),
+src/pages/pixel-perfect/ProductDetail.tsx:481:  const isSupplierFulfilled = product.commercialMode === "loadify_supplier_fulfilled";
+src/pages/pixel-perfect/admin/AdminOrders.tsx:84:    if (order.commercialMode !== "loadify_supplier_fulfilled") {
+src/pages/pixel-perfect/admin/AdminOrders.tsx:294:  const supplierOrders = filtered.filter((o) => o.commercialMode === "loadify_supplier_fulfilled");
+src/pages/pixel-perfect/admin/AdminOrders.tsx:474:              {selected.commercialMode === "loadify_supplier_fulfilled" && (
+src/pages/pixel-perfect/admin/AdminOrders.tsx:573:                    disabled={actionLoading === selected.id || selected.commercialMode === "loadify_supplier_fulfilled" || ["cancelled", "refunded"].includes(selected.status)}
+src/pages/pixel-perfect/admin/AdminOrders.tsx:589:                  {selected.commercialMode === "loadify_supplier_fulfilled"
+src/pages/pixel-perfect/admin/AdminProductSourcing.tsx:869:          commercialMode: "loadify_supplier_fulfilled",
+src/pages/pixel-perfect/buyer/BuyerOrders.tsx:209:          if (order.commercialMode !== "loadify_supplier_fulfilled") return order;
+src/pages/pixel-perfect/buyer/BuyerOrders.tsx:272:    const supplierFulfilled = returnOrder.commercialMode === "loadify_supplier_fulfilled";
+src/pages/pixel-perfect/buyer/BuyerOrders.tsx:521:                  {o.commercialMode === "loadify_supplier_fulfilled" && (
+supabase/migrations/20260820234948_supplier_commercial_economics.sql:24:  CONSTRAINT supplier_tax_rule_mode_check CHECK (commercial_mode IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct')),
+supabase/migrations/20260820234948_supplier_commercial_economics.sql:108:  CONSTRAINT supplier_pricing_mode_check CHECK (commercial_mode IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct')),
+supabase/migrations/20260820234948_supplier_commercial_economics.sql:145:  CONSTRAINT commerce_financial_ledger_mode_check CHECK (commercial_mode IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct')),
+supabase/migrations/20260820234948_supplier_commercial_economics.sql:203:  IF v_mode NOT IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct') THEN
+supabase/migrations/20260821090021_supplier_order_orchestrator_risk_reservation.sql:42:  CONSTRAINT supplier_fulfilment_leg_fulfiller_check CHECK (fulfiller_type IN ('marketplace_seller','loadify_direct','supplier')),
+supabase/migrations/20260821090021_supplier_order_orchestrator_risk_reservation.sql:43:  CONSTRAINT supplier_fulfilment_leg_mode_check CHECK (commercial_mode IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct')),
+supabase/migrations/20260821090021_supplier_order_orchestrator_risk_reservation.sql:48:    (fulfiller_type='supplier' AND supplier_offer_id IS NOT NULL AND commercial_mode='loadify_supplier_fulfilled')
+supabase/migrations/20260821090021_supplier_order_orchestrator_risk_reservation.sql:49:    OR (fulfiller_type='loadify_direct' AND commercial_mode='loadify_direct')
+supabase/migrations/20260821090119_supplier_order_orchestrator_runtime_guards.sql:203:  IF p_commercial_mode<>'loadify_supplier_fulfilled' THEN
+supabase/migrations/20260821090119_supplier_order_orchestrator_runtime_guards.sql:271:  ) VALUES(v_orch.id,v_leg_key,'supplier','loadify_supplier_fulfilled',p_supplier_offer_id,'planned',v_sync->>'currency')
+supabase/migrations/20260821090244_supplier_order_mixed_leg_and_release_closure.sql:34:  IF v_fulfiller NOT IN ('marketplace_seller','loadify_direct') THEN
+supabase/migrations/20260821090244_supplier_order_mixed_leg_and_release_closure.sql:37:  IF (v_fulfiller='marketplace_seller' AND v_mode<>'marketplace_seller') OR (v_fulfiller='loadify_direct' AND v_mode<>'loadify_direct') THEN
+supabase/migrations/20260821090313_supplier_order_route_integrity_closure.sql:8:    (fulfiller_type='supplier' AND supplier_offer_id IS NOT NULL AND seller_id IS NULL AND commercial_mode='loadify_supplier_fulfilled')
+supabase/migrations/20260821090313_supplier_order_route_integrity_closure.sql:9:    OR (fulfiller_type='loadify_direct' AND supplier_offer_id IS NULL AND seller_id IS NULL AND commercial_mode='loadify_direct')
+supabase/migrations/20260821090313_supplier_order_route_integrity_closure.sql:80:  IF v_fulfiller NOT IN ('marketplace_seller','loadify_direct') THEN
+supabase/migrations/20260821090313_supplier_order_route_integrity_closure.sql:83:  IF (v_fulfiller='marketplace_seller' AND v_mode<>'marketplace_seller') OR (v_fulfiller='loadify_direct' AND v_mode<>'loadify_direct') THEN
+supabase/migrations/20260821090313_supplier_order_route_integrity_closure.sql:99:  IF v_fulfiller='loadify_direct' AND p_seller_id IS NOT NULL THEN
+supabase/migrations/20260821090313_supplier_order_route_integrity_closure.sql:100:    RETURN jsonb_build_object('eligible',false,'reason','loadify_direct_does_not_accept_marketplace_seller_identity','interfaceVersion',1);
+supabase/migrations/20260821094352_supplier_payment_handshake_runtime_guards.sql:97:  IF NOT FOUND OR v_leg.fulfiller_type<>'supplier' OR v_leg.commercial_mode<>'loadify_supplier_fulfilled' OR v_leg.supplier_offer_id IS NULL THEN
+supabase/migrations/20260821094352_supplier_payment_handshake_runtime_guards.sql:137:    v_offer.id,v_offer.canonical_product_id,'loadify_supplier_fulfilled',v_offer.territory,v_res.external_variant_ref
+supabase/migrations/20260821120654_supplier_returns_recovery_foundation.sql:22:  commercial_mode text NOT NULL DEFAULT 'loadify_supplier_fulfilled',
+supabase/migrations/20260821120654_supplier_returns_recovery_foundation.sql:39:  CONSTRAINT supplier_return_case_mode_check CHECK (commercial_mode='loadify_supplier_fulfilled'),
+supabase/migrations/20260821120742_supplier_returns_recovery_runtime_guards.sql:50:   WHERE id=p_fulfilment_leg_id AND commercial_mode='loadify_supplier_fulfilled' AND supplier_offer_id IS NOT NULL;
+supabase/migrations/20260821203052_supplier_controlled_pilot.sql:472:    v_decision:=public.server_supplier_stock_price_decision_v1(v_offer.supplier_offer_id,v_offer.canonical_product_id,'loadify_supplier_fulfilled','GB',v_offer.external_variant_ref);
+supabase/migrations/20260821203144_supplier_controlled_pilot_adapter_readiness_closure.sql:96:      'loadify_supplier_fulfilled','GB',v_offer.external_variant_ref
+supabase/migrations/20260822173051_supplier_controlled_pilot_adapter_territory_guard.sql:94:      'loadify_supplier_fulfilled','GB',v_offer.external_variant_ref
+supabase/migrations/20260920193329_supplier_marketplace_projection.sql:7:  commercial_mode text NOT NULL DEFAULT 'loadify_supplier_fulfilled'
+supabase/migrations/20260920193329_supplier_marketplace_projection.sql:8:    CHECK (commercial_mode='loadify_supplier_fulfilled'),
+supabase/migrations/20260920200315_supplier_checkout_order_identity.sql:30:      OR "commercialMode" IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct')
+supabase/migrations/20260920200315_supplier_checkout_order_identity.sql:41:      "commercialMode" IS DISTINCT FROM 'loadify_supplier_fulfilled'
+supabase/migrations/20260920200315_supplier_checkout_order_identity.sql:102:    AND commercial_mode='loadify_supplier_fulfilled'
+supabase/migrations/20260920200315_supplier_checkout_order_identity.sql:119:        'loadify_supplier_fulfilled',
+supabase/migrations/20260920200315_supplier_checkout_order_identity.sql:125:    AND commercial_mode='loadify_supplier_fulfilled';
+supabase/migrations/20260920200315_supplier_checkout_order_identity.sql:142:    'loadify_supplier_fulfilled',v_projection.canonical_product_id,v_projection.supplier_offer_id,
+supabase/migrations/20260920200315_supplier_checkout_order_identity.sql:160:    'loadify_supplier_fulfilled',p_quantity,'GB','',
+supabase/migrations/20260920201105_supplier_payment_completion.sql:30:  IF NOT FOUND OR v_order."commercialMode"<>'loadify_supplier_fulfilled'
+supabase/migrations/20260920201105_supplier_payment_completion.sql:67:    AND l.commercial_mode='loadify_supplier_fulfilled'
+supabase/migrations/20260920202009_supplier_runtime_buyer_status.sql:19:    AND "commercialMode"='loadify_supplier_fulfilled';
+supabase/migrations/20260920202009_supplier_runtime_buyer_status.sql:100:  WHERE id=p_order_id AND "commercialMode"='loadify_supplier_fulfilled'
+supabase/migrations/20260921062910_supplier_return_customer_bridge.sql:17:        ("commercialMode"='loadify_supplier_fulfilled' AND "sellerId" IS NULL)
+supabase/migrations/20260921062910_supplier_return_customer_bridge.sql:18:        OR ("commercialMode" IS DISTINCT FROM 'loadify_supplier_fulfilled' AND "sellerId" IS NOT NULL)
+supabase/migrations/20260921062910_supplier_return_customer_bridge.sql:39:'Commercial identity of the customer return. loadify_supplier_fulfilled means Loadify is the seller of record and sellerId remains null.';
+supabase/migrations/20260921081947_supplier_projection_service_read.sql:33:    AND p.commercial_mode='loadify_supplier_fulfilled'
+supabase/migrations/20260921091538_supplier_projection_multi_offer_bindings.sql:327:      AND ps.commercial_mode='loadify_supplier_fulfilled'
+supabase/migrations/20260921091538_supplier_projection_multi_offer_bindings.sql:336:    AND p.commercial_mode='loadify_supplier_fulfilled'
+supabase/migrations/20260921091538_supplier_projection_multi_offer_bindings.sql:412:    AND commercial_mode='loadify_supplier_fulfilled'
+supabase/migrations/20260921091538_supplier_projection_multi_offer_bindings.sql:454:        'loadify_supplier_fulfilled',
+supabase/migrations/20260921091538_supplier_projection_multi_offer_bindings.sql:462:    AND commercial_mode='loadify_supplier_fulfilled';
+supabase/migrations/20260921091538_supplier_projection_multi_offer_bindings.sql:481:    'loadify_supplier_fulfilled',v_projection.canonical_product_id,v_offer.id,
+supabase/migrations/20260921091538_supplier_projection_multi_offer_bindings.sql:500:    'loadify_supplier_fulfilled',p_quantity,v_projection.territory,v_catalog_item.external_variant_ref,
+supabase/migrations/20260922145846_direct_supplier_transaction_capability_evidence.sql:467:      v_offer.supplier_offer_id,v_offer.canonical_product_id,'loadify_supplier_fulfilled','GB',v_offer.external_variant_ref
+supabase/migrations/20260922145846_direct_supplier_transaction_capability_evidence.sql:578:  IF NOT FOUND OR v_order."commercialMode" IS DISTINCT FROM 'loadify_supplier_fulfilled' THEN
+supabase/migrations/20260922154827_direct_supplier_multi_transport_pilot_readiness.sql:178:      'loadify_supplier_fulfilled','GB',v_offer.external_variant_ref
+supabase/migrations/20260922155453_direct_supplier_runtime_binding_cutover.sql:54:     OR v_leg.commercial_mode<>'loadify_supplier_fulfilled'
+supabase/migrations/20260922155453_direct_supplier_runtime_binding_cutover.sql:113:    v_offer.id,v_offer.canonical_product_id,'loadify_supplier_fulfilled',v_offer.territory,v_res.external_variant_ref
+supabase/migrations/20260922155453_direct_supplier_runtime_binding_cutover.sql:397:    AND commercial_mode='loadify_supplier_fulfilled'
+supabase/migrations/20260924153000_multicountry_market_native_pricing.sql:193:  IF v_mode NOT IN ('marketplace_seller','loadify_supplier_fulfilled','loadify_direct') THEN
+supabase/migrations/20260925211000_ecn_inventory_source_decision.sql:289:  -- commercial mode 'loadify_supplier_fulfilled', whose present legal/economic
+supabase/migrations/20260925211000_ecn_inventory_source_decision.sql:340:    'loadify_supplier_fulfilled',

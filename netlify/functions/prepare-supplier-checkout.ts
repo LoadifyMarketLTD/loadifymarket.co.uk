@@ -67,6 +67,20 @@ export const handler: Handler = async (event) => {
     }, METHODS);
   }
 
+  const { data: commercialReadiness, error: commercialReadinessError } = await admin.rpc(
+    "server_supplier_marketplace_commercial_readiness_v1",
+    { p_market_code: requestedMarket },
+  );
+  if (commercialReadinessError || !commercialReadiness || commercialReadiness.eligible !== true) {
+    return jsonResponse(409, {
+      error: "Supplier marketplace checkout is temporarily unavailable while the independent-supplier commercial model is being verified",
+      code: "SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY",
+      marketCode: requestedMarket,
+      commercialReadiness: commercialReadiness ?? null,
+      paymentSessionCreated: false,
+    }, METHODS);
+  }
+
   const shippingValidation = validateMarketAddress(shippingAddress, requestedMarket);
   const billingValidation = validateMarketAddress(billingAddress, requestedMarket);
   if (!shippingValidation.ok || !billingValidation.ok) {
@@ -141,6 +155,6 @@ export const handler: Handler = async (event) => {
     paymentSessionCreated: false,
     paymentCaptured: false,
     supplierOrderSubmitted: false,
-    nextGate: "loadify_merchant_of_record_payment_session",
+    nextGate: "supplier_marketplace_payment_session",
   }, METHODS);
 };

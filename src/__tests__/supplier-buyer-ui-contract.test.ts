@@ -14,7 +14,7 @@ describe("supplier fulfilled buyer UI contract", () => {
 
   it("merges governed supplier catalog without inventing a seller id", () => {
     expect(catalog).toContain('commercialMode: "loadify_supplier_fulfilled"');
-    expect(catalog).toContain('seller: "Loadify Market"');
+    expect(catalog).toContain('seller: item.supplierName?.trim() || "Independent supplier"');
     expect(catalog).not.toContain("sellerId:");
     expect(grid).toContain("fetchSupplierCatalog()");
   });
@@ -36,6 +36,6 @@ describe("supplier fulfilled buyer UI contract", () => {
   it("projects supplier runtime status into buyer orders", () => {
     expect(orders).toContain("/.netlify/functions/supplier-order-status?orderId=");
     expect(orders).toContain("supplierRuntimeStatus");
-    expect(orders).toContain("Sold by Loadify Market");
+    expect(orders).toContain("Sold by independent approved supplier");
   });
 });

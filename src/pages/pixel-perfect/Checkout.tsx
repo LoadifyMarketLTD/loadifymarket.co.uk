@@ -850,9 +850,9 @@ const Checkout = () => {
                   )}
 
                   <div className="rounded-lg bg-muted/50 border border-border p-4 text-xs text-muted-foreground leading-relaxed">
-                    <span className="font-semibold text-foreground">{supplierOnlyCart ? "Loadify Sale:" : "Marketplace Notice:"}</span>{" "}
+                    <span className="font-semibold text-foreground">{supplierOnlyCart ? "Supplier Marketplace Notice:" : "Marketplace Notice:"}</span>{" "}
                     {supplierOnlyCart
-                      ? "You are buying from Loadify Market. Stock is held and dispatched by an approved fulfilment supplier; Loadify does not operate a warehouse."
+                      ? "You are buying from the independent approved supplier identified for this product/order. The supplier owns or controls the stock and dispatches the goods; Loadify provides the marketplace and checkout workflow."
                       : "You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller."}
                   </div>
 

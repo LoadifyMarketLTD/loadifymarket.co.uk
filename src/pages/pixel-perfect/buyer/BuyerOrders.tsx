@@ -520,7 +520,7 @@ const BuyerOrders = () => {
                   </Badge>
                   {o.commercialMode === "loadify_supplier_fulfilled" && (
                     <span className="text-[11px] text-muted-foreground">
-                      Sold by Loadify Market{o.supplierConfirmation ? ` · Supplier ${o.supplierConfirmation}` : ""}
+                      Sold by independent approved supplier{o.supplierConfirmation ? ` · Supplier ${o.supplierConfirmation}` : ""}
                       {o.trackingRef ? ` · Tracking ${o.trackingRef}` : ""}
                     </span>
                   )}
