@@ -8,6 +8,7 @@ const DEPLOYMENT_ASSET_ERROR_PATTERNS = [
   /chunkloaderror/i,
   /loading chunk [^ ]+ failed/i,
   /failed to load module script/i,
+  /cannot read properties of undefined \(reading ['"]default['"]\)/i,
 ];
 
 export function isDeploymentAssetError(error: unknown): boolean {
