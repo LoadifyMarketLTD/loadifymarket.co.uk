@@ -1103,7 +1103,7 @@ Evidence continues in:
 The shadow route engine remains **non-authoritative**. Address structure validation, buyer authentication, rate limiting, maintenance mode and multi-seller cart rejection remain checkout-boundary controls and must not be silently replaced by the route decision.
 
 
-## 25. Romania online withdrawal readiness and desktop price repair ÔÇö 25 September 2026
+## 25. Romania online withdrawal readiness and desktop price repair - 25 September 2026
 
 Authoritative legal review identified an additional Romania launch requirement with a near-term effective date:
 - OUG nr. 18/2026 amends the Romanian distance-contract framework with an online withdrawal-function requirement applicable from 27 September 2026.
@@ -1111,8 +1111,8 @@ Authoritative legal review identified an additional Romania launch requirement w
 - This technical implementation does not mark any legal-policy version as reviewed or verified; the policy-version gate remains fail-closed until explicit review is complete.
 
 Implemented and verified:
-- dedicated buyer route `/buyer/withdrawal` with the Romanian presentation `Retrage+øi-v-â din contract aici`;
-- explicit consumer confirmation action `Confirma+øi retragerea`;
+- dedicated buyer route `/buyer/withdrawal` with the Romanian presentation `RetrageÈ›i-vÄƒ din contract aici`;
+- explicit consumer confirmation action `ConfirmaÈ›i retragerea`;
 - Romania-order ownership, market and 14-day post-delivery window checks;
 - dedicated server-only declaration record `public.order_withdrawal_requests`;
 - buyer/admin read RLS, with client INSERT/UPDATE/DELETE revoked;
