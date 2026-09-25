@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -7,6 +6,8 @@ const migration = readFileSync(
   resolve(process.cwd(), "supabase/migrations/20260925170000_ecn_cross_border_route_decision.sql"),
   "utf8",
 );
+const checkout = readFileSync(resolve(process.cwd(), "netlify/functions/create-checkout.ts"), "utf8");
+const returnEligibility = readFileSync(resolve(process.cwd(), "netlify/functions/customer-return-eligibility.ts"), "utf8");
 
 describe("ECN cross-border route decision", () => {
   it("is read-only and service-role only", () => {
@@ -89,6 +90,15 @@ describe("ECN cross-border route decision", () => {
     expect(migration).toContain("Royal Mail");
     expect(migration).toContain("Evri");
     expect(migration).toContain("v_shipping_selection_ok");
+  });
+
+  it("keeps full address and customer-return entitlement in their existing authoritative boundaries", () => {
+    expect(checkout).toContain("validateMarketAddress(billingAddress, marketCode)");
+    expect(checkout).toContain("validateMarketAddress(shippingAddress, marketCode)");
+    expect(returnEligibility).toContain("evaluateCustomerReturnAutomation");
+    expect(migration).toContain("'returnRouteEligible',v_return_ok");
+    expect(migration).toContain("'returnEntitlementAuthoritative',false");
+    expect(migration).toContain("Customer return entitlement remains authoritative");
   });
 
   it("keeps checkout fail-closed until every required gate is eligible", () => {

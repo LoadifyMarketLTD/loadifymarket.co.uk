@@ -151,3 +151,50 @@ For marketplace-seller checkout context the shadow decision now also requires:
 New explicit shadow outputs include seller-account eligibility, stock eligibility, selected-shipping eligibility, selected method/courier/rate and requested quantity.
 
 This remains read-only and non-authoritative.
+
+
+## Parity finding 4 — address and return authority boundaries
+
+The next parity pass confirmed that two live checkout concerns must **not** be absorbed into the product route engine:
+
+### Address validation remains checkout-authoritative
+
+The live checkout validates full billing and shipping addresses with `validateMarketAddress(...)`, including:
+
+- address line;
+- city;
+- country/market match;
+- GB postcode format;
+- RO six-digit postcode format.
+
+The ECN shadow route decision therefore uses only the destination country/market and destination postcode needed for route/tax parity. It does not attempt to become the canonical full-address validator.
+
+### Return route capability is not customer return entitlement
+
+The live return boundary uses `customer-return-eligibility.ts` and `evaluateCustomerReturnAutomation(...)`, which depend on:
+
+- authenticated order ownership;
+- order market;
+- order/order-item identity;
+- delivered/completed state;
+- verified delivery date;
+- purchased quantity;
+- requested quantity;
+- reason code;
+- return-window age;
+- supplier/carrier capabilities.
+
+Therefore the ECN route decision now explicitly exposes:
+
+- `returnRouteEligible` — reverse-logistics route capability only;
+- `returnEntitlementAuthoritative=false` — customer entitlement remains order-authoritative.
+
+This prevents the route engine from falsely claiming that a customer is entitled to a return merely because the origin→destination route supports returns.
+
+### Verification
+
+- ECN route + address contract tests: **19/19 PASS across 3 files**;
+- TypeScript: **PASS**;
+- targeted ESLint: **PASS**;
+- canonical migration health: **228/228 PASS**;
+- `git diff --check`: **PASS**.
