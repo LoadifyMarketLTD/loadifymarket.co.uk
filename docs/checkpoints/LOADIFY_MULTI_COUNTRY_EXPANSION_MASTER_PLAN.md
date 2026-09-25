@@ -1,11 +1,11 @@
 # Loadify Market — Multi-Country Expansion Master Plan
 
-**Status:** CANONICAL / ACTIVE  
-**Created:** 24 September 2026  
-**Owner:** Loadify Market / XDrive Logistics Ltd  
-**Repository:** `LoadifyMarketLTD/loadifymarket.co.uk`  
-**Canonical implementation worktree:** `D:\LoadifyMarket-Multicountry`  
-**Canonical implementation branch:** `feat/multicountry-uk-ro`  
+**Status:** CANONICAL / ACTIVE
+**Created:** 24 September 2026
+**Owner:** Loadify Market / XDrive Logistics Ltd
+**Repository:** `LoadifyMarketLTD/loadifymarket.co.uk`
+**Canonical implementation worktree:** `D:\LoadifyMarket-Multicountry`
+**Canonical implementation branch:** `feat/multicountry-uk-ro`
 **Base:** `origin/main` at `eb005e5a` when the worktree was created.
 
 > This document is the mandatory continuity source for every agent working on Loadify Market international expansion. Read it before modifying the project. Update it whenever an implementation phase is completed, materially changed, blocked, or superseded.
@@ -451,15 +451,15 @@ Every new agent/session must:
 
 At the end of each significant work session append/update:
 
-**Date/time:**  
-**Branch/commit:**  
-**Completed:**  
-**Files changed:**  
-**Tests/evidence:**  
-**Known issues:**  
-**Blocked by:**  
-**Next exact task:**  
-**Do not touch:**  
+**Date/time:**
+**Branch/commit:**
+**Completed:**
+**Files changed:**
+**Tests/evidence:**
+**Known issues:**
+**Blocked by:**
+**Next exact task:**
+**Do not touch:**
 
 ## 20. Current next exact task
 
