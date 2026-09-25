@@ -8,6 +8,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores([
     'dist',
+    '.netlify/**',
     'src/components/ui/**',
     'android/.gradle/**',
     'android/app/build/**',
