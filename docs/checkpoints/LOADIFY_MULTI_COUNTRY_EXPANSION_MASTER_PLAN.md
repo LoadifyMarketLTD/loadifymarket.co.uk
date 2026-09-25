@@ -9,6 +9,8 @@
 **Base:** `origin/main` at `eb005e5a` when the worktree was created.
 
 > This document is the mandatory continuity source for every agent working on Loadify Market international expansion. Read it before modifying the project. Update it whenever an implementation phase is completed, materially changed, blocked, or superseded.
+>
+> **European Commerce Network architecture:** also read `docs/checkpoints/LOADIFY_EUROPEAN_COMMERCE_NETWORK_MASTER_BLUEPRINT.md`. The blueprint is the canonical cross-border product/architecture model (routes, multi-warehouse, landed cost, compliance, reverse logistics and B2B/RFQ). This plan remains canonical for implementation state, launch controls and Romania readiness.
 
 ## 1. Mission
 
