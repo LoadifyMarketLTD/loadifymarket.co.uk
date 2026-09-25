@@ -1,7 +1,6 @@
 import type { Config, Context } from '@netlify/edge-functions';
 import { COMMERCIAL_SEO_META } from '../../src/lib/commercialSeo.ts';
-
-const BASE_URL = 'https://loadifymarket.co.uk';
+import { seoMarketContext } from './_shared/marketSeo.ts';
 
 type PageMeta = {
   title: string;
@@ -68,6 +67,7 @@ export default async function publicMeta(
   context: Context,
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
+  const marketContext = seoMarketContext(requestUrl);
   const pathname = requestUrl.pathname.replace(/\/$/, '') || '/';
   const meta = PAGE_META[pathname];
   if (!meta) return context.next();
@@ -85,7 +85,7 @@ export default async function publicMeta(
 
   const title = escapeAttr(meta.title);
   const description = escapeAttr(meta.description);
-  const canonical = escapeAttr(`${BASE_URL}${pathname}`);
+  const canonical = escapeAttr(`${marketContext.baseUrl}${pathname}`);
 
   html = replaceMeta(html, /<title>[^<]*<\/title>/, `<title>${title}</title>`);
   html = replaceMeta(
