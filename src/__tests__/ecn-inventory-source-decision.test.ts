@@ -43,9 +43,15 @@ describe("ECN-3B inventory-source decision", () => {
     expect(migration).toContain("'INVENTORY_LOCATION_MISSING'");
   });
 
-  it("reuses governed supplier stock and price readiness instead of copying raw stock", () => {
-    expect(migration).toContain("server_supplier_stock_price_decision_v1");
-    expect(migration).toContain("private.supplier_stock_observations");
+  it("fails supplier ECN selection closed until the intermediary commercial model is corrected", () => {
+    expect(migration).toContain("supplier_intermediary_commercial_model_not_ready");
+    expect(migration).toContain("does not own or pre-purchase");
+    expect(migration).toContain("supplier stock");
+    expect(migration).toContain("MUST NOT");
+    expect(migration).toContain("be propagated into ECN");
+  });
+
+  it("does not create a competing supplier stock or reservation system", () => {
     expect(migration).not.toContain("CREATE TABLE IF NOT EXISTS private.supplier_stock_observations");
     expect(migration).not.toContain("CREATE TABLE IF NOT EXISTS private.supplier_stock_reservations");
   });

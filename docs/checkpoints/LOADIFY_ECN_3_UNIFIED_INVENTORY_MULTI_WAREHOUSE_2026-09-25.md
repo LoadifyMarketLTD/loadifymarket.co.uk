@@ -12,7 +12,20 @@
 
 ## 1. Objective
 
-Introduce a unified inventory decision layer that can choose an eligible fulfilment source without replacing the existing seller-stock or supplier-stock systems.
+Introduce a unified inventory decision layer that can choose an eligible third-party fulfilment source without replacing the existing seller-stock or supplier-stock systems.
+
+### Non-negotiable marketplace ownership model
+
+Loadify Market is a platform/intermediary. It does **not**:
+
+- own inventory;
+- operate its own warehouses;
+- pre-purchase goods from suppliers;
+- take title to goods;
+- become the retailer/seller of record merely because a product comes from a direct supplier;
+- finance stock before a buyer order exists.
+
+Stock remains owned/controlled by the independent seller or supplier until sold under the applicable marketplace contract. The responsible seller/supplier stores and dispatches the goods. Loadify may orchestrate catalogue, checkout, payment workflow, shipping information, returns/disputes and evidence, but this does not transfer inventory ownership to Loadify.
 
 The target question is:
 
@@ -33,7 +46,7 @@ The output must support:
 
 **Do not build a second competing stock truth.**
 
-The existing platform already has two materially different stock models.
+The existing platform already has two materially different **third-party stock** models. Neither model represents Loadify-owned stock.
 
 ### Seller stock truth today
 
@@ -520,6 +533,8 @@ Only after later approval: reservation/cutover work.
 ## 18. Non-goals
 
 ECN-3 does not:
+
+- make Loadify the owner, purchaser, importer, warehouse operator, retailer or seller of the goods;
 
 - activate Romania;
 - rewrite supplier stock evidence;
