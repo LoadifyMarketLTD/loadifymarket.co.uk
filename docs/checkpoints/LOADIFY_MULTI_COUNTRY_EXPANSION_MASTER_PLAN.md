@@ -1027,3 +1027,31 @@ Continue GB→GB parity with the remaining domains:
 7. buyer/account-state and maintenance/rate-limit boundaries where route authority must not replace existing checkout controls.
 
 Do not make the ECN route decision authoritative until the resulting parity matrix shows no unexplained mismatch.
+
+
+### 24.13 Main synchronization update — Romania online withdrawal
+
+The branch was synchronized again with current `origin/main` after commits:
+
+- `59c97e5c — feat: add Romania online withdrawal function`
+- `0480a7d9 — fix: expose Romania withdrawal function in Netlify runtime`
+
+This production-main work adds a Romania online withdrawal/cancellation request path and corresponding evidence/tests without changing the RO PRELAUNCH payment/checkout state.
+
+Merged files include:
+
+- `src/pages/pixel-perfect/buyer/BuyerWithdrawal.tsx`
+- `netlify/functions/request-order-withdrawal.ts`
+- `netlify/functions-modern/request-order-withdrawal.ts`
+- `supabase/migrations/20260925182500_romania_online_withdrawal_function.sql`
+- `src/__tests__/romania-online-withdrawal.test.ts`
+- `docs/checkpoints/evidence/romania-online-withdrawal-2026-09-25.md`
+
+Post-merge verification:
+
+- ECN + GB tax parity + Romania withdrawal focused suite: **50/50 PASS across 5 files**
+- TypeScript: **PASS**
+- canonical migration health: **228/228 unique versions PASS**
+- `git diff --check`: **PASS**
+
+The ECN parity fix remains isolated to the shadow route decision and does not modify live UK checkout behaviour.
