@@ -538,6 +538,10 @@ Latest verified hardening evidence:
 - branch is synchronized with current origin/main and remains isolated from UK production.
 - loadifymarket.ro DNS currently does not resolve; no production-domain attachment has been attempted.
 - Romania remains PRELAUNCH with checkout/payment disabled.
+- crawler-visible edge metadata is now market-aware: product/category/public canonical URLs resolve to the request market domain and product/category discovery is filtered by marketCodes.
+- focused crawler SEO tests: 11/11 PASS; TypeScript and ESLint PASS.
+- production build after crawler SEO hardening: PASS; 2,499 modules transformed, 225/225 canonical migration versions and security boundary 9/9 PASS.
+- branch remains synchronized with origin/main (0 behind) and clean after the crawler SEO commit.
 
 Next exact work:
 1. Complete the Romanian legal-page presentation using reviewed policy content; do not auto-verify policy versions merely because translated text exists.
