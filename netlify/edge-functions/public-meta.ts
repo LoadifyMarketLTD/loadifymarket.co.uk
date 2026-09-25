@@ -1,6 +1,6 @@
 import type { Config, Context } from '@netlify/edge-functions';
 import { COMMERCIAL_SEO_META } from '../../src/lib/commercialSeo.ts';
-import { seoMarketContext } from './_shared/marketSeo.ts';
+import { replaceOrInsertSeoAlternates, seoMarketContext } from './_shared/marketSeo.ts';
 
 type PageMeta = {
   title: string;
@@ -110,6 +110,11 @@ export default async function publicMeta(
   );
   html = replaceMeta(
     html,
+    /<meta property="og:locale" content="[^"]*"\s*\/?>/,
+    `<meta property="og:locale" content="${marketContext.locale.replace('-', '_')}" />`,
+  );
+  html = replaceMeta(
+    html,
     /<meta name="twitter:title" content="[^"]*"\s*\/?>/,
     `<meta name="twitter:title" content="${title}" />`,
   );
@@ -131,6 +136,7 @@ export default async function publicMeta(
   } else {
     html = html.replace('</head>', `  <link rel="canonical" href="${canonical}" />\n</head>`);
   }
+  html = replaceOrInsertSeoAlternates(html, pathname);
 
   const headers = new Headers(response.headers);
   return new Response(html, {

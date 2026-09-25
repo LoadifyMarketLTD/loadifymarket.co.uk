@@ -11,7 +11,7 @@ import {
   productAggregateRating,
   schemaItemCondition,
 } from '../../src/lib/productSeo.ts';
-import { marketCodesRestFilter, seoMarketContext, type SeoMarket } from './_shared/marketSeo.ts';
+import { marketCodesRestFilter, replaceOrInsertSeoAlternates, seoMarketContext, type SeoMarket } from './_shared/marketSeo.ts';
 const SITE_NAME = 'Loadify Market';
 const LEGAL_OPERATOR_NAME = 'XDrive Logistics Ltd';
 
@@ -386,6 +386,10 @@ export default async function productMeta(
     /<meta property="og:type" content="[^"]*"/,
     '<meta property="og:type" content="product"',
   );
+  html = html.replace(
+    /<meta property="og:locale" content="[^"]*"/,
+    `<meta property="og:locale" content="${marketContext.locale.replace('-', '_')}"`,
+  );
 
   if (html.includes('property="og:image:secure_url"')) {
     html = html.replace(
@@ -506,6 +510,7 @@ export default async function productMeta(
   if (extraLines.length > 0) {
     html = html.replace('</head>', `${extraLines.join('\n')}\n</head>`);
   }
+  html = replaceOrInsertSeoAlternates(html, `/product/${product.id}`);
 
   return new Response(html, {
     status: baseResponse.status,

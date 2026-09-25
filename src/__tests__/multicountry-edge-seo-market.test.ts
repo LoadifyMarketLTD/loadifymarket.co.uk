@@ -31,4 +31,16 @@ describe("multi-country crawler-visible edge metadata", () => {
     expect(publicMeta).toContain("seoMarketContext(requestUrl)");
     expect(publicMeta).toContain("marketContext.baseUrl");
   });
+
+  it("emits crawler-visible reciprocal hreflang links for GB and RO", () => {
+    expect(helper).toContain('hreflang="en-GB"');
+    expect(helper).toContain('hreflang="ro-RO"');
+    expect(helper).toContain('hreflang="x-default"');
+    expect(product).toContain("replaceOrInsertSeoAlternates");
+    expect(category).toContain("replaceOrInsertSeoAlternates");
+    expect(publicMeta).toContain("replaceOrInsertSeoAlternates");
+    expect(product).toContain("marketContext.locale.replace('-', '_')");
+    expect(category).toContain("marketContext.locale.replace('-', '_')");
+    expect(publicMeta).toContain("marketContext.locale.replace('-', '_')");
+  });
 });

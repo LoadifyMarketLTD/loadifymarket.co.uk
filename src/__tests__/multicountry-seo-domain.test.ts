@@ -15,4 +15,8 @@ describe("multi-country SEO domains", () => {
     expect(seo).toContain('market === "RO" ? "ro_RO" : "en_GB"');
     expect(seo).toContain('content={config.locale}');
   });
+  it("uses the active market domain for the default social image", () => {
+    expect(seo).toContain('ogImage ?? `${activeBaseUrl}/og-loadify-market.png`');
+    expect(seo).toContain('content={resolvedOgImage}');
+  });
 });

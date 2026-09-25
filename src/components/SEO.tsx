@@ -6,7 +6,6 @@ import { useMarket } from "@/contexts/MarketContext";
 
 const SITE_NAME = "Loadify Market";
 const BASE_URL = "https://loadifymarket.co.uk";
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
 const PRODUCT_SELLER_PROMO_RE = /\s*Sell with 0% commission on Loadify Market\.?\s*$/i;
 
 interface SEOProps {
@@ -57,7 +56,7 @@ export default function SEO({
   title,
   description,
   canonical,
-  ogImage = DEFAULT_OG_IMAGE,
+  ogImage,
   ogType = "website",
   robots = "index, follow",
   ogPrice,
@@ -76,6 +75,7 @@ export default function SEO({
   const fullTitle = buildSeoTitle(resolvedTitle);
   const alternatePath = canonicalPath(canonical);
   const activeBaseUrl = market === "RO" ? "https://loadifymarket.ro" : BASE_URL;
+  const resolvedOgImage = ogImage ?? `${activeBaseUrl}/og-loadify-market.png`;
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
       ? `${activeBaseUrl}${canonicalPath(canonical) ?? "/"}`
@@ -106,7 +106,7 @@ export default function SEO({
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={resolvedDescription} />
-      <meta property="og:image" content={ogImage} />
+      <meta property="og:image" content={resolvedOgImage} />
       {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
 
       {ogType === "product" && ogPrice && (
@@ -121,7 +121,7 @@ export default function SEO({
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={resolvedDescription} />
-      <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image" content={resolvedOgImage} />
 
       {shouldRenderStructuredData && structuredData && (
         <script type="application/ld+json">

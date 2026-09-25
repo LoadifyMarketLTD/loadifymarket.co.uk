@@ -7,7 +7,7 @@
  */
 import type { Config, Context } from '@netlify/edge-functions';
 import { getCategorySeoLanding } from '../../src/lib/categorySeo.ts';
-import { marketCodesRestFilter, seoMarketContext, type SeoMarket } from './_shared/marketSeo.ts';
+import { marketCodesRestFilter, replaceOrInsertSeoAlternates, seoMarketContext, type SeoMarket } from './_shared/marketSeo.ts';
 const SITE_NAME = 'Loadify Market';
 const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,158}[a-z0-9])?$/i;
 
@@ -173,9 +173,11 @@ export default async function categoryMeta(
   html = replacePropertyMeta(html, 'og:title', title);
   html = replacePropertyMeta(html, 'og:description', description);
   html = replacePropertyMeta(html, 'og:url', canonical);
+  html = replacePropertyMeta(html, 'og:locale', marketContext.locale.replace('-', '_'));
   html = replaceOrInsertMeta(html, 'twitter:title', title);
   html = replaceOrInsertMeta(html, 'twitter:description', description);
   html = replaceCanonical(html, canonical);
+  html = replaceOrInsertSeoAlternates(html, `/category/${slug}`);
 
   return new Response(html, {
     status: baseResponse.status,
