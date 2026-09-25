@@ -18,9 +18,9 @@ describe("supplier checkout market gate", () => {
     expect(source).toContain('requestedMarket !== "GB" && requestedMarket !== "RO"');
   });
 
-  it("keeps Romania supplier checkout disabled", () => {
+  it("keeps Romania supplier checkout disabled until the explicit runtime launch control is live", () => {
     expect(source).toContain("SUPPLIER_CHECKOUT_MARKET_NOT_READY");
-    expect(source).toContain('if (requestedMarket !== "GB")');
+    expect(source).toContain("marketCheckoutIsLive(admin, requestedMarket as LaunchMarket)");
     expect(source).toContain("paymentSessionCreated: false");
   });
 

@@ -6,6 +6,7 @@ import { jsonResponse, optionsResponse } from "./_shared/http";
 import { evaluateProjectionSupplierOffers } from "./_shared/supplierOfferSelectionRuntime";
 import { evaluateSupplierCheckoutGuard } from "./_shared/supplierSync";
 import { validateMarketAddress } from "../../src/lib/marketAddress";
+import { marketCheckoutIsLive, type LaunchMarket } from "./_shared/marketLaunch";
 
 const METHODS = "POST, OPTIONS";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -57,7 +58,7 @@ export const handler: Handler = async (event) => {
   if (requestedMarket !== "GB" && requestedMarket !== "RO") {
     return jsonResponse(400, { error: "Unsupported checkout market", code: "SUPPLIER_CHECKOUT_MARKET_INVALID" }, METHODS);
   }
-  if (requestedMarket !== "GB") {
+  if (!await marketCheckoutIsLive(admin, requestedMarket as LaunchMarket)) {
     return jsonResponse(409, {
       error: "Supplier checkout is not yet enabled for this market",
       code: "SUPPLIER_CHECKOUT_MARKET_NOT_READY",

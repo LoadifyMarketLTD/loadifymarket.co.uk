@@ -12,6 +12,7 @@ import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { resolveMarketplaceTaxV1 } from './_shared/marketplaceTax';
 import { validateMarketAddress } from '../../src/lib/marketAddress';
+import { marketPaymentIsLive, type LaunchMarket } from './_shared/marketLaunch';
 
 interface CheckoutItem {
   productId: string;
@@ -83,17 +84,6 @@ export const handler: Handler = async (event) => {
   if (requestedMarket !== 'GB' && requestedMarket !== 'RO') {
     return { statusCode: 400, body: JSON.stringify({ error: 'Unsupported checkout market', code: 'PAYMENT_MARKET_INVALID' }) };
   }
-  if (requestedMarket !== 'GB') {
-    return {
-      statusCode: 409,
-      body: JSON.stringify({
-        error: 'Mobile payments are not yet enabled for this market',
-        code: 'PAYMENT_MARKET_NOT_READY',
-        marketCode: requestedMarket,
-      }),
-    };
-  }
-
   if (!Array.isArray(items) || items.length === 0 || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
@@ -118,6 +108,14 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  if (!await marketPaymentIsLive(supabase, requestedMarket as LaunchMarket)) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({ error: 'Mobile payments are not yet enabled for this market', code: 'PAYMENT_MARKET_NOT_READY', marketCode: requestedMarket }),
+    };
+  }
+  const expectedCurrency = requestedMarket === 'RO' ? 'RON' : 'GBP';
+  const stripeCurrency = expectedCurrency.toLowerCase();
   const reservationToken = randomUUID();
 
   // Mobile payment creation also runs with service_role. Enforce current account
@@ -185,7 +183,7 @@ export const handler: Handler = async (event) => {
       return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" is not available in this market.`, code: 'PRODUCT_MARKET_NOT_ELIGIBLE' }) };
     }
     const productCurrency = dbProduct.currency ?? 'GBP';
-    if (requestedMarket === 'GB' && productCurrency !== 'GBP') {
+    if (productCurrency !== expectedCurrency) {
       return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" has an invalid market currency.`, code: 'PRODUCT_CURRENCY_MISMATCH' }) };
     }
     if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
@@ -492,7 +490,7 @@ export const handler: Handler = async (event) => {
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalPence,
-      currency: 'gbp',
+      currency: stripeCurrency,
       // Keep the charge on the platform for the protection window, but make the
       // connected seller the business of record for this payment.
       on_behalf_of: sellerProfile.stripeAccountId,
@@ -516,7 +514,8 @@ export const handler: Handler = async (event) => {
         userId: verifiedBuyerId,
         status: 'pending',
         amount: chargeableTotal,
-        currency: 'GBP',
+        currency: expectedCurrency,
+        marketCode: requestedMarket,
         metadata: {
           commercialSnapshotVersion: 1,
           buyerSnapshot,

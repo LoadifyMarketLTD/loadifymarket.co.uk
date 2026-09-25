@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Handler } from "@netlify/functions";
 import { authenticateActiveAccount } from "./_shared/activeAccountAuth";
 import { jsonResponse, optionsResponse } from "./_shared/http";
+import { marketPaymentIsLive, type LaunchMarket } from "./_shared/marketLaunch";
 
 const METHODS = "POST, OPTIONS";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -45,7 +46,9 @@ export const handler: Handler = async (event) => {
     return jsonResponse(409, { error: "Supplier order is not ready for payment" }, METHODS);
   }
 
-  if (order.marketCode !== "GB" || order.currency !== "GBP") {
+  const orderMarket = order.marketCode === "RO" ? "RO" : order.marketCode === "GB" ? "GB" : null;
+  const expectedCurrency = orderMarket === "RO" ? "RON" : orderMarket === "GB" ? "GBP" : null;
+  if (!orderMarket || order.currency !== expectedCurrency || !await marketPaymentIsLive(admin, orderMarket as LaunchMarket)) {
     return jsonResponse(409, {
       error: "Supplier payments are not yet enabled for this market or currency",
       code: "SUPPLIER_PAYMENT_MARKET_NOT_READY",
@@ -120,7 +123,7 @@ export const handler: Handler = async (event) => {
     orderId: order.id,
     status: "pending",
     amount: Number(order.total),
-    currency: "GBP",
+    currency: order.currency,
     metadata: {
       commercialMode: "loadify_supplier_fulfilled",
       orderId: order.id,
@@ -141,7 +144,7 @@ export const handler: Handler = async (event) => {
     paymentIntentId: intent.id,
     orderId: order.id,
     amountPence,
-    currency: "GBP",
+    currency: order.currency,
     merchantOfRecord: "Loadify Market",
     externalCheckoutRedirect: false,
   }, METHODS);

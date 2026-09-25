@@ -31,8 +31,9 @@ describe("multi-country money and tax boundary", () => {
     expect(migration).toContain("Conversion requires explicit FX evidence");
   });
 
-  it("keeps supplier payment fail-closed outside live GB/GBP", () => {
-    expect(payment).toContain('order.marketCode !== "GB" || order.currency !== "GBP"');
+  it("keeps supplier payment fail-closed unless the market/currency and runtime launch gate agree", () => {
+    expect(payment).toContain('expectedCurrency = orderMarket === "RO" ? "RON" : orderMarket === "GB" ? "GBP" : null');
+    expect(payment).toContain("marketPaymentIsLive(admin, orderMarket as LaunchMarket)");
     expect(payment).toContain("SUPPLIER_PAYMENT_MARKET_NOT_READY");
     expect(payment).toContain("p_territory: order.marketCode");
     expect(payment).toContain("currency: order.currency.toLowerCase()");

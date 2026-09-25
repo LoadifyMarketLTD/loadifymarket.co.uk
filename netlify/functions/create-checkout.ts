@@ -7,6 +7,7 @@ import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { resolveMarketplaceTaxV1 } from './_shared/marketplaceTax';
 import { validateMarketAddress } from '../../src/lib/marketAddress';
+import { marketCheckoutIsLive, type LaunchMarket } from './_shared/marketLaunch';
 
 interface CheckoutItem {
   productId: string;
@@ -87,10 +88,6 @@ export const handler: Handler = async (event) => {
     marketCode = 'GB',
   } = body;
 
-  if (marketCode !== 'GB') {
-    return { statusCode: 409, body: JSON.stringify({ error: 'Checkout is not yet enabled for this market.', code: 'MARKET_CHECKOUT_NOT_READY' }) };
-  }
-
   if (!Array.isArray(items) || items.length === 0 || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
@@ -116,6 +113,11 @@ export const handler: Handler = async (event) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  if (!await marketCheckoutIsLive(supabase, marketCode as LaunchMarket)) {
+    return { statusCode: 409, body: JSON.stringify({ error: 'Checkout is not yet enabled for this market.', code: 'MARKET_CHECKOUT_NOT_READY' }) };
+  }
+  const expectedCurrency = marketCode === 'RO' ? 'RON' : 'GBP';
+  const stripeCurrency = expectedCurrency.toLowerCase();
   const reservationToken = randomUUID();
   let reservedProductIds: string[] = [];
   const releaseReservedProducts = async () => {
@@ -207,7 +209,7 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: `Item "${dbProduct?.title ?? item.title}" is no longer available` }),
       };
     }
-    if (dbProduct.currency !== 'GBP' || !Array.isArray(dbProduct.marketCodes) || !dbProduct.marketCodes.includes(marketCode)) {
+    if (dbProduct.currency !== expectedCurrency || !Array.isArray(dbProduct.marketCodes) || !dbProduct.marketCodes.includes(marketCode)) {
       return { statusCode: 409, body: JSON.stringify({ error: 'This item is not eligible for checkout in the selected market.', code: 'MARKET_CURRENCY_MISMATCH' }) };
     }
         if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
@@ -526,7 +528,7 @@ export const handler: Handler = async (event) => {
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = enrichedItems.map((item) => {
       return {
         price_data: {
-          currency: 'gbp',
+          currency: stripeCurrency,
           product_data: { name: item.title },
           unit_amount: Math.round(item.price * 100),
         },
@@ -537,7 +539,7 @@ export const handler: Handler = async (event) => {
     if (shippingAmountPence > 0) {
       lineItems.push({
         price_data: {
-          currency: 'gbp',
+          currency: stripeCurrency,
           product_data: { name: `Shipping — ${resolvedShippingMethodLabel}` },
           unit_amount: shippingAmountPence,
         },
@@ -545,7 +547,7 @@ export const handler: Handler = async (event) => {
       });
     }
 
-    const rawSiteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').trim();
+    const rawSiteUrl = (marketCode === 'RO' ? 'https://loadifymarket.ro' : (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk')).trim();
     let siteUrl: string;
     try {
       const parsed = new URL(rawSiteUrl);
@@ -589,7 +591,7 @@ export const handler: Handler = async (event) => {
         userId: verifiedBuyerId,
         status: 'pending',
         amount: chargeableTotal,
-        currency: 'GBP',
+        currency: expectedCurrency,
         marketCode,
         metadata: {
           commercialSnapshotVersion: 1,
