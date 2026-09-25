@@ -1183,3 +1183,90 @@ Verification:
 - `git diff --check` PASS.
 
 With pricing, tax, seller/account, stock, selected shipping, address authority, return authority and checkout orchestration boundaries now classified, GB→GB shadow parity is substantially complete at the contract/domain level. The Route Engine remains non-authoritative until the parity evidence is consolidated and the next implementation gate is explicitly recorded.
+
+
+### 24.17 ECN-2 closure + ECN-3 start
+
+ECN-2 GB→GB shadow parity has been consolidated into:
+
+`docs/checkpoints/ECN_2_GB_GB_SHADOW_PARITY_MATRIX_2026-09-25.md`
+
+Current decision:
+
+- ECN-2 **contract/domain parity is closed**;
+- the Route Engine remains **shadow/non-authoritative**;
+- no checkout cutover is approved;
+- future authority requires controlled deployment + runtime shadow comparison + no unexplained divergence.
+
+The parity matrix now classifies every audited concern as either:
+
+1. Route Engine responsibility; or
+2. intentionally retained checkout/return orchestration responsibility.
+
+No known unexplained GB→GB contract mismatch remains in the audited domains.
+
+### ECN-3 — Unified Inventory / Multi-Warehouse
+
+Canonical design created:
+
+`docs/checkpoints/LOADIFY_ECN_3_UNIFIED_INVENTORY_MULTI_WAREHOUSE_2026-09-25.md`
+
+Architectural decision:
+
+**Unified Inventory is a unified decision layer, not a second raw-stock source of truth.**
+
+Existing stock systems remain authoritative for their current domains:
+
+- Seller: `products.stockQuantity` + current listing reservation flow.
+- Supplier: `supplier_stock_observations` + supplier readiness decisions + `supplier_stock_reservations`.
+
+ECN-3 normalizes those sources for route-aware source selection without overwriting either system.
+
+### ECN-3A foundation implemented
+
+Migration:
+
+`supabase/migrations/20260925204500_ecn_unified_inventory_foundation.sql`
+
+Introduced:
+
+- `private.seller_inventory_positions`
+- `private.supplier_warehouse_bindings`
+
+Safety properties:
+
+- seller product ownership enforced;
+- seller dispatch-location ownership enforced;
+- active seller inventory requires verified/active physical location;
+- no negative or over-reserved stock;
+- supplier warehouse ref must exist in supplier foundation declarations;
+- supplier dispatch-location ownership enforced;
+- warehouse-country / dispatch-country parity enforced;
+- verified supplier warehouse binding requires evidence and reviewed verified location;
+- new tables private;
+- supplier stock observations/reservations are not duplicated;
+- `products.stockQuantity` remains live seller authority;
+- no Romania route/launch state changed.
+
+Verification:
+
+- ECN-3A + ECN foundation/parity tests: **34/34 PASS across 4 files**
+- TypeScript: **PASS**
+- targeted ESLint: **PASS**
+- canonical migration health: **229/229 unique versions PASS**
+- `git diff --check`: **PASS**
+
+Next exact task:
+
+Proceed to **ECN-3B — read-only inventory-source decision RPC**.
+
+The RPC must:
+
+- normalize legacy seller listing stock;
+- normalize seller location positions;
+- normalize governed supplier stock without copying raw supplier observations;
+- return deterministic candidate sources;
+- remain service-role only;
+- remain shadow/non-authoritative;
+- keep legacy implicit GB stock compatibility GB→GB-only;
+- keep all Romania routes PRELAUNCH.
