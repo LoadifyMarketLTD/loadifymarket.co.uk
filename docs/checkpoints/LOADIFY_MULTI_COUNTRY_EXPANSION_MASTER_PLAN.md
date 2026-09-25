@@ -1164,3 +1164,22 @@ Verification:
 - `git diff --check` PASS.
 
 The Route Engine remains non-authoritative. Buyer authentication, rate limiting, maintenance mode, duplicate-line prevention, single-seller-cart enforcement, complete address validation and order-level return entitlement remain outer workflow boundaries.
+
+
+### 24.16 GB→GB outer-boundary parity — checkout orchestration contract frozen
+
+The final outer-boundary parity pass has now classified the remaining checkout/session controls as deliberately **outside** the ECN Route Engine.
+
+Checkout/payment orchestration remains authoritative for buyer authentication, buyer identity matching, rate limiting, maintenance mode, duplicate cart-line rejection, single-seller-cart enforcement, reservation lifecycle and complete address validation.
+
+A new contract test (`src/__tests__/ecn-checkout-orchestration-boundaries.test.ts`) verifies both web checkout and payment-intent parity and prevents future ECN work from silently moving these controls into the product-route decision.
+
+Verification:
+
+- focused outer-boundary/route/address suite: **21/21 PASS across 3 files**;
+- TypeScript PASS;
+- targeted ESLint PASS;
+- migration health **228/228**;
+- `git diff --check` PASS.
+
+With pricing, tax, seller/account, stock, selected shipping, address authority, return authority and checkout orchestration boundaries now classified, GB→GB shadow parity is substantially complete at the contract/domain level. The Route Engine remains non-authoritative until the parity evidence is consolidated and the next implementation gate is explicitly recorded.

@@ -198,3 +198,31 @@ This prevents the route engine from falsely claiming that a customer is entitled
 - targeted ESLint: **PASS**;
 - canonical migration health: **228/228 PASS**;
 - `git diff --check`: **PASS**.
+
+
+## Parity finding 5 — checkout orchestration stays outside Route Engine
+
+The final GB→GB outer-boundary pass confirms that the Route Engine must **not** absorb checkout/session controls that are not product-route decisions.
+
+Authoritative checkout/payment orchestration remains responsible for:
+
+- authenticated active buyer account;
+- buyerId matching the authenticated actor;
+- checkout/payment rate limiting;
+- maintenance mode;
+- duplicate product-line rejection;
+- single-seller-cart enforcement;
+- reservation lifecycle and release;
+- full billing/shipping address validation.
+
+A dedicated contract test now asserts these boundaries in both `create-checkout.ts` and `create-payment-intent.ts`, and also asserts that the ECN shadow SQL does not duplicate rate-limit, maintenance, cart/session or reservation logic.
+
+This keeps the ECN decision product-scoped: product + actor + origin + destination + quantity + shipping method + readiness evidence.
+
+Verification:
+
+- outer-boundary + route + address contract suite: **21/21 PASS across 3 files**;
+- TypeScript: **PASS**;
+- targeted ESLint: **PASS**;
+- canonical migration health: **228/228 PASS**;
+- `git diff --check`: **PASS**.
