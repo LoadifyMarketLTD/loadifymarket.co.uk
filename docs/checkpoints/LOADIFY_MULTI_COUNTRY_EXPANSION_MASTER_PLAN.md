@@ -552,11 +552,13 @@ Latest verified hardening evidence:
 - Romania remains PRELAUNCH; checkout/payment remain disabled and no loadifymarket.ro production attachment or launch cutover was performed.
 
 Next exact work:
-1. Complete the Romanian legal-page presentation using reviewed policy content; do not auto-verify policy versions merely because translated text exists.
-2. Build a reproducible synthetic RO prelaunch E2E fixture covering catalogue -> cart -> RO address -> blocked checkout/readiness -> seller/supplier eligibility -> return/refund invariants.
-3. Re-run the E2E fixture against the branch and preserve evidence in the checkpoint folder.
-4. Re-check origin/main immediately before review/merge and rerun production build if main moved.
-5. Do not apply RO launch migrations, attach loadifymarket.ro to production, or enable checkout/payment until final E2E evidence and explicit launch approval are complete.
+1. Complete and review the Romanian legal policy content, then register reviewed current ro-RO policy versions for buyer_terms, privacy, returns_policy and shipping_policy. Do not auto-verify policy versions merely because translated text exists.
+2. Create and review the production RO payment-readiness evidence for RON charge support, merchant account capability, SCA/3DS, refunds and settlement/reconciliation.
+3. Implement and verify the evidence-backed Romanian/EU Marketplace Seller tax contract; keep independent Marketplace Seller RO checkout fail-closed until this is complete.
+4. Configure and verify loadifymarket.ro DNS and Netlify custom-domain attachment without enabling live RO checkout/payment.
+5. Run the final real-environment RO transaction rehearsal after domain staging, without using a live customer charge.
+6. Re-run full multicountry regression, production E2E, build, migration health and Supabase security advisors immediately before any launch state change.
+7. Keep Romania PRELAUNCH with checkout=false and payment=false until the remaining launch blockers are closed and explicit launch approval is given.
 
 ## 21. Continuity instruction for Daniel
 
@@ -581,18 +583,57 @@ Verified technical evidence:
 - Production build PASS: Vite 7.3.6, 2,499 modules transformed; security boundary 9/9 PASS. Existing Capacitor import and heic2any chunk warnings remain warnings only.
 - Stripe live account Loadify Market Platform was read directly on 25 September 2026: charges enabled, payouts enabled, card_payments active and transfers active; no outstanding account requirements were reported by the connected Stripe account read.
 - Official EU consumer guidance rechecked on 25 September 2026: distance-sale withdrawal is generally 14 days, pre-contract information must include trader/price/delivery/withdrawal information, and EU goods carry the applicable minimum legal guarantee framework. GDPR transparency/data-subject rights and Romanian ANSPDCP complaint routes were also rechecked from official EU/ANSPDCP sources.
-- Supabase production project was inspected read-only. The 15 multicountry/RO migrations dated 24 September are NOT yet applied to production; private RO launch/payment/legal tables and their readiness RPCs therefore do not yet exist in production. This is intentionally not changed before the cutover gate.
+- Supabase production schema parity was completed on 25 September 2026. All 15 canonical multicountry/RO migrations from 24 September were applied to production in dependency order. Post-apply verification confirmed the market/currency columns and the RO payment-readiness, launch-control and legal-policy RPCs exist live.
+- The production RO launch control was verified after schema cutover and remains PRELAUNCH with catalogEnabled=true, checkoutEnabled=false and paymentEnabled=false. GB remains live with checkout/payment enabled.
+- Production payment-readiness remains correctly fail-closed for RO until reviewed evidence exists for RON charge support, merchant account capability, SCA/3DS, refunds and settlement/reconciliation.
+- Production legal readiness remains correctly fail-closed for RO until reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions exist.
 - loadifymarket.ro DNS still does not resolve. No Netlify production-domain attachment or DNS cutover has been attempted.
 
 Current hard blockers before RO can be switched live:
-1. Reviewed Romanian legal policy versions are still absent. Repository legal pages remain UK/English source content; the database gate correctly requires reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions. Do not fabricate or auto-verify these.
-2. The 15 canonical multicountry/RO migrations are pending production application. Apply only as a controlled prelaunch schema cutover, then verify advisors/RPCs and confirm RO remains prelaunch.
-3. Production RO payment evidence rows must be created from verified Stripe evidence and reviewed, including RON charge support, account capability, SCA/3DS, refunds and settlement/reconciliation.
-4. loadifymarket.ro DNS and Netlify custom-domain attachment are pending.
-5. A final real-environment RO transaction rehearsal is required after schema/domain staging and before enabling live checkout/payment. Do not use a live customer charge as a test.
-6. Marketplace Seller RO tax treatment remains fail-closed under the existing narrow GB marketplace-tax resolver. Supplier-Fulfilled economics already have RO/RON evidence gates, but independent Marketplace Seller checkout must not be declared RO-ready until an evidence-backed Romanian/EU seller tax contract is implemented and tested.
+1. Reviewed Romanian legal policy versions are still absent. The database gate correctly requires reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions. Do not fabricate or auto-verify these.
+2. Production RO payment evidence rows must be created from verified Stripe evidence and reviewed, including RON charge support, account capability, SCA/3DS, refunds and settlement/reconciliation.
+3. loadifymarket.ro DNS and Netlify custom-domain attachment are pending.
+4. A final real-environment RO transaction rehearsal is required after schema/domain staging and before enabling live checkout/payment. Do not use a live customer charge as a test.
+5. Marketplace Seller RO tax treatment remains fail-closed under the existing narrow GB marketplace-tax resolver. Supplier-Fulfilled economics already have RO/RON evidence gates, but independent Marketplace Seller checkout must not be declared RO-ready until an evidence-backed Romanian/EU seller tax contract is implemented and tested.
+6. Final full regression/build/migration/advisor verification must be repeated immediately before the governed launch-control mutation.
+
+Closed production blocker:
+- The 15 canonical multicountry/RO migrations are no longer pending. They were applied to production on 25 September 2026 and verified with RO remaining PRELAUNCH.
 
 Cutover rule:
 - Keep RO prelaunch, checkout=false, payment=false until all blockers above are closed.
 - The final state change must use the governed Romania launch-control RPC with an active admin identity and an explicit reason.
 - Re-run full multicountry regression, E2E, build, migration health and Supabase security advisors immediately before the final state change.
+
+
+## 23. Production parity and E2E audit update — 25 September 2026
+
+This section supersedes any earlier statement in this document that the 15 multicountry/RO migrations are still pending production application.
+
+Completed and verified during the production audit:
+- PR #799 (UK/RO multicountry) was repaired, fully validated and merged to main.
+- Production homepage MarketProvider regression was fixed in main at commit `bcd2e9dd19022b8f49750afaee0cede43856aabf`; dedicated regression, TypeScript, ESLint and live E2E passed, with no new `useMarket must be used within MarketProvider` error reports in the post-fix verification window.
+- All 15 canonical multicountry/RO schema migrations from 24 September were applied to the live Supabase production project in dependency order.
+- Post-cutover schema verification confirmed live presence of product/order market and currency columns plus the payment-readiness, launch-control and legal-policy RPCs.
+- Romania launch control live result: status=prelaunch, catalogEnabled=true, checkoutEnabled=false, paymentEnabled=false.
+- United Kingdom launch control live result: status=live, catalogEnabled=true, checkoutEnabled=true, paymentEnabled=true.
+- Romania payment-readiness remains intentionally fail-closed because reviewed production evidence is still missing for RON charge support, merchant account capability, SCA/3DS, refund support and settlement/reconciliation.
+- Romania legal-policy readiness remains intentionally fail-closed because reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions are still absent.
+- Focused multicountry verification after schema cutover: 19/19 tests PASS.
+- Romania production prelaunch browser E2E: 3/3 PASS, covering RON catalogue/cart plus blocked checkout, tracked-order currency rendering and Romanian legal-page presentation while launch remains gated.
+- Production role-isolation E2E: 5/5 PASS.
+- Production route sweep: 117/117 static application routes returned HTTP 200 after redirect repair.
+- The earlier `/orders` and `/orders/success` redirect loop was repaired and retested in production.
+- Stale lazy-module/CSS recovery was hardened for dynamic-import, `default` export and CSS-preload deployment failures; affected public pages were retested without new fatal client errors.
+- Production dependency audit was reduced to zero production vulnerabilities after pinning safe transitive versions for `qs` and `fflate`.
+- Paid GitHub Actions Android build workflow was changed to manual-only so repository pushes no longer automatically consume paid Actions minutes.
+
+Updated remaining hard blockers before Romania live cutover:
+1. Reviewed and current ro-RO legal policy versions for buyer terms, privacy, returns and shipping.
+2. Reviewed production payment-readiness evidence for RON/Stripe/SCA/refunds/reconciliation.
+3. Evidence-backed Romanian/EU Marketplace Seller tax contract and regression coverage.
+4. loadifymarket.ro DNS plus Netlify custom-domain attachment and verification.
+5. Final real-environment RO transaction rehearsal after domain staging, without a live customer charge.
+6. Final full regression/build/migration/advisor gate immediately before launch-control mutation.
+
+Launch state remains unchanged: Romania is PRELAUNCH and no RO live checkout/payment cutover has been authorised.
