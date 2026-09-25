@@ -33,6 +33,7 @@ import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import { useCart } from "@/contexts/CartContext";
 import { useMarket } from "@/contexts/MarketContext";
+import { formatMoney } from "@/lib/money";
 import {
   trackProductView,
   trackShareProduct,
@@ -103,7 +104,7 @@ const ProductDetail = () => {
   const { user } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
   const { addToCart } = useCart();
-  const { market } = useMarket();
+  const { market, config } = useMarket();
   // State passed from listing pages (Catalog, CategoryPage, Clearance)
   const navState = (location.state ?? {}) as {
     flow?: string;
@@ -483,7 +484,9 @@ const ProductDetail = () => {
   const mobileBottomNavOffset = "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))";
   const mobileQuantityLimit = Math.max(1, Math.min(10, product.maxPurchaseQuantity ?? 10));
 
-  const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
+  const marketBaseUrl = market === "RO" ? "https://loadifymarket.ro" : BASE_URL;
+  const canonicalProductUrl = `${marketBaseUrl}/product/${product.id}`;
+  const formattedProductPrice = formatMoney({ amount: product.price, currency: config.currency }, config.locale);
   const currentProductUrl = typeof window !== "undefined"
     ? `${window.location.origin}${window.location.pathname}`
     : canonicalProductUrl;
@@ -515,7 +518,7 @@ const ProductDetail = () => {
   const primaryImageCandidate = galleryImages.find((img) => typeof img === "string" && img.trim().length > 0) || product.image;
   const seoImage = toAbsolutePublicUrl(primaryImageCandidate) ?? DEFAULT_OG_IMAGE;
   const encodedProductUrl = encodeURIComponent(currentProductUrl);
-  const whatsappText = `Check out this product on Loadify Market: ${product.title} — £${product.price.toLocaleString("en-GB")} ${currentProductUrl}`;
+  const whatsappText = `Check out this product on Loadify Market: ${product.title} — ${formattedProductPrice} ${currentProductUrl}`;
   const encodedWhatsAppText = encodeURIComponent(whatsappText);
   const supportsNativeShare = canShare();
 
@@ -530,7 +533,7 @@ const ProductDetail = () => {
     offers: {
       "@type": "Offer",
       price: product.price.toFixed(2),
-      priceCurrency: "GBP",
+      priceCurrency: config.currency,
       availability: product.isAvailable === false
         ? "https://schema.org/OutOfStock"
         : "https://schema.org/InStock",
@@ -634,13 +637,13 @@ const ProductDetail = () => {
   return (
     <MainLayout>
       <SEO
-        title={`${product.title} — £${product.price.toLocaleString("en-GB")}`}
+        title={`${product.title} — ${formattedProductPrice}`}
         description={ogDescription}
         canonical={canonicalProductUrl}
         ogImage={seoImage}
         ogType="product"
         ogPrice={product.price != null ? product.price.toFixed(2) : undefined}
-        ogPriceCurrency="GBP"
+        ogPriceCurrency={config.currency}
         structuredData={productJsonLd}
       />
 
