@@ -411,6 +411,8 @@ No existing core module should be duplicated solely for international expansion.
 
 ## 7. Canonical Capability Map
 
+Detailed evidence inventory: `docs/checkpoints/LOADIFY_ECN_0_CANONICAL_CAPABILITY_MAP_2026-09-25.md`.
+
 Status definitions:
 
 - **Implemented** — material code/schema exists.
