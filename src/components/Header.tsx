@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { isCapacitorContext } from "@/lib/capacitorUtils";
 
