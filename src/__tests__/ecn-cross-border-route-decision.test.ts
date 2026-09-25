@@ -54,6 +54,16 @@ describe("ECN cross-border route decision", () => {
     expect(migration).toContain("AND v_customs_ok");
   });
 
+  it("mirrors the live GB marketplace seller tax boundary during shadow parity", () => {
+    expect(migration).toContain("p_destination_postcode text DEFAULT NULL");
+    expect(migration).toContain("v_marketplace_tax_ok");
+    expect(migration).toContain("seller_non_vat_declared");
+    expect(migration).toContain("seller_profile_non_vat_declaration_v1");
+    expect(migration).toContain("seller_self_declaration_v1");
+    expect(migration).toContain("^(BT|GY|JE|IM|GX|BF)");
+    expect(migration).toContain("AND v_marketplace_tax_ok");
+  });
+
   it("keeps seller and supplier market blockers semantically distinct", () => {
     expect(migration).toContain("SELLER_MARKET_UNSUPPORTED");
     expect(migration).toContain("SELLER_DELIVERY_MARKET_UNSUPPORTED");
