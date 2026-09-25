@@ -184,11 +184,12 @@ async function fetchProductData(
 async function fetchSupplierProductData(
   productRef: string,
   origin: string,
+  market: SeoMarket,
 ): Promise<ProductLookup> {
   if (!UUID_PATTERN.test(productRef)) return { status: 'not_found' };
 
   try {
-    const url = `${origin}/.netlify/functions/supplier-catalog?id=${encodeURIComponent(productRef)}`;
+    const url = `${origin}/.netlify/functions/supplier-catalog?id=${encodeURIComponent(productRef)}&market=${market}`;
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(2500),
@@ -301,7 +302,7 @@ export default async function productMeta(
 
   let lookup = marketplaceLookup;
   if (lookup.status === 'not_found' && UUID_PATTERN.test(productRef)) {
-    lookup = await fetchSupplierProductData(productRef, requestUrl.origin);
+    lookup = await fetchSupplierProductData(productRef, requestUrl.origin, marketContext.market);
   }
   if (lookup.status === 'unavailable') return baseResponse;
   if (lookup.status === 'not_found') return noindexHtmlResponse(baseResponse);

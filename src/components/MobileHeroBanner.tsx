@@ -12,6 +12,8 @@ import { useAuthStore } from '@/store';
 import { hasBuyerAccess, hasSellerAccess } from '@/lib/roleUtils';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import type { Product } from '@/components/catalog/ProductCard';
+import { useMarket } from '@/contexts/MarketContext';
+import { formatPrice } from '@/lib/formatPrice';
 
 interface MobileHeroBannerProps {
   products: Product[];
@@ -20,6 +22,7 @@ interface MobileHeroBannerProps {
 
 export default function MobileHeroBanner({ products, loading }: MobileHeroBannerProps) {
   const navigate = useNavigate();
+  const { config } = useMarket();
   const { user } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
   const liveProducts = products.slice(0, 4);
@@ -91,7 +94,7 @@ export default function MobileHeroBanner({ products, loading }: MobileHeroBanner
                 <img src={product.image} alt={product.title} className="aspect-square w-full object-cover" loading="eager" decoding="async" />
                 <span className="block px-1.5 pb-1.5 pt-1">
                   <span className="block truncate text-[8.5px] font-bold text-[#0A234F]">{product.title}</span>
-                  <span className="mt-0.5 block text-[9.5px] font-black text-[#0A234F]">£{product.price.toFixed(2)}</span>
+                  <span className="mt-0.5 block text-[9.5px] font-black text-[#0A234F]">{formatPrice(product.price, product.currency ?? config.currency)}</span>
                 </span>
               </button>
             ))}

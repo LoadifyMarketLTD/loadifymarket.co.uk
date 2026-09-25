@@ -3,11 +3,14 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { fetchSupplierCatalog } from "@/lib/supplierCatalog";
+import { useMarket } from "@/contexts/MarketContext";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface ShowcaseProduct {
   id: string;
   title: string;
   price: number;
+  currency?: string;
   images: string[] | null;
   sellerId?: string | null;
   sellerName?: string;
@@ -15,6 +18,7 @@ interface ShowcaseProduct {
 }
 
 const FeaturedProducts = () => {
+  const { market, config } = useMarket();
   const [products, setProducts] = useState<ShowcaseProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,10 +28,11 @@ const FeaturedProducts = () => {
     const loadProducts = async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, title, price, images, sellerId, category:categories!categoryId(name, slug)")
+        .select("id, title, price, currency, images, sellerId, category:categories!categoryId(name, slug)")
         .eq("isActive", true)
         .eq("isApproved", true)
         .eq("listingStatus", "active")
+        .contains("marketCodes", [market])
         .or("listingContext.eq.service,stockQuantity.gt.0")
         .order("createdAt", { ascending: false })
         .limit(10);
@@ -52,12 +57,13 @@ const FeaturedProducts = () => {
       }
 
       if (!cancelled) {
-        const supplierProducts = await fetchSupplierCatalog().catch(() => []);
+        const supplierProducts = await fetchSupplierCatalog(market).catch(() => []);
         if (cancelled) return;
         const supplierShowcase: ShowcaseProduct[] = supplierProducts.map((item) => ({
           id: item.id,
           title: item.title,
           price: item.price,
+          currency: item.currency,
           images: item.image ? [item.image] : null,
           sellerId: null,
           sellerName: "Loadify Market",
@@ -74,7 +80,7 @@ const FeaturedProducts = () => {
 
     void loadProducts();
     return () => { cancelled = true; };
-  }, []);
+  }, [market]);
 
   return (
     <section className="bg-[#F8F7F4] px-6 pb-16 pt-10" aria-label="Marketplace products">
@@ -164,7 +170,7 @@ const FeaturedProducts = () => {
 
                     <div className="mt-4 flex items-center justify-between gap-2 border-t border-black/[0.06] pt-3.5">
                       <p className="text-sm font-semibold text-[#0A234F] sm:text-base">
-                        £{item.price.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatPrice(item.price, (item.currency as "GBP" | "RON" | undefined) ?? config.currency)}
                       </p>
                       <ArrowRight className="h-4 w-4 shrink-0 text-[#64748B] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[#0A234F]" aria-hidden="true" />
                     </div>

@@ -27,4 +27,23 @@ describe("multi-country public commerce surfaces", () => {
     expect(cart).toContain('eligibleMarkets.includes(market)');
     expect(cart).toContain('currency: row.currency ?? item.product.currency ?? "GBP"');
   });
+
+  it("keeps homepage and supplier catalog market-aware", () => {
+    const featured = read("src/components/FeaturedProducts.tsx");
+    const supplierClient = read("src/lib/supplierCatalog.ts");
+    const supplierApi = read("netlify/functions/supplier-catalog.ts");
+    expect(featured).toContain('.contains("marketCodes", [market])');
+    expect(featured).toContain("fetchSupplierCatalog(market)");
+    expect(supplierClient).toContain("market=${market}");
+    expect(supplierApi).toContain('market !== "GB" && market !== "RO"');
+    expect(supplierApi).toContain("territory: market");
+  });
+
+  it("uses market domain and currency for product sharing", () => {
+    const share = read("src/lib/shareProduct.ts");
+    const detail = read("src/pages/pixel-perfect/ProductDetail.tsx");
+    expect(share).toContain('market === "RO" ? "https://loadifymarket.ro" : "https://loadifymarket.co.uk"');
+    expect(share).toContain("formatMoney({ amount: product.price, currency })");
+    expect(detail).toContain("toAbsolutePublicUrl(primaryImageCandidate, marketBaseUrl)");
+  });
 });

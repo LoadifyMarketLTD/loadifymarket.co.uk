@@ -44,16 +44,15 @@ import {
 const BASE_URL = "https://loadifymarket.co.uk";
 const DEFAULT_PRODUCT_SEO_DESCRIPTION =
   "Discover marketplace and supplier-fulfilled products on Loadify Market.";
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
 
-function toAbsolutePublicUrl(value?: string | null): string | undefined {
+function toAbsolutePublicUrl(value: string | null | undefined, baseUrl: string): string | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   if (trimmed.startsWith("//")) return `https:${trimmed}`;
-  if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`;
-  return `${BASE_URL}/${trimmed}`;
+  if (trimmed.startsWith("/")) return `${baseUrl}${trimmed}`;
+  return `${baseUrl}/${trimmed}`;
 }
 
 function excerpt(text: string, max = 180): string {
@@ -169,7 +168,7 @@ const ProductDetail = () => {
         if (error) throw error;
 
         if (!data) {
-          const supplierProduct = market === 'GB' && UUID_RE.test(id) ? await fetchSupplierCatalogItem(id) : null;
+          const supplierProduct = UUID_RE.test(id) ? await fetchSupplierCatalogItem(id, market) : null;
           if (!supplierProduct) {
             setNotFound(true);
             return;
@@ -516,7 +515,7 @@ const ProductDetail = () => {
     ? seoDescription
     : seoDescription.trimEnd() + BRAND_TAGLINE;
   const primaryImageCandidate = galleryImages.find((img) => typeof img === "string" && img.trim().length > 0) || product.image;
-  const seoImage = toAbsolutePublicUrl(primaryImageCandidate) ?? DEFAULT_OG_IMAGE;
+  const seoImage = toAbsolutePublicUrl(primaryImageCandidate, marketBaseUrl) ?? `${marketBaseUrl}/og-loadify-market.png`;
   const encodedProductUrl = encodeURIComponent(currentProductUrl);
   const whatsappText = `Check out this product on Loadify Market: ${product.title} — ${formattedProductPrice} ${currentProductUrl}`;
   const encodedWhatsAppText = encodeURIComponent(whatsappText);
@@ -627,7 +626,7 @@ const ProductDetail = () => {
   const handleNativeShare = async () => {
     if (!supportsNativeShare) return;
     try {
-      await shareProduct({ id: product.id, title: product.title, price: product.price });
+      await shareProduct({ id: product.id, title: product.title, price: product.price, market, currency: config.currency });
       trackShareProduct("native", product.id, product.title);
     } catch {
       // User cancellation is non-fatal; no toast needed.
