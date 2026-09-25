@@ -10,6 +10,7 @@ describe("Romania online withdrawal function", () => {
   it("keeps the statutory withdrawal declaration separate from payment mutation", () => {
     const migration = repo("supabase/migrations/20260925182500_romania_online_withdrawal_function.sql");
     const endpoint = repo("netlify/functions/request-order-withdrawal.ts");
+    const modernWrapper = repo("netlify/functions-modern/request-order-withdrawal.ts");
 
     expect(migration).toContain("order_withdrawal_requests");
     expect(migration).toContain("REVOKE INSERT, UPDATE, DELETE");
@@ -19,6 +20,8 @@ describe("Romania online withdrawal function", () => {
     expect(endpoint).toContain("RESEND_API_KEY");
     expect(endpoint).not.toContain(".from('refunds').insert");
     expect(endpoint).not.toContain("payment_intents");
+    expect(modernWrapper).toContain("../functions/request-order-withdrawal");
+    expect(modernWrapper).toContain("withLambda(handler)");
   });
 
   it("keeps the function visible in the buyer workspace and Romania legal content", () => {
