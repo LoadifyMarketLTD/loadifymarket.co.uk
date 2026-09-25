@@ -542,6 +542,14 @@ Latest verified hardening evidence:
 - focused crawler SEO tests: 11/11 PASS; TypeScript and ESLint PASS.
 - production build after crawler SEO hardening: PASS; 2,499 modules transformed, 225/225 canonical migration versions and security boundary 9/9 PASS.
 - branch remains synchronized with origin/main (0 behind) and clean after the crawler SEO commit.
+- final hard-coded market review also corrected client commerce analytics, cart totals, product SEO/share currency, supplier catalog territory propagation, featured/home inventory filtering, mobile hero pricing and catalogue filter currency/location presentation.
+- dedicated multi-country regression now covers 22 test files / 104 tests: PASS.
+- final TypeScript: PASS.
+- final ESLint: PASS.
+- final migration health: 225 canonical migrations / 225 unique versions: PASS.
+- final production build: PASS; 2,499 modules transformed; security boundary 9/9 PASS; only the existing heic2any chunk warning remains.
+- final origin/main comparison after fetch: 0 behind / 49 ahead; git diff --check PASS; worktree clean.
+- Romania remains PRELAUNCH; checkout/payment remain disabled and no loadifymarket.ro production attachment or launch cutover was performed.
 
 Next exact work:
 1. Complete the Romanian legal-page presentation using reviewed policy content; do not auto-verify policy versions merely because translated text exists.
