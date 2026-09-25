@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store';
-import { hasAdminAccess, hasSellerAccess } from '@/lib/roleUtils';
+import { hasAdminAccess, hasSellerAccess, isActiveSellerAccess } from '@/lib/roleUtils';
 import { toast } from '@/hooks/use-toast';
 import { authorizedFetch } from '@/lib/authorizedFetch';
 import { openExternalUrl } from '@/lib/capacitorUtils';
@@ -170,6 +170,11 @@ const SellerOnboarding = () => {
 
     if (!hasSellerAccess(user)) {
       navigate('/buyer', { replace: true });
+      return;
+    }
+
+    if (isActiveSellerAccess(user) && user.onboardingCompleted === true) {
+      navigate('/seller', { replace: true });
       return;
     }
 

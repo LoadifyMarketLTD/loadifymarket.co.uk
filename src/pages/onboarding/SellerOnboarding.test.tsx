@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,6 +16,7 @@ const sellerUser = {
   isActive: true,
   isAdmin: false,
   sellerStatus: 'draft',
+  onboardingCompleted: false,
 };
 
 vi.mock('@/store', () => ({
@@ -90,6 +92,18 @@ describe('SellerOnboarding initial-load recovery', () => {
     mocks.authorizedFetch.mockReset();
     mocks.toast.mockReset();
     mocks.openExternalUrl.mockReset();
+    sellerUser.sellerStatus = 'draft';
+    sellerUser.onboardingCompleted = false;
+  });
+
+  it('sends an already active, completed seller to the Seller Workspace without re-running setup', async () => {
+    sellerUser.sellerStatus = 'active';
+    sellerUser.onboardingCompleted = true;
+
+    renderOnboarding();
+
+    await waitFor(() => expect(mocks.authorizedFetch).not.toHaveBeenCalled());
+    expect(screen.queryByRole('heading', { name: 'Seller setup unavailable' })).not.toBeInTheDocument();
   });
 
   it('replaces the initial spinner with an actionable error state when loading fails', async () => {
