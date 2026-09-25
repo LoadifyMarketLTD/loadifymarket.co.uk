@@ -69,6 +69,7 @@ function renderProductInfo(props: Partial<ComponentProps<typeof ProductInfo>> = 
         views={product.views}
         listed={product.listed}
         product={product}
+        formattedPrice="£125.00"
         sellerId="seller-1"
         onShareFacebook={vi.fn()}
         onShareWhatsApp={vi.fn()}
@@ -80,6 +81,11 @@ function renderProductInfo(props: Partial<ComponentProps<typeof ProductInfo>> = 
 }
 
 describe("ProductInfo contact CTAs", () => {
+  it("renders the market-formatted product price on desktop", () => {
+    renderProductInfo({ formattedPrice: "149,90 RON" });
+    expect(screen.getByTestId("product-price-desktop")).toHaveTextContent("149,90 RON");
+  });
+
   it("renders a Message button and triggers its handler", async () => {
     const user = userEvent.setup();
     const onMessageSeller = vi.fn();
