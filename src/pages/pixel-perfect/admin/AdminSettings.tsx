@@ -388,7 +388,7 @@ const AdminSettings = () => {
               />
             </div>
             <div>
-              <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>SendGrid API Key</Label>
+              <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Resend API Key</Label>
               <Input
                 type="password"
                 value="Configured via environment variable"

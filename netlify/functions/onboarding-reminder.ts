@@ -12,7 +12,7 @@ import { createClient } from '@supabase/supabase-js';
  *   [functions."onboarding-reminder"]
  *     schedule = "0 9 * * *"
  *
- * Uses SendGrid via the shared send-email function (server-to-server).
+ * Uses Resend via the shared send-email function (server-to-server).
  *
  * ⚠️  IMPORTANT — admin manual trigger:
  *   This function uses the `schedule()` wrapper from @netlify/functions, which

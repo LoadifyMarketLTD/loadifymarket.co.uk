@@ -105,7 +105,7 @@ This document reflects the actual completed state of the platform and remaining 
 
 ## ✅ Phase 4: Notifications & Communication — COMPLETE
 
-### 4.1 Email System (SendGrid)
+### 4.1 Email System (Resend)
 - [x] `send-email.ts` serverless function with all transactional templates
 - [x] Templates: welcome (buyer + seller), email confirmation, order confirmation,
       order shipped, order delivered, return requested, dispute opened,

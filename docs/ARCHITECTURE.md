@@ -60,7 +60,7 @@ Netlify CDN / Edge
                               │
              ┌────────────────┼─────────────────┐
              ▼                ▼                 ▼
-        Supabase           Stripe           SendGrid
+        Supabase           Stripe           Resend
      PostgreSQL/Auth     Checkout/Connect   transactional email
      Storage/PostgREST   webhooks/payments
      Realtime/RLS
@@ -81,7 +81,7 @@ The Android application is a Capacitor wrapper around the Loadify web applicatio
 | Data platform | Supabase PostgreSQL, Auth, Storage, PostgREST, Realtime |
 | Server API | Netlify Functions plus Supabase APIs |
 | Payments | Stripe Checkout and Stripe Connect |
-| Email | SendGrid; Supabase Auth email for applicable auth flows |
+| Email | Resend; Supabase Auth email for applicable auth flows |
 | Hosting / edge | Netlify |
 | Android | Capacitor 8 |
 | Unit/integration tests | Vitest |

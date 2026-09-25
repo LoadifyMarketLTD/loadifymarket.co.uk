@@ -12,7 +12,7 @@ export const handler: Handler = async () => {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
-  const sendgridKey = process.env.SENDGRID_API_KEY;
+  const resendKey = process.env.RESEND_API_KEY;
 
   // Keep diagnostics server-side. This endpoint is public, so provider names,
   // environment-variable names and raw database errors must not be returned to
@@ -21,7 +21,7 @@ export const handler: Handler = async () => {
     env: { status: 'ok' },
     db: { status: 'warn', detail: 'not checked' },
     payments: { status: stripeSecret ? 'ok' : 'warn', detail: stripeSecret ? undefined : 'not configured' },
-    email: { status: sendgridKey ? 'ok' : 'warn', detail: sendgridKey ? undefined : 'not configured' },
+    email: { status: resendKey ? 'ok' : 'warn', detail: resendKey ? undefined : 'not configured' },
   };
 
   if (!supabaseUrl || !serviceRoleKey) {

@@ -1,14 +1,14 @@
 /**
  * emailTemplates.ts
  *
- * Centralised static text for transactional emails sent through SendGrid.
+ * Centralised static text for transactional emails sent through Resend.
  *
  * IMPORTANT — TRANSACTIONAL ONLY
  * --------------------------------
  * These templates are for transactional messages triggered by user actions
  * (purchases, service completions, disputes, RFQ quotes).
  * They MUST NOT be repurposed for marketing, promotional campaigns, or
- * bulk/newsletter emails. Doing so violates SendGrid's Sender Policy,
+ * bulk/newsletter emails. Doing so violates Resend's Sender Policy,
  * PECR / GDPR rules, and our platform's deliverability standing.
  *
  * Each export is a function that accepts a minimal data bag and returns

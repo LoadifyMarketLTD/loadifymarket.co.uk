@@ -51,7 +51,7 @@ async function sendInternalEmail(
   });
 
   // A resolved fetch only proves that an HTTP response was received. The
-  // send-email function returns non-2xx when SendGrid/config/auth fails, so the
+  // send-email function returns non-2xx when Resend/config/auth fails, so the
   // admin action must fail closed instead of reporting a false successful send.
   if (!response.ok) {
     throw new Error(`send-email failed with HTTP ${response.status}`);

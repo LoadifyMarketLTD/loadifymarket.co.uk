@@ -239,7 +239,7 @@ Delivery requests should be visible to sellers on their dashboard.
 
 ---
 
-### 3.3 Email Notification — Conditional on SendGrid Configuration
+### 3.3 Email Notification — Conditional on Resend Configuration
 
 **What was requested:**  
 Transport quote submissions should trigger an email notification.
@@ -249,7 +249,7 @@ Transport quote submissions should trigger an email notification.
 - The form submits to this function
 
 **What is still missing:**  
-- Email delivery requires `SENDGRID_API_KEY` and `VITE_SUPPORT_EMAIL` environment variables to be set in Netlify
+- Email delivery requires `RESEND_API_KEY` and `VITE_SUPPORT_EMAIL` environment variables to be set in Netlify
 - If these are not configured in production, the email silently fails and only the `emailSent = false` warning is shown to the user
 - The email goes to the platform support address only; no copy is sent to the seller whose listing triggered the request
 
@@ -284,7 +284,7 @@ Every task marked as PARTIALLY IMPLEMENTED below includes an explicit reason cat
 **Explanation:**  
 A live bidirectional API integration between Loadify Market and `https://app.xdrivelogistics.co.uk/` requires XDrive to expose a public REST or webhook API. No such API is available to this codebase. The integration is currently limited to:
 - Outbound deep-links with encoded query params
-- A one-way email relay via SendGrid
+- A one-way email relay via Resend
 
 The `DeliveryRequest.xdriveRef` field was added in anticipation of a future inbound confirmation, but XDrive has not provided a callback endpoint. Until XDrive exposes an API (or a shared Supabase table is agreed between both platforms), a two-way integration cannot be built.
 
@@ -323,7 +323,7 @@ The `transport_quote_request` email template is fully implemented in `netlify/fu
 
 | Variable | Purpose | Required? |
 |----------|---------|-----------|
-| `SENDGRID_API_KEY` | Authenticates calls to the SendGrid API | Yes |
+| `RESEND_API_KEY` | Authenticates calls to the Resend API | Yes |
 | `VITE_SUPPORT_EMAIL` | Sets the `from` address and the `to` address for platform notifications | Yes |
 
 These are external service credentials that must be provisioned manually in the Netlify dashboard (or via Netlify CLI `netlify env:set`). They cannot be committed to source code. Until they are configured in the Netlify production environment, the email function will return a non-OK response and the UI will display the amber fallback warning.
@@ -364,7 +364,7 @@ The integration is **referral / deep-linking only**. Specifically:
 
 - ✅ **Visual:** XDrive is presented as the delivery partner throughout the UI
 - ✅ **Referral:** Clicking "Open in XDrive Logistics App" opens `https://app.xdrivelogistics.co.uk/` with pre-filled query params
-- ✅ **Email relay:** A transport quote request email is sent to the platform's support address via SendGrid when a user submits the form
+- ✅ **Email relay:** A transport quote request email is sent to the platform's support address via Resend when a user submits the form
 - ❌ **Not functional API:** No HTTP calls are made directly from Loadify Market's backend to XDrive's backend
 - ❌ **No authentication:** Loadify Market does not authenticate against XDrive or share session tokens
 - ❌ **No real-time sync:** No webhooks, polling, or live data exchange occurs between the two systems
@@ -421,7 +421,7 @@ None. There is no incoming data flow. `DeliveryRequest.xdriveRef` exists as a fi
 |---|-------------|-----|--------|
 | 1 | "Real" XDrive integration | Deep-link + email only; no API, no confirmation round-trip, no `xdriveRef` populated | `technical limitation` — XDrive exposes no public API or webhook endpoint |
 | 2 | Seller delivery request visibility | Works but only via `localStorage`; no database persistence, no cross-device support | `not yet started` — Supabase migration not created; deferred to next sprint |
-| 3 | Email notification for transport quotes | Code fully implemented but depends on external credentials | `requires manual configuration` — `SENDGRID_API_KEY` + `VITE_SUPPORT_EMAIL` must be set in Netlify |
+| 3 | Email notification for transport quotes | Code fully implemented but depends on external credentials | `requires manual configuration` — `RESEND_API_KEY` + `VITE_SUPPORT_EMAIL` must be set in Netlify |
 | 4 | Deal card images | Images served from Unsplash CDN but no fallback on CDN failure | `unclear requirement` — fallback behaviour was not specified in the original instruction |
 
 ---
@@ -448,7 +448,7 @@ The following improvements were identified during the audit as desirable but wer
 |----------------|----------------|
 | `technical limitation` | XDrive API integration (XDrive has no public API) |
 | `missing dependency` | XDrive webhook round-trip (requires XDrive-side infrastructure) |
-| `requires manual configuration` | Email delivery (Netlify env vars: `SENDGRID_API_KEY`, `VITE_SUPPORT_EMAIL`) |
+| `requires manual configuration` | Email delivery (Netlify env vars: `RESEND_API_KEY`, `VITE_SUPPORT_EMAIL`) |
 | `not yet started` | Supabase delivery_requests table; buyer/admin dashboard integration |
 | `unclear requirement` | CDN image fallback (not specified in the instruction) |
 

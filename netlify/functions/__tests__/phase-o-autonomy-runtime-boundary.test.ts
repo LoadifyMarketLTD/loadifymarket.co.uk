@@ -72,7 +72,7 @@ describe('Phase O autonomous runtime boundary', () => {
     expect(runtime).not.toContain('cancelOrder(');
     expect(runtime).not.toContain('requestReturn(');
     expect(runtime).not.toContain('stripe.');
-    expect(runtime).not.toContain('@sendgrid/mail');
+    expect(runtime).not.toContain('api.resend.com');
     expect(runtime).toContain('providerMutationPerformed: false');
     expect(runtime).toContain('customerPiiDisclosurePerformed: false');
     expect(runtime).toContain('paymentMutationPerformed: false');

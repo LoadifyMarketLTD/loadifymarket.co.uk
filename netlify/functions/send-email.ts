@@ -240,7 +240,6 @@ export const handler: Handler = async (event) => {
   try {
     const fromEmail = (
       process.env.RESEND_FROM_EMAIL ||
-      process.env.SENDGRID_FROM_EMAIL ||
       'contact@loadifymarket.co.uk'
     ).trim();
 

@@ -16,7 +16,7 @@ describe('shadow mode runtime boundary', () => {
     expect(endpoint).not.toContain('cancelOrder(');
     expect(endpoint).not.toContain('requestReturn(');
     expect(endpoint).not.toContain('stripe.');
-    expect(endpoint).not.toContain('@sendgrid/mail');
+    expect(endpoint).not.toContain('api.resend.com');
     expect(endpoint).toContain('persistencePerformed: false');
     expect(endpoint).toContain('providerMutationPerformed: false');
     expect(endpoint).toContain('customerNotificationPerformed: false');

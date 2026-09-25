@@ -75,7 +75,7 @@ The following stale assumptions have been removed from this matrix:
 
 - RFQ/service commerce as a current Buyer critical flow;
 - old `/dashboard`/`src/App.tsx` route inventory as current routing truth;
-- SendGrid as the current general transactional-email dispatcher;
+- Resend as the current general transactional-email dispatcher;
 - a historical GitHub Actions workflow as current CI authority;
 - historical fixed commission/VAT/payout models as universal current truth.
 

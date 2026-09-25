@@ -12,7 +12,7 @@ Primary user-facing support channel:
 
 - **Email:** `contact@loadifymarket.co.uk`
 
-Transactional email is sent through the current server-side email boundary. At the time of this update, `netlify/functions/send-email.ts` uses **Resend** with the verified `loadifymarket.co.uk` domain. Do not describe SendGrid as the current transactional provider unless the runtime changes again and this document is updated with it.
+Transactional email is sent through the current server-side email boundary. At the time of this update, `netlify/functions/send-email.ts` uses **Resend** with the verified `loadifymarket.co.uk` domain. Do not describe Resend as the current transactional provider unless the runtime changes again and this document is updated with it.
 
 Password-reset and other Supabase Auth-managed emails may use the Supabase Auth mail configuration rather than the general transactional dispatcher.
 

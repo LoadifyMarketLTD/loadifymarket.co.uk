@@ -14,7 +14,6 @@
         "npm:@eslint/js@^9.39.1",
         "npm:@hookform/resolvers@^5.2.2",
         "npm:@netlify/functions@2",
-        "npm:@sendgrid/mail@^8.1.4",
         "npm:@stripe/react-stripe-js@^5.4.1",
         "npm:@stripe/stripe-js@^8.5.3",
         "npm:@supabase/supabase-js@^2.86.2",

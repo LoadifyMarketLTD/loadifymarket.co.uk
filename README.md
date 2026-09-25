@@ -129,7 +129,7 @@ Those matters must follow the controlling canonical business contract, current c
 | Database | Supabase (PostgreSQL + Auth + Storage) |
 | API | Supabase PostgREST + Netlify Functions |
 | Payments | Stripe Checkout + Stripe Connect |
-| Email | SendGrid plus Supabase Auth email where applicable |
+| Email | Resend plus Supabase Auth email where applicable |
 | Hosting | Netlify |
 | Mobile | Capacitor Android |
 | Testing | Vitest + Playwright |
