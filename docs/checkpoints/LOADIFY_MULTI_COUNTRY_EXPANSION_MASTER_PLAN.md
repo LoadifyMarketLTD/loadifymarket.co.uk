@@ -10,7 +10,7 @@
 
 > This document is the mandatory continuity source for every agent working on Loadify Market international expansion. Read it before modifying the project. Update it whenever an implementation phase is completed, materially changed, blocked, or superseded.
 >
-> **European Commerce Network architecture:** also read `docs/checkpoints/LOADIFY_EUROPEAN_COMMERCE_NETWORK_MASTER_BLUEPRINT.md`. The blueprint is the canonical cross-border product/architecture model (routes, multi-warehouse, landed cost, compliance, reverse logistics and B2B/RFQ). This plan remains canonical for implementation state, launch controls and Romania readiness.
+> **European Commerce Network architecture:** also read `docs/checkpoints/LOADIFY_EUROPEAN_COMMERCE_NETWORK_MASTER_BLUEPRINT.md`, `docs/checkpoints/LOADIFY_ECN_0_CANONICAL_CAPABILITY_MAP_2026-09-25.md` and `docs/checkpoints/LOADIFY_ECN_1_CROSS_BORDER_DOMAIN_MODEL_2026-09-25.md`. This master plan remains canonical for implementation state, launch controls and Romania readiness.
 
 ## 1. Mission
 
@@ -271,7 +271,7 @@ Native app eventually needs:
 - deep links
 - store listing/localisation where launched
 
-## 14. Current implementation state — 24 Sep 2026
+## 14. Initial implementation state — 24 Sep 2026 (historical baseline)
 
 A clean isolated worktree was created from current `origin/main`:
 
@@ -463,7 +463,9 @@ At the end of each significant work session append/update:
 **Next exact task:**
 **Do not touch:**
 
-## 20. Current next exact task
+## 20. Historical next-task log (superseded by §24)
+
+> Preserve this section as implementation history. The current authoritative continuation point is §24.
 
 Phase 0/1 foundation and the first Phase 2/5 market-capability boundary are now stable.
 
@@ -554,11 +556,13 @@ Latest verified hardening evidence:
 - Romania remains PRELAUNCH; checkout/payment remain disabled and no loadifymarket.ro production attachment or launch cutover was performed.
 
 Next exact work:
-1. Complete the Romanian legal-page presentation using reviewed policy content; do not auto-verify policy versions merely because translated text exists.
-2. Build a reproducible synthetic RO prelaunch E2E fixture covering catalogue -> cart -> RO address -> blocked checkout/readiness -> seller/supplier eligibility -> return/refund invariants.
-3. Re-run the E2E fixture against the branch and preserve evidence in the checkpoint folder.
-4. Re-check origin/main immediately before review/merge and rerun production build if main moved.
-5. Do not apply RO launch migrations, attach loadifymarket.ro to production, or enable checkout/payment until final E2E evidence and explicit launch approval are complete.
+1. Complete and review the Romanian legal policy content, then register reviewed current ro-RO policy versions for buyer_terms, privacy, returns_policy and shipping_policy. Do not auto-verify policy versions merely because translated text exists.
+2. Create and review the production RO payment-readiness evidence for RON charge support, merchant account capability, SCA/3DS, refunds and settlement/reconciliation.
+3. Implement and verify the evidence-backed Romanian/EU Marketplace Seller tax contract; keep independent Marketplace Seller RO checkout fail-closed until this is complete.
+4. Configure and verify loadifymarket.ro DNS and Netlify custom-domain attachment without enabling live RO checkout/payment.
+5. Run the final real-environment RO transaction rehearsal after domain staging, without using a live customer charge.
+6. Re-run full multicountry regression, production E2E, build, migration health and Supabase security advisors immediately before any launch state change.
+7. Keep Romania PRELAUNCH with checkout=false and payment=false until the remaining launch blockers are closed and explicit launch approval is given.
 
 ## 21. Continuity instruction for Daniel
 
@@ -583,18 +587,347 @@ Verified technical evidence:
 - Production build PASS: Vite 7.3.6, 2,499 modules transformed; security boundary 9/9 PASS. Existing Capacitor import and heic2any chunk warnings remain warnings only.
 - Stripe live account Loadify Market Platform was read directly on 25 September 2026: charges enabled, payouts enabled, card_payments active and transfers active; no outstanding account requirements were reported by the connected Stripe account read.
 - Official EU consumer guidance rechecked on 25 September 2026: distance-sale withdrawal is generally 14 days, pre-contract information must include trader/price/delivery/withdrawal information, and EU goods carry the applicable minimum legal guarantee framework. GDPR transparency/data-subject rights and Romanian ANSPDCP complaint routes were also rechecked from official EU/ANSPDCP sources.
-- Supabase production project was inspected read-only. The 15 multicountry/RO migrations dated 24 September are NOT yet applied to production; private RO launch/payment/legal tables and their readiness RPCs therefore do not yet exist in production. This is intentionally not changed before the cutover gate.
+- Supabase production schema parity was completed on 25 September 2026. All 15 canonical multicountry/RO migrations from 24 September were applied to production in dependency order. Post-apply verification confirmed the market/currency columns and the RO payment-readiness, launch-control and legal-policy RPCs exist live.
+- The production RO launch control was verified after schema cutover and remains PRELAUNCH with catalogEnabled=true, checkoutEnabled=false and paymentEnabled=false. GB remains live with checkout/payment enabled.
+- Production payment-readiness remains correctly fail-closed for RO until reviewed evidence exists for RON charge support, merchant account capability, SCA/3DS, refunds and settlement/reconciliation.
+- Production legal readiness remains correctly fail-closed for RO until reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions exist.
 - loadifymarket.ro DNS still does not resolve. No Netlify production-domain attachment or DNS cutover has been attempted.
 
 Current hard blockers before RO can be switched live:
-1. Reviewed Romanian legal policy versions are still absent. Repository legal pages remain UK/English source content; the database gate correctly requires reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions. Do not fabricate or auto-verify these.
-2. The 15 canonical multicountry/RO migrations are pending production application. Apply only as a controlled prelaunch schema cutover, then verify advisors/RPCs and confirm RO remains prelaunch.
-3. Production RO payment evidence rows must be created from verified Stripe evidence and reviewed, including RON charge support, account capability, SCA/3DS, refunds and settlement/reconciliation.
-4. loadifymarket.ro DNS and Netlify custom-domain attachment are pending.
-5. A final real-environment RO transaction rehearsal is required after schema/domain staging and before enabling live checkout/payment. Do not use a live customer charge as a test.
-6. Marketplace Seller RO tax treatment remains fail-closed under the existing narrow GB marketplace-tax resolver. Supplier-Fulfilled economics already have RO/RON evidence gates, but independent Marketplace Seller checkout must not be declared RO-ready until an evidence-backed Romanian/EU seller tax contract is implemented and tested.
+1. Reviewed Romanian legal policy versions are still absent. The database gate correctly requires reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions. Do not fabricate or auto-verify these.
+2. Production RO payment evidence rows must be created from verified Stripe evidence and reviewed, including RON charge support, account capability, SCA/3DS, refunds and settlement/reconciliation.
+3. loadifymarket.ro DNS and Netlify custom-domain attachment are pending.
+4. A final real-environment RO transaction rehearsal is required after schema/domain staging and before enabling live checkout/payment. Do not use a live customer charge as a test.
+5. Marketplace Seller RO tax treatment remains fail-closed under the existing narrow GB marketplace-tax resolver. Supplier-Fulfilled economics already have RO/RON evidence gates, but independent Marketplace Seller checkout must not be declared RO-ready until an evidence-backed Romanian/EU seller tax contract is implemented and tested.
+6. Final full regression/build/migration/advisor verification must be repeated immediately before the governed launch-control mutation.
+
+Closed production blocker:
+- The 15 canonical multicountry/RO migrations are no longer pending. They were applied to production on 25 September 2026 and verified with RO remaining PRELAUNCH.
 
 Cutover rule:
 - Keep RO prelaunch, checkout=false, payment=false until all blockers above are closed.
 - The final state change must use the governed Romania launch-control RPC with an active admin identity and an explicit reason.
 - Re-run full multicountry regression, E2E, build, migration health and Supabase security advisors immediately before the final state change.
+
+
+## 23. Production parity and E2E audit update — 25 September 2026
+
+This section supersedes any earlier statement in this document that the 15 multicountry/RO migrations are still pending production application.
+
+Completed and verified during the production audit:
+- PR #799 (UK/RO multicountry) was repaired, fully validated and merged to main.
+- Production homepage MarketProvider regression was fixed in main at commit `bcd2e9dd19022b8f49750afaee0cede43856aabf`; dedicated regression, TypeScript, ESLint and live E2E passed, with no new `useMarket must be used within MarketProvider` error reports in the post-fix verification window.
+- All 15 canonical multicountry/RO schema migrations from 24 September were applied to the live Supabase production project in dependency order.
+- Post-cutover schema verification confirmed live presence of product/order market and currency columns plus the payment-readiness, launch-control and legal-policy RPCs.
+- Romania launch control live result: status=prelaunch, catalogEnabled=true, checkoutEnabled=false, paymentEnabled=false.
+- United Kingdom launch control live result: status=live, catalogEnabled=true, checkoutEnabled=true, paymentEnabled=true.
+- Romania payment-readiness remains intentionally fail-closed because reviewed production evidence is still missing for RON charge support, merchant account capability, SCA/3DS, refund support and settlement/reconciliation.
+- Romania legal-policy readiness remains intentionally fail-closed because reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions are still absent.
+- Focused multicountry verification after schema cutover: 19/19 tests PASS.
+- Romania production prelaunch browser E2E: 3/3 PASS, covering RON catalogue/cart plus blocked checkout, tracked-order currency rendering and Romanian legal-page presentation while launch remains gated.
+- Production role-isolation E2E: 5/5 PASS.
+- Production route sweep: 117/117 static application routes returned HTTP 200 after redirect repair.
+- The earlier `/orders` and `/orders/success` redirect loop was repaired and retested in production.
+- Stale lazy-module/CSS recovery was hardened for dynamic-import, `default` export and CSS-preload deployment failures; affected public pages were retested without new fatal client errors.
+- Production dependency audit was reduced to zero production vulnerabilities after pinning safe transitive versions for `qs` and `fflate`.
+- Paid GitHub Actions Android build workflow was changed to manual-only so repository pushes no longer automatically consume paid Actions minutes.
+
+Updated remaining hard blockers before Romania live cutover:
+1. Reviewed and current ro-RO legal policy versions for buyer terms, privacy, returns and shipping.
+2. Reviewed production payment-readiness evidence for RON/Stripe/SCA/refunds/reconciliation.
+3. Evidence-backed Romanian/EU Marketplace Seller tax contract and regression coverage.
+4. loadifymarket.ro DNS plus Netlify custom-domain attachment and verification.
+5. Final real-environment RO transaction rehearsal after domain staging, without a live customer charge.
+6. Final full regression/build/migration/advisor gate immediately before launch-control mutation.
+
+Launch state remains unchanged: Romania is PRELAUNCH and no RO live checkout/payment cutover has been authorised.
+
+
+## 24. Current ECN implementation status — 25 September 2026
+
+**This section is the authoritative continuation point for the European Commerce Network workstream. It supersedes the older “Next exact work” text in §20 while preserving the production-readiness blockers in §23.**
+
+### 24.1 Canonical continuity set
+
+The international programme now has four canonical documents:
+
+1. `docs/checkpoints/LOADIFY_MULTI_COUNTRY_EXPANSION_MASTER_PLAN.md`
+2. `docs/checkpoints/LOADIFY_EUROPEAN_COMMERCE_NETWORK_MASTER_BLUEPRINT.md`
+3. `docs/checkpoints/LOADIFY_ECN_0_CANONICAL_CAPABILITY_MAP_2026-09-25.md`
+4. `docs/checkpoints/LOADIFY_ECN_1_CROSS_BORDER_DOMAIN_MODEL_2026-09-25.md`
+
+These documents must be read together. Do not restart the architecture from scratch.
+
+### 24.2 ECN-0 — COMPLETE
+
+Commit:
+
+`5bbc9538 — docs: complete ECN-0 capability inventory`
+
+The evidence-led capability map now covers:
+
+- Identity/Auth
+- Public Marketplace
+- Buyer
+- Seller
+- Seller market capability
+- Stripe Connect/settlement
+- Direct Supplier Network
+- AI Product Builder
+- Catalogue governance
+- Inventory
+- Cart
+- Checkout
+- Payments
+- Orders
+- Shipping
+- Tracking/POD
+- Returns
+- Refunds
+- Disputes
+- Messaging
+- Reviews
+- Notifications
+- Support
+- Trust & Safety
+- Legal
+- Compliance
+- B2B/Trade/RFQ
+- Services foundation
+- Admin Hub
+- Analytics
+- SEO
+- Mobile/Android
+- Security/governance
+- Observability
+- Multi-country kernel
+- Romania readiness
+
+Confirmed gaps:
+
+- Admin Products is still global and does not yet classify domestic vs international route semantics.
+- Buyer/Seller RFQ routes currently redirect instead of exposing a complete routed RFQ workspace.
+- Inventory is not yet a canonical multi-warehouse model.
+- Shipping is market-aware but not yet a complete origin→destination route engine.
+- `marketCodes` and `deliveryMarketCodes` remain broad capability primitives, not transaction authority.
+- Romania payment readiness still requires reviewed end-to-end evidence.
+
+### 24.3 European Commerce Network Blueprint — CANONICAL
+
+Commit:
+
+`76f26568 — docs: define European commerce network blueprint`
+
+Canonical architecture:
+
+`ONE APPLICATION + ONE CORE COMMERCE PLATFORM + MARKET CONFIGURATION + CROSS-BORDER ROUTE INTELLIGENCE`
+
+The blueprint defines:
+
+- one canonical product identity;
+- separation of Market, Origin, Destination and Dispatch Location;
+- Cross-Border Route Engine;
+- Unified Inventory / Multi-Warehouse;
+- Shipping Route Engine;
+- Landed Cost / Customs;
+- destination compliance;
+- international money semantics;
+- reverse logistics;
+- B2B/RFQ;
+- Admin European Commerce Control Centre;
+- Romania as the proving ground for GB-GB, RO-RO, GB-RO and RO-GB;
+- EU Country Factory.
+
+### 24.4 ECN-1 — DESIGN COMPLETE + FOUNDATION IMPLEMENTED
+
+Canonical design:
+
+`docs/checkpoints/LOADIFY_ECN_1_CROSS_BORDER_DOMAIN_MODEL_2026-09-25.md`
+
+Foundation commit:
+
+`0ee7a479 — feat: add ECN cross-border domain foundation`
+
+Migration:
+
+`supabase/migrations/20260925163000_ecn_cross_border_domain_foundation.sql`
+
+Implemented:
+
+- `private.market_routes`
+- `private.dispatch_locations`
+- `private.actor_route_capabilities`
+- `private.route_decision_snapshots`
+- `public.server_market_route_baseline_v1(...)`
+
+Route defaults:
+
+- `GB-GB` = live baseline
+- `RO-RO` = prelaunch
+- `GB-RO` = prelaunch
+- `RO-GB` = prelaunch
+
+Safety properties:
+
+- additive, UK-compatible schema;
+- private operational tables;
+- verified route capability cannot exceed seller/supplier high-level market declarations;
+- dispatch ownership and route-origin consistency are guarded;
+- existing market-native pricing truth is reused from `private.product_market_price_versions`;
+- no competing pricing source was introduced;
+- the baseline route RPC is service-role-only and does not authorise checkout;
+- no Romania live activation is included.
+
+### 24.5 ECN-2 — SHADOW ROUTE DECISION IMPLEMENTED
+
+Commit:
+
+`887b5ba4 — feat: add shadow cross-border route decision`
+
+Primary implementation:
+
+- `supabase/migrations/20260925170000_ecn_cross_border_route_decision.sql`
+- `src/lib/crossBorder.ts`
+- `src/lib/crossBorder.test.ts`
+- `src/__tests__/ecn-cross-border-route-decision.test.ts`
+
+The shadow decision composes existing governed decisions for:
+
+1. product activation and destination-market eligibility;
+2. destination country distinct from destination market;
+3. dispatch/origin;
+4. seller/supplier route capability;
+5. market-native price;
+6. market shipping readiness;
+7. market/product compliance;
+8. payment readiness;
+9. legal-policy readiness;
+10. market launch controls;
+11. cross-border tax/customs readiness;
+12. return-route capability.
+
+Safety properties:
+
+- read-only;
+- SECURITY DEFINER;
+- service-role only;
+- **not wired into live checkout**;
+- implicit legacy origin is allowed only for controlled GB-GB shadow compatibility;
+- RO-RO, GB-RO and RO-GB remain fail-closed;
+- ordinary seller RO compliance is not inferred from supplier evidence;
+- seller and supplier blocker domains remain distinct;
+- destination country and destination market remain distinct;
+- checkout eligibility requires all mandatory gates to pass.
+
+### 24.6 Latest ECN verification evidence
+
+Latest verified ECN hardening evidence:
+
+- targeted ECN tests: **28/28 PASS across 5 files**
+- TypeScript: **PASS**
+- targeted ESLint: **PASS**
+- canonical migration health: **227/227 unique versions PASS**
+- build security boundary suite: **9/9 PASS**
+- production build: **PASS**
+- approximately **2,500 modules transformed**
+- `git diff --check`: **PASS**
+
+The ECN branch now contains two additional canonical migrations beyond the production-parity set applied in §23.
+
+**Important distinction:** the 15 multi-country/RO migrations from 24 September have already been applied to production and verified, as recorded in §23. The two newer ECN migrations dated 25 September (`20260925163000` and `20260925170000`) remain branch implementation and must not be treated as production-applied until a controlled deployment occurs.
+
+### 24.7 Production/runtime regressions closed before ECN continuation
+
+Verified closures:
+
+- public homepage `MarketProvider` regression repaired in main at `bcd2e9dd`;
+- multicountry runtime-provider continuity restored at `ace84e68`;
+- seller access / modern Netlify function routing restored at `ba8fe4e4`.
+
+These fixes must remain preserved during branch synchronization and future ECN work.
+
+### 24.8 Romania launch status
+
+Romania remains **PRELAUNCH**.
+
+Production launch state remains:
+
+- catalog enabled;
+- checkout disabled;
+- payment disabled.
+
+The remaining Romania live blockers recorded in §23 remain active:
+
+1. reviewed/current ro-RO legal policy versions;
+2. reviewed Stripe/RON payment-readiness evidence;
+3. evidence-backed Romanian/EU Marketplace Seller tax contract;
+4. `loadifymarket.ro` DNS and Netlify custom-domain verification;
+5. final real-environment RO transaction rehearsal without a live customer charge;
+6. final regression/build/migration/advisor gate before launch-control mutation.
+
+ECN work does not bypass any of these blockers.
+
+### 24.9 Current branch synchronization state
+
+At this update:
+
+- branch: `feat/multicountry-uk-ro`
+- latest ECN implementation commit: `887b5ba4`
+- current `origin/main` includes production-audit commit `88ea9ec2`
+- branch is **ahead 6 / behind 1** before synchronization
+
+The latest `origin/main` production-audit content has been incorporated into this master plan. Before the next merge/review checkpoint, synchronize the branch with `origin/main` without losing ECN commits or production hotfixes.
+
+### 24.10 Current exact next task
+
+Proceed to **GB→GB shadow parity evidence** before making the ECN route engine authoritative anywhere.
+
+Build a parity harness that compares the existing live UK commerce contract against the ECN shadow decision for representative active UK listings.
+
+Classify every mismatch by domain:
+
+- product/market
+- actor capability
+- dispatch/origin
+- price
+- shipping
+- compliance
+- payment
+- legal
+- launch control
+- returns
+
+Rules:
+
+1. Reproduce every mismatch.
+2. Identify root cause.
+3. Fix the correct layer.
+4. Test locally.
+5. Re-run parity.
+6. Do not change live UK checkout merely to force parity unless the existing live behaviour is independently proven defective.
+7. The shadow route engine remains non-authoritative until GB→GB parity is demonstrated.
+8. Romania remains PRELAUNCH.
+
+After GB→GB parity is proven, continue according to the ECN blueprint with:
+
+- ECN-3 Unified Inventory / Multi-Warehouse;
+- ECN-4 route-aware shipping;
+- ECN-5 tax/customs/landed cost;
+- ECN-6 destination compliance;
+- ECN-7 reverse logistics;
+- ECN-8 B2B/RFQ;
+- ECN-9 Admin European Commerce Control Centre;
+- ECN-10 Romania four-route E2E.
+
+### 24.11 Do not touch / do not activate
+
+Until the corresponding gates pass:
+
+- do not switch RO launch control to live;
+- do not enable RO checkout/payment;
+- do not use a real customer/live Stripe charge as a development test;
+- do not attach/cut over `loadifymarket.ro`;
+- do not duplicate canonical products per country;
+- do not replace existing supplier-commerce architecture;
+- do not make the ECN shadow route decision authoritative before GB parity;
+- do not modify the separate Android release workspace as part of this ECN branch.
