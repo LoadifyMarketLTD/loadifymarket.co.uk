@@ -14,6 +14,7 @@ CREATE OR REPLACE FUNCTION public.server_cross_border_product_decision_v1(
   p_product_id uuid,
   p_destination_country text,
   p_destination_market text,
+  p_destination_postcode text DEFAULT NULL,
   p_context text DEFAULT 'checkout',
   p_dispatch_location_id uuid DEFAULT NULL,
   p_supplier_id uuid DEFAULT NULL,
@@ -28,6 +29,7 @@ AS $$
 DECLARE
   v_destination_country text:=upper(BTRIM(COALESCE(p_destination_country,'')));
   v_destination_market text:=upper(BTRIM(COALESCE(p_destination_market,'')));
+  v_destination_postcode text:=upper(regexp_replace(BTRIM(COALESCE(p_destination_postcode,'')),'\\s+','','g'));
   v_context text:=lower(BTRIM(COALESCE(p_context,'')));
 
   v_product public.products%ROWTYPE;
@@ -64,6 +66,7 @@ DECLARE
   v_payment_ok boolean:=false;
   v_legal_ok boolean:=false;
   v_launch_ok boolean:=false;
+  v_marketplace_tax_ok boolean:=false;
   v_tax_route_ok boolean:=false;
   v_customs_ok boolean:=false;
 
@@ -389,6 +392,50 @@ BEGIN
     v_diagnostics:=array_append(v_diagnostics,'SELLER_PRODUCT_COMPLIANCE_EVIDENCE_MISSING');
   END IF;
 
+  -- Mirror the existing authoritative marketplace-seller tax boundary in shadow
+  -- mode. The live GB checkout currently permits only GB non-VAT sellers with
+  -- a complete seller declaration, matching per-product tax evidence, and a
+  -- Great Britain destination outside the excluded postcode families.
+  --
+  -- Supplier commerce has its own governed tax/economics evidence chain, so
+  -- this seller-specific compatibility gate is not applied to supplier flows.
+  IF p_supplier_id IS NOT NULL THEN
+    v_marketplace_tax_ok:=true;
+  ELSIF v_route_key='GB-GB' THEN
+    v_marketplace_tax_ok :=
+      upper(BTRIM(COALESCE(v_seller.country,''))) IN ('GB','GBR','UK','UNITED KINGDOM','GREAT BRITAIN')
+      AND upper(regexp_replace(BTRIM(COALESCE(
+        v_seller."businessAddress"->>'postcode',
+        v_seller."businessAddress"->>'postalCode',
+        v_seller."businessAddress"->>'postal_code',
+        ''
+      )),'\\s+','','g')) !~ '^(BT|GY|JE|IM|GX|BF)'
+      AND NULLIF(v_destination_postcode,'') IS NOT NULL
+      AND v_destination_postcode !~ '^(BT|GY|JE|IM|GX|BF)'
+      AND v_seller."taxDeclarationConfirmed"=true
+      AND v_seller."taxDeclarationVersion"=1
+      AND v_seller."taxDeclarationSource"='seller_self_declaration_v1'
+      AND v_seller."taxDeclarationCapturedAt" IS NOT NULL
+      AND v_seller."isVatRegistered"=false
+      AND NULLIF(BTRIM(COALESCE(v_seller."vatNumber",'')),'') IS NULL
+      AND v_product."listingContext"='product'
+      AND v_product."taxTreatmentStatus"='seller_non_vat_declared'
+      AND v_product."taxTreatmentSource"='seller_profile_non_vat_declaration_v1'
+      AND v_product."taxEvidenceVersion"=1
+      AND v_product."taxEvidenceCapturedAt" IS NOT NULL
+      AND COALESCE(v_product."vatRate",-1)=0
+      AND v_product."priceExVat" IS NOT NULL
+      AND ROUND(v_product."priceExVat"*100)=ROUND(v_product.price*100);
+  ELSE
+    -- Marketplace Seller RO/international tax contracts are intentionally not
+    -- inferred from the GB contract and remain fail-closed.
+    v_marketplace_tax_ok:=false;
+  END IF;
+
+  IF NOT v_marketplace_tax_ok THEN
+    v_diagnostics:=array_append(v_diagnostics,'TAX_READINESS_INCOMPLETE');
+  END IF;
+
   v_payment:=public.server_market_payment_readiness_v1(v_destination_market);
   v_payment_ok:=COALESCE((v_payment->>'eligible')::boolean,false);
   IF NOT v_payment_ok THEN
@@ -431,6 +478,7 @@ BEGIN
     v_shipping_ok
     AND v_route.checkout_enabled
     AND v_route.status='live'
+    AND v_marketplace_tax_ok
     AND v_tax_route_ok
     AND v_customs_ok
     AND v_market_compliance_ok
@@ -508,7 +556,7 @@ BEGIN
          OR NOT v_actor_can_fulfil THEN
         v_blockers:=array_append(v_blockers,'SHIPPING_ROUTE_UNAVAILABLE');
       END IF;
-      IF NOT v_tax_route_ok THEN
+      IF NOT v_marketplace_tax_ok OR NOT v_tax_route_ok THEN
         v_blockers:=array_append(v_blockers,'TAX_READINESS_INCOMPLETE');
       END IF;
       IF NOT v_customs_ok THEN
@@ -591,22 +639,24 @@ BEGIN
     'paymentReadiness',v_payment,
     'legalPolicyVersions',v_legal,
     'launchControl',v_launch,
+    'marketplaceTaxEligible',v_marketplace_tax_ok,
+    'destinationPostcode',NULLIF(v_destination_postcode,''),
     'interfaceVersion',1
   );
 END;
 $$;
 
 REVOKE ALL ON FUNCTION public.server_cross_border_product_decision_v1(
-  uuid,text,text,text,uuid,uuid,uuid,uuid
+  uuid,text,text,text,text,uuid,uuid,uuid,uuid
 )
 FROM PUBLIC,anon,authenticated;
 
 GRANT EXECUTE ON FUNCTION public.server_cross_border_product_decision_v1(
-  uuid,text,text,text,uuid,uuid,uuid,uuid
+  uuid,text,text,text,text,uuid,uuid,uuid,uuid
 )
 TO service_role;
 
 COMMENT ON FUNCTION public.server_cross_border_product_decision_v1(
-  uuid,text,text,text,uuid,uuid,uuid,uuid
+  uuid,text,text,text,text,uuid,uuid,uuid,uuid
 ) IS
   'ECN-2 shadow cross-border product decision. Read-only and service-role-only. Country and market are separate. GB legacy origin is allowed only for GB-GB parity; Romania seller product compliance remains fail-closed until reviewed seller-product evidence exists.';

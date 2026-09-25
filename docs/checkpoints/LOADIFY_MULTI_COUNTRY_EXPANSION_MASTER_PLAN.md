@@ -933,3 +933,97 @@ Until the corresponding gates pass:
 - do not replace existing supplier-commerce architecture;
 - do not make the ECN shadow route decision authoritative before GB parity;
 - do not modify the separate Android release workspace as part of this ECN branch.
+
+
+### 24.12 GB→GB shadow parity audit progress — first real mismatch closed
+
+A read-only production parity audit was executed against the current active physical UK catalogue before making the ECN shadow decision authoritative.
+
+Production population observed:
+
+- active physical listings: **9**
+- product GB market + GBP currency ready: **9/9**
+- seller GB market/delivery + active Stripe/seller state ready: **9/9**
+- GB shipping readiness eligible: **9/9**
+- approved GB market-price version present: **0/9**
+- complete live GB marketplace tax evidence: **4/9**
+
+Evidence file:
+
+`docs/checkpoints/evidence/ECN_GB_GB_SHADOW_PARITY_2026-09-25.md`
+
+#### Pricing parity
+
+The live UK checkout still uses canonical `products.price` in GBP for the current active listings.
+
+Because **0/9** currently have an approved GB market-price ledger version, a strict market-price ledger requirement would break live UK parity.
+
+The ECN shadow decision already preserves the correct controlled compatibility rule:
+
+- GB-GB only;
+- legacy implicit GB origin only;
+- product currency GBP;
+- `products.price` accepted as `legacy_gb_listing_price` in shadow parity mode.
+
+This compatibility path is not available for Romania or cross-border routes.
+
+#### Tax parity defect reproduced
+
+The live UK checkout calls `resolveMarketplaceTaxV1`.
+
+Production evidence showed:
+
+- **4/9** active listings currently satisfy the complete live marketplace-seller product tax evidence contract;
+- **5/9** do not and therefore remain correctly blocked by live checkout.
+
+The initial ECN shadow route decision treated domestic route tax readiness as automatically satisfied and could therefore disagree with live checkout for those 5 listings.
+
+This was a real parity defect in the **shadow engine**, not in live UK checkout.
+
+#### Tax parity repair
+
+The ECN shadow route decision was hardened to mirror the existing GB marketplace-seller tax boundary:
+
+- explicit destination postcode input;
+- GB seller-country contract;
+- excluded postcode families `BT|GY|JE|IM|GX|BF`;
+- seller self-declaration v1;
+- non-VAT seller state with no conflicting VAT number;
+- physical product only;
+- product treatment `seller_non_vat_declared`;
+- source `seller_profile_non_vat_declaration_v1`;
+- evidence version/timestamp required;
+- VAT rate 0;
+- `priceExVat` equals listing price at penny precision;
+- failure produces `TAX_READINESS_INCOMPLETE`;
+- Marketplace Seller RO/international tax remains fail-closed and is not inferred from GB.
+
+Supplier Commerce remains separate because it has its own governed tax/economics evidence chain.
+
+#### Verification after repair
+
+- focused parity/domain/tax tests: **46/46 PASS across 4 files**
+- TypeScript: **PASS**
+- targeted ESLint: **PASS**
+- canonical migration health: **227/227 unique versions PASS**
+- production build: **PASS**
+- build security boundary suite: **9/9 PASS**
+- Vite transformed **2,500 modules**
+- `git diff --check`: **PASS**
+- only the existing Capacitor import/chunk and heic2any large-chunk warnings remain non-blocking build warnings
+
+The shadow route engine remains **non-authoritative**.
+
+#### Next exact parity work
+
+Continue GB→GB parity with the remaining domains:
+
+1. seller account capability vs route capability;
+2. shipping-method/rate selection parity, not just readiness-count parity;
+3. destination-address validation parity;
+4. product stock/reservation parity;
+5. return eligibility parity;
+6. checkout-level single-seller constraint parity;
+7. buyer/account-state and maintenance/rate-limit boundaries where route authority must not replace existing checkout controls.
+
+Do not make the ECN route decision authoritative until the resulting parity matrix shows no unexplained mismatch.
