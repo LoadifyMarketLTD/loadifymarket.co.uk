@@ -198,7 +198,7 @@ describe('SEO foundation contract', () => {
     for (const path of EDGE_ONLY_PUBLIC_META_ROUTES) {
       expect(publicMeta, `missing edge-only public metadata route: ${path}`).toContain(`'${path}':`);
     }
-    expect(publicMeta).toContain('`${BASE_URL}${pathname}`');
+    expect(publicMeta).toContain('`${marketContext.baseUrl}${pathname}`');
     expect(publicMeta).toContain('name="description"');
     expect(publicMeta).toContain('property="og:title"');
     expect(publicMeta).toContain('name="twitter:title"');

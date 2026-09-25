@@ -49,6 +49,11 @@ export const handler: Handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
+  }
+
   const supabaseUrl = process.env.VITE_SUPABASE_URL ?? '';
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
   if (!supabaseUrl || !serviceRoleKey) {
