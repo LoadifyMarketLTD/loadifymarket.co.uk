@@ -1444,3 +1444,54 @@ First complete the future-order supplier commercial contract layer:
 Seller-owned multi-location ECN work remains valid and may continue independently.
 
 Do not activate Romania, DNS or live payment changes as part of this remediation.
+
+
+### 24.21 Future supplier order identity is now database-guarded
+
+New migration:
+
+`supabase/migrations/20260925215000_supplier_marketplace_future_order_contract.sql`
+
+Purpose:
+
+Prevent any future supplier marketplace order from being created with the obsolete Loadify-as-seller identity even if an application-level commercial readiness gate is bypassed or misconfigured.
+
+Future supplier marketplace inserts now require:
+
+- independent supplier identity snapshot;
+- independent supplier legal seller snapshot;
+- independent supplier invoice issuer;
+- verified market commercial control;
+- reviewed settlement-model snapshot;
+- marketplace operator snapshot = Loadify Market;
+- supplier commercial contract version 1.
+
+The guard is **INSERT-only** and leaves historical orders untouched.
+
+It explicitly blocks Loadify/XDrive from being snapshotted as seller of supplier marketplace goods.
+
+`merchantOfRecordSnapshot` and `paymentRecipientSnapshot` are intentionally not guessed by this migration. Their future values must come from reviewed Stripe/payment/legal evidence.
+
+Verification:
+
+- focused future-order/intermediary suite: **23/23 PASS across 4 files**
+- TypeScript PASS
+- migration health **232/232**
+- `git diff --check` PASS
+
+### Current exact task after 24.21
+
+The remaining P0 blocker is now narrower:
+
+**determine and evidence the supplier marketplace settlement/payment model without changing Loadify into the owner or seller of the goods.**
+
+Until that evidence exists:
+
+- GB supplier marketplace checkout remains blocked;
+- RO supplier marketplace checkout remains blocked;
+- supplier PaymentIntent creation remains blocked;
+- historical supplier orders remain serviceable;
+- seller marketplace commerce remains unaffected;
+- ECN supplier route integration remains fail-closed.
+
+Do not set `supplier_marketplace_commercial_controls.status='verified'` or `checkout_enabled=true` based on an architectural assumption.

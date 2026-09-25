@@ -244,3 +244,38 @@ The next technical/legal boundary is to replace the future-order legacy snapshot
 - platform collection as disclosed agent, if payment-provider/legal evidence supports it.
 
 Neither option is considered ready merely because it exists in the schema.
+
+
+## Future-order database defense — 25 September 2026
+
+A second defense-in-depth migration has been added:
+
+`supabase/migrations/20260925215000_supplier_marketplace_future_order_contract.sql`
+
+It does not modify historical orders.
+
+For **future** `loadify_supplier_fulfilled` technical-mode inserts it requires:
+
+- approved supplier offer;
+- approved supplier identity;
+- published supplier marketplace projection;
+- verified market commercial control;
+- supplier seller-of-record identity snapshot;
+- supplier legal/display name snapshot;
+- supplier as invoice issuer;
+- reviewed settlement-model snapshot;
+- explicit Loadify marketplace-operator snapshot;
+- commercial contract version 1.
+
+The INSERT guard explicitly rejects Loadify/XDrive as the seller identity for supplier marketplace goods.
+
+Important: the migration deliberately does **not** guess `merchantOfRecordSnapshot` or `paymentRecipientSnapshot`. Those semantics depend on the eventually reviewed Stripe/agency settlement contract and remain blocked until evidence exists.
+
+This prevents an accidental future switch of the market readiness flag from reviving the old Loadify-as-seller order-creation semantics.
+
+Verification:
+
+- future-order + intermediary/checkout/payment contract suite: **23/23 PASS across 4 files**
+- TypeScript: **PASS**
+- canonical migrations: **232/232 unique versions PASS**
+- `git diff --check`: **PASS**
