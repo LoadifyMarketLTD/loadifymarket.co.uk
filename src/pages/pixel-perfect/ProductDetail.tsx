@@ -185,7 +185,7 @@ const ProductDetail = () => {
           setSellerListingCount(0);
           setSellerStoreSlug(null);
           setSellerJoinDate(null);
-          trackProductView(supplierProduct.id, supplierProduct.title, supplierProduct.price);
+          trackProductView(supplierProduct.id, supplierProduct.title, supplierProduct.price, config.currency);
           return;
         }
 
@@ -224,7 +224,7 @@ const ProductDetail = () => {
         }
 
         // Track product page view for analytics
-        trackProductView(adapted.id, adapted.title, adapted.price);
+        trackProductView(adapted.id, adapted.title, adapted.price, config.currency);
 
         // Capture category slug for breadcrumb link
         const rawCat = Array.isArray(data.category) ? data.category[0] : data.category;
@@ -317,7 +317,7 @@ const ProductDetail = () => {
     };
 
     fetchProduct();
-  }, [id, user?.id, market]);
+  }, [id, user?.id, market, config.currency]);
 
   if (loading) {
     return (
@@ -452,7 +452,7 @@ const ProductDetail = () => {
       promptAuth('buy');
       return false;
     }
-    trackAddToCart(product.id, product.title, product.price);
+    trackAddToCart(product.id, product.title, product.price, config.currency);
     addToCart(product, mobileQty);
     return true;
   };
@@ -754,7 +754,7 @@ const ProductDetail = () => {
                 </h1>
 
                 <p style={{ fontSize: "26px", fontWeight: 800, color: "#0A234F", marginBottom: "4px" }}>
-                  £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
+                  {formattedProductPrice}
                 </p>
                 <p style={{ fontSize: "13px", color: "#64748B", fontWeight: 500, marginBottom: "4px" }}>
                   Shipping calculated at checkout

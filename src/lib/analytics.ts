@@ -31,9 +31,9 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>):
 }
 
 /** Track when a buyer begins the checkout flow. */
-export function trackCheckout(items: Array<{ id: string; name: string; price: number; quantity?: number }>): void {
+export function trackCheckout(items: Array<{ id: string; name: string; price: number; quantity?: number }>, currency = "GBP"): void {
   trackEvent("begin_checkout", {
-    currency: "GBP",
+    currency,
     items: items.map((item) => ({
       item_id: item.id,
       item_name: item.name,
@@ -49,9 +49,9 @@ export function trackRegister(method: "email" | "google" | "apple" = "email"): v
 }
 
 /** Track a product detail page view. */
-export function trackProductView(productId: string, productName: string, price?: number): void {
+export function trackProductView(productId: string, productName: string, price?: number, currency = "GBP"): void {
   trackEvent("view_item", {
-    currency: "GBP",
+    currency,
     items: [
       {
         item_id: productId,
@@ -104,9 +104,9 @@ export function trackPublishListing(productId: string, productName?: string): vo
 }
 
 /** Track when a buyer adds a product to cart. */
-export function trackAddToCart(productId: string, productName: string, price: number): void {
+export function trackAddToCart(productId: string, productName: string, price: number, currency = "GBP"): void {
   trackEvent("add_to_cart", {
-    currency: "GBP",
+    currency,
     value: price,
     items: [{ item_id: productId, item_name: productName, price, quantity: 1 }],
   });
@@ -118,9 +118,9 @@ export function trackMessageSeller(productId: string): void {
 }
 
 /** Track when a buyer starts the checkout flow. */
-export function trackStartCheckout(items: Array<{ id: string; name: string; price: number; quantity?: number }>): void {
+export function trackStartCheckout(items: Array<{ id: string; name: string; price: number; quantity?: number }>, currency = "GBP"): void {
   trackEvent("start_checkout", {
-    currency: "GBP",
+    currency,
     items: items.map((item) => ({
       item_id: item.id,
       item_name: item.name,
@@ -134,12 +134,13 @@ export function trackStartCheckout(items: Array<{ id: string; name: string; pric
 export function trackCompletedPurchase(params: {
   orderId: string;
   value: number;
+  currency?: string;
   productId?: string;
 }): void {
   trackEvent("completed_purchase", {
     transaction_id: params.orderId,
     value: params.value,
-    currency: "GBP",
+    currency: params.currency ?? "GBP",
     ...(params.productId ? { item_id: params.productId } : {}),
   });
 }
