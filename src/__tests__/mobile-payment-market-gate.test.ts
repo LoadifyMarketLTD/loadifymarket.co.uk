@@ -23,8 +23,9 @@ describe("mobile payment market gate", () => {
     expect(source).toContain("PRODUCT_MARKET_NOT_ELIGIBLE");
   });
 
-  it("requires GBP for the live GB payment boundary", () => {
-    expect(source).toContain("requestedMarket === 'GB' && productCurrency !== 'GBP'");
+  it("requires the product currency to match the selected market", () => {
+    expect(source).toContain("const expectedCurrency = requestedMarket === 'RO' ? 'RON' : 'GBP'");
+    expect(source).toContain("productCurrency !== expectedCurrency");
     expect(source).toContain("PRODUCT_CURRENCY_MISMATCH");
   });
 });
