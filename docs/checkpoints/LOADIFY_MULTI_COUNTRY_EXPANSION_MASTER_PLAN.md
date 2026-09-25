@@ -565,3 +565,34 @@ When a ChatGPT conversation reaches its limit, start a new chat and say:
 **“Continuă Loadify Multi-Country din master plan: `D:\LoadifyMarket-Multicountry\docs\checkpoints\LOADIFY_MULTI_COUNTRY_EXPANSION_MASTER_PLAN.md`. Citește-l integral și continuă autonom de la Current next exact task.”**
 
 That path is the canonical handoff reference.
+
+
+## 22. Romania launch-readiness closeout — 25 September 2026
+
+Verified technical evidence:
+- Runtime launch control is now wired end-to-end instead of being a database-only switch. The RO client remains fail-closed until the server reports status=live with both checkout and payment enabled.
+- Marketplace web checkout, mobile PaymentIntent, supplier checkout and supplier PaymentIntent now consult the explicit launch control. GB remains the default live GBP boundary.
+- When RO is explicitly live, payment creation preserves RON as transaction currency; payment-session currency is no longer hard-coded to GBP on these paths.
+- Dedicated launch-boundary regression plus the full multicountry set: 24 test files / 112 tests PASS.
+- Romania synthetic browser E2E: 2/2 PASS (RO catalogue/cart currency and prelaunch checkout fail-closed; tracked-order RON rendering).
+- TypeScript PASS.
+- ESLint PASS. Generated Netlify runtime output is now explicitly excluded from lint so a local .netlify directory cannot stall or contaminate repository lint.
+- Migration health PASS: 225 canonical migrations / 225 unique versions.
+- Production build PASS: Vite 7.3.6, 2,499 modules transformed; security boundary 9/9 PASS. Existing Capacitor import and heic2any chunk warnings remain warnings only.
+- Stripe live account Loadify Market Platform was read directly on 25 September 2026: charges enabled, payouts enabled, card_payments active and transfers active; no outstanding account requirements were reported by the connected Stripe account read.
+- Official EU consumer guidance rechecked on 25 September 2026: distance-sale withdrawal is generally 14 days, pre-contract information must include trader/price/delivery/withdrawal information, and EU goods carry the applicable minimum legal guarantee framework. GDPR transparency/data-subject rights and Romanian ANSPDCP complaint routes were also rechecked from official EU/ANSPDCP sources.
+- Supabase production project was inspected read-only. The 15 multicountry/RO migrations dated 24 September are NOT yet applied to production; private RO launch/payment/legal tables and their readiness RPCs therefore do not yet exist in production. This is intentionally not changed before the cutover gate.
+- loadifymarket.ro DNS still does not resolve. No Netlify production-domain attachment or DNS cutover has been attempted.
+
+Current hard blockers before RO can be switched live:
+1. Reviewed Romanian legal policy versions are still absent. Repository legal pages remain UK/English source content; the database gate correctly requires reviewed current ro-RO buyer_terms, privacy, returns_policy and shipping_policy versions. Do not fabricate or auto-verify these.
+2. The 15 canonical multicountry/RO migrations are pending production application. Apply only as a controlled prelaunch schema cutover, then verify advisors/RPCs and confirm RO remains prelaunch.
+3. Production RO payment evidence rows must be created from verified Stripe evidence and reviewed, including RON charge support, account capability, SCA/3DS, refunds and settlement/reconciliation.
+4. loadifymarket.ro DNS and Netlify custom-domain attachment are pending.
+5. A final real-environment RO transaction rehearsal is required after schema/domain staging and before enabling live checkout/payment. Do not use a live customer charge as a test.
+6. Marketplace Seller RO tax treatment remains fail-closed under the existing narrow GB marketplace-tax resolver. Supplier-Fulfilled economics already have RO/RON evidence gates, but independent Marketplace Seller checkout must not be declared RO-ready until an evidence-backed Romanian/EU seller tax contract is implemented and tested.
+
+Cutover rule:
+- Keep RO prelaunch, checkout=false, payment=false until all blockers above are closed.
+- The final state change must use the governed Romania launch-control RPC with an active admin identity and an explicit reason.
+- Re-run full multicountry regression, E2E, build, migration health and Supabase security advisors immediately before the final state change.
