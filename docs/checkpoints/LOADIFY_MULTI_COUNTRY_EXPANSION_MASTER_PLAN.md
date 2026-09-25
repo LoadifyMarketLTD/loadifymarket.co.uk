@@ -1270,3 +1270,66 @@ The RPC must:
 - remain shadow/non-authoritative;
 - keep legacy implicit GB stock compatibility GB→GB-only;
 - keep all Romania routes PRELAUNCH.
+
+
+### 24.18 ECN-3B — read-only inventory-source decision implemented
+
+Migration:
+
+`supabase/migrations/20260925211000_ecn_inventory_source_decision.sql`
+
+New service-role-only shadow interface:
+
+`public.server_inventory_source_decision_v1(...)`
+
+The decision normalizes inventory sources without creating a competing stock truth.
+
+Seller path:
+
+- uses active verified `seller_inventory_positions` when present;
+- evaluates physical origin and market route per position;
+- deterministically ranks:
+  1. preferred eligible location when explicitly supplied;
+  2. domestic eligible source;
+  3. greater available quantity;
+  4. stable inventory-position id;
+- exposes seller-position reservation mode as non-authoritative;
+- retains `products.stockQuantity` only as the existing controlled GB→GB legacy compatibility path;
+- outside GB→GB, missing physical inventory location fails closed.
+
+Supplier path:
+
+- reuses `server_supplier_stock_price_decision_v1`;
+- reads the exact governed stock observation selected by that decision;
+- requires a physical external warehouse reference in supplier stock evidence;
+- requires a verified `supplier_warehouse_bindings` mapping;
+- requires verified/active ECN dispatch location;
+- derives physical route from the bound warehouse country;
+- retains `supplier_stock_reservations` as the supplier reservation model;
+- does not copy raw supplier stock into an ECN stock table.
+
+Safety:
+
+- read-only;
+- service-role only;
+- no stock reservation;
+- no live checkout integration;
+- no route activation;
+- no Romania launch mutation;
+- no duplicate supplier stock/reservation system.
+
+Verification:
+
+- ECN inventory + route + orchestration focused suite: **35/35 PASS across 4 files**
+- TypeScript: **PASS**
+- targeted ESLint: **PASS**
+- canonical migration health: **230/230 unique versions PASS**
+- `git diff --check`: **PASS**
+
+Next exact task:
+
+Proceed to **ECN-3C — compose the inventory-source decision into the ECN shadow Route Engine**.
+
+Do not merely replace the current stock boolean. The selected inventory source must become the source of physical origin/dispatch for the route decision when explicit positions/bindings exist, while preserving the GB→GB legacy compatibility path.
+
+The resulting integration remains shadow/non-authoritative and must be parity-tested before any checkout wiring.
