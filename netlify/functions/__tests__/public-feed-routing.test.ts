@@ -24,6 +24,12 @@ describe('public XML route precedence', () => {
     expect(redirects.findIndex((line) => line.startsWith('/api/*'))).toBeLessThan(spaFallback);
   });
 
+  it('does not create an order-route redirect loop while preserving legacy order links', () => {
+    expect(redirects.some((line) => line.startsWith('/orders/*'))).toBe(false);
+    expect(redirects).toContain('/orders/success                       /index.html                      200');
+    expect(redirects).toContain('/orders/:orderId                      /orders?orderId=:orderId         302!');
+  });
+
   it('fails visibly instead of publishing a successful empty feed without Supabase configuration', async () => {
     const previousUrl = process.env.VITE_SUPABASE_URL;
     const previousKey = process.env.VITE_SUPABASE_ANON_KEY;
