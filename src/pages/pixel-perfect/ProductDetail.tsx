@@ -867,6 +867,7 @@ const ProductDetail = () => {
                 <div className="bg-card rounded-xl border border-border p-6">
                   <ProductInfo
                     product={product}
+                    formattedPrice={formattedProductPrice}
                     title={product.title}
                     category={product.category}
                     subcategory={product.subcategory}

@@ -22,6 +22,7 @@ interface ProductInfoProps {
   views: number;
   listed: string;
   product: Product;
+  formattedPrice: string;
   /** The seller's user ID — used to detect if the logged-in user owns this product */
   sellerId?: string | null;
   onShareFacebook: () => void;
@@ -53,6 +54,7 @@ const ProductInfo = ({
   views,
   listed,
   product,
+  formattedPrice,
   sellerId,
   onShareFacebook,
   onShareMessenger,
@@ -211,6 +213,12 @@ const ProductInfo = ({
         <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground leading-tight">
           {title}
         </h1>
+        <p
+          data-testid="product-price-desktop"
+          className="text-3xl font-display font-extrabold text-primary"
+        >
+          {formattedPrice}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

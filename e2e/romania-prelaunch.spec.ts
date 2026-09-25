@@ -87,7 +87,8 @@ test('Romania synthetic catalogue to cart remains RON and checkout stays fail-cl
 
   await page.getByText('Produs test România').first().click();
   await expect(page).toHaveURL(new RegExp('/product/' + productId + '$'));
-  await expect(page.getByText(/149[,.]90\s*RON/).first()).toBeVisible();
+  await expect(page.getByTestId('product-price-desktop')).toHaveText(/149[,.]90\s*RON/);
+  await expect(page.getByTestId('product-price-desktop')).toBeVisible();
 
   await page.evaluate(({ id, seller }) => {
     window.localStorage.setItem('loadify_cart', JSON.stringify([{
