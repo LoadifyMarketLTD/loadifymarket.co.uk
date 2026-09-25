@@ -1333,3 +1333,43 @@ Proceed to **ECN-3C — compose the inventory-source decision into the ECN shado
 Do not merely replace the current stock boolean. The selected inventory source must become the source of physical origin/dispatch for the route decision when explicit positions/bindings exist, while preserving the GB→GB legacy compatibility path.
 
 The resulting integration remains shadow/non-authoritative and must be parity-tested before any checkout wiring.
+
+
+### 24.19 P0 business-model correction — Loadify remains platform/intermediary
+
+Owner-confirmed non-negotiable model:
+
+- Loadify does **not** own stock;
+- Loadify does **not** operate warehouses;
+- Loadify does **not** pre-purchase goods;
+- Loadify does **not** finance supplier inventory;
+- Loadify does **not** take title to goods;
+- Loadify must not become retailer/seller of record merely because goods are sourced from a supplier.
+
+A repository audit found a real architectural inconsistency:
+
+- the canonical master plan / ECN blueprint / public supplier messaging correctly state that supplier stock remains with the supplier and Loadify does not operate a warehouse;
+- however the legacy supplier-commerce mode `loadify_supplier_fulfilled` is also used by code, tests and buyer/legal copy that currently state that Loadify is seller/merchant of record for supplier-fulfilled goods.
+
+This conflict is now recorded in:
+
+`docs/checkpoints/LOADIFY_MARKETPLACE_OWNERSHIP_MODEL_CORRECTION_2026-09-25.md`
+
+Immediate safety action:
+
+- ECN supplier inventory-source selection is now fail-closed with `supplier_intermediary_commercial_model_not_ready`;
+- ECN must not propagate `loadify_supplier_fulfilled` seller/MoR semantics into Romania/Europe;
+- seller-owned stock-location work remains valid because the goods remain seller-owned;
+- supplier warehouse bindings represent third-party supplier locations only and never Loadify-owned stock.
+
+**ECN-3C supplier integration is BLOCKED until the supplier commercial/legal model is corrected.**
+
+Next exact task before supplier ECN integration:
+
+1. audit every use of `loadify_supplier_fulfilled` / `loadify_direct`;
+2. separate technical fulfilment actor from legal seller-of-record;
+3. define the canonical independent supplier marketplace contract;
+4. migrate checkout/order/payment/refund/returns/legal/email/test semantics without changing stock ownership;
+5. only then re-enable supplier inventory-source routing in ECN.
+
+Romania remains PRELAUNCH.

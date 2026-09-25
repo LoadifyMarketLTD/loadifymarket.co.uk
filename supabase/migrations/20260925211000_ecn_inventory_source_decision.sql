@@ -282,8 +282,33 @@ BEGIN
     );
   END IF;
 
-  -- Supplier inventory path. The existing supplier stock/price decision remains
-  -- the stock truth. ECN only binds its warehouse evidence to a physical route.
+  -- Supplier inventory path.
+  --
+  -- Loadify is a marketplace/intermediary and does not own or pre-purchase
+  -- supplier stock. The current legacy supplier commerce runtime uses the
+  -- commercial mode 'loadify_supplier_fulfilled', whose present legal/economic
+  -- semantics elsewhere in the repository can make Loadify seller/merchant of
+  -- record. That conflicts with the canonical marketplace model and MUST NOT
+  -- be propagated into ECN.
+  --
+  -- Until the supplier commercial contract is corrected to an independent
+  -- supplier/seller-of-record marketplace model, supplier inventory selection
+  -- remains fail-closed here. Seller-owned inventory paths remain available.
+  RETURN jsonb_build_object(
+    'eligible',false,
+    'reason','supplier_intermediary_commercial_model_not_ready',
+    'sourceType','supplier_offer',
+    'supplierOfferId',p_supplier_offer_id,
+    'canonicalProductId',p_canonical_product_id,
+    'candidates','[]'::jsonb,
+    'blockers',jsonb_build_array('ACTOR_ROUTE_CAPABILITY_MISSING'),
+    'authoritativeCheckout',false,
+    'interfaceVersion',1
+  );
+
+  -- The code below is intentionally unreachable until the supplier marketplace
+  -- commercial model is redesigned. It is retained temporarily as reference
+  -- for the existing governed supplier stock evidence chain.
   IF p_canonical_product_id IS NULL THEN
     RETURN jsonb_build_object(
       'eligible',false,
