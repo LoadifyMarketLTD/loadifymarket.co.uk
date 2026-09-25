@@ -18,24 +18,24 @@ const ShippingPolicy = () => {
   }
   return (
     <MainLayout>
-      <SEO title="Shipping Policy | Loadify Market" description="Learn how shipping works for Marketplace Seller and Loadify Supplier-Fulfilled orders." canonical="/shipping-policy" />
+      <SEO title="Shipping Policy | Loadify Market" description="Learn how shipping works for orders from independent marketplace sellers and approved suppliers." canonical="/shipping-policy" />
       <main id="main-content" className="pt-4 md:pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Shipping Policy" }]} backTo="/" />
         </div>
         <div className="legal-content">
           <h1>Shipping Policy</h1>
-          <p className="text-muted-foreground"><strong>Last updated:</strong> 21 September 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> 25 September 2026</p>
 
           <p>This Shipping Policy explains how dispatch and delivery work on Loadify Market, operated by XDrive Logistics Ltd (Company No: 13171804).</p>
-          <p><strong>Loadify does not operate a physical warehouse or delivery fleet for marketplace goods.</strong> Marketplace Seller orders are dispatched by the named independent seller. Loadify Supplier-Fulfilled orders are sold by Loadify and physically dispatched by an approved supplier or fulfilment provider on Loadify's behalf.</p>
+          <p><strong>Loadify does not operate a physical warehouse or delivery fleet for marketplace goods.</strong> Marketplace Seller orders are dispatched by the named independent seller. Approved Supplier Marketplace orders are held and dispatched by the independent supplier or its authorised fulfilment provider.</p>
 
           <h2>1. Shipping Models</h2>
           <p><strong>Marketplace Seller.</strong> The independent seller chooses and manages the available shipping methods, dispatch process and tracking for its products, subject to the terms shown before purchase and applicable Platform rules.</p>
-          <p><strong>Loadify Supplier-Fulfilled.</strong> Loadify remains the seller of record, while the approved supplier or fulfilment provider holds the stock and performs physical dispatch. Supplier-held stock does not become Loadify warehouse stock.</p>
+          <p><strong>Approved Supplier Marketplace.</strong> The independent supplier remains the seller of record and controls the stock. The supplier or its authorised fulfilment provider performs physical dispatch. Supplier-held stock does not become Loadify inventory.</p>
 
           <h2>2. Delivery Areas</h2>
-          <p>The delivery territory for a product is shown by the applicable listing and checkout flow. Supplier-Fulfilled products are only offered where the approved supplier route, stock, pricing and delivery capability are eligible for the buyer's destination.</p>
+          <p>The delivery territory for a product is shown by the applicable listing and checkout flow. Approved supplier products are only offered where the independent supplier route, stock, pricing and delivery capability are eligible for the buyer's destination.</p>
 
           <h2>3. Shipping Costs</h2>
           <p>Shipping charges are calculated from the applicable seller or supplier-fulfilment route and are shown before the buyer confirms payment. Relevant factors may include:</p>
@@ -60,11 +60,11 @@ const ShippingPolicy = () => {
           </ul>
 
           <h2>6. Order Tracking</h2>
-          <p>Where tracking is available, it is attached to the Loadify order record. For Marketplace Seller orders the tracking originates from the seller's fulfilment process. For Supplier-Fulfilled orders it may originate from the approved supplier or its carrier and is surfaced through Loadify where supported.</p>
+          <p>Where tracking is available, it is attached to the Loadify order record. For Marketplace Seller orders the tracking originates from the seller's fulfilment process. For Approved Supplier Marketplace orders it originates from the independent supplier or its carrier and may be surfaced through Loadify where supported.</p>
 
           <h2>7. Delivery Issues</h2>
           <p>Examples include non-delivery, significant delay, damage in transit or receipt of an incorrect item.</p>
-          <p>For a Marketplace Seller order, use the seller-contact or order-support route first unless the Platform directs otherwise. For a Loadify Supplier-Fulfilled order, contact Loadify through the order/support route; Loadify will coordinate with the fulfilment supplier or carrier where required.</p>
+          <p>For a Marketplace Seller or Approved Supplier Marketplace order, use the responsible seller/supplier contact or order-support route. Loadify may coordinate platform evidence with the seller, supplier or carrier where required.</p>
 
           <h2>8. Failed Delivery and Address Accuracy</h2>
           <p>Buyers are responsible for providing an accurate delivery address and reasonable delivery-contact information. Additional charges caused by an incorrect address, repeated failed delivery or refused delivery may be recoverable where permitted by law and disclosed terms.</p>

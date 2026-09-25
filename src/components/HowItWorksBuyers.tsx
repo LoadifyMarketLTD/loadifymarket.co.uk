@@ -3,7 +3,7 @@ export default function HowItWorksBuyers() {
     {
       number: 1,
       title: "Browse & Discover",
-      description: "Find products from independent sellers and Loadify Supplier-Fulfilled ranges across multiple categories.",
+      description: "Find products from independent marketplace sellers and approved suppliers across multiple categories.",
     },
     {
       number: 2,

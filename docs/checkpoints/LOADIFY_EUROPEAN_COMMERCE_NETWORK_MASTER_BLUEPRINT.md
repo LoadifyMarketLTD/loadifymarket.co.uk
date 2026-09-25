@@ -216,8 +216,9 @@ Unless explicitly changed through a separately approved business/legal model:
 - Loadify does not buy supplier stock in advance.
 - Loadify does not operate its own warehouse merely to enable international expansion.
 - Independent sellers/suppliers retain or control stock.
+- The independent seller or supplier identified for the goods remains the seller of record under the marketplace model; Loadify remains the platform/intermediary.
 - Sellers/suppliers remain responsible for fulfilment according to the applicable arrangement.
-- Loadify must not silently become retailer/reseller/importer of record solely because cross-border commerce is added.
+- Loadify must not silently become retailer/reseller/seller/importer of record solely because supplier sourcing, platform payment orchestration or cross-border commerce is added.
 - Product data rights, stock authority, price authority and compliance evidence must remain attributable.
 - Payments, tax treatment, customs responsibility, shipping responsibility and returns responsibility must be explicit for every route.
 - Existing UK production behaviour remains protected while international capabilities are introduced.

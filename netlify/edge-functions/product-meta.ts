@@ -13,7 +13,6 @@ import {
 } from '../../src/lib/productSeo.ts';
 import { marketCodesRestFilter, replaceOrInsertSeoAlternates, seoMarketContext, type SeoMarket } from './_shared/marketSeo.ts';
 const SITE_NAME = 'Loadify Market';
-const LEGAL_OPERATOR_NAME = 'XDrive Logistics Ltd';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,6 +34,8 @@ interface ProductRow {
   reviewCount?: number | null;
   category?: { name?: string; slug?: string } | null;
   commercialMode?: 'marketplace_seller' | 'loadify_supplier_fulfilled';
+  supplierName?: string | null;
+  supplierLegalName?: string | null;
   currency?: string | null;
   marketCodes?: string[] | null;
 }
@@ -56,6 +57,8 @@ interface SupplierCatalogPayload {
     currency?: string;
     sellableQuantity?: number;
     checkoutEligible?: boolean;
+    supplierName?: string;
+    supplierLegalName?: string;
   }>;
 }
 
@@ -223,6 +226,8 @@ async function fetchSupplierProductData(
         stockQuantity: Number.isFinite(quantity) ? Math.max(0, Math.floor(quantity)) : 0,
         condition: 'new',
         commercialMode: 'loadify_supplier_fulfilled',
+        supplierName: item.supplierName?.trim() || undefined,
+        supplierLegalName: item.supplierLegalName?.trim() || item.supplierName?.trim() || undefined,
         currency: item.currency?.trim().toUpperCase() || 'GBP',
       },
     };
@@ -314,7 +319,7 @@ export default async function productMeta(
 
   const isSupplierFulfilled = product.commercialMode === 'loadify_supplier_fulfilled';
   const sellerName = isSupplierFulfilled
-    ? SITE_NAME
+    ? product.supplierName?.trim() || undefined
     : product.sellerId
       ? await fetchPublicSellerName(product.sellerId, supabaseUrl, supabaseAnonKey)
       : undefined;
@@ -486,17 +491,13 @@ export default async function productMeta(
             ...(itemCondition ? { itemCondition } : {}),
             ...(sellerName
               ? {
-                  seller: isSupplierFulfilled
-                    ? {
-                        '@type': 'Organization',
-                        name: SITE_NAME,
-                        legalName: LEGAL_OPERATOR_NAME,
-                        url: baseUrl,
-                      }
-                    : {
-                        '@type': 'Organization',
-                        name: sellerName,
-                      },
+                  seller: {
+                    '@type': 'Organization',
+                    name: sellerName,
+                    ...(isSupplierFulfilled && product.supplierLegalName
+                      ? { legalName: product.supplierLegalName }
+                      : {}),
+                  },
                 }
               : {}),
           },

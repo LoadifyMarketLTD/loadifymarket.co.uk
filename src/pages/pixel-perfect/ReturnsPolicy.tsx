@@ -18,24 +18,24 @@ const ReturnsPolicy = () => {
   }
   return (
     <MainLayout>
-      <SEO title="Returns Policy | Loadify Market" description="Understand returns and refunds for Marketplace Seller and Loadify Supplier-Fulfilled purchases." canonical="/returns-policy" />
+      <SEO title="Returns Policy | Loadify Market" description="Understand returns and refunds for purchases from independent marketplace sellers and approved suppliers." canonical="/returns-policy" />
       <main id="main-content" className="pt-4 md:pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Returns Policy" }]} backTo="/" />
         </div>
         <div className="legal-content">
           <h1>Returns Policy</h1>
-          <p className="text-muted-foreground"><strong>Last updated:</strong> 21 September 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> 25 September 2026</p>
 
           <p>This Returns Policy explains how returns and refunds are handled on Loadify Market, operated by XDrive Logistics Ltd (Company No: 13171804).</p>
-          <p><strong>The return route depends on who is the seller of record for the order.</strong> Marketplace Seller orders are handled by the named independent seller, with Loadify providing platform support. Loadify Supplier-Fulfilled orders are sold by Loadify Market, and Loadify coordinates the customer-facing return and refund process with the approved fulfilment supplier where required.</p>
+          <p><strong>The return route depends on the independent seller or approved supplier responsible for the order.</strong> Loadify provides the marketplace return-request and support workflow but does not become the owner or seller of the goods.</p>
 
           <h2>1. Marketplace Seller Returns</h2>
           <p>For a product sold by an independent Marketplace Seller, that seller's return terms apply subject to applicable law and Platform rules. The seller is responsible for the goods as seller of record. Buyers should use the order's seller-contact, return or dispute route.</p>
 
-          <h2>2. Loadify Supplier-Fulfilled Returns</h2>
-          <p>For a product identified as Loadify Supplier-Fulfilled, XDrive Logistics Ltd trading as Loadify Market is the seller of record. The approved supplier may hold stock, dispatch the goods and receive a physical return on Loadify's behalf, but Loadify remains the buyer's customer-facing seller for the return and refund decision.</p>
-          <p>Buyers should submit the return or cancellation through the Loadify order flow or contact Loadify support. Return instructions may specify a supplier or fulfilment-provider return address after the request has been reviewed.</p>
+          <h2>2. Approved Supplier Marketplace Returns</h2>
+          <p>For an approved supplier product, the independent supplier identified for the order remains the seller of record and is responsible for the applicable return and refund obligations. Supplier-held stock never becomes Loadify inventory.</p>
+          <p>Buyers may submit the return or cancellation through the Loadify order flow. Loadify can route the request, retain evidence and provide support escalation, while return instructions may direct the goods to the responsible supplier or its authorised return location.</p>
 
           <h2>3. Consumer Rights</h2>
           <p>Where UK consumer law applies, statutory cancellation and product-quality rights are not reduced by this policy. Under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013, eligible distance-sale consumers generally have 14 days after receiving goods to notify the seller of cancellation, subject to statutory exceptions.</p>
@@ -58,11 +58,11 @@ const ReturnsPolicy = () => {
           <p>Where the Consumer Rights Act 2015 applies, goods must meet the applicable statutory standards, including being as described, of satisfactory quality and fit for purpose. Available remedies depend on the circumstances and timing of the claim.</p>
 
           <h2>7. Refund Process</h2>
-          <p>For Marketplace Seller orders, the independent seller is responsible for the refund decision under the applicable seller terms and law, while Loadify may facilitate the Stripe workflow and platform records. For Loadify Supplier-Fulfilled orders, Loadify reviews the customer-facing request and, when a refund is due, executes it through Stripe to the original payment method and reconciles the supplier relationship separately.</p>
+          <p>The independent seller or approved supplier is responsible for the refund entitlement under the applicable terms and law. Loadify may facilitate the platform and Stripe refund workflow, maintain transaction records and support evidence exchange, but this facilitation does not transfer ownership of the goods or seller-of-record responsibility to Loadify.</p>
           <p>After Stripe confirms a refund, the buyer's bank or card issuer may take additional business days to display it.</p>
 
           <h2>8. Disputes</h2>
-          <p>If a Marketplace Seller issue cannot be resolved directly, the buyer may escalate it through Loadify support. For Supplier-Fulfilled orders, Loadify is already the customer-facing seller and will investigate the request, obtain fulfilment evidence where needed and apply the appropriate remedy.</p>
+          <p>If an issue cannot be resolved directly with the independent seller or approved supplier, the buyer may escalate it through Loadify support. Loadify may investigate platform evidence and coordinate the dispute workflow without replacing the responsible seller or supplier.</p>
 
           <h2>9. Large &amp; B2B Orders</h2>
           <p>B2B purchases and negotiated large orders may be subject to different contractual return terms. Statutory consumer cancellation rights do not automatically apply where the buyer is acting wholly or mainly for business purposes.</p>

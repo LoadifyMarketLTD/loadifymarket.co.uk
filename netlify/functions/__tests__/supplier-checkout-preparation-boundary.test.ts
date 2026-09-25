@@ -26,18 +26,18 @@ describe("Loadify Supplier-Fulfilled checkout preparation boundary", () => {
     expect(multiOfferMigration).toContain('"supplierExternalVariantRefSnapshot"');
   });
 
-  it("uses the canonical order truth without a fake marketplace seller", () => {
+  it("fails new supplier checkout closed until the intermediary commercial model is verified", () => {
+    expect(endpoint).toContain("server_supplier_marketplace_commercial_readiness_v1");
+    expect(endpoint).toContain("SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY");
+    expect(endpoint).toContain("independent-supplier commercial model");
     expect(migration).toContain('"sellerId" IS NULL');
-    expect(migration).toContain("'loadify_supplier_fulfilled'");
-    expect(migration).toContain("'XDrive Logistics Ltd trading as Loadify Market'");
-    expect(migration).toContain("'Loadify Market'");
   });
 
   it("keeps payment and supplier submission downstream", () => {
     expect(endpoint).toContain("paymentSessionCreated: false");
     expect(endpoint).toContain("paymentCaptured: false");
     expect(endpoint).toContain("supplierOrderSubmitted: false");
-    expect(endpoint).toContain('"loadify_merchant_of_record_payment_session"');
+    expect(endpoint).toContain('"supplier_marketplace_payment_session"');
     expect(migration).toContain("No Stripe session is created here");
   });
 

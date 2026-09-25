@@ -109,3 +109,138 @@ A “warehouse” in ECN is always a third-party seller/supplier fulfilment loca
 **ECN-3C supplier integration is BLOCKED by business-model inconsistency.**
 
 ECN-3C may continue for independent seller-owned inventory paths, but supplier paths remain fail-closed until the marketplace commercial contract is corrected.
+
+
+## Remediation implemented — 25 September 2026
+
+The first production-safety remediation slice is now implemented on the multi-country branch.
+
+### Commercial-model control
+
+New migration:
+
+`supabase/migrations/20260925213500_supplier_marketplace_intermediary_control.sql`
+
+It creates a private, fail-closed market control for supplier marketplace commerce with the following invariant fields:
+
+- `supplier_is_seller_of_record = true`
+- `loadify_owns_inventory = false`
+- `loadify_prepurchases_inventory = false`
+- settlement model must remain one of the reviewed marketplace settlement models
+- checkout cannot be enabled unless the control is explicitly verified with evidence and reviewer identity
+
+Both GB and RO are seeded:
+
+- status = `blocked`
+- checkout = `false`
+- settlement = `unconfigured`
+
+No historical paid order is rewritten.
+
+### New supplier checkout/payment safety gate
+
+`prepare-supplier-checkout.ts` and `create-supplier-payment-intent.ts` now require:
+
+`server_supplier_marketplace_commercial_readiness_v1(...)`
+
+If the independent-supplier commercial model is not verified, both paths fail closed with:
+
+`SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY`
+
+This means no new supplier marketplace stock reservation/payment can silently continue under the obsolete Loadify seller/MoR assumption.
+
+Existing historical orders remain serviceable through their existing snapshots/runtime paths.
+
+### Supplier identity is now buyer-facing truth
+
+New service-role identity projection:
+
+`server_supplier_marketplace_identity_v1(...)`
+
+The supplier catalogue now publishes the approved independent supplier identity for the selected offer:
+
+- supplier id
+- supplier display name
+- supplier legal name
+
+Buyer product adaptation and JSON-LD/SEO use that supplier identity instead of presenting Loadify as the seller.
+
+The catalogue can remain discoverable while `checkoutEligible=false` until the commercial model gate is verified.
+
+### Buyer / admin / transactional copy corrected
+
+Current source surfaces were corrected so they no longer claim that Loadify owns or sells supplier goods:
+
+- Featured Products
+- Checkout
+- Supplier Payment panel
+- Buyer Orders
+- Admin Orders
+- transactional order email
+- product SEO / JSON-LD
+- UK Terms
+- UK Buyer Terms
+- UK Returns Policy
+- UK Shipping Policy
+- Romania PRELAUNCH legal draft
+
+The legal pages now state the marketplace model consistently:
+
+- independent seller/supplier = seller of record for the goods;
+- seller/supplier retains stock responsibility;
+- Loadify = marketplace/platform operator;
+- Loadify may facilitate payment/order/support workflows without taking title to the goods;
+- Loadify remains responsible for its own platform acts and legal obligations.
+
+This is architecture/product alignment, not a claim that external legal review is complete.
+
+### Legacy technical identifier
+
+`loadify_supplier_fulfilled` remains present in historical schemas/runtime code as a technical routing identifier.
+
+It must no longer be interpreted as:
+
+- Loadify-owned inventory;
+- Loadify-purchased inventory;
+- Loadify seller-of-record status;
+- Loadify merchant-of-record status for the goods.
+
+Do not mass-rename this identifier in already-applied migrations. Future work must separate technical fulfilment routing from the legal/commercial seller identity.
+
+### Evidence and verification
+
+Usage inventory:
+
+`docs/checkpoints/evidence/supplier-commercial-mode-usage-2026-09-25.txt`
+
+Audit captured **153 repository references** requiring historical/current classification.
+
+Current forbidden live-source audit found no remaining affirmative buyer/admin/runtime claim that:
+
+- Loadify is seller/merchant of record for supplier goods;
+- supplier goods are sold by Loadify;
+- buyer is purchasing supplier goods from Loadify.
+
+Only negative assertions in tests remain.
+
+Verified:
+
+- supplier/intermediary focused suite: **35/35 PASS across 7 files**
+- TypeScript: **PASS**
+- targeted ESLint: **PASS**
+- canonical migrations: **231/231 unique versions PASS**
+- build security boundary suite: **9/9 PASS**
+- production build: **PASS**
+- Vite: **2,501 modules transformed**
+- `git diff --check`: **PASS**
+
+### Remaining blocker
+
+Supplier marketplace checkout must remain BLOCKED until the settlement model is evidence-backed.
+
+The next technical/legal boundary is to replace the future-order legacy snapshots and payment semantics with an independent-supplier seller-of-record contract. Acceptable technical candidates in the control are intentionally only placeholders until validated:
+
+- supplier Stripe Connect settlement; or
+- platform collection as disclosed agent, if payment-provider/legal evidence supports it.
+
+Neither option is considered ready merely because it exists in the schema.

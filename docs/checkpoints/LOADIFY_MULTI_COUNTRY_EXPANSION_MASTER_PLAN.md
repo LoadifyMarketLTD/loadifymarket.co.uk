@@ -32,8 +32,9 @@ Loadify Market is a marketplace/intermediary and technology-commerce platform.
 - Loadify does not buy supplier stock in advance.
 - Loadify does not operate a warehouse.
 - Independent sellers/suppliers retain stock.
+- The independent seller/supplier identified for the goods remains the seller of record; Loadify remains the marketplace/platform intermediary.
 - Sellers/suppliers fulfil orders directly to buyers under the applicable marketplace arrangement.
-- Loadify must not silently become retailer/reseller of record merely to make an integration work.
+- Loadify must not silently become retailer/reseller/seller of record merely to make an integration, payment flow or supplier route work.
 - Supplier integrations must preserve marketplace rights, product-data rights, stock/price availability, fulfilment responsibility and applicable compliance evidence.
 - Existing UK operation must continue to work while new markets are introduced.
 - Payment, tax and legal behaviour must be explicitly validated per market before real transactions are enabled.
@@ -1373,3 +1374,73 @@ Next exact task before supplier ECN integration:
 5. only then re-enable supplier inventory-source routing in ECN.
 
 Romania remains PRELAUNCH.
+
+
+### 24.20 Supplier marketplace intermediary safety gate implemented
+
+The P0 ownership-model remediation has moved from documentation-only to an enforced fail-closed runtime boundary.
+
+New migration:
+
+`supabase/migrations/20260925213500_supplier_marketplace_intermediary_control.sql`
+
+Canonical invariants now enforced for future supplier marketplace commerce:
+
+- independent supplier is seller of record;
+- Loadify does not own supplier inventory;
+- Loadify does not pre-purchase supplier inventory;
+- supplier marketplace checkout remains blocked until a reviewed settlement/legal model is evidenced;
+- GB and RO supplier marketplace checkout controls are both seeded BLOCKED;
+- no historical paid supplier order is rewritten.
+
+New service-role boundaries:
+
+- `server_supplier_marketplace_commercial_readiness_v1(...)`
+- `server_supplier_marketplace_identity_v1(...)`
+
+Runtime changes:
+
+- supplier checkout preparation fails closed before reservation if commercial readiness is not verified;
+- supplier PaymentIntent creation fails closed before Stripe interaction if commercial readiness is not verified;
+- supplier catalogue exposes independent supplier identity rather than Loadify seller identity;
+- supplier catalogue checkout eligibility is false while the commercial model gate is blocked;
+- product SEO/JSON-LD identifies the independent supplier as seller;
+- current buyer/admin/email/legal surfaces no longer claim Loadify is seller/MoR for supplier goods.
+
+The legacy identifier `loadify_supplier_fulfilled` remains a historical/technical routing identifier only. It must not be treated as legal seller-of-record or inventory-ownership truth.
+
+Evidence:
+
+`docs/checkpoints/evidence/supplier-commercial-mode-usage-2026-09-25.txt`
+
+The audit captured **153 references** for classification. Historical applied migrations/docs are preserved as historical evidence; they are superseded on the business-model point by the owner-confirmed marketplace/intermediary contract.
+
+Verification:
+
+- supplier/intermediary suite: **35/35 PASS across 7 files**
+- TypeScript PASS
+- targeted ESLint PASS
+- migration health **231/231**
+- security build tests **9/9 PASS**
+- production build PASS
+- Vite **2,501 modules**
+- `git diff --check` PASS
+
+Romania remains PRELAUNCH.
+
+### Current exact task after 24.20
+
+Do **not** resume supplier ECN-3C routing yet.
+
+First complete the future-order supplier commercial contract layer:
+
+1. decouple technical fulfilment mode from legal seller-of-record identity;
+2. override future supplier checkout order creation so supplier identity is snapshotted as seller of record instead of Loadify;
+3. define invoice issuer / payment recipient / settlement semantics from reviewed evidence;
+4. keep new supplier checkout/payment blocked until that settlement model passes the commercial-readiness gate;
+5. preserve servicing of historical orders created under old snapshots;
+6. only then re-enable the supplier branch of `server_inventory_source_decision_v1` and continue ECN-3C.
+
+Seller-owned multi-location ECN work remains valid and may continue independently.
+
+Do not activate Romania, DNS or live payment changes as part of this remediation.

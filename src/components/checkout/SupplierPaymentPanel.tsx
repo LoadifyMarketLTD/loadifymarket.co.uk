@@ -42,7 +42,7 @@ export default function SupplierPaymentPanel({ orderId, total, onPaid }: Props) 
       <div>
         <p className="text-sm font-semibold">Secure payment with Loadify Market</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Your payment is processed by Stripe. Loadify Market remains your seller and merchant of record.
+          Your payment is processed by Stripe through Loadify Market's marketplace checkout. The independent supplier identified for the order remains responsible for the goods and fulfilment.
         </p>
       </div>
       <PaymentElement />

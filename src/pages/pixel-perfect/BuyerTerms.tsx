@@ -18,18 +18,18 @@ const BuyerTerms = () => {
   }
   return (
     <MainLayout>
-      <SEO title="Buyer Terms | Loadify Market" description="Read the buyer terms that apply to Marketplace Seller and Loadify Supplier-Fulfilled purchases." canonical="/buyer-terms" />
+      <SEO title="Buyer Terms | Loadify Market" description="Read the buyer terms that apply to purchases from independent marketplace sellers and approved suppliers." canonical="/buyer-terms" />
       <main id="main-content" className="pt-4 md:pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Buyer Terms" }]} backTo="/" />
         </div>
         <div className="legal-content">
           <h1>Buyer Terms</h1>
-          <p className="text-muted-foreground"><strong>Last updated:</strong> 21 September 2026</p>
+          <p className="text-muted-foreground"><strong>Last updated:</strong> 25 September 2026</p>
 
           <p>These Buyer Terms apply to users who purchase goods through Loadify Market ("Platform"), operated by XDrive Logistics Ltd (Company No: 13171804, VAT: GB375949535). They supplement our general <a href="/terms">Terms &amp; Conditions</a>.</p>
 
-          <p><strong>The seller of record is shown by the applicable product, checkout and order record.</strong> Some products are sold by an independent Marketplace Seller. Other products are sold by XDrive Logistics Ltd trading as Loadify Market and dispatched by an approved fulfilment supplier. Please review the seller identity, delivery information, return terms and product information before ordering.</p>
+          <p><strong>The seller of record is the independent seller or approved supplier identified for the applicable product and order.</strong> Loadify Market operates the marketplace platform and does not own or pre-purchase the goods. Please review the seller/supplier identity, delivery information, return terms and product information before ordering.</p>
 
           <h2>1. Account &amp; Eligibility</h2>
           <p>To purchase on Loadify Market, you must:</p>
@@ -43,13 +43,13 @@ const BuyerTerms = () => {
           <p>When you place an order on the Platform:</p>
           <ul>
             <li>For a Marketplace Seller product, you contract directly with the independent seller identified for that order</li>
-            <li>For a Loadify Supplier-Fulfilled product, you contract with XDrive Logistics Ltd trading as Loadify Market</li>
+            <li>For an Approved Supplier Marketplace product, you contract with the independent supplier identified for that product or order</li>
             <li>You agree to pay the displayed product price, delivery and any other mandatory amount shown before payment</li>
             <li>Orders are confirmed only after the applicable payment and order-state checks succeed</li>
           </ul>
 
           <h2>3. Payment</h2>
-          <p>Payments are processed securely through Stripe. Marketplace Seller orders may use Stripe Connect with the independent seller as merchant of record. Loadify Supplier-Fulfilled orders are processed with Loadify as seller and merchant of record. Loadify does not store full card details.</p>
+          <p>Payments are processed securely through Stripe. Loadify may facilitate the marketplace payment workflow for independent sellers and suppliers, but payment processing does not make Loadify the owner or supplier of the goods. Loadify does not store full card details.</p>
           <p>You agree to provide valid payment details and not to initiate fraudulent or abusive chargebacks. Raising a legitimate card dispute or exercising statutory rights is not prohibited.</p>
 
           <h2>4. Buyer Responsibilities</h2>
@@ -63,7 +63,7 @@ const BuyerTerms = () => {
           </ul>
 
           <h2>5. Returns &amp; Refunds</h2>
-          <p>Marketplace Seller returns are handled under the independent seller's applicable terms and law. Loadify Supplier-Fulfilled returns are requested through Loadify, which coordinates the customer-facing return and refund process with the fulfilment supplier where necessary. See our <a href="/returns-policy">Returns Policy</a>.</p>
+          <p>Marketplace Seller returns are handled under the independent seller's applicable terms and law. Approved Supplier Marketplace returns remain the responsibility of the independent supplier under the applicable terms and law, while Loadify may provide the return-request workflow, evidence exchange and support escalation. See our <a href="/returns-policy">Returns Policy</a>.</p>
           <p>A cancellation request does not itself cancel an order. The order remains active until the responsible seller-of-record confirms the applicable cancellation and refund state. After packing or dispatch has started, the applicable return process may need to be used instead.</p>
 
           <h2>6. Reviews &amp; Feedback</h2>
@@ -76,7 +76,7 @@ const BuyerTerms = () => {
           <p>We reserve the right to remove reviews that violate these standards.</p>
 
           <h2>7. Disputes</h2>
-          <p>For a Marketplace Seller order, buyers should normally first use the order's seller-contact and dispute route. For a Loadify Supplier-Fulfilled order, Loadify is the customer-facing seller and support route. Loadify may investigate evidence, coordinate with sellers or fulfilment suppliers and apply the relevant refund or dispute process.</p>
+          <p>For a Marketplace Seller or Approved Supplier Marketplace order, buyers should use the order's seller/supplier-contact, return or dispute route. Loadify may provide platform support, investigate evidence and coordinate the workflow, but the independent seller or supplier remains the commercial party responsible for the goods.</p>
 
           <h2>8. Account Suspension</h2>
           <p>We may suspend or terminate a buyer account if the user:</p>
@@ -87,7 +87,7 @@ const BuyerTerms = () => {
           </ul>
 
           <h2>9. Liability and Consumer Rights</h2>
-          <p>Nothing in these Buyer Terms limits statutory consumer rights or liability that cannot lawfully be limited. For Marketplace Seller products, the independent seller is responsible for the goods as seller of record. For Loadify Supplier-Fulfilled products, XDrive Logistics Ltd trading as Loadify Market is responsible to the buyer as seller of record, while the approved supplier may perform physical fulfilment on Loadify's behalf.</p>
+          <p>Nothing in these Buyer Terms limits statutory consumer rights or liability that cannot lawfully be limited. The independent Marketplace Seller or approved supplier identified for the order is responsible for the goods as seller of record. Loadify remains responsible for its own marketplace-platform acts, omissions and legal obligations.</p>
 
           <h2>10. Contact</h2>
           <p>For buyer-related queries:</p>
