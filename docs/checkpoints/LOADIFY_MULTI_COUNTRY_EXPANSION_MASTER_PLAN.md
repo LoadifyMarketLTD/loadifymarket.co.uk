@@ -552,7 +552,7 @@ Latest verified hardening evidence:
 - Romania remains PRELAUNCH; checkout/payment remain disabled and no loadifymarket.ro production attachment or launch cutover was performed.
 
 Next exact work:
-1. Complete and review the Romanian legal policy content, then register reviewed current ro-RO policy versions for buyer_terms, privacy, returns_policy and shipping_policy. Do not auto-verify policy versions merely because translated text exists.
+1. Complete the final human/legal review of the Romanian policy content, including the OUG 18/2026 online-withdrawal requirements now implemented technically, then register reviewed current ro-RO policy versions for buyer_terms, privacy, returns_policy and shipping_policy. Do not auto-verify policy versions merely because translated text exists.
 2. Create and review the production RO payment-readiness evidence for RON charge support, merchant account capability, SCA/3DS, refunds and settlement/reconciliation.
 3. Implement and verify the evidence-backed Romanian/EU Marketplace Seller tax contract; keep independent Marketplace Seller RO checkout fail-closed until this is complete.
 4. Configure and verify loadifymarket.ro DNS and Netlify custom-domain attachment without enabling live RO checkout/payment.
@@ -637,3 +637,47 @@ Updated remaining hard blockers before Romania live cutover:
 6. Final full regression/build/migration/advisor gate immediately before launch-control mutation.
 
 Launch state remains unchanged: Romania is PRELAUNCH and no RO live checkout/payment cutover has been authorised.
+
+
+## 24. Romania online withdrawal readiness and desktop price repair — 25 September 2026
+
+Authoritative legal review identified an additional Romania launch requirement with a near-term effective date:
+- OUG nr. 18/2026 amends the Romanian distance-contract framework with an online withdrawal-function requirement applicable from 27 September 2026.
+- The implementation evidence and authoritative source references are recorded in `docs/checkpoints/evidence/romania-online-withdrawal-2026-09-25.md`.
+- This technical implementation does not mark any legal-policy version as reviewed or verified; the policy-version gate remains fail-closed until explicit review is complete.
+
+Implemented and verified:
+- dedicated buyer route `/buyer/withdrawal` with the Romanian presentation `Retrageți-vă din contract aici`;
+- explicit consumer confirmation action `Confirmați retragerea`;
+- Romania-order ownership, market and 14-day post-delivery window checks;
+- dedicated server-only declaration record `public.order_withdrawal_requests`;
+- buyer/admin read RLS, with client INSERT/UPDATE/DELETE revoked;
+- durable-medium confirmation by Resend to the authenticated buyer account email, including declaration content and submission date/time;
+- the declaration does not automatically mutate payment truth, issue a refund or bypass governed return/refund workflows;
+- Romanian Buyer Terms and Returns Policy link to the online withdrawal function;
+- canonical Netlify Functions runtime wrapper added after the first deployment exposed that `netlify.toml` publishes `netlify/functions-modern`, not the legacy source directory directly;
+- unauthenticated production call to the withdrawal endpoint correctly returns 401 after runtime deployment;
+- Supabase production migration `romania_online_withdrawal_function` applied and verified; table/policy present, anonymous/authenticated direct INSERT privileges remain false;
+- production RO launch state rechecked after migration: PRELAUNCH, catalog=true, checkout=false, payment=false; GB remains live;
+- focused withdrawal/legal tests: PASS;
+- TypeScript: PASS;
+- ESLint: PASS;
+- complete unit/contract suite after implementation: 267 files / 1546 tests PASS;
+- production build: PASS; migration health 226/226 unique canonical versions; security boundary 9/9 PASS;
+- post-deploy Romania prelaunch browser E2E: 4/4 PASS;
+- no new client error reports were observed during the post-deploy validation window.
+
+A separate E2E regression exposed a real desktop commerce defect:
+- Product Detail rendered the market-formatted price only inside the mobile-only `md:hidden` card; desktop `ProductInfo` omitted price entirely.
+- Desktop `ProductInfo` now receives and renders the canonical market-formatted price.
+- dedicated ProductInfo price regression: PASS;
+- full unit/contract suite after the repair: 267 files / 1546 tests PASS;
+- local Romania prelaunch E2E: 4/4 PASS;
+- final production Romania prelaunch E2E after deploy: 4/4 PASS.
+
+Launch posture is unchanged:
+- Romania remains PRELAUNCH;
+- checkout=false;
+- payment=false;
+- reviewed ro-RO legal policy versions are still required before launch;
+- payment-readiness evidence, Marketplace Seller RO tax contract, loadifymarket.ro domain cutover and final real-environment transaction rehearsal remain outstanding.
