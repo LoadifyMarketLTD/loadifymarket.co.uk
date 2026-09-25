@@ -8,6 +8,7 @@ describe("deployment asset recovery", () => {
     expect(isDeploymentAssetError(new Error("Failed to fetch dynamically imported module: https://loadifymarket.co.uk/assets/Signup-old.js"))).toBe(true);
     expect(isDeploymentAssetError(new Error("ChunkLoadError: Loading chunk 42 failed"))).toBe(true);
     expect(isDeploymentAssetError(new Error("Failed to load module script"))).toBe(true);
+    expect(isDeploymentAssetError(new Error("Unable to preload CSS for /assets/Login-old.css"))).toBe(true);
     expect(isDeploymentAssetError(new Error("Cannot read properties of undefined (reading 'default')"))).toBe(true);
   });
 
