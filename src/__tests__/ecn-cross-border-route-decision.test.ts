@@ -78,7 +78,22 @@ describe("ECN cross-border route decision", () => {
     expect(migration).toContain("Never infer supplier evidence for a seller");
   });
 
+  it("mirrors seller account, stock and selected shipping boundaries for checkout parity", () => {
+    expect(migration).toContain("p_quantity integer DEFAULT 1");
+    expect(migration).toContain("p_shipping_method_id uuid DEFAULT NULL");
+    expect(migration).toContain("public.account_capabilities");
+    expect(migration).toContain('NULLIF(BTRIM(v_seller."businessName"),\'\')');
+    expect(migration).toContain('NULLIF(BTRIM(v_seller."fullName"),\'\')');
+    expect(migration).toContain("SELLER_ACCOUNT_UNAVAILABLE");
+    expect(migration).toContain("INSUFFICIENT_STOCK");
+    expect(migration).toContain("Royal Mail");
+    expect(migration).toContain("Evri");
+    expect(migration).toContain("v_shipping_selection_ok");
+  });
+
   it("keeps checkout fail-closed until every required gate is eligible", () => {
+    expect(migration).toContain("AND v_seller_account_ok");
+    expect(migration).toContain("AND v_stock_ok");
     expect(migration).toContain("AND v_route.checkout_enabled");
     expect(migration).toContain("AND v_route.status='live'");
     expect(migration).toContain("AND v_market_compliance_ok");

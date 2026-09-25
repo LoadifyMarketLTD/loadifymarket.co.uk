@@ -106,3 +106,48 @@ Continue comparing the live UK contract and the shadow route decision across:
 - returns
 
 Every mismatch must be repaired in the shadow/appropriate domain unless the live behaviour is independently proven defective.
+
+
+## Parity finding 3 — seller commercial boundary, stock and selected shipping method
+
+A second read-only production parity pass checked the active UK physical catalogue against the live checkout conditions for seller account state, stock and selected shipping method.
+
+Observed production state:
+
+- active physical listings: **9**
+- positive stock: **9/9**
+- seller commercial/account boundary ready: **9/9**
+- at least one active supported shipping selection with non-negative rate: **9/9**
+- valid shipping choices per listing: **1–2**
+
+The active seller is an **individual seller**. `businessName` is intentionally empty while `fullName` is populated.
+
+This exposed a shadow-only identity bug during implementation: SQL using `COALESCE(businessName, fullName, '')` treats an empty businessName as present and never reaches fullName. The live TypeScript checkout correctly uses `businessName?.trim() || fullName?.trim()`.
+
+The shadow engine was corrected to use empty-string-aware fallback:
+
+- non-empty business name, otherwise
+- non-empty full name.
+
+No live seller data was changed.
+
+### Shadow parity hardening added
+
+For marketplace-seller checkout context the shadow decision now also requires:
+
+- active `public.users` account;
+- non-admin seller actor;
+- active `account_capabilities` seller capability;
+- active/non-paused seller profile;
+- active Stripe Connect status and Stripe account id;
+- non-empty commercial identity with individual-seller fallback;
+- positive requested whole quantity;
+- sufficient `products.stockQuantity`;
+- selected `product_shipping` relation;
+- active shipping method;
+- carrier restricted to the same live supported set: **Royal Mail / Evri**;
+- at least one non-negative shipping rate for the selected method.
+
+New explicit shadow outputs include seller-account eligibility, stock eligibility, selected-shipping eligibility, selected method/courier/rate and requested quantity.
+
+This remains read-only and non-authoritative.
