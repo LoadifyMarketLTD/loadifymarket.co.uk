@@ -124,7 +124,9 @@ export default async function publicMeta(
     `<meta name="twitter:description" content="${description}" />`,
   );
 
-  if (pathname === '/catalog' && requestUrl.search.length > 0) {
+  if (!marketContext.indexable) {
+    html = setRobots(html, 'noindex, nofollow');
+  } else if (pathname === '/catalog' && requestUrl.search.length > 0) {
     html = setRobots(html, 'noindex, follow');
   }
 

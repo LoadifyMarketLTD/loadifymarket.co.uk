@@ -14,6 +14,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { CATEGORY_SEO_LANDINGS } from '../../src/lib/categorySeo';
+import { MARKET_CONFIG } from '../../src/lib/marketConfig';
 
 const GB_BASE_URL = 'https://loadifymarket.co.uk';
 const RO_BASE_URL = 'https://loadifymarket.ro';
@@ -70,8 +71,11 @@ function escapeXml(value: string): string {
 }
 
 function urlEntry(loc: string, changefreq: string, priority: string, path?: string): string {
+  const roAlternate = path && MARKET_CONFIG.RO.status === 'live'
+    ? `\n    <xhtml:link rel="alternate" hreflang="ro-RO" href="${escapeXml(`${RO_BASE_URL}${path}`)}" />`
+    : '';
   const alternates = path
-    ? `\n    <xhtml:link rel="alternate" hreflang="en-GB" href="${escapeXml(`${GB_BASE_URL}${path}`)}" />\n    <xhtml:link rel="alternate" hreflang="ro-RO" href="${escapeXml(`${RO_BASE_URL}${path}`)}" />\n    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(`${GB_BASE_URL}${path}`)}" />`
+    ? `\n    <xhtml:link rel="alternate" hreflang="en-GB" href="${escapeXml(`${GB_BASE_URL}${path}`)}" />${roAlternate}\n    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(`${GB_BASE_URL}${path}`)}" />`
     : '';
   return `  <url>\n    <loc>${escapeXml(loc)}</loc>${alternates}\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
@@ -112,6 +116,21 @@ export const handler: Handler = async (event) => {
 
   const market = sitemapMarketFromEvent(event);
   const baseUrl = market === 'RO' ? RO_BASE_URL : GB_BASE_URL;
+  if (market === 'RO' && MARKET_CONFIG.RO.status !== 'live') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+        'X-Robots-Tag': 'noindex, nofollow',
+      },
+      body: [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+        '</urlset>',
+      ].join('\n'),
+    };
+  }
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 

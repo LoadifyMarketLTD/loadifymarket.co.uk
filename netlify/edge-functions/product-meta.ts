@@ -269,6 +269,9 @@ export default async function productMeta(
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
   const marketContext = seoMarketContext(requestUrl);
+  if (!marketContext.indexable) {
+    return noindexHtmlResponse(await context.next());
+  }
   const baseUrl = marketContext.baseUrl;
   const defaultOgImage = `${baseUrl}/og-loadify-market.png`;
   const segments = requestUrl.pathname.split('/').filter(Boolean);

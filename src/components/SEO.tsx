@@ -3,6 +3,7 @@ import { getCategorySeoLanding } from "@/lib/categorySeo";
 import { getCommercialSeoMeta } from "@/lib/commercialSeo";
 import { buildSeoTitle } from "@/lib/seo";
 import { useMarket } from "@/contexts/MarketContext";
+import { MARKET_CONFIG } from "@/lib/marketConfig";
 
 const SITE_NAME = "Loadify Market";
 const BASE_URL = "https://loadifymarket.co.uk";
@@ -74,7 +75,10 @@ export default function SEO({
   );
   const fullTitle = buildSeoTitle(resolvedTitle);
   const alternatePath = canonicalPath(canonical);
-  const activeBaseUrl = market === "RO" ? "https://loadifymarket.ro" : BASE_URL;
+  const roSeoLive = MARKET_CONFIG.RO.status === "live";
+  const marketSeoIndexable = market !== "RO" || roSeoLive;
+  const effectiveRobots = marketSeoIndexable ? robots : "noindex, nofollow";
+  const activeBaseUrl = market === "RO" && roSeoLive ? "https://loadifymarket.ro" : BASE_URL;
   const resolvedOgImage = ogImage ?? `${activeBaseUrl}/og-loadify-market.png`;
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
@@ -82,7 +86,7 @@ export default function SEO({
       : `${activeBaseUrl}${canonical}`
     : undefined;
   const ukAlternateUrl = alternatePath ? `${BASE_URL}${alternatePath === "/" ? "" : alternatePath}` : undefined;
-  const roAlternateUrl = alternatePath ? `https://loadifymarket.ro${alternatePath === "/" ? "" : alternatePath}` : undefined;
+  const roAlternateUrl = roSeoLive && alternatePath ? `https://loadifymarket.ro${alternatePath === "/" ? "" : alternatePath}` : undefined;
   const marketOgLocale = market === "RO" ? "ro_RO" : "en_GB";
 
   // Product JSON-LD is injected server-side by product-meta with the canonical
@@ -94,7 +98,7 @@ export default function SEO({
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={resolvedDescription} />
-      {robots !== "index, follow" && <meta name="robots" content={robots} />}
+      {effectiveRobots !== "index, follow" && <meta name="robots" content={effectiveRobots} />}
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
       {ukAlternateUrl && <link rel="alternate" hrefLang="en-GB" href={ukAlternateUrl} />}
       {roAlternateUrl && <link rel="alternate" hrefLang="ro-RO" href={roAlternateUrl} />}

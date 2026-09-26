@@ -117,6 +117,17 @@ export default async function categoryMeta(
 ): Promise<Response> {
   const requestUrl = new URL(request.url);
   const marketContext = seoMarketContext(requestUrl);
+  if (!marketContext.indexable) {
+    const response = await context.next();
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('text/html')) return response;
+    const html = replaceOrInsertMeta(await response.text(), 'robots', 'noindex, nofollow');
+    return new Response(html, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: new Headers(response.headers),
+    });
+  }
   const segments = requestUrl.pathname.split('/').filter(Boolean);
   if (segments.length !== 2 || segments[0] !== 'category') return context.next();
 
