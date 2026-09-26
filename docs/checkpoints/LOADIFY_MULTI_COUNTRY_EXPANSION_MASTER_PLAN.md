@@ -1113,3 +1113,69 @@ Continue with the next implementation-capable hard blocker:
 3. implement only an evidence-backed, fail-closed Romanian/EU Marketplace Seller tax contract and regression coverage;
 4. do not mark legal/tax review as approved where a human/legal reviewer is required;
 5. keep RO PRELAUNCH and payment/checkout disabled.
+
+
+### 25.11 Romania Marketplace Seller tax-contract foundation applied fail-closed
+
+The existing live Marketplace Seller tax resolver was confirmed to be intentionally narrow to the current Great Britain non-VAT physical-product contract. Romania/international Marketplace Seller tax remains unsupported by that GB resolver and must not be inferred from it.
+
+Authoritative-source research was completed against current European Commission / EU / ANAF material before implementing the Romania contract. The implementation deliberately separates commercial ownership from VAT treatment because an electronic interface can become a deemed supplier for VAT in defined cases even when the independent seller owns the goods.
+
+Key evidence-driven design decisions:
+- an account being `individual` does not itself prove taxable-person or non-taxable-person VAT status;
+- Romania's current VAT rates are represented as reviewable product classifications rather than a blanket hard-coded rate;
+- domestic, intra-EU distance-sale and imported-goods scenarios are separate route classes;
+- IOSS/OSS/domestic/import VAT treatment is an explicit reviewed rule field rather than inferred from market alone;
+- the <= EUR 150 class is retained where relevant to current VAT/IOSS rules, but it is not treated as a customs-duty exemption;
+- legal basis and effective dates are versioned so evidence reviewed for the 2026 framework cannot silently remain authoritative after already-enacted 2027 EU changes take effect.
+
+Implemented:
+- `supabase/migrations/20260926103000_romania_marketplace_seller_tax_contract.sql`;
+- private reviewed-rule ledger `private.marketplace_tax_route_rules`;
+- service-role-only RPC `public.server_marketplace_ro_tax_rule_v1(...)`;
+- runtime contract validator `netlify/functions/_shared/marketplaceRoTax.ts`;
+- regression suite `src/__tests__/romania-marketplace-seller-tax-contract.test.ts`;
+- evidence record `docs/checkpoints/evidence/romania-marketplace-seller-tax-contract-2026-09-26.md`.
+
+The migration seeds **no tax rule** and activates **no Romanian checkout path**. A route becomes eligible only if a currently valid rule is explicitly `verified` with:
+- reviewer identity;
+- review timestamp;
+- non-empty evidence;
+- authoritative source references;
+- evidence hash;
+- legal effective period.
+
+Validation on the current-main branch:
+- focused Romania/GB tax suite: **41/41 PASS across 3 files**;
+- canonical migration health: **236/236 unique**;
+- TypeScript: **PASS**;
+- ESLint on the new runtime/test contract: **PASS**;
+- git diff --check: **PASS**;
+- production security build tests: **9/9 PASS**;
+- production build: **PASS**;
+- Vite: **2,501 modules transformed**;
+- only the pre-existing HEIC chunk-size warning remains.
+
+Production Supabase:
+- preflight confirmed no pre-existing parallel table/RPC;
+- migration `romania_marketplace_seller_tax_contract` applied successfully;
+- `private.marketplace_tax_route_rules` exists;
+- `server_marketplace_ro_tax_rule_v1` exists;
+- current verified rule count = **0**;
+- sample RO decision = `eligible=false`, `reason=ro_marketplace_tax_evidence_missing`;
+- RPC execution: anon=false, authenticated=false, service_role=true;
+- no new security-advisor warning was introduced by this contract.
+
+Public launch-state recheck after schema application:
+- GB = live, catalog=true, checkout=true, payment=true;
+- RO = prelaunch, catalog=true, checkout=false, payment=false.
+
+Therefore the Romanian Marketplace Seller tax blocker is **architecturally implemented and fail-closed, but not legally/tax-review closed**. No seller/product/route rule has been marked verified, no legal reviewer identity was fabricated, and no RO checkout/payment authority was enabled.
+
+### Current exact task after 25.11
+
+1. integrate this reviewed technical foundation and the §25.10 Stripe evidence checkpoint into main through one controlled PR;
+2. re-verify production launch state and tax/payment gates after deployment;
+3. then inspect `loadifymarket.ro` DNS and Netlify custom-domain state before any domain mutation;
+4. stage/verify the Romania domain only if it can be done without enabling live checkout/payment or prematurely publishing RO SEO;
+5. preserve reviewed ro-RO legal policy versions and final real-environment transaction rehearsal as hard launch blockers requiring genuine review/evidence.
