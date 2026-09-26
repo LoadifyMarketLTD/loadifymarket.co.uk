@@ -1577,3 +1577,111 @@ Post-DDL fail-closed re-verification:
 5. after merge, confirm production main contains the migration and no launch/SEO regression;
 6. then re-inspect GitHub/main/master plan before choosing the next remaining multicountry blocker;
 7. do not reopen closed UK/RO/ECN work unless a new reproducible defect appears.
+
+
+### 25.19 Individual/private Seller flow — production-verified, no company/VAT required
+
+The Seller onboarding path was re-audited from current `main` after PR #804 specifically against the real business requirement that a private/individual seller must be able to operate without a company registration number and without a VAT number.
+
+Current code contract:
+- supported seller types remain `individual`, `sole_trader`, and `company`;
+- `individual` profile completeness requires contact phone + address postcode;
+- an Individual Seller does **not** require a fake business/store name for legal-profile completeness;
+- company registration number is required only when `sellerType='company'`;
+- VAT number is required only when `isVatRegistered=true`;
+- Individual Seller persistence deliberately writes an empty business name;
+- non-company Seller persistence does not require a company-registration number;
+- non-VAT-registered Seller persistence does not require a VAT number;
+- activation still fails closed on inactive account/capability or unready Stripe state.
+
+Focused current-main validation:
+- Seller profile-type completeness;
+- Seller onboarding readiness;
+- Seller active-account activation gate;
+- Seller activation entry boundary;
+- Seller tax-resync boundary.
+
+Result:
+- **5/5 test files PASS**;
+- **25/25 tests PASS**;
+- targeted ESLint: **PASS**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**.
+
+Production aggregate verification, without exposing personal Seller data:
+- there is **1 active Individual Seller** matching the required case;
+- `sellerStatus='active'`;
+- `stripeConnectStatus='active'`;
+- `isVatRegistered=false`;
+- company-registration number is absent;
+- VAT number is absent;
+- active Seller capability is present;
+- public store row is present.
+
+Production function-boundary verification:
+- `POST /.netlify/functions/seller-onboarding-status` exists and fails closed with HTTP 401 when unauthenticated;
+- `POST /.netlify/functions/set-seller-onboarding` exists and fails closed with HTTP 401 when unauthenticated;
+- the earlier `Seller setup unavailable / Server misconfiguration` deployment symptom is not reproduced on the current production function boundary.
+
+Conclusion:
+- the real Individual/private Seller, no-company, no-VAT model is **implemented and verified in production**;
+- do not rework this flow unless a new reproducible regression appears.
+
+### 25.20 Romania Stripe payment evidence — live technical facts reverified, approval still fail-closed
+
+The existing Romania payment-readiness evidence package was rechecked against the live Stripe account after the engineering closeout.
+
+Live Stripe platform facts:
+- Loadify platform account is live;
+- charges are enabled;
+- payouts are enabled;
+- details are submitted;
+- card-payments capability is active;
+- transfers capability is active;
+- account country is GB;
+- default settlement currency is GBP.
+
+Connected-account aggregate:
+- **2/2** currently connected accounts are active for charges;
+- **2/2** are active for payouts;
+- **2/2** have active card-payments capability;
+- **2/2** have active transfers capability;
+- both observed accounts are GB/GBP accounts.
+
+Current technical evidence therefore materially supports the existing `merchant_account_capability` observation and remains consistent with the documented Stripe RON-presentment/SCA/refund/reconciliation architecture.
+
+This does **not** convert Romania payment readiness to verified:
+- the five evidence rows remain `draft`;
+- no reviewer identity is fabricated;
+- no live Romanian customer charge is created merely to satisfy a checklist;
+- the controlled real-environment Romania rehearsal remains outstanding;
+- `server_market_payment_readiness_v1('RO')` remains `eligible=false`.
+
+The engineering boundary is therefore correct:
+- technical capability evidence is collected;
+- launch authority remains fail-closed pending legitimate review/rehearsal.
+
+### Current exact task after 25.20
+
+Engineering work already closed and frozen unless a new regression is reproduced:
+- UK/RO multicountry foundation;
+- PRELAUNCH SEO/robots/sitemap suppression;
+- market-launch-status runtime publishing;
+- ECN shadow route/inventory stack;
+- supplier intermediary/seller-of-record safeguards;
+- supplier Stripe/payment-model readiness foundations;
+- Romania Marketplace Seller tax technical contract;
+- Romania legal rendered surfaces and official guarantee asset;
+- ECN FK performance hardening;
+- Individual/private Seller no-company/no-VAT flow;
+- DMARC/SPF/DKIM/MX current configuration.
+
+Remaining launch blockers are now predominantly evidence/external-governance blockers, not missing engineering:
+1. legitimate review of the four RO legal-policy drafts;
+2. legitimate review of Romania Marketplace Seller tax rules/evidence;
+3. controlled non-customer-charge Romania payment rehearsal and review of the five payment evidence domains;
+4. authoritative registration of `loadifymarket.ro`, followed by controlled DNS/Netlify staging;
+5. final full regression/build/migration/security gate immediately before any governed launch-state mutation.
+
+Do not invent additional code work to simulate closure of those external/review gates.
+Before any future implementation, re-inspect current `main`, open/recent PRs and this master plan and proceed only on a newly proven gap.
