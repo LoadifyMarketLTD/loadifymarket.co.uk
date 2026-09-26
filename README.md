@@ -11,7 +11,7 @@ Loadify Market is a UK-operated commerce platform under XDrive Logistics Ltd (Co
 
 ## Legal entity and repository ownership
 
-**XDrive Logistics Ltd (Company No. 13171804)** is the canonical UK legal entity associated with Loadify Market and its technology assets. The GitHub namespace **LoadifyMarketLTD** is a technical repository namespace only and is not a separate legal entity or the legal owner of the platform. See [`docs/legal/LEGAL_ENTITY_AND_IP_OWNERSHIP.md`](./docs/legal/LEGAL_ENTITY_AND_IP_OWNERSHIP.md).
+**XDrive Logistics Ltd (Company No. 13171804)** is the canonical UK legal entity associated with Loadify Market and its technology assets. The GitHub namespace **XDriveLogisticsLtd** is a technical repository namespace only and is not a separate legal entity or the legal owner of the platform. See [`docs/legal/LEGAL_ENTITY_AND_IP_OWNERSHIP.md`](./docs/legal/LEGAL_ENTITY_AND_IP_OWNERSHIP.md).
 
 The controlling product direction is not a simple seller-only marketplace and not a generic dropshipping site:
 
@@ -143,7 +143,7 @@ Those matters must follow the controlling canonical business contract, current c
 ## Quick start
 
 ```bash
-git clone https://github.com/LoadifyMarketLTD/loadifymarket.co.uk.git
+git clone https://github.com/XDriveLogisticsLtd/loadifymarket.co.uk.git
 cd loadifymarket.co.uk
 npm install
 cp .env.example .env
