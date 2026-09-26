@@ -796,3 +796,34 @@ Outstanding Romania launch blockers remain unchanged:
 - loadifymarket.ro DNS + Netlify domain staging;
 - final non-customer-charge real-environment rehearsal;
 - final full regression/build/migration/security gate immediately before any governed launch-state mutation.
+
+
+### 25.6 Reconciliation defect: Romania launch-status function was not published
+
+During branch-only reconciliation, a real production routing defect was reproduced:
+
+- `netlify/functions/market-launch-status.ts` exists in `main`;
+- `netlify.toml` publishes only `netlify/functions-modern`;
+- the corresponding modern wrapper was missing;
+- live request to `/.netlify/functions/market-launch-status?market=RO` returned SPA HTML instead of the launch-status JSON contract.
+
+Minimal fix:
+- add only `netlify/functions-modern/market-launch-status.ts`;
+- add `market-launch-status` to the canonical modern-wrapper deployment guard;
+- do not port the rest of the historical seller-onboarding patch because current seller onboarding is already implemented separately in `main`.
+
+Verification before integration:
+- modern-wrapper + Romania runtime launch focused suite: **21/21 PASS**;
+- targeted ESLint: **PASS**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**.
+
+This is a reconciliation delta, not a rebuild of PR #799.
+
+### Current exact task after 25.6
+
+1. production-build and deploy the missing launch-status wrapper;
+2. verify live endpoint returns JSON for GB/RO and preserves RO PRELAUNCH;
+3. continue ECN branch reconciliation against current main;
+4. exclude already-superseded runtime/provider/onboarding patches;
+5. keep ECN shadow-only and supplier/RO commerce fail-closed.

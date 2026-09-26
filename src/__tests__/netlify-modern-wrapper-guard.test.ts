@@ -7,6 +7,7 @@ const criticalHandlers = [
   'register-social-intent',
   'start-seller-activation',
   'seller-onboarding-status',
+  'market-launch-status',
   'set-seller-onboarding',
   'recheck-activation',
   'connect-onboard',
