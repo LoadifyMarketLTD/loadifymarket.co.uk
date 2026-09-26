@@ -1369,3 +1369,70 @@ Therefore the engineering review package is deterministic and ready for a legiti
    - RO legal-policy readiness remains false;
 6. do not convert draft legal policies to verified without a legitimate reviewer;
 7. do not stage `loadifymarket.ro` until authoritative registration exists.
+
+
+### 25.15 GitHub reconciliation after PR #801/#802 and PR #803 deploy-preview repair
+
+A fresh GitHub reconciliation was performed before continuing.
+
+Already merged into `main` and therefore not to be reimplemented:
+- PR #801 — ECN shadow routing + supplier marketplace safety/readiness reconciliation;
+- PR #802 — fail-closed Romania payment evidence + Marketplace Seller tax contract.
+
+The earlier §25 integration tasks for those slices are therefore superseded by this section.
+
+PR #803 (`audit/ro-domain-legal-20260926`) remained the only active Romania legal-surface slice. Its first Netlify Deploy Preview failed even though its focused legal tests and normal production build had passed.
+
+The exact Netlify pipeline was reproduced locally with:
+- `npm ci`;
+- `npm run lint`;
+- full `npm test`;
+- `npm run build`;
+- Netlify Functions bundling;
+- Netlify Edge Functions bundling.
+
+Root cause:
+- `netlify/functions/__tests__/seo-foundation-contract.test.ts` still encoded an older SEO assumption that Loadify itself must be the Product structured-data seller/legal operator for `loadify_supplier_fulfilled` products;
+- current production architecture from PR #801 correctly keeps the independent supplier as seller of record and exposes `supplierName` / `supplierLegalName`;
+- changing runtime code back to Loadify seller identity would violate the approved marketplace/intermediary model.
+
+Repair:
+- update only the stale SEO contract test;
+- require supplier identity fields for supplier-fulfilled Product structured data;
+- explicitly reject `legalName: LEGAL_OPERATOR_NAME` for that supplier-fulfilled branch;
+- no production seller-identity runtime behavior is weakened or reverted.
+
+Verification after repair:
+- focused SEO foundation contract: **13/13 PASS**;
+- exact Netlify full test suite: **283/283 files PASS, 1,653/1,653 tests PASS**;
+- canonical migration health: **236/236 unique**;
+- security build tests: **9/9 PASS**;
+- TypeScript: **PASS**;
+- Vite production build: **2,501 modules transformed**;
+- Netlify Functions bundling: **PASS**;
+- Netlify Edge Functions bundling: **PASS**;
+- complete `netlify build --offline --context deploy-preview`: **PASS, exit code 0**.
+
+Supabase concurrency note:
+- hosted migration history shows the ECN/supplier migration set had already been applied by the concurrent PR #801 flow before a second idempotent application was attempted during reconciliation;
+- no security-advisor finding was introduced for the new ECN/supplier objects;
+- no cosmetic migration-history repair will be performed;
+- existing project governance remains: preserve verified hosted history unless an actual schema/history defect is demonstrated.
+
+### Current exact task after 25.15
+
+1. commit and push the stale SEO-contract repair plus this authoritative checkpoint to PR #803;
+2. wait for the new Netlify Deploy Preview/checks for the exact new head SHA;
+3. re-fetch `main` immediately before merge to avoid duplicate/concurrent work;
+4. merge PR #803 only if the updated head is mergeable and preview checks pass;
+5. after production deploy, verify:
+   - GB remains live with checkout/payment enabled;
+   - RO remains PRELAUNCH with checkout/payment disabled;
+   - RO payment readiness remains false;
+   - RO Marketplace Seller tax readiness remains false;
+   - RO legal-policy readiness remains false;
+   - UK sitemap/home/robots still publish no premature Romania SEO alternates;
+   - Romanian legal surfaces and the official harmonised guarantee asset are deployed;
+6. keep all four Romanian legal-policy ledger rows in `draft` until a legitimate reviewer explicitly approves them;
+7. do not stage or publish `loadifymarket.ro` until authoritative registration exists;
+8. after PR #803 closeout, address any ECN performance-advisor index findings separately from legal/launch work.

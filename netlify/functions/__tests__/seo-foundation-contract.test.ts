@@ -152,8 +152,9 @@ describe('SEO foundation contract', () => {
     expect(productMeta).toContain('fetchPublicSellerName');
     expect(productMeta).toContain('name: sellerName');
     expect(productMeta).toContain("commercialMode === 'loadify_supplier_fulfilled'");
-    expect(productMeta).toContain('name: SITE_NAME');
-    expect(productMeta).toContain('legalName: LEGAL_OPERATOR_NAME');
+    expect(productMeta).toContain('supplierName');
+    expect(productMeta).toContain('supplierLegalName');
+    expect(productMeta).not.toContain('legalName: LEGAL_OPERATOR_NAME');
   });
 
   it('keeps Level 2 commercial metadata mapped to distinct public search intents', () => {
