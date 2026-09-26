@@ -1745,3 +1745,51 @@ Only the existing non-blocking large-chunk/dynamic-import warnings remain; they 
 4. verify the production deployment and live UK/RO launch gates after merge;
 5. continue the final platform closeout only on newly reproduced defects;
 6. do not alter Romania PRELAUNCH or any legal/tax/payment review state as part of this dependency-security fix.
+
+
+### 25.22 PR #806 production closeout — dependency security verified live
+
+PR #806 was merged into `main` at:
+- merge SHA: `e823525367c6b5c7e80d49b93b7a66048acaaf46`.
+
+Final dependency-security state:
+- `npm audit`: **0 vulnerabilities**;
+- `npm audit --omit=dev`: **0 vulnerabilities**;
+- full suite on the remediated lockfile: **284/284 files PASS, 1,655/1,655 tests PASS**;
+- clean-checkout Netlify production-context build: **PASS**;
+- Netlify Functions bundling: **PASS**;
+- Netlify Edge Functions bundling: **PASS**.
+
+Live post-merge regression verification:
+- GB launch status:
+  - `status=live`;
+  - `checkoutEnabled=true`;
+  - `paymentEnabled=true`;
+- RO launch status:
+  - `status=prelaunch`;
+  - `checkoutEnabled=false`;
+  - `paymentEnabled=false`;
+- production homepage: HTTP 200, no premature Romania-domain/hreflang leak;
+- production robots: HTTP 200, no premature Romania-domain/hreflang leak;
+- production sitemap: HTTP 200, no premature Romania-domain/hreflang leak.
+
+Therefore the dependency-security defect discovered during final closeout is **CLOSED and production-verified**.
+
+### Current exact task after 25.22
+
+Continue final platform closeout only on newly reproduced defects.
+
+Engineering currently verified and frozen unless regression appears:
+- GB live marketplace/runtime;
+- RO PRELAUNCH launch gating;
+- SEO/robots/sitemap market isolation;
+- Seller/Buyer onboarding boundaries;
+- Individual Seller no-company/no-VAT flow;
+- Stripe runtime/deployment boundaries;
+- supplier intermediary and seller-of-record safeguards;
+- ECN shadow routing/inventory and FK hardening;
+- migration health;
+- current dependency-security state;
+- DMARC/SPF/DKIM/MX configuration.
+
+Do not treat external review/registration gates as engineering defects and do not fabricate their completion.
