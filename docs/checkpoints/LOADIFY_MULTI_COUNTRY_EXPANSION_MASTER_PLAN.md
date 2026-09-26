@@ -1685,3 +1685,63 @@ Remaining launch blockers are now predominantly evidence/external-governance blo
 
 Do not invent additional code work to simulate closure of those external/review gates.
 Before any future implementation, re-inspect current `main`, open/recent PRs and this master plan and proceed only on a newly proven gap.
+
+
+### 25.21 Final platform closeout — npm dependency vulnerabilities removed and clean-build gate passed
+
+During the final full-platform closeout from current `main`, `npm ci` exposed a real dependency-security gap in the development/build toolchain:
+- initial audit: **8 vulnerabilities**;
+- severity: **1 low, 4 moderate, 3 high**;
+- production-only audit was already **0 vulnerabilities**.
+
+Affected packages were transitive/dev-toolchain dependencies, including:
+- `@xmldom/xmldom`;
+- `browserslist`;
+- `js-yaml`;
+- `@humanfs/node`;
+- `@vitest/mocker` / `vitest`;
+- `baseline-browser-mapping`;
+- `postcss-selector-parser`.
+
+Remediation:
+- applied the non-breaking `npm audit fix` dependency resolution;
+- no application runtime source file was changed;
+- `package.json` dependency ranges were not broadened;
+- only the reproducible lockfile was updated;
+- resolved toolchain versions include Vitest 4.1.11, xmldom 0.9.12, js-yaml 4.3.2 and Browserslist 4.29.1.
+
+Post-remediation verification:
+- `npm audit`: **0 vulnerabilities**;
+- `npm audit --omit=dev`: **0 vulnerabilities**;
+- clean `npm ci`: **PASS**;
+- full test suite: **284/284 test files PASS, 1,655/1,655 tests PASS**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**.
+
+A first local Netlify verification in the heavily-used worktree encountered Windows filesystem/process concurrency while multiple npm pipelines overlapped:
+- transient missing `stripe/package.json` during function bundling;
+- transient `ENOTEMPTY` while a second `npm ci` attempted to replace `node_modules`.
+
+These were not accepted as application results. All overlapping processes were terminated and the exact remediation commit was checked out into a brand-new worktree with no `node_modules`, matching a clean CI/deployment checkout.
+
+Clean-worktree production-context Netlify verification:
+- `npm ci`: **PASS**, **0 vulnerabilities**;
+- web build environment: **PASS**;
+- canonical migration health: **237/237 unique**;
+- security build tests: **9/9 PASS**;
+- TypeScript: **PASS**;
+- Vite build: **PASS**, **2,501 modules transformed**;
+- Netlify Functions bundling: **PASS**;
+- Netlify Edge Functions bundling: **PASS**;
+- complete `netlify build --offline --context production`: **PASS, exit code 0**.
+
+Only the existing non-blocking large-chunk/dynamic-import warnings remain; they are not security, correctness or deployment failures.
+
+### Current exact task after 25.21
+
+1. push the lockfile security remediation and this checkpoint through one controlled PR;
+2. require an exact-head successful Netlify Deploy Preview;
+3. merge only if current `main` has not changed underneath the PR;
+4. verify the production deployment and live UK/RO launch gates after merge;
+5. continue the final platform closeout only on newly reproduced defects;
+6. do not alter Romania PRELAUNCH or any legal/tax/payment review state as part of this dependency-security fix.
