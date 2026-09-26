@@ -992,7 +992,7 @@ export default function TradeAccount() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/40">
-            <p>© {new Date().getFullYear()} Loadify Market Ltd. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} XDrive Logistics Ltd, trading as Loadify Market. All rights reserved.</p>
             <div className="flex gap-4">
               <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
