@@ -885,3 +885,80 @@ Continue with the supplier safety slice only after comparing each affected file 
 6. keep supplier checkout/payment disabled;
 7. keep supplier ECN routing non-authoritative/fail-closed;
 8. re-run supplier + ECN + migration + TypeScript + production-build gates before considering integration.
+
+
+### 25.8 Supplier safety slice reconciled and validated
+
+The remaining supplier commercial-safety work has now been reconciled onto the same current-main worktree, after comparing affected runtime/SEO/legal files against the newer production line.
+
+Reconciled:
+- supplier marketplace intermediary commercial-control gate;
+- independent-supplier seller-of-record identity propagation;
+- future supplier-order identity snapshot guard;
+- supplier Stripe connected-account binding/readiness foundation;
+- supplier payment-model technical-readiness matrix.
+
+Safety posture is unchanged and explicit:
+- supplier marketplace checkout remains blocked until commercial readiness is verified;
+- supplier payment creation remains blocked by the commercial-readiness RPC;
+- no settlement model is guessed or auto-selected;
+- no supplier Stripe account is assumed from supplier identity;
+- supplier remains the independent seller of record;
+- Loadify remains marketplace/operator/intermediary, not inventory owner or supplier seller;
+- supplier ECN routing remains fail-closed/non-authoritative;
+- Romania remains PRELAUNCH.
+
+Validation of the combined supplier + ECN slice:
+- focused supplier + ECN suite: **105/105 PASS across 16 files**;
+- canonical migration health: **235/235 unique**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**;
+- production build: **PASS**;
+- security build tests: **9/9 PASS**;
+- Vite: **2,501 modules transformed**.
+
+### 25.9 Old multicountry branch remainder classified — do not port blindly
+
+After the functional ECN and supplier slices were reconciled, the remaining old-branch commits were inspected.
+
+Do not port as runtime work:
+- `ace84e68` — runtime provider repair is superseded by PR #799/#800/current main;
+- `ba8fe4e4` — old seller/function routing patch is superseded except for the missing `market-launch-status` wrapper, which was already extracted, deployed and verified independently;
+- old ECN master-blueprint/progress-only commits — stale/historical documentation must not overwrite the current §25 source of truth;
+- `0aa30874` — seller onboarding regression closeout is historical documentation, not a new runtime delta;
+- old PRELAUNCH SEO commits — already reconciled and deployed to main as the dedicated hotfix.
+
+Therefore the old 28-commit worktree must not be bulk-merged.
+
+### 25.10 Supabase production-history governance reverified
+
+Hosted Supabase migration history was inspected directly before any ECN production DDL.
+
+Confirmed existing project convention:
+- canonical migration files in the repository and hosted application timestamps are not always identical;
+- the 15 multicountry/RO canonical migrations were already applied to production in dependency order on 25 September and recorded under their hosted application timestamps;
+- existing project documentation explicitly distinguishes canonical repository history from verified hosted migration history;
+- do not rewrite hosted migration history merely to make local timestamps look identical;
+- do not use migration-repair unless actual schema/history state is proven incorrect.
+
+The temporary idea to renumber early ECN migration files solely around the hosted timestamp head was rejected and reverted. The canonical ECN migration filenames remain unchanged.
+
+Supabase project status before ECN DDL:
+- project `loadify-market`: ACTIVE_HEALTHY;
+- Postgres: 17.6;
+- existing hosted migration head includes Romania online withdrawal;
+- current Supabase advisors were captured before new DDL;
+- no ECN/supplier safety migration has yet been claimed as production-applied by this section.
+
+Current Supabase changelog was also checked before DDL review. The 25 September PostgreSQL 15.19/17.11 notice concerns ltree, legacy pgcrypto ciphers, btree_gist NaN indexes and custom selectivity operators; the reconciled ECN/supplier migrations do not intentionally depend on those mechanisms.
+
+### Current exact task after 25.10
+
+1. preserve this reconciled branch remotely before production DDL;
+2. review the nine new ECN/supplier migrations for destructive DDL, privilege exposure and dependency order;
+3. inspect hosted schema for conflicting/pre-existing ECN objects;
+4. only if those checks pass, apply the ECN/supplier migrations to production in canonical dependency order and verify every created RPC/table/guard;
+5. rerun Supabase security/performance advisors after DDL;
+6. integrate the reconciled branch into current main only after production schema parity is verified;
+7. verify production web/runtime after deploy;
+8. keep supplier checkout/payment and RO checkout/payment fail-closed.
