@@ -1793,3 +1793,75 @@ Engineering currently verified and frozen unless regression appears:
 - DMARC/SPF/DKIM/MX configuration.
 
 Do not treat external review/registration gates as engineering defects and do not fabricate their completion.
+
+
+### 25.23 Public Product Reviews RLS defect — reproduced and repaired
+
+The final live public crawl exposed one real runtime defect on Product Detail pages.
+
+Reproduction:
+- a public product page returned HTTP 200 and rendered the correct product;
+- repeated fresh-browser runs consistently logged two 401 resource failures;
+- the review loader emitted:
+  - PostgreSQL error code `42501`;
+  - `permission denied for table users`.
+
+Root cause:
+- `src/components/product/ProductReviews.tsx` loaded public published reviews with a PostgREST relation join:
+  - `users(firstName, lastName)`;
+- `reviews.userId` correctly references `public.users.id`;
+- the `public.users` table is intentionally protected:
+  - anon has no SELECT grant;
+  - authenticated users can select only their own user row or admin-authorised rows;
+- therefore a public Product Detail page could not legally resolve arbitrary reviewer names through the protected `users` relation.
+
+Security/privacy decision:
+- do **not** weaken `users` RLS;
+- do **not** grant anon SELECT on `users`;
+- do **not** broaden the existing authenticated-only `user_display_names` view;
+- public reviews already have a safe UI fallback label, `Buyer`.
+
+Repair:
+- remove the `users(firstName, lastName)` join from the public published-review query;
+- remove the corresponding nested user profile type;
+- render the public author label as `Buyer`;
+- retain `review.userId` only for existing report-user and ownership behaviours.
+
+Regression coverage:
+- new contract test:
+  - `src/__tests__/product-reviews-public-query.test.ts`;
+- freezes that the public reviews query:
+  - reads from `reviews`;
+  - retains `userId`;
+  - does not join `users(firstName, lastName)`;
+  - does not access `review.users`;
+  - retains the privacy-safe `Buyer` public author label.
+
+Verification before integration:
+- focused Product Reviews + marketplace compliance suite: **4/4 PASS**;
+- targeted ESLint: **PASS**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**;
+- `npm ci`: **PASS**, **0 vulnerabilities**;
+- canonical migration health: **237/237 unique**;
+- security build tests: **9/9 PASS**;
+- Vite production build: **PASS**, **2,501 modules transformed**;
+- Netlify Functions bundling: **PASS**;
+- Netlify Edge Functions bundling: **PASS**;
+- complete `netlify build --offline --context production`: **PASS, exit code 0**.
+
+No schema, RLS, grant, launch-state, payment, tax, legal-policy or SEO state is changed by this fix.
+
+### Current exact task after 25.23
+
+1. commit and push the Product Reviews privacy/RLS repair;
+2. require a clean exact-head Netlify Deploy Preview;
+3. merge only if current `main` has not changed underneath the PR;
+4. after production deploy, re-run the exact affected Product Detail smoke test;
+5. verify:
+   - product URL remains correct;
+   - HTTP 200;
+   - review loader no longer emits 401;
+   - no `permission denied for table users`;
+   - no new `pageerror` / console error is introduced by the fix;
+6. rerun the public sitemap browser crawl and continue closeout only on new reproducible defects.
