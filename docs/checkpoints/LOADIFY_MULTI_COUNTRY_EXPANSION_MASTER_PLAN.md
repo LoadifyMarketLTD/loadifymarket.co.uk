@@ -1865,3 +1865,95 @@ No schema, RLS, grant, launch-state, payment, tax, legal-policy or SEO state is 
    - no `permission denied for table users`;
    - no new `pageerror` / console error is introduced by the fix;
 6. rerun the public sitemap browser crawl and continue closeout only on new reproducible defects.
+
+
+### 25.24 Public seller storefront RLS defect — reproduced, repaired and live-verified
+
+The post-PR #808 public Product Detail smoke test exposed one additional authorization defect.
+
+Reproduction:
+- public Product Detail rendered correctly at HTTP 200;
+- the page emitted one console resource failure:
+  - HTTP 401 from PostgREST on `public.seller_stores`;
+- affected query:
+  - `select=storeSlug`;
+  - filtered by the product seller `userId`;
+  - filtered by `isActive=true`.
+
+Hosted root cause:
+- `seller_stores_select` was a single `FOR SELECT TO public` RLS policy;
+- its predicate mixed:
+  - public storefront condition: `"isActive" = true`;
+  - owner condition: `auth.uid() = "userId"`;
+  - admin helper: `public.is_admin()`;
+- `public.is_admin()` is intentionally executable only by authenticated/service roles and is not executable by `anon`;
+- therefore an anonymous storefront read could fail while evaluating the authenticated-only helper even when the row was active.
+
+Security decision:
+- do **not** grant anon EXECUTE on `public.is_admin()`;
+- do **not** weaken the admin-helper ACL;
+- do **not** bypass RLS through a service-role browser path.
+
+Repair:
+- add canonical migration:
+  - `20260926123000_split_seller_stores_public_select_policy.sql`;
+- replace the mixed public policy with:
+  - `seller_stores_select_anon`:
+    - role `anon`;
+    - predicate only `"isActive" = true`;
+  - `seller_stores_select_authenticated`:
+    - role `authenticated`;
+    - active stores OR owner OR `public.is_admin()`.
+- no store data is mutated;
+- no new function grant is added;
+- write policies are unchanged.
+
+Regression coverage:
+- `src/__tests__/seller-stores-public-policy-split.test.ts`;
+- freezes:
+  - anon policy contains no `is_admin`;
+  - anon policy contains no `auth.uid`;
+  - authenticated owner/admin access remains present;
+  - migration contains no data mutation and no anonymous admin-helper EXECUTE grant.
+
+Local verification:
+- focused seller-store + public Product Reviews suite: **5/5 PASS**;
+- canonical migration health: **238/238 unique**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**;
+- security build tests: **9/9 PASS**;
+- production build: **PASS**;
+- Vite: **2,501 modules transformed**.
+
+Hosted verification:
+- migration application succeeded;
+- the exact previously failing public Product Detail now returns:
+  - HTTP 200;
+  - **0 console errors**;
+  - **0 page errors**;
+  - **0 Loadify/Supabase 4xx/5xx responses**;
+  - no protected-user permission error.
+
+Public browser crawl after the RLS repair:
+- production sitemap URLs discovered: **53**;
+- Chromium pages tested: **53/53**;
+- pass count: **53**;
+- failure count: **0**;
+- no navigation failures;
+- no console errors;
+- no page errors;
+- no Loadify/Supabase 4xx/5xx responses.
+
+Live unauthenticated role-isolation regression:
+- protected workspace/API suite: **5/5 PASS**.
+
+### Current exact task after 25.24
+
+1. commit and push the isolated seller-store RLS migration, regression test and this checkpoint;
+2. open one dedicated PR against current `main`;
+3. require exact-head Netlify Deploy Preview success;
+4. re-fetch `main` immediately before merge because PR #812 is concurrently open on unrelated GitHub-reference work;
+5. merge only if the RLS PR is clean and no overlapping migration appeared;
+6. after merge, verify the exact Product Detail and one slug-based Seller Profile live;
+7. rerun Supabase security advisor for `seller_stores` / admin-helper ACL regressions;
+8. continue final platform closeout only on newly reproduced defects.
