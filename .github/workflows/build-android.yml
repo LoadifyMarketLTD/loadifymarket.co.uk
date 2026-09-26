@@ -738,7 +738,7 @@ jobs:
       # ── Publish GitHub Release ────────────────────────────────────────────────
       # Creates a versioned GitHub Release and uploads the APK as
       # "loadify-market.apk" so the stable download URL resolves:
-      #   https://github.com/LoadifyMarketLTD/loadifymarket.co.uk/releases/latest/download/loadify-market.apk
+      #   https://github.com/XDriveLogisticsLtd/loadifymarket.co.uk/releases/latest/download/loadify-market.apk
       # Only runs on main-branch builds (push and workflow_dispatch from main)
       # to avoid cluttering releases with branch builds.
       # The commit SHA suffix ensures the tag is unique across runs.
