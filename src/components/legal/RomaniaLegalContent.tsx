@@ -19,7 +19,7 @@ const LegalShell = ({ title, children }: { title: string; children: ReactNode })
 export const RomaniaBuyerTerms = () => (
   <LegalShell title="Termeni pentru cumpărători">
     <p>Acești termeni se aplică achizițiilor destinate pieței din România prin Loadify Market. Platforma este operată de XDrive Logistics Ltd, care tranzacționează sub marca Loadify Market.</p>
-    <p><strong>Vânzătorul contractual este identificat înainte de comandă și în evidența comenzii.</strong> Pentru ofertele unui vânzător independent, contractul de vânzare este cu comerciantul indicat. Pentru produsele Loadify Supplier-Fulfilled, XDrive Logistics Ltd / Loadify Market este vânzătorul contractual, iar furnizorul aprobat poate efectua expedierea fizică.</p>
+    <p><strong>Vânzătorul contractual este comerciantul independent sau furnizorul aprobat identificat înainte de comandă și în evidența comenzii.</strong> Loadify Market operează platforma marketplace și poate facilita fluxul de comandă, plată, tracking și suport, dar nu deține, nu pre-cumpără și nu devine proprietarul bunurilor oferite de vânzători/furnizori.</p>
     <h2>1. Informații înainte de comandă</h2>
     <p>Înainte de plasarea unei comenzi sunt prezentate, după caz, caracteristicile esențiale ale produsului, identitatea comerciantului, prețul total și taxele obligatorii, costurile de livrare, modalitatea de plată, restricțiile de livrare, termenul estimat și informațiile privind retragerea/returul.</p>
     <h2>2. Comandă și plată</h2>
@@ -51,7 +51,7 @@ export const RomaniaReturnsPolicy = () => (
     <h2>5. Bunuri neconforme</h2>
     <p>O cerere privind un produs defect, deteriorat, descris incorect sau neconform este tratată separat de simpla schimbare de opinie și beneficiază de remediile legale aplicabile.</p>
     <h2>6. Cum solicitați returul sau retragerea</h2>
-    <p>Pentru exercitarea dreptului de retragere aferent unei comenzi online eligibile din România, folosiți funcția <a href="/buyer/withdrawal">„Retrageți-vă din contract aici”</a>. Pentru returul fizic al bunului, folosiți ruta de retur din comandă sau contactați suportul. Pentru Marketplace Seller, comerciantul indicat este vânzătorul contractual; pentru Loadify Supplier-Fulfilled, Loadify este ruta de suport și vânzătorul contractual.</p>
+    <p>Pentru exercitarea dreptului de retragere aferent unei comenzi online eligibile din România, folosiți funcția <a href="/buyer/withdrawal">„Retrageți-vă din contract aici”</a>. Pentru returul fizic al bunului, folosiți ruta de retur din comandă sau contactați suportul. Comerciantul independent sau furnizorul aprobat identificat în comandă rămâne vânzătorul contractual; Loadify poate facilita ruta de suport și transmiterea cererii.</p>
     <h2>7. Contact</h2><Contact />
   </LegalShell>
 );
@@ -60,7 +60,7 @@ export const RomaniaShippingPolicy = () => (
   <LegalShell title="Politica de livrare">
     <p>Produsele destinate României sunt oferite numai atunci când ruta de livrare, stocul și eligibilitatea pieței sunt disponibile pentru destinația cumpărătorului.</p>
     <h2>1. Cine expediază</h2>
-    <p>Comenzile Marketplace Seller sunt expediate de comerciantul independent indicat. Produsele Loadify Supplier-Fulfilled sunt vândute de Loadify și pot fi expediate fizic de un furnizor sau operator logistic aprobat.</p>
+    <p>Comenzile Marketplace Seller sunt expediate de comerciantul independent indicat. Produsele provenite prin rețeaua de furnizori aprobați sunt vândute de furnizorul independent identificat pentru comandă și sunt expediate de acesta sau de operatorul logistic autorizat de acesta.</p>
     <h2>2. Cost și termen</h2>
     <p>Costul livrării și termenul estimat aplicabil sunt afișate înainte de confirmarea plății. Dacă nu a fost convenit un alt termen, se aplică obligațiile legale privind livrarea contractelor cu consumatorii, inclusiv regula privind livrarea în cel mult 30 de zile acolo unde aceasta este aplicabilă.</p>
     <h2>3. Adresa</h2>

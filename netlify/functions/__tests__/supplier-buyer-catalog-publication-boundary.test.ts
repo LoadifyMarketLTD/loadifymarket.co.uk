@@ -33,7 +33,9 @@ describe("supplier buyer catalog publication boundary", () => {
     expect(catalog).toContain("evaluateProjectionSupplierOffers");
     expect(catalog).toContain("selected.grossCustomerPrice");
     expect(catalog).toContain("selected.sellableQuantity");
-    expect(catalog).toContain("Fulfilled by approved supplier");
+    expect(catalog).toContain("Sold and dispatched by approved supplier");
+    expect(catalog).toContain("server_supplier_marketplace_commercial_readiness_v1");
+    expect(catalog).toContain("server_supplier_marketplace_identity_v1");
     expect(catalog).toContain("payload.imageUrls");
     expect(catalog).toContain("imageUrls,");
   });

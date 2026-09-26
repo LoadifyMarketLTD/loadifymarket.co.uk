@@ -13,6 +13,10 @@ interface SupplierCatalogItem {
   sellableQuantity?: number;
   fulfilmentLabel?: string;
   checkoutEligible?: boolean;
+  checkoutBlockReason?: string | null;
+  supplierId?: string;
+  supplierName?: string;
+  supplierLegalName?: string;
   publishedAt?: string;
 }
 
@@ -43,13 +47,13 @@ function adaptSupplierCatalogItem(item: SupplierCatalogItem, market: "GB" | "RO"
     images: imageUrls,
     price: Number(item.price),
     currency: item.currency === "RON" ? "RON" : "GBP",
-    category: "Loadify Market",
+    category: "Supplier marketplace",
     subcategory: "",
     condition: "New",
     location: market === "RO" ? "România" : "United Kingdom",
-    seller: "Loadify Market",
+    seller: item.supplierName?.trim() || "Independent supplier",
     sellerVerified: true,
-    fulfilmentLabel: item.fulfilmentLabel || "Fulfilled by approved supplier",
+    fulfilmentLabel: item.fulfilmentLabel || "Sold and dispatched by approved supplier",
     unitCount: quantity,
     rating: 0,
     reviewCount: 0,

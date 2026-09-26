@@ -57,6 +57,19 @@ export const handler: Handler = async (event) => {
     }, METHODS);
   }
 
+  const { data: commercialReadiness, error: commercialReadinessError } = await admin.rpc(
+    "server_supplier_marketplace_commercial_readiness_v1",
+    { p_market_code: orderMarket },
+  );
+  if (commercialReadinessError || !commercialReadiness || commercialReadiness.eligible !== true) {
+    return jsonResponse(409, {
+      error: "Supplier marketplace payment is blocked until the independent-supplier commercial model is verified",
+      code: "SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY",
+      marketCode: orderMarket,
+      commercialReadiness: commercialReadiness ?? null,
+    }, METHODS);
+  }
+
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
   const { data: existingSession } = await admin
     .from("payment_sessions")
@@ -74,7 +87,9 @@ export const handler: Handler = async (event) => {
         orderId: order.id,
         amountPence: existingIntent.amount,
         currency: order.currency,
-        merchantOfRecord: "Loadify Market",
+        marketplaceOperator: "Loadify Market",
+        supplierIsSellerOfRecord: true,
+        settlementModel: commercialReadiness.settlementModel,
         externalCheckoutRedirect: false,
         reused: true,
       }, METHODS);
@@ -145,7 +160,9 @@ export const handler: Handler = async (event) => {
     orderId: order.id,
     amountPence,
     currency: order.currency,
-    merchantOfRecord: "Loadify Market",
+    marketplaceOperator: "Loadify Market",
+    supplierIsSellerOfRecord: true,
+    settlementModel: commercialReadiness.settlementModel,
     externalCheckoutRedirect: false,
   }, METHODS);
 };

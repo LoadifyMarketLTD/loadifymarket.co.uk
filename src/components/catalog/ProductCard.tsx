@@ -148,7 +148,7 @@ const ProductCard = ({ product, linkState, theme = "light" }: { product: Product
           <div className="flex items-center gap-1.5">
             <span className={`text-xs font-medium ${light ? "text-[#0A234F]" : "text-foreground"}`}>{product.seller}</span>
             {isSupplierFulfilled ? (
-              <span className="inline-flex items-center text-[10px] font-semibold text-[#1D57D8] bg-[#EEF3FF] border border-[#B8CBFF] rounded-full px-1.5 py-0.5" title="Fulfilled by approved supplier" aria-label="Supplier fulfilled">
+              <span className="inline-flex items-center text-[10px] font-semibold text-[#1D57D8] bg-[#EEF3FF] border border-[#B8CBFF] rounded-full px-1.5 py-0.5" title="Sold and dispatched by approved supplier" aria-label="Supplier marketplace product">
                 Supplier fulfilled
               </span>
             ) : product.sellerVerified ? (

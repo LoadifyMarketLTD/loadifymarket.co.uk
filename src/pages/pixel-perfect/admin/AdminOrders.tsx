@@ -476,7 +476,7 @@ const AdminOrders = () => {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Supplier-Fulfilled Operations</p>
-                      <p className="mt-1 text-xs text-slate-300">Loadify is seller of record. Supplier fulfilment, recovery and tracking remain separate controlled operations.</p>
+                      <p className="mt-1 text-xs text-slate-300">The independent supplier is the seller of record and controls the goods. Loadify provides marketplace orchestration, evidence, tracking and support controls.</p>
                     </div>
                     {supplierOpsLoading && <Loader2 className="h-4 w-4 animate-spin text-blue-300" />}
                   </div>
