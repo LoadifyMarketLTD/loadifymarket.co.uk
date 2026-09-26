@@ -1,5 +1,5 @@
 {
-  "name": "loadifymarket.co.uk",
+  "name": "loadify-market-platform",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -129,5 +129,8 @@
     "qs": "6.16.0",
     "dompurify": "3.4.13",
     "fflate": "0.8.3"
-  }
+  },
+  "description": "Loadify Market commerce platform operated by XDrive Logistics Ltd",
+  "author": "XDrive Logistics Ltd",
+  "license": "UNLICENSED"
 }
