@@ -962,3 +962,49 @@ Current Supabase changelog was also checked before DDL review. The 25 September 
 6. integrate the reconciled branch into current main only after production schema parity is verified;
 7. verify production web/runtime after deploy;
 8. keep supplier checkout/payment and RO checkout/payment fail-closed.
+
+
+### 25.8 Supplier marketplace safety/readiness slice reconciled and validated
+
+The supplier branch-only safety layer has now been reconciled onto the current-main ECN worktree without selecting or activating a supplier commercial/payment model.
+
+Reconciled:
+- supplier marketplace intermediary commercial-control gate;
+- supplier catalogue publication now carries independent supplier identity and fails checkout closed while commercial readiness is incomplete;
+- supplier checkout preparation fails closed before payment-session creation;
+- supplier PaymentIntent path fails closed before Stripe intent creation;
+- future supplier-order identity contract requires the independent supplier as seller/invoice issuer and explicitly prevents Loadify/XDrive from being snapshotted as the supplier seller identity;
+- supplier-specific Stripe connected-account binding/readiness foundation, separate from seller_profiles;
+- supplier payment-model technical-readiness matrix for:
+  - stripe_connect_direct_charge;
+  - stripe_connect_indirect_obo.
+
+No commercial model was selected.
+
+Authority/launch posture remains unchanged:
+- supplier checkout disabled unless reviewed commercial readiness becomes eligible;
+- supplier payment disabled unless reviewed readiness becomes eligible;
+- supplier ECN routing remains non-authoritative/fail-closed;
+- Loadify remains marketplace/intermediary and does not own/pre-purchase supplier stock;
+- Romania remains PRELAUNCH with checkout=false and payment=false.
+
+Combined verification on current-main reconciliation base:
+- Supplier + ECN focused suite: **105/105 PASS across 16 files**;
+- canonical migration health: **235/235 unique**;
+- TypeScript: **PASS**;
+- git diff --check: **PASS**;
+- production security build tests: **9/9 PASS**;
+- production build: **PASS**;
+- Vite: **2,501 modules transformed**;
+- only the existing chunk-size warning remains.
+
+### Current exact task after 25.8
+
+Before production integration:
+1. inspect the 9 new canonical migrations against the live Supabase schema;
+2. verify they are additive/non-authoritative and do not alter existing seller payment truth;
+3. apply them in dependency order only if production parity/safety checks pass;
+4. re-check RO launch control remains PRELAUNCH and GB remains live after schema application;
+5. re-run focused supplier/ECN production-safe verification;
+6. only then integrate the reconciled code into main;
+7. keep supplier checkout/payment and supplier ECN authority blocked until reviewed commercial evidence explicitly permits activation.
