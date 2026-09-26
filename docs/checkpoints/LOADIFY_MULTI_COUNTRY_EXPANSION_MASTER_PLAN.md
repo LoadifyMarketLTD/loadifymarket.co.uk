@@ -1436,3 +1436,144 @@ Supabase concurrency note:
 6. keep all four Romanian legal-policy ledger rows in `draft` until a legitimate reviewer explicitly approves them;
 7. do not stage or publish `loadifymarket.ro` until authoritative registration exists;
 8. after PR #803 closeout, address any ECN performance-advisor index findings separately from legal/launch work.
+
+
+### 25.16 PR #803 production closeout — verified live and fail-closed
+
+PR #803 was merged into `main` at:
+- merge SHA: `54ef104563f63c9271d6500fbb25739fb16af417`.
+
+The production deployment was verified from the public site and hosted database after merge.
+
+Live market launch status:
+- GB:
+  - status = `live`;
+  - catalogEnabled = true;
+  - checkoutEnabled = true;
+  - paymentEnabled = true.
+- RO:
+  - status = `prelaunch`;
+  - catalogEnabled = true;
+  - checkoutEnabled = false;
+  - paymentEnabled = false.
+
+Production crawler/publication checks:
+- `/robots.txt`: HTTP 200, no `loadifymarket.ro` or `ro-RO` publication;
+- `/sitemap.xml`: HTTP 200, no Romania-domain/hreflang leak;
+- homepage: HTTP 200, no Romania-domain/hreflang leak.
+
+Official Romanian harmonised guarantee asset:
+- live path: `/legal/eu-legal-guarantee-notice-ro.png`;
+- live size: **88,604 bytes**;
+- live SHA-256:
+  - `51d641e25d29a9cd4d087a6540d474ade46fd52b2e38f1ac65befb1108caa032`;
+- live hash exactly matches the frozen official Commission asset.
+
+Hosted Romania launch blockers remain fail-closed:
+- payment readiness:
+  - `eligible=false`;
+  - reason = `payment_readiness_incomplete`;
+  - missing evidence still includes RON charge support, merchant-account capability, SCA/3DS, refund support and settlement reconciliation;
+- legal-policy readiness:
+  - `eligible=false`;
+  - reason = `legal_policy_versions_incomplete`;
+  - buyer_terms, privacy, returns_policy and shipping_policy remain required;
+- Marketplace Seller tax contract:
+  - sample reviewed-route lookup returns `eligible=false`;
+  - reason = `ro_marketplace_tax_evidence_missing`.
+
+Romania legal-policy ledger remains unchanged:
+- exactly the four review candidates remain `status='draft'`;
+- `reviewed_by IS NULL`;
+- `reviewed_at IS NULL`;
+- evidence hashes remain the four fingerprints recorded in §25.14.
+
+Therefore PR #803 is closed in production without activating Romania commerce, tax authority, legal approval or premature SEO publication.
+
+### 25.17 ECN performance-advisor follow-up — isolated from launch/legal work
+
+After the legal closeout, the Supabase performance advisor was rechecked for the ECN/supplier objects introduced by PR #801.
+
+Security:
+- no new ECN/supplier security-advisor finding was introduced by the reconciled schema.
+
+Performance:
+- 12 ECN/supplier foreign keys remain without covering indexes:
+  - `private.actor_route_capabilities.dispatch_location_id`;
+  - `private.actor_route_capabilities.reviewed_by`;
+  - `private.actor_route_capabilities.seller_id`;
+  - `private.actor_route_capabilities.supplier_id`;
+  - `private.dispatch_locations.reviewed_by`;
+  - `private.market_routes.changed_by`;
+  - `private.route_decision_snapshots.dispatch_location_id`;
+  - `private.route_decision_snapshots.seller_id`;
+  - `private.route_decision_snapshots.supplier_id`;
+  - `private.supplier_marketplace_commercial_controls.reviewed_by`;
+  - `private.supplier_stripe_account_bindings.verified_by`;
+  - `private.supplier_warehouse_bindings.reviewed_by`.
+
+These are INFO-level performance findings, not correctness or security defects.
+
+A fresh GitHub/main/PR reconciliation found no concurrent ECN FK-index patch.
+
+### Current exact task after 25.17
+
+1. add one isolated, idempotent migration containing only the 12 covering indexes above;
+2. add regression coverage that freezes the expected table/column index contract;
+3. run migration health, focused tests, TypeScript, diff-check and production build;
+4. review the migration for zero business/launch-state mutation;
+5. apply it to hosted Supabase only after local validation;
+6. rerun the Supabase performance advisor and verify those 12 specific unindexed-FK findings are cleared;
+7. rerun the security advisor to confirm no regression;
+8. integrate through a separate controlled PR;
+9. do not modify RO PRELAUNCH, supplier payment activation, legal-policy review state, tax rules or SEO publication.
+
+
+### 25.18 ECN foreign-key index hardening — hosted verification complete
+
+The isolated ECN/supplier performance migration was implemented without changing any marketplace, launch, payment, tax, legal or SEO state.
+
+Migration:
+- `supabase/migrations/20260926110000_ecn_fk_index_hardening.sql`.
+
+Scope:
+- exactly 12 `CREATE INDEX IF NOT EXISTS` statements;
+- no `INSERT`, `UPDATE`, `DELETE`, `ALTER` or `DROP`;
+- no launch-control, payment-readiness, legal-policy, Marketplace Seller tax or supplier-activation mutation.
+
+Regression coverage:
+- `src/__tests__/ecn-fk-index-hardening.test.ts`;
+- freezes the 12 expected table/column covering indexes;
+- asserts the migration contains no business-state/schema-destructive mutation.
+
+Local verification before hosted DDL:
+- focused index contract: **2/2 PASS**;
+- canonical migration health: **237/237 unique**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**;
+- production security build tests: **9/9 PASS**;
+- production build: **PASS**;
+- Vite: **2,501 modules transformed**;
+- only the existing chunk-size/dynamic-import warnings remain.
+
+Hosted Supabase:
+- migration application succeeded;
+- hosted migration entry: `ecn_fk_index_hardening`;
+- the 12 specific `unindexed_foreign_keys` advisor findings are now **0/12 remaining**;
+- security advisor reports **0 findings on the target ECN/supplier objects**.
+
+Post-DDL fail-closed re-verification:
+- RO payment readiness remains `eligible=false`;
+- RO legal-policy readiness remains `eligible=false`;
+- RO Marketplace Seller tax lookup remains `eligible=false`;
+- no Romania launch authority was changed.
+
+### Current exact task after 25.18
+
+1. commit and push the isolated migration, regression test and this checkpoint;
+2. open one dedicated PR from `perf/ecn-fk-index-20260926` to current `main`;
+3. verify the exact PR head against current main and Netlify/check results;
+4. merge only when clean and green;
+5. after merge, confirm production main contains the migration and no launch/SEO regression;
+6. then re-inspect GitHub/main/master plan before choosing the next remaining multicountry blocker;
+7. do not reopen closed UK/RO/ECN work unless a new reproducible defect appears.
