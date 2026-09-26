@@ -827,3 +827,61 @@ This is a reconciliation delta, not a rebuild of PR #799.
 3. continue ECN branch reconciliation against current main;
 4. exclude already-superseded runtime/provider/onboarding patches;
 5. keep ECN shadow-only and supplier/RO commerce fail-closed.
+
+
+### 25.7 ECN shadow/domain/inventory stack reconciled onto current main
+
+The first ECN reconciliation slice is now rebased conceptually onto the current production code line without bulk-merging the historical multicountry branch.
+
+Reconciled onto the current-main worktree:
+- ECN cross-border domain foundation;
+- shadow cross-border route decision;
+- GB->GB shadow tax parity;
+- GB->GB shadow checkout parity;
+- checkout/return parity boundaries;
+- checkout orchestration non-authority guard;
+- unified inventory / multi-warehouse foundation;
+- inventory-source decision;
+- marketplace inventory-ownership correction;
+- seller-owned inventory composition into the shadow Route Engine.
+
+Deliberately excluded:
+- historical runtime/provider/onboarding patches already superseded by current main;
+- historical master-plan fragments that would overwrite the current §25 source of truth;
+- the stale ECN master blueprint file previously removed from main;
+- all supplier checkout/payment activation.
+
+Current authority posture:
+- ECN remains shadow / non-authoritative;
+- seller-owned inventory routing is decision support only;
+- supplier inventory routing remains fail-closed;
+- supplier checkout and supplier PaymentIntent activation remain blocked;
+- Loadify does not own, pre-purchase or warehouse supplier inventory;
+- Romania remains PRELAUNCH with checkout=false and payment=false.
+
+Verification on the current-main reconciliation worktree:
+- ECN focused suite: **54/54 PASS across 7 files**;
+- canonical migration health: **231/231 unique**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**;
+- production build: **PASS**;
+- security build tests: **9/9 PASS**;
+- Vite: **2,501 modules transformed**;
+- only the existing chunk-size warning remains.
+
+The production `market-launch-status` deployment defect found during reconciliation is also now closed E2E:
+- GB returns JSON with status=live, checkoutEnabled=true, paymentEnabled=true;
+- RO returns JSON with status=prelaunch, checkoutEnabled=false, paymentEnabled=false.
+
+### Current exact task after 25.7
+
+Continue with the supplier safety slice only after comparing each affected file against current main:
+
+1. reconcile the supplier marketplace intermediary commercial-control gate;
+2. reconcile the future supplier-order independent-supplier identity guard;
+3. reconcile supplier Stripe connected-account readiness;
+4. reconcile the supplier payment-model technical-readiness matrix;
+5. preserve all current-main SEO/runtime/legal changes when conflicts exist;
+6. keep supplier checkout/payment disabled;
+7. keep supplier ECN routing non-authoritative/fail-closed;
+8. re-run supplier + ECN + migration + TypeScript + production-build gates before considering integration.
