@@ -1,9 +1,26 @@
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import { RomaniaPrivacyPolicy } from "@/components/legal/RomaniaLegalContent";
+import { useMarket } from "@/contexts/MarketContext";
 import { ShieldCheck } from "lucide-react";
 
 const PrivacyPolicy = () => {
+  const { market } = useMarket();
+
+  if (market === "RO") {
+    return (
+      <MainLayout>
+        <SEO title="Politica de confidențialitate | Loadify Market" description="Informații juridice pentru utilizatorii Loadify Market din România." canonical="/privacy" />
+        <main id="main-content" className="bg-[#F7F9FC] pb-20 pt-4 text-[#0A234F] md:pt-28">
+          <div className="container mx-auto max-w-4xl px-4">
+            <RomaniaPrivacyPolicy />
+          </div>
+        </main>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <SEO title="Privacy Policy | Loadify Market" description="Understand how Loadify Market collects, uses, and protects your personal data in compliance with UK GDPR." canonical="/privacy" />

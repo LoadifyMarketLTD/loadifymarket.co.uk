@@ -871,6 +871,14 @@ const Checkout = () => {
                         {" · "}
                         <a href="/privacy" className="underline hover:text-foreground">Confidențialitate</a>
                       </p>
+                      <div className="mt-4 border-t border-border pt-4">
+                        <p className="mb-2 font-semibold text-foreground">Garanția legală de conformitate</p>
+                        <img
+                          src="/legal/eu-legal-guarantee-notice-ro.png"
+                          alt="Notificarea armonizată privind garanția legală de conformitate pentru România"
+                          className="mx-auto h-auto w-full max-w-[640px]"
+                        />
+                      </div>
                     </div>
                   )}
 

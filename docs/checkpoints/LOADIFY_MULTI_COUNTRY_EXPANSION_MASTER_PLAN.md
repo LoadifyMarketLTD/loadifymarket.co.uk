@@ -1179,3 +1179,137 @@ Therefore the Romanian Marketplace Seller tax blocker is **architecturally imple
 3. then inspect `loadifymarket.ro` DNS and Netlify custom-domain state before any domain mutation;
 4. stage/verify the Romania domain only if it can be done without enabling live checkout/payment or prematurely publishing RO SEO;
 5. preserve reviewed ro-RO legal policy versions and final real-environment transaction rehearsal as hard launch blockers requiring genuine review/evidence.
+
+
+### 25.12 loadifymarket.ro domain staging preflight — blocked at registration
+
+The Romania custom-domain staging blocker was inspected before any Netlify/DNS mutation.
+
+Verified production Netlify state:
+- canonical site = `loadifymarketcouk`;
+- project id = `5cf610c7-95b1-482a-b713-01f59fa68e09`;
+- production deploy is `ready` on main commit `8f81a8b937303b12aaa095d18cfab3a996228478`;
+- current custom domain = `loadifymarket.co.uk`;
+- current domain aliases = none;
+- current Netlify DNS zone = `loadifymarket.co.uk`;
+- no `loadifymarket.ro` DNS zone exists in the Netlify account.
+
+Public DNS preflight:
+- `loadifymarket.ro` does not resolve;
+- `www.loadifymarket.ro` does not resolve;
+- no delegated NS/A/CNAME records were observed.
+
+Authoritative ROTLD WHOIS preflight on 26 September 2026 returned:
+- **No entries found for the selected source(s)** for `loadifymarket.ro`.
+
+Therefore the current blocker is not a missing Netlify record: the intended Romania domain is not presently registered in the authoritative .ro registry.
+
+No mutation was performed:
+- no speculative Netlify DNS zone was created;
+- no custom-domain alias was attached;
+- no nameserver records were invented;
+- no SEO/publication state changed.
+
+Required external prerequisite:
+1. register `loadifymarket.ro` through a .ro registrar/ROTLD-supported registrar;
+2. then delegate the domain to the intended DNS provider (Netlify DNS if retaining the current architecture);
+3. only after authoritative delegation exists, attach/stage apex + www in Netlify;
+4. keep Romania PRELAUNCH/noindex and checkout/payment disabled until the remaining launch gates close.
+
+### Current exact task after 25.12
+
+Because domain staging is externally blocked at registration, continue with the next implementation-capable blocker:
+1. inspect the current Romanian legal-policy contract, policy ledger and rendered `RomaniaLegalContent`;
+2. determine exactly which required `ro-RO` policy versions are missing/unreviewed;
+3. prepare evidence-backed draft policy snapshots/validation where possible;
+4. do not mark any policy `reviewed` or launch-approved without a legitimate reviewer;
+5. preserve RO PRELAUNCH and current SEO/payment/checkout gates.
+
+
+### 25.13 Romania legal-policy routing and harmonised guarantee-notice hardening
+
+The Romanian legal-policy launch blocker was audited at both database-gate and rendered-surface level.
+
+Production legal-policy gate before this slice:
+- `private.market_legal_policy_versions` contained **0** Romania rows;
+- `server_market_legal_policy_snapshot_v1('RO')` returned `eligible=false`;
+- all four required current ro-RO policies were correctly reported missing:
+  - buyer_terms;
+  - privacy;
+  - returns_policy;
+  - shipping_policy.
+
+Rendered-surface audit:
+- Buyer Terms web already routed RO to `RomaniaBuyerTerms`;
+- Returns Policy web already routed RO to `RomaniaReturnsPolicy`;
+- Shipping Policy web already routed RO to `RomaniaShippingPolicy`;
+- Privacy Policy web already routed RO to `RomaniaPrivacyPolicy`;
+- a real native/APK defect was reproduced: `PrivacyPolicy.tsx` selects `PrivacyPolicyMobile` in native mode, but `PrivacyPolicyMobile` was UK-only and ignored the active market.
+
+Native privacy fix:
+- `PrivacyPolicyMobile.tsx` now reads `useMarket()`;
+- RO renders `RomaniaPrivacyPolicy` with Romanian SEO metadata;
+- GB retains the existing UK native privacy policy;
+- regression test `src/__tests__/romania-legal-policy-routing.test.ts` covers all five rendered policy surfaces, including native privacy.
+
+A second real pre-launch compliance gap was confirmed for the legal framework effective **27 September 2026**:
+- the existing RO checkout already contains the payment-obligation wording and links to Buyer Terms, Returns, Shipping and Privacy;
+- however it did not display the harmonised legal-guarantee notice required for the relevant Romanian online consumer flow.
+
+Official asset implementation:
+- downloaded from the European Commission's official all-language PNG/JPG package;
+- Romanian colour PNG copied byte-for-byte into:
+  - `public/legal/eu-legal-guarantee-notice-ro.png`;
+- official asset dimensions: **1654 × 2339**;
+- official asset size: **88,604 bytes**;
+- SHA-256:
+  - `51d641e25d29a9cd4d087a6540d474ade46fd52b2e38f1ac65befb1108caa032`;
+- the notice is not redrawn, translated, recompressed or editorially modified;
+- only responsive CSS sizing is applied.
+
+RO checkout placement:
+- inside the existing RO-only `Informații înainte de comandă` block;
+- before the `Comandă cu obligație de plată` button;
+- labelled `Garanția legală de conformitate`;
+- rendered from the official static asset path.
+
+Regression protection:
+- `src/__tests__/romania-harmonised-legal-guarantee-notice.test.ts` freezes the official SHA-256;
+- verifies the asset is present on the RO checkout surface;
+- verifies the notice occurs before the payment-obligation order button.
+
+Review package:
+- `docs/checkpoints/evidence/romania-legal-policy-review-package-2026-09-26.md`.
+
+Current exact policy fingerprints:
+- buyer_terms:
+  - `91dd1e65f6b63e1ce1ab1b70bc7a2e39b565e839539bed937699e5a9c8abfef9`;
+- returns_policy:
+  - `5d1081f7629a1e63f309c3cae2a1aab743900c1232fe8492da8eb1b8d826d009`;
+- shipping_policy:
+  - `aed95d61ed61e4ba76994080f2e73450d3fc488943e1c35bbd790601f8aed110`;
+- privacy:
+  - `2d91098ac2181ad906b6d23967d62b65706fae5304ec0c38ecb4dda80caa2e80`.
+
+Validation:
+- focused legal/checkout suite: **17/17 PASS across 4 files**;
+- ESLint on changed legal/checkout/test files: **PASS**;
+- TypeScript: **PASS**;
+- git diff --check: **PASS**;
+- canonical migration health: **236/236 unique**;
+- production security build tests: **9/9 PASS**;
+- production build: **PASS**;
+- Vite: **2,501 modules transformed**;
+- only the pre-existing HEIC chunk-size warning remains.
+
+This slice still does **not** constitute legal review or launch approval.
+
+### Current exact task after 25.13
+
+1. commit and push this deterministic legal-review package and rendered-surface fixes;
+2. register the four exact ro-RO policy fingerprints in production as `draft` only, tied to that source commit;
+3. leave `reviewed_by` and `reviewed_at` NULL;
+4. verify the legal-policy launch RPC remains `eligible=false` and still requires reviewed versions;
+5. integrate through a controlled PR only after the draft-ledger and post-insert gate checks pass;
+6. do not register/attach `loadifymarket.ro` until the domain is actually registered;
+7. do not enable RO checkout/payment or SEO publication.
