@@ -1313,3 +1313,59 @@ This slice still does **not** constitute legal review or launch approval.
 5. integrate through a controlled PR only after the draft-ledger and post-insert gate checks pass;
 6. do not register/attach `loadifymarket.ro` until the domain is actually registered;
 7. do not enable RO checkout/payment or SEO publication.
+
+
+### 25.14 Romania legal-policy draft ledger registered without launch authority
+
+After commit `ceb8947fe6a808a345613a9f72d312df81041c7e` fixed the rendered legal surfaces and froze the official Romanian harmonised legal-guarantee asset, the four exact Romanian policy fingerprints were registered in the production legal-policy ledger as **draft review candidates only**.
+
+Production rows created in `private.market_legal_policy_versions`:
+- buyer_terms:
+  - version = `2026-09-26-draft-buyer_terms`;
+  - evidence hash = `91dd1e65f6b63e1ce1ab1b70bc7a2e39b565e839539bed937699e5a9c8abfef9`;
+- privacy:
+  - version = `2026-09-26-draft-privacy`;
+  - evidence hash = `2d91098ac2181ad906b6d23967d62b65706fae5304ec0c38ecb4dda80caa2e80`;
+- returns_policy:
+  - version = `2026-09-26-draft-returns_policy`;
+  - evidence hash = `5d1081f7629a1e63f309c3cae2a1aab743900c1232fe8492da8eb1b8d826d009`;
+- shipping_policy:
+  - version = `2026-09-26-draft-shipping_policy`;
+  - evidence hash = `aed95d61ed61e4ba76994080f2e73450d3fc488943e1c35bbd790601f8aed110`.
+
+Every row is tied to the exact GitHub source commit and component export.
+
+All four rows intentionally remain:
+- `status='draft'`;
+- `reviewed_by IS NULL`;
+- `reviewed_at IS NULL`.
+
+The intended review-effective timestamp is recorded as 27 September 2026, but this has no launch effect while status remains draft.
+
+Post-insert production verification:
+- all four draft rows exist with the expected hashes;
+- no verified RO legal-policy row exists;
+- `server_market_legal_policy_snapshot_v1('RO')` remains:
+  - `eligible=false`;
+  - `reason=legal_policy_versions_incomplete`;
+  - missingPolicies = buyer_terms, privacy, returns_policy, shipping_policy.
+
+Therefore the engineering review package is deterministic and ready for a legitimate human/legal review, while the launch gate remains fail-closed.
+
+### Current exact task after 25.14
+
+1. commit and push this ledger checkpoint;
+2. open one controlled PR from `audit/ro-domain-legal-20260926` to current main;
+3. compare the final diff and merge only with the verified head SHA;
+4. verify the production deploy contains:
+   - native RO privacy routing;
+   - official harmonised legal-guarantee notice asset;
+   - RO pre-order notice before the payment-obligation button;
+5. re-check after deploy:
+   - GB remains live;
+   - RO remains PRELAUNCH;
+   - RO payment readiness remains false;
+   - RO tax readiness remains false;
+   - RO legal-policy readiness remains false;
+6. do not convert draft legal policies to verified without a legitimate reviewer;
+7. do not stage `loadifymarket.ro` until authoritative registration exists.
