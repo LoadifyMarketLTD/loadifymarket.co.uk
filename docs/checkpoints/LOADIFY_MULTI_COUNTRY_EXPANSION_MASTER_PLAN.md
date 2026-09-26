@@ -1053,3 +1053,63 @@ The reconciled ECN/supplier branch is now schema-compatible with production and 
 4. verify production deploy completes;
 5. re-run live launch-state and supplier fail-closed checks after deploy;
 6. then continue with the remaining branch-only/master-plan items without reopening closed UK/RO SEO, DMARC, or seller-onboarding work.
+
+
+### 25.10 Romania Stripe payment-readiness technical evidence checkpoint
+
+A read-only production Stripe audit was completed against the canonical Loadify Market Platform account.
+
+Verified live account facts:
+- platform country = GB;
+- default currency = GBP;
+- charges enabled = true;
+- payouts enabled = true;
+- details submitted = true;
+- card_payments = active;
+- transfers = active.
+
+Two currently connected accounts were observed; both are GB accounts with charges/payouts enabled and card_payments/transfers active.
+
+Official Stripe documentation was rechecked for:
+- RON/presentment currency support and charge limits;
+- SCA / 3D Secure;
+- refunds;
+- Connect presentment/settlement currency behaviour.
+
+Loadify runtime was rechecked:
+- RO transaction currency is RON;
+- web Checkout and mobile PaymentIntent preserve the expected market/order currency;
+- refunds use the canonical Stripe PaymentIntent;
+- webhook/payment-session boundaries validate amount/currency;
+- RO checkout/payment remain disabled.
+
+Five evidence rows were recorded in production `private.market_payment_readiness_evidence` as **DRAFT** only:
+- ron_charge_support;
+- merchant_account_capability;
+- sca_3ds_support;
+- refund_support;
+- settlement_reconciliation.
+
+No reviewer identity was fabricated:
+- status = draft;
+- reviewed_by = null;
+- reviewed_at = null.
+
+Post-insert verification confirms `server_market_payment_readiness_v1('RO')` still returns:
+- eligible=false;
+- reason=payment_readiness_incomplete;
+- all five domains remain in missingEvidence.
+
+Evidence file:
+- `docs/checkpoints/evidence/romania-stripe-payment-readiness-2026-09-26.md`
+
+Therefore the payment-readiness blocker is **advanced but not closed**. A legitimate review plus the controlled real-environment rehearsal are still required before these rows may become verified. No live customer charge was created and no RO launch state changed.
+
+### Current exact task after 25.10
+
+Continue with the next implementation-capable hard blocker:
+1. inspect the current Marketplace Seller tax resolver and existing tax evidence contracts;
+2. research current authoritative Romanian/EU marketplace/VAT requirements relevant to the implemented business model;
+3. implement only an evidence-backed, fail-closed Romanian/EU Marketplace Seller tax contract and regression coverage;
+4. do not mark legal/tax review as approved where a human/legal reviewer is required;
+5. keep RO PRELAUNCH and payment/checkout disabled.
