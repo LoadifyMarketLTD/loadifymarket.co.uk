@@ -681,3 +681,118 @@ Launch posture is unchanged:
 - payment=false;
 - reviewed ro-RO legal policy versions are still required before launch;
 - payment-readiness evidence, Marketplace Seller RO tax contract, loadifymarket.ro domain cutover and final real-environment transaction rehearsal remain outstanding.
+
+
+## 25. GitHub/main reconciliation and anti-duplication checkpoint — 26 September 2026
+
+This section is the current source of truth for deciding what must NOT be rebuilt and what remains outstanding.
+
+### 25.1 Already implemented in `main` / production — do not redo
+
+GitHub was inspected directly before continuing work.
+
+Confirmed merged or present in `main`:
+- PR #799 — `feat: complete UK/RO multicountry marketplace foundation` — merged, 59 commits / 119 files;
+- PR #800 — `fix: restore public homepage MarketProvider` — merged;
+- Romania runtime launch controls with RO remaining PRELAUNCH and GB remaining live;
+- market-aware catalogue/cart/product/tracking currency handling;
+- Romania legal/prelaunch presentation;
+- Romania online withdrawal function and Netlify runtime exposure;
+- desktop Product Detail price visibility repair;
+- production schema application for the existing UK/RO foundation;
+- production route/role-isolation hardening already recorded in sections 22–24;
+- PRELAUNCH SEO hotfix now in `main`:
+  - `1e4fe9f2` — suppress prelaunch Romania SEO alternates;
+  - `eb95b6f1` — host-aware fail-closed `robots.txt`;
+  - `4bbb3f93` — isolate the SEO hotfix from branch-only supplier identity work.
+
+Live verification after deployment:
+- UK homepage: no `loadifymarket.ro` publication and no `hreflang="ro-RO"` while RO is PRELAUNCH;
+- UK sitemap: no Romania alternate publication while RO is PRELAUNCH;
+- UK robots: valid UK crawl rules and UK sitemap;
+- live sitemap sweep: **45/45 URLs HTTP-successful, 0 Romania-domain leaks, 0 Romania hreflang leaks**.
+
+The following areas are therefore frozen unless a new reproducible regression is found:
+- UK/RO base market architecture already merged by PR #799;
+- homepage MarketProvider repair from PR #800;
+- Romania withdrawal implementation already deployed;
+- desktop price repair already deployed;
+- PRELAUNCH SEO / sitemap / robots suppression now deployed;
+- validated SPF/DKIM/DMARC/MX configuration unless a new mail-authentication failure is reproduced.
+
+### 25.2 Email and seller runtime status — no speculative rework
+
+Public DNS was reverified on 26 September 2026:
+- SPF: `v=spf1 include:_spf.mx.cloudflare.net ~all`;
+- DMARC: `v=DMARC1; p=none; rua=mailto:contact@loadifymarket.co.uk`;
+- DKIM: `resend._domainkey.loadifymarket.co.uk` publishes the Resend key;
+- MX remains Cloudflare Email Routing.
+
+No DNS/email change is required from current evidence.
+
+The earlier seller setup `Server misconfiguration` / `Seller setup unavailable` symptom is not treated as an active code/config defect unless reproduced again.
+Individual/private sellers must remain valid without forcing company registration or VAT details when those facts do not apply.
+
+### 25.3 Branch-only work — implemented locally but NOT yet production truth
+
+The dedicated `feat/multicountry-uk-ro` worktree still contains work that is not yet integrated into `main`.
+Do not describe these items as production-complete until they are separately reconciled, validated against current `main`, and deliberately integrated.
+
+Branch-only areas include:
+- European Commerce Network blueprint and ECN-0 capability inventory;
+- ECN cross-border domain foundation;
+- shadow cross-border route decision;
+- GB→GB shadow parity hardening and checkout/return/tax parity guards;
+- checkout orchestration boundary tests;
+- unified inventory / multi-warehouse foundation;
+- inventory-source decision and seller-owned inventory composition into the shadow Route Engine;
+- marketplace inventory-ownership correction;
+- supplier marketplace intermediary commercial-control gate;
+- future supplier-order independent-supplier identity guard;
+- supplier-specific Stripe connected-account binding/readiness foundation;
+- supplier Stripe payment-model technical-readiness matrix.
+
+These remain non-authoritative / fail-closed:
+- supplier marketplace checkout remains blocked;
+- supplier PaymentIntent activation remains blocked;
+- supplier ECN routing remains non-authoritative / blocked;
+- no supplier stock ownership is transferred to Loadify;
+- no Romania checkout/payment launch state is changed.
+
+### 25.4 Anti-duplication operating rule
+
+Before implementing any remaining item:
+1. inspect `origin/main` and recent merged PRs/commits;
+2. compare the target files/contracts with the dedicated multicountry branch;
+3. classify the item as:
+   - already implemented / superseded;
+   - branch-only and still needed;
+   - stale / no longer needed;
+4. implement or port only the verified missing delta;
+5. validate locally on a worktree based on current `origin/main`;
+6. only then integrate.
+
+Do not bulk-merge the 28-commit multicountry branch merely because it is ahead of `main`.
+
+### 25.5 Current exact task
+
+The UK/RO base programme and PRELAUNCH SEO closeout are now current in production.
+
+Next work must start with **branch-only reconciliation**, not new implementation from scratch:
+
+1. reconcile the ECN/cross-border branch against current `main` file-by-file;
+2. identify which runtime/provider/onboarding patches are already superseded by PR #799/#800/current main and exclude them;
+3. validate the ECN shadow domain/route/inventory stack as one coherent non-authoritative slice on current main;
+4. keep seller-owned inventory routing shadow-only;
+5. keep supplier routing and supplier checkout fail-closed;
+6. separately review supplier Stripe account/payment-model readiness before any commercial model is selected;
+7. update this master plan after each reconciled slice;
+8. keep Romania PRELAUNCH, checkout=false and payment=false.
+
+Outstanding Romania launch blockers remain unchanged:
+- reviewed current ro-RO legal policy versions;
+- reviewed production RON/Stripe/SCA/refund/reconciliation evidence;
+- evidence-backed Romanian/EU Marketplace Seller tax contract;
+- loadifymarket.ro DNS + Netlify domain staging;
+- final non-customer-charge real-environment rehearsal;
+- final full regression/build/migration/security gate immediately before any governed launch-state mutation.
