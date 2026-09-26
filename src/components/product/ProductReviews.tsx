@@ -20,7 +20,6 @@ interface DBReview {
   helpfulVoters: string[];
   createdAt: string;
   userId: string;
-  users: { firstName: string | null; lastName: string | null } | null;
 }
 
 interface RatingBucket {
@@ -101,8 +100,7 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
         .from("reviews")
         .select(`
           id, rating, title, comment, isVerifiedPurchase,
-          helpfulCount, helpfulVoters, createdAt, userId,
-          users(firstName, lastName)
+          helpfulCount, helpfulVoters, createdAt, userId
         `)
         .eq("productId", productId)
         .eq("status", "published")
@@ -396,9 +394,7 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
       ) : (
         <div className="space-y-4">
           {reviews.map((review) => {
-            const firstName = review.users?.firstName ?? "";
-            const lastName = review.users?.lastName ?? "";
-            const authorName = [firstName, lastName].filter(Boolean).join(" ") || "Buyer";
+            const authorName = "Buyer";
             const alreadyVoted = user ? review.helpfulVoters.includes(user.id) : false;
             return (
               <div key={review.id} className="border border-border rounded-lg p-4 space-y-2">
