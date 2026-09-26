@@ -1,5 +1,6 @@
 /product-feed.xml  /.netlify/functions/product-feed  200!
 /sitemap.xml       /.netlify/functions/sitemap       200!
+/robots.txt        /.netlify/functions/robots        200!
 /api/*             /.netlify/functions/:splat        200!
 
 # Canonical public-route redirects — keep crawler-visible aliases as real 301s.
