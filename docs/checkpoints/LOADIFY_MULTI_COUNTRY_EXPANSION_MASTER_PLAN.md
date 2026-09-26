@@ -1957,3 +1957,167 @@ Live unauthenticated role-isolation regression:
 6. after merge, verify the exact Product Detail and one slug-based Seller Profile live;
 7. rerun Supabase security advisor for `seller_stores` / admin-helper ACL regressions;
 8. continue final platform closeout only on newly reproduced defects.
+
+
+### 25.25 PR #813 post-merge public closeout — Product Detail, Seller Profile and extended route crawl verified
+
+PR #813 was merged into `main` at:
+- merge SHA: `98b2bc2bdeb0d98d826034bc03c8987ef9f283b8`.
+
+Post-merge production verification:
+- exact previously affected Product Detail:
+  - HTTP 200;
+  - correct product title;
+  - **0 console errors**;
+  - **0 page errors**;
+  - **0 Loadify/Supabase 4xx/5xx responses**.
+- active production Seller currently has no `storeSlug`;
+- the existing UUID fallback route was therefore tested instead of inventing a slug:
+  - `/seller/{sellerUserId}`;
+  - HTTP 200;
+  - public Seller profile rendered correctly;
+  - **0 console errors**;
+  - **0 page errors**;
+  - **0 Loadify/Supabase 4xx/5xx responses**;
+  - active listings rendered.
+
+Seller Profile architecture check:
+- `SellerCard` correctly uses `/seller/{storeSlug}` when a slug exists;
+- it falls back to `/seller/{sellerId}` for legacy/current stores without a slug;
+- `SellerPublicProfilePage` explicitly recognises UUID routes and resolves the public profile via `seller_profiles_public`;
+- no additional runtime change is required for a missing slug.
+
+Supabase advisor review after the RLS split:
+- no new `seller_stores` security regression was introduced;
+- the advisor still reports `public.is_admin()` as an authenticated-executable `SECURITY DEFINER` helper;
+- this is **intentional architecture**, not a newly introduced defect:
+  - `search_path=''`;
+  - helper checks the current `auth.uid()` only;
+  - requires `users.role='admin'`;
+  - requires `users.isActive=true`;
+  - anon has no EXECUTE privilege;
+  - authenticated/service roles retain EXECUTE;
+  - **89 public-schema RLS policies currently depend on `is_admin()`**.
+- revoking authenticated EXECUTE merely to silence the advisor would break a large part of the existing RLS contract and is therefore rejected.
+- existing unused-index findings on `seller_stores` are informational only and are not removed without workload evidence.
+
+Extended browser closeout beyond sitemap:
+- additional public/non-sitemap routes tested in Chromium: **60**;
+- pass count: **60/60**;
+- failure count: **0**;
+- includes:
+  - marketplace/platform/business/buyer/seller/trade/supplier information pages;
+  - supplier application;
+  - auth entry/recovery pages;
+  - legal/policy surfaces;
+  - cart/order-success/checkout-error surfaces;
+  - tracking entry points;
+  - redirects/aliases;
+  - public Seller UUID fallback profile.
+- no navigation failures;
+- no console errors;
+- no page errors;
+- no Loadify/Supabase 4xx/5xx responses.
+
+Combined public-browser evidence now includes:
+- sitemap crawl: **53/53 PASS**;
+- additional public/non-sitemap crawl: **60/60 PASS**;
+- unauthenticated role-isolation suite: **5/5 PASS**.
+
+### Current exact task after 25.25
+
+Continue final platform closeout on non-public surfaces without weakening authentication controls.
+
+1. audit deployed Netlify/API function boundaries for unintended anonymous success or unexpected 5xx responses;
+2. run every safe unauthenticated E2E/authorization contract available from the repo;
+3. inspect authenticated release-gate prerequisites without fabricating or resetting real credentials;
+4. where authenticated end-to-end execution is impossible without genuine test credentials, keep the gap explicit rather than claiming PASS;
+5. continue repairing only newly reproduced defects;
+6. do not reopen public Product Detail / Seller Profile / seller-store RLS unless a regression is reproduced;
+7. keep RO PRELAUNCH and all legal/tax/payment review gates unchanged.
+
+
+### 25.26 Remaining RLS auth-initplan performance warnings — 33/33 eliminated without access changes
+
+The full Supabase Performance Advisor was reviewed after the public/API closeout.
+
+A real performance warning class remained:
+- `auth_rls_initplan`: **33 WARN findings**;
+- each finding represented an RLS policy evaluating `auth.uid()` or `auth.role()` per row rather than once per query.
+
+A canonical, semantics-preserving migration was added:
+- `supabase/migrations/20260926124500_optimize_remaining_auth_rls_initplans.sql`.
+
+Scope:
+- exactly **33 `ALTER POLICY`** statements;
+- only auth-context evaluation was changed:
+  - `auth.uid()` → `(select auth.uid())`;
+  - `auth.role()` → `(select auth.role())`;
+  - existing `public.is_admin()` checks in the affected policies are evaluated through a scalar initplan where applicable;
+- policy names remain unchanged;
+- policy roles remain unchanged;
+- policy commands remain unchanged;
+- row ownership/admin/participant predicates remain semantically unchanged;
+- no `GRANT` or `REVOKE`;
+- no DML;
+- no table/function creation or deletion;
+- no launch, legal, tax, payment or supplier-commerce state mutation.
+
+Regression coverage:
+- `src/__tests__/rls-auth-initplan-optimization.test.ts`;
+- freezes exactly 33 policy alterations;
+- rejects any remaining bare `auth.uid()` / `auth.role()` in the migration;
+- rejects privilege/data/schema mutation;
+- preserves sensitive admin and participant checks.
+
+Local verification before hosted DDL:
+- focused RLS/security suite: **18/18 PASS across 3 files**;
+- canonical migration health: **239/239 unique**;
+- TypeScript: **PASS**;
+- `git diff --check`: **PASS**;
+- production security build tests: **9/9 PASS**;
+- production build: **PASS**;
+- Vite: **2,501 modules transformed**.
+
+Hosted application:
+- the first tool-wrapped attempt was rejected by PostgreSQL because the remote-file reader footer was accidentally included after the SQL;
+- PostgreSQL rejected that transaction before execution;
+- the clean SQL body was then applied successfully as migration:
+  - `optimize_remaining_auth_rls_initplans`.
+
+Advisor result after DDL:
+- `auth_rls_initplan`: **33 → 0**;
+- security advisor warning counts are unchanged:
+  - anonymous SECURITY DEFINER warnings: **1**;
+  - authenticated SECURITY DEFINER warnings: **14**;
+- therefore the optimization introduced no new security-advisor exposure.
+
+Post-DDL live regression:
+- unauthenticated role-isolation suite: **5/5 PASS**;
+- Product Detail smoke:
+  - HTTP 200;
+  - 0 console/page errors;
+  - 0 Loadify/Supabase 4xx/5xx;
+- Seller Public Profile UUID-fallback smoke:
+  - HTTP 200;
+  - 0 console/page errors;
+  - 0 Loadify/Supabase 4xx/5xx.
+
+Security-advisor interpretation retained:
+- the remaining SECURITY DEFINER warnings are not automatically defects;
+- inspected mutating/sensitive RPCs self-authorize through admin, active-account, buyer/seller ownership, balance, evidence and case-state checks;
+- `is_seller_checkout_ready` must remain callable by anonymous product-listing RLS unless the public catalogue architecture is redesigned;
+- identity/RLS helper RPCs must not have privileges revoked merely to silence an advisor if doing so would break enforced RLS.
+
+### Current exact task after 25.26
+
+1. commit and push the isolated RLS initplan migration, regression test and updated master plan;
+2. open a dedicated PR against the exact current `main`;
+3. require exact-head Netlify Deploy Preview success and re-check concurrent PR #812 before merge;
+4. after merge, verify production role isolation and public Product/Seller surfaces again;
+5. then inspect `multiple_permissive_policies` WARN findings **without bulk deletion**:
+   - classify historical duplicates/superseded policies;
+   - consolidate only where effective access semantics can be proven identical;
+   - leave intentionally additive policies unchanged;
+6. treat unused-index and unindexed-FK INFO findings separately and only with workload/dependency evidence;
+7. keep RO PRELAUNCH and external review gates unchanged.
