@@ -1008,3 +1008,48 @@ Before production integration:
 5. re-run focused supplier/ECN production-safe verification;
 6. only then integrate the reconciled code into main;
 7. keep supplier checkout/payment and supplier ECN authority blocked until reviewed commercial evidence explicitly permits activation.
+
+
+### 25.9 Live Supabase schema application and post-apply safety verification
+
+The nine reconciled ECN/supplier migrations were applied to the production Loadify Supabase project in dependency order after live preflight confirmed that none of the new ECN/supplier objects already existed.
+
+Applied:
+- 20260925163000_ecn_cross_border_domain_foundation.sql
+- 20260925170000_ecn_cross_border_route_decision.sql
+- 20260925204500_ecn_unified_inventory_foundation.sql
+- 20260925211000_ecn_inventory_source_decision.sql
+- 20260925213500_supplier_marketplace_intermediary_control.sql
+- 20260925215000_supplier_marketplace_future_order_contract.sql
+- 20260926090000_ecn_route_inventory_source_composition.sql
+- 20260926094500_supplier_stripe_account_binding.sql
+- 20260926100000_supplier_payment_model_readiness.sql
+
+Post-apply live verification:
+- all expected private ECN/supplier tables exist;
+- all expected server RPCs exist;
+- supplier future-order snapshot columns exist;
+- supplier commercial readiness RPC is fail-closed:
+  - GB: status=blocked, eligible=false, checkoutEnabled=false, settlementModel=unconfigured;
+  - RO: status=blocked, eligible=false, checkoutEnabled=false, settlementModel=unconfigured;
+- Loadify inventory semantics remain false:
+  - loadifyOwnsInventory=false;
+  - loadifyPrepurchasesInventory=false;
+  - supplierIsSellerOfRecord=true;
+- new supplier commercial/payment-model RPCs are not executable by anon or authenticated; service_role only;
+- Supabase security advisors introduced no new warning class from these server RPCs; previously known advisor findings remain separate backlog;
+- public launch state remains unchanged:
+  - GB = live, catalog=true, checkout=true, payment=true;
+  - RO = prelaunch, catalog=true, checkout=false, payment=false.
+
+The Supabase CLI linked push route was deliberately not used because remote migration history contains existing generated versions that are not present 1:1 as local filenames. No migration-history repair was performed. The nine reviewed migrations were applied individually through the production Supabase migration interface, preserving the production database without rewriting historical migration records.
+
+### Current exact task after 25.9
+
+The reconciled ECN/supplier branch is now schema-compatible with production and remains fail-closed where required. Before merge:
+1. fetch current main and verify no new divergence;
+2. confirm the branch worktree is clean;
+3. merge only this reconciled branch into main;
+4. verify production deploy completes;
+5. re-run live launch-state and supplier fail-closed checks after deploy;
+6. then continue with the remaining branch-only/master-plan items without reopening closed UK/RO SEO, DMARC, or seller-onboarding work.
