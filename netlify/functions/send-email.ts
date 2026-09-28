@@ -423,6 +423,8 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           <p style="margin: 10px 0 0 0;"><strong>${marketCode === 'RO' ? 'Data comenzii' : 'Order Date'}:</strong> ${escapeHtml(data.orderDate || '')}</p>
           <p style="margin: 10px 0 0 0;"><strong>Total:</strong> ${escapeHtml(formatEmailMoney(data.total, data.currency))}</p>
           ${sellerName ? `<p style="margin: 10px 0 0 0;"><strong>${marketCode === 'RO' ? 'Vândut de' : 'Sold by'}:</strong> ${escapeHtml(sellerName)}</p>` : ''}
+          ${marketCode === 'RO' && asTrimmed(data.sellerTraderStatus) ? `<p style="margin: 10px 0 0 0;"><strong>Statut vânzător:</strong> ${asTrimmed(data.sellerTraderStatus) === 'trader' ? 'Profesionist / trader' : 'Neprofesionist / non-trader'}</p>` : ''}
+          ${marketCode === 'RO' && asTrimmed(data.sellerTraderStatus) === 'non_trader' ? `<p style="margin: 10px 0 0 0; color: #92400e;"><strong>Atenție:</strong> Drepturile specifice consumatorilor aplicabile contractelor încheiate cu profesioniști nu se aplică în aceeași formă acestei tranzacții.</p>` : ''}
           ${shippingAddress ? `<p style="margin: 10px 0 0 0;"><strong>${marketCode === 'RO' ? 'Adresa de livrare' : 'Shipping address'}:</strong> ${shippingAddress}</p>` : ''}
         </div>
         <h3 style="color: #243b53;">${marketCode === 'RO' ? 'Produse' : 'Order Items'}:</h3>
