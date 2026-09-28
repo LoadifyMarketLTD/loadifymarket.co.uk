@@ -230,6 +230,15 @@ interface CartItem {
   title: string;
   image: string | null;
   listingContext: 'product' | 'service';
+  consumerInformation?: {
+    producerDurabilityGuaranteeMonths?: string;
+    hasDigitalElements?: boolean;
+    softwareUpdateMinimumPeriod?: string;
+    reparabilityScore?: string;
+    sparePartsInformation?: string;
+    repairInformation?: string;
+    repairRestrictions?: string;
+  };
 }
 
 interface CommercialBuyerSnapshot {
