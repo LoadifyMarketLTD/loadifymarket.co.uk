@@ -159,6 +159,14 @@ export default function ProductFormPage() {
     estimatedRetailValue: '', // Estimated RRP for bulk/pallet
     manifestNotes: '',        // Stock manifest notes for bulk/pallet/clearance
     shippingNotes: '',
+    euConsumerInformationReviewed: false,
+    producerDurabilityGuaranteeMonths: '',
+    hasDigitalElements: false,
+    softwareUpdateMinimumPeriod: '',
+    reparabilityScore: '',
+    sparePartsInformation: '',
+    repairInformation: '',
+    repairRestrictions: '',
     collectionAvailable: false,
     deliveryAvailable: true,
   });
@@ -230,6 +238,14 @@ export default function ProductFormPage() {
           estimatedRetailValue: specs.estimatedRetailValue || '',
           manifestNotes: specs.manifestNotes || '',
           shippingNotes: specs.shippingNotes || '',
+          euConsumerInformationReviewed: specs.euConsumerInformationReviewed === 'true',
+          producerDurabilityGuaranteeMonths: specs.producerDurabilityGuaranteeMonths || '',
+          hasDigitalElements: specs.hasDigitalElements === 'true',
+          softwareUpdateMinimumPeriod: specs.softwareUpdateMinimumPeriod || '',
+          reparabilityScore: specs.reparabilityScore || '',
+          sparePartsInformation: specs.sparePartsInformation || '',
+          repairInformation: specs.repairInformation || '',
+          repairRestrictions: specs.repairRestrictions || '',
           collectionAvailable: specs.collectionAvailable === 'true',
           // deliveryAvailable defaults to true for new products (not yet saved); explicit 'false' disables it
           deliveryAvailable: specs.deliveryAvailable !== 'false',
@@ -238,7 +254,11 @@ export default function ProductFormPage() {
         // Restore custom key-value specs — strip out known structured keys
         const knownKeys = new Set([
           'shortDescription', 'salePrice', 'moq', 'lotQuantity', 'brand', 'model', 'sku',
-          'estimatedRetailValue', 'manifestNotes', 'shippingNotes', 'collectionAvailable', 'deliveryAvailable',
+          'estimatedRetailValue', 'manifestNotes', 'shippingNotes',
+          'euConsumerInformationReviewed', 'producerDurabilityGuaranteeMonths',
+          'hasDigitalElements', 'softwareUpdateMinimumPeriod', 'reparabilityScore',
+          'sparePartsInformation', 'repairInformation', 'repairRestrictions',
+          'collectionAvailable', 'deliveryAvailable',
         ]);
         const customEntries = Object.entries(specs)
           .filter(([k]) => !knownKeys.has(k))
@@ -334,6 +354,14 @@ export default function ProductFormPage() {
     if (formData.model) specs.model = formData.model;
     if (formData.sku) specs.sku = formData.sku;
     if (formData.shippingNotes) specs.shippingNotes = formData.shippingNotes;
+    specs.euConsumerInformationReviewed = formData.euConsumerInformationReviewed ? 'true' : 'false';
+    if (formData.producerDurabilityGuaranteeMonths) specs.producerDurabilityGuaranteeMonths = formData.producerDurabilityGuaranteeMonths;
+    specs.hasDigitalElements = formData.hasDigitalElements ? 'true' : 'false';
+    if (formData.softwareUpdateMinimumPeriod) specs.softwareUpdateMinimumPeriod = formData.softwareUpdateMinimumPeriod;
+    if (formData.reparabilityScore) specs.reparabilityScore = formData.reparabilityScore;
+    if (formData.sparePartsInformation) specs.sparePartsInformation = formData.sparePartsInformation;
+    if (formData.repairInformation) specs.repairInformation = formData.repairInformation;
+    if (formData.repairRestrictions) specs.repairRestrictions = formData.repairRestrictions;
     // Shipping/logistics flags — stored as strings because the specifications field
     // is typed as Record<string, string> (JSONB stored as text values)
     specs.collectionAvailable = formData.collectionAvailable ? 'true' : 'false';
@@ -1237,9 +1265,113 @@ export default function ProductFormPage() {
               </div>
             </Section>
 
-            {/* ─── SECTION 8: Listing Type Details (conditional) ─────────── */}
+            <Section title="8. EU / Romania Consumer Information">
+              <p className="text-sm text-slate-400 mb-4">
+                Review the producer information available for this product. These fields support EU/Romania pre-contract
+                disclosures on durability, software updates and repair. Do not invent information: enter it only when it
+                has been supplied by the producer or is otherwise verified for this product.
+              </p>
+
+              <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-surface/50 p-4 mb-4 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.euConsumerInformationReviewed}
+                  onChange={(e) => setFormData(prev => ({ ...prev, euConsumerInformationReviewed: e.target.checked }))}
+                  className="mt-0.5 h-4 w-4 rounded border-white/20 text-primary focus:ring-primary/40"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-slate-200">EU/Romania consumer-information applicability reviewed</span>
+                  <span className="block text-xs text-slate-500 mt-1">
+                    This confirms that you reviewed the producer information available for the product. It does not create a guarantee or repair claim that the producer has not supplied.
+                  </span>
+                </span>
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Producer durability guarantee (months)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.producerDurabilityGuaranteeMonths}
+                    onChange={(e) => handleChange('producerDurabilityGuaranteeMonths', e.target.value)}
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                    placeholder="Leave blank if not supplied"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Enter only a producer guarantee covering the entire good and supplied as verified product information.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Reparability score</label>
+                  <input
+                    type="text"
+                    value={formData.reparabilityScore}
+                    onChange={(e) => handleChange('reparabilityScore', e.target.value)}
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                    placeholder="Only where an applicable score is provided"
+                  />
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 mb-4 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.hasDigitalElements}
+                  onChange={(e) => setFormData(prev => ({ ...prev, hasDigitalElements: e.target.checked }))}
+                  className="h-4 w-4 rounded border-white/20 text-primary focus:ring-primary/40"
+                />
+                <span className="text-sm text-slate-300">This product has digital elements / requires software updates</span>
+              </label>
+
+              {formData.hasDigitalElements && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Minimum software-update period or end date</label>
+                  <input
+                    type="text"
+                    value={formData.softwareUpdateMinimumPeriod}
+                    onChange={(e) => handleChange('softwareUpdateMinimumPeriod', e.target.value)}
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+                    placeholder="e.g. 5 years or 31 Dec 2031 — only if supplied by producer/provider"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Spare-parts availability / estimated cost / ordering procedure</label>
+                  <textarea
+                    value={formData.sparePartsInformation}
+                    onChange={(e) => handleChange('sparePartsInformation', e.target.value)}
+                    rows={3}
+                    className="w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y"
+                    placeholder="Only information made available by the producer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Repair / maintenance information</label>
+                  <textarea
+                    value={formData.repairInformation}
+                    onChange={(e) => handleChange('repairInformation', e.target.value)}
+                    rows={3}
+                    className="w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y"
+                    placeholder="Availability of repair or maintenance instructions, where supplied"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Repair restrictions</label>
+                  <textarea
+                    value={formData.repairRestrictions}
+                    onChange={(e) => handleChange('repairRestrictions', e.target.value)}
+                    rows={2}
+                    className="w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y"
+                    placeholder="Any producer-provided repair restrictions"
+                  />
+                </div>
+              </div>
+            </Section>
+
+            {/* ─── SECTION 9: Listing Type Details (conditional) ─────────── */}
             {isBulkType && (
-              <Section title="8. Listing Type Details">
+              <Section title="9. Listing Type Details">
                 {/* Pallet-specific fields */}
                 {formData.type === 'pallet' && (
                   <div className="mb-4">
@@ -1355,10 +1487,10 @@ export default function ProductFormPage() {
               </Section>
             )}
 
-            {/* ─── SECTION 9: Publish / Save ────────────────────────────── */}
+            {/* ─── SECTION 10: Publish / Save ───────────────────────────── */}
             <div className="bg-surface border border-white/10 rounded-xl p-6">
               <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">
-                {id ? '9. Save Changes' : '9. Publish Listing'}
+                {id ? '10. Save Changes' : '10. Publish Listing'}
               </h2>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
