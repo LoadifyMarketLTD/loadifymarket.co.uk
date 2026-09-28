@@ -38,6 +38,7 @@ interface OnboardingReadiness {
 
 interface OnboardingStatus {
   sellerType: SellerType | null;
+  traderStatus: 'trader' | 'non_trader' | null;
   sellerStatus: 'draft' | 'submitted' | 'active' | 'suspended' | string;
   requiresAdminApproval: boolean;
   isApproved: boolean;
@@ -126,6 +127,7 @@ const SellerOnboarding = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [savingType, setSavingType] = useState(false);
+  const [savingTraderStatus, setSavingTraderStatus] = useState(false);
   const [savingStore, setSavingStore] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [storeName, setStoreName] = useState('');
@@ -252,6 +254,28 @@ const SellerOnboarding = () => {
       });
     } finally {
       setSavingType(false);
+    }
+  };
+
+  const saveTraderStatus = async (traderStatus: 'trader' | 'non_trader') => {
+    setSavingTraderStatus(true);
+    try {
+      const response = await authorizedFetch('/.netlify/functions/set-seller-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'trader_status', traderStatus }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || 'Unable to save trader status');
+      await refreshStatus(true);
+    } catch (error) {
+      toast({
+        title: 'Trader status not saved',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingTraderStatus(false);
     }
   };
 
@@ -427,6 +451,40 @@ const SellerOnboarding = () => {
               {savingType ? (
                 <p className="flex items-center text-sm text-gray-500"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</p>
               ) : null}
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <h3 className="text-sm font-semibold text-gray-900">Consumer-law trader status</h3>
+                <p className="mt-1 text-xs text-gray-600">
+                  This is a separate legal declaration. Do not choose based only on whether you are an individual, sole trader or company.
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    disabled={savingTraderStatus}
+                    onClick={() => void saveTraderStatus('trader')}
+                    className={`rounded-lg border p-3 text-left text-sm transition ${
+                      status.traderStatus === 'trader' ? 'border-success bg-success/10' : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <span className="font-semibold text-gray-900">I am acting as a trader / professional</span>
+                    <span className="mt-1 block text-xs text-gray-500">I am selling for purposes related to my trade, business, craft or profession.</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingTraderStatus}
+                    onClick={() => void saveTraderStatus('non_trader')}
+                    className={`rounded-lg border p-3 text-left text-sm transition ${
+                      status.traderStatus === 'non_trader' ? 'border-success bg-success/10' : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <span className="font-semibold text-gray-900">I am not acting as a trader / professional</span>
+                    <span className="mt-1 block text-xs text-gray-500">I am selling outside a trade, business, craft or profession.</span>
+                  </button>
+                </div>
+                {savingTraderStatus ? (
+                  <p className="mt-2 flex items-center text-xs text-gray-500"><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Saving declaration…</p>
+                ) : null}
+              </div>
             </div>
           )}
 
