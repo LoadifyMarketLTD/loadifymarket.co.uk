@@ -597,6 +597,8 @@ export const handler: Handler = async (event) => {
           commercialSnapshotVersion: 1,
           buyerSnapshot,
           sellerSnapshot,
+          currency: expectedCurrency,
+          marketCode,
           taxSnapshot: taxDecision.snapshot,
           items: enrichedItems,
           shippingAddress: effectiveShippingAddress,
