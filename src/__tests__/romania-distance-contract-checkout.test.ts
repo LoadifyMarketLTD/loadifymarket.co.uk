@@ -13,8 +13,8 @@ describe("Romania distance-contract checkout disclosure", () => {
 
   it("links the buyer to the transaction policies before ordering", () => {
     expect(source).toContain('href="/buyer-terms"');
-    expect(source).toContain('href="/returns"');
-    expect(source).toContain('href="/shipping"');
+    expect(source).toContain('href="/returns-policy"');
+    expect(source).toContain('href="/shipping-policy"');
     expect(source).toContain('href="/privacy"');
   });
 
