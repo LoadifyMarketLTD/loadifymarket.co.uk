@@ -442,7 +442,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           <a href="${legalBaseUrl}/buyer-terms">${marketCode === 'RO' ? 'Termeni pentru cumpărători' : 'Buyer Terms'}</a> ·
           <a href="${legalBaseUrl}/returns-policy">${marketCode === 'RO' ? 'Politica de retur' : 'Returns Policy'}</a> ·
           <a href="${legalBaseUrl}/shipping-policy">${marketCode === 'RO' ? 'Politica de livrare' : 'Shipping Policy'}</a> ·
-          <a href="${legalBaseUrl}/privacy-policy">${marketCode === 'RO' ? 'Politica de confidențialitate' : 'Privacy Policy'}</a>
+          <a href="${legalBaseUrl}/privacy">${marketCode === 'RO' ? 'Politica de confidențialitate' : 'Privacy Policy'}</a>
         </p>
         <p>${marketCode === 'RO' ? 'Veți primi o notificare separată atunci când comanda este expediată.' : "We'll send you another email when your order has been shipped."}</p>
         <p>${marketCode === 'RO' ? 'Pentru întrebări, contactați' : 'If you have any questions, please contact us at'} contact@loadifymarket.co.uk</p>
