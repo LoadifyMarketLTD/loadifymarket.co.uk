@@ -303,7 +303,7 @@ export const handler: Handler = async (event) => {
 
   const { data: sellerProfile, error: sellerProfileError } = await supabase
     .from('seller_profiles')
-    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, country, isVatRegistered, vatNumber, businessAddress, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
+    .select('stripeAccountId, stripeConnectStatus, sellerStatus, isPaused, businessName, fullName, country, isVatRegistered, vatNumber, businessAddress, traderStatus, taxDeclarationConfirmed, taxDeclarationVersion, taxDeclarationSource, taxDeclarationCapturedAt')
     .eq('userId', checkoutSellerId)
     .maybeSingle<{
       stripeAccountId: string | null;
@@ -316,6 +316,7 @@ export const handler: Handler = async (event) => {
       isVatRegistered: boolean | null;
       vatNumber: string | null;
       businessAddress: Record<string, unknown> | null;
+      traderStatus: 'trader' | 'non_trader' | null;
       taxDeclarationConfirmed: boolean | null;
       taxDeclarationVersion: number | null;
       taxDeclarationSource: string | null;
@@ -339,6 +340,15 @@ export const handler: Handler = async (event) => {
   const sellerBusinessName = sellerProfile.businessName?.trim() || sellerProfile.fullName?.trim() || '';
   if (!sellerBusinessName) {
     return { statusCode: 409, body: JSON.stringify({ error: 'Seller commercial identity is incomplete. Please try again later.' }) };
+  }
+  if (marketCode === 'RO' && !sellerProfile.traderStatus) {
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: 'Seller trader status must be declared before Romania checkout can be enabled.',
+        code: 'SELLER_TRADER_STATUS_REQUIRED',
+      }),
+    };
   }
 
   let shippingAmount = 0;
@@ -486,6 +496,7 @@ export const handler: Handler = async (event) => {
   const sellerSnapshot = {
     id: checkoutSellerId,
     businessName: sellerBusinessName,
+    traderStatus: sellerProfile.traderStatus,
   };
 
   const catalogSubtotalPence = enrichedItems.reduce(
