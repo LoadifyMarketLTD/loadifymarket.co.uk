@@ -42,6 +42,15 @@ export interface Product {
   availabilityMessage?: string;
   /** Current maximum purchasable quantity for physical listings; undefined for services. */
   maxPurchaseQuantity?: number;
+  /** EU/Romania pre-contract product information captured from verified producer data. */
+  euConsumerInformationReviewed?: boolean;
+  producerDurabilityGuaranteeMonths?: string;
+  hasDigitalElements?: boolean;
+  softwareUpdateMinimumPeriod?: string;
+  reparabilityScore?: string;
+  sparePartsInformation?: string;
+  repairInformation?: string;
+  repairRestrictions?: string;
 }
 
 const conditionColor: Record<string, string> = {
