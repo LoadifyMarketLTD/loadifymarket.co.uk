@@ -288,80 +288,34 @@ const BuyerOrders = () => {
         return;
       }
 
-      if (supplierFulfilled) {
-        const response = await authorizedFetch("/.netlify/functions/request-supplier-customer-return", {
-          method: "POST",
-          body: JSON.stringify({
-            orderId: returnOrder.id,
-            reasonCode: returnReason,
-            description: returnDescription.trim(),
-          }),
-        });
-        const payload = await response.json() as {
-          error?: string;
-          return?: ReturnState;
-          manualReviewRequired?: boolean;
-        };
-        if (!response.ok || !payload.return) {
-          throw new Error(payload.error || "Supplier return request could not be created.");
-        }
-        setReturnStates((current) => new Map(current).set(returnOrder.id, payload.return as ReturnState));
-        toast({
-          title: "Return requested",
-          description: payload.manualReviewRequired
-            ? "Loadify has recorded the return. Supplier authorisation is being reviewed before any refund is issued."
-            : "Your return request has been recorded. No refund is issued until the return conditions are completed.",
-        });
-        setReturnOrder(null);
-        setReturnReason("");
-        setReturnDescription("");
-        return;
-      }
-
-      const { data: orderItem, error: orderItemError } = await supabase
-        .from("order_items")
-        .select("id, quantity")
-        .eq("orderId", returnOrder.id)
-        .limit(1)
-        .maybeSingle<{ id: string; quantity: number | null }>();
-      if (orderItemError || !orderItem?.id) throw new Error("Order item information is unavailable. Please contact support.");
-
-      const eligibilityResponse = await authorizedFetch("/.netlify/functions/customer-return-eligibility", {
+      const response = await authorizedFetch("/.netlify/functions/request-customer-return", {
         method: "POST",
         body: JSON.stringify({
           orderId: returnOrder.id,
-          orderItemId: orderItem.id,
-          quantity: orderItem.quantity ?? 1,
           reasonCode: returnReason,
+          description: returnDescription.trim(),
         }),
       });
-      const eligibility = await eligibilityResponse.json() as {
+      const payload = await response.json() as {
         error?: string;
-        result?: { decision?: string; automaticRefundExecutionAllowed?: boolean; paymentMutationAllowed?: boolean };
+        return?: ReturnState;
+        manualReviewRequired?: boolean;
       };
-      if (!eligibilityResponse.ok) throw new Error(eligibility.error || "Return eligibility could not be checked.");
-      if (eligibility.result?.decision === "ineligible") {
-        throw new Error("This order is outside the current return eligibility boundary.");
+      if (!response.ok || !payload.return) {
+        throw new Error(payload.error || "Return request could not be created.");
       }
-      if (eligibility.result?.automaticRefundExecutionAllowed !== false || eligibility.result?.paymentMutationAllowed !== false) {
-        throw new Error("Unsafe return policy response. No return was created.");
-      }
-
-      const { data: created, error } = await supabase.from("returns").insert({
-        orderId: returnOrder.id,
-        buyerId: user.id,
-        sellerId: returnOrder.sellerId,
-        reason: returnReason,
-        description: returnDescription.trim(),
-        status: "requested",
-      }).select("id, orderId, status, buyerCarrier, buyerTrackingNumber, refundAmount, createdAt").single();
-      if (error) throw error;
-      const createdReturn = created as unknown as ReturnState;
-      setReturnStates((current) => new Map(current).set(returnOrder.id, createdReturn));
-      toast({ title: "Return requested", description: "Your return request has been submitted. No refund is issued until the return conditions are completed." });
+      setReturnStates((current) => new Map(current).set(returnOrder.id, payload.return as ReturnState));
+      toast({
+        title: "Return requested",
+        description: payload.manualReviewRequired
+          ? "Your return has been recorded for review. No refund is issued until the applicable return or conformity conditions are completed."
+          : "Your return request has been recorded. No refund is issued until the applicable return conditions are completed.",
+      });
       setReturnOrder(null);
       setReturnReason("");
       setReturnDescription("");
+      return;
+
     } catch (err) {
       toast({ title: "Failed to submit return", description: (err as Error).message, variant: "destructive" });
     } finally {
