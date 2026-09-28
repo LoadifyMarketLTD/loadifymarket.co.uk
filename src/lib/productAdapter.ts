@@ -221,6 +221,32 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     isAvailable: availability.isAvailable,
     availabilityMessage: availability.message,
     maxPurchaseQuantity,
+    euConsumerInformationReviewed: dbProduct.specifications?.["euConsumerInformationReviewed"] === "true",
+    producerDurabilityGuaranteeMonths:
+      typeof dbProduct.specifications?.["producerDurabilityGuaranteeMonths"] === "string"
+        ? String(dbProduct.specifications?.["producerDurabilityGuaranteeMonths"])
+        : undefined,
+    hasDigitalElements: dbProduct.specifications?.["hasDigitalElements"] === "true",
+    softwareUpdateMinimumPeriod:
+      typeof dbProduct.specifications?.["softwareUpdateMinimumPeriod"] === "string"
+        ? String(dbProduct.specifications?.["softwareUpdateMinimumPeriod"])
+        : undefined,
+    reparabilityScore:
+      typeof dbProduct.specifications?.["reparabilityScore"] === "string"
+        ? String(dbProduct.specifications?.["reparabilityScore"])
+        : undefined,
+    sparePartsInformation:
+      typeof dbProduct.specifications?.["sparePartsInformation"] === "string"
+        ? String(dbProduct.specifications?.["sparePartsInformation"])
+        : undefined,
+    repairInformation:
+      typeof dbProduct.specifications?.["repairInformation"] === "string"
+        ? String(dbProduct.specifications?.["repairInformation"])
+        : undefined,
+    repairRestrictions:
+      typeof dbProduct.specifications?.["repairRestrictions"] === "string"
+        ? String(dbProduct.specifications?.["repairRestrictions"])
+        : undefined,
   };
 }
 
