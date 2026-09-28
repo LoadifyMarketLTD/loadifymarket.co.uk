@@ -1,0 +1,82 @@
+# Loadify Market Romania — Legal Compliance Matrix
+Date: 2026-09-28
+Status: PRE-LAUNCH / legal engineering audit in progress
+Canonical implementation: `src/components/legal/RomaniaLegalContent.tsx`
+
+## Scope
+This matrix maps the four Romania consumer-facing documents to the principal official legal sources currently verified:
+- Buyer Terms
+- Returns Policy
+- Shipping Policy
+- Privacy / GDPR Policy
+
+The platform model used throughout is marketplace/intermediary: XDrive Logistics Ltd operates Loadify Market, while the identified third-party seller remains the contractual seller of the goods. Loadify does not own or pre-purchase inventory.
+
+## Official sources verified
+1. OUG 34/2014 privind drepturile consumatorilor, consolidated text:
+   https://legislatie.just.ro/Public/DetaliiDocument/158913
+2. OUG 18/2026 amending OUG 34/2014:
+   https://legislatie.just.ro/Public/DetaliiDocumentAfis/308474
+3. OUG 140/2021 privind anumite aspecte referitoare la contractele de vanzare de bunuri:
+   https://legislatie.just.ro/Public/DetaliiDocumentAfis/268151
+4. Regulation (EU) 2016/679 (GDPR):
+   https://eur-lex.europa.eu/eli/reg/2016/679/oj
+5. Regulation (EU) 2022/2065 (Digital Services Act):
+   https://eur-lex.europa.eu/eli/reg/2022/2065/oj
+
+## Matrix
+
+| Area | Source / article | Requirement | Current implementation | Status / action |
+| --- | --- | --- | --- | --- |
+| Pre-contract consumer information | OUG 34/2014 art. 6 | Essential characteristics, trader identity, total price, delivery, payment, withdrawal, complaint route and other required information must be available before contract | Buyer Terms section 1 now lists the required information categories and requires seller status + allocation of responsibilities | PARTIAL — UI/checkout evidence must still prove every field is shown at the required moment |
+| Online marketplace seller status | OUG 34/2014 marketplace information rules | Consumer must be told whether third party is a professional and the consequences if not | Buyer Terms sections 1 and 6 distinguish professional/non-professional sellers | TEXT CLOSED; UI evidence still required |
+| Ranking transparency | OUG 34/2014 marketplace rules / Omnibus implementation | Principal ranking parameters and relative importance must be disclosed | Buyer Terms section 2 documents current filters and sort modes; repository `src/lib/search.ts` confirms default newest-first and user-selectable price/newest/top-rated ordering | PARTIAL — add a dedicated, easily accessible ranking explanation in product/search UI if not already exposed |
+| Order creates payment obligation | OUG 34/2014 art. 8 | Immediately before order, required information must be prominent and action must make payment obligation unambiguous | Buyer Terms section 3 states requirement | OPEN — checkout button wording and immediate pre-order disclosure must be verified in UI |
+| Contract confirmation | OUG 34/2014 art. 8(9) and durable-medium rules | Acceptance/contract information must be confirmed on durable medium | Buyer Terms section 3 requires durable-medium confirmation | OPEN — verify transactional email content and timestamp |
+| 14-day withdrawal | OUG 34/2014 art. 9 | Consumer has 14 days in eligible distance contracts, with delivery-specific start rules | Buyer Terms section 4 and Returns sections 1-4 | TEXT CLOSED |
+| Online withdrawal function | OUG 34/2014 art. 11^1 inserted by OUG 18/2026; applicable from 19 June 2026 | Visible, continuously accessible withdrawal function; identify consumer/contract; confirmation action; durable-medium acknowledgement with content/date/time | `/buyer/withdrawal`, labels “Retrageți-vă din contract aici” and “Confirmați retragerea”; policy text updated accordingly | IMPLEMENTED; E2E evidence exists, but final production re-test required |
+| Withdrawal refund deadline | OUG 34/2014 art. 13 | Refund without undue delay and max 14 days; standard delivery cost included; lawful withholding for goods | Returns section 4 | TEXT CLOSED; refund execution flow still needs E2E verification |
+| Return of goods | OUG 34/2014 art. 14 | Return within max 14 days after withdrawal; direct cost only where properly disclosed; diminished-value rule | Returns sections 3 and 5 | TEXT CLOSED |
+| Withdrawal exceptions | OUG 34/2014 art. 16 | Statutory exceptions only; cannot be invented or broadened contractually | Returns section 6 | TEXT CLOSED; product-level exception flags must be verified |
+| Legal conformity guarantee | OUG 140/2021 | Seller liability for non-conformity and statutory remedies | Buyer Terms section 5 and Returns section 7 | TEXT CLOSED; product/checkout notices still require UI validation |
+| New 2026 consumer-information changes | OUG 18/2026, measures applicable from 27 Sep 2026 | New sustainability/durability/repair/update-related information duties apply where conditions are met | Not fully represented in the four policies because applicability depends on product information supplied by manufacturer/seller | OPEN — product data model + PDP + checkout audit required |
+| Delivery deadline | OUG 34/2014 delivery rules | Unless otherwise agreed, delivery without undue delay and generally within 30 days | Shipping section 2 | TEXT CLOSED |
+| Non-delivery remedies | OUG 34/2014 | Additional appropriate deadline in ordinary cases; termination may follow; exceptions where deadline is essential/refusal | Shipping section 3 | TEXT CLOSED |
+| Passing of risk | OUG 34/2014 | Risk normally passes on physical possession, subject to consumer-chosen-carrier exception | Shipping section 4 | TEXT CLOSED |
+| Operator identification | Romanian e-commerce/consumer information rules | Operator identity and effective contact details must be accessible | Shared Contact block now includes company number, VAT, postal address, email and telephone | TEXT CLOSED |
+| GDPR transparency | GDPR arts. 12-14 | Clear controller identity, categories, purposes, legal bases, recipients, retention, transfers, rights, indirect data | Privacy sections 1-9 | PARTIAL — exact retention schedule and processor inventory must be reconciled with production systems |
+| GDPR territorial scope | GDPR art. 3(2) | Non-EU controller targeting people in EU falls within GDPR scope where conditions met | Privacy intro | TEXT CLOSED |
+| EU representative | GDPR art. 27 | Where art. 3(2) applies and exception does not, non-EU controller must designate representative in Union | Privacy section 2 explicitly leaves Romania PRE-LAUNCH until requirement is evaluated/closed | BLOCKER |
+| International transfers | GDPR arts. 44-49 | Lawful transfer mechanism required where personal data leaves EEA | Privacy section 8 | PARTIAL — vendor-by-vendor transfer mechanism evidence required |
+| Automated decisions | GDPR arts. 13-15, 22 | Additional disclosures/rights if solely automated decision with legal/similarly significant effect | Privacy section 10 | TEXT CLOSED subject to confirmation no such production decision exists |
+| Trader traceability | DSA art. 30 | Where the DSA consumer-marketplace section applies, obtain trader identity/contact/payment/register/self-certification data and make reasonable verification efforts | Buyer Terms section 7 states controlled trader traceability; onboarding must be checked against actual fields | OPEN — applicability/exemption analysis + onboarding evidence required |
+| DSA SME scope | DSA art. 29 | Section 4 obligations have an exemption for qualifying micro/small providers unless VLOP, with transitional rule after loss of status | Not yet encoded as a legal conclusion | BLOCKER — confirm XDrive/Loadify enterprise-size status before treating art. 30 as a mandatory duty rather than voluntary control |
+
+## Confirmed corrections already made in code
+- Removed the incorrect old statement tying the online withdrawal function to 27 September 2026.
+- Rewrote the withdrawal workflow description to match art. 11^1 mechanics.
+- Added VAT and telephone to operator contact details.
+- Added marketplace/seller-status and responsibility allocation language.
+- Added ranking explanation reflecting `src/lib/search.ts`.
+- Expanded withdrawal refund, return-cost, diminished-value and exception rules.
+- Expanded delivery delay and risk-transfer rules.
+- Expanded GDPR purposes/legal bases, indirect collection, transfers, rights and automated-decision sections.
+- Added an explicit Article 27 GDPR pre-launch blocker.
+
+## Remaining hard blockers before Romania launch
+1. Resolve GDPR Article 27 EU representative applicability and, if required, designate/publish the representative.
+2. Verify the 27 September 2026 OUG 18/2026 sustainability/durability/repair/update disclosures against the actual product catalogue and manufacturer data.
+3. Verify checkout immediately-before-order information and payment-obligation button wording.
+4. Verify durable-medium order confirmation email contains the required contractual information.
+5. Verify product/search UI exposes seller professional status and ranking information where legally required.
+6. Verify refund, return and non-conformity flows E2E against policy promises.
+7. Confirm DSA Article 29 size/exemption status before classifying Article 30 trader-traceability as mandatory.
+8. Reconcile Privacy Policy with the live processor/subprocessor inventory, retention schedule and international-transfer mechanisms.
+
+## Rule for closeout
+No item above is treated as legally closed merely because policy text exists. A requirement is closed only when:
+- the legal source is identified;
+- the policy language is correct;
+- the product/UI/backend behavior matches it;
+- evidence is captured;
+- no contradictory policy or workflow remains.
