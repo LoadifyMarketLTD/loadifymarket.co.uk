@@ -7,7 +7,7 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8'
 describe('website commerce parity', () => {
   it('keeps buyer returns on the desktop workflow with eligibility and return tracking', () => {
     const source = read('src/pages/pixel-perfect/buyer/BuyerOrders.tsx');
-    expect(source).toContain('/.netlify/functions/customer-return-eligibility');
+    expect(source).toContain('/.netlify/functions/request-customer-return');
     expect(source).toContain('buyerCarrier');
     expect(source).toContain('buyerTrackingNumber');
     expect(source).toContain('Save Tracking');
