@@ -834,6 +834,28 @@ const Checkout = () => {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground line-clamp-1">{item.product.title}</p>
                             <p className="text-xs text-muted-foreground">Qty: {item.quantity} · {item.product.seller}</p>
+                            {market === "RO" && item.product.euConsumerInformationReviewed && (
+                              <div className="mt-2 space-y-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                                {item.product.producerDurabilityGuaranteeMonths ? (
+                                  <p><strong className="text-foreground">Garanție durabilitate:</strong> {item.product.producerDurabilityGuaranteeMonths} luni</p>
+                                ) : null}
+                                {item.product.hasDigitalElements && item.product.softwareUpdateMinimumPeriod ? (
+                                  <p><strong className="text-foreground">Actualizări software:</strong> {item.product.softwareUpdateMinimumPeriod}</p>
+                                ) : null}
+                                {item.product.reparabilityScore ? (
+                                  <p><strong className="text-foreground">Scor reparabilitate:</strong> {item.product.reparabilityScore}</p>
+                                ) : null}
+                                {item.product.sparePartsInformation ? (
+                                  <p><strong className="text-foreground">Piese de schimb:</strong> {item.product.sparePartsInformation}</p>
+                                ) : null}
+                                {item.product.repairInformation ? (
+                                  <p><strong className="text-foreground">Reparare/întreținere:</strong> {item.product.repairInformation}</p>
+                                ) : null}
+                                {item.product.repairRestrictions ? (
+                                  <p><strong className="text-foreground">Restricții reparare:</strong> {item.product.repairRestrictions}</p>
+                                ) : null}
+                              </div>
+                            )}
                           </div>
                           <span className="text-sm font-semibold text-foreground shrink-0">
                             {formatMoney({ amount: item.product.price * item.quantity, currency: item.product.currency ?? marketConfig.currency })}
