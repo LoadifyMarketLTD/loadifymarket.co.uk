@@ -49,3 +49,20 @@ A supplier can move toward live marketplace commerce only when all relevant gate
 `approved supplier identity + verified commercial profile + market commercial readiness + payment/settlement evidence + catalogue/compliance/stock/pricing/fulfilment readiness`.
 
 The matrix is deliberately additive and does not change historical orders or turn on production supplier checkout.
+
+
+## Phase O — commercial viability closure
+
+Controlled Pilot activation now has a separate fail-closed market-viability gate for every pilot offer.
+
+Before activation, each offer requires immutable reviewed evidence that:
+- its proposed buyer price is the same price in the current approved supplier pricing snapshot;
+- approved economics still satisfy expected contribution >= minimum contribution;
+- at least three current UK benchmark observations/evidence references exist;
+- benchmark evidence is no older than 14 days at readiness evaluation;
+- the proposed customer price does not exceed the reviewed median-market-price premium ceiling;
+- every offer in the bounded pilot set has an approved viability decision.
+
+This closes the gap between technical readiness and commercial usefulness. A product can be technically fulfilable, in stock and correctly priced by the supplier while still being unsuitable for Loadify because the complete transaction economics or real UK market price make it commercially uncompetitive.
+
+The gate does not infer demand from supplier labels such as "hot" or "winning". Market evidence must be recorded explicitly and reviewed. It does not activate a pilot, publish a product or enable global Supplier Commerce.
