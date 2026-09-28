@@ -124,6 +124,7 @@ const ProductDetail = () => {
   const [productCategorySlug, setProductCategorySlug] = useState<string | null>(null);
   const [sellerStoreSlug, setSellerStoreSlug] = useState<string | null>(null);
   const [sellerTraderStatus, setSellerTraderStatus] = useState<'trader' | 'non_trader' | null>(null);
+  const [consumerInfo, setConsumerInfo] = useState<Record<string, string | boolean | null>>({});
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -185,6 +186,7 @@ const ProductDetail = () => {
           setSellerListingCount(0);
           setSellerStoreSlug(null);
           setSellerTraderStatus(null);
+          setConsumerInfo({});
           setSellerJoinDate(null);
           trackProductView(supplierProduct.id, supplierProduct.title, supplierProduct.price, config.currency);
           return;
@@ -210,6 +212,19 @@ const ProductDetail = () => {
         setProductDescription(
           typeof data.description === "string" ? data.description : "",
         );
+        const rawSpecs = data.specifications && typeof data.specifications === "object"
+          ? data.specifications as Record<string, unknown>
+          : {};
+        setConsumerInfo({
+          reviewed: rawSpecs.euConsumerInformationReviewed === "true",
+          producerDurabilityGuaranteeMonths: typeof rawSpecs.producerDurabilityGuaranteeMonths === "string" ? rawSpecs.producerDurabilityGuaranteeMonths : null,
+          hasDigitalElements: rawSpecs.hasDigitalElements === "true",
+          softwareUpdateMinimumPeriod: typeof rawSpecs.softwareUpdateMinimumPeriod === "string" ? rawSpecs.softwareUpdateMinimumPeriod : null,
+          reparabilityScore: typeof rawSpecs.reparabilityScore === "string" ? rawSpecs.reparabilityScore : null,
+          sparePartsInformation: typeof rawSpecs.sparePartsInformation === "string" ? rawSpecs.sparePartsInformation : null,
+          repairInformation: typeof rawSpecs.repairInformation === "string" ? rawSpecs.repairInformation : null,
+          repairRestrictions: typeof rawSpecs.repairRestrictions === "string" ? rawSpecs.repairRestrictions : null,
+        });
         setProductSellerId(data.sellerId ?? null);
 
         // Sync mobile wishlist state
@@ -936,6 +951,35 @@ const ProductDetail = () => {
                   Report this listing
                 </button>
               ) : null}
+
+              {market === "RO" && consumerInfo.reviewed === true && (
+                <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                  <h2 className="font-display text-lg font-semibold text-foreground">Informații privind durabilitatea și repararea</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Sunt afișate numai informațiile declarate și revizuite pentru acest produs. Câmpurile fără informații furnizate nu sunt prezentate ca promisiuni sau garanții.
+                  </p>
+                  <dl className="grid gap-3 text-sm">
+                    {consumerInfo.producerDurabilityGuaranteeMonths ? (
+                      <div><dt className="font-semibold text-foreground">Garanție comercială de durabilitate a producătorului</dt><dd className="text-muted-foreground">{String(consumerInfo.producerDurabilityGuaranteeMonths)} luni</dd></div>
+                    ) : null}
+                    {consumerInfo.reparabilityScore ? (
+                      <div><dt className="font-semibold text-foreground">Scor de reparabilitate</dt><dd className="text-muted-foreground">{String(consumerInfo.reparabilityScore)}</dd></div>
+                    ) : null}
+                    {consumerInfo.hasDigitalElements === true && consumerInfo.softwareUpdateMinimumPeriod ? (
+                      <div><dt className="font-semibold text-foreground">Perioada minimă pentru actualizări software</dt><dd className="text-muted-foreground">{String(consumerInfo.softwareUpdateMinimumPeriod)}</dd></div>
+                    ) : null}
+                    {consumerInfo.sparePartsInformation ? (
+                      <div><dt className="font-semibold text-foreground">Piese de schimb</dt><dd className="text-muted-foreground whitespace-pre-line">{String(consumerInfo.sparePartsInformation)}</dd></div>
+                    ) : null}
+                    {consumerInfo.repairInformation ? (
+                      <div><dt className="font-semibold text-foreground">Reparare și întreținere</dt><dd className="text-muted-foreground whitespace-pre-line">{String(consumerInfo.repairInformation)}</dd></div>
+                    ) : null}
+                    {consumerInfo.repairRestrictions ? (
+                      <div><dt className="font-semibold text-foreground">Restricții privind repararea</dt><dd className="text-muted-foreground whitespace-pre-line">{String(consumerInfo.repairRestrictions)}</dd></div>
+                    ) : null}
+                  </dl>
+                </div>
+              )}
 
               {productDescription.trim().length > 0 && (
                 <div className="bg-card rounded-xl border border-border p-6 space-y-4">
