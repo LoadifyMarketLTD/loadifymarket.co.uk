@@ -39,7 +39,7 @@ The platform model used throughout is marketplace/intermediary: XDrive Logistics
 | Return of goods | OUG 34/2014 art. 14 | Return within max 14 days after withdrawal; direct cost only where properly disclosed; diminished-value rule | Returns sections 3 and 5 | TEXT CLOSED |
 | Withdrawal exceptions | OUG 34/2014 art. 16 | Statutory exceptions only; cannot be invented or broadened contractually | Returns section 6 | TEXT CLOSED; product-level exception flags must be verified |
 | Legal conformity guarantee | OUG 140/2021 | Seller liability for non-conformity and statutory remedies | Buyer Terms section 5 and Returns section 7 | TEXT CLOSED; product/checkout notices still require UI validation |
-| New 2026 consumer-information changes | OUG 18/2026, measures applicable from 27 Sep 2026 | New sustainability/durability/repair/update-related information duties apply where conditions are met | Not fully represented in the four policies because applicability depends on product information supplied by manufacturer/seller | OPEN — product data model + PDP + checkout audit required |
+| New 2026 consumer-information changes | OUG 18/2026, measures applicable from 27 Sep 2026 | New sustainability/durability/repair/update-related information duties apply where conditions are met | Seller product editor now captures reviewed producer durability guarantee, digital-elements/update period, reparability, spare-parts, repair and repair-restriction information without inventing missing claims; Romania Product Detail displays reviewed values; Romania checkout fails closed unless the product consumer-information applicability review is marked complete and snapshots the available fields | IMPLEMENTED IN SOURCE — production migration/data population and E2E evidence still required |
 | Delivery deadline | OUG 34/2014 delivery rules | Unless otherwise agreed, delivery without undue delay and generally within 30 days | Shipping section 2 | TEXT CLOSED |
 | Non-delivery remedies | OUG 34/2014 | Additional appropriate deadline in ordinary cases; termination may follow; exceptions where deadline is essential/refusal | Shipping section 3 | TEXT CLOSED |
 | Passing of risk | OUG 34/2014 | Risk normally passes on physical possession, subject to consumer-chosen-carrier exception | Shipping section 4 | TEXT CLOSED |
@@ -65,7 +65,7 @@ The platform model used throughout is marketplace/intermediary: XDrive Logistics
 
 ## Remaining hard blockers before Romania launch
 1. Resolve GDPR Article 27 EU representative applicability and, if required, designate/publish the representative.
-2. Verify the 27 September 2026 OUG 18/2026 sustainability/durability/repair/update disclosures against the actual product catalogue and manufacturer data.
+2. Populate and verify real product-level sustainability/durability/repair/update evidence. Source now captures and displays the fields and Romania checkout fails closed when review is incomplete; no producer information may be invented.
 3. Re-test the Romania checkout in production/E2E: source now contains the immediate pre-order notice and `Comandă cu obligație de plată`, but runtime evidence is still required.
 4. Re-test the durable-medium order confirmation in production: source now carries Romania market/currency, seller identity, total, shipping address, order items and links to the transaction policies.
 5. Deploy/re-test seller trader-status and ranking disclosures in production; source implementation is now present, but DB migration/application and runtime evidence remain required.
