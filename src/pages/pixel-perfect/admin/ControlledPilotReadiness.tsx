@@ -156,6 +156,17 @@ export default function ControlledPilotReadiness() {
             />
           </div>
 
+          {marketViability && (
+            <div className="mt-4 rounded-xl border border-border bg-background p-4 text-sm">
+              <div className="font-semibold">UK market viability</div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                <Metric label="Decision" value={text(marketViability.decision) || text(marketViability.reason) || "not evaluated"} ok={text(marketViability.decision) === "approved"} />
+                <Metric label="Approved offers" value={String(marketViability.approvedCount ?? 0)} />
+                <Metric label="Blocked offers" value={String(marketViability.blockedCount ?? marketViability.failureCount ?? 0)} ok={Number(marketViability.blockedCount ?? marketViability.failureCount ?? 0) === 0} />
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 rounded-xl border border-amber-300/50 bg-amber-50 p-4 text-sm text-amber-950">
             <div className="flex gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
