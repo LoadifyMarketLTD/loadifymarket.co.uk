@@ -41,7 +41,9 @@ describe('Inkthreadable controlled API client', () => {
     expect(built).not.toBeNull();
     expect(built?.url).toContain('format=JSON');
     expect(built?.url).toContain('id=123');
+    expect(built?.url).toContain('AppId=APP-123456');
     expect(built?.url).toMatch(/Signature=[a-f0-9]{40}/);
+    expect(built?.url).not.toContain(CREDS.signingKey);
   });
 
   it('supports cancellation transport without a request body', () => {
