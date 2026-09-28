@@ -75,7 +75,7 @@ export default function ControlledPilotReadiness() {
   const ready = readiness?.ready === true;
   const passed = acceptance?.passed === true;
   const readinessFailures = asRecordArray(readiness?.failures);
-  const acceptanceFailures = asRecordArray(acceptance?.failures);
+  const acceptanceFailures = asRecordArray(acceptance?.failures);\n  const marketViability = asRecord(readiness?.marketViability);
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -160,7 +160,7 @@ export default function ControlledPilotReadiness() {
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 <strong>Activation is intentionally not available here.</strong>
-                <p className="mt-1 leading-6">A real pilot must first satisfy Supplier Foundation, verified adapter, passed simulator, explicit cohort, bounded offer set and live stock/price readiness. Simulator PASS is not Pilot PASS.</p>
+                <p className="mt-1 leading-6">A real pilot must first satisfy Supplier Foundation, verified adapter, passed simulator, explicit cohort, bounded offer set, live stock/price readiness and evidence-backed UK market viability. A technically valid product that is unprofitable or materially uncompetitive remains blocked. Simulator PASS is not Pilot PASS.</p>
               </div>
             </div>
           </div>
