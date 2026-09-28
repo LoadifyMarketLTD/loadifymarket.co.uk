@@ -47,11 +47,14 @@ export function buildInkthreadableRequest(
   }
   if (input.method !== 'POST' && !url.searchParams.has('format')) url.searchParams.set('format', 'JSON');
 
+  // Inkthreadable signs GET/DELETE using the complete query string excluding
+  // Signature, so AppId must be present before the digest is calculated.
+  url.searchParams.set('AppId', creds.appId);
+
   const body = input.method === 'POST' ? JSON.stringify(input.body ?? {}) : undefined;
   const queryForSignature = url.searchParams.toString();
   const signature = signatureFor(input.method, body ?? '', queryForSignature, creds.signingKey);
 
-  url.searchParams.set('AppId', creds.appId);
   url.searchParams.set('Signature', signature);
 
   return {
