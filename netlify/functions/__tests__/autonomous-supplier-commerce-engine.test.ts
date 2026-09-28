@@ -132,6 +132,36 @@ describe('Autonomous Supplier Commerce Engine', () => {
     expect(result.paymentMutationAllowed).toBe(false);
   });
 
+  it('does not reject statutory non-conformity claims merely because 14 days have passed', () => {
+    const result = evaluateCustomerReturnAutomation({
+      orderStatus: 'delivered',
+      deliveredAt: '2026-08-01T10:00:00.000Z',
+      requestedAt: new Date('2026-08-31T10:00:00.000Z'),
+      purchasedQuantity: 1,
+      requestedQuantity: 1,
+      reasonCode: 'damaged',
+      supplierReturnCapability: true,
+      carrierLabelCapability: false,
+    });
+    expect(result.decision).toBe('eligible_for_return_request');
+    expect(result.reason).toBe('return_ready_label_manual');
+  });
+
+  it('still applies the 14-day withdrawal boundary to changed-mind returns', () => {
+    const result = evaluateCustomerReturnAutomation({
+      orderStatus: 'delivered',
+      deliveredAt: '2026-08-01T10:00:00.000Z',
+      requestedAt: new Date('2026-08-31T10:00:00.000Z'),
+      purchasedQuantity: 1,
+      requestedQuantity: 1,
+      reasonCode: 'changed_mind',
+      supplierReturnCapability: true,
+      carrierLabelCapability: true,
+    });
+    expect(result.decision).toBe('ineligible');
+    expect(result.reason).toBe('withdrawal_window_expired');
+  });
+
   it('routes returns to manual review when provider return capability is unavailable', () => {
     const result = evaluateCustomerReturnAutomation({
       orderStatus: 'delivered',
