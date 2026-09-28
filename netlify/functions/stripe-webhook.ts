@@ -245,6 +245,7 @@ interface CommercialBuyerSnapshot {
 interface CommercialSellerSnapshot {
   id: string;
   businessName: string;
+  traderStatus?: 'trader' | 'non_trader' | null;
 }
 
 interface OrderData {
@@ -545,6 +546,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
           currency: orderData.currency || 'GBP',
           marketCode: orderData.marketCode || 'GB',
           sellerName: orderData.sellerSnapshot?.businessName || '',
+          sellerTraderStatus: orderData.sellerSnapshot?.traderStatus || '',
           shippingAddress: orderData.shippingAddress,
           items: orderData.items,
           legalBaseUrl: orderData.marketCode === 'RO' ? 'https://loadifymarket.ro' : 'https://loadifymarket.co.uk',
