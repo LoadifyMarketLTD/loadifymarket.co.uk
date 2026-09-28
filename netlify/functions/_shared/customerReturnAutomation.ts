@@ -29,6 +29,8 @@ export interface CustomerReturnAutomationResult {
 }
 
 const RETURNABLE_ORDER_STATES = new Set(['delivered', 'completed']);
+const WITHDRAWAL_REASON_CODES = new Set(['changed_mind']);
+const NON_CONFORMITY_REASON_CODES = new Set(['damaged', 'wrong_item', 'not_as_described']);
 
 /**
  * Platform return-policy boundary. This does not execute a refund and does not
@@ -63,7 +65,24 @@ export function evaluateCustomerReturnAutomation(
   const deliveredAt = Date.parse(input.deliveredAt);
   const ageDays = (requestedAt.getTime() - deliveredAt) / 86_400_000;
   if (ageDays < 0) return blocked('manual_review', 'delivery_date_in_future');
-  if (ageDays > returnWindowDays) return blocked('ineligible', 'return_window_expired');
+
+  const reasonCode = input.reasonCode.trim().toLowerCase();
+
+  // The 14-day distance-contract withdrawal window must not be reused as a
+  // blanket deadline for statutory non-conformity claims. Changed-mind returns
+  // use the withdrawal window; damaged/wrong/not-as-described goods continue
+  // through the conformity/remedy route and are never auto-rejected merely
+  // because more than 14 days have elapsed.
+  if (WITHDRAWAL_REASON_CODES.has(reasonCode) && ageDays > returnWindowDays) {
+    return blocked('ineligible', 'withdrawal_window_expired');
+  }
+
+  if (!WITHDRAWAL_REASON_CODES.has(reasonCode) && !NON_CONFORMITY_REASON_CODES.has(reasonCode)) {
+    return {
+      ...blocked('manual_review', 'return_reason_requires_review'),
+      refundState: 'pending_receipt',
+    };
+  }
 
   if (!input.supplierReturnCapability) {
     return {
