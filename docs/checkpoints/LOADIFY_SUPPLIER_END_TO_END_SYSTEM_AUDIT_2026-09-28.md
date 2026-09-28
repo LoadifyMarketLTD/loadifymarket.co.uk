@@ -45,7 +45,7 @@ This is safe and expected before the first real supplier.
 | Generic scheduled stock/price execution | Universal provider-neutral 15-minute supplier stock/price scheduler in PR #816 | IMPLEMENTED IN DRAFT PR |
 | Checkout revalidation | Server-side selected-offer stock/price and commercial readiness | PRESENT |
 | Supplier commercial profile | Universal supplier contract matrix in PR #816 | IMPLEMENTED IN DRAFT PR |
-| Stripe/settlement binding | Supplier Stripe account capability + market settlement readiness | FOUNDATION PRESENT; CONTRACT/EXECUTION NOT CLOSED |
+| Stripe/settlement binding | Exact supplier commercial profile snapshot + settlement intent + payable ledger + manual settlement evidence/reconciliation in PR #816 | MANUAL PILOT PATH IMPLEMENTED; AUTOMATED CONNECT EXECUTION NOT CLOSED |
 | Customer payment | Supplier PaymentIntent boundary exists and remains fail-closed | PRESENT |
 | Supplier order handshake | Idempotent submit/recovery/acknowledgement runtime | PRESENT FOR EXECUTABLE ADAPTERS |
 | Manual supplier order route | Verified manual_only order + acknowledgement bindings are accepted for Phase O without autonomous shadow promotion | IMPLEMENTED IN DRAFT PR |
@@ -62,17 +62,19 @@ This is safe and expected before the first real supplier.
 
 ## Critical findings
 
-### 1. Manual pilot and automated pilot are conflated in the current Direct Supplier activation path
+### 1. Verified manual Phase O path is now implemented in PR #816
 
-The Universal Supplier Integration Kit correctly supports `manual_only`, but the latest Direct Supplier Phase O readiness requires an automated order binding and automated acknowledgement binding. The Phase O runtime wrapper also treats `manual_only` as not ready for autonomous activation.
+The Universal Supplier Integration Kit `manual_only` path is now carried through both readiness and the post-payment runtime boundary.
 
-That is incompatible with an intentionally manual first pilot such as Wholesale Finds UK.
+Implemented boundaries:
+- verified manual order + acknowledgement bindings are accepted for `email`, `manual_portal` and `manual_file`;
+- canonical-ready manual pilots do not falsely require autonomous shadow promotion;
+- post-payment handshake preparation accepts the same reviewed manual bindings;
+- an active admin may record manual supplier acceptance only with an external supplier-order reference and non-empty evidence;
+- manual acceptance updates canonical handshake/orchestration/reservation state but performs no provider mutation and no payment mutation;
+- automated Direct Supplier execution retains its stronger write/config/idempotency requirements.
 
-Required correction:
-- preserve a verified manual pilot path;
-- require documented operator workflow, acknowledgement evidence, tracking path and PII controls;
-- do not pretend the manual route is automated;
-- keep automated activation subject to the stronger shadow/autonomy evidence.
+This removes the earlier Wholesale Finds UK manual-pilot blocker without pretending the workflow is automated.
 
 ### 2. Provider-neutral stock/price scheduled execution is now implemented in PR #816
 
@@ -103,17 +105,23 @@ Required future controlled capability:
 - exceptions, uncertainty and high-risk categories remain human review;
 - rollout only after Phase O evidence and Phase P controlled scale support it.
 
-### 4. Settlement is still the highest financial gap
+### 4. Manual-pilot settlement runtime is now implemented; automated settlement remains fail-closed
 
-The platform has:
-- supplier Stripe account binding;
-- market settlement readiness;
-- supplier payable / payout / refund / recovery / chargeback ledger concepts;
-- PR #816 per-supplier fee and settlement policy.
+PR #816 now carries the supplier contract through checkout and settlement without relying on whichever commercial profile is current later:
 
-But no supplier marketplace settlement model is active in production and the GB market control remains blocked/unconfigured.
+- future supplier orders snapshot the independent supplier as seller and invoice issuer;
+- Loadify is snapshotted only as marketplace operator; no unsupported merchant/payment-recipient assumption is inserted;
+- the exact supplier commercial profile ID/version and settlement model are stored on the order;
+- payment reloads that exact historical profile snapshot;
+- a canonical settlement intent derives the supplier payable from immutable order/pricing/landed-cost/profile evidence;
+- customer payment and supplier payable are materialised in the append-only financial ledger;
+- manual supplier settlement requires active-admin authority, exact payable amount, external payment reference and non-empty evidence;
+- recording a manual payment appends the payout ledger entry and runs supplier financial reconciliation;
+- the runtime itself never performs an external manual payment.
 
-Do not promise supplier payout timing/deductions until this is closed and validated.
+Supported payable bases for this controlled path are deterministic `supplier_trade_price_plus_agreed_shipping` and `fixed_contract_amount`. `retail_less_attributable_costs`, arbitrary order-level formulas, protection-window execution and automated Stripe Connect supplier settlement remain explicitly fail-closed until the required actual-fee/formula/timing/payment evidence exists.
+
+No supplier marketplace settlement model is active in production and the GB market control remains blocked/unconfigured. Do not promise supplier payout timing/deductions from production yet.
 
 ### 5. No real supplier evidence exists in production yet
 
@@ -121,14 +129,14 @@ The architecture is extensive, but production currently has zero real supplier/o
 
 ## Correct execution order from here
 
-1. Close PR #816's universal commercial profile + Phase O market-viability changes.
-2. Close the marketplace settlement contract/runtime.
-3. Keep Wholesale Finds UK first pilot manual and bounded.
-4. Onboard the first authentic supplier data and 10–15 candidate products.
-5. Run product market/economic selection and admit only viable offers.
-6. Execute real Phase O pilot with exact cohort/order caps, tracking and reconciliation.
-7. Only after Phase O evidence, promote automation dimensions gradually in Phase P.
-8. Automatic publication/order execution remains policy-controlled and fail-closed until proved.
+1. Close PR #816's validated manual-pilot Supplier Commerce foundation without enabling production.
+2. Keep Wholesale Finds UK first pilot manual and bounded.
+3. Onboard the first authentic supplier data and 10–15 candidate products.
+4. Run product market/economic selection and admit only viable offers.
+5. Configure reviewed GB market/supplier commercial evidence for the controlled pilot without enabling unsupported automated settlement.
+6. Execute the real Phase O pilot with exact cohort/order caps, manual supplier acceptance/settlement evidence, tracking and reconciliation.
+7. Close actual-fee/formula/protection-window and Stripe Connect automated settlement only from real Phase O evidence.
+8. Only after Phase O evidence, promote automation dimensions gradually in Phase P; automatic publication/order execution remains policy-controlled and fail-closed until proved.
 
 ## No Fake PASS
 

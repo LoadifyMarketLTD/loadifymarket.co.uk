@@ -74,7 +74,7 @@ describe("supplier commercial policy matrix", () => {
     expect(createPayment).toContain("supplierSellerIdSnapshot");
     expect(createPayment).toContain("supplierCommercialContractVersion");
     expect(createPayment).toContain("SUPPLIER_COMMERCIAL_CONTRACT_SNAPSHOT_MISSING");
-    expect(createPayment).toContain("server_supplier_commercial_profile_readiness_v1");
+    expect(createPayment).toContain("server_supplier_commercial_profile_snapshot_v1");
     expect(createPayment).toContain("SUPPLIER_SETTLEMENT_MODEL_MISMATCH");
     expect(createPayment).toContain("supplierCommercialProfileId");
     expect(createPayment).toContain("supplierCommercialProfileVersion");

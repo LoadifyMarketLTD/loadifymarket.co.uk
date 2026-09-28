@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS private.supplier_commercial_profiles (
   settlement_minimum_amount numeric(18,4) NOT NULL DEFAULT 0,
   settlement_currency text NOT NULL DEFAULT 'GBP',
   supplier_payable_basis text NOT NULL,
+  supplier_payable_fixed_amount numeric(18,4),
+  supplier_payable_formula jsonb,
   settlement_schedule text,
 
   -- Returns / cancellation / dispute cost allocation.
@@ -113,6 +115,15 @@ CREATE TABLE IF NOT EXISTS private.supplier_commercial_profiles (
       'fixed_contract_amount',
       'order_level_formula'
     )),
+  CONSTRAINT supplier_commercial_profile_payable_contract_check
+    CHECK (
+      (supplier_payable_fixed_amount IS NULL OR supplier_payable_fixed_amount >= 0)
+      AND (supplier_payable_formula IS NULL OR jsonb_typeof(supplier_payable_formula)='object')
+      AND (supplier_payable_basis<>'fixed_contract_amount' OR supplier_payable_fixed_amount IS NOT NULL)
+      AND (supplier_payable_basis<>'order_level_formula' OR (
+        supplier_payable_formula IS NOT NULL AND supplier_payable_formula<>'{}'::jsonb
+      ))
+    ),
   CONSTRAINT supplier_commercial_profile_postage_payer_check
     CHECK (
       change_of_mind_return_postage_payer IN ('buyer_when_lawful','supplier','loadify','case_by_case')
@@ -205,6 +216,13 @@ BEGIN
   IF NEW.pricing_model='loadify_managed_with_supplier_constraints' AND NEW.loadify_may_set_retail IS DISTINCT FROM true THEN
     RAISE EXCEPTION 'loadify-managed pricing requires loadify_may_set_retail=true';
   END IF;
+  IF NEW.supplier_payable_basis='fixed_contract_amount' AND NEW.supplier_payable_fixed_amount IS NULL THEN
+    RAISE EXCEPTION 'fixed_contract_amount requires supplier_payable_fixed_amount';
+  END IF;
+  IF NEW.supplier_payable_basis='order_level_formula'
+     AND (NEW.supplier_payable_formula IS NULL OR NEW.supplier_payable_formula='{}'::jsonb) THEN
+    RAISE EXCEPTION 'order_level_formula requires a reviewed declarative supplier_payable_formula';
+  END IF;
 
   RETURN NEW;
 END;
@@ -292,6 +310,8 @@ BEGIN
     'settlementMinimumAmount',v_profile.settlement_minimum_amount,
     'settlementCurrency',v_profile.settlement_currency,
     'supplierPayableBasis',v_profile.supplier_payable_basis,
+    'supplierPayableFixedAmount',v_profile.supplier_payable_fixed_amount,
+    'supplierPayableFormula',v_profile.supplier_payable_formula,
     'settlementSchedule',v_profile.settlement_schedule,
     'changeOfMindReturnPostagePayer',v_profile.change_of_mind_return_postage_payer,
     'faultyItemReturnPostagePayer',v_profile.faulty_item_return_postage_payer,

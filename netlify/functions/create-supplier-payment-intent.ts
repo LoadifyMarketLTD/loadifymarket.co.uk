@@ -34,7 +34,7 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await admin
     .from("orders")
-    .select("id,buyerId,status,total,currency,marketCode,commercialMode,sellerId,canonicalProductId,supplierOfferId,pricingSnapshotId,supplierExternalVariantRefSnapshot,stripePaymentIntentId,supplierSellerIdSnapshot,supplierCommercialContractVersion")
+    .select("id,buyerId,status,total,currency,marketCode,commercialMode,sellerId,canonicalProductId,supplierOfferId,pricingSnapshotId,supplierExternalVariantRefSnapshot,stripePaymentIntentId,supplierSellerIdSnapshot,supplierCommercialContractVersion,supplierCommercialProfileIdSnapshot,supplierCommercialProfileVersionSnapshot,supplierSettlementModelSnapshot")
     .eq("id", orderId)
     .eq("buyerId", auth.actor.id)
     .maybeSingle();
@@ -70,7 +70,14 @@ export const handler: Handler = async (event) => {
     }, METHODS);
   }
 
-  if (!order.supplierSellerIdSnapshot || order.supplierCommercialContractVersion !== 1) {
+  if (
+    !order.supplierSellerIdSnapshot
+    || order.supplierCommercialContractVersion !== 1
+    || !order.supplierCommercialProfileIdSnapshot
+    || !Number.isInteger(order.supplierCommercialProfileVersionSnapshot)
+    || order.supplierCommercialProfileVersionSnapshot < 1
+    || !order.supplierSettlementModelSnapshot
+  ) {
     return jsonResponse(409, {
       error: "Supplier order does not contain the required immutable commercial contract identity",
       code: "SUPPLIER_COMMERCIAL_CONTRACT_SNAPSHOT_MISSING",
@@ -78,10 +85,12 @@ export const handler: Handler = async (event) => {
   }
 
   const { data: supplierCommercialProfile, error: supplierCommercialProfileError } = await admin.rpc(
-    "server_supplier_commercial_profile_readiness_v1",
+    "server_supplier_commercial_profile_snapshot_v1",
     {
+      p_profile_id: order.supplierCommercialProfileIdSnapshot,
       p_supplier_id: order.supplierSellerIdSnapshot,
       p_market_code: orderMarket,
+      p_version: order.supplierCommercialProfileVersionSnapshot,
     },
   );
   if (supplierCommercialProfileError || !supplierCommercialProfile || supplierCommercialProfile.eligible !== true) {
@@ -94,7 +103,10 @@ export const handler: Handler = async (event) => {
     }, METHODS);
   }
 
-  if (supplierCommercialProfile.settlementModel !== commercialReadiness.settlementModel) {
+  if (
+    supplierCommercialProfile.settlementModel !== commercialReadiness.settlementModel
+    || supplierCommercialProfile.settlementModel !== order.supplierSettlementModelSnapshot
+  ) {
     return jsonResponse(409, {
       error: "Supplier settlement contract does not match the reviewed market settlement model",
       code: "SUPPLIER_SETTLEMENT_MODEL_MISMATCH",
