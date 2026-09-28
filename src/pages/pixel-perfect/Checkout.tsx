@@ -865,9 +865,9 @@ const Checkout = () => {
                       <p className="mt-2">
                         <a href="/buyer-terms" className="underline hover:text-foreground">Termeni cumpărător</a>
                         {" · "}
-                        <a href="/returns" className="underline hover:text-foreground">Retururi</a>
+                        <a href="/returns-policy" className="underline hover:text-foreground">Retururi</a>
                         {" · "}
-                        <a href="/shipping" className="underline hover:text-foreground">Livrare</a>
+                        <a href="/shipping-policy" className="underline hover:text-foreground">Livrare</a>
                         {" · "}
                         <a href="/privacy" className="underline hover:text-foreground">Confidențialitate</a>
                       </p>
