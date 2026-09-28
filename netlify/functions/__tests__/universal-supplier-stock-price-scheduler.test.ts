@@ -53,7 +53,10 @@ describe('Universal supplier stock/price scheduler boundary', () => {
     expect(scheduler).toContain('evaluateSupplierFeedBatch');
     expect(scheduler).toContain('persistSupplierStockPriceSnapshots');
     expect(scheduler).toContain("requireStockQuantity: true");
-    expect(scheduler).toContain("batch.decision === 'auto_quarantine'");
+    expect(scheduler).toContain("batch.decision !== 'allow_staging'");
+    expect(scheduler).toContain("code: batch.decision === 'auto_quarantine' ? 'AUTO_QUARANTINE' : 'FAIL_CLOSED_INACTIVE'");
+    expect(scheduler).toContain("code: 'UNREQUESTED_VARIANT_RESPONSE'");
+    expect(scheduler.indexOf("batch.decision !== 'allow_staging'")).toBeLessThan(scheduler.indexOf('persistSupplierStockPriceSnapshots(admin'));
     expect(scheduler).toContain('publicSellabilityAllowed: false');
     expect(scheduler).toContain('marketplacePublicationAllowed: false');
   });
