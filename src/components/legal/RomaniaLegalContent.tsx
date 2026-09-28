@@ -141,7 +141,16 @@ export const RomaniaPrivacyPolicy = () => (
     </ul>
 
     <h2>5. Destinatari și furnizori</h2>
-    <p>Datele pot fi comunicate, strict în măsura necesară scopului, vânzătorului sau partenerului de fulfilment implicat în comandă și furnizorilor tehnologici utilizați pentru plăți, bază de date, hosting, e-mail, notificări, securitate și analiză. Exemplele operaționale includ Stripe și Supabase. Loadify nu vinde date personale.</p>
+    <p>Datele pot fi comunicate, strict în măsura necesară scopului, vânzătorului sau partenerului de fulfilment implicat în comandă și furnizorilor tehnologici utilizați pentru operarea platformei. Furnizorii identificați în implementarea curentă includ:</p>
+    <ul>
+      <li><strong>Stripe:</strong> procesarea plăților și infrastructura Stripe Connect pentru selleri;</li>
+      <li><strong>Supabase:</strong> autentificare, bază de date, stocare și servicii backend asociate;</li>
+      <li><strong>Netlify:</strong> hosting, livrarea aplicației și funcții server-side;</li>
+      <li><strong>Resend:</strong> transmiterea e-mailurilor tranzacționale și operaționale;</li>
+      <li><strong>Firebase Cloud Messaging:</strong> livrarea notificărilor push pe dispozitivele compatibile, atunci când această funcție este activată;</li>
+      <li><strong>Google Analytics:</strong> analiză de utilizare numai atunci când serviciul este configurat și consimțământul necesar a fost acordat.</li>
+    </ul>
+    <p>Furnizorii nu dobândesc dreptul de a utiliza datele pentru scopuri incompatibile cu rolul lor contractual. Loadify nu vinde date personale. Lista operațională a furnizorilor este revizuită înainte de lansarea România și la modificarea materială a infrastructurii.</p>
 
     <h2>6. Date obținute indirect</h2>
     <p>Dacă primim date personale despre o persoană din altă sursă decât direct de la aceasta, de exemplu de la un vânzător, furnizor de fulfilment sau alt partener implicat într-o comandă, furnizăm informațiile cerute de art. 14 GDPR atunci când obligația se aplică, inclusiv categoriile de date și sursa acestora.</p>
@@ -150,7 +159,7 @@ export const RomaniaPrivacyPolicy = () => (
     <p>Datele sunt păstrate pentru perioada necesară scopului pentru care au fost colectate și, ulterior, numai atât cât este justificat de obligații legale, contabile sau fiscale, prevenirea fraudei, securitate ori formularea, exercitarea sau apărarea unor pretenții. Perioadele sau criteriile concrete de retenție sunt documentate pe categorii de date și sisteme.</p>
 
     <h2>8. Transferuri internaționale</h2>
-    <p>Unele date pot fi prelucrate în Regatul Unit, Statele Unite sau alte jurisdicții din afara Spațiului Economic European, în funcție de furnizorii utilizați. Atunci când GDPR impune garanții pentru un transfer internațional, sunt utilizate mecanismele prevăzute de capitolul V GDPR, cum ar fi o decizie de adecvare sau clauze contractuale standard, după caz.</p>
+    <p>În funcție de furnizorul și serviciul concret, datele pot fi prelucrate în afara Spațiului Economic European. Înainte ca versiunea România să fie activată comercial, fiecare flux relevant trebuie mapat la locația de prelucrare și la mecanismul juridic aplicabil. Atunci când GDPR impune garanții pentru un transfer internațional, sunt utilizate mecanismele prevăzute de capitolul V GDPR, precum o decizie de adecvare, clauze contractuale standard sau alt mecanism legal aplicabil. Persoanele vizate pot solicita informații privind garanțiile relevante pentru transferurile care le privesc.</p>
 
     <h2>9. Drepturile persoanei vizate</h2>
     <p>În condițiile GDPR, persoana vizată poate avea dreptul la informare și acces, rectificare, ștergere, restricționare, portabilitate, opoziție și retragerea consimțământului atunci când temeiul este consimțământul. Drepturile nu sunt absolute și pot fi limitate atunci când GDPR sau altă lege aplicabilă permite acest lucru.</p>
