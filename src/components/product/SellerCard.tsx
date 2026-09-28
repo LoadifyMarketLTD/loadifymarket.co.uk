@@ -14,9 +14,11 @@ interface SellerCardProps {
   sellerId?: string | null;
   /** ISO date string for when the seller joined */
   joinDate?: string | null;
+  /** Explicit consumer-law declaration; never inferred from sellerType. */
+  traderStatus?: 'trader' | 'non_trader' | null;
 }
 
-const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug, sellerId, joinDate }: SellerCardProps) => {
+const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug, sellerId, joinDate, traderStatus }: SellerCardProps) => {
   const joinYear = joinDate ? new Date(joinDate).getFullYear() : null;
   const profilePath = storeSlug ? `/seller/${storeSlug}` : sellerId ? `/seller/${sellerId}` : null;
 
@@ -52,6 +54,23 @@ const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug
           </div>
         </div>
       </div>
+
+      {traderStatus ? (
+        <div className={`rounded-lg border p-3 text-xs leading-relaxed ${
+          traderStatus === 'trader'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+            : 'border-amber-200 bg-amber-50 text-amber-900'
+        }`}>
+          <p className="font-semibold">
+            {traderStatus === 'trader' ? 'Seller status: Trader / professional' : 'Seller status: Non-trader'}
+          </p>
+          {traderStatus === 'non_trader' ? (
+            <p className="mt-1">
+              Consumer rights that specifically apply to contracts with professional traders do not apply in the same form to this sale.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
