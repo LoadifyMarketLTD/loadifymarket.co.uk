@@ -981,6 +981,53 @@ const ProductDetail = () => {
                 </div>
               )}
 
+              {market === "RO" && product.euConsumerInformationReviewed && (
+                <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                  <h2 className="font-display text-lg font-semibold text-foreground">Informații UE privind durabilitatea și repararea</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Informațiile de mai jos sunt afișate numai atunci când au fost furnizate de producător/furnizor și revizuite pentru această listare.
+                  </p>
+                  <dl className="space-y-3 text-sm">
+                    {product.producerDurabilityGuaranteeMonths ? (
+                      <div>
+                        <dt className="font-semibold text-foreground">Garanție comercială de durabilitate a producătorului</dt>
+                        <dd className="text-muted-foreground">{product.producerDurabilityGuaranteeMonths} luni</dd>
+                      </div>
+                    ) : null}
+                    {product.hasDigitalElements && product.softwareUpdateMinimumPeriod ? (
+                      <div>
+                        <dt className="font-semibold text-foreground">Perioada minimă de actualizări software</dt>
+                        <dd className="text-muted-foreground">{product.softwareUpdateMinimumPeriod}</dd>
+                      </div>
+                    ) : null}
+                    {product.reparabilityScore ? (
+                      <div>
+                        <dt className="font-semibold text-foreground">Scor de reparabilitate</dt>
+                        <dd className="text-muted-foreground">{product.reparabilityScore}</dd>
+                      </div>
+                    ) : null}
+                    {product.sparePartsInformation ? (
+                      <div>
+                        <dt className="font-semibold text-foreground">Piese de schimb</dt>
+                        <dd className="text-muted-foreground whitespace-pre-line">{product.sparePartsInformation}</dd>
+                      </div>
+                    ) : null}
+                    {product.repairInformation ? (
+                      <div>
+                        <dt className="font-semibold text-foreground">Reparare și întreținere</dt>
+                        <dd className="text-muted-foreground whitespace-pre-line">{product.repairInformation}</dd>
+                      </div>
+                    ) : null}
+                    {product.repairRestrictions ? (
+                      <div>
+                        <dt className="font-semibold text-foreground">Restricții privind repararea</dt>
+                        <dd className="text-muted-foreground whitespace-pre-line">{product.repairRestrictions}</dd>
+                      </div>
+                    ) : null}
+                  </dl>
+                </div>
+              )}
+
               {productDescription.trim().length > 0 && (
                 <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                   <div className="flex items-center justify-between">
