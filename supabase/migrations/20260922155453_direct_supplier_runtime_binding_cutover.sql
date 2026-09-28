@@ -130,9 +130,14 @@ BEGIN
         AND p.territory=v_offer.territory
         AND p.capability='order_submission'
         AND p.status='verified'
-        AND p.execution_mode='automated_write'
-        AND p.transport IN ('http_rest','graphql')
-        AND NULLIF(BTRIM(p.config_ref),'') IS NOT NULL
+        AND (
+          (p.execution_mode='manual_only' AND p.transport IN ('email','manual_portal','manual_file'))
+          OR (
+            p.execution_mode='automated_write'
+            AND p.transport IN ('http_rest','graphql')
+            AND NULLIF(BTRIM(p.config_ref),'') IS NOT NULL
+          )
+        )
         AND NULLIF(BTRIM(p.contract_ref),'') IS NOT NULL
     ) OR NOT EXISTS (
       SELECT 1
@@ -141,11 +146,16 @@ BEGIN
         AND p.territory=v_offer.territory
         AND p.capability='acknowledgement'
         AND p.status='verified'
-        AND p.execution_mode IN ('automated_read','automated_write')
-        AND p.transport IN ('http_rest','graphql','webhook')
         AND (
-          p.transport='webhook'
-          OR NULLIF(BTRIM(p.config_ref),'') IS NOT NULL
+          (p.execution_mode='manual_only' AND p.transport IN ('email','manual_portal','manual_file'))
+          OR (
+            p.execution_mode IN ('automated_read','automated_write')
+            AND p.transport IN ('http_rest','graphql','webhook')
+            AND (
+              p.transport='webhook'
+              OR NULLIF(BTRIM(p.config_ref),'') IS NOT NULL
+            )
+          )
         )
         AND NULLIF(BTRIM(p.contract_ref),'') IS NOT NULL
     ) THEN
