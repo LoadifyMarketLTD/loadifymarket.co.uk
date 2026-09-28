@@ -305,6 +305,15 @@ const Catalog = () => {
                 </span>
               </p>
             )}
+            <details className="mt-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs text-slate-600">
+              <summary className="cursor-pointer font-semibold text-[#0A234F]">How results are ranked</summary>
+              <p className="mt-2 leading-relaxed">
+                By default, eligible listings are ordered mainly by publication date, with newer listings first.
+                When you choose another sort option, that selected criterion becomes the main ordering factor:
+                lowest price, highest price, popularity by views, or seller/product rating. Category, condition,
+                location, price range and search text can reduce which eligible listings are included before sorting.
+              </p>
+            </details>
           </div>
 
           {/* Active filter tags */}
