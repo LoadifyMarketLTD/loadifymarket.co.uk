@@ -428,12 +428,40 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           ${shippingAddress ? `<p style="margin: 10px 0 0 0;"><strong>${marketCode === 'RO' ? 'Adresa de livrare' : 'Shipping address'}:</strong> ${shippingAddress}</p>` : ''}
         </div>
         <h3 style="color: #243b53;">${marketCode === 'RO' ? 'Produse' : 'Order Items'}:</h3>
-        ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
+        ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => {
+          const consumerInfo = item.consumerInformation && typeof item.consumerInformation === 'object'
+            ? item.consumerInformation as Record<string, unknown>
+            : null;
+          const roConsumerRows = marketCode === 'RO' && consumerInfo
+            ? [
+                asTrimmed(consumerInfo.producerDurabilityGuaranteeMonths)
+                  ? `<li><strong>Garanție comercială de durabilitate:</strong> ${escapeHtml(asTrimmed(consumerInfo.producerDurabilityGuaranteeMonths))} luni</li>`
+                  : '',
+                consumerInfo.hasDigitalElements === true && asTrimmed(consumerInfo.softwareUpdateMinimumPeriod)
+                  ? `<li><strong>Actualizări software:</strong> ${escapeHtml(asTrimmed(consumerInfo.softwareUpdateMinimumPeriod))}</li>`
+                  : '',
+                asTrimmed(consumerInfo.reparabilityScore)
+                  ? `<li><strong>Scor de reparabilitate:</strong> ${escapeHtml(asTrimmed(consumerInfo.reparabilityScore))}</li>`
+                  : '',
+                asTrimmed(consumerInfo.sparePartsInformation)
+                  ? `<li><strong>Piese de schimb:</strong> ${escapeHtml(asTrimmed(consumerInfo.sparePartsInformation))}</li>`
+                  : '',
+                asTrimmed(consumerInfo.repairInformation)
+                  ? `<li><strong>Reparare/întreținere:</strong> ${escapeHtml(asTrimmed(consumerInfo.repairInformation))}</li>`
+                  : '',
+                asTrimmed(consumerInfo.repairRestrictions)
+                  ? `<li><strong>Restricții reparare:</strong> ${escapeHtml(asTrimmed(consumerInfo.repairRestrictions))}</li>`
+                  : '',
+              ].filter(Boolean).join('')
+            : '';
+          return `
           <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
             <p style="margin: 0;"><strong>${escapeHtml(item.title || '')}</strong></p>
             <p style="margin: 5px 0 0 0; color: #666;">${marketCode === 'RO' ? 'Cantitate' : 'Quantity'}: ${escapeHtml(item.quantity || 0)} | ${marketCode === 'RO' ? 'Preț' : 'Price'}: ${escapeHtml(formatEmailMoney(item.price, data.currency))}</p>
+            ${roConsumerRows ? `<ul style="margin: 8px 0 0 18px; padding: 0; color: #4b5563; font-size: 13px; line-height: 1.5;">${roConsumerRows}</ul>` : ''}
           </div>
-        `).join('') : ''}
+        `;
+        }).join('') : ''}
         <div style="background-color: #f0f9f4; border-left: 4px solid #22c55e; padding: 12px 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
           <p style="margin: 0; font-size: 13px; color: #374151;"><strong>${marketCode === 'RO' ? 'Responsabilitatea pentru comandă' : 'Order responsibility'}:</strong> ${marketCode === 'RO'
             ? 'Vânzătorul independent identificat în comandă rămâne vânzătorul contractual și răspunde pentru bunuri și îndeplinirea obligațiilor sale de vânzător. Loadify Market furnizează infrastructura marketplace și ruta de suport; nu deține bunurile.'
