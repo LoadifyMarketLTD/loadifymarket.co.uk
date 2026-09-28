@@ -119,6 +119,23 @@ async function syncTarget(admin: ReturnType<typeof createClient>, target: SyncTa
   }
 
   const variant = target.externalVariantRefs[0];
+  const requested = new Set(target.externalVariantRefs);
+  if (stock.data.some(row => !requested.has(row.externalVariantRef)) || prices.data.some(row => !requested.has(row.externalVariantRef))) {
+    await recordSupplierCommerceOperation(admin, {
+      correlationId,
+      requestId: context.idempotencyKey,
+      operation: 'stock_price_sync',
+      providerRef: adapter.providerKey,
+      supplierRef: target.supplierKey,
+      entityType: 'supplier_offer',
+      entityRef: target.offerKey,
+      resultClass: 'MANUAL_REVIEW_REQUIRED',
+      errorClass: 'UNREQUESTED_VARIANT_RESPONSE',
+      recoveryState: 'manual_review',
+      finishedAt: new Date().toISOString(),
+    });
+    return { supplierKey: target.supplierKey, offerKey: target.offerKey, ok: false, code: 'UNREQUESTED_VARIANT_RESPONSE' };
+  }
   const stockRow = stock.data.find(row => row.externalVariantRef === variant);
   const priceRow = prices.data.find(row => row.externalVariantRef === variant);
   if (!stockRow || !priceRow) {
@@ -159,6 +176,31 @@ async function syncTarget(admin: ReturnType<typeof createClient>, target: SyncTa
     requireStockQuantity: true,
   });
 
+  if (batch.decision !== 'allow_staging') {
+    await recordSupplierCommerceOperation(admin, {
+      correlationId,
+      requestId: context.idempotencyKey,
+      operation: 'stock_price_sync',
+      providerRef: adapter.providerKey,
+      supplierRef: target.supplierKey,
+      entityType: 'supplier_offer',
+      entityRef: target.offerKey,
+      resultClass: 'MANUAL_REVIEW_REQUIRED',
+      errorClass: batch.candidates[0]?.circuit.reasons.join(',') || 'CIRCUIT_BLOCKED',
+      recoveryState: batch.decision === 'auto_quarantine' ? 'manual_review' : 'resolved',
+      finishedAt: new Date().toISOString(),
+    });
+    return {
+      supplierKey: target.supplierKey,
+      offerKey: target.offerKey,
+      ok: false,
+      code: batch.decision === 'auto_quarantine' ? 'AUTO_QUARANTINE' : 'FAIL_CLOSED_INACTIVE',
+      circuitDecision: batch.decision,
+      publicSellabilityAllowed: false,
+      marketplacePublicationAllowed: false,
+    };
+  }
+
   const persisted = await persistSupplierStockPriceSnapshots(admin, adapter, context, {
     supplierOfferId: target.supplierOfferId,
     supplierKey: target.supplierKey,
@@ -171,21 +213,6 @@ async function syncTarget(admin: ReturnType<typeof createClient>, target: SyncTa
     prices: [priceRow],
   });
 
-  if (batch.decision !== 'allow_staging') {
-    await recordSupplierCommerceOperation(admin, {
-      correlationId,
-      requestId: context.idempotencyKey,
-      operation: 'stock_price_sync',
-      providerRef: adapter.providerKey,
-      supplierRef: target.supplierKey,
-      entityType: 'supplier_offer',
-      entityRef: target.offerKey,
-      resultClass: batch.decision === 'auto_quarantine' ? 'MANUAL_REVIEW_REQUIRED' : 'STOCK_CHANGED',
-      errorClass: batch.candidates[0]?.circuit.reasons.join(',') || null,
-      recoveryState: batch.decision === 'auto_quarantine' ? 'manual_review' : 'resolved',
-      finishedAt: new Date().toISOString(),
-    });
-  }
 
   return {
     supplierKey: target.supplierKey,
