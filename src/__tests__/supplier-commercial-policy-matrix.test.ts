@@ -6,6 +6,14 @@ const migrationPath = path.resolve(
   "supabase/migrations/20260928145500_supplier_commercial_policy_matrix.sql",
 );
 const migration = fs.readFileSync(migrationPath, "utf8");
+const prepareCheckout = fs.readFileSync(
+  path.resolve(process.cwd(), "netlify/functions/prepare-supplier-checkout.ts"),
+  "utf8",
+);
+const createPayment = fs.readFileSync(
+  path.resolve(process.cwd(), "netlify/functions/create-supplier-payment-intent.ts"),
+  "utf8",
+);
 
 describe("supplier commercial policy matrix", () => {
   it("supports supplier-specific pricing authority without code forks", () => {
@@ -54,5 +62,24 @@ describe("supplier commercial policy matrix", () => {
     expect(migration).toContain("verified supplier commercial profile is immutable");
     expect(migration).toContain("verified_supplier_commercial_profile_missing");
     expect(migration).toContain("Creation alone never activates checkout or settlement");
+  });
+  it("fails checkout closed when the selected supplier has no verified commercial profile", () => {
+    expect(prepareCheckout).toContain("server_supplier_commercial_profile_readiness_v1");
+    expect(prepareCheckout).toContain("SUPPLIER_COMMERCIAL_PROFILE_NOT_READY");
+    expect(prepareCheckout).toContain("supplierCommercialProfileId");
+    expect(prepareCheckout).toContain("supplierCommercialProfileVersion");
+  });
+
+  it("binds payment to the immutable supplier contract and matching settlement model", () => {
+    expect(createPayment).toContain("supplierSellerIdSnapshot");
+    expect(createPayment).toContain("supplierCommercialContractVersion");
+    expect(createPayment).toContain("SUPPLIER_COMMERCIAL_CONTRACT_SNAPSHOT_MISSING");
+    expect(createPayment).toContain("server_supplier_commercial_profile_readiness_v1");
+    expect(createPayment).toContain("SUPPLIER_SETTLEMENT_MODEL_MISMATCH");
+    expect(createPayment).toContain("supplierCommercialProfileId");
+    expect(createPayment).toContain("supplierCommercialProfileVersion");
+    expect(createPayment).toContain("processorFeePayer");
+    expect(createPayment).toContain("connectFeePayer");
+    expect(createPayment).toContain("payoutFeePayer");
   });
 });
