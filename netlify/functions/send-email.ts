@@ -358,6 +358,35 @@ function escapeHtml(value: unknown): string {
     .replace(/'/g, '&#039;');
 }
 
+function formatEmailMoney(value: unknown, currency: unknown): string {
+  const amount = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  const code = typeof currency === 'string' && /^[A-Z]{3}$/i.test(currency.trim())
+    ? currency.trim().toUpperCase()
+    : 'GBP';
+  try {
+    return new Intl.NumberFormat(code === 'RON' ? 'ro-RO' : 'en-GB', {
+      style: 'currency',
+      currency: code,
+    }).format(amount);
+  } catch {
+    return `${code} ${amount.toFixed(2)}`;
+  }
+}
+
+function formatEmailAddress(value: unknown): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+  const address = value as Record<string, unknown>;
+  return [
+    address.name,
+    address.line1,
+    address.line2,
+    address.city,
+    address.county,
+    address.postcode ?? address.postal_code,
+    address.country,
+  ].map(asTrimmed).filter(Boolean).map(escapeHtml).join(', ');
+}
+
 function generateEmailHTML(template: string, data: Record<string, unknown>): string {
   const header = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
@@ -380,31 +409,46 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
   let content = '';
 
   switch (template) {
-    case 'order_confirmation':
+    case 'order_confirmation': {
+      const legalBaseUrl = asTrimmed(data.legalBaseUrl) || (process.env.URL || 'https://loadifymarket.co.uk');
+      const sellerName = asTrimmed(data.sellerName);
+      const shippingAddress = formatEmailAddress(data.shippingAddress);
+      const marketCode = asTrimmed(data.marketCode).toUpperCase();
       content = `
-        <h2 style="color: #243b53;">Order Confirmation</h2>
-        <p>Hi ${escapeHtml(data.customerName || 'Customer')},</p>
-        <p>Thank you for your order! Your order has been confirmed and is being processed.</p>
+        <h2 style="color: #243b53;">${marketCode === 'RO' ? 'Confirmarea comenzii' : 'Order Confirmation'}</h2>
+        <p>${marketCode === 'RO' ? 'Bună' : 'Hi'} ${escapeHtml(data.customerName || 'Customer')},</p>
+        <p>${marketCode === 'RO' ? 'Comanda dvs. a fost confirmată. Păstrați acest e-mail ca evidență a informațiilor contractuale ale comenzii.' : 'Your order has been confirmed. Keep this email as a durable record of the contractual order information.'}</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Order Number:</strong> ${escapeHtml(data.orderNumber || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${escapeHtml(data.orderDate || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Total:</strong> £${typeof data.total === 'number' ? data.total.toFixed(2) : '0.00'}</p>
-          ${data.sellerName ? `<p style="margin: 10px 0 0 0;"><strong>Sold by:</strong> ${escapeHtml(data.sellerName)}</p>` : ''}
+          <p style="margin: 0;"><strong>${marketCode === 'RO' ? 'Număr comandă' : 'Order Number'}:</strong> ${escapeHtml(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>${marketCode === 'RO' ? 'Data comenzii' : 'Order Date'}:</strong> ${escapeHtml(data.orderDate || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Total:</strong> ${escapeHtml(formatEmailMoney(data.total, data.currency))}</p>
+          ${sellerName ? `<p style="margin: 10px 0 0 0;"><strong>${marketCode === 'RO' ? 'Vândut de' : 'Sold by'}:</strong> ${escapeHtml(sellerName)}</p>` : ''}
+          ${shippingAddress ? `<p style="margin: 10px 0 0 0;"><strong>${marketCode === 'RO' ? 'Adresa de livrare' : 'Shipping address'}:</strong> ${shippingAddress}</p>` : ''}
         </div>
-        <h3 style="color: #243b53;">Order Items:</h3>
+        <h3 style="color: #243b53;">${marketCode === 'RO' ? 'Produse' : 'Order Items'}:</h3>
         ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
           <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
             <p style="margin: 0;"><strong>${escapeHtml(item.title || '')}</strong></p>
-            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${escapeHtml(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
+            <p style="margin: 5px 0 0 0; color: #666;">${marketCode === 'RO' ? 'Cantitate' : 'Quantity'}: ${escapeHtml(item.quantity || 0)} | ${marketCode === 'RO' ? 'Preț' : 'Price'}: ${escapeHtml(formatEmailMoney(item.price, data.currency))}</p>
           </div>
         `).join('') : ''}
         <div style="background-color: #f0f9f4; border-left: 4px solid #22c55e; padding: 12px 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
-          <p style="margin: 0; font-size: 13px; color: #374151;"><strong>Order responsibility:</strong> Marketplace Seller orders are sold and fulfilled by the independent seller shown on the order. Approved Supplier Marketplace orders are sold and fulfilled by the independent supplier identified for the order. Loadify provides the marketplace workflow and support route; it does not own the goods.</p>
+          <p style="margin: 0; font-size: 13px; color: #374151;"><strong>${marketCode === 'RO' ? 'Responsabilitatea pentru comandă' : 'Order responsibility'}:</strong> ${marketCode === 'RO'
+            ? 'Vânzătorul independent identificat în comandă rămâne vânzătorul contractual și răspunde pentru bunuri și îndeplinirea obligațiilor sale de vânzător. Loadify Market furnizează infrastructura marketplace și ruta de suport; nu deține bunurile.'
+            : 'Marketplace Seller orders are sold and fulfilled by the independent seller shown on the order. Approved Supplier Marketplace orders are sold and fulfilled by the independent supplier identified for the order. Loadify provides the marketplace workflow and support route; it does not own the goods.'}</p>
         </div>
-        <p style="margin-top: 20px;">We'll send you another email when your order has been shipped.</p>
-        <p>If you have any questions, please contact us at contact@loadifymarket.co.uk</p>
+        <p style="font-size: 13px; line-height: 1.6;">
+          ${marketCode === 'RO' ? 'Informațiile juridice aplicabile acestei comenzi:' : 'Legal information applicable to this order:'}
+          <a href="${legalBaseUrl}/buyer-terms">${marketCode === 'RO' ? 'Termeni pentru cumpărători' : 'Buyer Terms'}</a> ·
+          <a href="${legalBaseUrl}/returns-policy">${marketCode === 'RO' ? 'Politica de retur' : 'Returns Policy'}</a> ·
+          <a href="${legalBaseUrl}/shipping-policy">${marketCode === 'RO' ? 'Politica de livrare' : 'Shipping Policy'}</a> ·
+          <a href="${legalBaseUrl}/privacy-policy">${marketCode === 'RO' ? 'Politica de confidențialitate' : 'Privacy Policy'}</a>
+        </p>
+        <p>${marketCode === 'RO' ? 'Veți primi o notificare separată atunci când comanda este expediată.' : "We'll send you another email when your order has been shipped."}</p>
+        <p>${marketCode === 'RO' ? 'Pentru întrebări, contactați' : 'If you have any questions, please contact us at'} contact@loadifymarket.co.uk</p>
       `;
       break;
+    }
 
     case 'order_shipped':
       content = `
