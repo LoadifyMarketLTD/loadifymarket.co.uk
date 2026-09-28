@@ -8,7 +8,7 @@ import {
   parseSellerType,
 } from './_shared/sellerOnboarding';
 
-type SellerOnboardingAction = 'seller_type' | 'store_identity';
+type SellerOnboardingAction = 'seller_type' | 'trader_status' | 'store_identity';
 
 /**
  * POST /.netlify/functions/set-seller-onboarding
@@ -134,6 +134,33 @@ export const handler: Handler = async (event) => {
             ? Boolean(current.requiresAdminApproval)
             : requireCompanyApproval,
       }),
+    };
+  }
+
+  if (action === 'trader_status') {
+    const traderStatus = body.traderStatus === 'trader' || body.traderStatus === 'non_trader'
+      ? body.traderStatus
+      : null;
+    if (!traderStatus) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'traderStatus must be trader or non_trader' }),
+      };
+    }
+
+    const { error } = await supabase
+      .from('seller_profiles')
+      .update({ traderStatus })
+      .eq('userId', sellerId);
+
+    if (error) {
+      console.error('set-seller-onboarding trader_status:', error.message);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Unable to save trader status' }) };
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, traderStatus }),
     };
   }
 
