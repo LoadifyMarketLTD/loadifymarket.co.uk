@@ -74,18 +74,20 @@ Required correction:
 - do not pretend the manual route is automated;
 - keep automated activation subject to the stronger shadow/autonomy evidence.
 
-### 2. End-to-end automation is not complete
+### 2. Provider-neutral stock/price scheduled execution is now implemented in PR #816
 
-Scheduled supplier catalogue acquisition exists. Stock/price safety logic exists. However there is no universal scheduled execution loop that consumes every supplier's verified integration profiles for stock and price and updates canonical observations.
+PR #816 now contains a universal 15-minute scheduled read loop driven by approved supplier offers, approved sync policies and verified `automated_read` stock + price integration profiles.
 
-The older autonomous runner is Avasam-specific and cannot be treated as universal automation.
+Implemented boundaries:
+- provider-neutral runtime through `UniversalDirectSupplierAdapterV1`; no Avasam-specific dependency;
+- service-role-only due-target selector with bounded batches;
+- global/scoped `stock_sync` and `price_sync` controls checked before provider access;
+- circuit breaker checks price drift, missing/zero/negative stock and rejects unrequested variant responses;
+- unsafe/quarantined observations are not persisted by the scheduler;
+- accepted observations use the existing idempotent append-only server RPC;
+- public sellability, marketplace publication, checkout, orders and payments are not activated by this runner.
 
-Required correction:
-- provider-neutral scheduler driven by verified integration profiles;
-- per-capability rate/freshness controls;
-- circuit breaker/quarantine;
-- idempotent observation persistence;
-- automatic fail-closed sellability when data becomes stale or unsafe.
+This closes the architecture/code gap identified by the audit. It is not yet a production E2E PASS: the new migration has not been applied to production, the branch validation gate still needs to run, and production has no real approved supplier target to exercise it.
 
 ### 3. Automatic publication is intentionally disabled and therefore not "finished"
 
