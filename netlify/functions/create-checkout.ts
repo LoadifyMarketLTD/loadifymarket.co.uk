@@ -234,6 +234,18 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Only physical goods can be purchased through Loadify Market.', code: 'PHYSICAL_GOODS_ONLY' }),
       };
     }
+    if (marketCode === 'RO') {
+      const reviewed = dbProduct.specifications?.euConsumerInformationReviewed === 'true';
+      if (!reviewed) {
+        return {
+          statusCode: 409,
+          body: JSON.stringify({
+            error: 'This product is not yet ready for Romania checkout because its EU consumer-information review is incomplete.',
+            code: 'RO_PRODUCT_CONSUMER_INFO_REVIEW_REQUIRED',
+          }),
+        };
+      }
+    }
     if (dbProduct.listingContext !== 'service') {
       if (typeof dbProduct.stockQuantity !== 'number' || dbProduct.stockQuantity <= 0) {
         return { statusCode: 400, body: JSON.stringify({ error: `Item "${dbProduct.title}" is out of stock` }) };
@@ -287,6 +299,35 @@ export const handler: Handler = async (event) => {
       title: dbProduct.title,
       image: Array.isArray(dbProduct.images) && dbProduct.images.length > 0 ? dbProduct.images[0] : null,
       listingContext: dbProduct.listingContext === 'service' ? 'service' as const : 'product' as const,
+      consumerInformation: marketCode === 'RO'
+        ? {
+            producerDurabilityGuaranteeMonths:
+              typeof dbProduct.specifications?.producerDurabilityGuaranteeMonths === 'string'
+                ? dbProduct.specifications.producerDurabilityGuaranteeMonths
+                : '',
+            hasDigitalElements: dbProduct.specifications?.hasDigitalElements === 'true',
+            softwareUpdateMinimumPeriod:
+              typeof dbProduct.specifications?.softwareUpdateMinimumPeriod === 'string'
+                ? dbProduct.specifications.softwareUpdateMinimumPeriod
+                : '',
+            reparabilityScore:
+              typeof dbProduct.specifications?.reparabilityScore === 'string'
+                ? dbProduct.specifications.reparabilityScore
+                : '',
+            sparePartsInformation:
+              typeof dbProduct.specifications?.sparePartsInformation === 'string'
+                ? dbProduct.specifications.sparePartsInformation
+                : '',
+            repairInformation:
+              typeof dbProduct.specifications?.repairInformation === 'string'
+                ? dbProduct.specifications.repairInformation
+                : '',
+            repairRestrictions:
+              typeof dbProduct.specifications?.repairRestrictions === 'string'
+                ? dbProduct.specifications.repairRestrictions
+                : '',
+          }
+        : undefined,
     };
   });
 
