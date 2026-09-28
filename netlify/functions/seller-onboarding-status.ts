@@ -46,7 +46,7 @@ export const handler: Handler = async (event) => {
       supabase
         .from('seller_profiles')
         .select(
-          'sellerType, sellerStatus, isApproved, requiresAdminApproval, storeName, businessName, contactPhone, businessAddress, companyRegistrationNumber, vatNumber, isVatRegistered, profileCompleted, storeCreated, firstProductCreated, stripeAccountId, stripeConnectStatus, stripeChargesEnabled, stripePayoutsEnabled, stripeDetailsSubmitted',
+          'sellerType, traderStatus, sellerStatus, isApproved, requiresAdminApproval, storeName, businessName, contactPhone, businessAddress, companyRegistrationNumber, vatNumber, isVatRegistered, profileCompleted, storeCreated, firstProductCreated, stripeAccountId, stripeConnectStatus, stripeChargesEnabled, stripePayoutsEnabled, stripeDetailsSubmitted',
         )
         .eq('userId', sellerId)
         .maybeSingle(),
@@ -73,6 +73,7 @@ export const handler: Handler = async (event) => {
 
     const profile = profileRes.data as {
       sellerType: string | null;
+      traderStatus: 'trader' | 'non_trader' | null;
       sellerStatus: string | null;
       isApproved: boolean | null;
       requiresAdminApproval: boolean | null;
@@ -153,6 +154,7 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         sellerType: profile.sellerType,
+        traderStatus: profile.traderStatus,
         sellerStatus,
         requiresAdminApproval: Boolean(profile.requiresAdminApproval),
         isApproved: Boolean(profile.isApproved),
