@@ -73,14 +73,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 /** Fetch seller info for a list of seller IDs from seller_profiles_public */
 async function fetchSellerMap(
   sellerIds: string[],
-): Promise<Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>> {
-  const map = new Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>();
+): Promise<Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string; traderStatus?: 'trader' | 'non_trader' | null }>> {
+  const map = new Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string; traderStatus?: 'trader' | 'non_trader' | null }>();
   if (sellerIds.length === 0) return map;
   const { data } = await supabase
     .from("seller_profiles_public")
-    .select("userId, businessName, isApproved, rating")
+    .select("userId, businessName, isApproved, rating, traderStatus")
     .in("userId", sellerIds);
-  (data ?? []).forEach((row: { userId?: string; businessName?: string; isApproved?: boolean; rating?: number }) => {
+  (data ?? []).forEach((row: { userId?: string; businessName?: string; isApproved?: boolean; rating?: number; traderStatus?: 'trader' | 'non_trader' | null }) => {
     if (row.userId) map.set(row.userId, row);
   });
   return map;
@@ -123,6 +123,7 @@ const ProductDetail = () => {
   const [productSellerId, setProductSellerId] = useState<string | null>(null);
   const [productCategorySlug, setProductCategorySlug] = useState<string | null>(null);
   const [sellerStoreSlug, setSellerStoreSlug] = useState<string | null>(null);
+  const [sellerTraderStatus, setSellerTraderStatus] = useState<'trader' | 'non_trader' | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -183,6 +184,7 @@ const ProductDetail = () => {
           setSellerProducts([]);
           setSellerListingCount(0);
           setSellerStoreSlug(null);
+          setSellerTraderStatus(null);
           setSellerJoinDate(null);
           trackProductView(supplierProduct.id, supplierProduct.title, supplierProduct.price, config.currency);
           return;
@@ -203,6 +205,7 @@ const ProductDetail = () => {
         // Step 5: Adapt to UI shape, including canonical purchase availability.
         const adapted = adaptProduct(normalised);
         setProduct(adapted);
+        setSellerTraderStatus(sellerMap.get(data.sellerId)?.traderStatus ?? null);
         setMobileQty(1);
         setProductDescription(
           typeof data.description === "string" ? data.description : "",
@@ -900,6 +903,7 @@ const ProductDetail = () => {
                     storeSlug={sellerStoreSlug}
                     sellerId={productSellerId}
                     joinDate={sellerJoinDate}
+                    traderStatus={sellerTraderStatus}
                   />
                 )}
 
