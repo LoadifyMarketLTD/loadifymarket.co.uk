@@ -27,7 +27,10 @@ BEGIN
         'stockMaxAgeSeconds', p.stock_max_age_seconds,
         'priceMaxAgeSeconds', p.price_max_age_seconds,
         'lastStockObservedAt', ls.last_observed_at,
-        'lastPriceObservedAt', lp.last_observed_at
+        'lastStockQuantity', ls.last_quantity,
+        'lastPriceObservedAt', lp.last_observed_at,
+        'lastPriceMinor', lp.last_amount_minor,
+        'lastPriceCurrency', lp.last_currency
       ) AS row_data,
       LEAST(
         COALESCE(ls.last_observed_at, '-infinity'::timestamptz)
@@ -58,20 +61,24 @@ BEGIN
      AND price_profile.transport IN ('http_rest','graphql')
      AND NULLIF(BTRIM(price_profile.config_ref),'') IS NOT NULL
     LEFT JOIN LATERAL (
-      SELECT max(observed_at) AS last_observed_at
+      SELECT so.observed_at AS last_observed_at, so.quantity AS last_quantity
       FROM private.supplier_stock_observations so
       WHERE so.supplier_offer_id=o.id
         AND so.external_variant_ref=COALESCE(ci.external_variant_ref,'')
+      ORDER BY so.observed_at DESC, so.received_at DESC
+      LIMIT 1
     ) ls ON true
     LEFT JOIN LATERAL (
-      SELECT max(observed_at) AS last_observed_at
+      SELECT po.observed_at AS last_observed_at, po.amount_minor AS last_amount_minor, po.currency AS last_currency
       FROM private.supplier_price_observations po
       WHERE po.supplier_offer_id=o.id
         AND po.external_variant_ref=COALESCE(ci.external_variant_ref,'')
+      ORDER BY po.observed_at DESC, po.received_at DESC
+      LIMIT 1
     ) lp ON true
     WHERE o.status='approved'
       AND s.lifecycle_status='approved'
-      AND ci.status IN ('linked','identity_review')
+      AND ci.status='linked'
       AND (
         ls.last_observed_at IS NULL
         OR ls.last_observed_at + make_interval(secs => p.stock_max_age_seconds) <= now()
