@@ -251,6 +251,8 @@ interface OrderData {
   commercialSnapshotVersion?: number;
   buyerSnapshot?: CommercialBuyerSnapshot;
   sellerSnapshot?: CommercialSellerSnapshot;
+  currency?: string;
+  marketCode?: string;
   items: CartItem[];
   shippingAddress: Record<string, string>;
   billingAddress: Record<string, string>;
@@ -535,7 +537,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
         to: session.customer_email,
         subject: 'Order Confirmation',
         template: 'order_confirmation',
-        data: { customerName: 'Customer', orderNumber: result.orderNumber, orderDate: new Date().toLocaleDateString('en-GB'), total: expectedPence / 100, items: orderData.items },
+        data: {
+          customerName: orderData.buyerSnapshot?.name || 'Customer',
+          orderNumber: result.orderNumber,
+          orderDate: new Date().toLocaleDateString(orderData.marketCode === 'RO' ? 'ro-RO' : 'en-GB'),
+          total: expectedPence / 100,
+          currency: orderData.currency || 'GBP',
+          marketCode: orderData.marketCode || 'GB',
+          sellerName: orderData.sellerSnapshot?.businessName || '',
+          shippingAddress: orderData.shippingAddress,
+          items: orderData.items,
+          legalBaseUrl: orderData.marketCode === 'RO' ? 'https://loadifymarket.ro' : 'https://loadifymarket.co.uk',
+        },
       }),
     }).catch((err: unknown) => console.warn('Buyer email failed:', err));
   }
