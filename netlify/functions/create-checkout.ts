@@ -49,6 +49,7 @@ interface DBProduct {
   images: string[];
   currency: 'GBP' | 'RON' | 'EUR' | 'USD';
   marketCodes: string[];
+  specifications?: Record<string, unknown> | null;
 }
 
 const STRIPE_CHECKOUT_WINDOW_MINUTES = 30;
@@ -187,7 +188,7 @@ export const handler: Handler = async (event) => {
   const productIds = submittedProductIds;
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images, currency, marketCodes')
+    .select('id, price, priceExVat, vatRate, taxTreatmentStatus, taxTreatmentSource, taxEvidenceVersion, taxEvidenceCapturedAt, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus, images, currency, marketCodes, specifications')
     .in('id', productIds);
 
   if (dbError) {
@@ -214,6 +215,18 @@ export const handler: Handler = async (event) => {
     }
         if (!Number.isFinite(dbProduct.price) || dbProduct.price <= 0) {
       return { statusCode: 409, body: JSON.stringify({ error: `Item "${dbProduct.title}" has an invalid price.` }) };
+    }
+    if (
+      marketCode === 'RO' &&
+      dbProduct.specifications?.euConsumerInformationReviewed !== 'true'
+    ) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({
+          error: `Item "${dbProduct.title}" has not completed the Romania/EU consumer-information review.`,
+          code: 'RO_PRODUCT_CONSUMER_INFORMATION_REVIEW_REQUIRED',
+        }),
+      };
     }
     if (dbProduct.listingContext === 'service') {
       return {
@@ -262,6 +275,15 @@ export const handler: Handler = async (event) => {
       taxTreatmentSource: dbProduct.taxTreatmentSource,
       taxEvidenceVersion: dbProduct.taxEvidenceVersion,
       taxEvidenceCapturedAt: dbProduct.taxEvidenceCapturedAt,
+      consumerInformation: marketCode === 'RO' ? {
+        producerDurabilityGuaranteeMonths: dbProduct.specifications?.producerDurabilityGuaranteeMonths ?? null,
+        hasDigitalElements: dbProduct.specifications?.hasDigitalElements === 'true',
+        softwareUpdateMinimumPeriod: dbProduct.specifications?.softwareUpdateMinimumPeriod ?? null,
+        reparabilityScore: dbProduct.specifications?.reparabilityScore ?? null,
+        sparePartsInformation: dbProduct.specifications?.sparePartsInformation ?? null,
+        repairInformation: dbProduct.specifications?.repairInformation ?? null,
+        repairRestrictions: dbProduct.specifications?.repairRestrictions ?? null,
+      } : null,
       title: dbProduct.title,
       image: Array.isArray(dbProduct.images) && dbProduct.images.length > 0 ? dbProduct.images[0] : null,
       listingContext: dbProduct.listingContext === 'service' ? 'service' as const : 'product' as const,
