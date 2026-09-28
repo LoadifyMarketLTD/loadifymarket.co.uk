@@ -49,8 +49,8 @@ The platform model used throughout is marketplace/intermediary: XDrive Logistics
 | EU representative | GDPR art. 27 | Where art. 3(2) applies and exception does not, non-EU controller must designate representative in Union | Privacy section 2 explicitly leaves Romania PRE-LAUNCH until requirement is evaluated/closed | BLOCKER |
 | International transfers | GDPR arts. 44-49 | Lawful transfer mechanism required where personal data leaves EEA | Privacy section 8 | PARTIAL — vendor-by-vendor transfer mechanism evidence required |
 | Automated decisions | GDPR arts. 13-15, 22 | Additional disclosures/rights if solely automated decision with legal/similarly significant effect | Privacy section 10 | TEXT CLOSED subject to confirmation no such production decision exists |
-| Trader traceability | DSA art. 30 | Where the DSA consumer-marketplace section applies, obtain trader identity/contact/payment/register/self-certification data and make reasonable verification efforts | Buyer Terms section 7 states controlled trader traceability; onboarding must be checked against actual fields | OPEN — applicability/exemption analysis + onboarding evidence required |
-| DSA SME scope | DSA art. 29 | Section 4 obligations have an exemption for qualifying micro/small providers unless VLOP, with transitional rule after loss of status | Not yet encoded as a legal conclusion | BLOCKER — confirm XDrive/Loadify enterprise-size status before treating art. 30 as a mandatory duty rather than voluntary control |
+| Trader traceability | DSA art. 30 | Where DSA Section 4 applies, obtain trader identity/contact/payment/register/self-certification data and make reasonable verification efforts | Buyer Terms section 7 is conditional; current source has business identity/contact/registration fields, Stripe payment onboarding and trader-status declaration. Identity-document and Article 30 self-certification completeness are not yet claimed | CONDITIONAL — Article 29 status must be closed first; retain conservative controls regardless |
+| DSA SME scope | DSA art. 29 + Recommendation 2003/361/EC | Section 4 excludes qualifying micro/small providers unless VLOP; EU size calculation also considers staff, financial thresholds and partner/linked enterprises | Companies House shows one current officer and Micro company accounts for 2022–2025, strongly supporting very small-company status, but UK micro-account filing is not alone a complete EU Recommendation 2003/361/EC calculation | PROVISIONALLY SUPPORTED — retain final blocker until staff/financial/linked-enterprise evidence is recorded |
 
 ## Confirmed corrections already made in code
 - Removed the incorrect old statement tying the online withdrawal function to 27 September 2026.
@@ -70,7 +70,7 @@ The platform model used throughout is marketplace/intermediary: XDrive Logistics
 4. Re-test the durable-medium order confirmation in production: source now carries Romania market/currency, seller identity, total, shipping address, order items and links to the transaction policies.
 5. Deploy/re-test seller trader-status and ranking disclosures in production; source implementation is now present, but DB migration/application and runtime evidence remain required.
 6. Re-test return/refund/non-conformity E2E in production. Source now centralises buyer return creation server-side and separates withdrawal expiry from statutory non-conformity claims.
-7. Confirm DSA Article 29 size/exemption status before classifying Article 30 trader-traceability as mandatory.
+7. Complete the Article 29 size file using exact employee/AWU, turnover or balance-sheet total, and partner/linked-enterprise evidence. Public Companies House evidence already strongly supports micro-company status but is not treated as conclusive EU-size proof.
 8. Reconcile Privacy Policy with the live processor/subprocessor inventory, retention schedule and international-transfer mechanisms.
 
 ## Rule for closeout
