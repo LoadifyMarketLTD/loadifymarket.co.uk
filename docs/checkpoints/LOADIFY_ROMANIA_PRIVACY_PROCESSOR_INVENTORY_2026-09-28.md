@@ -26,3 +26,18 @@ This inventory records providers that are evidenced by the current repository. I
 8. Contractual role of each seller/supplier/fulfilment partner for shared buyer data.
 
 No item above is treated as verified merely because a provider appears in source code.
+
+
+## Loadify-controlled retention evidence
+Repository evidence from `netlify/functions/delete-account.ts` confirms the current deletion/anonymisation boundary:
+- authentication identity is deleted only after core anonymisation and deletion steps succeed;
+- profile/contact/storefront data are removed or anonymised;
+- carts, recently viewed, wishlists, saved searches, notifications, notification settings, reviews, non-transaction product questions/offers/conversations, user blocks and push tokens are deleted where applicable;
+- seller listings are deactivated and seller product media are removed from Loadify-controlled storage;
+- transaction-linked records needed for accounting, fraud prevention, disputes and payment reconciliation are intentionally retained;
+- the public privacy surfaces already state that retained transaction-linked records may be kept for up to six years where required.
+
+This six-year period is therefore a documented Loadify policy/runtime retention ceiling for the retained transaction-linked category, not a claim that every category or every external processor retains data for six years.
+
+## Remaining provider-retention evidence
+External provider retention remains unverified until account/contract evidence is collected for Stripe, Supabase, Netlify, Resend, Firebase/Google and any seller/fulfilment recipient. The Romania Privacy Policy must not imply a provider-specific retention period that has not been verified.
