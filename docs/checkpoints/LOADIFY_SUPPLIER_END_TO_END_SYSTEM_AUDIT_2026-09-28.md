@@ -42,13 +42,13 @@ This is safe and expected before the first real supplier.
 | Buyer publication gate | Import/economics/stock guards and governed projection | PRESENT |
 | Automatic publication | Autonomous policy currently forbids marketplace publication | NOT COMPLETE |
 | Stock/price freshness | Sync policies, stale/missing/exhausted fail-closed, safety stock, price drift | PRESENT |
-| Generic scheduled stock/price execution | Avasam-specific autonomous runner exists; universal per-supplier scheduler is not complete | GAP |
+| Generic scheduled stock/price execution | Universal provider-neutral 15-minute supplier stock/price scheduler in PR #816 | IMPLEMENTED IN DRAFT PR |
 | Checkout revalidation | Server-side selected-offer stock/price and commercial readiness | PRESENT |
 | Supplier commercial profile | Universal supplier contract matrix in PR #816 | IMPLEMENTED IN DRAFT PR |
 | Stripe/settlement binding | Supplier Stripe account capability + market settlement readiness | FOUNDATION PRESENT; CONTRACT/EXECUTION NOT CLOSED |
 | Customer payment | Supplier PaymentIntent boundary exists and remains fail-closed | PRESENT |
 | Supplier order handshake | Idempotent submit/recovery/acknowledgement runtime | PRESENT FOR EXECUTABLE ADAPTERS |
-| Manual supplier order route | Integration model can describe manual_only, but Phase O activation/runtime currently expects executable automated order+ack for Direct Supplier | GAP / BLOCKER FOR WHOLESALE FINDS MANUAL PILOT |
+| Manual supplier order route | Verified manual_only order + acknowledgement bindings are accepted for Phase O without autonomous shadow promotion | IMPLEMENTED IN DRAFT PR |
 | Tracking | canonical tracking sync, mappings, exception engine | PRESENT |
 | Cancellation | capability model and provider runtime contract | PRESENT / PROVIDER-EVIDENCE DEPENDENT |
 | Returns | buyer return bridge + supplier return request | PRESENT |
@@ -122,15 +122,13 @@ The architecture is extensive, but production currently has zero real supplier/o
 ## Correct execution order from here
 
 1. Close PR #816's universal commercial profile + Phase O market-viability changes.
-2. Reconcile the verified manual-pilot path with the Direct Supplier readiness/runtime boundary.
-3. Close the marketplace settlement contract/runtime.
-4. Add provider-neutral scheduled stock/price execution.
-5. Keep Wholesale Finds UK first pilot manual and bounded.
-6. Onboard the first authentic supplier data and 10–15 candidate products.
-7. Run product market/economic selection and admit only viable offers.
-8. Execute real Phase O pilot with exact cohort/order caps, tracking and reconciliation.
-9. Only after Phase O evidence, promote automation dimensions gradually in Phase P.
-10. Automatic publication/order execution remains policy-controlled and fail-closed until proved.
+2. Close the marketplace settlement contract/runtime.
+3. Keep Wholesale Finds UK first pilot manual and bounded.
+4. Onboard the first authentic supplier data and 10–15 candidate products.
+5. Run product market/economic selection and admit only viable offers.
+6. Execute real Phase O pilot with exact cohort/order caps, tracking and reconciliation.
+7. Only after Phase O evidence, promote automation dimensions gradually in Phase P.
+8. Automatic publication/order execution remains policy-controlled and fail-closed until proved.
 
 ## No Fake PASS
 
