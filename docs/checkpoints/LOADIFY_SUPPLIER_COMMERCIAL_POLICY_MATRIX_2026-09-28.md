@@ -1,7 +1,7 @@
 # Loadify Supplier Commercial Policy Matrix
 
-**Date:** 28 September 2026  
-**Status:** IMPLEMENTATION FOUNDATION — FAIL CLOSED  
+**Date:** 28 September 2026
+**Status:** IMPLEMENTATION FOUNDATION — FAIL CLOSED
 **Scope:** universal per-supplier commercial configuration. This document does not activate supplier checkout or settlement.
 
 ## Objective

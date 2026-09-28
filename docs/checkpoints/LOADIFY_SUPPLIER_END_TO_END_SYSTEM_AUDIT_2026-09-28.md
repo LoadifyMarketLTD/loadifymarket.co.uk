@@ -1,8 +1,8 @@
 # Loadify Supplier Commerce — End-to-End System Audit
 
-**Date:** 28 September 2026  
-**Scope:** supplier onboarding → catalogue acquisition → canonicalisation → rights/compliance → economics → market viability → publication → checkout/payment → supplier execution → tracking → returns/refunds/recovery → reconciliation → automation/scale.  
-**Canonical phase:** Phase O — Controlled Pilot.  
+**Date:** 28 September 2026
+**Scope:** supplier onboarding → catalogue acquisition → canonicalisation → rights/compliance → economics → market viability → publication → checkout/payment → supplier execution → tracking → returns/refunds/recovery → reconciliation → automation/scale.
+**Canonical phase:** Phase O — Controlled Pilot.
 **Production activation:** OFF / fail-closed.
 
 ## Executive result
