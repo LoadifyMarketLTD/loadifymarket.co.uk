@@ -75,7 +75,8 @@ export default function ControlledPilotReadiness() {
   const ready = readiness?.ready === true;
   const passed = acceptance?.passed === true;
   const readinessFailures = asRecordArray(readiness?.failures);
-  const acceptanceFailures = asRecordArray(acceptance?.failures);\n  const marketViability = asRecord(readiness?.marketViability);
+  const acceptanceFailures = asRecordArray(acceptance?.failures);
+  const marketViability = asRecord(readiness?.marketViability);
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
