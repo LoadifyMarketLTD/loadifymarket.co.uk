@@ -75,8 +75,10 @@ describe('direct supplier transaction readiness boundary', () => {
   it('uses supplier-specific multi-transport bindings instead of the legacy single-adapter rule for Direct Supplier', () => {
     expect(integrationMigration).toContain("v_pilot.provider_key='direct_supplier'");
     expect(integrationMigration).toContain('direct_supplier_integration_bindings');
-    expect(integrationMigration).toContain('verified_automated_order_binding_required');
-    expect(integrationMigration).toContain('verified_acknowledgement_binding_required');
+    expect(integrationMigration).toContain('verified_manual_or_automated_order_binding_required');
+    expect(integrationMigration).toContain("p.execution_mode='manual_only' AND p.transport IN ('email','manual_portal','manual_file')");
+    expect(integrationMigration).toContain("p.execution_mode='automated_write'");
+    expect(integrationMigration).toContain('verified_manual_or_automated_acknowledgement_binding_required');
     expect(integrationMigration).toContain("'universal_supplier_integration_kit'");
     expect(integrationMigration).toContain("'single_verified_full_capability_adapter'");
   });

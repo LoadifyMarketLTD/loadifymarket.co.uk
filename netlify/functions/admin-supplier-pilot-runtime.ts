@@ -388,23 +388,34 @@ export const handler: Handler = async (event, context) => {
   }
 
   if (!autonomyReadiness.ready) {
-    return jsonResponse(200, {
-      ok: false,
-      reason: 'autonomous_pilot_readiness_failed',
-      pilotId,
-      providerKey,
-      canonicalReadiness,
-      shadowReview: rawShadowReview ?? null,
-      autonomyReadiness,
-      shadowReviewPersistenceBound: shadowReview?.persistenceBound === true,
-      shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true,
-      shadowReviewReadAvailable: !shadowReviewError,
-      shadowReviewRequiredBinding,
-      activationPerformed: false,
-      providerMutationPerformed: false,
-      customerPiiDisclosurePerformed: false,
-      paymentMutationPerformed: false,
-    }, METHODS);
+    // A deliberately manual Phase O pilot is not an autonomous activation.
+    // Permit it only when the canonical SQL gate is ready and the reviewed
+    // provider contract explicitly exposes order submission as manual_only.
+    // Automated pilots retain the full shadow/autonomy promotion requirement.
+    const verifiedManualPilot = canonicalReadiness?.ready === true
+      && providerOrderExecution.found
+      && providerOrderExecution.availability === 'manual_only'
+      && providerOrderExecution.externalMutationAllowed === false;
+
+    if (!verifiedManualPilot) {
+      return jsonResponse(200, {
+        ok: false,
+        reason: 'autonomous_pilot_readiness_failed',
+        pilotId,
+        providerKey,
+        canonicalReadiness,
+        shadowReview: rawShadowReview ?? null,
+        autonomyReadiness,
+        shadowReviewPersistenceBound: shadowReview?.persistenceBound === true,
+        shadowPromotionPolicyConfigured: shadowReview?.promotionPolicyConfigured === true,
+        shadowReviewReadAvailable: !shadowReviewError,
+        shadowReviewRequiredBinding,
+        activationPerformed: false,
+        providerMutationPerformed: false,
+        customerPiiDisclosurePerformed: false,
+        paymentMutationPerformed: false,
+      }, METHODS);
+    }
   }
 
   // Canonical SQL activation re-validates server_supplier_pilot_activation_readiness_v1.

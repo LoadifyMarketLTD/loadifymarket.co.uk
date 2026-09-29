@@ -11,7 +11,7 @@ describe('customer return eligibility boundary', () => {
     expect(automation).toContain("new Set(['delivered', 'completed'])");
     expect(automation).toContain('input.returnWindowDays ?? 14');
     expect(automation).toContain("return blocked('manual_review', 'delivery_date_unverified')");
-    expect(automation).toContain("return blocked('ineligible', 'return_window_expired')");
+    expect(automation).toContain("return blocked('ineligible', 'withdrawal_window_expired')");
   });
 
   it('enforces the same delivered evidence and 14-day window at the RLS helper boundary', () => {

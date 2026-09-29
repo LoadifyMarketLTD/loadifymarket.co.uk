@@ -31,7 +31,7 @@ export const handler: Handler = async (event) => {
 
   const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";
   const action = typeof body.action === "string" ? body.action.trim() : "";
-  if (!UUID_RE.test(orderId) || !["submit","recover","tracking"].includes(action)) {
+  if (!UUID_RE.test(orderId) || !["submit","recover","tracking","manual_accept"].includes(action)) {
     return jsonResponse(400, { error: "Valid orderId and runtime action are required" }, METHODS);
   }
 
@@ -47,6 +47,34 @@ export const handler: Handler = async (event) => {
 
   const providerKey = String(current.providerKey ?? "");
   if (!isProviderKey(providerKey)) return jsonResponse(409, { error: "Supplier provider is not registered" }, METHODS);
+
+  if (action === "manual_accept") {
+    const handshakeId = String(current.handshakeId ?? "");
+    const externalSupplierOrderRef = typeof body.externalSupplierOrderRef === "string"
+      ? body.externalSupplierOrderRef.trim()
+      : "";
+    const evidence = body.evidence && typeof body.evidence === "object" && !Array.isArray(body.evidence)
+      ? body.evidence
+      : null;
+    if (!UUID_RE.test(handshakeId) || !externalSupplierOrderRef || !evidence) {
+      return jsonResponse(400, { error: "Manual acceptance requires handshake, external supplier order reference and evidence" }, METHODS);
+    }
+    const { data: result, error } = await admin.rpc("server_record_manual_supplier_order_acceptance_v1", {
+      p_actor_id: auth.actor.id,
+      p_handshake_id: handshakeId,
+      p_external_supplier_order_ref: externalSupplierOrderRef,
+      p_evidence: evidence,
+    });
+    if (error || !result || typeof result !== "object") {
+      return jsonResponse(409, { error: "Manual supplier order acceptance could not be recorded", result: result ?? null }, METHODS);
+    }
+    return jsonResponse((result as { ok?: unknown }).ok === true ? 200 : 409, {
+      ok: (result as { ok?: unknown }).ok === true,
+      action,
+      result,
+    }, METHODS);
+  }
+
   const supplierOfferId = String(current.supplierOfferId ?? "");
   if (!UUID_RE.test(supplierOfferId)) {
     return jsonResponse(409, { error: "Supplier offer context is unavailable" }, METHODS);

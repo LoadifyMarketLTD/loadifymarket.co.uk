@@ -82,6 +82,11 @@ BEGIN
       ));
     END IF;
 
+    -- Phase O may deliberately use a verified manual route for the first real
+    -- supplier. Do not falsely require autonomous execution when the reviewed
+    -- capability contract says manual_only. Automated execution still requires
+    -- its stronger runtime/config/idempotency evidence through the integration
+    -- profile verification boundary.
     IF NOT EXISTS (
       SELECT 1
       FROM private.supplier_integration_profiles p
@@ -89,13 +94,18 @@ BEGIN
         AND p.territory='GB'
         AND p.capability='order_submission'
         AND p.status='verified'
-        AND p.execution_mode='automated_write'
-        AND p.transport IN ('http_rest','graphql')
-        AND NULLIF(BTRIM(p.config_ref),'') IS NOT NULL
+        AND (
+          (p.execution_mode='manual_only' AND p.transport IN ('email','manual_portal','manual_file'))
+          OR (
+            p.execution_mode='automated_write'
+            AND p.transport IN ('http_rest','graphql')
+            AND NULLIF(BTRIM(p.config_ref),'') IS NOT NULL
+          )
+        )
     ) THEN
       v_failures:=v_failures||jsonb_build_array(jsonb_build_object(
         'check','direct_supplier_order_runtime',
-        'reason','verified_automated_order_binding_required'
+        'reason','verified_manual_or_automated_order_binding_required'
       ));
     END IF;
 
@@ -106,12 +116,18 @@ BEGIN
         AND p.territory='GB'
         AND p.capability='acknowledgement'
         AND p.status='verified'
-        AND p.execution_mode IN ('automated_read','automated_write')
-        AND p.transport IN ('http_rest','graphql','webhook')
+        AND (
+          (p.execution_mode='manual_only' AND p.transport IN ('email','manual_portal','manual_file'))
+          OR (
+            p.execution_mode IN ('automated_read','automated_write')
+            AND p.transport IN ('http_rest','graphql','webhook')
+            AND NULLIF(BTRIM(p.config_ref),'') IS NOT NULL
+          )
+        )
     ) THEN
       v_failures:=v_failures||jsonb_build_array(jsonb_build_object(
         'check','direct_supplier_ack_runtime',
-        'reason','verified_acknowledgement_binding_required'
+        'reason','verified_manual_or_automated_acknowledgement_binding_required'
       ));
     END IF;
   ELSE

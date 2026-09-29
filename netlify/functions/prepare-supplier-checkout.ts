@@ -106,6 +106,24 @@ export const handler: Handler = async (event) => {
     }, METHODS);
   }
 
+  const { data: supplierCommercialProfile, error: supplierCommercialProfileError } = await admin.rpc(
+    "server_supplier_commercial_profile_readiness_v1",
+    {
+      p_supplier_id: selectedOffer.supplierId,
+      p_market_code: requestedMarket,
+    },
+  );
+  if (supplierCommercialProfileError || !supplierCommercialProfile || supplierCommercialProfile.eligible !== true) {
+    return jsonResponse(409, {
+      error: "Selected supplier does not yet have a verified commercial contract for this market",
+      code: "SUPPLIER_COMMERCIAL_PROFILE_NOT_READY",
+      supplierId: selectedOffer.supplierId,
+      marketCode: requestedMarket,
+      supplierCommercialProfile: supplierCommercialProfile ?? null,
+      paymentSessionCreated: false,
+    }, METHODS);
+  }
+
   const checkoutGuard = await evaluateSupplierCheckoutGuard(admin, {
     supplierOfferId: selectedOffer.supplierOfferId,
     canonicalProductId: selectedOffer.canonicalProductId,
@@ -155,6 +173,10 @@ export const handler: Handler = async (event) => {
     paymentSessionCreated: false,
     paymentCaptured: false,
     supplierOrderSubmitted: false,
+    supplierCommercialProfileId: supplierCommercialProfile.profileId,
+    supplierCommercialProfileVersion: supplierCommercialProfile.version,
+    supplierPricingModel: supplierCommercialProfile.pricingModel,
+    supplierSettlementModel: supplierCommercialProfile.settlementModel,
     nextGate: "supplier_marketplace_payment_session",
   }, METHODS);
 };

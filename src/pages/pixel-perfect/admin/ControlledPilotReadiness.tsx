@@ -76,6 +76,7 @@ export default function ControlledPilotReadiness() {
   const passed = acceptance?.passed === true;
   const readinessFailures = asRecordArray(readiness?.failures);
   const acceptanceFailures = asRecordArray(acceptance?.failures);
+  const marketViability = asRecord(readiness?.marketViability);
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -155,12 +156,23 @@ export default function ControlledPilotReadiness() {
             />
           </div>
 
+          {marketViability && (
+            <div className="mt-4 rounded-xl border border-border bg-background p-4 text-sm">
+              <div className="font-semibold">UK market viability</div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                <Metric label="Decision" value={text(marketViability.decision) || text(marketViability.reason) || "not evaluated"} ok={text(marketViability.decision) === "approved"} />
+                <Metric label="Approved offers" value={String(marketViability.approvedCount ?? 0)} />
+                <Metric label="Blocked offers" value={String(marketViability.blockedCount ?? marketViability.failureCount ?? 0)} ok={Number(marketViability.blockedCount ?? marketViability.failureCount ?? 0) === 0} />
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 rounded-xl border border-amber-300/50 bg-amber-50 p-4 text-sm text-amber-950">
             <div className="flex gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 <strong>Activation is intentionally not available here.</strong>
-                <p className="mt-1 leading-6">A real pilot must first satisfy Supplier Foundation, verified adapter, passed simulator, explicit cohort, bounded offer set and live stock/price readiness. Simulator PASS is not Pilot PASS.</p>
+                <p className="mt-1 leading-6">A real pilot must first satisfy Supplier Foundation, verified adapter, passed simulator, explicit cohort, bounded offer set, live stock/price readiness and evidence-backed UK market viability. A technically valid product that is unprofitable or materially uncompetitive remains blocked. Simulator PASS is not Pilot PASS.</p>
               </div>
             </div>
           </div>
