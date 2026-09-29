@@ -33,6 +33,18 @@ function parseJsonObject(body: string): JsonRecord | null {
     return null;
   }
 }
+interface TradeprintSandboxProductConfig {
+  productId: string;
+  serviceLevel: string;
+  productionData: JsonRecord;
+}
+
+export interface TradeprintSandboxDeliveryInput extends TradeprintSandboxProductConfig {
+  artworkService: string;
+  quantity: number;
+  postcode: string;
+}
+
 async function loginTradeprintSandbox(
   credentials: TradeprintSandboxCredentials,
 ): Promise<TradeprintSandboxResult<string>> {
@@ -70,16 +82,24 @@ async function loginTradeprintSandbox(
 
   return { ok: true, status: response.status, data: token };
 }
-export async function fetchTradeprintSandboxProductAttributes(
+
+async function callTradeprintSandboxJson(
   credentials: TradeprintSandboxCredentials,
+  method: 'GET' | 'POST',
+  endpoint: string,
+  body?: JsonRecord,
 ): Promise<TradeprintSandboxResult<JsonRecord>> {
   const login = await loginTradeprintSandbox(credentials);
   if (!login.ok) return login;
 
   const response = await executeSupplierRuntimeHttp({
-    url: `${TRADEPRINT_SANDBOX_BASE_URL}/products-v2/attributes-v2`,
-    method: 'GET',
-    headers: { authorization: `Bearer ${login.data}` },
+    url: `${TRADEPRINT_SANDBOX_BASE_URL}/${endpoint}`,
+    method,
+    headers: {
+      authorization: `Bearer ${login.data}`,
+      ...(body ? { 'content-type': 'application/json' } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
     timeoutMs: 10000,
     maxBytes: 4 * 1024 * 1024,
   });
@@ -90,15 +110,61 @@ export async function fetchTradeprintSandboxProductAttributes(
     return {
       ok: false,
       errorClass: 'MALFORMED_RESPONSE',
-      message: 'Tradeprint product discovery response was malformed',
+      message: 'Tradeprint sandbox response was malformed',
     };
   }
+  return { ok: true, status: response.status, data: payload.result as JsonRecord };
+}
 
-  return {
-    ok: true,
-    status: response.status,
-    data: payload.result as JsonRecord,
-  };
+export async function fetchTradeprintSandboxProductAttributes(
+  credentials: TradeprintSandboxCredentials,
+): Promise<TradeprintSandboxResult<JsonRecord>> {
+  return callTradeprintSandboxJson(
+    credentials,
+    'GET',
+    'products-v2/attributes-v2',
+  );
+}
+
+export async function fetchTradeprintSandboxPriceList(
+  credentials: TradeprintSandboxCredentials,
+  productName: string,
+): Promise<TradeprintSandboxResult<JsonRecord>> {
+  const name = productName.trim();
+  if (!name) {
+    return { ok: false, errorClass: 'PERMANENT_REJECTION', message: 'Tradeprint product name is required' };
+  }
+  return callTradeprintSandboxJson(
+    credentials,
+    'POST',
+    `products-v2/${encodeURIComponent(name)}`,
+    { format: 'json', markup: 0 },
+  );
+}
+
+export async function fetchTradeprintSandboxQuantities(
+  credentials: TradeprintSandboxCredentials,
+  input: TradeprintSandboxProductConfig,
+): Promise<TradeprintSandboxResult<JsonRecord>> {
+  return callTradeprintSandboxJson(credentials, 'POST', 'products-v2/quantities-v2', {
+    productId: input.productId,
+    serviceLevel: input.serviceLevel,
+    productionData: input.productionData,
+  });
+}
+
+export async function fetchTradeprintSandboxExpectedDelivery(
+  credentials: TradeprintSandboxCredentials,
+  input: TradeprintSandboxDeliveryInput,
+): Promise<TradeprintSandboxResult<JsonRecord>> {
+  return callTradeprintSandboxJson(credentials, 'POST', 'products/expectedDeliveryDate', {
+    productId: input.productId,
+    serviceLevel: input.serviceLevel,
+    artworkService: input.artworkService,
+    productionData: input.productionData,
+    quantity: input.quantity,
+    deliveryAddress: { postcode: input.postcode },
+  });
 }
 
 export function tradeprintSandboxCredentialsFromEnv(): TradeprintSandboxCredentials | null {

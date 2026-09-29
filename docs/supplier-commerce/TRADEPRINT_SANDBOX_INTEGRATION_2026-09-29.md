@@ -33,16 +33,21 @@ No order was created, validated, paid, cancelled or otherwise mutated during thi
 - Sandbox credentials must only be provisioned through protected server environment variables.
 ## Canonical first-phase contract
 
-Loadify initially supports only:
+Loadify currently supports the sandbox discovery boundary only:
 
 - sandbox authentication;
 - read-only product attribute discovery;
+- single-product price-list discovery;
+- product quantity discovery;
+- expected-delivery discovery;
 - fail-closed response parsing;
 - server-only credential loading.
 
-The Tradeprint SDK also documents price-list, quantity, expected-delivery, validate-order,
-submit-order, artwork, status and cancellation flows. These are intentionally not enabled
-in the first adapter boundary.
+Price-list, quantity and expected-delivery calls are implemented only as sandbox discovery
+operations and require a selected product/configuration before live probing. The Tradeprint
+SDK also documents validate-order, submit-order, artwork, status and cancellation flows.
+Those order mutation paths remain intentionally disabled until a test product is selected
+and the discovery evidence is reviewed.
 
 ## Commercial items still requiring explicit confirmation
 

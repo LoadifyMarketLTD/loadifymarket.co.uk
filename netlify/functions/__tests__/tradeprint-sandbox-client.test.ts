@@ -9,7 +9,10 @@ vi.mock('../_shared/supplierRuntimeHttp', () => ({
 }));
 
 import {
+  fetchTradeprintSandboxExpectedDelivery,
+  fetchTradeprintSandboxPriceList,
   fetchTradeprintSandboxProductAttributes,
+  fetchTradeprintSandboxQuantities,
   tradeprintSandboxBaseUrl,
   tradeprintSandboxCredentialsFromEnv,
 } from '../_shared/tradeprintSandboxClient';
@@ -100,5 +103,72 @@ describe('Tradeprint sandbox client', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errorClass).toBe('MALFORMED_RESPONSE');
     expect(executeSupplierRuntimeHttp).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Tradeprint sandbox product discovery extensions', () => {
+  const mockSuccess = () => {
+    executeSupplierRuntimeHttp
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: JSON.stringify({
+          success: true,
+          result: { token: 'sandbox-token-1234567890' },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: JSON.stringify({ success: true, result: { ok: true } }),
+      });
+  };
+
+  it('builds a sandbox price-list request for one product', async () => {
+    mockSuccess();
+    await fetchTradeprintSandboxPriceList(CREDS, 'Flyers');
+    const request = executeSupplierRuntimeHttp.mock.calls[1][0];
+    expect(request.url).toBe(
+      'https://sandbox.orders.tradeprint.io/v2/products-v2/Flyers',
+    );
+    expect(request.method).toBe('POST');
+    expect(JSON.parse(request.body)).toEqual({ format: 'json', markup: 0 });
+  });
+
+  it('builds a sandbox quantities request', async () => {
+    mockSuccess();
+    await fetchTradeprintSandboxQuantities(CREDS, {
+      productId: 'PRD-SRJ3LY4F',
+      serviceLevel: 'Saver',
+      productionData: { 'Sides Printed': 'Double Sided' },
+    });
+    const request = executeSupplierRuntimeHttp.mock.calls[1][0];
+    expect(request.url).toBe(
+      'https://sandbox.orders.tradeprint.io/v2/products-v2/quantities-v2',
+    );
+    expect(JSON.parse(request.body)).toMatchObject({
+      productId: 'PRD-SRJ3LY4F',
+      serviceLevel: 'Saver',
+    });
+  });
+
+  it('builds a sandbox expected-delivery request', async () => {
+    mockSuccess();
+    await fetchTradeprintSandboxExpectedDelivery(CREDS, {
+      productId: 'PRD-SRJ3LY4F',
+      serviceLevel: 'Saver',
+      artworkService: 'Just Print',
+      productionData: { 'Paper Type': '100gsm Premium Smooth White Paper' },
+      quantity: 500,
+      postcode: 'DD2 1TP',
+    });
+    const request = executeSupplierRuntimeHttp.mock.calls[1][0];
+    expect(request.url).toBe(
+      'https://sandbox.orders.tradeprint.io/v2/products/expectedDeliveryDate',
+    );
+    expect(JSON.parse(request.body)).toMatchObject({
+      quantity: 500,
+      deliveryAddress: { postcode: 'DD2 1TP' },
+    });
   });
 });
