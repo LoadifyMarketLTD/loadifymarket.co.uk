@@ -58,3 +58,35 @@ and the discovery evidence is reviewed.
 
 Sandbox integration may continue while these items remain pending. Production activation
 must remain OFF until the commercial evidence is complete.
+
+## Verified sandbox catalogue snapshot — 29 September 2026
+
+The authenticated Tradeprint Sandbox currently exposes 17 product families through the product-attribute discovery boundary. Price-list exports were successfully generated and downloaded for all 17 families.
+
+Observed product families:
+
+- Comp slips
+- Custom Roll - Top Backpack
+- Deskpads
+- Envelopes
+- Feather Flags
+- Flyers
+- Folded & Laminated Leaflets
+- Folded Leaflets
+- Letterheads
+- Long Run Posters
+- Mesh Banners
+- Perfect Bound Booklets
+- PVC Banners
+- Roller Banners
+- Standard BC
+- Teardrop Flags
+- Triplex BC
+
+Across the 17 exported price-list files, 206,602 raw configuration/price rows were observed. These rows are configuration/service combinations, not 206,602 distinct marketplace products. Loadify therefore records the 17 families as technical catalogue candidates and keeps the raw rows as variant/configuration evidence.
+
+All catalogue candidates remain fail-closed with `publicationAllowed=false`. No public listing, checkout, supplier order or production activation is created by this snapshot.
+
+A Tradeprint Head of New Business subsequently confirmed in writing that Loadify's supplier-fulfilled marketplace model is a good fit for Tradeprint Connect, including REST integration, sandbox testing, white-label fulfilment and direct delivery. Detailed commercial terms, rate/catalogue limits, production credential requirements and content/image usage rights remain pending written confirmation.
+
+One additional unresolved mapping issue remains: sandbox price-list values are preserved as raw supplier evidence until Tradeprint confirms the price-unit/settlement semantics. They must not be converted into customer-facing prices by assumption.

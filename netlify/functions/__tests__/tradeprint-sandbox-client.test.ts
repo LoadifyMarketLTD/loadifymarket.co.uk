@@ -172,3 +172,20 @@ describe('Tradeprint sandbox product discovery extensions', () => {
     });
   });
 });
+
+import {
+  TRADEPRINT_SANDBOX_CATALOG_FAMILIES,
+  TRADEPRINT_SANDBOX_DISCOVERED_FAMILY_COUNT,
+  TRADEPRINT_SANDBOX_DISCOVERED_VARIANT_ROW_COUNT,
+} from '../_shared/tradeprintSandboxCatalog';
+
+describe('Tradeprint sandbox verified catalogue manifest', () => {
+  it('captures all currently exposed sandbox product families fail-closed', () => {
+    expect(TRADEPRINT_SANDBOX_DISCOVERED_FAMILY_COUNT).toBe(17);
+    expect(TRADEPRINT_SANDBOX_DISCOVERED_VARIANT_ROW_COUNT).toBe(206602);
+    expect(TRADEPRINT_SANDBOX_CATALOG_FAMILIES.map((family) => family.productName)).toContain('Flyers');
+    expect(TRADEPRINT_SANDBOX_CATALOG_FAMILIES.map((family) => family.productName)).toContain('Perfect Bound Booklets');
+    expect(TRADEPRINT_SANDBOX_CATALOG_FAMILIES.every((family) => family.sandboxAvailable === true)).toBe(true);
+    expect(TRADEPRINT_SANDBOX_CATALOG_FAMILIES.every((family) => family.publicationAllowed === false)).toBe(true);
+  });
+});
