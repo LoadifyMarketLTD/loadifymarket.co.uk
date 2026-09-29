@@ -35,7 +35,7 @@ describe("Romania online withdrawal function", () => {
     expect(page).toContain("Retrageți-vă din contract aici");
     expect(page).toContain("Confirmați retragerea");
     expect(legal).toContain('href="/buyer/withdrawal"');
-    expect(legal).toContain("27 septembrie 2026");
+    expect(legal).toContain("28 septembrie 2026");
   });
 
   it("allows withdrawal before delivery and for fourteen days after delivery", () => {

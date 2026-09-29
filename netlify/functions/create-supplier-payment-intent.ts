@@ -34,7 +34,7 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await admin
     .from("orders")
-    .select("id,buyerId,status,total,currency,marketCode,commercialMode,sellerId,canonicalProductId,supplierOfferId,pricingSnapshotId,supplierExternalVariantRefSnapshot,stripePaymentIntentId")
+    .select("id,buyerId,status,total,currency,marketCode,commercialMode,sellerId,canonicalProductId,supplierOfferId,pricingSnapshotId,supplierExternalVariantRefSnapshot,stripePaymentIntentId,supplierSellerIdSnapshot,supplierCommercialContractVersion,supplierCommercialProfileIdSnapshot,supplierCommercialProfileVersionSnapshot,supplierSettlementModelSnapshot")
     .eq("id", orderId)
     .eq("buyerId", auth.actor.id)
     .maybeSingle();
@@ -70,6 +70,51 @@ export const handler: Handler = async (event) => {
     }, METHODS);
   }
 
+  if (
+    !order.supplierSellerIdSnapshot
+    || order.supplierCommercialContractVersion !== 1
+    || !order.supplierCommercialProfileIdSnapshot
+    || !Number.isInteger(order.supplierCommercialProfileVersionSnapshot)
+    || order.supplierCommercialProfileVersionSnapshot < 1
+    || !order.supplierSettlementModelSnapshot
+  ) {
+    return jsonResponse(409, {
+      error: "Supplier order does not contain the required immutable commercial contract identity",
+      code: "SUPPLIER_COMMERCIAL_CONTRACT_SNAPSHOT_MISSING",
+    }, METHODS);
+  }
+
+  const { data: supplierCommercialProfile, error: supplierCommercialProfileError } = await admin.rpc(
+    "server_supplier_commercial_profile_snapshot_v1",
+    {
+      p_profile_id: order.supplierCommercialProfileIdSnapshot,
+      p_supplier_id: order.supplierSellerIdSnapshot,
+      p_market_code: orderMarket,
+      p_version: order.supplierCommercialProfileVersionSnapshot,
+    },
+  );
+  if (supplierCommercialProfileError || !supplierCommercialProfile || supplierCommercialProfile.eligible !== true) {
+    return jsonResponse(409, {
+      error: "Supplier payment is blocked until this supplier has a verified commercial contract",
+      code: "SUPPLIER_COMMERCIAL_PROFILE_NOT_READY",
+      supplierId: order.supplierSellerIdSnapshot,
+      marketCode: orderMarket,
+      supplierCommercialProfile: supplierCommercialProfile ?? null,
+    }, METHODS);
+  }
+
+  if (
+    supplierCommercialProfile.settlementModel !== commercialReadiness.settlementModel
+    || supplierCommercialProfile.settlementModel !== order.supplierSettlementModelSnapshot
+  ) {
+    return jsonResponse(409, {
+      error: "Supplier settlement contract does not match the reviewed market settlement model",
+      code: "SUPPLIER_SETTLEMENT_MODEL_MISMATCH",
+      supplierSettlementModel: supplierCommercialProfile.settlementModel,
+      marketSettlementModel: commercialReadiness.settlementModel,
+    }, METHODS);
+  }
+
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
   const { data: existingSession } = await admin
     .from("payment_sessions")
@@ -90,6 +135,12 @@ export const handler: Handler = async (event) => {
         marketplaceOperator: "Loadify Market",
         supplierIsSellerOfRecord: true,
         settlementModel: commercialReadiness.settlementModel,
+        supplierCommercialProfileId: supplierCommercialProfile.profileId,
+        supplierCommercialProfileVersion: supplierCommercialProfile.version,
+        pricingModel: supplierCommercialProfile.pricingModel,
+        processorFeePayer: supplierCommercialProfile.processorFeePayer,
+        connectFeePayer: supplierCommercialProfile.connectFeePayer,
+        payoutFeePayer: supplierCommercialProfile.payoutFeePayer,
         externalCheckoutRedirect: false,
         reused: true,
       }, METHODS);
@@ -128,6 +179,10 @@ export const handler: Handler = async (event) => {
       supplierOfferId: order.supplierOfferId,
       pricingSnapshotId: order.pricingSnapshotId,
       supplierExternalVariantRef: order.supplierExternalVariantRefSnapshot,
+      supplierCommercialProfileId: supplierCommercialProfile.profileId,
+      supplierCommercialProfileVersion: String(supplierCommercialProfile.version),
+      supplierPricingModel: supplierCommercialProfile.pricingModel,
+      supplierSettlementModel: supplierCommercialProfile.settlementModel,
     },
   }, { idempotencyKey: `supplier-payment:${order.id}` });
 
@@ -146,6 +201,13 @@ export const handler: Handler = async (event) => {
       supplierOfferId: order.supplierOfferId,
       pricingSnapshotId: order.pricingSnapshotId,
       supplierExternalVariantRef: order.supplierExternalVariantRefSnapshot,
+      supplierCommercialProfileId: supplierCommercialProfile.profileId,
+      supplierCommercialProfileVersion: supplierCommercialProfile.version,
+      supplierPricingModel: supplierCommercialProfile.pricingModel,
+      supplierSettlementModel: supplierCommercialProfile.settlementModel,
+      processorFeePayer: supplierCommercialProfile.processorFeePayer,
+      connectFeePayer: supplierCommercialProfile.connectFeePayer,
+      payoutFeePayer: supplierCommercialProfile.payoutFeePayer,
     },
   });
 
@@ -163,6 +225,12 @@ export const handler: Handler = async (event) => {
     marketplaceOperator: "Loadify Market",
     supplierIsSellerOfRecord: true,
     settlementModel: commercialReadiness.settlementModel,
+    supplierCommercialProfileId: supplierCommercialProfile.profileId,
+    supplierCommercialProfileVersion: supplierCommercialProfile.version,
+    pricingModel: supplierCommercialProfile.pricingModel,
+    processorFeePayer: supplierCommercialProfile.processorFeePayer,
+    connectFeePayer: supplierCommercialProfile.connectFeePayer,
+    payoutFeePayer: supplierCommercialProfile.payoutFeePayer,
     externalCheckoutRedirect: false,
   }, METHODS);
 };
