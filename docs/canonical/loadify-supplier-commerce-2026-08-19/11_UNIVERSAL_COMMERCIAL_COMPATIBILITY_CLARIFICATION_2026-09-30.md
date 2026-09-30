@@ -1,7 +1,7 @@
 # LOADIFY MARKET — UNIVERSAL COMMERCIAL COMPATIBILITY CLARIFICATION
 
-**Date fixed:** 30 September 2026  
-**Status:** CONTROLLING PRODUCT / COMMERCIAL ARCHITECTURE CLARIFICATION  
+**Date fixed:** 30 September 2026
+**Status:** CONTROLLING PRODUCT / COMMERCIAL ARCHITECTURE CLARIFICATION
 **Owner decision:** Loadify Market must be technically capable of supporting the legitimate commercial model required by an approved supplier, seller, customer, fulfilment provider or commercial partner, rather than forcing every partner into one platform-wide role allocation.
 
 ## 1. Controlling direction
