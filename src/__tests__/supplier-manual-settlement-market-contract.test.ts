@@ -1,4 +1,4 @@
-﻿import { readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -29,7 +29,8 @@ describe("supplier manual settlement market contract", () => {
   });
 
   it("keeps payment fail-closed unless the reviewed market and supplier settlement models match", () => {
-    expect(payment).toContain("supplierCommercialProfile.settlementModel !== commercialReadiness.settlementModel");
+    expect(payment).toContain("supplierCommercialProfile.settlementModel !== commercialCompatibility.settlementModel");
     expect(payment).toContain("SUPPLIER_SETTLEMENT_MODEL_MISMATCH");
+    expect(payment).toContain("server_supplier_commercial_compatibility_readiness_v2");
   });
 });

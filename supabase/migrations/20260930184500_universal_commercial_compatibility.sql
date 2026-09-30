@@ -31,6 +31,25 @@ ALTER TABLE private.supplier_marketplace_commercial_controls
   ADD COLUMN IF NOT EXISTS allowed_merchant_of_record_parties text[] NOT NULL DEFAULT ARRAY['loadify']::text[],
   ADD COLUMN IF NOT EXISTS allowed_settlement_models text[] NOT NULL DEFAULT ARRAY['stripe_connect_supplier','platform_collection_as_agent','manual_supplier_settlement']::text[];
 
+-- Legacy market-wide ownership booleans remain meaningful only when the adaptive
+-- compatibility engine is disabled. In adaptive mode, the reviewed per-supplier
+-- commercial profile is the source of truth.
+ALTER TABLE private.supplier_marketplace_commercial_controls
+  DROP CONSTRAINT IF EXISTS supplier_marketplace_control_seller_check,
+  DROP CONSTRAINT IF EXISTS supplier_marketplace_control_inventory_owner_check,
+  DROP CONSTRAINT IF EXISTS supplier_marketplace_control_prepurchase_check;
+
+ALTER TABLE private.supplier_marketplace_commercial_controls
+  DROP CONSTRAINT IF EXISTS supplier_marketplace_control_legacy_model_check;
+ALTER TABLE private.supplier_marketplace_commercial_controls
+  ADD CONSTRAINT supplier_marketplace_control_legacy_model_check CHECK (
+    adaptive_model_enabled
+    OR (
+      supplier_is_seller_of_record = true
+      AND loadify_owns_inventory = false
+      AND loadify_prepurchases_inventory = false
+    )
+  );
 ALTER TABLE private.supplier_marketplace_commercial_controls
   DROP CONSTRAINT IF EXISTS supplier_marketplace_control_compatibility_roles_check;
 ALTER TABLE private.supplier_marketplace_commercial_controls
@@ -43,113 +62,6 @@ ALTER TABLE private.supplier_marketplace_commercial_controls
     AND allowed_settlement_models <@ ARRAY['stripe_connect_supplier','platform_collection_as_agent','manual_supplier_settlement']::text[]
   );
 
-CREATE OR REPLACE FUNCTION public.server_supplier_commercial_compatibility_readiness_v2(
-  p_supplier_id uuid,
-  p_market_code text
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
-AS $$
-DECLARE
-  v_market text:=upper(BTRIM(COALESCE(p_market_code,'')));
-  v_control private.supplier_marketplace_commercial_controls%ROWTYPE;
-  v_profile private.supplier_commercial_profiles%ROWTYPE;
-  v_supplier private.supplier_foundation_suppliers%ROWTYPE;
-  v_seller_name text;
-BEGIN
-  IF p_supplier_id IS NULL OR v_market !~ '^[A-Z]{2}$' THEN
-    RETURN jsonb_build_object('eligible',false,'reason','invalid_commercial_compatibility_input','interfaceVersion',2);
-  END IF;
-
-  SELECT * INTO v_supplier
-  FROM private.supplier_foundation_suppliers
-  WHERE id=p_supplier_id AND lifecycle_status='approved';
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('eligible',false,'reason','approved_supplier_not_found','supplierId',p_supplier_id,'marketCode',v_market,'interfaceVersion',2);
-  END IF;
-
-  SELECT * INTO v_control
-  FROM private.supplier_marketplace_commercial_controls
-  WHERE market_code=v_market;
-  IF NOT FOUND OR v_control.status<>'verified' OR v_control.checkout_enabled IS DISTINCT FROM true THEN
-    RETURN jsonb_build_object('eligible',false,'reason','market_commercial_control_not_ready','supplierId',p_supplier_id,'marketCode',v_market,'interfaceVersion',2);
-  END IF;
-
-  SELECT * INTO v_profile
-  FROM private.supplier_commercial_profiles
-  WHERE supplier_id=p_supplier_id
-    AND market_code=v_market
-    AND status='verified'
-    AND effective_from<=now()
-    AND (effective_to IS NULL OR effective_to>now())
-  ORDER BY version DESC
-  LIMIT 1;
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('eligible',false,'reason','verified_supplier_commercial_profile_missing','supplierId',p_supplier_id,'marketCode',v_market,'interfaceVersion',2);
-  END IF;
-
-  IF v_profile.seller_of_record_party <> ALL(v_control.allowed_seller_of_record_parties) THEN
-    RETURN jsonb_build_object('eligible',false,'reason','seller_of_record_model_not_allowed','sellerOfRecordParty',v_profile.seller_of_record_party,'interfaceVersion',2);
-  END IF;
-  IF v_profile.merchant_of_record_party <> ALL(v_control.allowed_merchant_of_record_parties) THEN
-    RETURN jsonb_build_object('eligible',false,'reason','merchant_of_record_model_not_allowed','merchantOfRecordParty',v_profile.merchant_of_record_party,'interfaceVersion',2);
-  END IF;
-  IF v_profile.settlement_model <> ALL(v_control.allowed_settlement_models) THEN
-    RETURN jsonb_build_object('eligible',false,'reason','settlement_model_not_allowed','settlementModel',v_profile.settlement_model,'interfaceVersion',2);
-  END IF;
-
-  IF v_profile.seller_of_record_party='third_party'
-     AND NULLIF(BTRIM(v_profile.role_bindings->>'sellerOfRecordName'),'') IS NULL THEN
-    RETURN jsonb_build_object('eligible',false,'reason','third_party_seller_identity_missing','interfaceVersion',2);
-  END IF;
-  IF v_profile.invoice_issuer_party='third_party'
-     AND NULLIF(BTRIM(v_profile.role_bindings->>'invoiceIssuerName'),'') IS NULL THEN
-    RETURN jsonb_build_object('eligible',false,'reason','third_party_invoice_issuer_missing','interfaceVersion',2);
-  END IF;
-
-  v_seller_name:=CASE v_profile.seller_of_record_party
-    WHEN 'supplier' THEN COALESCE(NULLIF(BTRIM(v_supplier.legal_name),''),v_supplier.display_name)
-    WHEN 'loadify' THEN 'Loadify Market / XDrive Logistics Ltd'
-    WHEN 'marketplace_seller' THEN NULLIF(BTRIM(v_profile.role_bindings->>'marketplaceSellerName'),'')
-    WHEN 'third_party' THEN NULLIF(BTRIM(v_profile.role_bindings->>'sellerOfRecordName'),'')
-    ELSE NULL
-  END;
-  IF v_seller_name IS NULL THEN
-    RETURN jsonb_build_object('eligible',false,'reason','seller_identity_binding_missing','interfaceVersion',2);
-  END IF;
-
-  RETURN jsonb_build_object(
-    'eligible',true,
-    'reason','supplier_commercial_compatibility_ready',
-    'supplierId',v_supplier.id,
-    'supplierKey',v_supplier.supplier_key,
-    'marketCode',v_market,
-    'profileId',v_profile.id,
-    'profileVersion',v_profile.version,
-    'sellerOfRecordParty',v_profile.seller_of_record_party,
-    'sellerOfRecordName',v_seller_name,
-    'invoiceIssuerParty',v_profile.invoice_issuer_party,
-    'merchantOfRecordParty',v_profile.merchant_of_record_party,
-    'inventoryOwnerParty',v_profile.inventory_owner_party,
-    'fulfilmentParty',v_profile.fulfilment_party,
-    'customerServiceParty',v_profile.customer_service_party,
-    'settlementModel',v_profile.settlement_model,
-    'pricingModel',v_profile.pricing_model,
-    'roleBindings',v_profile.role_bindings,
-    'interfaceVersion',2
-  );
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.server_supplier_commercial_compatibility_readiness_v2(uuid,text)
-FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.server_supplier_commercial_compatibility_readiness_v2(uuid,text)
-TO service_role;
-
-COMMENT ON FUNCTION public.server_supplier_commercial_compatibility_readiness_v2(uuid,text) IS
-'Fail-closed per-supplier commercial compatibility readiness. Supports supplier-, Loadify-, marketplace-seller- or reviewed third-party seller/invoice/merchant/fulfilment roles without supplier-specific code forks.';
 -- Complete role matrix: payment, returns and cancellation authority are independent
 -- from seller/invoice/merchant identity and are contract-configurable.
 ALTER TABLE private.supplier_commercial_profiles
@@ -664,3 +576,164 @@ GRANT EXECUTE ON FUNCTION public.server_prepare_supplier_checkout_selected_offer
 COMMENT ON FUNCTION public.server_prepare_supplier_checkout_selected_offer_v2(
   uuid,uuid,uuid,integer,jsonb,jsonb,text,text,uuid
 ) IS 'Creates supplier-commerce orders from a reviewed configurable commercial role contract. Seller, invoice issuer, merchant/payment recipient, inventory owner, fulfilment and service roles are snapshotted independently. No provider order or payment is created here.';
+
+-- Admin governance: configure commercial compatibility without direct private-table writes.
+-- Creating/verifying a profile does not enable market checkout or Supplier Commerce controls.
+CREATE OR REPLACE FUNCTION public.server_admin_supplier_commercial_compatibility_v2(
+  p_actor_id uuid,
+  p_action text,
+  p_payload jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+DECLARE
+  v_action text:=lower(BTRIM(COALESCE(p_action,'')));
+  v_payload jsonb:=COALESCE(p_payload,'{}'::jsonb);
+  v_supplier_id uuid;
+  v_profile_id uuid;
+  v_market text;
+  v_version integer;
+  v_profile private.supplier_commercial_profiles%ROWTYPE;
+  v_control private.supplier_marketplace_commercial_controls%ROWTYPE;
+  v_evidence jsonb;
+  v_arr text[];
+BEGIN
+  PERFORM private.require_active_admin_v1(p_actor_id);
+  IF jsonb_typeof(v_payload)<>'object' THEN RAISE EXCEPTION 'payload must be an object'; END IF;
+
+  IF v_action='create_profile_draft' THEN
+    v_supplier_id:=NULLIF(v_payload->>'supplierId','')::uuid;
+    v_market:=upper(BTRIM(COALESCE(v_payload->>'marketCode','')));
+    IF v_supplier_id IS NULL OR v_market !~ '^[A-Z]{2}$' THEN
+      RAISE EXCEPTION 'supplierId and valid marketCode are required';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM private.supplier_foundation_suppliers WHERE id=v_supplier_id) THEN
+      RAISE EXCEPTION 'supplier not found';
+    END IF;
+    IF NULLIF(BTRIM(v_payload->>'pricingModel'),'') IS NULL
+       OR NULLIF(BTRIM(v_payload->>'settlementModel'),'') IS NULL
+       OR NULLIF(BTRIM(v_payload->>'settlementTrigger'),'') IS NULL
+       OR NULLIF(BTRIM(v_payload->>'supplierPayableBasis'),'') IS NULL
+       OR NULLIF(BTRIM(v_payload->>'reason'),'') IS NULL THEN
+      RAISE EXCEPTION 'pricingModel, settlementModel, settlementTrigger, supplierPayableBasis and reason are required';
+    END IF;
+
+    SELECT COALESCE(MAX(version),0)+1 INTO v_version
+    FROM private.supplier_commercial_profiles
+    WHERE supplier_id=v_supplier_id AND market_code=v_market;
+
+    INSERT INTO private.supplier_commercial_profiles(
+      supplier_id,market_code,version,status,
+      pricing_model,supplier_price_basis,supplier_price_floor,supplier_recommended_retail,supplier_fixed_retail,
+      loadify_may_set_retail,supplier_approval_required_for_retail,
+      platform_commission_type,platform_commission_value,platform_commission_effective_until,
+      processor_fee_payer,connect_fee_payer,payout_fee_payer,
+      settlement_model,settlement_trigger,settlement_minimum_amount,settlement_currency,
+      supplier_payable_basis,supplier_payable_fixed_amount,supplier_payable_formula,settlement_schedule,
+      change_of_mind_return_postage_payer,faulty_item_return_postage_payer,wrong_item_return_postage_payer,
+      damaged_in_fulfilment_postage_payer,pre_dispatch_cancellation_cost_payer,post_dispatch_cancellation_cost_payer,
+      chargeback_allocation_model,platform_error_cost_payer,
+      manual_ordering_allowed,electronic_ordering_allowed,tracking_required,returns_supported,
+      seller_of_record_party,invoice_issuer_party,merchant_of_record_party,payment_recipient_party,
+      inventory_owner_party,fulfilment_party,customer_service_party,returns_authority_party,cancellation_authority_party,
+      role_bindings,evidence,reason
+    ) VALUES(
+      v_supplier_id,v_market,v_version,'draft',
+      BTRIM(v_payload->>'pricingModel'),COALESCE(NULLIF(BTRIM(v_payload->>'supplierPriceBasis'),''),'trade_price'),
+      NULLIF(v_payload->>'supplierPriceFloor','')::numeric,NULLIF(v_payload->>'supplierRecommendedRetail','')::numeric,NULLIF(v_payload->>'supplierFixedRetail','')::numeric,
+      COALESCE(NULLIF(v_payload->>'loadifyMaySetRetail','')::boolean,false),COALESCE(NULLIF(v_payload->>'supplierApprovalRequiredForRetail','')::boolean,true),
+      COALESCE(NULLIF(BTRIM(v_payload->>'platformCommissionType'),''),'percentage'),COALESCE(NULLIF(v_payload->>'platformCommissionValue','')::numeric,0),
+      NULLIF(v_payload->>'platformCommissionEffectiveUntil','')::timestamptz,
+      COALESCE(NULLIF(BTRIM(v_payload->>'processorFeePayer'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'connectFeePayer'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'payoutFeePayer'),''),'supplier'),
+      BTRIM(v_payload->>'settlementModel'),BTRIM(v_payload->>'settlementTrigger'),COALESCE(NULLIF(v_payload->>'settlementMinimumAmount','')::numeric,0),COALESCE(NULLIF(BTRIM(v_payload->>'settlementCurrency'),''),'GBP'),
+      BTRIM(v_payload->>'supplierPayableBasis'),NULLIF(v_payload->>'supplierPayableFixedAmount','')::numeric,v_payload->'supplierPayableFormula',NULLIF(BTRIM(v_payload->>'settlementSchedule'),''),
+      COALESCE(NULLIF(BTRIM(v_payload->>'changeOfMindReturnPostagePayer'),''),'buyer_when_lawful'),COALESCE(NULLIF(BTRIM(v_payload->>'faultyItemReturnPostagePayer'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'wrongItemReturnPostagePayer'),''),'supplier'),
+      COALESCE(NULLIF(BTRIM(v_payload->>'damagedInFulfilmentPostagePayer'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'preDispatchCancellationCostPayer'),''),'supplier_if_cost_incurred'),COALESCE(NULLIF(BTRIM(v_payload->>'postDispatchCancellationCostPayer'),''),'buyer_when_lawful'),
+      COALESCE(NULLIF(BTRIM(v_payload->>'chargebackAllocationModel'),''),'evidence_attribution'),'loadify',
+      COALESCE(NULLIF(v_payload->>'manualOrderingAllowed','')::boolean,true),COALESCE(NULLIF(v_payload->>'electronicOrderingAllowed','')::boolean,false),COALESCE(NULLIF(v_payload->>'trackingRequired','')::boolean,true),COALESCE(NULLIF(v_payload->>'returnsSupported','')::boolean,true),
+      COALESCE(NULLIF(BTRIM(v_payload->>'sellerOfRecordParty'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'invoiceIssuerParty'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'merchantOfRecordParty'),''),'loadify'),COALESCE(NULLIF(BTRIM(v_payload->>'paymentRecipientParty'),''),'loadify'),
+      COALESCE(NULLIF(BTRIM(v_payload->>'inventoryOwnerParty'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'fulfilmentParty'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'customerServiceParty'),''),'shared'),COALESCE(NULLIF(BTRIM(v_payload->>'returnsAuthorityParty'),''),'supplier'),COALESCE(NULLIF(BTRIM(v_payload->>'cancellationAuthorityParty'),''),'shared'),
+      COALESCE(v_payload->'roleBindings','{}'::jsonb),COALESCE(v_payload->'evidence','{}'::jsonb),BTRIM(v_payload->>'reason')
+    ) RETURNING * INTO v_profile;
+
+    RETURN jsonb_build_object('ok',true,'action',v_action,'profileId',v_profile.id,'version',v_profile.version,'status',v_profile.status,'checkoutEnabledByThisAction',false,'interfaceVersion',2);
+  END IF;
+
+  IF v_action='verify_profile' THEN
+    v_profile_id:=NULLIF(v_payload->>'profileId','')::uuid;
+    v_evidence:=COALESCE(v_payload->'evidence','{}'::jsonb);
+    IF v_profile_id IS NULL OR v_evidence='{}'::jsonb OR NULLIF(BTRIM(v_payload->>'reason'),'') IS NULL THEN
+      RAISE EXCEPTION 'profileId, non-empty evidence and reason are required';
+    END IF;
+    SELECT * INTO v_profile FROM private.supplier_commercial_profiles WHERE id=v_profile_id FOR UPDATE;
+    IF NOT FOUND OR v_profile.status<>'draft' THEN RAISE EXCEPTION 'draft commercial profile is required'; END IF;
+
+    UPDATE private.supplier_commercial_profiles
+    SET status='retired',effective_to=now()
+    WHERE supplier_id=v_profile.supplier_id AND market_code=v_profile.market_code
+      AND status='verified' AND effective_to IS NULL;
+
+    UPDATE private.supplier_commercial_profiles
+    SET status='verified',evidence=v_evidence,reason=BTRIM(v_payload->>'reason'),reviewed_by=p_actor_id,reviewed_at=now()
+    WHERE id=v_profile_id RETURNING * INTO v_profile;
+
+    RETURN jsonb_build_object('ok',true,'action',v_action,'profileId',v_profile.id,'version',v_profile.version,'status',v_profile.status,'checkoutEnabledByThisAction',false,'interfaceVersion',2);
+  END IF;
+
+  IF v_action='retire_profile' THEN
+    v_profile_id:=NULLIF(v_payload->>'profileId','')::uuid;
+    IF v_profile_id IS NULL OR NULLIF(BTRIM(v_payload->>'reason'),'') IS NULL THEN
+      RAISE EXCEPTION 'profileId and reason are required';
+    END IF;
+    UPDATE private.supplier_commercial_profiles
+    SET status='retired',effective_to=COALESCE(effective_to,now()),reason=BTRIM(v_payload->>'reason')
+    WHERE id=v_profile_id AND status IN ('draft','verified','suspended') RETURNING * INTO v_profile;
+    IF NOT FOUND THEN RAISE EXCEPTION 'active commercial profile not found'; END IF;
+    RETURN jsonb_build_object('ok',true,'action',v_action,'profileId',v_profile.id,'status',v_profile.status,'checkoutEnabledByThisAction',false,'interfaceVersion',2);
+  END IF;
+
+  IF v_action='configure_market_policy' THEN
+    v_market:=upper(BTRIM(COALESCE(v_payload->>'marketCode','')));
+    IF v_market !~ '^[A-Z]{2}$' THEN RAISE EXCEPTION 'valid marketCode is required'; END IF;
+    SELECT * INTO v_control FROM private.supplier_marketplace_commercial_controls WHERE market_code=v_market FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'market commercial control not found'; END IF;
+    IF v_control.checkout_enabled THEN
+      RAISE EXCEPTION 'market commercial policy cannot be changed while checkout is enabled';
+    END IF;
+    IF COALESCE(NULLIF(v_payload->>'adaptiveModelEnabled','')::boolean,false) IS DISTINCT FROM true THEN
+      RAISE EXCEPTION 'adaptiveModelEnabled=true is required for universal commercial compatibility policy';
+    END IF;
+
+    UPDATE private.supplier_marketplace_commercial_controls SET
+      adaptive_model_enabled=true,
+      allowed_seller_of_record_parties=CASE WHEN jsonb_typeof(v_payload->'allowedSellerOfRecordParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedSellerOfRecordParties')) ELSE allowed_seller_of_record_parties END,
+      allowed_invoice_issuer_parties=CASE WHEN jsonb_typeof(v_payload->'allowedInvoiceIssuerParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedInvoiceIssuerParties')) ELSE allowed_invoice_issuer_parties END,
+      allowed_merchant_of_record_parties=CASE WHEN jsonb_typeof(v_payload->'allowedMerchantOfRecordParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedMerchantOfRecordParties')) ELSE allowed_merchant_of_record_parties END,
+      allowed_payment_recipient_parties=CASE WHEN jsonb_typeof(v_payload->'allowedPaymentRecipientParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedPaymentRecipientParties')) ELSE allowed_payment_recipient_parties END,
+      allowed_inventory_owner_parties=CASE WHEN jsonb_typeof(v_payload->'allowedInventoryOwnerParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedInventoryOwnerParties')) ELSE allowed_inventory_owner_parties END,
+      allowed_fulfilment_parties=CASE WHEN jsonb_typeof(v_payload->'allowedFulfilmentParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedFulfilmentParties')) ELSE allowed_fulfilment_parties END,
+      allowed_customer_service_parties=CASE WHEN jsonb_typeof(v_payload->'allowedCustomerServiceParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedCustomerServiceParties')) ELSE allowed_customer_service_parties END,
+      allowed_returns_authority_parties=CASE WHEN jsonb_typeof(v_payload->'allowedReturnsAuthorityParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedReturnsAuthorityParties')) ELSE allowed_returns_authority_parties END,
+      allowed_cancellation_authority_parties=CASE WHEN jsonb_typeof(v_payload->'allowedCancellationAuthorityParties')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedCancellationAuthorityParties')) ELSE allowed_cancellation_authority_parties END,
+      allowed_settlement_models=CASE WHEN jsonb_typeof(v_payload->'allowedSettlementModels')='array' THEN ARRAY(SELECT jsonb_array_elements_text(v_payload->'allowedSettlementModels')) ELSE allowed_settlement_models END,
+      reason=COALESCE(NULLIF(BTRIM(v_payload->>'reason'),''),reason),
+      updated_at=now()
+    WHERE market_code=v_market RETURNING * INTO v_control;
+
+    RETURN jsonb_build_object('ok',true,'action',v_action,'marketCode',v_market,'adaptiveModelEnabled',v_control.adaptive_model_enabled,'checkoutEnabled',v_control.checkout_enabled,'checkoutEnabledByThisAction',false,'interfaceVersion',2);
+  END IF;
+
+  RAISE EXCEPTION 'unsupported commercial compatibility action';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.server_admin_supplier_commercial_compatibility_v2(uuid,text,jsonb)
+FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.server_admin_supplier_commercial_compatibility_v2(uuid,text,jsonb)
+TO service_role;
+
+COMMENT ON FUNCTION public.server_admin_supplier_commercial_compatibility_v2(uuid,text,jsonb) IS
+'Admin-only commercial compatibility configuration. Profiles and allowed-role policy can be reviewed/configured without enabling checkout or global Supplier Commerce. Market policy mutation is blocked while checkout is enabled.';

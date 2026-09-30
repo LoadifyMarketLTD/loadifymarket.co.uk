@@ -34,6 +34,8 @@ describe("universal commercial compatibility", () => {
   it("does not enable checkout or rewrite historical orders", () => {
     expect(migration).not.toContain("UPDATE public.orders");
     expect(migration).not.toContain("SET checkout_enabled=true");
-    expect(migration).not.toContain("UPDATE private.supplier_marketplace_commercial_controls");
+    expect(migration).toContain("checkoutEnabledByThisAction',false");
+    expect(migration).toContain("market commercial policy cannot be changed while checkout is enabled");
+    expect(migration).not.toContain("SET status='verified',checkout_enabled=true");
   });
 });
