@@ -32,6 +32,7 @@ export const handler: Handler = async (event) => {
     && !!commercialReadiness
     && commercialReadiness.eligible === true;
   const supplierIdentityCache = new Map<string, { displayName: string; legalName: string }>();
+  const commercialCompatibilityCache = new Map<string, Record<string, unknown>>();
 
   const items = [];
   for (const row of rows || []) {
@@ -42,6 +43,19 @@ export const handler: Handler = async (event) => {
     });
     const selected = selection.selected;
     if (!selection.eligible || !selected) continue;
+
+    let commercialCompatibility = commercialCompatibilityCache.get(selected.supplierId);
+    if (!commercialCompatibility) {
+      const { data: compatibility, error: compatibilityError } = await admin.rpc(
+        "server_supplier_commercial_compatibility_readiness_v2",
+        { p_supplier_id: selected.supplierId, p_market_code: market },
+      );
+      commercialCompatibility = !compatibilityError && compatibility
+        ? compatibility as Record<string, unknown>
+        : { eligible: false, reason: "supplier_commercial_compatibility_not_ready" };
+      commercialCompatibilityCache.set(selected.supplierId, commercialCompatibility);
+    }
+    const supplierCommercialReady = commercialCompatibility.eligible === true;
 
     let supplierIdentity = supplierIdentityCache.get(selected.supplierId);
     if (!supplierIdentity) {
@@ -76,9 +90,23 @@ export const handler: Handler = async (event) => {
       currency: selected.currency,
       availability: (selected.sellableQuantity ?? 0) > 0 ? "in_stock" : "out_of_stock",
       sellableQuantity: selected.sellableQuantity,
-      fulfilmentLabel: "Sold and dispatched by approved supplier",
-      checkoutEligible: commercialModelReady,
-      checkoutBlockReason: commercialModelReady ? null : "SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY",
+      fulfilmentLabel: commercialCompatibility.fulfilmentParty === "supplier"
+        ? "Fulfilled by approved supplier"
+        : "Fulfilment under approved commercial contract",
+      checkoutEligible: commercialModelReady && supplierCommercialReady,
+      checkoutBlockReason: !commercialModelReady
+        ? "SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY"
+        : supplierCommercialReady ? null : "SUPPLIER_COMMERCIAL_COMPATIBILITY_NOT_READY",
+      sellerOfRecordParty: commercialCompatibility.sellerOfRecordParty ?? null,
+      sellerOfRecordName: commercialCompatibility.sellerOfRecordName ?? null,
+      invoiceIssuerParty: commercialCompatibility.invoiceIssuerParty ?? null,
+      invoiceIssuerName: commercialCompatibility.invoiceIssuerName ?? null,
+      merchantOfRecordParty: commercialCompatibility.merchantOfRecordParty ?? null,
+      merchantOfRecordName: commercialCompatibility.merchantOfRecordName ?? null,
+      paymentRecipientParty: commercialCompatibility.paymentRecipientParty ?? null,
+      paymentRecipientName: commercialCompatibility.paymentRecipientName ?? null,
+      fulfilmentParty: commercialCompatibility.fulfilmentParty ?? null,
+      customerServiceParty: commercialCompatibility.customerServiceParty ?? null,
       supplierId: selected.supplierId,
       supplierName: supplierIdentity?.displayName || "Independent supplier",
       supplierLegalName: supplierIdentity?.legalName || supplierIdentity?.displayName || "Independent supplier",

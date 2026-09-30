@@ -20,7 +20,8 @@ describe("Loadify Supplier-Fulfilled checkout preparation boundary", () => {
     expect(endpoint).toContain("evaluateProjectionSupplierOffers");
     expect(endpoint).toContain("evaluateSupplierCheckoutGuard");
     expect(endpoint).toContain("selectedOffer.externalVariantRef");
-    expect(endpoint).toContain("server_prepare_supplier_checkout_selected_offer_v1");
+    expect(endpoint).toContain("server_prepare_supplier_checkout_selected_offer_v2");
+    expect(endpoint).toContain("server_supplier_commercial_compatibility_readiness_v2");
     expect(multiOfferMigration).toContain("server_reserve_supplier_offer_v1");
     expect(multiOfferMigration).toContain("v_catalog_item.external_variant_ref");
     expect(multiOfferMigration).toContain('"supplierExternalVariantRefSnapshot"');

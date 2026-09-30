@@ -106,6 +106,23 @@ export const handler: Handler = async (event) => {
     }, METHODS);
   }
 
+  const { data: commercialCompatibility, error: commercialCompatibilityError } = await admin.rpc(
+    "server_supplier_commercial_compatibility_readiness_v2",
+    {
+      p_supplier_id: selectedOffer.supplierId,
+      p_market_code: requestedMarket,
+    },
+  );
+  if (commercialCompatibilityError || !commercialCompatibility || commercialCompatibility.eligible !== true) {
+    return jsonResponse(409, {
+      error: "Selected supplier commercial model is not compatible with the reviewed market configuration",
+      code: "SUPPLIER_COMMERCIAL_COMPATIBILITY_NOT_READY",
+      supplierId: selectedOffer.supplierId,
+      marketCode: requestedMarket,
+      commercialCompatibility: commercialCompatibility ?? null,
+      paymentSessionCreated: false,
+    }, METHODS);
+  }
   const { data: supplierCommercialProfile, error: supplierCommercialProfileError } = await admin.rpc(
     "server_supplier_commercial_profile_readiness_v1",
     {
@@ -144,7 +161,7 @@ export const handler: Handler = async (event) => {
   const reservationKey = `supplier-checkout:${auth.actor.id}:${projectionId}:${checkoutAttemptId}`;
   const orchestrationKey = `supplier-order:${auth.actor.id}:${projectionId}:${checkoutAttemptId}`;
 
-  const { data, error } = await admin.rpc("server_prepare_supplier_checkout_selected_offer_v1", {
+  const { data, error } = await admin.rpc("server_prepare_supplier_checkout_selected_offer_v2", {
     p_buyer_id: auth.actor.id,
     p_projection_id: projectionId,
     p_supplier_offer_id: selectedOffer.supplierOfferId,
@@ -177,6 +194,19 @@ export const handler: Handler = async (event) => {
     supplierCommercialProfileVersion: supplierCommercialProfile.version,
     supplierPricingModel: supplierCommercialProfile.pricingModel,
     supplierSettlementModel: supplierCommercialProfile.settlementModel,
+    sellerOfRecordParty: commercialCompatibility.sellerOfRecordParty,
+    sellerOfRecordName: commercialCompatibility.sellerOfRecordName,
+    invoiceIssuerParty: commercialCompatibility.invoiceIssuerParty,
+    invoiceIssuerName: commercialCompatibility.invoiceIssuerName,
+    merchantOfRecordParty: commercialCompatibility.merchantOfRecordParty,
+    merchantOfRecordName: commercialCompatibility.merchantOfRecordName,
+    paymentRecipientParty: commercialCompatibility.paymentRecipientParty,
+    paymentRecipientName: commercialCompatibility.paymentRecipientName,
+    inventoryOwnerParty: commercialCompatibility.inventoryOwnerParty,
+    fulfilmentParty: commercialCompatibility.fulfilmentParty,
+    customerServiceParty: commercialCompatibility.customerServiceParty,
+    returnsAuthorityParty: commercialCompatibility.returnsAuthorityParty,
+    cancellationAuthorityParty: commercialCompatibility.cancellationAuthorityParty,
     nextGate: "supplier_marketplace_payment_session",
   }, METHODS);
 };
