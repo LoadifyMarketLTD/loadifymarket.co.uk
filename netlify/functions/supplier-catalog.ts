@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Handler } from "@netlify/functions";
 import { jsonResponse, optionsResponse } from "./_shared/http";
-import { evaluateProjectionSupplierOffers } from "./_shared/supplierOfferSelectionRuntime";
+import {
+  evaluateProjectionSupplierCatalogOffers,
+  evaluateProjectionSupplierOffers,
+} from "./_shared/supplierOfferSelectionRuntime";
 
 const METHODS = "GET, OPTIONS";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -35,12 +38,23 @@ export const handler: Handler = async (event) => {
   const commercialCompatibilityCache = new Map<string, Record<string, unknown>>();
 
   const items = [];
+  let hasCatalogDisplayOnly = false;
   for (const row of rows || []) {
-    const selection = await evaluateProjectionSupplierOffers(admin, {
-      projectionId: row.id,
-      requestedQuantity: 1,
-      territory: market,
-    });
+    const payload = row.projection_payload as Record<string, unknown>;
+    const catalogDisplayOnly = payload.catalogDisplayOnly === true && payload.checkoutEnabled === false;
+    if (catalogDisplayOnly) hasCatalogDisplayOnly = true;
+
+    const selection = catalogDisplayOnly
+      ? await evaluateProjectionSupplierCatalogOffers(admin, {
+          projectionId: row.id,
+          requestedQuantity: 1,
+          territory: market,
+        })
+      : await evaluateProjectionSupplierOffers(admin, {
+          projectionId: row.id,
+          requestedQuantity: 1,
+          territory: market,
+        });
     const selected = selection.selected;
     if (!selection.eligible || !selected) continue;
 
@@ -72,7 +86,6 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    const payload = row.projection_payload as Record<string, unknown>;
     const imageUrls = Array.isArray(payload.imageUrls)
       ? payload.imageUrls.filter((value): value is string => typeof value === "string" && value.startsWith("https://")).slice(0, 12)
       : [];
@@ -88,15 +101,23 @@ export const handler: Handler = async (event) => {
       imageUrls,
       price: selected.grossCustomerPrice,
       currency: selected.currency,
-      availability: (selected.sellableQuantity ?? 0) > 0 ? "in_stock" : "out_of_stock",
-      sellableQuantity: selected.sellableQuantity,
-      fulfilmentLabel: commercialCompatibility.fulfilmentParty === "supplier"
-        ? "Fulfilled by approved supplier"
-        : "Fulfilment under approved commercial contract",
-      checkoutEligible: commercialModelReady && supplierCommercialReady,
-      checkoutBlockReason: !commercialModelReady
-        ? "SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY"
-        : supplierCommercialReady ? null : "SUPPLIER_COMMERCIAL_COMPATIBILITY_NOT_READY",
+      availability: catalogDisplayOnly
+        ? "out_of_stock"
+        : (selected.sellableQuantity ?? 0) > 0 ? "in_stock" : "out_of_stock",
+      sellableQuantity: catalogDisplayOnly ? 0 : selected.sellableQuantity,
+      fulfilmentLabel: catalogDisplayOnly
+        ? (typeof payload.fulfilmentProvider === "string"
+            ? `Fulfilled by ${payload.fulfilmentProvider}`
+            : "Supplier fulfilled")
+        : commercialCompatibility.fulfilmentParty === "supplier"
+          ? "Fulfilled by approved supplier"
+          : "Fulfilment under approved commercial contract",
+      checkoutEligible: catalogDisplayOnly ? false : commercialModelReady && supplierCommercialReady,
+      checkoutBlockReason: catalogDisplayOnly
+        ? "CATALOG_DISPLAY_ONLY"
+        : !commercialModelReady
+          ? "SUPPLIER_MARKETPLACE_COMMERCIAL_MODEL_NOT_READY"
+          : supplierCommercialReady ? null : "SUPPLIER_COMMERCIAL_COMPATIBILITY_NOT_READY",
       sellerOfRecordParty: commercialCompatibility.sellerOfRecordParty ?? null,
       sellerOfRecordName: commercialCompatibility.sellerOfRecordName ?? null,
       invoiceIssuerParty: commercialCompatibility.invoiceIssuerParty ?? null,
@@ -122,7 +143,7 @@ export const handler: Handler = async (event) => {
     count: items.length,
     territory: market,
     commercialMode: "loadify_supplier_fulfilled",
-    inventoryAndPriceRevalidated: true,
+    inventoryAndPriceRevalidated: !hasCatalogDisplayOnly,
     commercialModelReady,
     commercialReadiness: commercialReadiness ?? null,
   }, METHODS);
