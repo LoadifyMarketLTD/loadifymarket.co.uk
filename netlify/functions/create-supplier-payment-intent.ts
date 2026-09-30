@@ -72,7 +72,7 @@ export const handler: Handler = async (event) => {
 
   if (
     !order.supplierSellerIdSnapshot
-    || order.supplierCommercialContractVersion !== 1
+    || ![1, 2].includes(order.supplierCommercialContractVersion)
     || !order.supplierCommercialProfileIdSnapshot
     || !Number.isInteger(order.supplierCommercialProfileVersionSnapshot)
     || order.supplierCommercialProfileVersionSnapshot < 1
@@ -84,6 +84,22 @@ export const handler: Handler = async (event) => {
     }, METHODS);
   }
 
+  const { data: commercialCompatibility, error: commercialCompatibilityError } = await admin.rpc(
+    "server_supplier_commercial_compatibility_readiness_v2",
+    {
+      p_supplier_id: order.supplierSellerIdSnapshot,
+      p_market_code: orderMarket,
+    },
+  );
+  if (commercialCompatibilityError || !commercialCompatibility || commercialCompatibility.eligible !== true) {
+    return jsonResponse(409, {
+      error: "Supplier payment is blocked until the selected commercial role model is verified",
+      code: "SUPPLIER_COMMERCIAL_COMPATIBILITY_NOT_READY",
+      supplierId: order.supplierSellerIdSnapshot,
+      marketCode: orderMarket,
+      commercialCompatibility: commercialCompatibility ?? null,
+    }, METHODS);
+  }
   const { data: supplierCommercialProfile, error: supplierCommercialProfileError } = await admin.rpc(
     "server_supplier_commercial_profile_snapshot_v1",
     {
@@ -104,14 +120,16 @@ export const handler: Handler = async (event) => {
   }
 
   if (
-    supplierCommercialProfile.settlementModel !== commercialReadiness.settlementModel
+    supplierCommercialProfile.settlementModel !== commercialCompatibility.settlementModel
     || supplierCommercialProfile.settlementModel !== order.supplierSettlementModelSnapshot
+    || supplierCommercialProfile.profileId !== commercialCompatibility.profileId
+    || supplierCommercialProfile.version !== commercialCompatibility.profileVersion
   ) {
     return jsonResponse(409, {
       error: "Supplier settlement contract does not match the reviewed market settlement model",
       code: "SUPPLIER_SETTLEMENT_MODEL_MISMATCH",
       supplierSettlementModel: supplierCommercialProfile.settlementModel,
-      marketSettlementModel: commercialReadiness.settlementModel,
+      marketSettlementModel: commercialCompatibility.settlementModel,
     }, METHODS);
   }
 
@@ -133,8 +151,16 @@ export const handler: Handler = async (event) => {
         amountPence: existingIntent.amount,
         currency: order.currency,
         marketplaceOperator: "Loadify Market",
-        supplierIsSellerOfRecord: true,
-        settlementModel: commercialReadiness.settlementModel,
+        supplierIsSellerOfRecord: commercialCompatibility.sellerOfRecordParty === "supplier",
+        sellerOfRecordParty: commercialCompatibility.sellerOfRecordParty,
+        sellerOfRecordName: commercialCompatibility.sellerOfRecordName,
+        invoiceIssuerParty: commercialCompatibility.invoiceIssuerParty,
+        invoiceIssuerName: commercialCompatibility.invoiceIssuerName,
+        merchantOfRecordParty: commercialCompatibility.merchantOfRecordParty,
+        merchantOfRecordName: commercialCompatibility.merchantOfRecordName,
+        paymentRecipientParty: commercialCompatibility.paymentRecipientParty,
+        paymentRecipientName: commercialCompatibility.paymentRecipientName,
+        settlementModel: commercialCompatibility.settlementModel,
         supplierCommercialProfileId: supplierCommercialProfile.profileId,
         supplierCommercialProfileVersion: supplierCommercialProfile.version,
         pricingModel: supplierCommercialProfile.pricingModel,
@@ -223,8 +249,16 @@ export const handler: Handler = async (event) => {
     amountPence,
     currency: order.currency,
     marketplaceOperator: "Loadify Market",
-    supplierIsSellerOfRecord: true,
-    settlementModel: commercialReadiness.settlementModel,
+    supplierIsSellerOfRecord: commercialCompatibility.sellerOfRecordParty === "supplier",
+    sellerOfRecordParty: commercialCompatibility.sellerOfRecordParty,
+    sellerOfRecordName: commercialCompatibility.sellerOfRecordName,
+    invoiceIssuerParty: commercialCompatibility.invoiceIssuerParty,
+    invoiceIssuerName: commercialCompatibility.invoiceIssuerName,
+    merchantOfRecordParty: commercialCompatibility.merchantOfRecordParty,
+    merchantOfRecordName: commercialCompatibility.merchantOfRecordName,
+    paymentRecipientParty: commercialCompatibility.paymentRecipientParty,
+    paymentRecipientName: commercialCompatibility.paymentRecipientName,
+    settlementModel: commercialCompatibility.settlementModel,
     supplierCommercialProfileId: supplierCommercialProfile.profileId,
     supplierCommercialProfileVersion: supplierCommercialProfile.version,
     pricingModel: supplierCommercialProfile.pricingModel,
