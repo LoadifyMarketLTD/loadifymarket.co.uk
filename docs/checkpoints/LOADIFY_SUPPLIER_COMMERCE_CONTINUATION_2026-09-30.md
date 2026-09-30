@@ -58,3 +58,25 @@ Puckator, Treat Pod, Contrado, Julian Bowen, Furniture To Go and The Carat Shop 
 Tradeprint remains OWNER-PAUSED and was not touched.
 
 Operating rule remains VERIFY -> DECIDE IF EVIDENCE IS SUFFICIENT -> EXECUTE -> VERIFY AGAIN. Fail closed; no paid tests or publication without required evidence and approval.
+
+## Capability evidence alignment — later 2026-09-30 continuation
+
+Supplier capability evidence was aligned in production without enabling acquisition, checkout, publication or payments.
+
+### Inkthreadable
+
+Onboarding requested capabilities now reflect the confirmed transactional scope: supplier identity, catalogue, variants, stock, price, shipping, order submission, acknowledgement, tracking and cancellation.
+Acknowledgement/status and tracking are verified as automated-read capabilities.
+Order submission and cancellation are deliberately BLOCKED/manual-only at capability-execution level because provider idempotency and lost-response recovery semantics remain unverified. The database write-safety constraint correctly rejected an attempted verified automated-write state until those controls are known.
+Current 2-4 product preflight is narrowed around directly observable official product pages. Exact staged SKU matches were verified for MUG-CER-WHI, JH001-BUPI-M, GD05-WHI-M and STTU169-NRW-M. Public supplier prices are observations only and were not promoted into publication pricing snapshots.
+
+### Costway UK
+
+Capability evidence now records manual B2B order-template submission and manual B2B tracking as verified.
+Catalogue, stock and price capabilities remain BLOCKED until the promised daily CSV is actually issued after cooperation/application, and its delivery method/schema/authoritative fields are verified.
+
+### Leaf Design UK
+
+Capability evidence now records the supplier-confirmed hourly CSV catalogue/stock/price capabilities as automated-read capabilities, while acquisition remains disabled.
+Order submission, tracking and returns are verified only as manual workflows.
+The retailer/reseller legal incompatibility with current Loadify Buyer Terms remains the blocking gate; no membership, commercial-profile approval or publication was performed.
