@@ -177,6 +177,7 @@ import {
   TRADEPRINT_SANDBOX_CATALOG_FAMILIES,
   TRADEPRINT_SANDBOX_DISCOVERED_FAMILY_COUNT,
   TRADEPRINT_SANDBOX_DISCOVERED_VARIANT_ROW_COUNT,
+  TRADEPRINT_SANDBOX_SELECTED_CANDIDATES,
 } from '../_shared/tradeprintSandboxCatalog';
 
 describe('Tradeprint sandbox verified catalogue manifest', () => {
@@ -188,4 +189,20 @@ describe('Tradeprint sandbox verified catalogue manifest', () => {
     expect(TRADEPRINT_SANDBOX_CATALOG_FAMILIES.every((family) => family.sandboxAvailable === true)).toBe(true);
     expect(TRADEPRINT_SANDBOX_CATALOG_FAMILIES.every((family) => family.publicationAllowed === false)).toBe(true);
   });
+});
+
+it('records the operator-selected Flyers sandbox configuration as non-publishable', () => {
+  const candidate = TRADEPRINT_SANDBOX_SELECTED_CANDIDATES[0];
+  expect(candidate.family).toBe('Flyers');
+  expect(candidate.productKey).toBe('PRD-WLPVQMTE');
+  expect(candidate.quantity).toBe(5000);
+  expect(candidate.productionData).toMatchObject({
+    'Paper Type': '130gsm Art Paper Gloss Finish',
+    Size: 'A5',
+    'Sides Printed': 'Double Sided',
+    Lamination: 'None',
+    Sets: '1',
+  });
+  expect(candidate.publicationAllowed).toBe(false);
+  expect(candidate.blockers).toContain('production_price_truth_required');
 });

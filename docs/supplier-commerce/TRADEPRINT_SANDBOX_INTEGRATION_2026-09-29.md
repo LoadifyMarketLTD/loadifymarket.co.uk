@@ -90,3 +90,22 @@ All catalogue candidates remain fail-closed with `publicationAllowed=false`. No 
 A Tradeprint Head of New Business subsequently confirmed in writing that Loadify's supplier-fulfilled marketplace model is a good fit for Tradeprint Connect, including REST integration, sandbox testing, white-label fulfilment and direct delivery. Detailed commercial terms, rate/catalogue limits, production credential requirements and content/image usage rights remain pending written confirmation.
 
 One additional unresolved mapping issue remains: sandbox price-list values are preserved as raw supplier evidence until Tradeprint confirms the price-unit/settlement semantics. They must not be converted into customer-facing prices by assumption.
+
+## Selected Flyers mapping — 30 September 2026
+
+Postman sandbox product discovery re-confirmed the exact Flyers family identifier and configuration:
+
+- family: `Flyers`
+- product key: `PRD-WLPVQMTE`
+- paper: `130gsm Art Paper Gloss Finish`
+- size: `A5`
+- sides: `Double Sided`
+- lamination: `None`
+- sets: `1`
+- service level: `Saver`
+- selected quantity: `5000`
+- previously observed sandbox price: `£75.50`
+
+The configuration is retained only as sandbox mapping evidence. It remains non-publishable because Tradeprint confirmed sandbox pricing is not production pricing and the current sandbox price-list/quantity service is returning provider-side internal-server errors while authentication and product-attribute discovery still pass.
+
+Publication must use production commercial truth, not the sandbox amount. Required gates remain: production credentials, production pricing/rate evidence, verified commercial and integration profiles, verified media/content rights, approved pricing snapshot and fresh availability evidence.

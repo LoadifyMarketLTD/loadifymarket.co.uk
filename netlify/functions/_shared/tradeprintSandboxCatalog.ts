@@ -1,4 +1,4 @@
-﻿export interface TradeprintSandboxCatalogFamily {
+export interface TradeprintSandboxCatalogFamily {
   productName: string;
   rawVariantRows: number;
   sandboxAvailable: true;
@@ -35,3 +35,45 @@ export const TRADEPRINT_SANDBOX_DISCOVERED_VARIANT_ROW_COUNT = TRADEPRINT_SANDBO
   (total, family) => total + family.rawVariantRows,
   0,
 );
+
+export interface TradeprintSandboxSelectedCandidate {
+  family: 'Flyers';
+  productKey: string;
+  serviceLevel: 'Saver';
+  quantity: number;
+  productionData: Readonly<Record<string, string>>;
+  sandboxObservedPriceGbp?: number;
+  publicationAllowed: false;
+  blockers: readonly string[];
+}
+
+/**
+ * Operator-selected sandbox configuration captured for controlled mapping.
+ * Sandbox prices are not production commercial truth and MUST NOT be published.
+ */
+export const TRADEPRINT_SANDBOX_SELECTED_CANDIDATES: readonly TradeprintSandboxSelectedCandidate[] = [
+  {
+    family: 'Flyers',
+    productKey: 'PRD-WLPVQMTE',
+    serviceLevel: 'Saver',
+    quantity: 5000,
+    productionData: {
+      'Paper Type': '130gsm Art Paper Gloss Finish',
+      Size: 'A5',
+      'Sides Printed': 'Double Sided',
+      Lamination: 'None',
+      Sets: '1',
+    },
+    sandboxObservedPriceGbp: 75.50,
+    publicationAllowed: false,
+    blockers: [
+      'production_credentials_required',
+      'production_price_truth_required',
+      'commercial_profile_required',
+      'integration_profile_required',
+      'verified_media_required',
+      'approved_pricing_snapshot_required',
+      'fresh_stock_or_availability_evidence_required',
+    ],
+  },
+] as const;
