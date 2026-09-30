@@ -203,6 +203,87 @@ async function buildCandidate(
   };
 }
 
+export async function evaluateProjectionSupplierCatalogOffers(
+  client: SupabaseClient,
+  input: {
+    projectionId: string;
+    requestedQuantity: number;
+    territory?: string;
+  },
+): Promise<SupplierOfferSelectionResult> {
+  try {
+    const territory = (input.territory || 'GB').trim().toUpperCase();
+    const { data, error } = await client.rpc('server_supplier_projection_offer_candidates_v1', {
+      p_projection_id: input.projectionId,
+      p_territory: territory,
+    });
+    if (error) {
+      return {
+        interfaceVersion: 1,
+        eligible: false,
+        reason: 'supplier_offer_candidates_unavailable',
+        selected: null,
+        ranked: [],
+        rejected: [],
+      };
+    }
+
+    const rows = asProjectionOfferRows(data);
+    const candidates = await Promise.all(
+      rows.map(row => buildCandidate(client, row, input.requestedQuantity)),
+    );
+    const eligible = candidates.filter(candidate => (
+      candidate.catalogEligible
+      && candidate.economicsEligible
+      && Number.isFinite(candidate.grossCustomerPrice)
+      && candidate.grossCustomerPrice >= 0
+      && Number.isFinite(candidate.expectedContribution)
+      && Number.isFinite(candidate.minimumContribution)
+      && candidate.expectedContribution >= candidate.minimumContribution
+      && /^[A-Z]{2}$/.test(candidate.territory)
+      && /^[A-Z]{3}$/.test(candidate.currency)
+    ));
+    const ranked = [...eligible].sort((left, right) => {
+      const leftHeadroom = left.expectedContribution - left.minimumContribution;
+      const rightHeadroom = right.expectedContribution - right.minimumContribution;
+      if (leftHeadroom !== rightHeadroom) return rightHeadroom - leftHeadroom;
+      if (left.grossCustomerPrice !== right.grossCustomerPrice) return left.grossCustomerPrice - right.grossCustomerPrice;
+      return left.supplierOfferId.localeCompare(right.supplierOfferId);
+    });
+    const eligibleIds = new Set(ranked.map(candidate => candidate.supplierOfferId));
+    return {
+      interfaceVersion: 1,
+      eligible: ranked.length > 0,
+      reason: ranked.length > 0 ? 'supplier_catalog_offer_selected' : 'no_catalog_visible_supplier_offer',
+      selected: ranked[0] ?? null,
+      ranked,
+      rejected: candidates
+        .filter(candidate => !eligibleIds.has(candidate.supplierOfferId))
+        .map(candidate => ({
+          supplierOfferId: candidate.supplierOfferId,
+          supplierKey: candidate.supplierKey,
+          reasons: [
+            !candidate.catalogEligible ? 'catalog_not_eligible' : '',
+            !candidate.economicsEligible ? 'economics_not_eligible' : '',
+            !Number.isFinite(candidate.grossCustomerPrice) || candidate.grossCustomerPrice < 0 ? 'invalid_customer_price' : '',
+            !Number.isFinite(candidate.expectedContribution)
+              || !Number.isFinite(candidate.minimumContribution)
+              || candidate.expectedContribution < candidate.minimumContribution ? 'margin_floor_failed' : '',
+          ].filter(Boolean),
+        })),
+    };
+  } catch {
+    return {
+      interfaceVersion: 1,
+      eligible: false,
+      reason: 'supplier_catalog_offer_selection_unavailable',
+      selected: null,
+      ranked: [],
+      rejected: [],
+    };
+  }
+}
+
 export async function evaluateProjectionSupplierOffers(
   client: SupabaseClient,
   input: {

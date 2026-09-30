@@ -31,8 +31,12 @@ describe("supplier buyer catalog publication boundary", () => {
     expect(readBoundary).toContain("p.commercial_mode='loadify_supplier_fulfilled'");
     expect(readBoundary).toContain("p.territory='GB'");
     expect(catalog).toContain("evaluateProjectionSupplierOffers");
+    expect(catalog).toContain("evaluateProjectionSupplierCatalogOffers");
+    expect(catalog).toContain("catalogDisplayOnly");
+    expect(catalog).toContain('checkoutBlockReason: catalogDisplayOnly');
+    expect(catalog).toContain('"CATALOG_DISPLAY_ONLY"');
     expect(catalog).toContain("selected.grossCustomerPrice");
-    expect(catalog).toContain("selected.sellableQuantity");
+    expect(catalog).toContain("catalogDisplayOnly ? 0 : selected.sellableQuantity");
     expect(catalog).toContain("Fulfilled by approved supplier");
     expect(catalog).toContain("server_supplier_commercial_compatibility_readiness_v2");
     expect(catalog).toContain("server_supplier_marketplace_commercial_readiness_v1");

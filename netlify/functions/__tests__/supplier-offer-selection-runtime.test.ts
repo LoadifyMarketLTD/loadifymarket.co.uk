@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  evaluateProjectionSupplierCatalogOffers,
   evaluateProjectionSupplierFallback,
   evaluateProjectionSupplierOffers,
 } from '../_shared/supplierOfferSelectionRuntime';
@@ -153,6 +154,26 @@ describe('supplier offer selection runtime', () => {
 
     expect(result.eligible).toBe(false);
     expect(result.rejected[0]?.reasons).toContain('returns_not_eligible');
+  });
+
+  it('keeps catalog visibility separate from transactional fulfilment readiness', async () => {
+    const client = clientWithCandidate({ returns_capability: false });
+    const catalog = await evaluateProjectionSupplierCatalogOffers(client, {
+      projectionId,
+      requestedQuantity: 1,
+      territory: 'GB',
+    });
+    const checkout = await evaluateProjectionSupplierOffers(client, {
+      projectionId,
+      requestedQuantity: 1,
+      territory: 'GB',
+    });
+
+    expect(catalog.eligible).toBe(true);
+    expect(catalog.selected?.supplierOfferId).toBe(offerId);
+    expect(catalog.selected?.grossCustomerPrice).toBe(29.99);
+    expect(checkout.eligible).toBe(false);
+    expect(checkout.rejected[0]?.reasons).toContain('returns_not_eligible');
   });
 
   it('rejects candidate evidence when the pricing snapshot no longer matches economics', async () => {
