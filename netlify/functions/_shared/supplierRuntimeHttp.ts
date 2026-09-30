@@ -49,7 +49,7 @@ async function resolvePublicHost(hostname: string): Promise<ResolvedAddress[] | 
   }
 }
 
-function errorForStatus(status: number): SupplierRuntimeHttpResult {
+function errorForStatus(status: number, method: SupplierRuntimeHttpRequest['method']): SupplierRuntimeHttpResult {
   if (status === 401 || status === 403) {
     return { ok: false, errorClass: 'AUTH_CONFIGURATION_FAILURE', message: 'Supplier runtime authentication was rejected' };
   }
@@ -62,7 +62,10 @@ function errorForStatus(status: number): SupplierRuntimeHttpResult {
   if (status >= 400 && status < 500) {
     return { ok: false, errorClass: 'PERMANENT_REJECTION', message: 'Supplier runtime rejected the request' };
   }
-  return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: 'Supplier runtime request failed' };
+  if (method === 'GET') {
+    return { ok: false, errorClass: 'RETRYABLE_FAILURE', message: 'Supplier runtime request failed' };
+  }
+  return { ok: false, errorClass: 'UNKNOWN_OUTCOME', message: 'Supplier write request failed after a non-trusted provider response' };
 }
 
 export async function executeSupplierRuntimeHttp(
@@ -126,7 +129,7 @@ export async function executeSupplierRuntimeHttp(
       const status = response.statusCode ?? 0;
       if (status < 200 || status >= 300) {
         response.resume();
-        finish(errorForStatus(status));
+        finish(errorForStatus(status, input.method));
         return;
       }
 
@@ -163,13 +166,17 @@ export async function executeSupplierRuntimeHttp(
         finish({ ok: true, body: Buffer.concat(chunks).toString('utf8'), status });
       });
       response.on('error', () => {
-        finish({ ok: false, errorClass: 'RETRYABLE_FAILURE', message: 'Supplier runtime response failed' });
+        finish(input.method === 'GET'
+          ? { ok: false, errorClass: 'RETRYABLE_FAILURE', message: 'Supplier runtime response failed' }
+          : { ok: false, errorClass: 'UNKNOWN_OUTCOME', message: 'Supplier write response failed after request dispatch' });
       });
     });
 
     request.setTimeout(input.timeoutMs, () => {
       request.destroy();
-      finish({ ok: false, errorClass: 'RETRYABLE_FAILURE', message: 'Supplier runtime request timed out' });
+      finish(input.method === 'GET'
+        ? { ok: false, errorClass: 'RETRYABLE_FAILURE', message: 'Supplier runtime request timed out' }
+        : { ok: false, errorClass: 'UNKNOWN_OUTCOME', message: 'Supplier write request timed out after dispatch' });
     });
     request.on('error', () => {
       finish({ ok: false, errorClass: 'UNKNOWN_OUTCOME', message: 'Supplier runtime request failed before a trusted response was received' });

@@ -11,6 +11,13 @@ export interface SupplierRuntimeHttpConfig {
   headers?: Record<string, string>;
   timeoutMs?: number;
   maxBytes?: number;
+  auth?: {
+    kind: 'sha1_query_or_body_secret';
+    appId: string;
+    secretKey: string;
+    appIdParam: string;
+    signatureParam: string;
+  };
   graphqlDocument?: string;
   graphqlOperationName?: string;
 }
@@ -137,6 +144,24 @@ export function resolveSupplierRuntimeConfig(
     }
   }
 
+  let auth: SupplierRuntimeHttpConfig['auth'];
+  if (value.auth !== undefined) {
+    if (!isRecord(value.auth) || value.auth.kind !== 'sha1_query_or_body_secret') {
+      return { ok: false, code: 'CONFIG_INVALID', error: 'Supplier runtime auth configuration is unsupported' };
+    }
+    const appId = stringValue(value.auth.appId);
+    const secretKey = stringValue(value.auth.secretKey);
+    const appIdParam = stringValue(value.auth.appIdParam) ?? 'AppId';
+    const signatureParam = stringValue(value.auth.signatureParam) ?? 'Signature';
+    if (!appId || !secretKey || appId.length > 512 || secretKey.length > 512) {
+      return { ok: false, code: 'CONFIG_INVALID', error: 'Supplier runtime auth credentials are invalid' };
+    }
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(appIdParam) || !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(signatureParam)) {
+      return { ok: false, code: 'CONFIG_INVALID', error: 'Supplier runtime auth parameter names are invalid' };
+    }
+    auth = { kind: 'sha1_query_or_body_secret', appId, secretKey, appIdParam, signatureParam };
+  }
+
   const graphqlDocument = kind === 'graphql' ? stringValue(value.graphqlDocument) : undefined;
   if (kind === 'graphql' && (!graphqlDocument || graphqlDocument.length > 20000)) {
     return { ok: false, code: 'CONFIG_INVALID', error: 'GraphQL document is required and must be bounded' };
@@ -155,6 +180,7 @@ export function resolveSupplierRuntimeConfig(
       headers: Object.keys(headers).length ? headers : undefined,
       timeoutMs,
       maxBytes,
+      auth,
       graphqlDocument,
       graphqlOperationName: kind === 'graphql' ? stringValue(value.graphqlOperationName) : undefined,
     },
