@@ -6,6 +6,7 @@ import { jsonResponse, optionsResponse } from "./_shared/http";
 import { SUPPLIER_PROVIDER_KEYS, type SupplierProviderKey } from "./_shared/supplierProviderRegistry";
 import { createRuntimeSupplierAdapter } from "./_shared/supplierAdapterRuntimeFactory";
 import { recoverSupplierOrderAcknowledgement, submitPaidSupplierOrder } from "./_shared/supplierOrderHandshake";
+import { recoverSupplierOrderLostResponse } from "./_shared/supplierOrderRecovery";
 import { syncSupplierTracking } from "./_shared/supplierTracking";
 
 const METHODS = "POST, OPTIONS";
@@ -105,15 +106,16 @@ export const handler: Handler = async (event) => {
 
   if (action === "recover") {
     const supplierOrderRef = String(context.externalSupplierOrderRef ?? "");
-    if (!supplierOrderRef) return jsonResponse(409, { error: "No supplier order reference is available for recovery" }, METHODS);
-    const result = await recoverSupplierOrderAcknowledgement(admin, adapter, {
+    const commonRecovery = {
       handshakeId: String(context.handshakeId),
-      supplierOrderRef,
       supplierKey: String(context.supplierKey),
       territory: String(context.destinationCountry || "GB"),
       correlationId: String(context.correlationId),
       idempotencyKey: String(context.idempotencyKey),
-    });
+    };
+    const result = supplierOrderRef
+      ? await recoverSupplierOrderAcknowledgement(admin, adapter, { ...commonRecovery, supplierOrderRef })
+      : await recoverSupplierOrderLostResponse(admin, adapter, commonRecovery);
     return jsonResponse(result.ok ? 200 : 409, { ok: result.ok, action, result }, METHODS);
   }
 

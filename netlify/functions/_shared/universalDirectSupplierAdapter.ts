@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type {
   SupplierAdapterCapability,
   SupplierAdapterContext,
@@ -139,6 +140,21 @@ function normalizeAckState(value: string, mapping: JsonRecord): SupplierOrderAck
   return 'unknown';
 }
 
+export function applySha1QueryOrBodyAuth(
+  url: URL,
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  body: string | undefined,
+  auth: { appId: string; secretKey: string; appIdParam: string; signatureParam: string },
+): void {
+  url.searchParams.set(auth.appIdParam, auth.appId);
+  url.searchParams.delete(auth.signatureParam);
+  const signedValue = method === 'GET' || method === 'DELETE'
+    ? `${url.searchParams.toString()}${auth.secretKey}`
+    : `${body ?? ''}${auth.secretKey}`;
+  const signature = createHash('sha1').update(signedValue, 'utf8').digest('hex');
+  url.searchParams.set(auth.signatureParam, signature);
+}
+
 async function executeBinding(
   runtime: SupplierIntegrationRuntime,
   binding: SupplierIntegrationBinding,
@@ -198,6 +214,15 @@ async function executeBinding(
       const value = canonicalValue(canonicalInput, canonicalPath);
       if (value !== undefined && value !== null) url.searchParams.set(remoteNameValue.trim(), String(value));
     }
+  }
+
+  if (config.auth?.kind === 'sha1_query_or_body_secret') {
+    applySha1QueryOrBodyAuth(
+      url,
+      config.method ?? (config.kind === 'graphql' ? 'POST' : 'GET'),
+      body,
+      config.auth,
+    );
   }
 
   const response = await executeSupplierRuntimeHttp({
@@ -386,6 +411,39 @@ export class UniversalDirectSupplierAdapterV1 implements SupplierAdapterV1 {
     const rawState = mappedString(executed.data, binding.mapping, 'state');
     const acknowledgedAt = mappedString(executed.data, binding.mapping, 'acknowledgedAt') || new Date().toISOString();
     return { ok: true, data: { supplierOrderRef: ref, state: normalizeAckState(rawState, binding.mapping), acknowledgedAt }, externalRef: ref };
+  }
+
+  async findOrderByIdempotencyKey(context: SupplierAdapterContext): Promise<SupplierAdapterResult<SupplierOrderAcknowledgement>> {
+    const binding = this.binding('acknowledgement');
+    if (!binding) return { ok: false, errorClass: 'CAPABILITY_UNAVAILABLE', message: 'Acknowledgement binding is unavailable' };
+    const lookup = isRecord(binding.mapping.idempotencyLookup) ? binding.mapping.idempotencyLookup : {};
+    const externalIdPath = typeof lookup.externalIdPath === 'string' ? lookup.externalIdPath.trim() : '';
+    if (!externalIdPath) {
+      return { ok: false, errorClass: 'CAPABILITY_UNAVAILABLE', message: 'Idempotency lookup mapping is unavailable' };
+    }
+    const executed = await executeBinding(this.runtime, binding, { context });
+    if (!executed.ok) return executed;
+    const matches = rowsFromPayload(executed.data, binding.mapping).filter((row) => {
+      const value = getPath(row, externalIdPath);
+      return (typeof value === 'string' || typeof value === 'number')
+        && String(value).trim() === context.idempotencyKey;
+    });
+    if (matches.length === 0) {
+      return { ok: false, errorClass: 'UNKNOWN_OUTCOME', message: 'Supplier order was not found by idempotency key' };
+    }
+    if (matches.length > 1) {
+      return { ok: false, errorClass: 'MALFORMED_RESPONSE', message: 'Supplier returned duplicate orders for one idempotency key' };
+    }
+    const row = matches[0];
+    const supplierOrderRef = mappedString(row, binding.mapping, 'supplierOrderRef');
+    if (!supplierOrderRef) return { ok: false, errorClass: 'MALFORMED_RESPONSE', message: 'Recovered supplier order reference is missing' };
+    const rawState = mappedString(row, binding.mapping, 'state');
+    const acknowledgedAt = mappedString(row, binding.mapping, 'acknowledgedAt') || new Date().toISOString();
+    return {
+      ok: true,
+      data: { supplierOrderRef, state: normalizeAckState(rawState, binding.mapping), acknowledgedAt },
+      externalRef: supplierOrderRef,
+    };
   }
 
   async getTracking(context: SupplierAdapterContext, supplierOrderRef: string): Promise<SupplierAdapterResult<SupplierTrackingEvent[]>> {

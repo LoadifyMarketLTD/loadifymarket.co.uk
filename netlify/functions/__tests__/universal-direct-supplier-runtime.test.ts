@@ -1,8 +1,9 @@
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { resolveSupplierRuntimeConfig } from "../_shared/supplierRuntimeConfig";
+import { applySha1QueryOrBodyAuth } from "../_shared/universalDirectSupplierAdapter";
 import { resolveSupplierWebhookConfig, verifySupplierWebhookRequest } from "../_shared/supplierWebhookRuntime";
 
 const repo = (file: string) => readFileSync(resolve(process.cwd(), file), "utf8");
@@ -10,6 +11,7 @@ const adapter = repo("netlify/functions/_shared/universalDirectSupplierAdapter.t
 const http = repo("netlify/functions/_shared/supplierRuntimeHttp.ts");
 const factory = repo("netlify/functions/_shared/supplierAdapterRuntimeFactory.ts");
 const order = repo("netlify/functions/admin-supplier-order-runtime.ts");
+const submissionGuard = repo("supabase/migrations/20260930230500_supplier_order_submission_inflight_guard.sql");
 const returns = repo("netlify/functions/admin-supplier-return-runtime.ts");
 const pilot = repo("netlify/functions/admin-supplier-pilot-runtime.ts");
 const webhook = repo("netlify/functions/direct-supplier-operational-webhook.ts");
@@ -48,6 +50,58 @@ describe("universal Direct Supplier runtime", () => {
     expect(adapter).toContain("orderSubmissionMappingReady");
     expect(adapter).toContain("context.idempotencyKey");
     expect(adapter).toContain("input.recipient.postcode");
+  });
+
+  it("keeps write retries fail-closed and supports lost-response lookup by the original idempotency key", () => {
+    expect(submissionGuard).toContain("submission_already_in_progress");
+    expect(submissionGuard).toContain("query_before_retry_required");
+    expect(http).toContain("Supplier write request timed out after dispatch");
+    expect(http).toContain("UNKNOWN_OUTCOME");
+    expect(order).toContain("recoverSupplierOrderLostResponse");
+    expect(adapter).toContain("findOrderByIdempotencyKey");
+    expect(adapter).toContain("idempotencyLookup");
+    expect(adapter).toContain("context.idempotencyKey");
+  });
+
+  it("supports server-side SHA1 query/body authentication without storing credentials in integration records", () => {
+    process.env[RUNTIME_ENV] = JSON.stringify({
+      kind: "http_rest",
+      supplierKey: "inkthreadable",
+      capability: "acknowledgement",
+      url: "https://www.inkthreadable.co.uk/api/orders.php?limit=250&format=json",
+      allowedHosts: ["www.inkthreadable.co.uk"],
+      method: "GET",
+      auth: {
+        kind: "sha1_query_or_body_secret",
+        appId: "APP-test",
+        secretKey: "secret-test",
+        appIdParam: "AppId",
+        signatureParam: "Signature",
+      },
+    });
+    const result = resolveSupplierRuntimeConfig("env:" + RUNTIME_ENV, {
+      supplierKey: "inkthreadable",
+      capability: "acknowledgement",
+      transport: "http_rest",
+    });
+    expect(result.ok).toBe(true);
+    const getUrl = new URL("https://www.inkthreadable.co.uk/api/orders.php?limit=250&format=json");
+    applySha1QueryOrBodyAuth(getUrl, "GET", undefined, {
+      appId: "APP-test", secretKey: "secret-test", appIdParam: "AppId", signatureParam: "Signature",
+    });
+    const getUnsigned = "limit=250&format=json&AppId=APP-test";
+    expect(getUrl.searchParams.get("Signature")).toBe(
+      createHash("sha1").update(getUnsigned + "secret-test", "utf8").digest("hex"),
+    );
+
+    const postUrl = new URL("https://www.inkthreadable.co.uk/api/orders.php");
+    const body = JSON.stringify({ external_id: "supplier-handshake:test" });
+    applySha1QueryOrBodyAuth(postUrl, "POST", body, {
+      appId: "APP-test", secretKey: "secret-test", appIdParam: "AppId", signatureParam: "Signature",
+    });
+    expect(postUrl.searchParams.get("Signature")).toBe(
+      createHash("sha1").update(body + "secret-test", "utf8").digest("hex"),
+    );
   });
 
   it("allows asynchronous acknowledgement through a verified webhook while polling stays fail-closed", () => {
