@@ -89,6 +89,46 @@ CREATE TRIGGER trg_guard_supplier_offer_price_constraint_history_v1
 BEFORE UPDATE OR DELETE ON private.supplier_offer_price_constraints
 FOR EACH ROW EXECUTE FUNCTION private.guard_supplier_offer_price_constraint_history_v1();
 
+
+-- A supplier_minimum_price policy may be supplier-wide or offer/SKU-specific.
+-- Do not force a fake supplier-wide floor when the verified contract is per offer.
+CREATE OR REPLACE FUNCTION private.guard_supplier_commercial_profile_v1()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO ''
+AS $$
+BEGIN
+  IF TG_OP='DELETE' AND OLD.status='verified' THEN
+    RAISE EXCEPTION 'verified supplier commercial profile is historical contract evidence and cannot be deleted';
+  END IF;
+  IF TG_OP='UPDATE' AND OLD.status='verified' THEN
+    IF (
+      to_jsonb(NEW) - ARRAY['status','effective_to']::text[]
+    ) IS DISTINCT FROM (
+      to_jsonb(OLD) - ARRAY['status','effective_to']::text[]
+    ) THEN
+      RAISE EXCEPTION 'verified supplier commercial profile is immutable; create a new version';
+    END IF;
+  END IF;
+  IF NEW.pricing_model='supplier_fixed_retail' AND NEW.supplier_fixed_retail IS NULL THEN
+    RAISE EXCEPTION 'supplier_fixed_retail requires supplier_fixed_retail amount';
+  END IF;
+  IF NEW.pricing_model='supplier_rrp' AND NEW.supplier_recommended_retail IS NULL THEN
+    RAISE EXCEPTION 'supplier_rrp requires supplier_recommended_retail';
+  END IF;
+  IF NEW.pricing_model='loadify_managed_with_supplier_constraints' AND NEW.loadify_may_set_retail IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'loadify-managed pricing requires loadify_may_set_retail=true';
+  END IF;
+  IF NEW.supplier_payable_basis='fixed_contract_amount' AND NEW.supplier_payable_fixed_amount IS NULL THEN
+    RAISE EXCEPTION 'fixed_contract_amount requires supplier_payable_fixed_amount';
+  END IF;
+  IF NEW.supplier_payable_basis='order_level_formula'
+     AND (NEW.supplier_payable_formula IS NULL OR NEW.supplier_payable_formula='{}'::jsonb) THEN
+    RAISE EXCEPTION 'order_level_formula requires a reviewed declarative supplier_payable_formula';
+  END IF;
+  RETURN NEW;
+END;
+$$;
 CREATE OR REPLACE FUNCTION public.server_supplier_offer_price_policy_decision_v1(
   p_supplier_offer_id uuid,
   p_pricing_snapshot_id uuid,
@@ -160,13 +200,16 @@ BEGIN
   LIMIT 1;
 
   IF v_profile.pricing_model='supplier_minimum_price' THEN
-    IF NOT FOUND OR v_constraint.minimum_customer_price IS NULL THEN
-      RETURN jsonb_build_object('eligible',false,'reason','supplier_offer_minimum_price_missing','interfaceVersion',1);
+    IF FOUND AND v_constraint.minimum_customer_price IS NOT NULL THEN
+      IF v_constraint.currency<>v_price.currency THEN
+        RETURN jsonb_build_object('eligible',false,'reason','supplier_offer_price_constraint_currency_mismatch','interfaceVersion',1);
+      END IF;
+      v_floor:=v_constraint.minimum_customer_price;
+    ELSIF v_profile.supplier_price_floor IS NOT NULL THEN
+      v_floor:=v_profile.supplier_price_floor;
+    ELSE
+      RETURN jsonb_build_object('eligible',false,'reason','supplier_minimum_price_missing','interfaceVersion',1);
     END IF;
-    IF v_constraint.currency<>v_price.currency THEN
-      RETURN jsonb_build_object('eligible',false,'reason','supplier_offer_price_constraint_currency_mismatch','interfaceVersion',1);
-    END IF;
-    v_floor:=v_constraint.minimum_customer_price;
   ELSIF v_profile.pricing_model='supplier_fixed_retail' THEN
     IF FOUND AND v_constraint.fixed_customer_price IS NOT NULL THEN
       IF v_constraint.currency<>v_price.currency THEN
@@ -275,14 +318,19 @@ BEGIN
       AND (valid_to IS NULL OR valid_to>now())
     ORDER BY version DESC
     LIMIT 1;
-    IF NOT FOUND OR v_constraint.minimum_customer_price IS NULL THEN
-      RAISE EXCEPTION 'verified per-offer minimum customer price is required before pricing approval';
-    END IF;
-    IF v_constraint.currency<>NEW.currency THEN
-      RAISE EXCEPTION 'supplier offer minimum price currency must match pricing currency';
-    END IF;
-    IF NEW.gross_customer_price<v_constraint.minimum_customer_price THEN
-      RAISE EXCEPTION 'approved customer price is below verified supplier minimum price';
+    IF FOUND AND v_constraint.minimum_customer_price IS NOT NULL THEN
+      IF v_constraint.currency<>NEW.currency THEN
+        RAISE EXCEPTION 'supplier offer minimum price currency must match pricing currency';
+      END IF;
+      IF NEW.gross_customer_price<v_constraint.minimum_customer_price THEN
+        RAISE EXCEPTION 'approved customer price is below verified supplier minimum price';
+      END IF;
+    ELSIF v_profile.supplier_price_floor IS NOT NULL THEN
+      IF NEW.gross_customer_price<v_profile.supplier_price_floor THEN
+        RAISE EXCEPTION 'approved customer price is below verified supplier minimum price';
+      END IF;
+    ELSE
+      RAISE EXCEPTION 'verified supplier minimum price is required before pricing approval';
     END IF;
   END IF;
 

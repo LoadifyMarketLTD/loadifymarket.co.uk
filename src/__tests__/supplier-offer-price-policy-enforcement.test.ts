@@ -15,11 +15,16 @@ describe("supplier offer price policy enforcement", () => {
     expect(migration).toContain("source_ref");
   });
 
-  it("fails closed when minimum-price evidence is absent or violated", () => {
-    expect(migration).toContain("supplier_offer_minimum_price_missing");
+  it("supports supplier-wide and per-offer minimum price evidence", () => {
+    expect(migration).toContain("A supplier_minimum_price policy may be supplier-wide or offer/SKU-specific");
+    expect(migration).toContain("ELSIF v_profile.supplier_price_floor IS NOT NULL");
+    expect(migration).toContain("supplier_minimum_price_missing");
+    expect(migration).toContain("verified supplier minimum price is required before pricing approval");
+  });
+
+  it("fails closed when a verified minimum price is violated", () => {
     expect(migration).toContain("supplier_minimum_price_floor_failed");
     expect(migration).toContain("approved customer price is below verified supplier minimum price");
-    expect(migration).toContain("verified per-offer minimum customer price is required before pricing approval");
   });
 
   it("blocks publication until economics and supplier price policy pass", () => {

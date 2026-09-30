@@ -26,13 +26,7 @@ CREATE TABLE IF NOT EXISTS private.supplier_brand_usage_policies (
   CONSTRAINT supplier_brand_usage_status_check
     CHECK (status IN ('draft','verified','retired')),
   CONSTRAINT supplier_brand_usage_terms_check
-    CHECK (
-      cardinality(restricted_brand_terms) BETWEEN 1 AND 32
-      AND NOT EXISTS (
-        SELECT 1 FROM unnest(restricted_brand_terms) x
-        WHERE NULLIF(BTRIM(x),'') IS NULL OR length(BTRIM(x))>128
-      )
-    ),
+    CHECK (cardinality(restricted_brand_terms) BETWEEN 1 AND 32),
   CONSTRAINT supplier_brand_usage_evidence_check
     CHECK (jsonb_typeof(evidence)='object'),
   CONSTRAINT supplier_brand_usage_reason_check
