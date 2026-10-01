@@ -17,9 +17,11 @@ describe("supplier buyer catalog publication boundary", () => {
     expect(publish).toContain("server_publish_supplier_marketplace_projection_v1");
   });
 
-  it("keeps seller listings untouched while handing published projections to revalidated supplier checkout", () => {
+  it("keeps seller listings untouched and does not misreport checkout as enabled after publication", () => {
     expect(publish).toContain("sellerListingMutationPerformed: false");
-    expect(publish).toContain("checkoutEnabled: true");
+    expect(publish).toContain("checkoutEnabled: data?.checkoutEnabled === true");
+    expect(publish).toContain("buyerVisible: data?.buyerVisible === true");
+    expect(publish).not.toContain("checkoutEnabled: true");
     expect(publish).toContain('nextGate: "buyer_checkout_revalidation"');
     expect(publish).not.toContain("create-product");
     expect(migration).toContain("'checkoutEnabled',false");
