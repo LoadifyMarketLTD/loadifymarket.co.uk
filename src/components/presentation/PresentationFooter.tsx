@@ -15,7 +15,7 @@ export default function PresentationFooter() {
         <div className="grid gap-10 px-6 py-12 sm:px-8 lg:grid-cols-[1.15fr_2fr] lg:px-10 lg:py-14">
           <div>
             <Link to="/" className="inline-flex items-center" aria-label="Loadify home">
-              <img src={logo} alt="Loadify Market" className="h-12 w-auto max-w-[205px] object-contain" />
+              <img src={logo} alt="Loadify Market" width={2400} height={800} className="h-12 w-auto max-w-[205px] object-contain" />
             </Link>
             <p className="mt-6 text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">LOADIFY MARKET</p>
             <h2 className="mt-3 max-w-md font-serif text-[1.8rem] font-normal leading-[1.08] tracking-[-0.03em] text-white sm:text-[2rem]">Commerce built around clear roles and controlled participation.</h2>
@@ -26,7 +26,7 @@ export default function PresentationFooter() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {groups.map((group) => <div key={group.title}><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">{group.title}</p><div className="mt-4 grid gap-3">{group.links.map(([label,to]) => <Link key={to} to={to} className="text-sm font-semibold text-white/72 transition hover:text-white">{label}</Link>)}</div></div>)}
+            {groups.map((group) => <div key={group.title}><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F5A300]">{group.title}</p><div className="mt-4 grid gap-3">{group.links.map(([label,to]) => <Link key={to} to={to} className="inline-flex min-h-11 items-center text-sm font-semibold text-white/72 transition hover:text-white">{label}</Link>)}</div></div>)}
           </div>
         </div>
         <div className="flex flex-col gap-3 border-t border-white/10 px-6 py-5 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10"><span>© {new Date().getFullYear()} Loadify Market. All rights reserved.</span><span>Marketplace commerce and business platform.</span></div>

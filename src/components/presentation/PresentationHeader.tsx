@@ -38,7 +38,7 @@ function PresentationHeaderContent() {
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0A234F]/95 backdrop-blur-xl">
       <div className="mx-auto flex h-[82px] max-w-[1480px] items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-10 xl:gap-7">
         <Link to="/" className="mr-auto flex min-w-0 items-center" aria-label="Loadify home">
-          <img src={logo} alt="Loadify Market" className="h-10 w-auto max-w-[138px] object-contain sm:h-11 sm:max-w-[170px]" />
+          <img src={logo} alt="Loadify Market" width={2400} height={800} className="h-10 w-auto max-w-[138px] object-contain sm:h-11 sm:max-w-[170px]" />
         </Link>
 
         <nav className="hidden items-center gap-5 xl:flex 2xl:gap-6" aria-label="Corporate navigation">

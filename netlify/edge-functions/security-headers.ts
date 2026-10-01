@@ -1,18 +1,14 @@
 /**
  * Netlify Edge Function: security-headers
  *
- * Runs at the Netlify edge (Deno runtime, globally distributed) and adds
- * security headers to every HTML response before it reaches the browser.
- * Edge functions run faster than regular Netlify Functions because they
- * execute at the CDN edge node closest to the visitor rather than in a
- * regional Lambda.
- *
- * This complements the static headers set in netlify.toml for cases where
- * dynamic request context is needed (e.g. future nonce injection for CSP).
+ * Dormant helper retained for future request-context security work such as
+ * CSP nonce injection. It is intentionally not registered globally because
+ * the current HSTS and Permissions-Policy headers are emitted statically from
+ * netlify.toml, avoiding an unnecessary Edge Function hop on HTML requests.
  *
  * @see https://docs.netlify.com/edge-functions/overview/
  */
-import type { Config, Context } from '@netlify/edge-functions';
+import type { Context } from '@netlify/edge-functions';
 
 export default async function securityHeaders(
   request: Request,
@@ -48,8 +44,3 @@ export default async function securityHeaders(
     headers,
   });
 }
-
-export const config: Config = {
-  // Run on every HTML page request.
-  path: '/*',
-};
