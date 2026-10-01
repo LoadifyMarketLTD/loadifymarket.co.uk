@@ -67,9 +67,10 @@ export const handler: Handler = async (event) => {
   if (error) return jsonResponse(409, { error: error.message, buyerVisible: false, checkoutEnabled: false }, METHODS);
 
   return jsonResponse(200, {
-    ok: true, publication: data,
-    buyerVisible: true,
-    checkoutEnabled: true,
+    ok: true,
+    publication: data,
+    buyerVisible: data?.buyerVisible === true,
+    checkoutEnabled: data?.checkoutEnabled === true,
     sellerListingMutationPerformed: false,
     nextGate: "buyer_checkout_revalidation",
   }, METHODS);
