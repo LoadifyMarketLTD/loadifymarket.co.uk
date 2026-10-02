@@ -13,6 +13,8 @@ Use this folder as the handoff source before contacting, importing, approving or
 | Supplier | Current classification | Product route | Immediate action |
 | --- | --- | --- | --- |
 | Wholesale Finds UK | CONDITIONAL / PILOT ACCEPTED | Manual supplier-fulfilled pilot, 10-15 products | Await confirmation of corrected commercial-role model; meanwhile retain 15 staged candidates and prepare final SKU shortlist/evidence |
+| Wholesale HQ | CONDITIONAL / AWAITING STOCK + IDENTITY EVIDENCE | Finished products + direct-to-customer fulfilment | Await pre-checkout stock route/export and verified legal identity before Supplier Foundation approval |
+| Cosmetic Plus | REJECTED FOR CURRENT MODEL | Trade portal + CSV/XML | Do not import: marketplace/content-rights, provenance and beauty-compliance evidence are insufficient |
 | Inkthreadable | OWNER-RETIRED / PERMANENTLY REMOVED | Historical POD/API evidence only | No further supplier work unless Daniel Preda explicitly reverses the owner decision |
 | Costway | PRE-QUALIFIED / APPLICATION REQUIRED | Daily CSV + manual B2B order upload | Await reply to our clarification/application email; do not publish until marketplace/channel approval and content rights are explicit |
 | Leaf Design | CONDITIONAL / STANDARD DROPSHIP ROUTE AVAILABLE | Hourly CSV; Loadify/XDrive must be retailer/reseller and purchase each order | Reassess under Universal Commercial Compatibility; legal/tax/payment review before opening paid dropship membership |
