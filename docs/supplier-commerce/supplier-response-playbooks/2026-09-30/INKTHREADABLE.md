@@ -1,9 +1,11 @@
 # Inkthreadable — Supplier Playbook
 
-Last reviewed: 2026-09-30
+Last reviewed: 2026-10-02
 Gmail thread: `1a0d068bf8ad80c5`
 Key supplier messages: `1a0d068bf8ad80c5`, `1a0e469f24e3163c`, `1a0e75e9a770d667`, `1a0e7f0e77b49a24`
-Current classification: **CONDITIONAL / INTEGRATION APPROVED**
+Current classification: **OWNER-RETIRED / PERMANENTLY REMOVED**
+
+> Controlling owner decision (2026-10-01): Inkthreadable is permanently removed from the active Loadify Market supplier strategy. Do not contact, reactivate, publish, order, run provider writes, or create a new pilot unless Daniel Preda explicitly reverses this decision in a new instruction. Historical technical evidence below is retained for audit only.
 
 ## What Inkthreadable confirmed
 
@@ -33,7 +35,7 @@ This supplier is suitable for made-to-order personalised/print products, not a c
 - current manually verified base cost/pricing source;
 - fulfilment and shipping economics.
 
-## Next actions
+## Historical next actions - SUPERSEDED; DO NOT EXECUTE
 
 1. Re-read the current Inkthreadable account/API configuration before any test; credentials must remain in secrets storage only.
 2. Select a very small first set (2-4 core products) rather than a broad catalogue.
