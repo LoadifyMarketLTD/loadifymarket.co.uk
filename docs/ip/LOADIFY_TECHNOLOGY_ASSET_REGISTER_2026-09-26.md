@@ -8,7 +8,7 @@
 
 ### Loadify Market Platform
 
-Repository: `LoadifyMarketLTD/loadifymarket.co.uk`  
+Repository: `XDriveLogisticsLtd/loadifymarket.co.uk`  
 Canonical legal entity: XDrive Logistics Ltd  
 Primary language: TypeScript  
 Snapshot SHA: `58c928f544062701d4eb9f1d5ec73879c332ec3d`

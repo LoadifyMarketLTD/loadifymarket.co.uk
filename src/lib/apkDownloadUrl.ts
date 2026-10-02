@@ -6,4 +6,4 @@
  * the appropriate store link.
  */
 export const APK_DOWNLOAD_URL =
-  'https://github.com/LoadifyMarketLTD/loadifymarket.co.uk/releases/latest/download/loadify-market.apk';
+  'https://github.com/XDriveLogisticsLtd/loadifymarket.co.uk/releases/latest/download/loadify-market.apk';
