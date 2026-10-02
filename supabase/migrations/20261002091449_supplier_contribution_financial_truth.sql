@@ -1,0 +1,7 @@
+-- Migration-history reconciliation only.
+-- Production already recorded version 20261002091449 when the additive
+-- supplier_contribution_financial_truth migration was applied after the
+-- canonical 20261001143000 version had already reached production.
+--
+-- No schema mutation is required here. Keeping this version in the repository
+-- prevents future migration drift checks from treating production as ahead.
